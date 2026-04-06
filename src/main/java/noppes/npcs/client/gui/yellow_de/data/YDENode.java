@@ -11,7 +11,7 @@ import java.util.List;
 public abstract class YDENode {
 
     public EnumYDEType type = EnumYDEType.DIALOG;
-    public int categoryId = -1;
+    public String category = "";
     public int id = -1;
     public int x = 0;
     public int y = 0;
@@ -23,7 +23,7 @@ public abstract class YDENode {
 
     public void load(CompoundTag compound) {
         type = EnumYDEType.values()[ValueUtil.onlyPositiveInt(compound.getInt("Type"), EnumYDEType.values().length)];
-        categoryId = compound.getInt("CategoryId");
+        category = compound.getString("Category");
         id = compound.getInt("Id");
         x = compound.getInt("X");
         y = compound.getInt("Y");
@@ -44,13 +44,13 @@ public abstract class YDENode {
     public CompoundTag save() {
         CompoundTag compound = new CompoundTag();
         compound.putInt("Type", type.ordinal());
-        compound.putInt("CategoryId", categoryId);
         compound.putInt("Id", id);
         compound.putInt("X", x);
         compound.putInt("Y", y);
         compound.putInt("Width", width);
         compound.putInt("Height", height);
         compound.putBoolean("IsLock", isLock);
+        compound.putString("Category", category);
         compound.putString("Title", Component.Serializer.toJson(title));
         ListTag listLinks = new ListTag();
         for (YDELink link : links) { listLinks.add(link.save());}

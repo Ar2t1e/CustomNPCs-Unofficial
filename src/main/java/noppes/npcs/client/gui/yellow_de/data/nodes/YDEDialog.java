@@ -8,10 +8,10 @@ public class YDEDialog extends YDENode {
 
     public int dialogId;
 
-    public YDEDialog(int idIn, int categoryIdIn, int dialogIdIn) {
+    public YDEDialog(int idIn, String categoryIn, int dialogIdIn) {
         type = EnumYDEType.DIALOG;
         id = idIn;
-        categoryId = categoryIdIn;
+        category = categoryIn;
         dialogId = dialogIdIn;
     }
 

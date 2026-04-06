@@ -58,7 +58,7 @@ public class GuiDialogInteract
         implements IGuiClose {
 
    protected Dialog dialog;
-   protected int selected = 0;
+   protected int selected = -1;
    protected final List<TextBlockClient> lines = new ArrayList<>();
    protected int dialogHeight = 180;
    protected final ResourceLocation wheel = getResource("wheel.png");
@@ -95,7 +95,7 @@ public class GuiDialogInteract
    }
    protected final ResourceLocation npcSkin;
    protected final ResourceLocation playerSkin;
-   protected final Map<Integer, List<String>> options = new TreeMap<>(); // [slotID, text]
+   protected final Map<Integer, TempOption> options = new TreeMap<>(); // [slotID, text]
    // dialog place
    protected int lineStart = 0;
    protected int lineTotal = 0;
@@ -176,10 +176,10 @@ public class GuiDialogInteract
       Dialog oldDialog = dialog;
       dialog = d.copy();
       options.clear();
-      selected = 0;
+      setFirstOption();
       selectedStart = 0;
 
-      // Old Sound
+      // stop last Sound
       MusicController.Instance.stopSound(null, SoundSource.VOICE);
       if (d.sound != null) {
          BlockPos pos = dialogNpc.getOnPos();
@@ -232,13 +232,13 @@ public class GuiDialogInteract
       int i = 0;
       selectedSize = 0;
       for (int id : options.keySet()) {
-         selectedTotal.put(i, options.get(id).size());
-         selectedSize += options.get(id).size();
+         selectedTotal.put(i, options.get(id).lines.size());
+         selectedSize += options.get(id).lines.size();
          i++;
       }
       lineVisibleSize = dialogHeight / fontHeight;
       selectedVisibleSize = Math.round((float) (height - dialogHeight - 2) / (float) fontHeight);
-      selected = 0;
+      setFirstOption();
       selectedStart = 0;
       if (lineStart < 0) { lineStart = 0; }
 
@@ -311,24 +311,24 @@ public class GuiDialogInteract
             continue;
          }
          DialogOption option = dialog.options.get(id);
-         List<String> lines = options.get(id);
+         TempOption tOpt = options.get(id);
          int j = 0;
-         for (String sct : lines) {
+         for (String sct : tOpt.lines) {
             if (j == 0) {
-               ClientProxy.Font.draw(graphics, optPos == selected ? "->" : " *", guiLeft + 1 + (icons.containsKey(option.iconId) ? 0 : 10) + addX, dialogHeight + i * fontHeight, guiSettings.pointerColor);
-               if (i != 0 && optPos - 1 != selected) {
-                  graphics.hLine(guiLeft + 2 + addX, endW - 1 + addX, dialogHeight + i * fontHeight, guiSettings.scrollLineColor);
-               }
-               if (selected == optPos) {
-                  graphics.hLine(left, endW - 1 + addX, dialogHeight + i * fontHeight, guiSettings.hoverLineColor);
-               }
-               if (icons.containsKey(option.iconId)) {
+               ClientProxy.Font.draw(graphics, (tOpt.isEnable ? optPos == selected ? "->" : " *" : ChatFormatting.STRIKETHROUGH + "" + ChatFormatting.GRAY + "   "),
+                       guiLeft + 1 + (icons.containsKey(option.iconId) ? 0 : 10) + addX, dialogHeight + i * fontHeight, guiSettings.pointerColor);
+               // up option line
+               graphics.hLine(guiLeft + 2 + addX, endW - 1 + addX, dialogHeight + i * fontHeight, guiSettings.scrollLineColor);
+               int iconId = option.iconId == 0 && !tOpt.isEnable ? 8 : option.iconId;
+               if (icons.containsKey(iconId)) {
                   matrixStack.pushPose();
-                  matrixStack.translate(guiLeft + 11.5f + addX, dialogHeight + i * fontHeight + 1.0f, 0.0f);
-                  RenderSystem.setShaderColor((float) (option.optionColor >> 16 & 255) / 255.0F, (float) (option.optionColor >> 8 & 255) / 255.0F, (float) (option.optionColor & 255) / 255.0F, 1.0F);
-                  float s = 12.0f / 256.0f;
+                  matrixStack.translate(guiLeft + 0.5f + addX, dialogHeight + i * fontHeight + 1.0f, 1.0f);
+                  int color = !tOpt.isEnable ? 0x808080 : option.optionColor;
+                  RenderSystem.setShaderColor((float) (color >> 16 & 255) / 255.0F, (float) (color >> 8 & 255) / 255.0F, (float) (color & 255) / 255.0F, 1.0F);
+                  float s = 11.0f / 256.0f;
                   matrixStack.scale(s, s, s);
-                  graphics.blit(icons.get(option.iconId), 0, 0, 0, 0, 256, 256);
+                  graphics.blit(icons.get(iconId), 0, 0, 0, 0, 256, 256);
+                  RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                   matrixStack.popPose();
                }
             }
@@ -340,10 +340,17 @@ public class GuiDialogInteract
             ClientProxy.Font.draw(graphics, sct, left, dialogHeight + i * fontHeight, option.optionColor);
             i++;
             j++;
-            if (j == lines.size()) {
+            // down option line
+            if (j == tOpt.lines.size()) {
                graphics.hLine(guiLeft + 2 + addX, endW - 1 + addX, dialogHeight + i * fontHeight, guiSettings.scrollLineColor);
-               if (selected == optPos) { graphics.hLine(left, endW - 1 + addX, dialogHeight + i * fontHeight, guiSettings.hoverLineColor); }
             }
+            if (selected == optPos) {
+               matrixStack.pushPose();
+               matrixStack.translate(0.0f, 0.0f, 1.0f);
+               graphics.hLine(left, endW - 1 + addX, dialogHeight + (i - 1) * fontHeight, guiSettings.hoverLineColor);
+               graphics.hLine(left, endW - 1 + addX, dialogHeight + i * fontHeight, guiSettings.hoverLineColor);
+               matrixStack.popPose();
+            } // select lines
          }
          optPos++;
       }
@@ -622,6 +629,7 @@ public class GuiDialogInteract
       int x = guiLeft + 1 + left;
       if (guiSettings.getType() == 2 && lineTotal > lineVisibleSize) { x += 13; }
       ClientProxy.Font.draw(graphics, text, x, guiTop + height, color);
+
       if (textures.containsKey(linePos)) {
          textures.get(linePos).left = guiLeft + 1 + left;
       }
@@ -661,7 +669,7 @@ public class GuiDialogInteract
          b = 34.0f;
          inB = Math.pow(selectedX, 2.0d) / Math.pow(a, 2.0d) + Math.pow(selectedY - 10, 2.0d) / Math.pow(b, 2.0d);
          if (inB < 1.0d) {
-            selected = -1;
+            setFirstOption();
             selectedWheel = selectedX > 0 ? 2 : 1;
          }
       }
@@ -685,17 +693,17 @@ public class GuiDialogInteract
          else if (rot > 275.0d && rot <= 360.0d) { selected = 3 + wheelList * 6; }
          else if (rot > 238.0d && rot <= 275.0d) { selected = 4 + wheelList * 6; }
          else { selected = 5 + wheelList * 6; }
+         if (!options.get(selected).isEnable) { setFirstOption(); }
       }
       else {
          if (wheelList == 0 && selectedWheel == 1) { selectedWheel = 0; }
          else if (selectedWheel == 2 && wheelList >= maxLists) { selectedWheel = 0; }
          if (selectedWheel != 0) {
-            selected = -1;
+            setFirstOption();
             int wu = 123 + (selectedWheel == 1 ? 0 : 15);
             graphics.blit(wheel, 17 + (selectedWheel == 1 ? 0 : 15), 7, wu, 0, 15, 18);
          }
       }
-
       // draw select
       if (wheelList >= maxLists) {
          for (int slot = selected < 0 ? options.size() - options.size() % 6
@@ -704,9 +712,7 @@ public class GuiDialogInteract
                int u = 63 * (slot % 3);
                int v = 40 * (int) (3.0d + Math.floor((double) slot % 6 / 3.0d));
                graphics.blit(wheel, 0, 0, u, v, 63, 40);
-               if (slot == selected) {
-                  selected = -1;
-               }
+               if (slot == selected) { setFirstOption(); }
             }
          }
       }
@@ -786,12 +792,13 @@ public class GuiDialogInteract
    }
 
    public void grabMouse(boolean grab) {
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
       if (grab && !isGrabbed) {
-         Minecraft.getInstance().mouseHandler.grabMouse();
+         minecraft.mouseHandler.grabMouse();
          isGrabbed = true;
       }
       else if (!grab && isGrabbed) {
-         Minecraft.getInstance().mouseHandler.releaseMouse();
+         minecraft.mouseHandler.releaseMouse();
          isGrabbed = false;
       }
    }
@@ -866,13 +873,13 @@ public class GuiDialogInteract
       int i = 0;
       selectedSize = 0;
       for (int id : options.keySet()) {
-         selectedTotal.put(i, options.get(id).size());
-         selectedSize += options.get(id).size();
+         selectedTotal.put(i, options.get(id).lines.size());
+         selectedSize += options.get(id).lines.size();
          i++;
       }
       lineVisibleSize = dialogHeight / fontHeight;
       selectedVisibleSize = Math.round((float) (height - dialogHeight - 2) / (float) fontHeight);
-      selected = 0;
+      setFirstOption();
       selectedStart = 0;
       lineStart = lineTotal - lineVisibleSize;
       if (lineStart < 0) { lineStart = 0; }
@@ -907,17 +914,15 @@ public class GuiDialogInteract
          if (key == minecraft.options.keyUp.getKey().getValue() || key == InputConstants.getKey("key.keyboard.up").getValue()) {
             --selected;
             --selectedStart;
-            if (selected < 0) {
-               selected = 0;
-            }
+            if (selected < 0) { selected = 0; }
+            if (!options.get(selected).isEnable) { setFirstOption(); }
             checkSelected();
          }
          if (key == minecraft.options.keyDown.getKey().getValue() || key == InputConstants.getKey("key.keyboard.down").getValue()) {
             ++selected;
             ++selectedStart;
-            if (selected >= options.size()) {
-               selected = options.size() - 1;
-            }
+            if (selected >= options.size()) { selected = options.size() - 1; }
+            if (!options.get(selected).isEnable) { setFirstOption(); }
             checkSelected();
          }
          if (key == InputConstants.KEY_RETURN) {
@@ -1007,20 +1012,22 @@ public class GuiDialogInteract
 
    @Override
    public void mouseMoved(double mouseX, double mouseY) {
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
       // cursor select option
       if (isMouseHover(mouseX, mouseY, guiLeft, dialogHeight, guiSettings.dialogWidth, height - dialogHeight)) { // options text
          int y = (int) Math.floor((mouseY - (double) dialogHeight) / (double) fontHeight);
          int i = 0;
          int optPos = 0;
          selected = -1;
-         for (List<String> list : options.values()) {
+         for (TempOption tOpt : options.values()) {
             if (optPos < selectedStart) {
                optPos++;
                continue;
             }
-            for (String ignored : list) {
+            for (String ignored : tOpt.lines) {
                if (i == y) {
                   selected = optPos;
+                  while (selected > -1 && !options.get(selected).isEnable) { selected--; }
                   break;
                }
                i++;
@@ -1028,9 +1035,9 @@ public class GuiDialogInteract
             if (selected != -1) { break; }
             optPos++;
          }
-         if (selected == -1) { selected = options.size() - 1; }
+         if (selected == -1) { setFirstOption(); }
       }
-      boolean lbm = ((IMouseHandlerMixin) Minecraft.getInstance().mouseHandler).getActiveButton() == 0;
+      boolean lbm = ((IMouseHandlerMixin) minecraft.mouseHandler).getActiveButton() == 0;
       if (lbm) {
          if (scrollD != null && scrollD[7] > -1) {
             double offsetLine = (scrollD[7] - mouseY) / scrollD[6];
@@ -1058,33 +1065,44 @@ public class GuiDialogInteract
       }
    }
 
+   private void setFirstOption() {
+      for (Map.Entry<Integer, TempOption> entry : options.entrySet()) {
+         if (entry.getValue().isEnable) {
+            selected = entry.getKey();
+            break;
+         }
+      }
+   }
+
    protected void resetOptions() {
       int max = guiSettings.dialogWidth - 46;
       if (selectedSize > selectedVisibleSize) { max -= 18; }
       options.clear();
       for (int slot : dialog.options.keySet()) {
          DialogOption option = dialog.options.get(slot);
-         if (option == null || option.optionType == OptionType.DISABLED || !option.isAvailable(player)) {
-            continue;
-         }
-         String optionText = NoppesStringUtils.formatText(option.title, player, dialogNpc);
-         List<String> lines = new ArrayList<>();
-         if (ClientProxy.Font.width(optionText) > max) {
-            StringBuilder total = new StringBuilder();
-            for (String sct : optionText.split(" ")) {
-               if (ClientProxy.Font.width(total + " " + sct) > max) {
-                  lines.add(total.toString());
-                  total = new StringBuilder(sct);
-               } else {
-                  if (!total.isEmpty()) { total.append(" "); }
-                  total.append(sct);
-               }
+         if (option != null && option.optionType != OptionType.DISABLED) {
+            String optionText = NoppesStringUtils.formatText(option.title, player, dialogNpc);
+            if (!option.isAvailable(player)) {
+               optionText = ChatFormatting.STRIKETHROUGH + "" + ChatFormatting.GRAY + Util.instance.deleteColor(optionText);
             }
-            if (!total.isEmpty()) { lines.add(total.toString()); }
-         } else {
-            lines.add(optionText);
+            TempOption tOpt = new TempOption(option.isAvailable(player), new ArrayList<>());
+            if (ClientProxy.Font.width(optionText) > max) {
+               StringBuilder total = new StringBuilder();
+               for (String sct : optionText.split(" ")) {
+                  if (ClientProxy.Font.width(total + " " + sct) > max) {
+                     tOpt.lines.add(total.toString());
+                     total = new StringBuilder(sct);
+                  } else {
+                     if (!total.isEmpty()) { total.append(" "); }
+                     total.append(sct);
+                  }
+               }
+               if (!total.isEmpty()) { tOpt.lines.add(total.toString()); }
+            } else {
+               tOpt.lines.add(optionText);
+            }
+            options.put(slot, tOpt);
          }
-         options.put(slot, lines);
       }
       if (!closeOnEsc && options.isEmpty()) { closeOnEsc = true; }
    }
@@ -1095,6 +1113,18 @@ public class GuiDialogInteract
    protected void setStartLine() {
       startLine = 0;
       for (TextBlockClient textBlock : lines) { startLine += textBlock.lines.size() + 1; }
+   }
+
+   public static class TempOption {
+
+      public final List<String> lines;
+      public final boolean isEnable;
+
+      public TempOption(boolean isEnableIn, List<String> linesIn) {
+         isEnable = isEnableIn;
+         lines = linesIn;
+      }
+
    }
 
 }

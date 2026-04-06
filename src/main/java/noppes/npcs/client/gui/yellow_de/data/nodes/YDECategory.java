@@ -9,10 +9,10 @@ public class YDECategory extends YDENode {
 
     protected float scale = 1.0f;
 
-    public YDECategory(int idIn, int categoryIdIn) {
+    public YDECategory(int idIn, String categoryIn) {
         type = EnumYDEType.CATEGORY;
         id = idIn;
-        categoryId = categoryIdIn;
+        category = categoryIn;
     }
 
     @Override

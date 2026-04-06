@@ -8,12 +8,12 @@ public class YDEQuest extends YDENode {
 
     public int questId;
 
-    public YDEQuest(int idIn, int categoryIdIn, int questIdIn) {
+    public YDEQuest(int idIn, String categoryIn, int questIdIn) {
         type = EnumYDEType.QUEST;
         id = idIn;
         width = 90;
         height = 60;
-        categoryId = categoryIdIn;
+        category = categoryIn;
         questId = questIdIn;
     }
 

@@ -9,10 +9,10 @@ public class YDENpc extends YDENode {
 
     public Dialog.StartedNpcData npcData;
 
-    public YDENpc(int idIn, int categoryIdIn, Dialog.StartedNpcData npcDataIn) {
+    public YDENpc(int idIn, String categoryIn, Dialog.StartedNpcData npcDataIn) {
         type = EnumYDEType.NPC;
         id = idIn;
-        categoryId = categoryIdIn;
+        category = categoryIn;
         npcData = npcDataIn;
         width = 90;
         height = 60;

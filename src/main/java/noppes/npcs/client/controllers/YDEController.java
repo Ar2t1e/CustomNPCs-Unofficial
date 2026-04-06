@@ -66,7 +66,7 @@ public class YDEController {
     public @Nonnull YDEData getLevelData(String levelKey) {
         //levels.clear();
         if (!levels.containsKey(levelKey)) { levels.put(levelKey, new YDEData()); }
-        return levels.get(levelKey);
+        return levels.get(levelKey).check();
     }
 
     public void save() {

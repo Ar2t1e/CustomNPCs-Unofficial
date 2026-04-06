@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.handler.data.IDialogCategory;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.util.GuiTooltipUtils;
@@ -17,8 +18,8 @@ import noppes.npcs.client.gui.yellow_de.data.YDELink;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
 import noppes.npcs.client.gui.yellow_de.data.nodes.YDECategory;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.ScriptController;
-import noppes.npcs.mixin.client.IMouseHandlerMixin;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomWindowNop;
@@ -31,6 +32,7 @@ import noppes.npcs.util.ValueUtil;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class GuiYellowDialogEditor extends GuiBasic {
@@ -67,7 +69,10 @@ public class GuiYellowDialogEditor extends GuiBasic {
 
         YDE_DATA = YDEController.getInstance().getLevelData(ScriptController.getLevelKey());
 
-        category = YDE_DATA.getCategory(1);
+        String name = "";
+        List<IDialogCategory> cats = DialogController.instance.categories();
+        if (!cats.isEmpty()) { name = cats.get(0).getName(); }
+        category = YDE_DATA.getCategory(name);
 
         int tabW = 160;
         leftTab = new GuiCustomWindowNop(this, 0, -tabW, 0, tabW, height, Component.translatable("yde.categories"));
@@ -118,8 +123,10 @@ public class GuiYellowDialogEditor extends GuiBasic {
         h = height * guiScale / 2.0f;
         int sel = select;
         select = -2;
+        LogWriter.info("TEST: "+category.category +"; "+YDE_DATA.nodes.size());
         for (YDENode node : YDE_DATA.nodes.values()) {
-            if (!(node instanceof YDECategory) && node.categoryId == category.categoryId) {
+            //LogWriter.info("TEST: "+node.categoryId+" - "+node);
+            if (!(node instanceof YDECategory) && node.category.equals(category.category)) {
                 YDEWindowNop windowNop = new YDEWindowNop(this, node);
                 add(windowNop);
                 if (sel == node.id) { select = node.id; }
@@ -404,7 +411,9 @@ public class GuiYellowDialogEditor extends GuiBasic {
     }
 
     @Override
-    public void save() { YDEController.getInstance().save(); }
+    public void save() {
+        YDEController.getInstance().save();
+    }
 
     public void movedSelectNodes(int addX, int addY) {
         YDEWindowNop hovered = null;

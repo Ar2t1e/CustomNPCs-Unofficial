@@ -13,6 +13,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.OptionType;
 import noppes.npcs.api.handler.IDialogHandler;
 import noppes.npcs.api.handler.data.IDialogCategory;
+import noppes.npcs.constants.EnumAvailabilityQuest;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSync;
@@ -22,6 +23,8 @@ import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.NBTJsonUtil;
 import noppes.npcs.util.Util;
+
+import javax.annotation.Nullable;
 
 public class DialogController implements IDialogHandler {
 
@@ -176,6 +179,7 @@ public class DialogController implements IDialogHandler {
             break;
          }
       }
+      dia4.availability.setQuest(dia5.quest, EnumAvailabilityQuest.NotActive.ordinal());
 
       cat.dialogs.put(dia1.id, dia1);
       cat.dialogs.put(dia2.id, dia2);
@@ -239,12 +243,24 @@ public class DialogController implements IDialogHandler {
       category.title = NoppesStringUtils.cleanFileName(category.title);
       if (category.title.isEmpty()) {
          category.title = "default";
-         while (containsCategoryName(category)) { category.title += "_"; }
+         List<String> names = new ArrayList<>();
+         for (DialogCategory dc : new ArrayList<>(categories.values())) {
+            if (!dc.equals(category) && dc.id != category.id) { names.add(dc.title); }
+         }
+         String name = category.title;
+         while(names.contains(name)) { name = name + "_"; }
+         category.title = name;
       }
       if (categories.containsKey(category.id)) {
          DialogCategory currentCategory = categories.get(category.id);
          if (!currentCategory.title.equals(category.title)) {
-            while (containsCategoryName(category)) { category.title += "_"; }
+            List<String> names = new ArrayList<>();
+            for (DialogCategory dc : new ArrayList<>(categories.values())) {
+               if (!dc.equals(category) && dc.id != category.id) { names.add(dc.title); }
+            }
+            String name = category.title;
+            while(names.contains(name)) { name = name + "_"; }
+            category.title = name;
             File newDir = new File(getDir(), category.title);
             File oldDir = new File(getDir(), currentCategory.title);
             if (newDir.exists()) {
@@ -258,7 +274,6 @@ public class DialogController implements IDialogHandler {
             }
          }
          category.dialogs.clear();
-         LogWriter.info("TEST: ");
          category.dialogs.putAll(currentCategory.dialogs);
       }
       else {
@@ -266,9 +281,15 @@ public class DialogController implements IDialogHandler {
             ++lastUsedCatID;
             category.id = lastUsedCatID;
          }
-         while (containsCategoryName(category)) { category.title += "_"; }
+         List<String> names = new ArrayList<>();
+         for (DialogCategory dc : new ArrayList<>(categories.values())) {
+            if (!dc.equals(category) && dc.id != category.id) { names.add(dc.title); }
+         }
+         String name = category.title;
+         while(names.contains(name)) { name = name + "_"; }
+         category.title = name;
          File dir = new File(getDir(), category.title);
-         if (!dir.exists()) { dir.mkdirs(); }
+         if (!dir.exists() && !dir.mkdirs()) { LogWriter.debug("Error create dirs \"" + dir.getName() + "\""); }
       }
       categories.put(category.id, category);
       for (Dialog dialog : dialogs.values()) {
@@ -288,29 +309,15 @@ public class DialogController implements IDialogHandler {
       Packets.sendAll(new PacketSyncRemove(category, 5));
    }
 
-   public boolean containsCategoryName(DialogCategory categoryIn) {
-      for (DialogCategory category : categories.values()) {
-         if (!category.equals(categoryIn) &&
-                 categoryIn.id != category.id &&
-                 category.title.equalsIgnoreCase(categoryIn.title)) {
-            return true;
-         }
-      }
-      return false;
-   }
-
-   public boolean containsDialogName(DialogCategory category, Dialog dialogIn) {
-      for (Dialog dialog : category.dialogs.values()) {
-         if (!dialog.equals(dialogIn) &&
-                 dialog.id != dialogIn.id &&
-                 dialog.title.equalsIgnoreCase(dialogIn.title)) { return true; }
-      }
-      return false;
-   }
-
    public void saveDialog(DialogCategory category, Dialog dialog) {
       if (category != null) {
-         while(containsDialogName(dialog.category, dialog)) { dialog.title = dialog.title + "_"; }
+         List<String> names = new ArrayList<>();
+         for (Dialog d : new ArrayList<>(dialog.category.dialogs.values())) {
+            if (!d.equals(dialog) && d.id != dialog.id) { names.add(d.title); }
+         }
+         String name = dialog.title;
+         while(names.contains(name)) { name = name + "_"; }
+         dialog.title = name;
          if (dialog.id < 0) {
             ++lastUsedDialogID;
             dialog.id = lastUsedDialogID;
@@ -378,4 +385,10 @@ public class DialogController implements IDialogHandler {
 
    public DialogGuiSettings getGuiSettings() { return guiSettings; }
 
+   public @Nullable DialogCategory getCategory(String categoryIn) {
+      for (DialogCategory category : new ArrayList<>(categories.values())) {
+         if (category.title.equals(categoryIn)) { return category; }
+      }
+      return null;
+   }
 }

@@ -22,7 +22,6 @@ import java.util.Locale;
 import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -84,6 +83,7 @@ public class TrueTypeFont {
         int r = color >> 16 & 255;
         int g = color >> 8 & 255;
         int b = color & 255;
+        if (a == 0) { a = 255; }
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -105,7 +105,6 @@ public class TrueTypeFont {
         float currentX = 0.0F;
         float maxLineHeight = 0.0F;
 
-        // Для obfuscated - запоминаем оригинальные глифы и их позиции
         List<Glyph> glyphs = cache.glyphs;
         for (Glyph gl : glyphs) {
             switch (gl.type) {

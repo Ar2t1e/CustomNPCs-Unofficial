@@ -22,12 +22,12 @@ public class YDEData {
         for (int i = 0; i < listNodes.size(); i++) {
             CompoundTag compound = listNodes.getCompound(i);
             YDENode node = switch (EnumYDEType.values()[ValueUtil.onlyPositiveInt(compound.getInt("Type"), EnumYDEType.values().length)]) {
-                case CATEGORY -> new YDECategory(-1, -1);
-                case NPC -> new YDENpc(-1, -1, null);
-                case OPTION -> new YDEOption(-1, -1, -1, -1);
-                case QUEST -> new YDEQuest(-1, -1, -1);
-                case AREA -> new YDEArea(-1);
-                default -> new YDEDialog(-1, -1, -1);
+                case CATEGORY -> new YDECategory(-1, "");
+                case NPC -> new YDENpc(-1, "", null);
+                case OPTION -> new YDEOption(-1, "", -1, -1);
+                case QUEST -> new YDEQuest(-1, "", -1);
+                case AREA -> new YDEArea("");
+                default -> new YDEDialog(-1, "", -1);
             };
             try {
                 node.load(listNodes.getCompound(i));
@@ -37,28 +37,7 @@ public class YDEData {
         }
     }
 
-    public YDEData() {
-        // create from current data
-        for (DialogCategory category : DialogController.instance.categories.values()) {
-            YDECategory yde_category = new YDECategory(nodes.size(), category.id);
-            if (category.id > -1) {
-                yde_category.title = Component.literal("ID: " + category.id);
-            }
-            nodes.put(yde_category.id, yde_category);
-        }
-        int y = 0;
-        for (DialogCategory category : DialogController.instance.categories.values()) {
-            for (Dialog dialog : category.dialogs.values()) {
-                YDEDialog yde_dialog = getDialog(dialog.id);
-                if (yde_dialog == null) {
-                    yde_dialog = new YDEDialog(nodes.size(), category.id, dialog.id);
-                    yde_dialog.title = Component.translatable("dialog.dialog").append(Component.literal(" ID: " + dialog.id));
-                    nodes.put(yde_dialog.id, yde_dialog);
-                    y = processDialog(yde_dialog, 0, y == 0 ? y : y + 60);
-                }
-            }
-        }
-    }
+    public YDEData() { }
 
     private int processDialog(YDEDialog yde_dialog, int x, int y) {
         int yMax = y + 140;
@@ -67,12 +46,12 @@ public class YDEData {
         Dialog dialog = DialogController.instance.get(yde_dialog.dialogId);
         if (dialog != null) {
             if (dialog.quest > -1) {
-                YDEQuest yde_quest = getQuest(yde_dialog.categoryId, dialog.quest);
+                YDEQuest yde_quest = getQuest(yde_dialog.category, dialog.quest);
                 if (yde_quest == null) {
-                    yde_quest = new YDEQuest(nodes.size(), yde_dialog.categoryId, dialog.quest);
+                    yde_quest = new YDEQuest(nodes.size(), yde_dialog.category, dialog.quest);
                     yde_quest.title = Component.translatable("gui.quest", " ID: " + dialog.quest);
                     yde_quest.x = x + 45;
-                    yde_quest.y = 140;
+                    yde_quest.y = yde_dialog.y + 140;
                     nodes.put(yde_quest.id, yde_quest);
                 }
                 yde_dialog.links.add(new YDELink(yde_dialog.id, yde_quest.id, EnumYDEType.QUEST));
@@ -80,9 +59,9 @@ public class YDEData {
             if (!dialog.startedNpcs.isEmpty()) {
                 int yN = 120;
                 for (Dialog.StartedNpcData npcData : dialog.startedNpcs) {
-                    YDENpc yde_npc = getNpc(yde_dialog.categoryId, npcData);
+                    YDENpc yde_npc = getNpc(yde_dialog.category, npcData);
                     if (yde_npc == null) {
-                        yde_npc = new YDENpc(nodes.size(), yde_dialog.categoryId, npcData);
+                        yde_npc = new YDENpc(nodes.size(), yde_dialog.category, npcData);
                         yde_npc.title = Component.literal("NPC: ");
                         yde_npc.x = x - 100;
                         yde_npc.y = yN;
@@ -97,7 +76,7 @@ public class YDEData {
                 int yN = 0;
                 for (Map.Entry<Integer, DialogOption> entry : dialog.options.entrySet()) {
                     entry.getValue().slot = entry.getKey();
-                    YDEOption yde_option = new YDEOption(nodes.size(), yde_dialog.categoryId, yde_dialog.dialogId, entry.getKey());
+                    YDEOption yde_option = new YDEOption(nodes.size(), yde_dialog.category, yde_dialog.dialogId, entry.getKey());
                     yde_option.title = Component.translatable("gui.answer").append(Component.literal(" # " + entry.getKey()));
                     yde_option.x = x;
                     yde_option.y = y + yN;
@@ -107,12 +86,13 @@ public class YDEData {
                         for (DialogOption.OptionDialogID optionDialog : entry.getValue().dialogs) {
                             YDEDialog yde_next_dialog = getDialog(optionDialog.dialogId);
                             if (yde_next_dialog == null) {
-                                yde_next_dialog = new YDEDialog(nodes.size(), yde_dialog.categoryId, optionDialog.dialogId);
+                                yde_next_dialog = new YDEDialog(nodes.size(), yde_dialog.category, optionDialog.dialogId);
                                 yde_next_dialog.title = Component.translatable("dialog.dialog").append(Component.literal("ID: " + optionDialog.dialogId));
                                 Dialog nextDialog = DialogController.instance.get(optionDialog.dialogId);
-                                if (nextDialog != null) {
-                                    DialogCategory category = DialogController.instance.categories.get(yde_dialog.categoryId);
-                                    nextDialog = new Dialog(DialogController.instance.categories.get(yde_dialog.categoryId));
+                                LogWriter.info("TEST: next dialog id "+optionDialog.dialogId+" - "+nextDialog);
+                                if (nextDialog == null) {
+                                    DialogCategory category = DialogController.instance.getCategory(yde_dialog.category);
+                                    nextDialog = new Dialog(category);
                                     nextDialog.id = optionDialog.dialogId;
                                     DialogController.instance.saveDialog(category, nextDialog);
                                 }
@@ -131,9 +111,9 @@ public class YDEData {
         return yMax;
     }
 
-    private YDEArea getArea(int categoryId, int areaId) {
+    private YDEArea getArea(String category, int areaId) {
         for (YDENode node : nodes.values()) {
-            if (node instanceof YDEArea area && area.categoryId == categoryId && area.id == areaId) { return area; }
+            if (node instanceof YDEArea area && area.category.equals(category) && area.id == areaId) { return area; }
         }
         return null;
     }
@@ -145,18 +125,18 @@ public class YDEData {
         return null;
     }
 
-    private YDENpc getNpc(int categoryId, Dialog.StartedNpcData npcData) {
+    private YDENpc getNpc(String category, Dialog.StartedNpcData npcData) {
         for (YDENode node : nodes.values()) {
             if (node.type == EnumYDEType.NPC && node instanceof YDENpc npc &&
-                    npc.categoryId == categoryId && npc.npcData.equals(npcData)) { return npc; }
+                    npc.category.equals(category) && npc.npcData.equals(npcData)) { return npc; }
         }
         return null;
     }
 
-    private YDEQuest getQuest(int categoryId, int questId) {
+    private YDEQuest getQuest(String category, int questId) {
         for (YDENode node : nodes.values()) {
             if (node.type == EnumYDEType.QUEST && node instanceof YDEQuest quest &&
-                    quest.categoryId == categoryId && quest.questId == questId) { return quest; }
+                    quest.category.equals(category) && quest.questId == questId) { return quest; }
         }
         return null;
     }
@@ -168,15 +148,15 @@ public class YDEData {
         return null;
     }
 
-    public @Nonnull YDECategory getCategory(int categoryId) {
+    public @Nonnull YDECategory getCategory(String category) {
         YDECategory empty = null;
         for (YDENode node : nodes.values()) {
-            if (node instanceof YDECategory category) {
-                if (category.categoryId == categoryId) { return category; }
-                if (category.categoryId == -1) { empty = category; }
+            if (node instanceof YDECategory cat) {
+                if (cat.category.equals(category)) { return cat; }
+                if (cat.category.isEmpty()) { empty = cat; }
             }
         }
-        if (empty == null) { nodes.put(-1, empty = new YDECategory(-1, -1)); }
+        if (empty == null) { nodes.put(-1, empty = new YDECategory(-1, "")); }
         return empty;
     }
 
@@ -184,6 +164,38 @@ public class YDEData {
         ListTag listNodes = new ListTag();
         for (YDENode node : nodes.values()) { listNodes.add(node.save()); }
         return listNodes;
+    }
+
+    public YDEData check() {
+        // create from current data
+        for (DialogCategory category : DialogController.instance.categories.values()) {
+            YDECategory yde_category = null;
+            for (YDENode node : nodes.values()) {
+                if (node instanceof YDECategory catNode) {
+                    if (catNode.category.equals(category.title)) { yde_category = catNode; }
+                }
+            }
+            if (yde_category == null) {
+                yde_category = new YDECategory(nodes.size(), category.title);
+                if (category.id > -1) {
+                    yde_category.title = Component.literal("ID: " + category.id);
+                }
+            }
+            nodes.put(yde_category.id, yde_category);
+        }
+        int y = 0;
+        for (DialogCategory category : DialogController.instance.categories.values()) {
+            for (Dialog dialog : category.dialogs.values()) {
+                YDEDialog yde_dialog = getDialog(dialog.id);
+                if (yde_dialog == null) {
+                    yde_dialog = new YDEDialog(nodes.size(), category.title, dialog.id);
+                    yde_dialog.title = Component.translatable("dialog.dialog").append(Component.literal(" ID: " + dialog.id));
+                    nodes.put(yde_dialog.id, yde_dialog);
+                    y = processDialog(yde_dialog, 0, y == 0 ? y : y + 60);
+                }
+            }
+        }
+        return this;
     }
 
 }

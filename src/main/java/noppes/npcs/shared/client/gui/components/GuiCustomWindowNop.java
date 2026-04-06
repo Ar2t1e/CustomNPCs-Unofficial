@@ -134,7 +134,7 @@ public class GuiCustomWindowNop extends GuiBasic
                 graphics.hLine(1, right - 2, bottom - 2, 0xC0F0F0F0);
                 if (title != null && !title.getString().isEmpty()) {
                     matrixStack.translate(3.0f, 3.0f, 0.0f);
-                    drawTopRect(graphics, right - 6);
+                    drawTopRect(graphics, right - 1);
                 }
                 matrixStack.popPose();
                 if (title != null && !title.getString().isEmpty()) {

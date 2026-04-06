@@ -6,9 +6,9 @@ import noppes.npcs.client.gui.yellow_de.data.YDENode;
 
 public class YDEArea extends YDENode {
 
-    public YDEArea(int categoryIdIn) {
+    public YDEArea(String categoryIn) {
         type = EnumYDEType.AREA;
-        categoryId = categoryIdIn;
+        category = categoryIn;
     }
 
     @Override

@@ -9,10 +9,10 @@ public class YDEOption extends YDENode {
     public int dialogId;
     public int slot;
 
-    public YDEOption(int idIn, int categoryIdIn, int dialogIdIn, int slotIn) {
+    public YDEOption(int idIn, String categoryIn, int dialogIdIn, int slotIn) {
         type = EnumYDEType.OPTION;
         id = idIn;
-        categoryId = categoryIdIn;
+        category = categoryIn;
         dialogId = dialogIdIn;
         slot = slotIn;
     }
