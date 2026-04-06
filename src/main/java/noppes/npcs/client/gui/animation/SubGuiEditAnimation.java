@@ -22,7 +22,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -39,6 +38,7 @@ import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.client.model.ModelNpcAlt;
 import noppes.npcs.client.model.animation.*;
 import noppes.npcs.controllers.AnimationController;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketAnimationChange;
@@ -266,7 +266,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
                 }
                 else {
                     if (isMotion || anim == null || part == null || part.id == 6 || part.id == 7) { return; }
-                    SubGuiEditAddPart sGui = new SubGuiEditAddPart(this, npc, npcPart, null, null);
+                    SubGuiEditAddPart<EntityCustomNpc> sGui = new SubGuiEditAddPart<>(this, npc, npcPart, null, null);
                     sGui.addPart.parentPart = part.id;
                     setSubGui(sGui);
                 }
@@ -1868,23 +1868,21 @@ public class SubGuiEditAnimation extends GuiNPCInterface
         boolean bo = super.mouseClicked(mouseX, mouseY, mouseButton);
         if (!hasSubGui()) {
             if (hoverRight && frame.getHoldRightStackType() == 3) {
-                IItemStack stack;
-                switch(frame.getHoldRightStackType()) {
-                    case 1: stack = npc.inventory.getProjectile(); break;
-                    case 2: stack = npc.inventory.getLeftHand(); break;
-                    case 3: stack = frame.getHoldRightStack(); break;
-                    default: stack = npc.inventory.getRightHand(); break;
-                }
+                IItemStack stack = switch (frame.getHoldRightStackType()) {
+                    case 1 -> npc.inventory.getProjectile();
+                    case 2 -> npc.inventory.getLeftHand();
+                    case 3 -> frame.getHoldRightStack();
+                    default -> npc.inventory.getRightHand();
+                };
                 setSubGui(new SubGuiSelectItemStack(0, stack==null || stack.isEmpty() ? ItemStack.EMPTY : stack.getMCItemStack()));
             }
             else if (hoverLeft && frame.getHoldLeftStackType() == 3) {
-                IItemStack stack;
-                switch(frame.getHoldLeftStackType()) {
-                    case 1: stack = npc.inventory.getProjectile(); break;
-                    case 2: stack = npc.inventory.getRightHand(); break;
-                    case 3: stack = frame.getHoldLeftStack(); break;
-                    default: stack = npc.inventory.getLeftHand(); break;
-                }
+                IItemStack stack = switch (frame.getHoldLeftStackType()) {
+                    case 1 -> npc.inventory.getProjectile();
+                    case 2 -> npc.inventory.getRightHand();
+                    case 3 -> frame.getHoldLeftStack();
+                    default -> npc.inventory.getLeftHand();
+                };
                 setSubGui(new SubGuiSelectItemStack(1, stack==null || stack.isEmpty() ? ItemStack.EMPTY : stack.getMCItemStack()));
             }
             else if (!bo && (mouseButton == 0 || mouseButton == 1) && hovered) {
@@ -2011,8 +2009,6 @@ public class SubGuiEditAnimation extends GuiNPCInterface
                     if (npc.getY() != Math.floor(npc.getY())) { yP = Math.ceil(npc.getY()) + y - 1; }
                     BlockPos posWorld = new BlockPos((int) Math.floor(npc.getX() + x), (int) Math.floor(yP), (int) Math.floor(npc.getZ() + z));
                     BlockState state = npc.level().getBlockState(posWorld);
-                    BlockEntity tile = npc.level().getBlockEntity(posWorld);
-                    if (tile != null && minecraft.getBlockEntityRenderDispatcher().getRenderer(tile) == null) { tile = null; }
                     BlockPos pos = new BlockPos(x, y, z);
                     environmentStates.put(pos, state);
                 }
@@ -2052,7 +2048,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
             partNames.setColorLine(CustomNpcs.colorAnimHoverPart);
             init();
         }
-        if (subgui instanceof SubGuiEditAddPart gui) {
+        if (subgui instanceof SubGuiEditAddPart<?> gui) {
             if (gui.isNew) {
                 // remove old
                 for (int parentID : gui.animation.addParts.keySet()) {
@@ -2595,16 +2591,14 @@ public class SubGuiEditAnimation extends GuiNPCInterface
             matrixStack.translate(0.0f, 0.0f, f);
         }
         if (showHitBox) {
-            float w = npc.getBbWidth() / 2;
             AABB col= npc.getBoundingBox();
-            if (col == null) { col = new AABB(-w, 0.0, -w, w, npc.getBbHeight(), w); }
             LevelRenderer.renderLineBox(matrixStack, graphics.bufferSource().getBuffer(RenderType.lines()),
                     col, 1.0f, 1.0f, 1.0f, 1.0f);
         }
 
         // Damage hitboxes
         if (anim.type == AnimationKind.ATTACKING && frame.isNowDamage() && !frame.damageHitboxes.isEmpty()) {
-            float s = 2.0f;;
+            float s;
             int i = 0;
             for (AABB aabb : anim.getDamageHitboxes(showNPC, frame.id)) {
                 float r = 0.75f;
@@ -2788,8 +2782,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
             getButton(53).setIsVisible(onlyCurrentPart);
             if (onlyCurrentPart) {
                 int s = npcPart.animation.getAnimationSpeedTicks();
-                Component[] ticks = new Component[s];
-                for (int i = 0; i <= s; i++) { ticks[i] = Component.literal(i + "/" + s); }
+                List<Component> ticks = new ArrayList<>();
+                for (int i = 0; i <= s; i++) { ticks.add(Component.literal(i + "/" + s)); }
                 getButton(53).setVariants(ticks);
             }
         }
