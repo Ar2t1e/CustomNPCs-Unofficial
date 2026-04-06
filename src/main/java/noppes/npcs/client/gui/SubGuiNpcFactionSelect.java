@@ -1,102 +1,112 @@
 package noppes.npcs.client.gui;
 
-import java.util.*;
-import java.util.Map.Entry;
-
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.global.GuiNPCManageFactions;
-import noppes.npcs.client.gui.util.*;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.client.gui.global.GuiNpcManageFactions;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.util.Util;
 
-import javax.annotation.Nonnull;
+import java.util.*;
 
-public class SubGuiNpcFactionSelect extends SubGuiInterface implements ICustomScrollListener {
+public class SubGuiNpcFactionSelect extends GuiNPCInterface implements ICustomScrollListener {
 
-	protected final String name;
-	protected final HashMap<String, Integer> base;
-	protected final Map<String, Integer> data = new LinkedHashMap<>();
-	protected GuiCustomScroll scrollHostileFactions;
-	public HashSet<Integer> selectFactions;
+    protected final String name;
+    protected final HashMap<Component, Integer> base;
+    protected final Map<Component, Integer> data = new LinkedHashMap<>();
+    protected GuiCustomScrollNop scrollHostileFactions;
 
-	public SubGuiNpcFactionSelect(int id, String nameIn, HashSet<Integer> setFactions, HashMap<String, Integer> baseIn) {
-		super(id);
-		background = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menubg.png");
-		xSize = 171;
-		ySize = 217;
-		closeOnEsc = true;
+    public final int id;
+    public HashSet<Integer> selectFactions;
 
-		name = nameIn;
-		base = baseIn;
-		selectFactions = new HashSet<>(setFactions);
-	}
+    public SubGuiNpcFactionSelect(int idIn, String nameIn, HashSet<Integer> setFactions, HashMap<Component, Integer> baseIn) {
+        super();
+        setBackground("menubg.png");
+        imageWidth = 171;
+        imageHeight = 217;
+        closeOnEsc = true;
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 14: {
-				GuiNPCManageFactions.isName = ((GuiNpcCheckBox) button).isSelected();
-				button.setHoverText("hover.sort",
-						new TextComponentTranslation("global.factions").getFormattedText(),
-						((GuiNpcCheckBox) button).getText());
-				break;
-			}
-			case 66: onClosed(); break;
-		}
-	}
-
-	@Override
-	public void initGui() {
-		super.initGui();
-		List<Entry<String, Integer>> newList = new ArrayList<>(base.entrySet());
-		newList.sort((f_0, f_1) -> {
-            if (GuiNPCManageFactions.isName) { return f_0.getKey().compareTo(f_1.getKey()); }
-			else { return f_0.getValue().compareTo(f_1.getValue()); }
-        });
-		HashSet<String> set = new HashSet<>();
-		data.clear();
-		for (Entry<String, Integer> entry : newList) {
-			int id = entry.getValue();
-			String name = Util.instance.deleteColor(new TextComponentTranslation(entry.getKey()).getFormattedText());
-			if (name.contains("ID:" + id + " ")) { name = name.substring(name.indexOf(" ") + 3); }
-			String key = ((char) 167) + "7ID:" + id + " " + ((char) 167) + "r" + name;
-			data.put(key, id);
-			if (key.equals(name)) { continue; }
-			if (selectFactions.contains(id)) { set.add(key); }
-		}
-		if (scrollHostileFactions == null) { scrollHostileFactions = new GuiCustomScroll(this, 1, true, true).setSize(163, 185); }
-		scrollHostileFactions.guiLeft = guiLeft + 4;
-		scrollHostileFactions.guiTop = guiTop + 28;
-		addScroll(scrollHostileFactions.setUnsortedList(new ArrayList<>(data.keySet()))
-				.setSelectedList(set));
-		addLabel(new GuiNpcLabel(0, Util.instance.deleteColor(name), guiLeft + 4, guiTop + 4));
-		addLabel(new GuiNpcLabel(1, "faction.select", guiLeft + 4, guiTop + 16));
-		addButton(new GuiNpcButton(66, guiLeft + 123, guiTop + 6, 45, 20, "gui.done").setHoverText("hover.back"));
-		GuiNpcCheckBox button;
-		addButton(button = new GuiNpcCheckBox(14, guiLeft + 91, guiTop + 6, 30, 12, "gui.name", "ID", GuiNPCManageFactions.isName));
-		button.setHoverText("hover.sort", new TextComponentTranslation("global.factions").getFormattedText(), button.getText());
-	}
+        id = idIn;
+        name = nameIn;
+        base = baseIn;
+        selectFactions = new HashSet<>(setFactions);
+    }
 
     @Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 1) {
-			HashSet<Integer> set = new HashSet<>();
-			List<String> list = scroll.getSelectedList();
-			HashSet<String> newList = new HashSet<>();
-			for (String key : data.keySet()) {
-				int id = data.get(key);
-				if (!list.contains(key)) { continue; }
-				set.add(id);
-				newList.add(key);
-			}
-			selectFactions = set;
-			if (list.size() != newList.size()) { scroll.setSelectedList(newList); }
-		}
-	}
+    public void buttonEvent(GuiButtonNop button) {
+        switch (button.id) {
+            case 14: {
+                GuiNpcManageFactions.sortByName = ((GuiCheckBoxNop) button).selected();
+                button.setHoverTexts(Component.translatable("hover.sort",
+                        Util.instance.getOldFormattedText(Component.translatable("global.factions")),
+                        Util.instance.getOldFormattedText(button.getMessage())));
+                break;
+            }
+            case 66: onClose(); break;
+        }
+    }
 
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
+    @Override
+    public void init() {
+        super.init();
+        List<Map.Entry<Component, Integer>> newList = new ArrayList<>(base.entrySet());
+        newList.sort((f_0, f_1) -> {
+            if (GuiNpcManageFactions.sortByName) { return f_0.getKey().getString().compareTo(f_1.getKey().getString()); }
+            else { return f_0.getValue().compareTo(f_1.getValue()); }
+        });
+        HashSet<Component> set = new HashSet<>();
+        data.clear();
+        for (Map.Entry<Component, Integer> entry : newList) {
+            int id = entry.getValue();
+            String name = Util.instance.deleteColor(entry.getKey().getString());
+            if (name.contains("ID:" + id + " ")) { name = name.substring(name.indexOf(" ") + 3); }
+            Component key = Component.empty()
+                    .append(Component.literal("ID:" + id + " ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(name).withStyle(ChatFormatting.RESET));
+            data.put(key, id);
+            if (key.getString().equals(name)) { continue; }
+            if (selectFactions.contains(id)) { set.add(key); }
+        }
+        if (scrollHostileFactions == null) { scrollHostileFactions = addScroll(1, true).setSize(161, 163); }
+        int x = guiLeft + 5;
+        int y = guiTop + 5;
+        addLabel(0, guiLeft, y, Util.instance.deleteColor(name)).setCenter(imageWidth);
+        addLabel(1, x + 1, y += 13, "faction.select");
+        add(scrollHostileFactions.setPos(guiLeft + 5, y + 10)
+                .setUnsortedList(new ArrayList<>(data.keySet()))
+                .setSelectedList(set));
+        y = guiTop + imageHeight - 24;
+        addButton(66, guiLeft + imageWidth - 49, y, "gui.done")
+                .setSize(45, 20)
+                .setHoverTexts("hover.back");
+        GuiButtonNop checkBox = addCheckBox(14, x, y + 3, "gui.name", "ID", GuiNpcManageFactions.sortByName)
+                .setSize(60, 12);
+        checkBox.setHoverTexts(Component.translatable("hover.sort",
+                Util.instance.getOldFormattedText(Component.translatable("global.factions")),
+                Util.instance.getOldFormattedText(checkBox.getMessage())));
+    }
+
+    @Override
+    public void scrollClicked(GuiCustomScrollNop scroll) {
+        if (scroll.id == 1) {
+            HashSet<Integer> set = new HashSet<>();
+            List<Component> list = scroll.getSelectedList();
+            HashSet<Component> newList = new HashSet<>();
+            for (Component key : data.keySet()) {
+                int id = data.get(key);
+                if (!list.contains(key)) { continue; }
+                set.add(id);
+                newList.add(key);
+            }
+            selectFactions = set;
+            if (list.size() != newList.size()) { scroll.setSelectedList(newList); }
+        }
+    }
+
+    @Override
+    public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 }

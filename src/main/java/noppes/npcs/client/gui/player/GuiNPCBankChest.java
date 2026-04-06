@@ -1,533 +1,859 @@
 package noppes.npcs.client.gui.player;
 
-import java.io.IOException;
-import java.util.*;
-
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.RenderHelper;
-import noppes.npcs.client.ClientGuiEventHandler;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.util.Util;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.util.ITooltipFlag.TooltipFlags;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.gui.SubGuiEditBankAccess;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.constants.EnumPlayerPacket;
+import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
+import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.global.GuiNpcManagePlayerData;
+import noppes.npcs.client.gui.global.SubGuiEditBankAccess;
+import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
+import noppes.npcs.constants.EnumPlayerData;
 import noppes.npcs.containers.ContainerNPCBank;
-import noppes.npcs.controllers.data.Bank.CeilSettings;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.controllers.data.Bank;
+import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.mixin.client.IMouseHandlerMixin;
+import noppes.npcs.mixin.client.gui.screens.inventory.IAbstractContainerScreenMixin;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.*;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.util.Util;
+import noppes.npcs.util.ValueUtil;
+import org.jetbrains.annotations.NotNull;
+import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.*;
 
-public class GuiNPCBankChest extends GuiContainerNPCInterface {
+public class GuiNPCBankChest extends GuiContainerNPCInterface<ContainerNPCBank> {
 
-	protected static final ResourceLocation backTexture = new ResourceLocation(CustomNpcs.MODID, "textures/gui/smallbg.png");
-	protected static final ResourceLocation tabsTexture = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
-	protected static final ResourceLocation rowTexture = new ResourceLocation("textures/gui/container/creative_inventory/tab_items.png");
-	protected final int maxRows;
-	protected int yPos;
-	protected int ceilPos = -1;
-	protected int allCost = 0;
-	protected final int step;
-	protected final boolean isMany;
-	protected boolean hoverScroll;
-	protected boolean isScrolling = false;
-	protected boolean upgrade;
-	protected boolean isWait;
-	protected boolean isOwner;
-	protected ItemStack stack;
-	protected int money;
-	public ContainerNPCBank cont;
-	public int row = 0;
+   protected final ResourceLocation bg = new ResourceLocation(CustomNpcs.MODID, "textures/gui/extrasmallbg.png");
+   public static final ResourceLocation INVENTORY_ITEMS = new ResourceLocation(CustomNpcs.MODID, "textures/gui/bank/inventory.png");
+   public static final ResourceLocation INVENTORY_EMPTY = new ResourceLocation(CustomNpcs.MODID, "textures/gui/bank/empty.png");
+   public static final ResourceLocation SAFE = new ResourceLocation(CustomNpcs.MODID, "textures/gui/bank/safe.png");
 
-	public GuiNPCBankChest(EntityNPCInterface npc, ContainerNPCBank container) {
-		super(npc, container);
-		allowUserInput = false;
-		closeOnEsc = true;
-		ySize = 114 + cont.height;
+   public static double startXMouse = 0;
+   public static double startYMouse = 0;
 
-		cont = container;
-		isMany = container.items.getSizeInventory() > 45;
-		maxRows = (int) Math.ceil((double) container.items.getSizeInventory() / 9.0d);
-		step = maxRows > 5 ? (int) (73.0f / ((float) maxRows - 5.0f)) : 0;
-		resetSlots();
-	}
+   protected final boolean isMany;
+   protected boolean isOwner;
+   public boolean isWait;
+   public int ceilsUpdate;
+   public int ceilPos;
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0 || isWait) { return; }
-		if (button.getID() > 2 && button.getID() < 8) {
-			onGuiClosed();
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.OpenCeilBank, cont.bank.id, ((GuiMenuSideButton) button).data);
-			return;
-		}
-		switch (button.getID()) {
-			case 0: {
-				NoppesUtilPlayer.sendData((upgrade ? EnumPlayerPacket.BankUpgrade : EnumPlayerPacket.BankUnlock), npc.getEntityId(), true, 1);
-				isWait = true;
-				break;
-			}
-			case 1: {
-				if (ceilPos <= 0) { return; }
-				ceilPos--;
-				initGui();
-				break;
-			} // up
-			case 2: {
-				if (ceilPos >= Math.floor((double) cont.bank.ceilSettings.size() / 5.0d)) { return; }
-				ceilPos++;
-				initGui();
-				break;
-			} // down
-			case 9: {
-				if (cont.bank == null) { return; }
-				setSubGui(new SubGuiEditBankAccess(0, cont.bank));
-				break;
-			} // settings
-			case 10: {
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.BankClearCeil, npc.getEntityId());
-				isWait = true;
-				break;
-			} // clear stacks
-			case 11: {
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.BankLock, npc.getEntityId());
-				isWait = true;
-				break;
-			} // lock
-			case 12: {
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.BankRegrade, npc.getEntityId());
-				isWait = true;
-				break;
-			} // regrade
-			case 13: {
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.BankResetCeil, npc.getEntityId());
-				isWait = true;
-				break;
-			} // reset
-			case 14: {
-				if (allCost <= 0) { return; }
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.BankUpgrade, npc.getEntityId(), true, allCost);
-				isWait = true;
-				break;
-			}
-		}
-	}
+   //scrolling
+   protected boolean isScrolling = false;
+   protected int scrollBarY;
+   public int scrollMax = 0;
+   public int scrollY;
 
-	@Override
-	public void subGuiClosed(GuiScreen gui) {
-		if (gui instanceof SubGuiEditBankAccess) {
-			SubGuiEditBankAccess subGui = (SubGuiEditBankAccess) gui;
-			boolean isChanged = false;
-			if (cont.bank.isChanging != subGui.isChanging) {
-				cont.bank.isChanging = subGui.isChanging;
-				isChanged = true;
-			}
-			if (!cont.bank.owner.equals(subGui.owner)) {
-				cont.bank.owner = subGui.owner;
-				isChanged = true;
-			}
-			if (subGui.names.size() != cont.bank.access.size()) {
-				cont.bank.access.clear();
-				cont.bank.access.addAll(subGui.names);
-				isChanged = true;
-			} else {
-				for (String name : subGui.names) {
-					if (cont.bank.access.contains(name)) { continue; }
-					cont.bank.access.clear();
-					cont.bank.access.addAll(subGui.names);
-					isChanged = true;
-					break;
-				}
-			}
-			if (isChanged) {
-				NBTTagCompound compound = new NBTTagCompound();
-				cont.bank.writeToNBT(compound);
-				isWait = true;
-				Client.sendData(EnumPacketServer.BankSave, compound);
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.OpenCeilBank, cont.bank.id, cont.ceil);
-			}
-		}
-	}
+   // currency to open or upgrade
+   protected boolean canUpgrade;
+   protected ItemStack stack;
+   protected int money;
+   protected int donat;
 
-	@Override
-	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-		mc.getTextureManager().bindTexture(backTexture);
-		int u = (width - xSize) / 2 - 8;
-		int v = (height - ySize) / 2;
-		int h = cont.height + 107;
-		// background
-		drawTexturedModalRect(u, v, 0, 0, 176, h - 4);
-		drawTexturedModalRect(u, v + h - 4, 0, 218, 176, 4);
-		int o = isMany ? 36 : 20;
-		drawTexturedModalRect(u + 172, v, 176 - o, 0, o, h - 4);
-		drawTexturedModalRect(u + 172, v + h - 4, 176 - o, 218, o, 4);
-		// Slots
-		mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-		for (int s = 0; s < cont.inventorySlots.size(); s++) {
-			Slot slot = cont.getSlot(s);
-			if (slot.xPos > 0 && slot.yPos > 0) { drawTexturedModalRect(u + 8 + slot.xPos - 1, v + slot.yPos - 1, 0, 0, 18, 18); }
-		}
-		// Rows
-		int i;
-		for (i = 0; i < Math.ceil(cont.items.getSizeInventory() / 9.0d) && i < 5; i++) {
-			fontRenderer.drawString("" + (1 + i + row), u + 13 - fontRenderer.getStringWidth("" + (1 + i + row)), v + 4 + (i + 1) * 18, CustomNpcs.LableColor.getRGB());
-			drawHorizontalLine(u + 4, u + 181, v + 17 + (i + 1) * 18, CustomNpcs.LableColor.getRGB());
-			if (i == 0) { drawHorizontalLine(u + 4, u + 181, v - 1 + (i + 1) * 18, CustomNpcs.LableColor.getRGB()); }
-		}
-		drawVerticalLine(u + 15, v + 14, v + 1 + (i + 1) * 18, CustomNpcs.LableColor.getRGB());
-		drawVerticalLine(u + 177, v + 14, v + 1 + (i + 1) * 18, CustomNpcs.LableColor.getRGB());
-		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-		// upgrade / new tab
-		CeilSettings cs = cont.bank.ceilSettings.get(cont.ceil);
-		if (isOwner && (cs.maxCells > cont.items.getSizeInventory() || cont.items.getSizeInventory() == 0)) {
-			Slot slot = cont.getSlot(cont.items.getSizeInventory());
-			if (!stack.isEmpty()) {
-				mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-				drawTexturedModalRect(u + slot.xPos + 53, v + slot.yPos - 23, 0, 0, 18, 18);
-				ITextComponent t = new TextComponentTranslation(upgrade ? "bank.upg.cost" : "bank.tab.cost");
-				fontRenderer.drawString(t.getFormattedText() + ":", u + slot.xPos, v + slot.yPos - (money <= 0 ? 18 : 24), CustomNpcs.LableColor.getRGB());
-				GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-			}
-			if (money > 0) {
-				GlStateManager.pushMatrix();
-				GlStateManager.translate(u + slot.xPos - 5, v + slot.yPos - 17, 0.0f);
-				mc.getTextureManager().bindTexture(ClientGuiEventHandler.COIN_NPC);
-				float s = 16.0f / 250.f;
-				GlStateManager.scale(s, s, s);
-				GlStateManager.enableBlend();
-				GlStateManager.color(2.0f, 2.0f, 2.0f, 1.0f);
-				drawTexturedModalRect(0, 0, 0, 0, 256, 256);
-				GlStateManager.popMatrix();
-				String text = Util.instance.getTextReducedNumber(money, true, true, false) + CustomNpcs.displayCurrencies;
-				fontRenderer.drawString(text, u + slot.xPos + 11, v + slot.yPos - 12, CustomNpcs.LableColor.getRGB(), false);
-				GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-			}
-		}
-		else {
-			ITextComponent text;
-			if (cont.items.getSizeInventory() == 0) { text = new TextComponentTranslation("bank.slots.empty"); }
-			else {
-				text = new TextComponentTranslation("bank.slots.info", "" + cont.items.getCountEmpty(), "" + cont.items.getSizeInventory());
-				if (player.capabilities.isCreativeMode) { text.appendSibling(new TextComponentString(((char)167) + "3 (GM total in ceil: " + cont.bank.ceilSettings.get(cont.ceil).maxCells + ")")); }
-			}
-			fontRenderer.drawString(text.getFormattedText(), u + 8, v + 8 + (i + 1) * 18, CustomNpcs.LableColor.getRGB());
-			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-		}
-		// Scroll
-		if (isMany) {
-			mc.getTextureManager().bindTexture(rowTexture);
-			drawTexturedModalRect(u + 184, v + 17, 174, 17, 14, 86);
-			drawTexturedModalRect(u + 184, v + 103, 174, 125, 14, 4);
-		}
-	}
+   @Nullable
+   protected Slot hoverSlot;
 
-	@Override
-	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-		ITextComponent b = new TextComponentTranslation("gui.bank", ": ");
-		ITextComponent n = new TextComponentTranslation(cont.bank.name);
-		n.getStyle().setBold(true);
-		b.appendSibling(n).appendSibling(new TextComponentString("; "));
-		b.appendSibling(new TextComponentTranslation("gui.ceil", " #" + ((char)167) + "l" +(cont.ceil + 1)));
-		fontRenderer.drawString(b.getFormattedText(), 8, 6, CustomNpcs.LableColor.getRGB());
-	}
+   public GuiNPCBankChest(ContainerNPCBank container, Inventory inv, Component ignoredTitle) {
+      super(NoppesUtilServer.getEditingNpc(Minecraft.getInstance().player), container, inv, Component.empty());
+      hoverIsGame = true;
+      if (container.items.getContainerSize() > 0) {
+         background = INVENTORY_ITEMS;
+         imageWidth = 190;
+         imageHeight = 238;
+      } else {
+         background = INVENTORY_EMPTY;
+         imageWidth = 178;
+         imageHeight = 143;
+      }
+      isMany = container.items.getContainerSize() > 45;
+      if (isMany) { scrollMax = (int) (Math.max(0.0d, Math.ceil((double) container.items.getContainerSize() / 9.0d)) * 18.0d - 90.0d); }
+      scrollY = menu.scrollY;
+      ceilPos = ValueUtil.correctInt(menu.ceilPos, 0, menu.data.bank.ceilSettings.size() - 5);
+      ceilsUpdate = menu.ceilsUpdate;
+      resetRow(0);
+   }
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (isWait) { drawWait(); return; }
-		drawDefaultBackground();
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		CeilSettings cs = cont.bank.ceilSettings.get(cont.ceil);
-		hoverScroll = false;
-		if (isMany && subgui == null) {
-			GlStateManager.pushMatrix();
-			GlStateManager.color(2.0F, 2.0F, 2.0F, 1.0F);
-			mc.getTextureManager().bindTexture(tabsTexture);
-            float currentScroll = maxRows > 5 ? (float) row / ((float) maxRows - 5.0f) : 0;
-			int h = (int) (currentScroll * 73.0f);
-			int u = (width - xSize) / 2 + 177;
-			int v = (height - ySize) / 2 + 18 + h;
-			hoverScroll = mouseX >= u && mouseX <= u + 12 && mouseY >= v && mouseY <= v + 15;
-			drawTexturedModalRect(u, v, (hoverScroll ? 244 : 232), 0, 12, 15);
-			GlStateManager.popMatrix();
-			int dWheel = Mouse.getDWheel();
-			if (dWheel != 0) { resetRow(dWheel < 0); }
-		}
-		PlayerData data = CustomNpcs.proxy.getPlayerData(player);
-		Slot slot = cont.getSlot(cont.items.getSizeInventory());
-		int u = (width - xSize) / 2;
-		int v = (height - ySize) / 2;
-		if (!stack.isEmpty() && isOwner) {
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(u + slot.xPos + 46, v + slot.yPos - 22, 50.0f);
-			RenderHelper.enableGUIStandardItemLighting();
-			mc.getRenderItem().renderItemAndEffectIntoGUI(stack, 0, 0);
-			GlStateManager.translate(0.0f, 0.0f, 200.0f);
-			drawString(mc.fontRenderer, "" + stack.getCount(), 16 - mc.fontRenderer.getStringWidth("" + stack.getCount()), 9, 0xFFFFFFFF);
-			RenderHelper.disableStandardItemLighting();
-			GlStateManager.popMatrix();
-			if (isMouseHover(mouseX, mouseY, u + slot.xPos + 46, v + slot.yPos - 22, 18, 18)) {
-				List<String> list = new ArrayList<>();
-				String t = new TextComponentTranslation("bank." + (upgrade ? "upg" : "tab") + ".cost.info", "" + cs.startCells, "" + cs.maxCells).getFormattedText();
-				if (!t.contains("<br>")) {
-					list.add(t);
-				} else {
-                    Collections.addAll(list, t.split("<br>"));
-				}
-				list.addAll(stack.getTooltip(mc.player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL));
-				putHoverText(list);
-			}
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		}
-		if (money > 0 && isOwner) {
-			if (isMouseHover(mouseX, mouseY, u + slot.xPos - 11, v + slot.yPos - 14, 50, 12)) {
-				String hover = new TextComponentTranslation("market.hover.currency.0",
-						Util.instance.getTextReducedNumber(money, true, true, false),
-						CustomNpcs.displayCurrencies,
-						Util.instance.getTextReducedNumber(data.game.getMoney(), true, true, false) + CustomNpcs.displayCurrencies).getFormattedText();
-				putHoverText(Arrays.asList(hover.split("<br>")));
-			}
-		}
-		allCost = 0;
-		int max = 0;
-		boolean canPayStack = false, canPayMoney = false;
-		if (getButton(0) != null && getButton(14) != null) {
-			max = cs.maxCells - cont.items.getSizeInventory();
-			allCost = Math.max(max, 0);
-			if (player.capabilities.isCreativeMode) {
-				canPayStack = true;
-				canPayMoney = true;
-			} else {
-				canPayStack = stack.isEmpty();
-				if (!canPayStack) {
-					int allSt = Util.instance.inventoryItemCount(player, stack, null, false, false);
-					allCost = Math.min(allCost, allSt / stack.getCount());
-					canPayStack = allSt >= stack.getCount();
-				}
-				canPayMoney = money <= 0;
-				if (!canPayMoney) {
-					allCost = Math.min(allCost, (int) data.game.getMoney() / money);
-					canPayMoney = data.game.getMoney() >= money;
-				}
-			}
-			getButton(0).setIsEnable(player.capabilities.isCreativeMode || (max > 0 && canPayStack && canPayMoney));
-			getButton(0).setIsVisible(isOwner);
-			getButton(14).setIsEnable(allCost != 0 && allCost <= max);
-			getButton(14).setIsVisible(isOwner && upgrade && max > 0);
-		}
-		if (getButton(10) != null) {
-			getButton(10).setIsEnable(cont.items.getSizeInventory() > 0 && !cont.items.isEmpty());
-		}
-		if (getButton(13) != null) {
-			getButton(13).setIsEnable(cont.items.getSizeInventory() > 0 && (!cont.items.isEmpty() || cont.items.getSizeInventory() != cont.bank.ceilSettings.get(cont.ceil).startCells));
-		}
-		if (CustomNpcs.ShowDescriptions && subgui == null) {
-			if (getButton(0) != null && getButton(0).visible && getButton(0).isHovered()) {
-				ITextComponent it = new TextComponentTranslation("bank.hover.update." + upgrade, ((char)167) + "61", "" + cont.items.getSizeInventory(), "" + cont.bank.ceilSettings.get(cont.ceil).maxCells);
-				if (!upgrade && cont.dataCeil < cont.bank.ceilSettings.size()) { it.appendSibling(new TextComponentTranslation("bank.hover.update.not.1", "" + (cont.dataCeil + 1))); }
-				if (!canPayStack) { it.appendSibling(new TextComponentTranslation("bank.hover.update.not.0")); }
-				if (!canPayMoney) { it.appendSibling(new TextComponentTranslation("bank.hover.update.not.1")); }
-				putHoverText(it.getFormattedText());
-			} else if (getButton(14) != null && getButton(14).visible && getButton(14).isHovered()) {
-				ITextComponent it = new TextComponentTranslation("bank.hover.update.true", ((char)167) + "6" + allCost + ((char)167) + "7/" + max, "" + cont.items.getSizeInventory(), "" + cont.bank.ceilSettings.get(cont.ceil).maxCells);
-				if (!upgrade && cont.dataCeil < cont.bank.ceilSettings.size()) { it.appendSibling(new TextComponentTranslation("bank.hover.update.not.1", "" + (cont.dataCeil + 1))); }
-				if (!canPayStack) { it.appendSibling(new TextComponentTranslation("bank.hover.update.not.0")); }
-				if (!canPayMoney) { it.appendSibling(new TextComponentTranslation("bank.hover.update.not.1")); }
-				putHoverText(it.getFormattedText());
-			}
-		}
-		if (hasHoverText()) { drawHoverText(null); }
-		else { renderHoveredToolTip(mouseX, mouseY); }
-	}
+   @Override
+   public void init() {
+      super.init();
+      int color = CustomNpcs.MainColor.getRGB();
+      // name
+      MutableComponent title = Component.translatable("bank.name" + (menu.data.bank.isPublic ? ".public" : ""), ": ");
+      if (ContainerNPCBank.editPlayerBankData != null && ContainerNPCBank.editPlayerBankData.isEmpty()) {
+         title = Component.translatable("bank.name.player", ContainerNPCBank.editPlayerBankData, ": ");
+      }
+      title.append(Component.translatable(menu.data.bank.name).withStyle(ChatFormatting.BOLD));
+      addLabel(0, guiLeft + 5, guiTop + 5, title)
+              .setSize(imageWidth - 10, 10)
+              .setColor(color);
+      // currency to open or upgrade
+      stack = ItemStack.EMPTY;
+      money = 0;
+      donat = 0;
+      Bank.CeilSettings cs = menu.data.bank.ceilSettings.get(menu.ceil);
+      isOwner = player.isCreative() || !menu.data.bank.isPublic || menu.data.bank.owner.isEmpty() || player.getName().getString().equals(menu.data.bank.owner);
+      canUpgrade = false;
+      if (menu.items.getContainerSize() == 0) {
+         stack = cs.openStack;
+         money = cs.openMoney;
+         donat = cs.openDonat;
+         canUpgrade = false;
+      }
+      else if (menu.items.getContainerSize() < cs.maxCells && !cs.upgradeStack.isEmpty()) {
+         stack = cs.upgradeStack;
+         money = cs.upgradeMoney;
+         donat = cs.upgradeDonat;
+         canUpgrade = true;
+      }
+      // open and upgrade buttons
+      Slot slot = menu.items.getContainerSize() < menu.slots.size() ? menu.getSlot(menu.items.getContainerSize()) : null;
+      int u = (width - imageWidth) / 2 - 8;
+      int v = (height - imageHeight) / 2;
+      if (slot != null) {
+         // not owner
+         if (isOwner && (!stack.isEmpty() || money > 0 || donat > 0)) {
+            int x = u + slot.x + 61 + (stack.isEmpty() ? 0 : 21);
+            int y = v + slot.y - 22; // upgrade button up + right or center
+            boolean showButton = player.isCreative() || canUpgrade ? menu.items.getContainerSize() < cs.maxCells : menu.ceil < menu.data.bank.ceilSettings.size();
+            addButton(0, x, y, canUpgrade ? "bank.upgrade" : "bank.unlock")
+                    .setSize(51, 18)
+                    .setIsEnabled(showButton);
+            // size -> open / upgrade
+            if (canUpgrade) {
+               int s = cs.maxCells - menu.items.getContainerSize();
+               if (s > 0) {
+                  int p = 0;
+                  List<Object> list = new ArrayList<>();
+                  list.add("1");
+                  list.add("5");
+                  list.add("10");
+                  list.add("20");
+                  list.add("gui.max");
+                  if (ceilsUpdate == 5) { p = 1; }
+                  else if (ceilsUpdate == 10) { p = 2; }
+                  else if (ceilsUpdate == 20) { p = 3; }
+                  else if (ceilsUpdate != 1) { p = 4; ceilsUpdate = s; }
+                  addButton(14, x + 52, y, true, p , list.toArray(new Object[0]))
+                          .setSize(37, 18)
+                          .setIsEnabled(showButton)
+                          .setIsVisible(cs.maxCells - menu.items.getContainerSize() > 0);
+               }
+            }
+            if (money > 0) {
+               addLabel(1, guiLeft + 21, y + (donat > 0 ? -1 : 4), Util.instance.getTextReducedNumber(money, true, true, false) + CustomNpcs.displayCurrencies)
+                       .setSize(38, 10)
+                       .setColor(color);
+            }
+            if (donat > 0) {
+               addLabel(2, guiLeft + 21, y + (money > 0 ? 11 : 4), Util.instance.getTextReducedNumber(money, true, true, false) + CustomNpcs.displayCurrencies)
+                       .setSize(38, 10)
+                       .setColor(color);
+            }
+         }
+         else {
+            addLabel(10, u + slot.x + 6, v + slot.y - 18, "")
+                    .setSize(162, 10)
+                    .setColor(color);
+         }
+         // clear items
+         GuiButtonNop clearButton = new GuiButtonNop(this, 10, "", u + slot.x + 171, v + slot.y + 59,
+                 (button) -> {
+                    if (!menu.items.isEmpty()) {
+                       ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+                          if (bo) {
+                             Packets.sendServer(new SPacketBankClearCeil(menu.data.bank.id, menu.ceil, ceilPos, ceilsUpdate));
+                          }
+                          NoppesUtil.openGUI(player, this);
+                       },
+                               Component.translatable("bank.name", ": ")
+                                       .append(Component.translatable(menu.data.bank.name).withStyle(ChatFormatting.BOLD))
+                                       .append("; ")
+                                       .append(Component.translatable("gui.ceil", " #" + ((char) 167) + "l" +(menu.ceil + 1))),
+                               Component.translatable("message.bank.del.items"));
+                       setScreen(guiYesNo);
+                    }
+                 })
+                 .setSize(14, 14)
+                 .setTexture(INVENTORY_ITEMS)
+                 .setUV(190, 20, 24, 24)
+                 .setDefBack(false)
+                 .setIsVisible(isOwner && menu.items.getContainerSize() > 0)
+                 .setIsEnabled(!menu.items.isEmpty())
+                 .setHoverTexts("bank.hover.clear.slots");
+         add(clearButton);
+      }
+      // creative manager
+      if (player.isCreative()) {
+         int x = guiLeft + imageWidth + 7;
+         int y = guiTop + 15;
+         addButton(11, x, y, "bank.lock")
+                 .setSize(80, 18)
+                 .setIsEnabled(menu.items.getContainerSize() > 0 && !cs.openStack.isEmpty())
+                 .setHoverTexts("bank.hover.lock");
+         int size = Math.max(menu.data.bank.ceilSettings.get(menu.ceil).startCells, menu.items.getContainerSize() - ceilsUpdate);
+         addButton(12, x, y += 21, "bank.regrade")
+                 .setSize(80, 18)
+                 .setIsEnabled(menu.items.getContainerSize() > cs.startCells)
+                 .setHoverTexts(Component.translatable("bank.hover.regrade", ((char) 167) + "6" + (menu.items.getContainerSize() - size)));
+         addButton(13, x, y + 21, "gui.reset")
+                 .setSize(80, 18)
+                 .setIsEnabled(!menu.items.isEmpty() || menu.items.getContainerSize() != cs.startCells)
+                 .setHoverTexts("bank.hover.reset");
+      }
+      // ceil tabs
+      if (ceilPos < 0) { ceilPos = 0; }
+      GuiSafeButton tab;
+      if (menu.data.bank.ceilSettings.size() > 1) {
+         int ceil;
+         int i;
+         int x = guiLeft - 34;
+         int y = guiTop + 16;
+         for (i = 0; i < 5; i++) {
+            ceil = i + ceilPos;
+            if (ceil < menu.data.bank.ceilSettings.size()) {
+               tab = new GuiSafeButton(this, 3 + i, (1 + i + ceilPos) + ">", x, y + 11 + i * 14, 30, 14, ceil);
+               tab.setHoverTexts(Component.translatable("bank.hover.ceil." + (i + ceilPos * 5 == menu.ceil), "" + (ceil + 1)));
+               add(tab);
+               // stop if this ceil is not open
+               NpcMiscInventory inv = menu.data.get(ceil);
+               if (inv == null || inv.getContainerSize() == 0 || ceil >= menu.data.bank.ceilSettings.size()) { break; }
+            }
+         }
+         if (ceilPos > 0) {
+            tab = new GuiSafeButton(this, 1, "" + ((char) 708), x, y, 30, 11, -1);
+            tab.setHoverTexts("bank.hover.up").setSize(30, 14);
+            add(tab);
+         }
+         if (i == 5 && ceilPos + i < menu.data.bank.ceilSettings.size()) {
+            tab = new GuiSafeButton(this, 2, "" + ((char) 709), x, y + 81, 30, 11, -1);
+            tab.setHoverTexts("bank.hover.down").setSize(30, 14);
+            add(tab);
+         }
+      }
+      // lock
+      if (menu.data.bank.isPublic) {
+         addButton(9, (width - imageWidth) / 2 - 29, (height - imageHeight) / 2 + 109, "")
+                 .setTexture(AbstractWidget.WIDGETS_LOCATION) // lock
+                 .setUV(menu.data.bank.owner.isEmpty() ? 20 : 0, 146, 20, 20)
+                 .setSize(20, 20)
+                 .setIsVisible(isOwner)
+                 .setHoverTexts("bank.hover.settings");
+      }
+      resetRow(0);
+   }
 
-	@Override
-	public void handleMouseInput() throws IOException {
-		if (isScrolling) {
-			int mouseY = height - Mouse.getEventY() * height / mc.displayHeight - 1;
-			if (mouseY - yPos >= step) {
-				resetRow(true);
-				yPos = mouseY;
-			} else if (((mouseY - yPos) * -1) >= step) {
-				resetRow(false);
-				yPos = mouseY;
-			}
-		}
-		super.handleMouseInput();
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      if (isWait) { return; }
+      if (button.id > 2 && button.id < 8) {
+         if (menu.ceil != ((GuiSafeButton) button).ceil) {
+            onClose();
+            Packets.sendServer(new SPacketBankOpen(menu.data.bank.id, ((GuiSafeButton) button).ceil, ceilPos, 0, ceilsUpdate));
+         }
+         return;
+      } // open ceil
+      switch (button.id) {
+         case 0: {
+            if (menu.items.getContainerSize() == menu.data.bank.ceilSettings.get(menu.ceil).maxCells) {
+               ceilsUpdate = 1;
+            }
+            Packets.sendServer(new SPacketBankUpgrade(menu.data.bank.id, menu.ceil, ceilsUpdate, scrollY, ceilPos));
+            isWait = true;
+            break;
+         } // open or upgrade
+         case 1: {
+            ceilPos--;
+            if (ceilPos < 0) { ceilPos = 0; }
+            init();
+            break;
+         } // up
+         case 2: {
+            ceilPos++;
+            if (ceilPos > menu.data.bank.ceilSettings.size() - 5) { ceilPos = menu.data.bank.ceilSettings.size() - 5; }
+            init();
+            break;
+         } // down
+         case 9: {
+            if (menu.data.bank.owner.isEmpty() && !player.isCreative()) { return; }
+            setSubGui(new SubGuiEditBankAccess(menu.data.bank));
+            break;
+         } // settings
+         case 11: {
+            Packets.sendServer(new SPacketBankLock(menu.data.bank.id));
+            isWait = true;
+            break;
+         } // lock
+         case 12: {
+            if (menu.items.getContainerSize() > menu.data.bank.ceilSettings.get(menu.ceil).startCells) {
+               Packets.sendServer(new SPacketBankRegrade(menu.data.bank.id, scrollY, ceilPos, ceilsUpdate));
+               isWait = true;
+            }
+            break;
+         } // regrade
+         case 13: {
+            Packets.sendServer(new SPacketBankResetCeil(menu.data.bank.id, ceilPos, ceilsUpdate));
+            isWait = true;
+            break;
+         } // reset
+         case 14: {
+            try {
+               ceilsUpdate = Integer.parseInt(button.getMessage().getString());
+            }
+            catch (Exception ignored) {
+               ceilsUpdate = 0;
+            }
+            init();
+            //Packets.sendServer(new SPacketBankUpgrade(menu.data.bank.id, menu.ceil, ceilsUpdate, scrollY, ceilPos));
+            break;
+         } // upgrade all
+      }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		resetSlots();
-		stack = ItemStack.EMPTY;
-		money = 0;
-		CeilSettings cs = cont.bank.ceilSettings.get(cont.ceil);
-		isOwner = !cont.bank.isPublic || player.capabilities.isCreativeMode || player.getName().equals(cont.bank.owner);
-		upgrade = cont.items.getSizeInventory() > 0;
-		if (cont.items.getSizeInventory() == 0 && !cs.openStack.isEmpty()) {
-			stack = cs.openStack;
-			money = cs.openMoney;
-			upgrade = false;
-		}
-		else if (cont.items.getSizeInventory() < cs.maxCells && !cs.upgradeStack.isEmpty()) {
-			stack = cs.upgradeStack;
-			money = cs.upgradeMoney;
-			upgrade = true;
-		}
-		Slot slot = cont.getSlot(cont.items.getSizeInventory());
-		int u = (width - xSize) / 2 - 8;
-		int v = (height - ySize) / 2;
-		if (!stack.isEmpty() || player.capabilities.isCreativeMode) {
-			int x = u + slot.xPos + 80 + (stack.isEmpty() ? 104 + (isMany ? 8 : 0) : 0);
-			int y = stack.isEmpty() ? guiTop + 36 : v + slot.yPos - 23; // upgrade button up + right or center
-			addButton(new GuiNpcButton(0, x, y, 50, 18, upgrade ? "bank.upgrade" : "bank.unlock")
-					.setIsEnable(player.capabilities.isCreativeMode ? (!upgrade || cont.items.getSizeInventory() < cs.maxCells) : cont.dataCeil == cont.bank.ceilSettings.size()));
-			addButton(new GuiNpcButton(14, x + 52, y, 25, 18, "gui.max")
-					.setIsEnable(getButton(0).enabled)
-					.setIsVisible(cs.maxCells - cont.items.getSizeInventory() > 0));
-			if (player.capabilities.isCreativeMode) {
-				x = u + slot.xPos + 184 + (isMany ? 8 : 0);
-				y = guiTop + 14;
-				addButton(new GuiNpcButton(11, x, y, 50, 18, "bank.lock")
-						.setIsEnable(cont.items.getSizeInventory() > 0 && !cs.openStack.isEmpty())
-						.setHoverText("bank.hover.lock"));
-				addButton(new GuiNpcButton(12, x, y += stack.isEmpty() ? 44 : 22, 50, 18, "bank.regrade")
-						.setIsEnable(cont.items.getSizeInventory() > 0)
-						.setHoverText("bank.hover.regrade"));
-				addButton(new GuiNpcButton(13, x, y + 22, 50, 18, "gui.reset")
-						.setIsEnable(cont.items.getSizeInventory() > 0 && (!cont.items.isEmpty() || cont.items.getSizeInventory() != cs.startCells))
-						.setHoverText("bank.hover.reset"));
-			}
-		}
-		GuiMenuSideButton tab;
-		if (ceilPos < 0) { ceilPos = (int) (Math.floor((double) cont.ceil / 5.0d)); }
-		if (cont.bank.ceilSettings.size() > 1) {
-			if (cont.bank.ceilSettings.size() > 5) {
-				if (ceilPos > 0) {
-					tab = new GuiMenuSideButton(1, guiLeft - 8, guiTop + 4, "" + ((char) 708));
-					tab.height = 12;
-					tab.offsetText = 1;
-					addButton(tab.setHoverText("bank.hover.up"));
-				}
-				if (ceilPos < Math.floor((double) cont.bank.ceilSettings.size() / 5.0d)) {
-					tab = new GuiMenuSideButton(2, guiLeft - 8, guiTop + 84, "" + ((char) 709));
-					tab.height = 12;
-					tab.offsetText = 2;
-					addButton(tab.setHoverText("bank.hover.down"));
-				}
-			}
-			for (int i = 0; i < 5 && (i + ceilPos * 5) < cont.bank.ceilSettings.size(); i++) {
-				tab = new GuiMenuSideButton(3 + i, guiLeft - 8, guiTop + 20 + i * 12, "" + (1 + i + ceilPos * 5));
-				tab.data = i + ceilPos * 5;
-				tab.height = 12;
-				if (i + ceilPos * 5 == cont.ceil) { tab.active = true; }
-				addButton(tab.setHoverText(new TextComponentTranslation("bank.hover.ceil." + tab.active, "" + tab.data).getFormattedText()));
-			}
-		}
-		if (cont.bank.isPublic) {
-			if (!cont.bank.owner.isEmpty() || player.capabilities.isCreativeMode) {
-				addButton(new GuiNpcButton(9, (isMany ? 12 : -4) + (width + xSize) / 2, guiTop - 8, 20, 20, 20, 146, GuiNPCInterface.WIDGETS)
-						.setIsVisible(isOwner)
-						.setHoverText("bank.hover.settings"));
-			}
-		}
-		addButton(new GuiNpcButton(10, u + slot.xPos + (isMany ? 166 : 159), v + slot.yPos - 24, 20, 20, "")
-				.setTexture(GuiNPCInterface.MENU_BUTTON)
-				.setHasDefaultBack(false)
-				.setUV(236, 0, 20, 20)
-				.setIsVisible(isOwner)
-				.setHoverText("bank.hover.clear.slots"));
-		if (row > maxRows) { row = maxRows; }
-	}
+   @Override
+   protected void renderBg(@NotNull GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
+      super.renderBg(graphics, partialTicks, mouseX, mouseY);
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      int u = (width - imageWidth) / 2 - 8;
+      int v = (height - imageHeight) / 2;
+      RenderSystem.enableBlend();
+      PoseStack matrixStack = graphics.pose();
+      // safe
+      matrixStack.pushPose();
+      matrixStack.translate((float) u - 29.0f, (float) v + 14.0f, 0.0f);
+      matrixStack.scale(0.5f, 0.5f, 1.0f);
+      graphics.blit(SAFE, 0, 0, 0, 0, 70, 194);
+      matrixStack.popPose();
+      // scroll bar
+      if (menu.items.getContainerSize() > 0) {
+         if (!isMany) { RenderSystem.setShaderColor(0.5f, 0.5f, 0.5f, 1.0F); }
+         // place
+         matrixStack.pushPose();
+         matrixStack.translate(u + 181.5, v + 18, 0.0f);
+         matrixStack.scale(0.5f, 0.5f, 1.0f);
+         graphics.blit(INVENTORY_ITEMS, 0, 0, 236, 0, 20, 170); // up
+         graphics.blit(INVENTORY_ITEMS, 0, 170, 236, 86, 20, 170); // down
+         matrixStack.popPose();
+         // bar
+         matrixStack.pushPose();
+         matrixStack.translate(u + 181.5f, v + (isMany ? 14.5f + scrollBarY : 33.0f), 0.0f);
+         matrixStack.scale(0.5f, 0.5f, 1.0f);
+         graphics.blit(INVENTORY_ITEMS, 0, -30, 215, 0, 20, 30); // up
+         graphics.blit(INVENTORY_ITEMS, 0, 0, 215, 30, 20, 31); // down
+         matrixStack.popPose();
+         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+      }
+      // Slots
+      hoverSlot = null;
+      if (!hasSubGui() && menu.items.getContainerSize() > 0) {
+         int x = guiLeft + 7, xs;
+         int y = guiTop + 20, ys;
+         graphics.enableScissor(x, y, x + 162, y + 90);
+         for (int s = 0; s < menu.items.getContainerSize(); s++) {
+            Slot slot = menu.slots.get(s);
+            xs = x + (s % 9) * 18;
+            ys = y - scrollY + (int) (Math.floor((double) s / 9.0d) * 18.0d);
+            if (ys > y - 17 && ys < y + 90) {
+               graphics.blit(INVENTORY_ITEMS, xs, ys, 191, 1, 18, 18);
+               xs += 1;
+               ys += 1;
+               if (slot.isActive()) { renderSlot(graphics, slot, xs, ys); }
+               int yh = ys;
+               int hy = 16;
+               if (ys < y) { yh = y; hy = 16 - y + ys; }
+               else if (ys > y + 72) { hy = Math.min(16, 90 - ys + y); }
+               if (isMouseHover(mouseX, mouseY, xs, yh, 16, hy)) {
+                  hoverSlot = slot;
+                  if (hoverSlot.isHighlightable()) {
+                     renderSlotHighlight(graphics, xs, ys, 0, getSlotColor(s));
+                     RenderSystem.enableBlend();
+                  }
+               }
+            }
+         }
+         graphics.disableScissor();
+      }
+      // upgrade / new tab
+      if (!hasSubGui() && isOwner && (!stack.isEmpty() || money > 0 || donat > 0) &&
+              menu.items.getContainerSize() < menu.slots.size()) {
+         Slot slot = menu.getSlot(menu.items.getContainerSize());
+         if (!stack.isEmpty()) {
+            int xs = u + slot.x + 61;
+            int ys = v + slot.y - 22;
+            // background
+            graphics.blit(INVENTORY_ITEMS, xs - 1, ys - 1, 190, 0, 20, 20);
+            xs += 1;
+            ys += 1;
+            // item
+            graphics.renderItem(stack, xs, ys);
+            graphics.renderItemDecorations(font, stack, xs, ys);
+            // info
+            if (isMouseHover(mouseX, mouseY, xs, ys, 16, 16)) {
+               List<Component> hover = new ArrayList<>();
+               hover.add(Component.translatable("bank." + (canUpgrade ? "upg" : "tab") + ".cost.info"));
+               hover.add(Component.literal("<br>"));
+               hover.addAll(getTooltipFromContainerItem(stack));
+               setHoverText(hover.toArray());
+            }
+         }
+         if (money > 0 || donat > 0) {
+            matrixStack.pushPose();
+            matrixStack.translate(u + slot.x + 4, v + slot.y - (money > 0 && donat > 0 ? 27 : 22), 0.0f);
+            float s = 16.0f / 250.f;
+            matrixStack.scale(s, s, s);
+            graphics.blit(GuiBasic.MONEY, 0, 0, 0, 0, 256, 256);
+            if (donat > 0) {
+               if (money > 0) { matrixStack.translate(0.0f, 192.0f, 0.0f); }
+               graphics.blit(GuiBasic.DONAT, 0, 0, 0, 0, 256, 256);
+            }
+            matrixStack.popPose();
+            if (money > 0 && isMouseHover(mouseX, mouseY, u + slot.x + 4, v + slot.y - (donat > 0 ? 25 : 20), 53, 12)) {
+               setHoverText("bank.hover." + (canUpgrade ? "upgrade" : "open") + ".money");
+            }
+            if (donat > 0 && isMouseHover(mouseX, mouseY, u + slot.x + 4, v + slot.y - (money > 0 ? 13 : 20), 53, 12)) {
+               setHoverText("bank.hover." + (canUpgrade ? "upgrade" : "open") + ".donat");
+            }
+         }
+      }
+      // creative manager
+      if (player.isCreative()) {
+         int x = guiLeft + imageWidth + 2;
+         int y = guiTop + 10;
+         graphics.blit(bg, x, y, 0, 0, 45, 71);
+         graphics.blit(bg, x + 45, y, 131, 0, 45, 71);
+      }
+      // info
+      if (getLabel(10) != null) {
+         int i = menu.items.getCountEmpty();
+         float f0 = menu.items.getContainerSize() == 0 ? 0.0f : (float) i / (float) menu.items.getContainerSize();
+         Component text;
+         if (menu.items.getContainerSize() == 0) { text = Component.translatable("bank.slots.empty"); }
+         else { text = Component.translatable("bank.slots.info",
+                 (f0 < 0.2 ? ((char) 167) + "c": f0 < 0.85 ? ((char) 167) + "e": "") + i,
+                 "" + menu.items.getContainerSize()); }
+         getLabel(10).setMessage(text);
+      }
+   }
 
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui == null) {
-			if (keyCode == Keyboard.KEY_UP || keyCode == mc.gameSettings.keyBindForward.getKeyCode()) {
-				resetRow(false);
-				return true;
-			}
-			if (keyCode == Keyboard.KEY_DOWN || keyCode == mc.gameSettings.keyBindBack.getKeyCode()) {
-				resetRow(true);
-				return true;
-			}
-		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
-	}
+   @Override
+   public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      if (startXMouse != 0 && startYMouse != 0) {
+         GLFW.glfwSetCursorPos(minecraft.getWindow().getWindow(),
+                 startXMouse * minecraft.getWindow().getGuiScale(),
+                 startYMouse * minecraft.getWindow().getGuiScale());
+         startXMouse = 0;
+         startYMouse = 0;
+      }
+      if (isWait) { drawWait(graphics); }
+      // clear all items
+      if (getButton(10) != null) { getButton(10).setIsEnabled(!menu.items.isEmpty()); }
+      // background
+      super.render(graphics, mouseX, mouseY, partialTicks);
+      if (hoveredSlot == null && hoverSlot != null) { hoveredSlot = hoverSlot; }
+      // open or upgrade check
+      GuiButtonNop button = getButton(0);
+      if (button != null && button.isVisible()) {
+         List<Component> hover = new ArrayList<>();
+         hover.add(Component.translatable("bank.hover.update." + canUpgrade,
+                 ((char)167) + "6" + ceilsUpdate, ((char)167) + "6" + menu.items.getContainerSize(), ((char)167) + "6" + menu.data.bank.ceilSettings.get(menu.ceil).maxCells));
+         boolean bo = true;
+         if (!canUpgrade && menu.ceil > 0) {
+            Bank.CeilSettings cs = menu.data.bank.ceilSettings.get(menu.ceil - 1);
+            NpcMiscInventory invPre = menu.data.get(menu.ceil - 1);
+            if (!cs.isFree && (invPre == null || invPre.getContainerSize() != cs.maxCells)) {
+               if (!player.isCreative()) { hover.add(Component.translatable("gui.allowed")); bo = false; }
+               hover.add(Component.translatable("bank.hover.update.not.open", "" + menu.ceil));
+            }
+         }
+         if (!stack.isEmpty()) {
+            Map<ItemStack, Integer> items = new HashMap<>();
+            items.put(stack, stack.getCount() * ceilsUpdate);
+            if (!Util.instance.canRemoveItems(player.inventoryMenu.getItems(), items, false, false)) {
+               if (bo && !player.isCreative()) { hover.add(Component.translatable("gui.allowed")); bo = false; }
+               hover.add(Component.translatable("hover.operation.not.items"));
+               hover.add(Component.literal(stack.getHoverName().getString())
+                       .append(Component.literal(" x" + stack.getCount() * ceilsUpdate).withStyle(ChatFormatting.DARK_RED)));
+            }
+         }
+         PlayerData data = CustomNpcs.proxy.getPlayerData(player);
+         if (money > 0 && data.game.getMoney() < money * (long) ceilsUpdate) {
+            if (bo && !player.isCreative()) { hover.add(Component.translatable("gui.allowed")); bo = false; }
+            hover.add(Component.translatable("hover.operation.not.money"));
+            hover.add(Component.literal(money * ceilsUpdate + CustomNpcs.displayCurrencies).withStyle(ChatFormatting.DARK_RED));
+         }
+         if (donat > 0 && data.game.getDonat() < donat * (long) ceilsUpdate) {
+            if (bo && !player.isCreative()) { hover.add(Component.translatable("gui.allowed")); bo = false; }
+            hover.add(Component.translatable("hover.operation.not.donat"));
+            hover.add(Component.literal(donat * ceilsUpdate + CustomNpcs.displayDonation).withStyle(ChatFormatting.DARK_RED));
+         }
+         button.setIsEnabled(bo || player.isCreative());
+         if (button.isHovered()) { setHoverText(hover); }
+      }
+      if (!hoverText.isEmpty()) { drawHoverText(null); }
+      else { renderTooltip(graphics, mouseX, mouseY); }
+   }
 
-	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (hoverScroll) {
-			yPos = mouseY;
-			isScrolling = true;
-		}
-		else if (isMany) {
-			int u = 173 + (width - xSize) / 2;
-			int v = 18 + (height - ySize) / 2;
-			if (mouseX >= u && mouseX <= u + 11 && mouseY >= v && mouseY <= v + 88) {
-				int h = mouseY - v, r;
-				if (h <= 7) { r = 0; }
-				else if (h >= 81) { r = maxRows; }
-				else { r = (int) ((double) maxRows * (double) h / 88.0d); }
-				int old = row;
-				if (r < 0) { r = 0; }
-				if (r > maxRows) { r = maxRows; }
-				if (old != r) {
-					row = r;
-					resetSlots();
-					return true;
-				}
-			}
-		}
-		return super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
-	}
+   @Override
+   public void subGuiClosed(Screen subgui) {
+      if (subgui instanceof SubGuiEditBankAccess gui) {
+         boolean isChanged = false;
+         if (menu.data.bank.isChanging != gui.isChanging) {
+            menu.data.bank.isChanging = gui.isChanging;
+            isChanged = true;
+         }
+         if (!menu.data.bank.owner.equals(gui.owner)) {
+            menu.data.bank.owner = gui.owner;
+            isChanged = true;
+         }
+         if (gui.names.size() != menu.data.bank.access.size()) {
+            menu.data.bank.access.clear();
+            menu.data.bank.access.addAll(gui.names);
+            isChanged = true;
+         }
+         else {
+            for (String name : gui.names) {
+               if (menu.data.bank.access.contains(name)) { continue; }
+               menu.data.bank.access.clear();
+               menu.data.bank.access.addAll(gui.names);
+               isChanged = true;
+               break;
+            }
+         }
+         if (isChanged) {
+            isWait = true;
+            menu.data.setChanged();
+         }
+      }
+   }
 
-	@Override
-	public boolean mouseCnpcsReleased(int mouseX, int mouseY, int state) {
-		if (isScrolling) { isScrolling = false; }
-		return super.mouseCnpcsReleased(mouseX, mouseY, state);
-	}
+   @Override
+   public boolean keyPressed(int key, int key_1, int key_2) {
+      if (isWait) { return false; }
+      if (!hasSubGui() && isMany) {
+         if (GuiBasic.isUpKey(key)) {
+            resetRow(-18);
+            return true;
+         }
+         if (GuiBasic.isDownKey(key)) {
+            resetRow(+18);
+            return true;
+         }
+      }
+      return super.keyPressed(key, key_1, key_2);
+   }
 
-	private void resetRow(boolean bo) {
-		if (!isMany) { return; }
-		int old = row;
-		if (bo) { row++; }
-		else { row--; }
-		if (row < 0) { row = 0; }
-		if (row > maxRows - 5) { row = maxRows - 5; }
-		if (old != row) { resetSlots(); }
-	}
+   @Override
+   public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+      if (isWait) { return false; }
+      isScrolling = false;
+      if (!hasSubGui() && isMany) {
+         double u = (double) guiLeft + (double) imageWidth - 17.0d;
+         double v = ((double) height - (double) imageHeight) / 2.0d + 17.5d;
+         if (isMouseHover(mouseX, mouseY, u, v, 10, 170.5d)) {
+            isScrolling = true;
+            mouseY -= 19.0d;
+            if (mouseY <= 15.0d) { scrollY = 0; }
+            else if (mouseY >= 155.0d) { scrollY = scrollMax; }
+            else {
+               mouseY -= 15.0d;
+               scrollY = (int) (mouseY / 135.0d * (double) scrollMax);
+            }
+            resetRow(0);
+            return true;
+         }
+      }
+      return super.mouseClicked(mouseX, mouseY, mouseButton);
+   }
 
-	private void resetSlots() {
-		if (!isMany) { return; }
-		int m = row * 9, n = m + 45, i = -1;
-		int t = cont.items.getSizeInventory(), u = 0, e = t;
-		if (t % 9 != 0) { e -= t % 9; }
-		for (int s = 0; s < t; s++) {
-			Slot slot = cont.getSlot(s);
-            if (s < m || s >= n) {
-				slot.xPos = -5000;
-				slot.yPos = -5000;
-				continue;
-			}
-			i++;
-			if (s >= e) { u = (int) (((9.0d - ((double) t % 9.0d)) / 2.0d) * 18.0d); }
-			slot.xPos = 8 + u + (i % 9) * 18;
-			slot.yPos = 18 + (i / 9) * 18;
-		}
-	}
+   @Override
+   public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
+      if (isWait) { return false; }
+      if (!hasSubGui() && isScrolling && mouseButton == 0) {
+         double y0 = ((double) height - (double) imageHeight) / 2.0d + 18.0d;
+         double y1 = y0 + 170.0d;
+         if (mouseY >= y0 && mouseY < y1) {
+            mouseY -= 19.0d;
+            if (mouseY <= 15.0d) { scrollY = 0; }
+            else if (mouseY >= 155.0d) { scrollY = scrollMax; }
+            else {
+               mouseY -= 15.0d;
+               scrollY = (int) (mouseY / 135.0d * (double) scrollMax);
+            }
+            resetRow(0);
+            return true;
+         }
+      }
+      return super.mouseDragged(mouseX, mouseY, mouseButton, dx, dy);
+   }
+
+   @Override
+   public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
+      if (isWait) { return false; }
+      if (!hasSubGui() && scrolled != 0) {
+         int u = (width - imageWidth) / 2 - 37;
+         int v = (height - imageHeight) / 2 + 14;
+         if (isMouseHover(mouseX, mouseY, u, v, 70, 194)) {
+            if ((scrolled > 0 && getButton(1) != null && getButton(1).isVisible()) ||
+                    (scrolled < 0 && getButton(2) != null && getButton(2).isVisible())) {
+               v = ValueUtil.correctInt(ceilPos - (int) scrolled, 0, menu.data.bank.ceilSettings.size() - 5);
+               if (v < 0) { v = 0; }
+               if (ceilPos != v) {
+                  ceilPos = v;
+                  init();
+               }
+            }
+            return true;
+         }
+         if (isMany) {
+            resetRow(scrolled > 0 ? -6 : 6);
+            return true;
+         }
+      }
+      return super.mouseScrolled(mouseX, mouseY, scrolled);
+   }
+
+   @Override
+   public Slot findSlot(double mouseX, double mouseY, Slot foundSlot) {
+      if (isWait) { return foundSlot; }
+      if (menu.items.getContainerSize() > 0) {
+         int x = guiLeft + 7, xs;
+         int y = guiTop + 20, ys;
+         for (int s = 0; s < menu.items.getContainerSize(); s++) {
+            Slot slot = menu.slots.get(s);
+            xs = x + (s % 9) * 18;
+            ys = y - scrollY + (int) (Math.floor((double) s / 9.0d) * 18.0d);
+            if (ys > y - 17 && ys < y + 90) {
+               xs += 1;
+               ys += 1;
+               int yh = ys;
+               int hy = 16;
+               if (ys < y) { yh = y; hy = 16 - y + ys; }
+               else if (ys > y + 72) { hy = Math.min(16, 90 - ys + y); }
+               if (isMouseHover(mouseX, mouseY, xs, yh, 16, hy)) { return isWait ? null : slot; }
+            }
+         }
+      }
+      return foundSlot;
+   }
+
+   @Override
+   public void onClose() {
+      super.onClose();
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      startXMouse = wrapper.mouseX;
+      startYMouse = wrapper.mouseY;
+      if (ContainerNPCBank.editPlayerBankData != null && !ContainerNPCBank.editPlayerBankData.isEmpty()) {
+         GuiNpcManagePlayerData gui = new GuiNpcManagePlayerData(npc);
+         gui.selection = EnumPlayerData.Bank;
+         gui.selectedPlayer = Component.literal(ContainerNPCBank.editPlayerBankData);
+         NoppesUtil.openGUI(player, gui);
+         Packets.sendServer(new SPacketPlayerDataGet(EnumPlayerData.Bank, ContainerNPCBank.editPlayerBankData));
+         ContainerNPCBank.editPlayerBankData = null;
+      }
+   }
+
+   private void renderSlot(@NotNull GuiGraphics graphics, Slot slotIn, int xPos, int yPos) {
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      Slot clickedSlot = ((IAbstractContainerScreenMixin) this).getClickedSlot();
+      ItemStack draggingItem = ((IAbstractContainerScreenMixin) this).getDraggingItem();
+      boolean isSplittingStack = ((IAbstractContainerScreenMixin) this).getIsSplittingStack();
+      int quickCraftingType = ((IAbstractContainerScreenMixin) this).getQuickCraftingType();
+
+      ItemStack itemstack = slotIn.getItem();
+      boolean hovering = false;
+      boolean flag1 = slotIn == clickedSlot && !draggingItem.isEmpty() && !isSplittingStack;
+      ItemStack itemstack1 = menu.getCarried();
+      String s = null;
+      if (slotIn == clickedSlot && !draggingItem.isEmpty() && isSplittingStack && !itemstack.isEmpty()) {
+         itemstack = itemstack.copyWithCount(itemstack.getCount() / 2);
+      }
+      else if (isQuickCrafting && quickCraftSlots.contains(slotIn) && !itemstack1.isEmpty()) {
+         if (quickCraftSlots.size() == 1) { return; }
+         if (AbstractContainerMenu.canItemQuickReplace(slotIn, itemstack1, true) && menu.canDragTo(slotIn)) {
+            hovering = true;
+            int k = Math.min(itemstack1.getMaxStackSize(), slotIn.getMaxStackSize(itemstack1));
+            int l = slotIn.getItem().isEmpty() ? 0 : slotIn.getItem().getCount();
+            int i1 = AbstractContainerMenu.getQuickCraftPlaceCount(quickCraftSlots, quickCraftingType, itemstack1) + l;
+            if (i1 > k) {
+               i1 = k;
+               s = ChatFormatting.YELLOW.toString() + k;
+            }
+            itemstack = itemstack1.copyWithCount(i1);
+         } else {
+            quickCraftSlots.remove(slotIn);
+            recalculateQuickCraftRemaining();
+         }
+      }
+      graphics.pose().pushPose();
+      graphics.pose().translate(0.0F, 0.0F, 100.0F);
+      if (itemstack.isEmpty() && slotIn.isActive()) {
+         Pair<ResourceLocation, ResourceLocation> pair = slotIn.getNoItemIcon();
+         if (pair != null) {
+            TextureAtlasSprite textureatlassprite = minecraft.getTextureAtlas(pair.getFirst()).apply(pair.getSecond());
+            graphics.blit(xPos, yPos, 0, 16, 16, textureatlassprite);
+            flag1 = true;
+         }
+      }
+      if (!flag1) {
+         if (hovering) { graphics.fill(xPos, yPos, xPos + 16, yPos + 16, 0x80FFFFFF); }
+         graphics.renderItem(itemstack, xPos, yPos, slotIn.x + slotIn.y * imageWidth);
+         graphics.renderItemDecorations(font, itemstack, xPos, yPos, s);
+      }
+      graphics.pose().popPose();
+   }
+
+   private void recalculateQuickCraftRemaining() {
+      ItemStack itemstack = this.menu.getCarried();
+      int quickCraftingType = ((IAbstractContainerScreenMixin) this).getQuickCraftingType();
+      if (!itemstack.isEmpty() && this.isQuickCrafting) {
+         if (quickCraftingType == 2) {
+            ((IAbstractContainerScreenMixin) this).setQuickCraftingRemainder(itemstack.getMaxStackSize());
+         } else {
+            ((IAbstractContainerScreenMixin) this).setQuickCraftingRemainder(itemstack.getCount());
+
+            for(Slot slot : quickCraftSlots) {
+               ItemStack itemstack1 = slot.getItem();
+               int i = itemstack1.isEmpty() ? 0 : itemstack1.getCount();
+               int j = Math.min(itemstack.getMaxStackSize(), slot.getMaxStackSize(itemstack));
+               int k = Math.min(AbstractContainerMenu.getQuickCraftPlaceCount(quickCraftSlots, quickCraftingType, itemstack) + i, j);
+               int quickCraftingRemainder = ((IAbstractContainerScreenMixin) this).getQuickCraftingRemainder();
+               ((IAbstractContainerScreenMixin) this).setQuickCraftingRemainder(quickCraftingRemainder - (k - i));
+            }
+
+         }
+      }
+   }
+
+   private void resetRow(int step) {
+      if (!isMany) { return; }
+      scrollY += step;
+      if (scrollY < 0) { scrollY = 0; }
+      else if (scrollY > scrollMax) { scrollY = scrollMax; }
+      scrollBarY = (int) (((float) height - (float) imageHeight) / 2.0f + 17.0f + (float) scrollY / (float) scrollMax * 141.0f);
+   }
+
+   public static class GuiSafeButton extends GuiButtonNop {
+
+      protected GuiNPCBankChest listener;
+      protected final int ceil;
+      protected final boolean isCeil;
+      protected long ticks;
+      protected long lastTick = System.currentTimeMillis();
+
+      public GuiSafeButton(GuiNPCBankChest gui, int buttonId, Object label, int x, int y, int w, int h, int ceilIn) {
+         super(gui, buttonId, label, x, y, null);
+         width = w;
+         height = h;
+         listener = gui;
+
+         isCeil = h == 14;
+         ceil = ceilIn;
+         txrX = 70;
+         txrY = isCeil ? 0 : 28;
+         txrW = w * 2;
+         txrH = h * 2;
+         ticks = listener.menu.ceil == ceil ? 500 : 0;
+      }
+
+      @Override
+      public void renderWidget(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+         if (!visible) { return; }
+         Minecraft mc = Minecraft.getInstance();
+         isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
+         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+         RenderSystem.enableBlend();
+         PoseStack matrixStack = graphics.pose();
+         // animation
+         matrixStack.pushPose();
+         matrixStack.translate(getX(), getY(), 0);
+         matrixStack.scale(0.5f, 0.5f, 1.0f);
+         // door
+         if (isCeil) { drawDoor(graphics, listener.menu.ceil == ceil || isHovered); }
+         else {
+            if (isHovered) {
+               float f = ((IMouseHandlerMixin) mc.mouseHandler).getActiveButton() == 0 ? 0.5f : 0.75f;
+               RenderSystem.setShaderColor(f, f, f, alpha);
+            }
+            graphics.blit(SAFE, 0, 0, txrX, txrY, txrW, txrH);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+         } // up or down
+         matrixStack.popPose();
+         // text
+         matrixStack.pushPose();
+         Component mes = getMessage();
+         renderString(graphics, getMessage(), getX() + (isCeil ? - mc.font.width(mes) : 2), getY(),
+                 getX() + (isCeil ? 0 : getWidth() - 2), getY() + getHeight(),
+                 getFGColor() | Mth.ceil(alpha * 255.0F) << 24, showShadow, true, customFont);
+         matrixStack.popPose();
+      }
+
+      private void drawDoor(GuiGraphics graphics, boolean isOpen) {
+         // inside
+         float f0 = 0.0f;
+         NpcMiscInventory inv = listener.menu.data.get(ceil);
+         if (inv != null) {
+            f0 = inv.getContainerSize() == 0 ? 1.0f : (float) inv.getCountEmpty() / (float) inv.getContainerSize();
+         }
+         int y = f0 >= 0.95f ? 106 : f0 <= 0.2f ? 50 : 78;
+         graphics.blit(SAFE, 0, 0, txrX, y, txrW, txrH);
+         double d0 = (double) ticks;
+         PoseStack matrixStack = graphics.pose();
+         if (d0 < 0) { ticks = 0; d0 = 0; }
+         if (d0 == 0.0d) { graphics.blit(SAFE, 0, 0, txrX, txrY, txrW, txrH); }
+         else if (d0 < 500.0d) {
+            double d1 = Math.sin(Math.toRadians(90 * d0 / 500.0d));
+            if (d1 < 0.5d) {
+               f0 = (float) ValueUtil.correctDouble(-4.7d * d1 + 4.0d, 1.65d, 4.0d);
+               double f1 = ValueUtil.correctDouble(85.714286d * Math.pow(d1, 3.0d) + 7.142857d * Math.pow(d1, 2.0d) + 17.0d * d1,
+                       0.0d, 21.0f);
+               matrixStack.scale(f0, 1.0f, 1.0f);
+               matrixStack.translate(f1, -4.0d, 1.0d);
+               graphics.blit(SAFE, 0, 0, 136, 0, 20, 41);
+               matrixStack.pushPose();
+               matrixStack.scale(2.0f * (float) d1, 1.0f, 1.0f);
+               graphics.blit(SAFE, -6, 0, 130, 0, 6, 41);
+               matrixStack.popPose();
+            }
+            else {
+               f0 = (float) ValueUtil.correctDouble(-1.7329d * d1 + 2.7329d, 1.0d, 1.86645d);
+               double f1 = ValueUtil.correctDouble(38.50667d * Math.pow(d1, 3.0d) - 28.824 * Math.pow(d1, 2.0d) + 29.395333d * d1 - 1.078d,
+                       11.227d, 38.0d);
+               matrixStack.scale(f0, 1.0f, 1.0f);
+               matrixStack.translate(f1, -4.0f, 1.0f);
+               graphics.blit(SAFE, 0, 0, 130, 0, 26, 41);
+            }
+         }
+         else {
+            matrixStack.translate(38.0f, -4.0d, 1.0d);
+            graphics.blit(SAFE, 0, 0, 130, 0, 26, 41);
+         }
+         long l = System.currentTimeMillis() - lastTick;
+         ticks = ValueUtil.correctLong(ticks + (isOpen ? l : -l), 0L, 500L);
+         lastTick = System.currentTimeMillis();
+      }
+
+   }
 
 }

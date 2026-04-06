@@ -1,64 +1,54 @@
 package noppes.npcs.ai;
 
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityMoveHelper;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class FlyingMoveHelper extends EntityMoveHelper {
+import java.util.Objects;
 
-	private int courseChangeCooldown;
-	private final EntityNPCInterface entity;
+public class FlyingMoveHelper extends MoveControl {
 
-	public FlyingMoveHelper(EntityNPCInterface entity) {
-		super(entity);
-		this.entity = entity;
-	}
+   private final EntityNPCInterface entity;
+   private int courseChangeCooldown;
 
-	private boolean isNotColliding(double posX, double posY, double posZ, double diagonal) {
-		double d4 = (posX - this.entity.posX) / diagonal;
-		double d5 = (posY - this.entity.posY) / diagonal;
-		double d6 = (posZ - this.entity.posZ) / diagonal;
-		AxisAlignedBB axisalignedbb = this.entity.getEntityBoundingBox();
-		for (int i = 1; i < diagonal; ++i) {
-			axisalignedbb = axisalignedbb.offset(d4, d5, d6);
-			if (!this.entity.world.getCollisionBoxes(this.entity, axisalignedbb).isEmpty()) {
-				return false;
-			}
-		}
-		return true;
-	}
+   public FlyingMoveHelper(EntityNPCInterface npc) {
+      super(npc);
+      this.entity = npc;
+   }
 
-	public void onUpdateMoveHelper() {
-		if (this.action == EntityMoveHelper.Action.MOVE_TO && this.courseChangeCooldown-- <= 0) {
-			this.courseChangeCooldown = 4;
-			double d0 = this.posX - this.entity.posX;
-			double d2 = this.posY - this.entity.posY;
-			double d3 = this.posZ - this.entity.posZ;
-			double d4 = d0 * d0 + d2 * d2 + d3 * d3;
-			d4 = MathHelper.sqrt(d4);
-			if (d4 > 0.5 && this.isNotColliding(this.posX, this.posY, this.posZ, d4)) {
-				double speed = this.entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED)
-						.getAttributeValue() / 2.5;
-				if (d4 < 3.0 && speed > 0.10000000149011612) {
-					speed = 0.10000000149011612;
-				}
-				EntityNPCInterface entity = this.entity;
-				entity.motionX += d0 / d4 * speed;
-				EntityNPCInterface entity2 = this.entity;
-				entity2.motionY += d2 / d4 * speed;
-				EntityNPCInterface entity3 = this.entity;
-				entity3.motionZ += d3 / d4 * speed;
-				EntityNPCInterface entity4 = this.entity;
-				EntityNPCInterface entity5 = this.entity;
-				float n = (float) -Math.atan2(this.entity.motionX, this.entity.motionZ) * 180.0f / 3.1415927f;
-				entity5.rotationYaw = n;
-				entity4.renderYawOffset = n;
-			} else {
-				this.action = EntityMoveHelper.Action.WAIT;
-			}
-		}
-	}
+   public void tick() {
+      if (this.operation == Operation.MOVE_TO && this.courseChangeCooldown-- <= 0) {
+         this.courseChangeCooldown = 4;
+         Vec3 vector3d = new Vec3(this.getWantedX() - this.entity.getX(), this.getWantedY() - this.entity.getY(), this.getWantedZ() - this.entity.getZ());
+         double length = vector3d.length();
+         vector3d = vector3d.normalize();
+         if (length > 0.5D && this.isNotColliding(vector3d, Mth.ceil(length))) {
+            double speed = Objects.requireNonNull(this.entity.getAttribute(Attributes.MOVEMENT_SPEED)).getValue() / 2.5D;
+            if (length < 3.0D && speed > 0.10000000149011612D) {
+               speed = 0.10000000149011612D;
+            }
+            Vec3 m = this.entity.getDeltaMovement().add(vector3d.scale(speed));
+            this.entity.setDeltaMovement(m);
+            this.entity.setYRot(-((float)Math.atan2(m.x, m.z)) * 180.0F / 3.1415927F);
+            this.entity.yBodyRot = this.entity.getYRot();
+         } else {
+            this.operation = Operation.WAIT;
+         }
+      }
 
+   }
+
+   private boolean isNotColliding(Vec3 vec, int length) {
+      AABB axisAlignedBB = this.entity.getBoundingBox();
+      for(int i = 1; i < length; ++i) {
+         axisAlignedBB = axisAlignedBB.move(vec);
+         if (!this.entity.level().noCollision(this.entity, axisAlignedBB)) {
+            return false;
+         }
+      }
+      return true;
+   }
 }

@@ -1,88 +1,95 @@
 package noppes.npcs.api.handler.data;
 
+import net.minecraft.network.chat.Component;
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
-public interface IQuestObjective { // QuestObjective
+public interface IQuestObjective {
 
-	int getAreaRange();
+   int getProgress();
 
-	int getCompassDimension();
+   void setProgress(@ParamName("progress") int progress);
 
-	IPos getCompassPos();
+   int getMaxProgress();
 
-	int getCompassRange();
+   boolean isCompleted();
 
-	IItemStack getItem();
+   String getText();
 
-	int getMaxProgress();
+   Component getMCText();
 
-	String getOrientationEntityName();
+   // New from Unofficial (BetaZavr)
+   int getAreaRange();
 
-	int getProgress();
+   String getCompassDimension();
 
-	int getTargetID();
+   IPos getCompassPos();
 
-	String getTargetName();
+   int getCompassRange();
 
-	String getText();
+   int getCompassColor();
 
-	int getType();
+   IItemStack getItem();
 
-	boolean isAndTitle();
+   String getOrientationEntityName();
 
-	boolean isCompleted();
+   int getTargetID();
 
-	boolean isIgnoreDamage();
+   String getTargetName();
 
-	boolean isItemIgnoreNBT();
+   int getType();
 
-	boolean isItemLeave();
+   boolean isAndTitle();
 
-	boolean isNotShowLogEntity();
+   boolean isIgnoreDamage();
 
-	boolean isPartName();
+   boolean isItemIgnoreNBT();
 
-	boolean isSetPointOnMiniMap();
+   boolean isItemLeave();
 
-	void setAndTitle(@ParamName("andTitle") boolean andTitle);
+   boolean isNotShowLogEntity();
 
-	void setAreaRange(@ParamName("nbt") int range);
+   boolean isPartName();
 
-	void setCompassDimension(@ParamName("dimensionId") int dimensionId);
+   boolean isSetPointOnMiniMap();
 
-	void setCompassPos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   void setAndTitle(@ParamName("andTitle") boolean andTitle);
 
-	void setCompassPos(@ParamName("pos") IPos pos);
+   void setAreaRange(@ParamName("range") int range);
 
-	void setCompassRange(@ParamName("range") int range);
+   void setCompassDimension(@ParamName("dimensionId") String dimensionId);
 
-	void setItem(@ParamName("item") IItemStack item);
+   void setCompassPos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void setItemIgnoreDamage(@ParamName("bo") boolean bo);
+   void setCompassPos(@ParamName("pos") IPos pos);
 
-	void setItemIgnoreNBT(@ParamName("bo") boolean bo);
+   void setCompassRange(@ParamName("range") int range);
 
-	void setItemLeave(@ParamName("bo") boolean bo);
+    void setCompassColor(@ParamName("color") int color);
 
-	void setMaxProgress(@ParamName("value") int value);
+    void setItem(@ParamName("item") IItemStack item);
 
-	void setNotShowLogEntity(@ParamName("notShowLogEntity") boolean notShowLogEntity);
+   void setItemIgnoreDamage(@ParamName("bo") boolean bo);
 
-	void setOrientationEntityName(@ParamName("name") String name);
+   void setItemIgnoreNBT(@ParamName("bo") boolean bo);
 
-	void setPartName(@ParamName("isPart") boolean isPart);
+   void setItemLeave(@ParamName("bo") boolean bo);
 
-	void setPointOnMiniMap(@ParamName("bo") boolean bo);
+   void setMaxProgress(@ParamName("value") int value);
 
-	void setProgress(@ParamName("value") int value);
+   void setNotShowLogEntity(@ParamName("notShowLogEntity") boolean notShowLogEntity);
 
-	void setTargetID(@ParamName("id") int id);
+   void setOrientationEntityName(@ParamName("name") String name);
 
-	void setTargetName(@ParamName("name") String name);
+   void setPartName(@ParamName("isPart") boolean isPart);
 
-	void setType(@ParamName("type") int type);
+   void setPointOnMiniMap(@ParamName("bo") boolean bo);
+
+   void setTargetID(@ParamName("id") int id);
+
+   void setTargetName(@ParamName("name") String name);
+
+   void setType(@ParamName("type") int type);
 
 }

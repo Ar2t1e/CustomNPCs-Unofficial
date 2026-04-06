@@ -1,288 +1,277 @@
 package noppes.npcs.controllers.data;
 
 import java.io.File;
-import java.nio.file.Files;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import noppes.npcs.CustomEntities;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.handler.ICustomPlayerData;
-import noppes.npcs.api.handler.capability.IPlayerDataHandler;
-import noppes.npcs.api.mixin.entity.IEntityMixin;
+import noppes.npcs.api.mixin.world.entity.IEntityIMixin;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataAnimation;
 import noppes.npcs.entity.data.DataTimers;
 import noppes.npcs.roles.RoleCompanion;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.NBTJsonUtil;
-import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-public class PlayerData implements IPlayerDataHandler, ICapabilityProvider, ICustomPlayerData {
+public class PlayerData
+implements ICapabilityProvider, ICustomPlayerData {
 
-	@CapabilityInject(IPlayerDataHandler.class)
-	public static Capability<IPlayerDataHandler> PLAYERDATA_CAPABILITY = null;
+   private static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "playerdata");
+   private static final PlayerData backup = new PlayerData();
+   public static Capability<PlayerData> PLAYERDATA_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() { });
 
-	protected static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "playerdata");
+   private final LazyOptional<PlayerData> instance;
 
-    public static PlayerData get(EntityPlayer player) {
-		if (player == null || player.world == null || player.world.isRemote) { return CustomNpcs.proxy.getPlayerData(player); }
-		PlayerData data = (PlayerData) player.getCapability(PlayerData.PLAYERDATA_CAPABILITY, null);
-		if (data != null && data.player == null) {
-			data.player = player;
-			data.playerLevel = player.experienceLevel;
-			data.animation = new DataAnimation(player);
-			data.scriptData = new PlayerScriptData(player);
-			NBTTagCompound compound = PlayerData.loadPlayerData(player.getPersistentID().toString(), player.getName());
-			if (compound.getKeySet().isEmpty()) { compound = loadPlayerDataOld(player.getPersistentID().toString(), player.getName()); }
-			data.setNBT(compound);
-		}
-		return data;
-	}
+   private EntityNPCInterface activeCompanion;
 
-	@SuppressWarnings("all")
-	public static NBTTagCompound loadPlayerData(String uuid, String name) {
-		File dir = CustomNpcs.getWorldSaveDirectory("playerdata");
-		File saveDir = new File(dir, uuid);
-		File file = new File(saveDir, name + ".json");
-		if (!saveDir.exists()) {
-			saveDir.mkdirs();
-			File oldVersionFile = new File(dir, uuid + ".json");
-			try {
-				if (oldVersionFile.exists()) {
-					NBTTagCompound nbt = NBTJsonUtil.LoadFile(oldVersionFile);
-					oldVersionFile.delete();
-					if (!file.exists()) {
-						try {
-							file.createNewFile();
-							Util.instance.saveFile(file, nbt);
-						}
-						catch (Exception e) { LogWriter.error("Error create player data: " + file.getAbsolutePath(), e); }
-					}
-					return nbt;
-				}
-			}
-			catch (Exception e) { LogWriter.error("Error old loading: " + oldVersionFile.getAbsolutePath(), e); }
-		}
-		if (!file.exists()) {
-			try { file.createNewFile(); }
-			catch (Exception e) { LogWriter.error("Error create player data: " + file.getAbsolutePath(), e); }
-			return new NBTTagCompound();
-		}
-		try {
-			if (file.exists()) { return NBTJsonUtil.LoadFile(file); }
-		}
-		catch (Exception e) { LogWriter.error("Error loading: " + file.getAbsolutePath(), e); }
-		return new NBTTagCompound();
-	}
+   public final PlayerDialogData dialogData = new PlayerDialogData();
+   public final PlayerBankData bankData = new PlayerBankData(this);
+   public final PlayerQuestData questData = new PlayerQuestData();
+   public final PlayerTransportData transportData = new PlayerTransportData();
+   public final PlayerFactionData factionData = new PlayerFactionData();
+   public final PlayerItemGiverData itemgiverData = new PlayerItemGiverData();
+   public final PlayerMailData mailData = new PlayerMailData();
 
-	@SuppressWarnings("all")
-	public static NBTTagCompound loadPlayerDataOld(String uuid, String name) {
-		File saveDir = CustomNpcs.getWorldSaveDirectory("playerdata/" + uuid);
-		if (name.isEmpty()) { name = "noplayername"; }
-		name += ".dat";
-		try {
-			File file = new File(saveDir, name);
-			if (file.exists()) {
-				NBTTagCompound comp = CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath()));
-				file.delete();
-				file = new File(saveDir, name + "_old");
-				if (file.exists()) {
-					file.delete();
-				}
-				return comp;
-			}
-		}
-		catch (Exception e) { LogWriter.except(e); }
-		try {
-			File file = new File(saveDir, name + "_old");
-			if (file.exists()) { return CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())); }
-		}
-		catch (Exception e) { LogWriter.except(e); }
-		return new NBTTagCompound();
-	}
-	public static void register(AttachCapabilitiesEvent<Entity> event) {
-		if (event.getObject() instanceof EntityPlayer) { event.addCapability(PlayerData.key, new PlayerData()); }
-	}
+   public PlayerScriptData scriptData;
+   public BlockPos scriptBlockPos = BlockPos.ZERO;
+   public ItemStack prevHeldItem = ItemStack.EMPTY;
+   public EntityNPCInterface editingNpc;
+   public DataTimers timers;
+   public CompoundTag cloned;
+   public Player player;
+   public Entity mounted;
+   public String name = "";
+   public String uuid = "";
+   public boolean updateClient;
+   public int companionID = 0;
+   public int playerLevel = 0;
+   public int dialogId = -1;
 
-	protected EntityNPCInterface activeCompanion = null;
-	public PlayerBankData bankData = new PlayerBankData();
-	public NBTTagCompound cloned;
-	public int companionID = 0;
-	public int dialogId = -1;
-	public PlayerDialogData dialogData = new PlayerDialogData();
-	public EntityNPCInterface editingNpc;
-	public PlayerFactionData factionData = new PlayerFactionData();
-	public PlayerGameData game = new PlayerGameData();
-	public PlayerItemGiverData itemgiverData = new PlayerItemGiverData();
-	public PlayerMailData mailData = new PlayerMailData();
-	public DataAnimation animation;
-	public PlayerOverlayHUD hud = new PlayerOverlayHUD();
-	public PlayerQuestData questData = new PlayerQuestData();
-	public PlayerScriptData scriptData;
-	public PlayerMiniMapData minimap = new PlayerMiniMapData();
-	public PlayerTransportData transportData = new PlayerTransportData();
+   // New data from Unofficial (BetaZavr)
+   public DataAnimation animation;
+   public PlayerGameData game = new PlayerGameData();
+   public PlayerCompassData compass = new PlayerCompassData();
+   public PlayerMiniMapData minimap = new PlayerMiniMapData();
+   public PlayerOverlayData overlay = new PlayerOverlayData();
 
-	public EntityPlayer player;
-	public int playerLevel = 0;
-	public ItemStack prevHeldItem = ItemStack.EMPTY;
+   public PlayerData() {
+      instance = LazyOptional.of(() -> this);
+      timers = new DataTimers(this);
+   }
 
-	public DataTimers timers = new DataTimers(this);
+   public void setNBT(CompoundTag data) {
+      dialogData.load(data);
+      bankData.load(data);
+      questData.load(data);
+      transportData.load(data);
+      factionData.load(data);
+      itemgiverData.load(data);
+      mailData.load(data);
+      timers.load(data);
 
-	public boolean updateClient = false; // send to -> ServerTickHandler.onPlayerTick() 112
+      // New data from Unofficial (BetaZavr)
+      game.load(data);
+      compass.load(data);
+      minimap.load(data);
+      overlay.load(data);
+      if (player != null && !(player instanceof FakePlayer)) {
+         name = player.getName().getString();
+         uuid = player.getUUID().toString();
+      } else {
+         name = data.getString("PlayerName");
+         uuid = data.getString("UUID");
+      }
+      companionID = data.getInt("PlayerCompanionId");
+      if (data.contains("PlayerCompanion") && !hasCompanion() && player != null) {
+         EntityCustomNpc npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, player.level());
+         npc.readAdditionalSaveData(data.getCompound("PlayerCompanion"));
+         npc.setPos(player.getX(), player.getY(), player.getZ());
+         if (npc.role.getEnumType() != RoleType.COMPANION) {
+            ((RoleCompanion)npc.role).setSitting(false);
+            player.level().addFreshEntity(npc);
+            setCompanion(npc);
+         }
+      }
+      if (player != null) {
+         ((IEntityIMixin) player).npcs$getStoredData().setNbt(data.getCompound("ScriptStoreddata"));
+      }
+   }
 
-	public String uuid = "";
-	public String playername = "";
+   public CompoundTag getSyncNBT() {
+      CompoundTag compound = new CompoundTag();
+      dialogData.save(compound);
+      questData.save(compound);
+      mailData.save(compound);
+      factionData.save(compound);
 
-	@SuppressWarnings("unchecked")
-	public <T> T getCapability(@Nonnull Capability<T> capability, EnumFacing facing) {
-		if (hasCapability(capability, facing)) { return (T) this; }
-		return null;
-	}
+      game.save(compound);
+      compass.save(compound);
+      minimap.save(compound);
+      overlay.save(compound);
+      return compound;
+   }
 
-	@Override
-	public NBTTagCompound getNBT() {
-		CustomNpcs.debugData.start(this);
-		if (player != null) {
-			playername = player.getName();
-			uuid = player.getPersistentID().toString();
-		}
-		NBTTagCompound compound = new NBTTagCompound();
-		dialogData.saveNBTData(compound);
-		questData.saveNBTData(compound);
-		transportData.saveNBTData(compound);
-		factionData.saveNBTData(compound);
-		itemgiverData.saveNBTData(compound);
-		mailData.saveNBTData(compound);
-		timers.writeToNBT(compound);
-		hud.saveNBTData(compound);
-		game.saveNBTData(compound);
-		minimap.saveNBTData(compound);
-		if (animation != null) { animation.save(compound); }
-		compound.setInteger("PlayerCompanionId", companionID);
-		if (playername != null && !playername.isEmpty()) { compound.setString("PlayerName", playername); }
-		if (uuid != null && !uuid.isEmpty()) { compound.setString("UUID", uuid); }
-		if (player != null) { compound.setTag("ScriptStoreddata", ((IEntityMixin) player).npcs$getStoredData().getNbt().getMCNBT()); }
-		if (hasCompanion()) {
-			NBTTagCompound nbt = new NBTTagCompound();
-			if (activeCompanion.writeToNBTAtomically(nbt)) { compound.setTag("PlayerCompanion", nbt); }
-		}
-		CustomNpcs.debugData.end(this);
-		return compound;
-	}
+   public CompoundTag getNBT() {
+      if (player != null && !(player instanceof FakePlayer)) {
+         name = player.getName().getString();
+         uuid = player.getUUID().toString();
+      }
+      CompoundTag compound = new CompoundTag();
+      dialogData.save(compound);
+      questData.save(compound);
+      transportData.save(compound);
+      factionData.save(compound);
+      itemgiverData.save(compound);
+      mailData.save(compound);
+      timers.save(compound);
 
-	public NBTTagCompound getSyncNBT() { // Only Display Datas
-		NBTTagCompound compound = new NBTTagCompound();
-		dialogData.saveNBTData(compound);
-		questData.saveNBTData(compound);
-		factionData.saveNBTData(compound);
-		return compound;
-	}
+      game.save(compound);
+      compass.save(compound);
+      minimap.save(compound);
+      overlay.save(compound);
 
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) { return capability == PlayerData.PLAYERDATA_CAPABILITY; }
+      compound.putString("PlayerName", name);
+      compound.putString("UUID", uuid);
+      compound.putInt("PlayerCompanionId", companionID);
+      if (player != null) { compound.put("ScriptStoreddata", ((IEntityIMixin) player).npcs$getStoredData().getNbt().getMCNBT()); }
+      if (hasCompanion()) {
+         CompoundTag nbt = new CompoundTag();
+         if (activeCompanion.saveAsPassenger(nbt)) { compound.put("PlayerCompanion", nbt); }
+      }
 
-	public boolean hasCompanion() { return activeCompanion != null && !activeCompanion.isDead; }
+      return compound;
+   }
 
-	@SuppressWarnings("all")
-	public synchronized void save(boolean update) {
-		CustomNPCsScheduler.runTack(() -> {
-			try {
-				if (uuid.isEmpty()) { uuid = "noplayeruuid"; }
-				if (playername.isEmpty()) { playername = "noplayername"; }
-				File saveDir = CustomNpcs.getWorldSaveDirectory("playerdata/" + uuid);
-				String filename = playername + ".json";
-				File file = new File(saveDir, filename + "_new");
-				File file1 = new File(saveDir, filename);
-				NBTTagCompound nbt = getNBT();
-				Util.instance.saveFile(file, nbt);
-				if (file1.exists()) { file1.delete(); }
-				file.renameTo(file1);
-			}
-			catch (Exception e) { LogWriter.error("Error save PlayerData to file", e); }
-			if (update) { updateClient = true; }
-		});
-	}
+   public boolean hasCompanion() { return activeCompanion != null && !activeCompanion.isRemoved(); }
 
-	public void setCompanion(EntityNPCInterface npc) {
-		if (npc == null || !(npc.advanced.roleInterface instanceof RoleCompanion)) { return; }
-		++companionID;
-		activeCompanion = npc;
-        ((RoleCompanion) npc.advanced.roleInterface).companionID = companionID;
-        save(false);
-	}
+   public void setCompanion(EntityNPCInterface npc) {
+      if (npc == null || npc.role.getType() == 6) {
+         ++companionID;
+         activeCompanion = npc;
+         if (npc != null) { ((RoleCompanion)npc.role).companionID = companionID; }
+         save(false);
+      }
+   }
 
-	@Override
-	public void setNBT(NBTTagCompound data) {
-		if (player != null) {
-			playername = player.getName();
-			uuid = player.getPersistentID().toString();
-		} else {
-			playername = data.getString("PlayerName");
-			uuid = data.getString("UUID");
-		}
-		dialogData.loadNBTData(data);
-		bankData.loadNBTData(data, uuid);
-		questData.loadNBTData(data);
-		transportData.loadNBTData(data);
-		factionData.loadNBTData(data);
-		itemgiverData.loadNBTData(data);
-		mailData.loadNBTData(data);
-		hud.loadNBTData(data);
-		timers.readFromNBT(data);
-		game.readFromNBT(data);
-		companionID = data.getInteger("PlayerCompanionId");
-		if (data.hasKey("PlayerCompanion") && !hasCompanion()) {
-			EntityCustomNpc npc = new EntityCustomNpc(player.world);
-			npc.readEntityFromNBT(data.getCompoundTag("PlayerCompanion"));
-			npc.setPosition(player.posX, player.posY, player.posZ);
-			if (npc.advanced.roleInterface instanceof RoleCompanion) {
-				setCompanion(npc);
-				((RoleCompanion) npc.advanced.roleInterface).setSitting(false);
-				player.world.spawnEntity(npc);
-			}
-		}
-		if (player != null) { ((IEntityMixin) player).npcs$getStoredData().setNbt(data.getCompoundTag("ScriptStoreddata")); }
-	}
+   public void updateCompanion(Level level) {
+      if (hasCompanion() && level != activeCompanion.level()) {
+         RoleCompanion role = (RoleCompanion) activeCompanion.role;
+         role.owner = player;
+         if (role.isFollowing()) {
+            CompoundTag nbt = new CompoundTag();
+            activeCompanion.saveAsPassenger(nbt);
+            activeCompanion.discard();
+            EntityCustomNpc npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, level);
+            npc.readAdditionalSaveData(nbt);
+            npc.setPos(player.getX(), player.getY(), player.getZ());
+            setCompanion(npc);
+            ((RoleCompanion) npc.role).setSitting(false);
+            level.addFreshEntity(npc);
+         }
+      }
+   }
 
-	public void updateCompanion(World world) {
-		if (!hasCompanion() || world == activeCompanion.world) { return; }
-		RoleCompanion role = (RoleCompanion) activeCompanion.advanced.roleInterface;
-		role.owner = player;
-		if (!role.isFollowing()) { return; }
-		NBTTagCompound nbt = new NBTTagCompound();
-		activeCompanion.writeToNBTAtomically(nbt);
-		activeCompanion.isDead = true;
-		EntityCustomNpc npc = new EntityCustomNpc(world);
-		npc.readEntityFromNBT(nbt);
-		npc.setPosition(player.posX, player.posY, player.posZ);
-		setCompanion(npc);
-		((RoleCompanion) npc.advanced.roleInterface).setSitting(false);
-		world.spawnEntity(npc);
-	}
+   @Override
+   public <T> @Nonnull LazyOptional<T> getCapability(@Nonnull Capability<T> capability, Direction facing) {
+      return capability == PLAYERDATA_CAPABILITY ? instance.cast() : LazyOptional.empty();
+   }
 
-	public EntityPlayer getPlayer() { return player; }
+   public static void register(AttachCapabilitiesEvent<Entity> event) {
+      if (event.getObject() instanceof Player) { event.addCapability(key, new PlayerData()); }
+   }
 
-	public void setPlayer(EntityPlayer playerIn) {
-		player = playerIn;
-		if (player != null) {
-			NBTTagCompound compound = new NBTTagCompound();
-			if (animation != null) { animation.save(compound); }
-			animation = new DataAnimation(player);
-			if (!compound.hasNoTags()) { animation.load(compound); }
-		}
-	}
+   public synchronized void save(boolean update) {
+      CustomNPCsScheduler.runTack(() -> {
+         try {
+            if (uuid.isEmpty()) { uuid = "noplayeruuid"; }
+            if (name.isEmpty()) { name = "noplayername"; }
+            File saveDir = CustomNpcs.getLevelSaveDirectory("playerdata/" + uuid);
+            if (saveDir != null && (saveDir.exists() || saveDir.mkdirs())) {
+               File file = new File(saveDir, name + ".json_new");
+               File file1 = new File(saveDir, name + ".json");
+               NBTJsonUtil.SaveFile(file, getNBT());
+               if (file1.exists() && !file1.delete()) { LogWriter.warn("Error delete file: " + file1); }
+               if (!file.renameTo(file1)) { LogWriter.warn("Error rename file: " + file + " to: " + file1); }
+            }
+            else {
+               LogWriter.warn("Error not exists playerdata directory:" + saveDir);
+            }
+         }
+         catch (Exception e) { LogWriter.error("Error save PlayerData to file", e); }
+         if (update) { updateClient = true; }
+      });
+   }
+
+   public void clear() {
+      dialogData.clear();
+      questData.clear();
+      transportData.clear();
+      factionData.clear();
+      itemgiverData.clear();
+      mailData.clear();
+      timers.clear();
+      game.clear();
+      minimap.clear();
+   }
+
+   public static CompoundTag loadPlayerData(String uuid, String name) {
+      if (name.isEmpty()) { name = "noplayername"; }
+      File saveDir = CustomNpcs.getLevelSaveDirectory("playerdata/"+uuid);
+      if (saveDir != null && (saveDir.exists() || saveDir.mkdirs())) {
+         File file = new File(saveDir, name + ".json");
+         File oldVersionFile = new File(saveDir.getParentFile(), uuid + ".json");
+         if (!oldVersionFile.exists()) { oldVersionFile = new File(saveDir.getParentFile(), uuid + ".dat"); }
+         if (!file.exists() && oldVersionFile.exists() && oldVersionFile.isFile()) {
+            try {
+               CompoundTag nbt = NBTJsonUtil.LoadFile(oldVersionFile);
+               if (oldVersionFile.delete()) { NBTJsonUtil.SaveFile(file, nbt); }
+               return nbt;
+            }
+            catch (Exception e) { LogWriter.error("Error old loading: " + oldVersionFile.getAbsolutePath(), e); }
+            return new CompoundTag();
+         }
+         else if (file.exists() && file.isFile()) {
+            try {
+               if (!oldVersionFile.exists() || oldVersionFile.delete()) { return NBTJsonUtil.LoadFile(file); }
+            }
+            catch (Exception e) { LogWriter.error("Error loading: " + file.getAbsolutePath(), e); }
+         }
+      }
+      return new CompoundTag();
+   }
+
+   public static PlayerData get(@Nullable Player player) {
+      if (player == null || player.level().isClientSide) { return CustomNpcs.proxy.getPlayerData(player); }
+      PlayerData data = player.getCapability(PLAYERDATA_CAPABILITY, null).orElse(backup);
+      if (data.player == null) {
+         data.player = player;
+         data.playerLevel = player.experienceLevel;
+         data.animation = new DataAnimation(player);
+         data.scriptData = new PlayerScriptData(player);
+         data.setNBT(loadPlayerData(player.getUUID().toString(), player.getName().getString()));
+      }
+      return data;
+   }
 
 }

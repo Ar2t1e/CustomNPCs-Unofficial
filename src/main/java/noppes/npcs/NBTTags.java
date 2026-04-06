@@ -1,392 +1,414 @@
 package noppes.npcs;
 
 import java.util.*;
+import java.util.List;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.*;
-import net.minecraft.util.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.wrapper.ItemStackWrapper;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.IScriptHandler;
 import noppes.npcs.controllers.ScriptContainer;
-import noppes.npcs.reflection.item.crafting.IngredientReflection;
 import noppes.npcs.util.Util;
 
 public class NBTTags {
 
-	public static HashMap<Integer, Boolean> getBooleanList(NBTTagList tagList) {
-		HashMap<Integer, Boolean> list = new HashMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.put(nbttagcompound.getInteger("Slot"), nbttagcompound.getBoolean("Boolean"));
-		}
-		return list;
-	}
+   public static void getItemStackList(ListTag tagList, NpcMiscInventory inv) {
+      inv.clearContent();
+      for(int i = 0; i < tagList.size() && i < inv.getContainerSize(); ++i) {
+         CompoundTag nbtStack = tagList.getCompound(i);
+         int slotId;
+         if (nbtStack.contains("Slot", 3)) { slotId = nbtStack.getInt("Slot"); }
+         else if (nbtStack.contains("Slot", 1)) { slotId = nbtStack.getByte("Slot") & 0xFF; }
+         else { continue; }
+         if (slotId >= 0 && slotId < inv.getContainerSize()) { inv.setItem(slotId, ItemStack.of(nbtStack)); }
+      }
+   }
 
-	public static Map<Integer, IItemStack> getIItemStackMap(NBTTagList tagList) {
-		Map<Integer, IItemStack> list = new HashMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			ItemStack item = new ItemStack(nbttagcompound);
-			if (!item.isEmpty()) {
-				try {
-					list.put(nbttagcompound.getByte("Slot") & 0xFF, Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(item));
-				} catch (ClassCastException e) {
-					list.put(nbttagcompound.getInteger("Slot"), Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(item));
-				}
-			}
-		}
-		return list;
-	}
+   public static HashMap<Integer, IItemStack> getIItemStackMap(ListTag tagList) {
+      HashMap<Integer, IItemStack> map = new HashMap<>();
+      NpcAPI api = NpcAPI.Instance();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag nbtStack = tagList.getCompound(i);
+         int slotId;
+         if (nbtStack.contains("Slot", 3)) { slotId = nbtStack.getInt("Slot"); }
+         else if (nbtStack.contains("Slot", 1)) { slotId = nbtStack.getByte("Slot") & 0xFF; }
+         else { continue; }
+         IItemStack iStack = api != null ? api.getIItemStack(ItemStack.of(nbtStack)) : ItemStackWrapper.AIR;
+         map.put(slotId, iStack);
+      }
+      return map;
+   }
 
-	public static NonNullList<Ingredient> getIngredientList(NBTTagList tagList) {
-		NonNullList<Ingredient> list = NonNullList.create();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			Ingredient ingredients;
-			if (nbttagcompound.hasKey("Ingredients", 9) && ((NBTTagList) nbttagcompound.getTag("Ingredients")).getTagType() == 10) {
-				NBTTagList ingredientsNBT = nbttagcompound.getTagList("Ingredients", 10);
-				List<ItemStack> ings = new ArrayList<>();
-				for (int j = 0; j < ingredientsNBT.tagCount(); j++) { ings.add(new ItemStack(ingredientsNBT.getCompoundTagAt(j))); }
-				ingredients = Ingredient.fromStacks(ings.toArray(new ItemStack[0]));
-			}
-			else { ingredients = Ingredient.fromStacks(new ItemStack(nbttagcompound)); }
-			list.add(nbttagcompound.getByte("Slot") & 0xFF, ingredients);
-		}
-		return list;
-	}
+   public static NonNullList<Ingredient> getIngredientList(ListTag tagList) {
+      NonNullList<Ingredient> list = NonNullList.create();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         Ingredient ingredients;
+         Tag tag = compound.get("Ingredients");
+         if (tag instanceof ListTag ingredientsNBT && ingredientsNBT.getElementType() == (byte) 10) {
+            List<ItemStack> ings = new ArrayList<>();
+            for (int j = 0; j < ingredientsNBT.size(); j++) { ings.add(ItemStack.of(ingredientsNBT.getCompound(j))); }
+            ingredients = Ingredient.of(ings.toArray(new ItemStack[0]));
+         }
+         else { ingredients = Ingredient.of(ItemStack.of(compound)); }
+         list.add(compound.getByte("Slot") & 0xFF, ingredients);
+      }
+      return list;
+   }
 
-	public static ArrayList<int[]> getIntegerArraySet(NBTTagList tagList) {
-		ArrayList<int[]> set = new ArrayList<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound compound = tagList.getCompoundTagAt(i);
-			set.add(compound.getIntArray("Array"));
-		}
-		return set;
-	}
+   public static ArrayList<int[]> getIntegerArraySet(ListTag tagList) {
+      ArrayList<int[]> set = new ArrayList<>();
+      for(int i = 0; i < tagList.size(); ++i) { set.add(tagList.getCompound(i).getIntArray("Array")); }
+      return set;
+   }
 
-	public static HashMap<Integer, Integer> getIntegerIntegerMap(NBTTagList tagList) {
-		HashMap<Integer, Integer> list = new HashMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.put(nbttagcompound.getInteger("Slot"), nbttagcompound.getInteger("Integer"));
-		}
-		return list;
-	}
+   public static HashMap<Integer, Boolean> getBooleanList(ListTag tagList) {
+      HashMap<Integer, Boolean> list = new HashMap<>();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         list.put(compound.getInt("Slot"), compound.getBoolean("Boolean"));
+      }
+      return list;
+   }
 
-	public static List<Integer> getIntegerList(NBTTagList tagList) {
-		List<Integer> list = new ArrayList<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.add(nbttagcompound.getInteger("Integer"));
-		}
-		return list;
-	}
+   public static HashMap<Integer, Integer> getIntegerIntegerMap(ListTag tagList) {
+      HashMap<Integer, Integer> list = new HashMap<>();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         list.put(compound.getInt("Slot"), compound.getInt("Integer"));
+      }
+      return list;
+   }
 
-	public static HashMap<Integer, Long> getIntegerLongMap(NBTTagList tagList) {
-		HashMap<Integer, Long> list = new HashMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.put(nbttagcompound.getInteger("Slot"), nbttagcompound.getLong("Long"));
-		}
-		return list;
-	}
+   public static HashMap<Integer, Long> getIntegerLongMap(ListTag tagList) {
+      HashMap<Integer, Long> list = new HashMap<>();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         list.put(compound.getInt("Slot"), compound.getLong("Long"));
+      }
+      return list;
+   }
 
-	public static HashSet<Integer> getIntegerSet(NBTTagList tagList) {
-		HashSet<Integer> list = new HashSet<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.add(nbttagcompound.getInteger("Integer"));
-		}
-		return list;
-	}
+   public static HashSet<Integer> getIntegerSet(ListTag tagList) {
+      HashSet<Integer> list = new HashSet<>();
+      for(int i = 0; i < tagList.size(); ++i) { list.add(tagList.getCompound(i).getInt("Integer")); }
+      return list;
+   }
 
-	public static HashMap<Integer, String> getIntegerStringMap(NBTTagList tagList) {
-		HashMap<Integer, String> list = new HashMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.put(nbttagcompound.getInteger("Slot"), nbttagcompound.getString("Value"));
-		}
-		return list;
-	}
+   public static List<Integer> getIntegerList(ListTag tagList) {
+      List<Integer> list = new ArrayList<>();
+      for(int i = 0; i < tagList.size(); ++i) { list.add(tagList.getCompound(i).getInt("Integer")); }
+      return list;
+   }
 
-	public static HashMap<ItemStack, Integer> getItemStackIntegerMap(NBTTagList tagList) {
-		HashMap<ItemStack, Integer> list = new HashMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.put(new ItemStack(nbttagcompound.getCompoundTag("Item")), nbttagcompound.getInteger("Value"));
-		}
-		return list;
-	}
+   public static HashMap<Integer, String> getIntegerStringMap(ListTag tagList) {
+      HashMap<Integer, String> list = new HashMap<>();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         list.put(compound.getInt("Slot"), compound.getString("Value"));
+      }
+      return list;
+   }
 
-	public static void getItemStackList(NBTTagList tagList, NonNullList<ItemStack> items) {
-		items.clear();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbtStack = tagList.getCompoundTagAt(i);
-			int slotId;
-			if (nbtStack.hasKey("Slot", 3)) { slotId = nbtStack.getInteger("Slot"); }
-			else if (nbtStack.hasKey("Slot", 1)) { slotId = nbtStack.getByte("Slot") & 0xFF; }
-			else { continue; }
-			if (slotId >= 0 && slotId < items.size()) { items.set(slotId, new ItemStack(nbtStack)); }
-		}
-	}
+   public static HashMap<String, Integer> getStringIntegerMap(ListTag tagList) {
+      HashMap<String, Integer> list = new HashMap<>();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         list.put(compound.getString("Slot"), compound.getInt("Value"));
+      }
+      return list;
+   }
 
-	public static TreeMap<Long, String> GetLongStringMap(NBTTagList tagList) {
-		TreeMap<Long, String> list = new TreeMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbt = tagList.getCompoundTagAt(i);
-			if (nbt.hasKey("String", 8)) {
-				list.put(nbt.getLong("Long"), nbt.getString("String"));
-			} // OLD
-			if (nbt.hasKey("String", 9) && ((NBTTagList) nbt.getTag("String")).getTagType() == 8) {
-				StringBuilder totalStr = new StringBuilder();
-				for (NBTBase sNbt : nbt.getTagList("String", 8)) {
-					totalStr.append(((NBTTagString) sNbt).getString());
-				}
-				list.put(nbt.getLong("Long"), totalStr.toString());
-			} // NEW
-		}
-		return list;
-	}
+   public static List<String> getStringList(ListTag tagList) {
+      List<String> list = new ArrayList<>();
+      for(int i = 0; i < tagList.size(); ++i) { list.add(tagList.getCompound(i).getString("Line")); }
+      return list;
+   }
 
-	public static List<ScriptContainer> GetScript(NBTTagList list, IScriptHandler handler, boolean isClient) {
-		List<ScriptContainer> scripts = new ArrayList<>();
-		for (int i = 0; i < list.tagCount(); ++i) {
-			NBTTagCompound compound = list.getCompoundTagAt(i);
-			ScriptContainer script = new ScriptContainer(handler, isClient);
-			script.readFromNBT(compound, isClient);
-			scripts.add(script);
-		}
-		return scripts;
-	}
+   public static List<ResourceLocation> getResourceLocationList(ListTag tagList) {
+      List<ResourceLocation> list = new ArrayList<>();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         ResourceLocation line = ResourceLocation.tryParse(compound.getString("Line"));
+         list.add(line);
+      }
+      return list;
+   }
 
-	public static HashMap<String, Integer> getStringIntegerMap(NBTTagList tagList) {
-		HashMap<String, Integer> list = new HashMap<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			list.put(nbttagcompound.getString("Slot"), nbttagcompound.getInteger("Value"));
-		}
-		return list;
-	}
+   public static ListTag nbtIntegerArraySet(List<int[]> set) {
+      ListTag nbtList = new ListTag();
+      if (set != null) {
+         for (int[] arr : set) {
+            CompoundTag compound = new CompoundTag();
+            compound.putIntArray("Array", arr);
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static List<String> getStringList(NBTTagList tagList) {
-		List<String> list = new ArrayList<>();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = tagList.getCompoundTagAt(i);
-			String line = nbttagcompound.getString("Line");
-			list.add(line);
-		}
-		return list;
-	}
+   public static ListTag nbtItemStackList(NonNullList<ItemStack> inventory) {
+      ListTag nbtList = new ListTag();
+      for(int slot = 0; slot < inventory.size(); ++slot) {
+         ItemStack item = inventory.get(slot);
+         if (!item.isEmpty()) {
+            CompoundTag compound = new CompoundTag();
+            compound.putByte("Slot", (byte)slot);
+            item.save(compound);
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtDoubleList(double... values) {
-		NBTTagList nbttaglist = new NBTTagList();
-		for (int i = values.length, j = 0; j < i; ++j) {
-			nbttaglist.appendTag(new NBTTagDouble(values[j]));
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtIItemStackMap(Map<Integer, IItemStack> inventory) {
+      ListTag nbtList = new ListTag();
+      if (inventory != null) {
+         for (Map.Entry<Integer, IItemStack> entry : inventory.entrySet()) {
+            if (!NoppesUtilServer.isItemStackNull(entry.getValue().getMCItemStack())) {
+               CompoundTag compound = new CompoundTag();
+               compound.putByte("Slot", entry.getKey().byteValue());
+               entry.getValue().getMCItemStack().save(compound);
+               nbtList.add(compound);
+            }
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtIItemStackMap(Map<Integer, IItemStack> inventory) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (inventory == null) {
-			return nbttaglist;
-		}
-		for (int slot : inventory.keySet()) {
-			IItemStack item = inventory.get(slot);
-			if (item == null) {
-				continue;
-			}
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setByte("Slot", (byte) slot);
-			item.getMCItemStack().writeToNBT(nbttagcompound);
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtIngredientList(NonNullList<Ingredient> inventory) {
+      ListTag nbtList = new ListTag();
+      if (inventory != null) {
+         for (int slot = 0; slot < inventory.size(); ++slot) {
+            Ingredient ingredient = inventory.get(slot);
+            CompoundTag compound = new CompoundTag();
+            compound.putByte("Slot", (byte) slot);
+            ListTag ingredients = new ListTag();
+            for (ItemStack ing : ingredient.getItems()) { ingredients.add(ing.save(new CompoundTag())); }
+            compound.put("Ingredients", ingredients);
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtIngredientList(NonNullList<Ingredient> inventory) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (inventory == null) {
-			return nbttaglist;
-		}
-		for (int slot = 0; slot < inventory.size(); ++slot) {
-			Ingredient ingredient = inventory.get(slot);
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setByte("Slot", (byte) slot);
-				NBTTagList ingredients = new NBTTagList();
-				ItemStack[] ings = IngredientReflection.getRawMatchingStacks(ingredient);
-				for (ItemStack ing : ings) {
-					ingredients.appendTag(ing.writeToNBT(new NBTTagCompound()));
-				}
-			nbttagcompound.setTag("Ingredients", ingredients);
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtIntegerIntegerMap(Map<Integer, Integer> lines) {
+      ListTag nbtList = new ListTag();
+      if (lines != null) {
+         for (int slot : lines.keySet()) {
+            CompoundTag compound = new CompoundTag();
+            compound.putInt("Slot", slot);
+            compound.putInt("Integer", lines.get(slot));
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtIntegerArraySet(List<int[]> set) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (set == null) {
-			return nbttaglist;
-		}
-		for (int[] arr : set) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setIntArray("Array", arr);
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtIntegerLongMap(HashMap<Integer, Long> lines) {
+      ListTag nbtList = new ListTag();
+      if (lines != null) {
+         for (int slot : lines.keySet()) {
+            CompoundTag compound = new CompoundTag();
+            compound.putInt("Slot", slot);
+            compound.putLong("Long", lines.get(slot));
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtIntegerCollection(Collection<Integer> set) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (set == null) {
-			return nbttaglist;
-		}
-		for (int slot : set) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setInteger("Integer", slot);
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtIntegerCollection(Collection<Integer> set) {
+      ListTag nbtList = new ListTag();
+      if (set != null) {
+         for (int slot : set) {
+            CompoundTag compound = new CompoundTag();
+            compound.putInt("Integer", slot);
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtIntegerIntegerMap(Map<Integer, Integer> lines) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (lines == null) {
-			return nbttaglist;
-		}
-		for (int slot : lines.keySet()) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setInteger("Slot", slot);
-			nbttagcompound.setInteger("Integer", lines.get(slot));
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static Tag nbtIntegerStringMap(Map<Integer, String> map) {
+      ListTag nbtList = new ListTag();
+      if (map != null) {
+         for (int slot : map.keySet()) {
+            CompoundTag compound = new CompoundTag();
+            compound.putInt("Slot", slot);
+            compound.putString("Value", map.get(slot));
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtIntegerLongMap(HashMap<Integer, Long> lines) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (lines == null) {
-			return nbttaglist;
-		}
-		for (int slot : lines.keySet()) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setInteger("Slot", slot);
-			nbttagcompound.setLong("Long", lines.get(slot));
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static IntArrayTag nbtIntegerList(List<Integer> list) {
+      int[] data = new int[0];
+      if (list != null) {
+         data = new int[list.size()];
+         int i = 0;
+         for (int s : list) { data[i++] = s; }
+      }
+      return new IntArrayTag(data);
+   }
 
-	public static NBTTagList nbtIntegerStringMap(Map<Integer, String> map) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (map == null) {
-			return nbttaglist;
-		}
-		for (int slot : map.keySet()) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setInteger("Slot", slot);
-			nbttagcompound.setString("Value", map.get(slot));
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtStringList(List<String> list) {
+      ListTag nbtList = new ListTag();
+      if (list != null) {
+         for (String s : list) {
+            CompoundTag compound = new CompoundTag();
+            compound.putString("Line", s);
+            nbtList.add(compound);
+         }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtItemStackIntegerMap(Map<ItemStack, Integer> map) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (map == null) {
-			return nbttaglist;
-		}
-		for (ItemStack item : map.keySet()) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setTag("Item", item.writeToNBT(new NBTTagCompound()));
-			nbttagcompound.setInteger("Value", map.get(item));
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtResourceLocationList(List<ResourceLocation> list) {
+      ListTag nbtList = new ListTag();
+      for (ResourceLocation s : list) {
+         CompoundTag compound = new CompoundTag();
+         compound.putString("Line", s.toString());
+         nbtList.add(compound);
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtItemStackList(NonNullList<ItemStack> inventory) {
-		NBTTagList nbttaglist = new NBTTagList();
-		for (int slot = 0; slot < inventory.size(); ++slot) {
-			ItemStack item = inventory.get(slot);
-			if (!item.isEmpty()) {
-				NBTTagCompound nbttagcompound = new NBTTagCompound();
-				nbttagcompound.setInteger("Slot", slot);
-				item.writeToNBT(nbttagcompound);
-				nbttaglist.appendTag(nbttagcompound);
-			}
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtDoubleList(double... doubles) {
+      ListTag nbtList = new ListTag();
+      if ( doubles != null) {
+         for (double d1 : doubles) { nbtList.add(DoubleTag.valueOf(d1)); }
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList NBTLongStringMap(Map<Long, String> map) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (map == null) {
-			return nbttaglist;
-		}
-		for (long slot : map.keySet()) {
-			NBTTagCompound nbt = new NBTTagCompound();
-			nbt.setLong("Long", slot);
-			String totalStr = map.get(slot);
-			if (totalStr.length() < 32767) { nbt.setString("String", totalStr); }
-			else {
-				NBTTagList list = new NBTTagList();
-				for (String line : Util.splitString(totalStr, 0)) { list.appendTag(new NBTTagString(line)); }
-				nbt.setTag("String", list);
-			}
-			nbttaglist.appendTag(nbt);
-		}
-		return nbttaglist;
-	}
+   public static CompoundTag nbtMerge(CompoundTag data, CompoundTag merge) {
+      CompoundTag compound = data.copy();
+      for (String name : merge.getAllKeys()) {
+         Tag tag = merge.get(name);
+         if (tag != null) {
+            if ( tag.getId() == 10) { tag = nbtMerge(compound.getCompound(name), (CompoundTag) tag); }
+            compound.put(name, tag);
+         }
+      }
+      return compound;
+   }
 
-	public static NBTTagCompound NBTMerge(NBTTagCompound data, NBTTagCompound merge) {
-		NBTTagCompound compound = data.copy();
-		Set<String> names = merge.getKeySet();
-		for (String name : names) {
-			NBTBase base = merge.getTag(name);
-			if (base.getId() == 10) {
-				base = NBTMerge(compound.getCompoundTag(name), (NBTTagCompound) base);
-			}
-			compound.setTag(name, base);
-		}
-		return compound;
-	}
+   public static List<ScriptContainer> getScript(ListTag list, IScriptHandler handler) {
+      List<ScriptContainer> scripts = new ArrayList<>();
+      for(int i = 0; i < list.size(); ++i) {
+         CompoundTag compound = list.getCompound(i);
+         ScriptContainer script = new ScriptContainer(handler);
+         script.load(compound);
+         scripts.add(script);
+      }
+      return scripts;
+   }
 
-	public static NBTTagList NBTScript(List<ScriptContainer> scripts) {
-		NBTTagList list = new NBTTagList();
-		for (ScriptContainer script : scripts) {
-			NBTTagCompound compound = new NBTTagCompound();
-			script.writeToNBT(compound);
-			list.appendTag(compound);
-		}
-		return list;
-	}
+   public static ListTag nbtScript(List<ScriptContainer> scripts) {
+      ListTag nbtList = new ListTag();
+      for (ScriptContainer script : scripts) {
+         CompoundTag compound = new CompoundTag();
+         script.save(compound);
+         nbtList.add(compound);
+      }
+      return nbtList;
+   }
 
-	public static NBTTagList nbtStringIntegerMap(Map<String, Integer> map) {
-		NBTTagList nbttaglist = new NBTTagList();
-		if (map == null) {
-			return nbttaglist;
-		}
-		for (String slot : map.keySet()) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setString("Slot", slot);
-			nbttagcompound.setInteger("Value", map.get(slot));
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static TreeMap<Long, String> getLongStringMap(ListTag tagList) {
+      TreeMap<Long, String> map = new TreeMap<>();
+      for(int i = 0; i < tagList.size(); ++i) {
+         CompoundTag compound = tagList.getCompound(i);
+         long time = compound.getLong("Long");
+         if (compound.contains("String", 8)) {
+            if (!compound.getString("String").isEmpty()) { map.put(time, compound.getString("String")); }
+         } // OLD
+         else {
+            Tag tag = compound.get("String");
+            if (tag instanceof ListTag list && list.getElementType() == 8) {
+               StringBuilder totalStr = new StringBuilder();
+               for (int j = 0; j < list.size(); j++) { totalStr.append(list.getString(j)); }
+               if (!totalStr.isEmpty()) { map.put(time, totalStr.toString()); }
+            }
+         } // NEW
+      }
+      return map;
+   }
 
-	public static NBTTagList nbtStringList(List<String> list) {
-		NBTTagList nbttaglist = new NBTTagList();
-		for (String s : list) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setString("Line", s);
-			nbttaglist.appendTag(nbttagcompound);
-		}
-		return nbttaglist;
-	}
+   public static ListTag nbtLongStringMap(Map<Long, String> map) {
+      ListTag nbtList = new ListTag();
+      if (map != null) {
+         for (long slot : map.keySet()) {
+            CompoundTag nbt = new CompoundTag();
+            nbt.putLong("Long", slot);
+            List<String> content = Util.splitString(map.get(slot));
+            if (content.size() < 2) { nbt.putString("String", map.get(slot)); } // OLD
+            else {
+               ListTag list = new ListTag();
+               for (String line : content) { list.add(StringTag.valueOf(line)); }
+               nbt.put("String", list);
+            } // NEW
+            nbtList.add(nbt);
+         }
+      }
+      return nbtList;
+   }
+
+   // New from Unofficial (BetaZavr)
+   public static boolean compareNBT(CompoundTag compound1, CompoundTag compound2) {
+      if (compound1.getAllKeys().size() != compound2.getAllKeys().size()) { return false; }
+      for (String key : compound1.getAllKeys()) {
+         Tag tag1 = compound1.get(key);
+         Tag tag2 = compound2.get(key);
+         if (tag1 == null || tag2 == null || notCompareNBTBase(tag1, tag2)) { return false; }
+      }
+      return true;
+   }
+
+   private static boolean notCompareNBTBase(Tag tag1, Tag tag2) {
+      if (tag1.getId() != tag2.getId()) { return true; }
+      return switch (tag1.getId()) {
+         case 1 -> // TAG_BYTE
+                 ((ByteTag) tag1).getAsByte() != ((ByteTag) tag2).getAsByte();
+         case 2 -> // TAG_SHORT
+                 ((ShortTag) tag1).getAsShort() != ((ShortTag) tag2).getAsShort();
+         case 3 -> // TAG_INT
+                 ((IntTag) tag1).getAsInt() != ((IntTag) tag2).getAsInt();
+         case 4 -> // TAG_LONG
+                 ((LongTag) tag1).getAsLong() != ((LongTag) tag2).getAsLong();
+         case 5 -> // TAG_FLOAT
+                 Float.floatToIntBits(((FloatTag) tag1).getAsFloat()) != Float.floatToIntBits(((FloatTag) tag2).getAsFloat());
+         case 6 -> // TAG_DOUBLE
+                 Double.doubleToLongBits(((DoubleTag) tag1).getAsDouble()) != Double.doubleToLongBits(((DoubleTag) tag2).getAsDouble());
+         case 7 -> // TAG_BYTE_ARRAY
+                 !Arrays.equals(((ByteArrayTag) tag1).getAsByteArray(), ((ByteArrayTag) tag2).getAsByteArray());
+         case 8 -> // TAG_STRING
+                 !tag1.getAsString().equals(tag2.getAsString());
+         case 9 -> // TAG_LIST
+                 notCompareNBTLists((ListTag) tag1, (ListTag) tag2);
+         case 10 -> // TAG_COMPOUND
+                 !compareNBT((CompoundTag) tag1, (CompoundTag) tag2);
+         case 11 -> // TAG_INT_ARRAY
+                 !Arrays.equals(((IntArrayTag) tag1).getAsIntArray(), ((IntArrayTag) tag2).getAsIntArray());
+         case 12 -> // TAG_LONG_ARRAY
+                 !Arrays.equals(((LongArrayTag) tag1).getAsLongArray(), ((LongArrayTag) tag2).getAsLongArray());
+         default -> true;
+      };
+   }
+
+   private static boolean notCompareNBTLists(ListTag list1, ListTag list2) {
+      if (list1.size() != list2.size()) { return true; }
+      for (int i = 0; i < list1.size(); i++) {
+         if (notCompareNBTBase(list1.get(i), list2.get(i))) { return true; }
+      }
+      return false;
+   }
 
 }

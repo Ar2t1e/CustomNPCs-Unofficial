@@ -1,30 +1,31 @@
 package noppes.npcs.api.entity.data;
 
-import net.minecraft.entity.ai.attributes.IAttribute;
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import noppes.npcs.api.interfaces.ParamName;
 
+@SuppressWarnings("all")
 public interface IAttributeSet {
 
-	String getAttribute();
+    String getAttribute();
 
-	double getChance();
+    double getChance();
 
-	double getMaxValue();
+    double getMaxValue();
 
-	double getMinValue();
+    double getMinValue();
 
-	int getSlot();
+    int getSlot();
 
-	void remove();
+    void remove();
 
-	void setAttribute(@ParamName("attribute") IAttribute attribute);
+    void setAttribute(@ParamName("attribute") Attribute attribute);
 
-	void setAttribute(@ParamName("name") String name);
+    void setAttribute(@ParamName("name") String name);
 
-	void setChance(@ParamName("chance") double chance);
+    void setChance(@ParamName("chance") double chance);
 
-	void setSlot(@ParamName("slot") int slot);
+    void setSlot(@ParamName("slot") int slot);
 
-	void setValues(@ParamName("min") double min, @ParamName("max") double max);
+    void setValues(@ParamName("min") double min, @ParamName("max") double max);
 
 }

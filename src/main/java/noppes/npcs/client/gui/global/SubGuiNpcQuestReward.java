@@ -1,88 +1,169 @@
 package noppes.npcs.client.gui.global;
 
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.ResourceLocation;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilServer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.containers.ContainerNpcQuestReward;
+import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.data.Quest;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.entity.data.DropSet;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketContainerOpen;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
+import java.util.*;
 
-public class SubGuiNpcQuestReward extends GuiContainerNPCInterface implements ITextfieldListener {
+// Changed by Unofficial (BetaZavr)
+public class SubGuiNpcQuestReward extends GuiBasic implements ITextfieldListener, ICustomScrollListener {
 
-	protected final ResourceLocation resource = new ResourceLocation(CustomNpcs.MODID, "textures/gui/questreward.png");
-	protected final Quest quest;
+   protected final Map<Component, DropSet> data = new HashMap<>();
+   protected final Quest quest;
+   protected GuiCustomScrollNop scroll;
 
-	public SubGuiNpcQuestReward(EntityNPCInterface npc, ContainerNpcQuestReward container) {
-		super(npc, container);
-		closeOnEsc = true;
+   public SubGuiNpcQuestReward(Quest questIn) {
+      super();
+      setBackground("largebg.png");
+      imageWidth = 192;
+      imageHeight = 231;
+      title = Component.translatable("questlog.reward");
 
-		quest = NoppesUtilServer.getEditingQuest(player);
-	}
+      quest = questIn;
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: quest.setRewardType(button.getValue()); break;
-			case 66: onClosed(); break;
-		}
-	}
+   @Override
+   public void init() {
+      super.init();
+      int w = 120;
+      int x0 = guiLeft + 4;
+      int x1 = x0 + w + 2;
+      int y = guiTop + 16;
+      int h = 14;
+      // items
+      if (scroll == null) { scroll = addScroll(0).setSize(184, 118); }
+      int i = 0;
+      LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+      List<ItemStack> stacks = new ArrayList<>();
+      List<Component> list = new ArrayList<>();
+      data.clear();
+      for (Map.Entry<Integer, DropSet> entry : new ArrayList<>(quest.rewardItems.entrySet())) {
+         if (entry.getValue().pos != entry.getKey()) { entry.getValue().pos = entry.getKey(); }
+         Component key = entry.getValue().getKey();
+         list.add(key);
+         data.put(key, entry.getValue());
+         hts.put(i++, entry.getValue().getHover(player));
+         stacks.add(entry.getValue().item);
+      }
+      add(scroll.setPos(x0, y)
+              .setUnsortedList(list)
+              .setHoverTexts(hts)
+              .setStacks(stacks));
+      // exit
+      addButton(66, x0 + imageWidth - 20, y - 12, "X")
+              .setSize(12, 12);
+      // add/del/edit item
+      addButton(1, x0, y += scroll.getHeight() + 1, "gui.add")
+              .setSize(60, 14)
+              .setHoverTexts("quest.hover.reward.add");
+      addButton(2, x0 + 62, y, "gui.remove")
+              .setSize(60, 14)
+              .setIsEnabled(scroll.hasSelected())
+              .setHoverTexts("quest.hover.reward.del");
+      addButton(3, x0 + 124, y, "selectServer.edit")
+              .setSize(60, 14)
+              .setIsEnabled(scroll.hasSelected())
+              .setHoverTexts("quest.hover.reward.edit");
+      // type
+      Component label = Component.translatable("quest.reward.get.item");
+      addLabel(0, x1 - 2 - font.width(label), (y += h + 2) + 2, label);
+      addButton(0, x1, y, false, quest.rewardType.ordinal(),
+              "drop.type.all", "drop.type.one", "drop.type.random")
+              .setSize(62, h)
+              .setHoverTexts("quest.hover.edit.reward.type");
+      // xp
+      label = Component.translatable("quest.exp").append(":");
+      addLabel(1, x1 - 2 - font.width(label), (y += h + 3) + 1, label);
+      int max = 99999;
+      addTextField(0, x1 + 1, y, 60, h - 2, quest.rewardExp)
+              .setMinMaxDefault(0, max, quest.rewardExp)
+              .setHoverTexts(Component.translatable("quest.hover.edit.reward.xp", ((char) 167) + "6" + max));
+      // money
+      label = Component.translatable("gui.money").append(":");
+      addLabel(2, x1 - 2 - font.width(label), (y += h + 2) + 1, label);
+      max = 99999999;
+      addTextField(1, x1 + 1, y, 60, h - 2, quest.rewardMoney)
+              .setMinMaxDefault(0, max, quest.rewardMoney)
+              .setHoverTexts(Component.translatable("quest.hover.edit.reward.money", ((char) 167) + "6" + max));
+      // donat
+      label = Component.translatable("gui.donat").append(":");
+      addLabel(3, x1 - 2 - font.width(label), (y += h + 2) + 1, label);
+      addTextField(2, x1 + 1, y, 60, h - 2, quest.rewardDonat)
+              .setMinMaxDefault(0, max, quest.rewardDonat)
+              .setHoverTexts(Component.translatable("quest.hover.edit.reward.donat", ((char) 167) + "6" + max));
+      // show reward text
+      addCheckBox(4, x0, y + h + 1, "gui.enabled", "gui.disabled", quest.showRewardText)
+              .setSize(97, 12)
+              .setHoverTexts("quest.hover.edit.reward.show");
+   }
 
-	@Override
-	public void onGuiClosed() {
-		GuiNpcTextField.unfocus();
-		player.closeScreen();
-		NoppesUtil.openGUI(player, GuiNPCManageQuest.Instance);
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 0: quest.setRewardType(button.getValue()); break;
+         case 1: {
+            openItemEdit(-1);
+            break;
+         } // add
+         case 2: {
+            if (scroll.hasSelected() && data.containsKey(scroll.getNormalSelected())) {
+               quest.removeDrop(data.get(scroll.getNormalSelected()));
+               init();
+            }
+            break;
+         } // del
+         case 3: {
+            if (scroll.hasSelected() && data.containsKey(scroll.getNormalSelected())) { openItemEdit(scroll.getSelectedIndex()); }
+            break;
+         } // edit
+         case 4: quest.showRewardText = ((GuiCheckBoxNop) button).selected(); break;
+         case 66: onClose(); break;
+      }
+   }
 
-	@Override
-	protected void drawGuiContainerBackgroundLayer(float f, int i, int j) {
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		mc.getTextureManager().bindTexture(resource);
-		int l = (width - xSize) / 2;
-		int i2 = (height - ySize) / 2;
-		drawTexturedModalRect(l, i2, 0, 0, xSize, ySize);
-		super.drawGuiContainerBackgroundLayer(f, i, j);
-	}
+   @Override
+   public void onClose() {
+      super.onClose();
+      NoppesUtil.openGUI(player, GuiNpcManageQuest.Instance);
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		int x = guiLeft + 4;
-		int y = guiTop + 14;
-		// type
-		addLabel(new GuiNpcLabel(0, "quest.reward.get.item", x + 1, y - 10));
-		addButton(new GuiNpcButton(0, x + 34, y, 62, 16, new String[] { "drop.type.all", "drop.type.one", "drop.type.random" }, quest.rewardType.ordinal())
-				.setHoverText("quest.hover.edit.reward.type"));
-		addButton(new GuiNpcButton(66, x + xSize - 20, y - 10, 12, 12, "X"));
-		// xp
-		int max = 99999;
-		addLabel(new GuiNpcLabel(1, "quest.exp", x + 1, (y += 19) + 3));
-		addTextField(new GuiNpcTextField(0, this, x + 35, y, 60, 14, quest.rewardExp + "")
-				.setMinMaxDefault(0, max, quest.rewardExp)
-				.setHoverText("quest.hover.edit.reward.xp", "" + max));
-		// money
-		max = 99999999;
-		addLabel(new GuiNpcLabel(2, "gui.money", x + 1, (y += 18) + 3));
-		addTextField(new GuiNpcTextField(1, this, x + 35, y, 60, 14, quest.rewardMoney + "")
-				.setMinMaxDefault(0, 99999999, quest.rewardMoney)
-				.setHoverText("quest.hover.edit.reward.money", "" + max));
-		// show reward text
-		addButton(new GuiNpcCheckBox(1, x, y + 16, 97, 12, "gui.enabled", "gui.disabled", quest.showRewardText)
-				.setHoverText("quest.hover.edit.reward.show"));
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textfield) {
+      switch (textfield.id) {
+         case 0: quest.rewardExp = textfield.getInteger(); break;
+         case 1: quest.rewardMoney = textfield.getInteger(); break;
+         case 2: quest.rewardDonat = textfield.getInteger(); break;
+      }
+   }
 
-    @Override
-	public void unFocused(GuiNpcTextField textfield) {
-		switch (textfield.getID()) {
-			case 0: quest.rewardExp = textfield.getInteger(); break;
-			case 1: quest.rewardMoney = textfield.getInteger(); break;
-		}
-	}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) { init(); }
+
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+      if (data.get(scroll.getNormalSelected()) != null) { openItemEdit(scroll.getSelectedIndex()); }
+   }
+
+   private void openItemEdit(int pos) {
+      CompoundTag compound = new CompoundTag();
+      compound.putInt("InventoryType", 2);
+      compound.putInt("QuestID", quest.getId());
+      compound.putInt("DropSet", pos);
+      Packets.sendServer(new SPacketContainerOpen(EnumGuiType.SetupDrop, (b) -> b.writeNbt(compound)));
+   }
 
 }

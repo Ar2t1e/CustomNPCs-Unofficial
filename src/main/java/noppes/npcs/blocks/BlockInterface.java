@@ -1,18 +1,11 @@
 package noppes.npcs.blocks;
 
-import net.minecraft.block.BlockContainer;
-import net.minecraft.block.material.Material;
-import noppes.npcs.CustomNpcs;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 
-public abstract class BlockInterface extends BlockContainer {
+public abstract class BlockInterface extends BaseEntityBlock implements EntityBlock {
 
-	protected BlockInterface(Material materialIn) {
-		super(materialIn);
-	}
-
-	protected void setName(String name) {
-		this.setRegistryName(CustomNpcs.MODID, name.toLowerCase());
-		this.setUnlocalizedName(name.toLowerCase());
-	}
+   protected BlockInterface(Properties properties) { super(properties); }
 
 }

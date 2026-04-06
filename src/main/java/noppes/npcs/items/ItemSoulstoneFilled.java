@@ -1,113 +1,109 @@
 package noppes.npcs.items;
 
 import java.util.List;
-
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomNpcs;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.roles.RoleFollower;
-
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 public class ItemSoulstoneFilled extends Item {
 
-	public static Entity Spawn(EntityPlayer player, ItemStack stack, World world, BlockPos pos) {
-		if (world.isRemote) {
-			return null;
-		}
-		if (stack.getTagCompound() == null || !stack.getTagCompound().hasKey("Entity", 10)) {
-			return null;
-		}
-		NBTTagCompound compound = stack.getTagCompound().getCompoundTag("Entity");
-		if (compound.getString("id").equals("minecraft:customnpcs.customnpc")
-				|| compound.getString("id").equals("minecraft:customnpcs:customnpc")) {
-			compound.setString("id", CustomNpcs.MODID + ":customnpc");
-		}
-		Entity entity = EntityList.createEntityFromNBT(compound, world);
-		if (entity == null) {
-			return null;
-		}
-		entity.setPosition(pos.getX() + 0.5, (pos.getY() + 1 + 0.2f), pos.getZ() + 0.5);
-		if (entity instanceof EntityNPCInterface) {
-			EntityNPCInterface npc = (EntityNPCInterface) entity;
-			npc.ais.setStartPos(pos);
-			npc.setHealth(npc.getMaxHealth());
-			npc.setPosition((pos.getX() + 0.5f), npc.getStartYPos(), (pos.getZ() + 0.5f));
-			if (npc.advanced.roleInterface instanceof RoleCompanion && player != null) {
-				PlayerData data = PlayerData.get(player);
-				if (data.hasCompanion()) {
-					return null;
-				}
-				((RoleCompanion) npc.advanced.roleInterface).setOwner(player);
-				data.setCompanion(npc);
-			}
-			if (npc.advanced.roleInterface instanceof RoleFollower && player != null) {
-				((RoleFollower) npc.advanced.roleInterface).setOwner(player);
-			}
-		}
-		if (!world.spawnEntity(entity)) {
-			if (player != null) { player.sendMessage(new TextComponentTranslation("error.failedToSpawn")); }
-			return null;
-		}
-		return entity;
-	}
+   public ItemSoulstoneFilled() {
+      super((new Properties()).stacksTo(1));
+   }
 
-	public ItemSoulstoneFilled() {
-		this.setRegistryName(CustomNpcs.MODID, "npcsoulstonefilled");
-		this.setUnlocalizedName("npcsoulstonefilled");
-		this.setMaxStackSize(1);
-	}
+   @OnlyIn(Dist.CLIENT)
+   public void appendHoverText(@NotNull ItemStack stack, Level level, @NotNull List<Component> list, @NotNull TooltipFlag flag) {
+      CompoundTag compound = stack.getTag();
+      if (compound != null && compound.contains("Entity", 10)) {
+         Component name = Component.translatable(compound.getString("Name"));
+         if (compound.contains("DisplayName")) {
+            name = Component.translatable(compound.getString("DisplayName")).append(" (").append(name).append(")");
+         }
 
-	@SideOnly(Side.CLIENT)
-	public void addInformation(@Nonnull ItemStack stack, World world, @Nonnull List<String> list, @Nonnull ITooltipFlag flag) {
-		NBTTagCompound compound = stack.getTagCompound();
-		if (compound == null || !compound.hasKey("Entity", 10)) {
-			list.add(TextFormatting.RED + "Error");
-			return;
-		}
-		String name = new TextComponentTranslation(compound.getString("Name")).getFormattedText();
-		if (compound.hasKey("DisplayName")) {
-			name = compound.getString("DisplayName") + " (" + name + ")";
-		}
-		list.add(TextFormatting.BLUE + name);
-		if (stack.getTagCompound().hasKey("ExtraText")) {
-			StringBuilder text = new StringBuilder();
-			for (String s : compound.getString("ExtraText").split(",")) {
-				text.append(new TextComponentTranslation(s).getFormattedText());
-			}
-			list.add(text.toString());
-		}
-	}
+         list.add(Component.literal(ChatFormatting.BLUE.getName()).append(name));
+         if (stack.getTag().contains("ExtraText")) {
+            MutableComponent text = Component.literal("");
+            String[] split = compound.getString("ExtraText").split(",");
+            for (String s : split) {
+               text.append(Component.translatable(s));
+            }
+            list.add(text);
+         }
+      } else {
+         list.add(Component.literal(ChatFormatting.RED + "Error"));
+      }
+   }
 
-	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (world.isRemote) {
-			return EnumActionResult.SUCCESS;
-		}
-		ItemStack stack = player.getHeldItem(hand);
-		if (Spawn(player, stack, world, pos) == null) {
-			return EnumActionResult.FAIL;
-		}
-		if (!player.capabilities.isCreativeMode) {
-			stack.splitStack(1);
-		}
-		return EnumActionResult.SUCCESS;
-	}
+   public @NotNull InteractionResult useOn(UseOnContext context) {
+      if (context.getLevel().isClientSide) {
+         return InteractionResult.SUCCESS;
+      } else {
+         ItemStack stack = context.getItemInHand();
+         if (Spawn(context.getPlayer(), stack, context.getLevel(), context.getClickedPos()) == null) {
+            return InteractionResult.FAIL;
+         } else {
+            if (context.getPlayer() != null && !context.getPlayer().getAbilities().instabuild) {
+               stack.split(1);
+            }
+            return InteractionResult.SUCCESS;
+         }
+      }
+   }
+
+   public static Entity Spawn(Player player, ItemStack stack, Level level, BlockPos pos) {
+      if (level.isClientSide) {
+         return null;
+      } else if (stack.getTag() != null && stack.getTag().contains("Entity", 10)) {
+         CompoundTag compound = stack.getTag().getCompound("Entity");
+         Entity entity = EntityType.create(compound, level).orElse(null);
+         if (entity == null) {
+            return null;
+         } else {
+            entity.setPos(pos.getX() + 0.5D, pos.getY() + 1.2D, pos.getZ() + 0.5D);
+            if (entity instanceof EntityNPCInterface npc) {
+               npc.ais.setStartPos(pos);
+               npc.setHealth(npc.getMaxHealth());
+               npc.setPos(pos.getX() + 0.5D, npc.getStartYPos(), pos.getZ() + 0.5D);
+               if (npc.role.getType() == 6 && player != null) {
+                  PlayerData data = PlayerData.get(player);
+                  if (data.hasCompanion()) {
+                     return null;
+                  }
+                  ((RoleCompanion)npc.role).setOwner(player);
+                  data.setCompanion(npc);
+               }
+               if (npc.role.getType() == 2 && player != null) {
+                  ((RoleFollower)npc.role).setOwner(player);
+               }
+            }
+            if (!level.addFreshEntity(entity)) {
+               if (player != null) { player.sendSystemMessage(Component.translatable("error.failedToSpawn")); }
+               return null;
+            } else {
+               return entity;
+            }
+         }
+      } else {
+         return null;
+      }
+   }
 
 }

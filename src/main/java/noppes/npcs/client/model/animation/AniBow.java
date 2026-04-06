@@ -1,35 +1,42 @@
 package noppes.npcs.client.model.animation;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.ModelBiped;
-import net.minecraft.entity.Entity;
-import noppes.npcs.client.model.ModelRendererAlt;
-import noppes.npcs.entity.EntityNPCInterface;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class AniBow {
-	public static void setRotationAngles(float ignoredLimbSwing, float ignoredLimbSwingAmount, float ignoredAgeInTicks, float ignoredNetHeadYaw, float ignoredHeadPitch, float ignoredScale, Entity entity, ModelBiped model) {
-		float ticks = (entity.ticksExisted - ((EntityNPCInterface) entity).animationStart) / 10.0f;
-		if (ticks > 1.0f) {
-			ticks = 1.0f;
-		}
-		float ticks2 = (entity.ticksExisted + 1 - ((EntityNPCInterface) entity).animationStart) / 10.0f;
-		if (ticks2 > 1.0f) {
-			ticks2 = 1.0f;
-		}
-		ticks += (ticks2 - ticks) * Minecraft.getMinecraft().getRenderPartialTicks();
-		if (model.bipedLeftArm instanceof ModelRendererAlt) { ((ModelRendererAlt) model.bipedLeftArm).setIsNormal(true); }
-		if (model.bipedRightArm instanceof ModelRendererAlt) { ((ModelRendererAlt) model.bipedRightArm).setIsNormal(true); }
-		model.bipedBody.rotateAngleX = ticks;
-		model.bipedHead.rotateAngleX = ticks;
-		model.bipedLeftArm.rotateAngleX = ticks;
-		model.bipedRightArm.rotateAngleX = ticks;
-		model.bipedBody.rotationPointZ = -ticks * 10.0f;
-		model.bipedBody.rotationPointY = ticks * 6.0f;
-		model.bipedHead.rotationPointZ = -ticks * 10.0f;
-		model.bipedHead.rotationPointY = ticks * 6.0f;
-		model.bipedLeftArm.rotationPointZ = -ticks * 10.0f;
-		model.bipedLeftArm.rotationPointY += ticks * 6.0f;
-		model.bipedRightArm.rotationPointZ = -ticks * 10.0f;
-		model.bipedRightArm.rotationPointY += ticks * 6.0f;
-	}
+public class AniBow implements AnimationBase {
+
+   public void animatePre(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+   }
+
+   public void animatePost(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+      float ticks = (float)(entity.tickCount - animationStart) / 10.0F;
+      if (ticks > 1.0F) {
+         ticks = 1.0F;
+      }
+
+      float ticks2 = (float)(entity.tickCount + 1 - animationStart) / 10.0F;
+      if (ticks2 > 1.0F) {
+         ticks2 = 1.0F;
+      }
+
+      ticks += (ticks2 - ticks) * Minecraft.getInstance().getDeltaFrameTime();
+      model.body.xRot = ticks;
+      model.head.xRot = ticks;
+      model.leftArm.xRot = ticks;
+      model.rightArm.xRot = ticks;
+      model.body.z = -ticks * 10.0F;
+      model.body.y = ticks * 6.0F;
+      model.head.z = -ticks * 10.0F;
+      model.head.y = ticks * 6.0F;
+      model.leftArm.z = -ticks * 10.0F;
+      ModelPart var10000 = model.leftArm;
+      var10000.y += ticks * 6.0F;
+      model.rightArm.z = -ticks * 10.0F;
+      var10000 = model.rightArm;
+      var10000.y += ticks * 6.0F;
+   }
+
 }

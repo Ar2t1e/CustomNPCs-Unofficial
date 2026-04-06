@@ -1,8 +1,13 @@
 package noppes.npcs.client.model.animation;
 
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.*;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AnimationDamageHitbox {
 
@@ -22,45 +27,76 @@ public class AnimationDamageHitbox {
         }
     }
 
-    public NBTTagCompound getNBT() {
-        NBTTagCompound compound = new NBTTagCompound();
+    public CompoundTag getNBT() {
+        CompoundTag compound = new CompoundTag();
 
-        compound.setInteger("ID", id);
+        compound.putInt("ID", id);
 
-        NBTTagList listO = new NBTTagList();
-        NBTTagList listS = new NBTTagList();
+        ListTag listO = new ListTag();
+        ListTag listS = new ListTag();
         for (int i = 0; i < 3; i++) {
-            listO.appendTag(new NBTTagFloat(offset[i]));
-            listS.appendTag(new NBTTagFloat(scale[i]));
+            listO.add(FloatTag.valueOf(offset[i]));
+            listS.add(FloatTag.valueOf(scale[i]));
         }
-        compound.setTag("Offset", listO);
-        compound.setTag("Scale", listS);
+        compound.put("Offset", listO);
+        compound.put("Scale", listS);
 
         return compound;
     }
 
-    public AnimationDamageHitbox(NBTTagCompound compound, int i) {
+    public AnimationDamageHitbox(CompoundTag compound, int i) {
         id = i;
-        NBTTagList listO = compound.getTagList("Offset", 5);
-        for (int j = 0; j < 3 && j < listO.tagCount(); j++) { offset[j] = listO.getFloatAt(j); }
-        NBTTagList listS = compound.getTagList("Scale", 5);
-        for (int j = 0; j < 3 && j < listS.tagCount(); j++) { scale[j] = listS.getFloatAt(j); }
+        ListTag listO = compound.getList("Offset", 5);
+        for (int j = 0; j < 3 && j < listO.size(); j++) { offset[j] = listO.getFloat(j); }
+        ListTag listS = compound.getList("Scale", 5);
+        for (int j = 0; j < 3 && j < listS.size(); j++) { scale[j] = listS.getFloat(j); }
     }
 
-    public AxisAlignedBB getScaledDamageHitbox(EntityLivingBase entity) {
-        AxisAlignedBB aabb = new AxisAlignedBB(-0.5d * scale[0], -0.5d * scale[1], -0.5d * scale[2], 0.5d * scale[0], 0.5d * scale[1], 0.5d * scale[2]).offset(entity.posX, entity.posY, entity.posZ);
-        double radYaw = Math.toRadians(entity.rotationYaw) + offset[2];
-        return aabb.offset(Math.sin(radYaw) * -offset[0], offset[1], Math.cos(radYaw) * offset[0]);
+    public AABB getScaledDamageHitbox(LivingEntity entity) {
+        AABB aabb = new AABB(-0.5d * scale[0], -0.5d * scale[1], -0.5d * scale[2],
+                0.5d * scale[0], 0.5d * scale[1], 0.5d * scale[2])
+                .move(entity.getX(), entity.getY(), entity.getZ());
+        double radYaw = Math.toRadians(entity.getYRot()) + offset[2];
+        return aabb.move(Math.sin(radYaw) * -offset[0], offset[1], Math.cos(radYaw) * offset[0]);
     }
 
-    public String getKey() {
-        AxisAlignedBB damageHitbox = new AxisAlignedBB(-0.5d * scale[0], -0.5d * scale[1], -0.5d * scale[2], 0.5d * scale[0], 0.5d * scale[1], 0.5d * scale[2]);
-        char c = (char) 167;
-        return c + "7ID:" + c + "r" + (id + 1) +
-                c + "7; d:" + c + "a" + Math.round(offset[0] * 10.0d) / 10.0d +
-                c + "7, h:" + c + "a" + Math.round(offset[1] * 10.0d) / 10.0d +
-                c + "7, w:" + c + "a" + Math.round(offset[2] * 10.0d) / 10.0d +
-                c + "7";
+
+    public Component getKey() {
+        return Component.empty()
+                .append(Component.literal("ID:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+(id + 1)).withStyle(ChatFormatting.RESET))
+                .append(Component.literal("; d:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+Math.round(offset[0] * 10.0d) / 10.0d).withStyle(ChatFormatting.GREEN))
+                .append(Component.literal("; h:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+Math.round(offset[1] * 10.0d) / 10.0d).withStyle(ChatFormatting.GREEN))
+                .append(Component.literal("; w:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+Math.round(offset[2] * 10.0d) / 10.0d).withStyle(ChatFormatting.GREEN));
+    }
+
+    public List<Component> getHoverKey() {
+        List<Component> list = new ArrayList<>();
+        list.add(Component.empty()
+                .append(Component.literal("ID:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+(id + 1)).withStyle(ChatFormatting.GOLD)));
+        list.add(Component.empty()
+                .append(Component.literal("D:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+offset[0]).withStyle(ChatFormatting.GREEN)));
+        list.add(Component.empty()
+                .append(Component.literal("H:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+offset[1]).withStyle(ChatFormatting.GREEN)));
+        list.add(Component.empty()
+                .append(Component.literal("W:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+offset[2]).withStyle(ChatFormatting.GREEN)));
+        list.add(Component.empty()
+                .append(Component.literal("Scale X:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+scale[0]).withStyle(ChatFormatting.AQUA)));
+        list.add(Component.empty()
+                .append(Component.literal("Scale Y:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+scale[1]).withStyle(ChatFormatting.AQUA)));
+        list.add(Component.empty()
+                .append(Component.literal("Scale Z:").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(""+scale[2]).withStyle(ChatFormatting.AQUA)));
+        return list;
     }
 
 }

@@ -2,8 +2,8 @@ package noppes.npcs.api.entity.data;
 
 public interface IPixelmonPlayerData {
 
-	Object getParty();
+   Object getParty();
 
-	Object getPC();
+   Object getPC();
 
 }

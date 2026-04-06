@@ -1,0 +1,1 @@
+{  "_comment": "Custom Armor Item Model created by default",  "parent": "minecraft:item/generated",  "textures": {    "layer0": "{mod_id}:item/{name}_{slot}",    "layer1": "{mod_id}:trims/items/{name}_{slot}_trim_{name}"  }}

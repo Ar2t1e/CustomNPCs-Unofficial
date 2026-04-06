@@ -1,21 +1,25 @@
 package noppes.npcs.api.wrapper;
 
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fluids.BlockFluidBase;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.Nameable;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.fluids.IFluidBlock;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IContainer;
@@ -30,246 +34,247 @@ import noppes.npcs.blocks.BlockScripted;
 import noppes.npcs.blocks.BlockScriptedDoor;
 import noppes.npcs.blocks.tiles.TileNpcEntity;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.world.entity.IEntityMixin;
+import noppes.npcs.shared.common.util.LRUHashMap;
 
 public class BlockWrapper implements IBlock {
 
-	/*
-	 * Used in:
-	 * A large number of Forge events
-	 * When checking vision when an NPC is looking at a target
-	 * Mod events and scripts
-	 */
-	public static volatile ConcurrentHashMap<Long, BlockWrapper> blockCache = new ConcurrentHashMap<>(25000);
+   /*
+    * Used in:
+    * A large number of Forge events
+    * When checking vision when an NPC is looking at a target
+    * Mod events and scripts
+    */
+   public static volatile ConcurrentHashMap<Long, BlockWrapper> blockCache = new ConcurrentHashMap<>(2500);
 
-	public static void clearCache() { blockCache.clear(); }
+   protected final IWorld level;
+   protected final Block block;
+   protected final BlockPos pos;
+   protected final BlockPosWrapper iPos;
+   protected BlockEntity tile;
+   protected TileNpcEntity storage;
 
-	public static void checkClearCache() {
-		if (blockCache.size() > 25000) {
-			blockCache.keySet().stream()
-					.limit(blockCache.size() - 25000)
-					.forEach(blockCache::remove);
-		}
-	}
+   private IData storeddata = new Data();
+   private IData tempdata = new Data();
 
-	/** Need convert to BlockState */
-	public static IBlock createNew(World world, BlockPos pos, IBlockState state) {
-		CustomNpcs.debugData.start(BlockWrapper.class);
-		Long key = makeKey(world, state, pos);
-		BlockWrapper wrapper = blockCache.get(key);
-		if (wrapper == null) {
-			wrapper = createBlockWrapper(world, state, pos);
-			blockCache.put(key, wrapper);
-		}
-		CustomNpcs.debugData.end(BlockWrapper.class);
-        return wrapper;
-	}
+   protected BlockWrapper(Level levelIn, Block blockIn, BlockPos posIn) {
+      level = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(levelIn);
+      block = blockIn;
+      pos = posIn;
+      iPos = new BlockPosWrapper(posIn);
+      setTile(levelIn.getBlockEntity(posIn));
+   }
 
-	private static Long makeKey(World world, IBlockState state, BlockPos pos) {
-		return (pos.toLong() << 32) | (world == null ? 0 : world.provider.getDimension()) | (state.getBlock().getRegistryName() == null ? 0 : state.getBlock().getRegistryName().hashCode());
-	}
+   public static void checkClearCache() {
+      if (blockCache.size() > 2500) {
+         blockCache.keySet().stream()
+                 .limit(blockCache.size() - 2500)
+                 .forEach(blockCache::remove);
+      }
+   }
+    public int getX() {
+      return this.pos.getX();
+   }
 
-	private static BlockWrapper createBlockWrapper(World world, IBlockState state, BlockPos pos) {
-		Block block = state.getBlock();
-		BlockWrapper wrapper;
-		if (block instanceof BlockScripted) { wrapper = new BlockScriptedWrapper(world, block, pos); }
-		else if (block instanceof BlockScriptedDoor) { wrapper = new BlockScriptedDoorWrapper(world, block, pos); }
-		else if (block instanceof BlockFluidBase) { wrapper = new BlockFluidContainerWrapper(world, block, pos); }
-		else { wrapper = new BlockWrapper(world, block, pos); }
-		wrapper.setTile(world.getTileEntity(pos));
-		return wrapper;
-	}
+   public int getY() {
+      return this.pos.getY();
+   }
 
-	protected Block block;
-	protected BlockPosWrapper bPos;
-	protected BlockPos pos;
-	public TileNpcEntity storage;
-	private IData storeddata = new Data();
-	private IData tempdata = new Data();
-	public TileEntity tile;
+   public int getZ() {
+      return this.pos.getZ();
+   }
 
-	protected IWorld world;
+   public IPos getPos() {
+      return this.iPos;
+   }
 
-	@SuppressWarnings("deprecation")
-	public BlockWrapper(World worldIn, Block blockIn, BlockPos posIn) {
-		if (worldIn instanceof WorldServer) {
-			world = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(worldIn);
-		}
-		else if (worldIn != null) {
-			WorldWrapper w = WrapperNpcAPI.worldCache.get(worldIn.provider.getDimension());
-			if (w != null) {
-				if (w.world == null) {
-					w.world = worldIn;
-				}
-			} else {
-				w = WorldWrapper.createNew(worldIn);
-				WrapperNpcAPI.worldCache.put(worldIn.provider.getDimension(), w);
-			}
-			world = w;
-		}
-		block = blockIn;
-		pos = posIn;
-		bPos = new BlockPosWrapper(posIn);
-        if (worldIn != null) { setTile(worldIn.getTileEntity(posIn)); }
-	}
+   public Object getProperty(String name) {
+      BlockState state = this.getMCBlockState();
+      for (Property<?> p : state.getProperties()) {
+         if (p.getName().equalsIgnoreCase(name)) {
+            return state.getValue(p);
+         }
+      }
+      throw new CustomNPCsException("Unknown property: " + name);
+   }
 
-	@Override
-	public void blockEvent(int type, int data) {
-		world.getMCWorld().addBlockEvent(pos, block, type, data);
-	}
+   public void setProperty(String name, Object value) {
+      if (!(value instanceof Comparable)) {
+         throw new CustomNPCsException("Not a valid property value: " + value);
+      }
+      BlockState state = this.getMCBlockState();
+      for (Property<?> p : state.getProperties()) {
+         if (p.getName().equalsIgnoreCase(name)) {
+            setPropertyValue(state, p, (Comparable<?>) value);
+            return;
+         }
+      }
+      throw new CustomNPCsException("Unknown property: " + name);
+   }
 
-	@Override
-	public IContainer getContainer() {
-		if (!isContainer()) {
-			throw new CustomNPCsException("This block is not a container");
-		}
-		return Objects.requireNonNull(NpcAPI.Instance()).getIContainer((IInventory) tile);
-	}
+   private <T extends Comparable<T>> void setPropertyValue(BlockState state, Property<T> p, Comparable<?> c) {
+      this.level.getMCLevel().setBlock(this.pos, state.setValue(p, p.getValueClass().cast(c)), 3);
+   }
 
-	@Override
-	public String getDisplayName() {
-		if (tile == null) {
-			return getName();
-		}
-		return Objects.requireNonNull(tile.getDisplayName()).getUnformattedText();
-	}
+   public String[] getProperties() {
+      Collection<Property<?>> props = this.getMCBlockState().getProperties();
+      List<String> list = new ArrayList<>();
+      for (Property<?> prop : props) {
+         list.add(prop.getName());
+      }
+      return list.toArray(new String[0]);
+   }
 
-	@Override
-	public Block getMCBlock() {
-		return block;
-	}
+   public void remove() {
+      this.level.getMCLevel().removeBlock(this.pos, false);
+   }
 
-	@Override
-	public IBlockState getMCBlockState() {
-		return world.getMCWorld().getBlockState(pos);
-	}
+   public boolean isRemoved() {
+      BlockState state = this.level.getMCLevel().getBlockState(this.pos);
+      if (state == null) {
+         return true;
+      } else {
+         return state.getBlock() != this.block;
+      }
+   }
 
-	@Override
-	public TileEntity getMCTileEntity() {
-		return tile;
-	}
+   public boolean isAir() {
+      return this.level.getMCLevel().getBlockState(this.pos).isAir();
+   }
 
-	@Override
-	public int getMetadata() {
-		return block.getMetaFromState(world.getMCWorld().getBlockState(pos));
-	}
+   public BlockWrapper setBlock(String name) {
+      Block block = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse(name));
+      if (block == null) {
+         return this;
+      } else {
+         this.level.getMCLevel().setBlock(this.pos, block.defaultBlockState(), 2);
+         return new BlockWrapper(this.level.getMCLevel(), block, this.pos);
+      }
+   }
 
-	@Override
-	public String getName() {
-		return Block.REGISTRY.getNameForObject(block) + "";
-	}
+   public BlockWrapper setBlock(IBlock block) {
+      this.level.getMCLevel().setBlock(this.pos, block.getMCBlock().defaultBlockState(), 2);
+      return new BlockWrapper(this.level.getMCLevel(), block.getMCBlock(), this.pos);
+   }
 
-	@Override
-	public IPos getPos() {
-		return bPos;
-	}
+   public boolean isContainer() {
+      if (this.tile != null && this.tile instanceof Container) {
+         return ((Container)this.tile).getContainerSize() > 0;
+      } else {
+         return false;
+      }
+   }
 
-	@Override
-	public IData getStoreddata() {
-		return storeddata;
-	}
+   public IContainer getContainer() {
+      if (!this.isContainer()) {
+         throw new CustomNPCsException("This block is not a container");
+      } else {
+         return Objects.requireNonNull(NpcAPI.Instance()).getIContainer((Container)this.tile);
+      }
+   }
 
-	@Override
-	public IData getTempdata() {
-		return tempdata;
-	}
+   public IData getTempdata() {
+      return this.tempdata;
+   }
 
-	@Override
-	public INbt getTileEntityNBT() {
-		NBTTagCompound compound = new NBTTagCompound();
-		tile.writeToNBT(compound);
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
-	}
+   public IData getStoreddata() {
+      return this.storeddata;
+   }
 
-	@Override
-	public IWorld getWorld() {
-		return world;
-	}
+   public String getName() {
+      return Objects.requireNonNull(ForgeRegistries.BLOCKS.getKey(this.block)).toString();
+   }
 
-	@Override
-	public int getX() {
-		return pos.getX();
-	}
+   public String getDisplayName() {
+      return this.tile != null && this.tile instanceof Nameable ? ((Nameable)this.tile).getDisplayName().getString() : this.getName();
+   }
 
-	@Override
-	public int getY() {
-		return pos.getY();
-	}
+   public IWorld getWorld() {
+      return this.level;
+   }
 
-	@Override
-	public int getZ() {
-		return pos.getZ();
-	}
+   public Block getMCBlock() {
+      return this.block;
+   }
 
-	@Override
-	public boolean hasTileEntity() {
-		return tile != null;
-	}
+   public static IBlock createNew(Level level, BlockPos pos, BlockState state) {
+      CustomNpcs.debugData.start(BlockWrapper.class);
+      Long key = makeKey(level, state, pos);
+      BlockWrapper wrapper = blockCache.get(key);
+      if (wrapper == null) {
+         wrapper = createBlockWrapper(level, state, pos);
+         blockCache.put(key, wrapper);
+      }
+      CustomNpcs.debugData.end(BlockWrapper.class);
+      return wrapper;
+   }
 
-	@Override
-	public void interact(int side) {
-		EntityPlayer player = EntityNPCInterface.GenericPlayer;
-		World w = world.getMCWorld();
-		player.setWorld(w);
-		player.setPosition(pos.getX(), pos.getY(), pos.getZ());
-		block.onBlockActivated(w, pos, w.getBlockState(pos),
-                EntityNPCInterface.CommandPlayer, EnumHand.MAIN_HAND, EnumFacing.values()[side], 0.0f,
-				0.0f, 0.0f);
-	}
+   private static Long makeKey(Level level, BlockState state, BlockPos pos) {
+       return pos.asLong() << 32 | (level == null ? 0 : level.dimension().hashCode()) | state.getBlock().hashCode();
+   }
 
-	@Override
-	public boolean isAir() {
-		return block.isAir(world.getMCWorld().getBlockState(pos), world.getMCWorld(), pos);
-	}
+   private static BlockWrapper createBlockWrapper(Level level, BlockState state, BlockPos pos) {
+      Block block = state.getBlock();
+      BlockWrapper wrapper;
+      if (block instanceof BlockScripted) { wrapper = new BlockScriptedWrapper(level, block, pos); }
+      else if (block instanceof BlockScriptedDoor) { wrapper = new BlockScriptedDoorWrapper(level, block, pos); }
+      else if (block instanceof IFluidBlock) { wrapper = new BlockFluidContainerWrapper(level, block, pos); }
+      else { wrapper = new BlockWrapper(level, block, pos); }
+      wrapper.setTile(level.getBlockEntity(pos));
+      return wrapper;
+   }
 
-	@Override
-	public boolean isContainer() {
-		return tile != null && tile instanceof IInventory && ((IInventory) tile).getSizeInventory() > 0;
-	}
+   public static void clearCache() {
+      blockCache.clear();
+   }
 
-	@Override
-	public boolean isRemoved() {
-		return world.getMCWorld().getBlockState(pos).getBlock() != block;
-	}
+   public boolean hasTileEntity() {
+      return this.tile != null;
+   }
 
-	@Override
-	public void remove() {
-		world.getMCWorld().setBlockToAir(pos);
-	}
+   protected void setTile(BlockEntity tile) {
+      this.tile = tile;
+      if (tile instanceof TileNpcEntity) {
+         this.storage = (TileNpcEntity)tile;
+         tempdata = storage.tempData;
+         storeddata = storage.storedData;
+      }
+   }
 
-	@Override
-	public BlockWrapper setBlock(IBlock block) {
-		world.getMCWorld().setBlockState(pos, block.getMCBlock().getDefaultState());
-		return new BlockWrapper(world.getMCWorld(), block.getMCBlock(), pos);
-	}
+   public INbt getBlockEntityNBT() {
+      CompoundTag compound = this.tile.saveWithoutMetadata();
+      return new NBTWrapper(compound);
+   }
 
-	@Override
-	public BlockWrapper setBlock(String name) {
-		Block block = Block.REGISTRY.getObject(new ResourceLocation(name));
-        world.getMCWorld().setBlockState(pos, block.getDefaultState());
-		return new BlockWrapper(world.getMCWorld(), block, pos);
-	}
+   public void setTileEntityNBT(INbt nbt) {
+      this.tile.load(nbt.getMCNBT());
+      this.tile.setChanged();
+      BlockState state = this.level.getMCLevel().getBlockState(this.pos);
+      this.level.getMCLevel().sendBlockUpdated(this.pos, state, state, 3);
+   }
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public void setMetadata(int i) {
-		world.getMCWorld().setBlockState(pos, block.getStateFromMeta(i), 3);
-	}
+   public BlockEntity getMCTileEntity() {
+      return this.tile;
+   }
 
-	public void setTile(TileEntity tileIn) {
-		tile = tileIn;
-		if (tile instanceof TileNpcEntity) {
-			storage = (TileNpcEntity) tile;
-			tempdata = storage.tempData;
-			storeddata = storage.storedData;
-		}
-	}
+   public BlockState getMCBlockState() {
+      return this.level.getMCLevel().getBlockState(this.pos);
+   }
 
-	@Override
-	public void setTileEntityNBT(INbt nbt) {
-		tile.readFromNBT(nbt.getMCNBT());
-		tile.markDirty();
-		IBlockState state = world.getMCWorld().getBlockState(pos);
-		world.getMCWorld().notifyBlockUpdate(pos, state, state, 3);
-	}
+   public void blockEvent(int type, int data) {
+      this.level.getMCLevel().blockEvent(this.pos, this.getMCBlock(), type, data);
+   }
+
+   public void interact(int side) {
+      Player player = EntityNPCInterface.GenericPlayer;
+      Level w = this.level.getMCLevel();
+      ((IEntityMixin) player).setLevel(w);
+      player.setPos(this.pos.getX(), this.pos.getY(), this.pos.getZ());
+      this.getMCBlockState().use(w, EntityNPCInterface.CommandPlayer, InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.ZERO, Direction.from3DDataValue(side), this.pos, true));
+   }
+
+   public TileNpcEntity getStorage() { return storage; }
+
+   public BlockEntity getTile() { return tile; }
 
 }

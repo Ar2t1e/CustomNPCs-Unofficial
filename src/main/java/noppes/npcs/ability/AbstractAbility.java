@@ -1,49 +1,39 @@
 package noppes.npcs.ability;
 
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.world.entity.LivingEntity;
 import noppes.npcs.constants.EnumAbilityType;
 import noppes.npcs.entity.EntityNPCInterface;
 
 public abstract class AbstractAbility implements IAbility {
 
-	private long cooldown = 0L;
-	public float maxHP = 1.0f;
-	public float minHP = 1.0f;
-	protected EntityNPCInterface npc;
+   private long cooldown = 0L;
+   protected EntityNPCInterface npc;
+   public float maxHP = 1.0F;
+   public float minHP = 0.0F;
 
-	public AbstractAbility(EntityNPCInterface npc) {
-		this.npc = npc;
-	}
+   public AbstractAbility(EntityNPCInterface npcIn) { npc = npcIn; }
 
-	@Override
-	public boolean canRun(EntityLivingBase target) {
-		if (onCooldown()) {
-			return false;
-		}
-		float f = npc.getHealth() / npc.getMaxHealth();
-		return f >= minHP && f <= maxHP
-				&& (getRNG() <= 1 || npc.getRNG().nextInt(getRNG()) == 0)
-				&& npc.canSee(target);
-	}
+   private boolean onCooldown() { return System.currentTimeMillis() < cooldown; }
 
-	@Override
-	public void endAbility() {
-		cooldown = System.currentTimeMillis() + npc.ais.getMaxHurtResistantTime() * 1000L;
-	}
+   public int getRNG() { return 0; }
 
-	@Override
-	public int getRNG() {
-		return 0;
-	}
+   public boolean canRun(LivingEntity target) {
+      if (onCooldown()) { return false; }
+      float f = npc.getHealth() / npc.getMaxHealth();
+      if (!(f < minHP) && !(f > maxHP)) {
+         return (getRNG() <= 1 || npc.getRandom().nextInt(getRNG()) == 0) && npc.canSee(target);
+      }
+      return false;
+   }
 
-	public abstract boolean isType(EnumAbilityType type);
+   public void endAbility() {
+       cooldown = System.currentTimeMillis() + (long) npc.ais.getMaxHurtResistantTime() * 1000L;
+   }
 
-	private boolean onCooldown() {
-		return System.currentTimeMillis() < cooldown;
-	}
+   public abstract boolean isType(EnumAbilityType var1);
 
-	@Override
-	public void startCombat() {
-		cooldown = System.currentTimeMillis() + npc.ais.getMaxHurtResistantTime() * 1000L;
-	}
+   public void startCombat() {
+       cooldown = System.currentTimeMillis() + (long) npc.ais.getMaxHurtResistantTime() * 1000L;
+   }
+
 }

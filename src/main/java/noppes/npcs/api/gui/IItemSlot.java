@@ -1,22 +1,26 @@
 package noppes.npcs.api.gui;
 
-import net.minecraft.inventory.Slot;
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.inventory.Slot;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.functions.gui.GuiItemSlotUpdate;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
 public interface IItemSlot extends ICustomGuiComponent {
 
-	Slot getMCSlot();
+   boolean hasStack();
 
-	IItemStack getStack();
+   IItemStack getStack();
 
-	boolean hasStack();
+   IItemSlot setStack(@ParamName("stack") IItemStack stack);
 
-	boolean isShowBack();
+   int getGuiType();
 
-	void setShowBack(@ParamName("bo") boolean bo);
+   IItemSlot setGuiType(@ParamName("type") int type);
 
-	IItemSlot setStack(@ParamName("stack") IItemStack stack);
+   boolean isPlayerSlot();
+
+   IItemSlot setOnUpdate(@ParamName("onPress") GuiItemSlotUpdate onPress);
+
+   Slot getMCSlot();
 
 }

@@ -1,19 +1,19 @@
 package noppes.npcs.api.item;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IItemBook extends IItemStack {
 
-	String getAuthor();
+   String[] getText();
 
-	String[] getText();
+   void setText(@ParamName("pages") String ... pages);
 
-	String getTitle();
+   String getAuthor();
 
-	void setAuthor(@ParamName("author") String author);
+   void setAuthor(@ParamName("author") String author);
 
-	void setText(@ParamName("pages") String ... pages);
+   String getTitle();
 
-	void setTitle(@ParamName("title") String title);
+   void setTitle(@ParamName("title") String title);
 
 }

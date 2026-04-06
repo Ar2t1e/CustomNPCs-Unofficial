@@ -1,0 +1,50 @@
+{
+	"name": "samurai_armor_right_arm",
+	"parent": "moreplayermodels:parts/arms/samurai_armor_arms.json",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"texture": "moreplayermodels:textures/parts/armor/samurai_armor.png",
+	"body_part": "arms",
+	"menu": "part.arms",
+	"animation_type": "arms",
+	"preview_rotation": 40,
+	"translate": [0, 0 ,0],
+	"scale": [1, 1, 1],
+	"rotate_offset": [0, 0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"can_use_player_skin" : false,
+	"author": "Anfauglir/Valaron/Jakob",
+	"render_data" : {
+        "format_version": "1.12.0",
+	    "minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.steve",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 3,
+					"visible_bounds_height": 3.5,
+					"visible_bounds_offset": [0, 1.25, 0]
+				},
+				"bones": [
+					{
+						"name": "right_arm",
+						"pivot": [0, 0, 0]
+					},
+	    			{
+						"name": "RIGHT_ARM_armor_1",
+						"parent": "right_arm",
+						"pivot": [-3.4, 20.875, 0],
+						"rotation": [0, 0, 22.5],
+						"cubes": [
+							{"origin": [4.01904, -0.32535, -2.5], "size": [1, 4, 5], "inflate": 0.1, "uv": [16, 6], "mirror": true},
+							{"origin": [3.01904, 3.67465, -2.5], "size": [3, 1, 5], "inflate": 0.11, "uv": [16, 0], "mirror": true},
+							{"origin": [5.01904, -2.32535, -2.5], "size": [1, 4, 5], "inflate": 0.09, "uv": [23, 10], "mirror": true},
+							{"origin": [6.01904, -4.32535, -2.5], "size": [1, 4, 5], "inflate": 0.08, "uv": [16, 15], "mirror": true}
+						]
+					}
+				]
+			}
+	    ]
+	}
+}

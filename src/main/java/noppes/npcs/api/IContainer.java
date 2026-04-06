@@ -1,26 +1,29 @@
 package noppes.npcs.api;
 
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
 @SuppressWarnings("all")
 public interface IContainer {
 
-	int count(@ParamName("item") IItemStack item, @ParamName("ignoreDamage") boolean ignoreDamage, @ParamName("ignoreNBT") boolean ignoreNBT);
+   int getSize();
 
-	IItemStack[] getItems();
+   ISlot getSlot(@ParamName("slotId") int slotId);
 
-	Container getMCContainer();
+   IItemStack getItem(@ParamName("slotId") int slotId);
 
-	IInventory getMCInventory();
+   void setItem(@ParamName("slotId") int slotId, @ParamName("item") IItemStack item);
 
-	int getSize();
+   Container getMCInventory();
 
-	IItemStack getSlot(@ParamName("slotId") int slotId);
+   AbstractContainerMenu getMCContainer();
 
-	boolean isEmpty();
+   int count(@ParamName("item") IItemStack item, @ParamName("ignoreDamage") boolean ignoreDamage, @ParamName("ignoreNBT") boolean ignoreNBT);
 
-	void setSlot(@ParamName("slotId") int slotId, @ParamName("item") IItemStack item);
+   IItemStack[] getItems();
+
+   boolean isEmpty();
 
 }

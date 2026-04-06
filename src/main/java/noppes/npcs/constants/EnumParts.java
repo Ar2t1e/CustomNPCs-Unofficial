@@ -1,74 +1,235 @@
 package noppes.npcs.constants;
 
-public enum EnumParts
-{
-	EARS("ears", -1), 
-	HORNS("horns", -1), 
-	HAIR("hair", -1), 
-	MOHAWK("mohawk", -1), 
-	SNOUT("snout", -1), 
-	BEARD("beard", -1), 
-	TAIL("tail", -1), 
-	CLAWS("claws", -1), 
-	LEGS("legs", 4), 
-	FIN("fin", -1), 
-	SKIRT("skirt", -1), 
-	WINGS("wings", -1), 
-	HEAD("head", 0), 
-	BODY("body", 3), 
-	BREASTS("breasts", -1), 
-	PARTICLES("particles", -1), 
-	ARM_LEFT("armleft", 1), 
-	ARM_RIGHT("armright", 2), 
-	WRIST_LEFT("wristleft", 1), 
-	WRIST_RIGHT("wristright", 2), 
-	LEFT_STACK("left_stack", 6), 
-	RIGHT_STACK("right_stack", 7), 
-	LEG_LEFT("legleft", 4), 
-	LEG_RIGHT("legright", 5), 
-	FOOT_LEFT("footleft", 4), 
-	FOOT_RIGHT("footright", 5), 
-	EYES("eyes", -1),
-	BELT("belt", -1), 
-	FEET_LEFT("bootleft", 4), 
-	FEET_RIGHT("bootright", 5),
-	CUSTOM("custom", -1),
-	CUSTOM_LAYERS("layers", -1);
-	
-	public final String name;
-	public final int patterns;
-	
-	EnumParts(String name, int id) {
-		this.patterns = id;
-		this.name = name;
-	}
-	
-	public static EnumParts FromName(String name) {
-		for (EnumParts e : values()) {
-			if (e.name.equals(name)) {
-				return e;
-			}
-		}
-		return null;
-	}
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import noppes.npcs.client.parts.MpmPartData;
+import noppes.npcs.shared.SharedReferences;
+import noppes.npcs.shared.common.util.ColorUtil;
 
-	public static EnumParts get(int part) {
-		for (EnumParts e : values()) {
-			if (e.patterns == part) { return e; }
-		}
-		return EnumParts.CUSTOM;
-	}
+public enum EnumParts {
 
-	public static EnumParts getMainModel(int ordinal) {
-		EnumParts[] set = EnumParts.values();
-		if (ordinal < 0) { ordinal *= -1; }
-		EnumParts ep = set[ordinal % set.length];
-		if (ep == EnumParts.HEAD || ep == EnumParts.BODY ||  ep == EnumParts.BELT ||
-				ep == EnumParts.ARM_LEFT || ep == EnumParts.ARM_RIGHT ||
-				ep == EnumParts.LEG_LEFT || ep == EnumParts.LEG_RIGHT ||
-				ep == EnumParts.WRIST_LEFT || ep == EnumParts.WRIST_RIGHT ||
-				ep == EnumParts.FOOT_LEFT || ep == EnumParts.FOOT_RIGHT)
-		{ return ep; }
-		return EnumParts.HEAD;
-	}
+   HEAD("head"),
+   BODY("body"),
+   PARTICLES("particles"),
+   ARM_LEFT("armleft"),
+   ARM_RIGHT("armright"),
+   LEG_LEFT("legleft"),
+   LEG_RIGHT("legright"),
+   EYES("eyes"),
+   // New from Unofficial (BetaZavr)
+   WRIST_LEFT("wristleft"),
+   WRIST_RIGHT("wristright"),
+   LEFT_STACK("left_stack"),
+   RIGHT_STACK("right_stack"),
+   FEET_LEFT("footleft"),
+   FEET_RIGHT("footright"),
+   FOOT_LEFT("footleft"),
+   FOOT_RIGHT("footright"),
+   BELT("belt"),
+   CUSTOM("custom"),
+   CUSTOM_LAYERS("layers");
+
+   public final String name;
+   public final int patterns = 1;
+
+   EnumParts(String name) {
+      this.name = name;
+   }
+
+   public static EnumParts FromName(String name) {
+      for (EnumParts e : values()) {
+         if (e.name.equals(name)) {
+            return e;
+         }
+      }
+      return null;
+   }
+
+   public static MpmPartData convertOldPart(CompoundTag compound) {
+      MpmPartData part = new MpmPartData();
+      part.color = ColorUtil.colorToRgb(compound.getInt("Color"));
+      part.usePlayerSkin = compound.getBoolean("PlayerTexture");
+      String name = compound.getString("PartName");
+      byte type = compound.getByte("Type");
+      byte pattern = compound.getByte("Pattern");
+      if (name.equals("beard")) {
+         if (type == 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/beard.json");
+         }
+
+         if (type == 1) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/beard_braided.json");
+         }
+
+         if (type == 2) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/beard_long.json");
+         }
+
+         if (type == 3) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/beard_small.json");
+         }
+      }
+
+      if (name.equals("breasts")) {
+         part.partId = new ResourceLocation(SharedReferences.modid(), type == 0 ? "parts/body/breasts.json" : "parts/body/breasts" + (type + 1) + ".json");
+      }
+
+      if (name.equals("claws")) {
+         part.partId = new ResourceLocation(SharedReferences.modid(), "parts/arms/claws.json");
+         if (pattern > 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), pattern == 1 ? "parts/arms/claws_left.json" : "parts/arms/claws_right.json");
+         }
+      }
+
+      if (name.equals("ears")) {
+         part.partId = new ResourceLocation(SharedReferences.modid(), type == 1 ? "parts/head/ears_bunny.json" : "parts/head/ears_mouse.json");
+      }
+
+      if (name.equals("fin")) {
+         part.partId = new ResourceLocation(SharedReferences.modid(), type == 1 ? "parts/body/fin.json" : "parts/body/fin2.json");
+      }
+
+      if (name.equals("hair")) {
+         if (type == 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/hair_long.json");
+         }
+
+         if (type == 1) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/hair_thin.json");
+         }
+
+         if (type == 2) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/hair_styled.json");
+         }
+
+         if (type == 3) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/hair_ponytail.json");
+         }
+      }
+
+      if (name.equals("horns")) {
+         if (type == 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/horns/horns_bull.json");
+         }
+
+         if (type == 1) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/horns/horns_antlers.json");
+         }
+
+         if (type == 2) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), pattern == 0 ? "parts/horns/horns_antenna_backwards.json" : "parts/horns/horns_antenna_forwards.json");
+         }
+      }
+
+      if (name.equals("legs")) {
+         if (type == 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/legs/legs_naga.json");
+         }
+
+         if (type == 1) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/legs/legs_spider.json");
+         }
+
+         if (type == 2) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/legs/legs_horse.json");
+         }
+
+         if (type == 3) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/legs/legs_mermaid.json");
+         }
+
+         if (type == 4) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/legs/legs_digitigrade.json");
+         }
+
+         if (type == 5) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/legs/legs_none.json");
+         }
+      }
+
+      if (name.equals("mohawk")) {
+         part.partId = new ResourceLocation(SharedReferences.modid(), type == 1 ? "parts/head/mohawk.json" : "parts/head/mohawk2.json");
+      }
+
+      if (name.equals("skirt")) {
+         part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/skirt.json");
+      }
+
+      if (name.equals("snout")) {
+         if (type == 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/snout_small.json");
+         }
+
+         if (type == 1) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/snout_medium.json");
+         }
+
+         if (type == 2) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/snout_large.json");
+         }
+
+         if (type == 3) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/snout_bunny.json");
+         }
+
+         if (type == 4) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/head/snout_beak.json");
+         }
+      }
+
+      if (name.equals("tail")) {
+         if (type == 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), pattern == 0 ? "parts/body/tail.json" : "parts/body/tail_two.json");
+         }
+
+         if (type == 1) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/tail_dragon.json");
+         }
+
+         if (type == 2) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/tail_horse.json");
+         }
+
+         if (type == 3) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/tail_squirrel.json");
+         }
+
+         if (type == 4) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/tail_fin.json");
+         }
+
+         if (type == 5) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/tail_rodent.json");
+         }
+
+         if (type == 6) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/tail_bird.json");
+         }
+
+         if (type == 7) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/tail_fox.json");
+         }
+      }
+
+      if (name.equals("wings")) {
+         if (type == 0) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/wings_angel.json");
+         }
+
+         if (type == 1) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/wings_reptile.json");
+         }
+
+         if (type == 2) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/wings_reaper.json");
+         }
+
+         if (type == 3) {
+            part.partId = new ResourceLocation(SharedReferences.modid(), "parts/body/wings_fairy.json");
+         }
+      }
+
+      return part;
+   }
+
 }

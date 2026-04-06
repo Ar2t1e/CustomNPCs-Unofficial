@@ -1,0 +1,52 @@
+{
+	"name": "Demon Horns",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"render_data" : {
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.steve",
+				"texture_width": 32,
+				"texture_height": 32,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "Horns",
+					"pivot": [0, 21, -6],
+					"rotation": [-25, 0, 0],
+					"cubes": [
+						{"origin": [-5, 28, -14], "size": [1, 3, 1], "pivot": [-1, 23, -1], "rotation": [-30, 0, 0], "uv": [12, 0]},
+						{"origin": [-5, 31, -10], "size": [2, 3, 2], "uv": [0, 5]},
+						{"origin": [-4, 30, -10], "size": [2, 2, 2], "uv": [6, 8]}
+					]
+				},
+				{
+					"name": "Horns2",
+					"parent": "Horns",
+					"pivot": [6, 21, -6],
+					"rotation": [0, 0, 0],
+					"cubes": [
+						{"origin": [4, 28, -14], "size": [1, 3, 1], "pivot": [5, 23, -1], "rotation": [-30, 0, 0], "uv": [0, 10]},
+						{"origin": [3, 31, -10], "size": [2, 3, 2], "uv": [0, 0]},
+						{"origin": [2, 30, -10], "size": [2, 2, 2], "uv": [6, 3]}
+					]
+				}
+			]
+		}
+	]
+	},
+	"texture": "moreplayermodels:textures/parts/horns/demon.png",
+	"body_part": "head",
+	"menu": "gui.headwear",
+	"preview_rotation": 315,
+	"translate": [0, 12, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, -12, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Crystaldark64"
+}

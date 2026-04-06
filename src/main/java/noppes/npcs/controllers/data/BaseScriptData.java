@@ -1,19 +1,11 @@
 package noppes.npcs.controllers.data;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.Event;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.api.block.IBlock;
@@ -25,184 +17,154 @@ import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.Util;
 
-public class BaseScriptData
-implements IScriptHandler {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-	protected boolean enabled = false;
-	public boolean hadInteract = true;
-	public long lastInited = -1L;
-	protected String scriptLanguage = "ECMAScript";
-	protected List<ScriptContainer> scripts = new ArrayList<>();
+public abstract class BaseScriptData implements IScriptHandler {
 
-	public void clear() {
-		this.scripts = new ArrayList<>();
-	}
+    protected final List<ScriptContainer> scripts = new ArrayList<>();
+    protected String scriptLanguage = "ECMAScript";
+    protected boolean enabled = false;
+    public long lastInited = -1L;
 
-	@Override
-	public void clearConsole() {
-		for (ScriptContainer script : this.getScripts()) {
-			script.console.clear();
-		}
-	}
+    public void clear() { scripts.clear(); }
 
-	@Override
-	public TreeMap<Long, String> getConsoleText() {
-		TreeMap<Long, String> map = new TreeMap<>();
-		int tab = 0;
-		for (ScriptContainer script : this.getScripts()) {
-			++tab;
-			for (Map.Entry<Long, String> entry : script.console.entrySet()) {
-				String log;
-				if (map.containsKey(entry.getKey())) { log = map.get(entry.getKey()) + "\n\n" + "ScriptTab " + tab + ":\n" + entry.getValue(); }
-				else { log = " ScriptTab " + tab + ":\n" + entry.getValue(); }
-				map.put(entry.getKey(), log);
-			}
-		}
-		return map;
-	}
+    @Override
+    public abstract void runScript(String type, Event event);
 
-	@Override
-	public void clearConsoleText(Long key) {
-		for (ScriptContainer script : this.getScripts()) {
-			script.console.remove(key);
-		}
-	}
+    @Override
+    public boolean isClient() { return Util.instance.getSide() == Dist.CLIENT; }
 
-	@Override
-	public String getLanguage() { return scriptLanguage; }
+    @Override
+    public boolean getEnabled() { return enabled; }
 
-	@Override
-	public List<ScriptContainer> getScripts() {
-		return this.scripts;
-	}
+    @Override
+    public void setEnabled(boolean bo) { enabled = bo; }
 
-	@Override
-	public boolean isClient() { return Thread.currentThread().getName().toLowerCase().contains("client"); }
+    @Override
+    public String getLanguage() { return scriptLanguage; }
 
-	@Override
-	public boolean getEnabled() { return this.enabled; }
+    @Override
+    public void setLanguage(String language) {
+        language = Util.instance.deleteColor(language);
+        if (ScriptController.Instance.languages.containsKey(language)) { scriptLanguage = language; }
+    }
 
-	public boolean isEnabled() {
-		return CustomNpcs.EnableScripting && enabled && ScriptController.HasStart && !scripts.isEmpty();
-	}
+    @Override
+    public List<ScriptContainer> getScripts() { return scripts; }
 
-	@Override
-	public ITextComponent noticeString(String type, Object event) {
-		ITextComponent message = new TextComponentString("");
-		message.getStyle().setColor(TextFormatting.DARK_GRAY);
-		String pos = "";
-		int dimID = 0;
-		double x = 0.0d, y = 0.0d, z = 0.0d, tpY = 0.0d;
-		if (type != null) {
-			ITextComponent hook = new TextComponentString("Hook \"");
-			hook.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent hookType = new TextComponentString(type);
-			hookType.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent hookEnd = new TextComponentString("\"");
-			hookEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(hook).appendSibling(hookType).appendSibling(hookEnd);
-		}
-		IEntity<?> iEntity = null;
-		IBlock iBlock = null;
-		if (event instanceof Event && !(event instanceof CustomNPCsEvent)) { event = new ForgeEvent((Event) event); }
-		if (event instanceof PlayerEvent) {
-			if (((PlayerEvent) event).player != null) { iEntity =  ((PlayerEvent) event).player; }
-			else {
-				ITextComponent mesPlayer = new TextComponentString("; Global players script");
-				mesPlayer.getStyle().setColor(TextFormatting.DARK_GRAY);
-				message = message.appendSibling(mesPlayer);
-			}
-			if (((PlayerEvent) event).player != null) { iEntity =  ((PlayerEvent) event).player; }
-		}
-		else if (event instanceof NpcEvent && ((NpcEvent) event).npc != null) { iEntity = ((NpcEvent) event).npc; }
-		if (iEntity != null) {
-			ITextComponent mesEntity;
-			if (iEntity.getMCEntity() instanceof EntityPlayer) { mesEntity = new TextComponentString("; Player \""); }
-			else if (iEntity.getMCEntity() instanceof EntityNPCInterface) { mesEntity = new TextComponentString("; NPC \""); }
-			else { mesEntity = new TextComponentString("; Entity \""); }
-			mesEntity.getStyle().setColor(TextFormatting.DARK_GRAY);
+    @Override
+    public TreeMap<Long, String> getConsoleText() {
+        TreeMap<Long, String> map = new TreeMap<>();
+        int tab = 0;
+        for (ScriptContainer script : getScripts()) {
+            ++tab;
+            for (Map.Entry<Long, String> entry : script.console.entrySet()) {
+                String log;
+                if (map.containsKey(entry.getKey())) { log = map.get(entry.getKey()) + "\n\n" + "ScriptTab " + tab + ":\n" + entry.getValue(); }
+                else { log = " ScriptTab " + tab + ":\n" + entry.getValue(); }
+                map.put(entry.getKey(), log);
+            }
+        }
+        return map;
+    }
 
-			ITextComponent name = new TextComponentString(iEntity.getName());
-			name.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesUUID = new TextComponentString("\"; UUID: \"");
-			mesUUID.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent uuid = new TextComponentString(iEntity.getUUID());
-			uuid.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesIn = new TextComponentString("\" in ");
-			mesIn.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(mesEntity).appendSibling(name).appendSibling(mesUUID).appendSibling(uuid).appendSibling(mesIn);
+    @Override
+    public void clearConsole() {
+        for (ScriptContainer script : this.getScripts()) { script.console.clear(); }
+    }
 
-			x = Math.round(iEntity.getPos().getX() * 100.0d) / 100.0d;
-			y = Math.round(iEntity.getPos().getY() * 100.0d) / 100.0d;
-			z = Math.round(iEntity.getPos().getZ() * 100.0d) / 100.0d;
-			dimID = iEntity.getWorld().getMCWorld() == null ? 0 : iEntity.getWorld().getMCWorld().provider.getDimension();
-			pos = "dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z;
-		}
-		if (event instanceof BlockEvent && ((BlockEvent) event).block != null) { iBlock = ((BlockEvent) event).block; }
-		if (iBlock != null) {
-			ITextComponent mesBlock = new TextComponentString("; Block in ");
-			mesBlock.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(mesBlock);
-			x = Math.floor(iBlock.getPos().getX());
-			y = Math.floor(iBlock.getPos().getY());
-			z = Math.floor(iBlock.getPos().getZ());
-			dimID = iBlock.getWorld().getMCWorld() == null ? 0 : iBlock.getWorld().getMCWorld().provider.getDimension();
-			pos = "dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z;
-			tpY = 1.0d;
-		}
-		if (!pos.isEmpty()) {
-			ITextComponent posClick = new TextComponentString(pos);
-			posClick.getStyle().setColor(TextFormatting.BLUE)
-					.setUnderlined(true)
-					.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + (y + tpY) + " "+z))
-					.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("script.hover.error.pos.tp")));
-			message = message.appendSibling(posClick);
-		}
-		ITextComponent side = new TextComponentString("; Side: " + (isClient() ? "Client" : "Server"));
-		side.getStyle().setColor(TextFormatting.DARK_GRAY);
-		return message.appendSibling(side);
-	}
+    @Override
+    public void clearConsoleText(Long key) {
+        for (ScriptContainer script : this.getScripts()) { script.console.remove(key); }
+    }
 
-	@Override
-	public void runScript(String type, Event event) { }
+    @Override
+    public boolean isEnabled() {
+        return CustomNpcs.EnableScripting && enabled && ScriptController.HasStart && !scripts.isEmpty();
+    }
 
-	public void readFromNBT(NBTTagCompound compound) {
-		this.scripts.clear();
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
-		this.scriptLanguage = Util.instance.deleteColor(compound.getString("ScriptLanguage"));
-		this.enabled = compound.getBoolean("ScriptEnabled");
-	}
+    @Override
+    public void setLastInited(long timeMC) { lastInited = timeMC; }
 
-	@Override
-	public void setEnabled(boolean bo) {
-		this.enabled = bo;
-	}
+    public void load(CompoundTag compound) {
+        clear();
+        scripts.addAll(NBTTags.getScript(compound.getList("Scripts", 10), this));
+        scriptLanguage = compound.getString("ScriptLanguage");
+        enabled = compound.getBoolean("ScriptEnabled");
+    }
 
-	@Override
-	public void setLanguage(String language) {
-		language = Util.instance.deleteColor(language);
-		if (ScriptController.Instance.languages.containsKey(language)) {
-			scriptLanguage = Util.instance.deleteColor(language);
-		}
-	}
+    public CompoundTag save(CompoundTag compound) {
+        compound.put("Scripts", NBTTags.nbtScript(scripts));
+        compound.putString("ScriptLanguage", scriptLanguage);
+        compound.putBoolean("ScriptEnabled", enabled);
+        return compound;
+    }
 
-	@Override
-	public void setLastInited(long timeMC) {
-		this.lastInited = timeMC;
-	}
+    public void init() { lastInited = -1; }
 
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.NBTScript(this.scripts));
-		compound.setString("ScriptLanguage", this.scriptLanguage);
-		compound.setBoolean("ScriptEnabled", this.enabled);
-		return compound;
-	}
+    // New from Unofficial (BetaZavr)
+    @Override
+    public MutableComponent noticeString(String type, Object event) {
+        MutableComponent message = Component.empty().withStyle(ChatFormatting.DARK_GRAY);
+        String pos = "";
+        String dimID = "overworld";
+        double x = 0.0d, y = 0.0d, z = 0.0d, tpY = 0.0d;
+        if (type != null) {
+            message.append(Component.literal(" hook \"").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(type).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("\"; ").withStyle(ChatFormatting.DARK_GRAY));
+        }
+        else { message.append(Component.literal("; ").withStyle(ChatFormatting.DARK_GRAY)); }
+        IEntity<?> iEntity = null;
+        IBlock iBlock = null;
+        if (event instanceof Event && !(event instanceof CustomNPCsEvent)) { event = new ForgeEvent((Event) event); }
+        if (event instanceof ForgeEvent.EntityEvent) { iEntity = ((ForgeEvent.EntityEvent) event).entity; }
+        if (event instanceof PlayerEvent) {
+            if (((PlayerEvent) event).player != null) { iEntity =  ((PlayerEvent) event).player; }
+            else { message.append(Component.literal("Global players script").withStyle(ChatFormatting.DARK_GRAY)); }
+            if (((PlayerEvent) event).player != null) { iEntity =  ((PlayerEvent) event).player; }
+        }
+        else if (event instanceof NpcEvent && ((NpcEvent) event).npc != null) { iEntity = ((NpcEvent) event).npc; }
+        if (iEntity != null) {
+            MutableComponent mesEntity;
+            if (iEntity.getMCEntity() instanceof Player) { mesEntity = Component.literal("Player \""); }
+            else if (iEntity.getMCEntity() instanceof EntityNPCInterface) { mesEntity = Component.literal("NPC \""); }
+            else { mesEntity = Component.literal("Entity \""); }
+            mesEntity.withStyle(ChatFormatting.DARK_GRAY);
+            message.append(mesEntity)
+                    .append(Component.literal(iEntity.getName()).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("\"; UUID: \"").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(iEntity.getUUID()).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("\" in ").withStyle(ChatFormatting.DARK_GRAY));
 
-	public boolean isEmpty() {
-		for (ScriptContainer cont : this.scripts) {
-			if (cont.hasScriptCode()) { return false; }
-		}
-		return true;
-	}
+            dimID = iEntity.getWorld().getMCLevel() == null ? "overworld" : iEntity.getWorld().getMCLevel().dimensionTypeId().location().toString();
+            x = Math.round(iEntity.getPos().getX() * 100.0d) / 100.0d;
+            y = Math.round(iEntity.getPos().getY() * 100.0d) / 100.0d;
+            z = Math.round(iEntity.getPos().getZ() * 100.0d) / 100.0d;
+            pos = "dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z;
+        }
+        if (pos.isEmpty() && event instanceof BlockEvent && ((BlockEvent) event).block != null) { iBlock = ((BlockEvent) event).block; }
+        if (iBlock != null) {
+            message.append(Component.literal("Block in ").withStyle(ChatFormatting.GRAY));
+            dimID = iBlock.getWorld().getMCLevel() == null ? "overworld" : iBlock.getWorld().getMCLevel().dimensionTypeId().location().toString();
+            x = Math.floor(iBlock.getPos().getX());
+            y = Math.floor(iBlock.getPos().getY());
+            z = Math.floor(iBlock.getPos().getZ());
+            pos = "dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z;
+            tpY = 1.0d;
+        }
+        if (!pos.isEmpty()) {
+            MutableComponent posClick = Component.literal(pos);
+            posClick.setStyle(posClick.getStyle().withColor(ChatFormatting.BLUE)
+                    .withUnderlined(true)
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + (y + tpY) + " "+z))
+                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp"))));
+            message.append(posClick);
+        }
+        return message.append(Component.literal("; Side: " + (Util.instance.getSide() == Dist.DEDICATED_SERVER ? "Server" : "Client")).withStyle(ChatFormatting.DARK_GRAY));
+    }
 
 }

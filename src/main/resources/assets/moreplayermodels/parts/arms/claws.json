@@ -1,0 +1,44 @@
+{
+	"name": "Claw",
+	"render_type": "simple",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{
+				"name": "right_arm",
+				"empty": true
+			},
+			{
+				"parent": "right_arm",
+				"texture_position": [0, 16],
+				"part_size": [4, 4],
+				"rotate": [0.0, -90, 0.0],
+				"translate": [-1.5, 13.75, -2],
+				"scale": [0.24, 0.24, 1]
+			},
+			{
+				"name": "left_arm",
+				"empty": true
+			},
+			{
+				"parent": "left_arm",
+				"texture_position": [0, 16],
+				"part_size": [4, 4],
+				"rotate": [0.0, -90, 0.0],
+				"translate": [2.5, 13.75, 2],
+				"scale": [0.24, 0.24, 1],
+				"mirror": true
+			}
+		]
+	},
+	"animation_type": "arms",
+	"texture": "moreplayermodels:textures/parts/arms/claws.png",
+	"body_part": "arms",
+	"menu": "part.arms",
+	"preview_rotation": -45,
+	"translate": [0.0, 0.0, 0.0],
+	"scale": [1, 1, 1],
+	"rotate_offset": [0, 0, 0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

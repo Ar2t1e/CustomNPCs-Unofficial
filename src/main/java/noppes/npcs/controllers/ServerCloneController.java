@@ -1,252 +1,223 @@
 package noppes.npcs.controllers;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.FileInputStream;
 import java.util.*;
 
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IWorld;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.handler.ICloneHandler;
+import noppes.npcs.packets.server.SPacketToolMobSpawner;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.NBTJsonUtil;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nullable;
+
 public class ServerCloneController implements ICloneHandler {
 
-	public static ServerCloneController Instance;
+   public long lastLoaded = System.currentTimeMillis();
+   public static ServerCloneController Instance;
 
-	public ServerCloneController() {
-		this.loadClones();
-	}
+   public ServerCloneController() { loadClones(); }
 
-	public void addClone(NBTTagCompound nbttagcompound, String name, int tab) {
-		this.cleanTags(nbttagcompound);
-		this.saveClone(tab, name, nbttagcompound);
-	}
+   private void loadClones() {
+      try {
+         File dir = new File(getDir(), "..");
+         File file = new File(dir, "clonednpcs.dat");
+         if (file.exists()) {
+            Map<Integer, Map<String, CompoundTag>> clones = loadOldClones(file);
+            if (file.delete()) {
+               file = new File(dir, "clonednpcs.dat_old");
+               if (!file.exists() || file.delete()) {
+                  for (int tab : clones.keySet()) {
+                     Map<String, CompoundTag> map = clones.get(tab);
+                     for (String name : map.keySet()) {
+                        saveClone(tab, name, map.get(name));
+                     }
+                  }
+               }
+            }
+         }
+      }
+      catch (Exception e) { LogWriter.except(e); }
+   }
 
-	public void cleanTags(NBTTagCompound nbttagcompound) {
-		if (nbttagcompound.hasKey("ItemGiverId")) {
-			nbttagcompound.setInteger("ItemGiverId", 0);
-		}
-		if (nbttagcompound.hasKey("TransporterId")) {
-			nbttagcompound.setInteger("TransporterId", -1);
-		}
-		nbttagcompound.removeTag("StartPosNew");
-		nbttagcompound.removeTag("StartPos");
-		nbttagcompound.removeTag("MovingPathNew");
-		nbttagcompound.removeTag("Pos");
-		nbttagcompound.removeTag("Riding");
-		nbttagcompound.removeTag("UUID");
-		nbttagcompound.removeTag("UUIDMost");
-		nbttagcompound.removeTag("UUIDLeast");
-		if (!nbttagcompound.hasKey("ModRev")) {
-			nbttagcompound.setInteger("ModRev", 1);
-		}
-		if (nbttagcompound.hasKey("TransformRole")) {
-			NBTTagCompound adv = nbttagcompound.getCompoundTag("TransformRole");
-			adv.setInteger("TransporterId", -1);
-			nbttagcompound.setTag("TransformRole", adv);
-		}
-		if (nbttagcompound.hasKey("TransformJob")) {
-			NBTTagCompound adv = nbttagcompound.getCompoundTag("TransformJob");
-			adv.setInteger("ItemGiverId", 0);
-			nbttagcompound.setTag("TransformJob", adv);
-		}
-		if (nbttagcompound.hasKey("TransformAI")) {
-			NBTTagCompound adv = nbttagcompound.getCompoundTag("TransformAI");
-			adv.removeTag("StartPosNew");
-			adv.removeTag("StartPos");
-			adv.removeTag("MovingPathNew");
-			nbttagcompound.setTag("TransformAI", adv);
-		}
-		if (nbttagcompound.hasKey("id")) {
-			String id = nbttagcompound.getString("id");
-			id = id.replace(CustomNpcs.MODID + ".", CustomNpcs.MODID + ":");
-			nbttagcompound.setString("id", id);
-		}
-	}
+   public @Nullable File getDir() {
+      File dir = CustomNpcs.getLevelSaveDirectory();
+      if (dir != null) {
+         dir = new File(dir, "clones");
+         if (dir.exists() || dir.mkdir()) { return dir; }
+      }
+      return dir;
+   }
 
-	@Override
-	public IEntity<?> get(int tab, String name, IWorld world) {
-		NBTTagCompound compound = this.getCloneData(null, name, tab);
-		if (compound == null) {
-			throw new CustomNPCsException("Unknown clone tab:" + tab + " name:" + name);
-		}
-		ServerCloneController.Instance.cleanTags(compound);
-		Entity entity = EntityList.createEntityFromNBT(compound, world.getMCWorld());
-		if (entity == null) {
-			return null;
-		}
-		return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity);
-	}
+   private Map<Integer, Map<String, CompoundTag>> loadOldClones(File file) throws Exception {
+      Map<Integer, Map<String, CompoundTag>> clones = new HashMap<>();
+      CompoundTag compound = NbtIo.readCompressed(new FileInputStream(file));
+      ListTag list = compound.getList("Data", 10);
+      for (int i = 0; i < list.size(); ++i) {
+         CompoundTag nbt = list.getCompound(i);
+         if (!nbt.contains("ClonedTab")) { nbt.putInt("ClonedTab", 1); }
+         Map<String, CompoundTag> tab = clones.computeIfAbsent(nbt.getInt("ClonedTab"), k -> new HashMap<>());
+         String name = nbt.getString("ClonedName");
+         for (int number = 1; tab.containsKey(name); name = String.format("%s%s", nbt.getString("ClonedName"), number)) { ++number; }
+         nbt.remove("ClonedName");
+         nbt.remove("ClonedTab");
+         nbt.remove("ClonedDate");
+         cleanTags(nbt);
+         tab.put(name, nbt);
+      }
+      return clones;
+   }
 
-	public NBTTagCompound getCloneData(ICommandSender player, String name, int tab) {
-		if (name == null || name.isEmpty()) {
-			return null;
-		}
-		File file = new File(new File(this.getDir(), tab + ""), name + ".json");
-		if (!file.exists()) {
-			if (player != null) {
-				player.sendMessage(new TextComponentString("Could not find clone file"));
-			}
-			return null;
-		}
-		try {
-			return NBTJsonUtil.LoadFile(file);
-		} catch (Exception e) {
-			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			if (player != null) {
-				player.sendMessage(new TextComponentString(e.getMessage()));
-			}
-			return null;
-		}
-	}
+   public @Nullable CompoundTag getCloneData(@Nullable CommandSourceStack player, String name, int tab) {
+      File dir = getDir();
+      if (dir == null || name == null || name.isEmpty()) { return null; }
+      File file = new File(dir, tab + "/" + name + ".json");
+      if (!file.exists()) {
+         if (player != null) { player.sendFailure(Component.translatable("message.clone.not.found.file", tab, name)); }
+         return null;
+      }
+      try { return NBTJsonUtil.LoadFile(file); }
+      catch (Exception e) {
+         LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
+         if (player != null) { player.sendFailure(Component.literal(e.getMessage())); }
+         return null;
+      }
+   }
 
-	public List<String> getClones(int tab) {
-		List<String> list = new ArrayList<>();
-		File dir = new File(this.getDir(), tab + "");
-		if (!dir.exists() || !dir.isDirectory()) {
-			return list;
-		}
-		for (String file : Objects.requireNonNull(dir.list())) {
-			if (file.endsWith(".json")) {
-				list.add(file.substring(0, file.length() - 5));
-			}
-		}
-		return list;
-	}
+   public void saveClone(int tab, String name, CompoundTag compound) {
+      try {
+         File dir = new File(getDir(), "" + tab);
+         if (!dir.exists() && !dir.mkdirs()) {
+            LogWriter.error("Error save server clone: Directory not created!");
+            return;
+         }
+         name = Util.instance.sanitizeFilename(name);
+         File file = new File(dir, name + ".json_new");
+         File file1 = new File(dir, name + ".json");
+         Util.instance.saveFile(file, compound);
+         if (file1.exists() && !file1.delete() || !file.renameTo(file1)) {
+            LogWriter.error("Error save server clone: Delete or rename " + file1 + "!");
+         }
+         lastLoaded = System.currentTimeMillis();
+      }
+      catch (Exception e) { LogWriter.except(e); }
+   }
 
-	public File getDir() {
-		File dir = new File(CustomNpcs.getWorldSaveDirectory(), "clones");
-		if (!dir.exists() && !dir.mkdir()) { return null; }
-		return dir;
-	}
+   public List<String> getClones(int tab) {
+      List<String> list = new ArrayList<>();
+      File dir = new File(getDir(), "" + tab);
+      if (dir.exists() && dir.isDirectory()) {
+         String[] files = dir.list();
+         if (files != null) {
+            for (String file : files) {
+               if (file.endsWith(".json")) { list.add(file.substring(0, file.length() - 5)); }
+            }
+         }
+      }
+      return list;
+   }
 
-	@SuppressWarnings("all")
-	private void loadClones() {
-		CustomNpcs.debugData.start(null);
-		try {
-			File dir = new File(this.getDir(), "..");
-			File file = new File(dir, "clonednpcs.dat");
-			if (file.exists()) {
-				Map<Integer, Map<String, NBTTagCompound>> clones = this.loadOldClones(file);
-				file.delete();
-				file = new File(dir, "clonednpcs.dat_old");
-				if (file.exists()) {
-					file.delete();
-				}
-				for (int tab : clones.keySet()) {
-					Map<String, NBTTagCompound> map = clones.get(tab);
-					for (String name : map.keySet()) {
-						this.saveClone(tab, name, map.get(name));
-					}
-				}
-			}
-		} catch (Exception e) {
-			LogWriter.except(e);
-		}
-		CustomNpcs.debugData.end(null);
-	}
+   public boolean removeClone(String name, int tab) {
+      File file = new File(getDir(), tab + "/" + name + ".json");
+      return file.exists() && file.delete();
+   }
 
-	private Map<Integer, Map<String, NBTTagCompound>> loadOldClones(File file) throws Exception {
-		Map<Integer, Map<String, NBTTagCompound>> clones = new HashMap<>();
-		NBTTagCompound nbt = CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath()));
-		NBTTagList list = nbt.getTagList("Data", 10);
-        for (int i = 0; i < list.tagCount(); ++i) {
-			NBTTagCompound compound = list.getCompoundTagAt(i);
-			if (!compound.hasKey("ClonedTab")) {
-				compound.setInteger("ClonedTab", 1);
-			}
-            Map<String, NBTTagCompound> tab = clones.computeIfAbsent(compound.getInteger("ClonedTab"), k -> new HashMap<>());
-            String name = compound.getString("ClonedName");
-			for (int number = 1; tab
-					.containsKey(name); name = String.format("%s%s", compound.getString("ClonedName"), number)) {
-				++number;
-			}
-			compound.removeTag("ClonedName");
-			compound.removeTag("ClonedTab");
-			compound.removeTag("ClonedDate");
-			this.cleanTags(compound);
-			tab.put(name, compound);
-		}
-		return clones;
-	}
+   public void addClone(CompoundTag compound, String name, int tab) {
+      cleanTags(compound);
+      saveClone(tab, name, compound);
+   }
 
-	@Override
-	public void remove(int tab, String name) {
-		this.removeClone(name, tab);
-	}
+   public void cleanTags(CompoundTag compound) {
+      if (compound.contains("ItemGiverId")) { compound.putInt("ItemGiverId", 0); }
+      if (compound.contains("TransporterId")) { compound.putInt("TransporterId", -1); }
+      compound.remove("StartPosNew");
+      compound.remove("StartPos");
+      compound.remove("MovingPathNew");
+      compound.remove("Pos");
+      compound.remove("Riding");
+      compound.remove("UUID");
+      compound.remove("UUIDMost");
+      compound.remove("UUIDLeast");
+      if (!compound.contains("ModRev")) { compound.putInt("ModRev", 1); }
+      CompoundTag adv;
+      if (compound.contains("TransformRole")) {
+         adv = compound.getCompound("TransformRole");
+         adv.putInt("TransporterId", -1);
+         compound.put("TransformRole", adv);
+      }
+      if (compound.contains("TransformJob")) {
+         adv = compound.getCompound("TransformJob");
+         adv.putInt("ItemGiverId", 0);
+         compound.put("TransformJob", adv);
+      }
+      if (compound.contains("TransformAI")) {
+         adv = compound.getCompound("TransformAI");
+         adv.remove("StartPosNew");
+         adv.remove("StartPos");
+         adv.remove("MovingPathNew");
+         compound.put("TransformAI", adv);
+      }
+      if (compound.contains("id")) {
+         String id = compound.getString("id");
+         if (!CustomNpcs.FixUpdateFromPre_1_12) {
+            id = id.replace(CustomNpcs.MODID + ".", CustomNpcs.MODID + ":");
+         }
+         compound.putString("id", id);
+      }
+   }
 
-	@SuppressWarnings("all")
-	public boolean removeClone(String name, int tab) {
-		File file = new File(new File(this.getDir(), tab + ""), name + ".json");
-		if (!file.exists()) {
-			return false;
-		}
-		file.delete();
-		return true;
-	}
+   @Override
+   public IEntity<?> spawn(double x, double y, double z, int tab, String name, IWorld level) {
+      if (level == null || level.getMCLevel().isClientSide()) {
+         LogWriter.debug("CloneHandler summoning Error: World is Client: "
+                 + (level == null ? "null" : level.getMCLevel().isClientSide() + " - " + level));
+         return null;
+      }
+      CompoundTag compound = getCloneData(null, name, tab);
+      if (compound == null) { throw new CustomNPCsException("Unknown clone tab:" + tab + " name:" + name); }
+      Entity entity = SPacketToolMobSpawner.spawnClone(compound, x, y, z, level.getMCLevel());
+      if (entity == null) {
+         LogWriter.debug(
+                 "CloneHandler summoning error: Failed to create an entity based on tab: " + tab + "; name: \""
+                         + name + "\"; compound:" + compound.toString().length());
+         return null;
+      }
+      return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity);
+   }
 
-	public void saveClone(int tab, String name, NBTTagCompound compound) {
-		CustomNpcs.debugData.start(null);
-		try {
-			File dir = new File(this.getDir(), tab + "");
-			if (!dir.exists() && !dir.mkdirs()) {
-				LogWriter.error("Error save server clone: Directory not created!");
-				return;
-			}
-			String filename = name + ".json";
-			File file = new File(dir, filename + "_new");
-			File file2 = new File(dir, filename);
-			Util.instance.saveFile(file, compound);
-			if (file2.exists() && !file2.delete() || !file.renameTo(file2)) {
-				LogWriter.error("Error save server clone: Delete or rename file2!");
-			}
-		} catch (Exception e) {
-			LogWriter.except(e);
-		}
-		CustomNpcs.debugData.end(null);
-	}
+   @Override
+   public IEntity<?> get(int tab, String name, IWorld level) {
+      CompoundTag compound = getCloneData(null, name, tab);
+      if (compound == null) { throw new CustomNPCsException("Unknown clone tab:" + tab + " name:" + name); }
+      cleanTags(compound);
+      Entity entity = EntityType.create(compound, level.getMCLevel()).orElse(null);
+      return entity == null ? null : Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity);
+   }
 
-	@Override
-	public void set(int tab, String name, IEntity<?> entity) {
-		NBTTagCompound compound = new NBTTagCompound();
-		if (!entity.getMCEntity().writeToNBTAtomically(compound)) {
-			throw new CustomNPCsException("Cannot save dead entities");
-		}
-		this.cleanTags(compound);
-		this.saveClone(tab, name, compound);
-	}
+   @Override
+   public void set(int tab, String name, IEntity<?> entity) {
+      CompoundTag compound = new CompoundTag();
+      if (!entity.getMCEntity().saveAsPassenger(compound)) { throw new CustomNPCsException("Cannot save dead entities"); }
+      cleanTags(compound);
+      saveClone(tab, name, compound);
+   }
 
-	@Override
-	public IEntity<?> spawn(double x, double y, double z, int tab, String name, IWorld world) {
-		if (world == null || world.getMCWorld().isRemote) {
-			LogWriter.debug("CloneHandler summoning Error: World is Client: "
-					+ (world == null ? "null" : world.getMCWorld().isRemote + " - " + world));
-			return null;
-		}
-		NBTTagCompound compound = this.getCloneData(null, name, tab);
-		if (compound == null) {
-			throw new CustomNPCsException("Unknown clone tab:" + tab + " name:" + name);
-		}
-		Entity entity = NoppesUtilServer.spawnClone(compound, x, y, z, world.getMCWorld());
-		if (entity == null) {
-			LogWriter.debug(
-                    "CloneHandler summoning error: Failed to create an entity based on tab: " + tab + "; name: \""
-                            + name + "\"; compound:" + compound.toString().length());
-			return null;
-		}
-		return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity);
-	}
+   @Override
+   public void remove(int tab, String name) { removeClone(name, tab); }
+
+   public boolean hasClone(int tab, String name) { return getCloneData(null, name, tab) != null; }
+
 }

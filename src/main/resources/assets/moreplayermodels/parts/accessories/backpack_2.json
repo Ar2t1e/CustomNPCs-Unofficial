@@ -1,0 +1,81 @@
+{
+	"name": "backpack",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"parent": "moreplayermodels:parts/accessories/backpack.json",
+	"texture": "moreplayermodels:textures/parts/accessories/backpack_2.png",
+	"body_part": "body",
+	"menu": "part.body",
+	"preview_rotation": 140,
+	"translate": [0, 24, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Anfauglir/Valaron/Jakob",
+	"render_data" : {
+        "format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.unknown",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 3,
+					"visible_bounds_height": 3.5,
+					"visible_bounds_offset": [0, 1.25, 0]
+				},
+				"bones": [
+					{
+						"name": "BODY",
+						"pivot": [0, 24, 0]
+					},
+					{
+						"name": "backpack_2",
+						"parent": "BODY",
+						"pivot": [0, 20, 2],
+						"cubes": [
+							{"origin": [-4, 14, 2], "size": [8, 10, 4], "uv": [0, 0]},
+							{"origin": [1, 12, 1.5], "size": [4, 4, 5], "pivot": [3.625, 14.125, 3.75], "rotation": [5, 0, 5], "uv": [17, 17]},
+							{"origin": [3.25, 12.25, 2], "size": [2, 4, 4], "pivot": [3.625, 14.125, 3.75], "rotation": [5, 0, 5], "uv": [4, 22]},
+							{"origin": [-5, 12, 1.5], "size": [4, 4, 5], "pivot": [-3.625, 14.125, 3.75], "rotation": [5, 0, -5], "uv": [17, 17], "mirror": true},
+							{"origin": [-5.25, 12.25, 2], "size": [2, 4, 4], "pivot": [-3.625, 14.125, 3.75], "rotation": [5, 0, -5], "uv": [4, 22], "mirror": true},
+							{"origin": [-3.5, 20.25, 2.25], "size": [7, 4, 4], "uv": [0, 14]},
+							{"origin": [-1, 19.25, 5.75], "size": [2, 2, 1], "pivot": [0, 20.25, 6.25], "rotation": [0, 0, -45], "uv": [20, 0]}
+						]
+					},
+					{
+						"name": "bottles",
+						"parent": "backpack_2",
+						"pivot": [0, 20, 2],
+						"cubes": [
+							{"origin": [-1.884, 13.503, 4.96944], "size": [2, 3, 3], "pivot": [-0.884, 16.91966, 6.96944], "rotation": [-114.28779, 79.02803, -119.72502], "uv": [16, 26]},
+							{"origin": [-1.884, 17.003, 5.46944], "size": [2, 1, 2], "pivot": [-0.884, 16.91966, 6.96944], "rotation": [-114.28779, 79.02803, -119.72502], "uv": [27, 32]},
+							{"origin": [-1.384, 16.503, 5.96944], "size": [1, 2, 1], "pivot": [-0.884, 16.91966, 6.96944], "rotation": [-114.28779, 79.02803, -119.72502], "uv": [0, 0]},
+							{"origin": [-6, 23, 2.75], "size": [2, 1, 3], "pivot": [0, 20, 2], "rotation": [-10.06514, 6.95176, -6.26924], "uv": [4, 30]},
+							{"origin": [-5.5, 22.5, 3.25], "size": [1, 2, 2], "pivot": [0, 20, 2], "rotation": [-10.06514, 6.95176, -6.26924], "uv": [30, 15]},
+							{"origin": [-6, 18.5, 2.25], "size": [2, 4, 4], "pivot": [0, 20, 2], "rotation": [-10.06514, 6.95176, -6.26924], "uv": [19, 32]}
+						]
+					},
+					{
+						"name": "lamp",
+						"parent": "backpack_2",
+						"pivot": [0, 20, 2.75],
+						"rotation": [0, 5, 0],
+						"cubes": [
+							{"origin": [3.5, 18, 3.25], "size": [2, 4, 2], "pivot": [0, 20, 2.75], "rotation": [-20, 0, 0], "uv": [26, 26]},
+							{"origin": [4, 15, 3.75], "size": [1, 18, 1], "pivot": [0, 20, 2.75], "rotation": [-20, 0, 0], "uv": [0, 22]},
+							{"origin": [4, 28.97282, 7.90181], "size": [1, 1, 1], "inflate": 0.2, "pivot": [4.5, 29.92282, 8.40181], "rotation": [-95, 0, 0], "uv": [0, 14]},
+							{"origin": [4, 27.04782, 7.90181], "size": [1, 7, 1], "pivot": [4.5, 29.92282, 8.40181], "rotation": [-95, 0, 0], "uv": [14, 32]},
+							{"origin": [4, 31.79782, 7.90181], "size": [1, 1, 1], "inflate": 0.2, "pivot": [4.5, 29.92282, 8.40181], "rotation": [-95, 0, 0], "uv": [0, 14]},
+							{"origin": [4.5, 24.25, 10.25], "size": [0, 5, 1], "pivot": [0, 20, 2.75], "rotation": [0, 0, 0], "uv": [12, 34]},
+							{"origin": [3.5, 23.25, 9.75], "size": [2, 1, 2], "pivot": [0, 20, 2.75], "rotation": [0, 0, 0], "uv": [24, 7]},
+							{"origin": [2.5, 22.25, 8.75], "size": [4, 1, 4], "pivot": [0, 20, 2.75], "rotation": [0, 0, 0], "uv": [20, 10]},
+							{"origin": [3, 18.25, 9.25], "size": [3, 4, 3], "pivot": [0, 20, 2.75], "rotation": [0, 0, 0], "uv": [24, 0]},
+							{"origin": [2.5, 17.25, 8.75], "size": [4, 1, 4], "pivot": [0, 20, 2.75], "rotation": [0, 0, 0], "uv": [20, 10]}
+						]
+					}
+				]
+			}
+		]
+	}
+}

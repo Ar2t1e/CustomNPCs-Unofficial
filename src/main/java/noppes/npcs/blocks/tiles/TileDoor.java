@@ -1,118 +1,95 @@
 package noppes.npcs.blocks.tiles;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import noppes.npcs.CustomRegisters;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
+import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomNpcs;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class TileDoor extends TileNpcEntity {
 
-public class TileDoor extends TileNpcEntity implements ITickable {
+   public int tickCount = 0;
+   public Block blockModel;
+   public boolean needsClientUpdate;
 
-	public Block blockModel;
-	public boolean needsClientUpdate;
-	public TileEntity renderTile;
-	public boolean renderTileErrored;
-	public ITickable renderTileUpdate;
-	public int ticksExisted;
+   public TileDoor(BlockEntityType<?> p_i48289_1_, BlockPos pos, BlockState state) {
+      super(p_i48289_1_, pos, state);
+      this.blockModel = CustomBlocks.scripted_door;
+      this.needsClientUpdate = false;
+   }
 
-	public TileDoor() {
-		this.ticksExisted = 0;
-		this.blockModel = CustomRegisters.scriptedDoor;
-		this.needsClientUpdate = false;
-		this.renderTileErrored = true;
-		this.renderTileUpdate = null;
-	}
+   public void load(@NotNull CompoundTag compound) {
+      super.load(compound);
+      this.setDoorNBT(compound);
+   }
 
-	public void writeDoorNBT(NBTTagCompound compound) {
-		compound.setString("ScriptDoorBlockModel", Block.REGISTRY.getNameForObject(this.blockModel) + "");
-	}
+   public void setDoorNBT(CompoundTag compound) {
+      this.blockModel = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse(compound.getString("ScriptDoorBlockModel")));
+      if (this.blockModel == null || !(this.blockModel instanceof DoorBlock)) { blockModel = CustomBlocks.scripted_door; }
+   }
 
-	public SPacketUpdateTileEntity getUpdatePacket() {
-		return new SPacketUpdateTileEntity(this.pos, 0, this.getUpdateTag());
-	}
+   public void saveAdditional(@NotNull CompoundTag compound) {
+      this.getDoorNBT(compound);
+      super.saveAdditional(compound);
+   }
 
-	@Nonnull
-	public NBTTagCompound getUpdateTag() {
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("x", this.pos.getX());
-		compound.setInteger("y", this.pos.getY());
-		compound.setInteger("z", this.pos.getZ());
-		this.writeDoorNBT(compound);
-		return compound;
-	}
+   public void getDoorNBT(CompoundTag compound) {
+      ResourceLocation registryName = ForgeRegistries.BLOCKS.getKey(blockModel);
+      if (registryName == null) { registryName = new ResourceLocation(CustomNpcs.MODID, "npcscripteddoortool"); }
+      compound.putString("ScriptDoorBlockModel", registryName.toString());
+   }
 
-	public void handleUpdateTag(@Nonnull NBTTagCompound compound) {
-		this.setDoorNBT(compound);
-	}
+   public void setItemModel(Block block) {
+      if (!(block instanceof DoorBlock)) {
+         block = CustomBlocks.scripted_door;
+      }
+      if (this.blockModel != block) {
+         this.blockModel = block;
+         this.needsClientUpdate = true;
+      }
+   }
 
-	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
-		this.handleUpdateTag(pkt.getNbtCompound());
-	}
+   public static void tick(Level level, BlockPos pos, BlockState state, TileDoor tile) {
+      ++tile.tickCount;
+      if (tile.tickCount >= 10) {
+         tile.tickCount = 0;
+         if (tile.needsClientUpdate) {
+            tile.setChanged();
+            level.setBlockAndUpdate(pos, state);
+            tile.needsClientUpdate = false;
+         }
+      }
 
-	@Override
-	public void readFromNBT(@Nonnull NBTTagCompound compound) {
-		super.readFromNBT(compound);
-		this.setDoorNBT(compound);
-	}
+   }
 
-	public void setDoorNBT(NBTTagCompound compound) {
-		this.blockModel = Block.REGISTRY.getObject(new ResourceLocation(compound.getString("ScriptDoorBlockModel")));
-		if (!(this.blockModel instanceof BlockDoor)) {
-			this.blockModel = CustomRegisters.scriptedDoor;
-		}
-		this.renderTileUpdate = null;
-		this.renderTile = null;
-		this.renderTileErrored = false;
-	}
+   public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+      this.handleUpdateTag(pkt.getTag());
+   }
 
-	public void setItemModel(Block block) {
-		if (!(block instanceof BlockDoor)) {
-			block = CustomRegisters.scriptedDoor;
-		}
-		if (this.blockModel == block) {
-			return;
-		}
-		this.blockModel = block;
-		this.needsClientUpdate = true;
-	}
+   public void handleUpdateTag(CompoundTag compound) {
+      this.setDoorNBT(compound);
+   }
 
-	public boolean shouldRefresh(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState) {
-		return oldState.getBlock() != newState.getBlock();
-	}
+   public ClientboundBlockEntityDataPacket getUpdatePacket() {
+      return ClientboundBlockEntityDataPacket.create(this);
+   }
 
-	public void update() {
-		if (this.renderTileUpdate != null) {
-			try {
-				this.renderTileUpdate.update();
-			} catch (Exception e) {
-				this.renderTileUpdate = null;
-			}
-		}
-		++this.ticksExisted;
-		if (this.ticksExisted >= 10) {
-			this.ticksExisted = 0;
-			if (this.needsClientUpdate) {
-				this.markDirty();
-				IBlockState state = this.world.getBlockState(this.pos);
-				this.world.notifyBlockUpdate(this.pos, state, state, 3);
-				this.needsClientUpdate = false;
-			}
-		}
-	}
+   public @NotNull CompoundTag getUpdateTag() {
+      CompoundTag compound = new CompoundTag();
+      compound.putInt("x", this.worldPosition.getX());
+      compound.putInt("y", this.worldPosition.getY());
+      compound.putInt("z", this.worldPosition.getZ());
+      this.getDoorNBT(compound);
+      return compound;
+   }
 
-	@Nonnull
-	@Override
-	public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-		this.writeDoorNBT(compound);
-		return super.writeToNBT(compound);
-	}
 }

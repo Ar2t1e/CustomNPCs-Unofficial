@@ -1,189 +1,146 @@
 package noppes.npcs.client.renderer;
 
-import net.minecraft.block.Block;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.entity.projectile.EntityTippedArrow;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemArrow;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.entity.EntityProjectile;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
-import javax.annotation.Nonnull;
 
-@SideOnly(Side.CLIENT)
-public class RenderProjectile<T extends EntityProjectile> extends Render<T> {
+@OnlyIn(Dist.CLIENT)
+public class RenderProjectile<T extends EntityProjectile> extends EntityRenderer<T> {
+	
 
-	private static final ResourceLocation ARROW_TEXTURES;
+	public boolean renderWithColor = true;
+	private static final ResourceLocation ARROW_TEXTURES = new ResourceLocation("textures/entity/projectiles/arrow.png");
+	private static final ResourceLocation field_110798_h = new ResourceLocation("textures/misc/enchanted_item_glint.png");
 
-	static {
-		ARROW_TEXTURES = new ResourceLocation("textures/entity/arrow.png");
-		//new ResourceLocation("textures/misc/enchanted_item_glint.png");
-	}
-	private boolean crash;
-	private boolean crash2;
+    private boolean crash = false;
+    private boolean crash2 = false;
 
-	public boolean renderWithColor;
-
-	public RenderProjectile() {
-		super(Minecraft.getMinecraft().getRenderManager());
-		this.renderWithColor = true;
-		this.crash = false;
-		this.crash2 = false;
+	public RenderProjectile(EntityRendererProvider.Context manager) {
+		super(manager);
 	}
 
-	public void doRender(@Nonnull T entity, double par2, double par4, double par6, float par8, float par9) {
-		this.doRenderProjectile(entity, par2, par4, par6, par9);
+    @Override
+    public void render(T projectile, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight) {
+        Minecraft mc = Minecraft.getInstance();
+        matrixStack.pushPose();
+        float scale = (float) projectile.getSize() / 10.0F;
+        ItemStack item = projectile.getItemDisplay();
+        matrixStack.scale(scale, scale, scale);
+
+        if (projectile.isArrow()) {
+            //RenderType type = RenderType.itemEntityTranslucentCull(this.getTextureLocation(projectile));
+
+            matrixStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, projectile.yRotO, projectile.getYRot()) - 90.0F));
+            matrixStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTicks, projectile.xRotO, projectile.getXRot())));
+
+            float f9 = (float)projectile.arrowShake - partialTicks;
+            if (f9 > 0.0F) {
+                float f10 = -Mth.sin(f9 * 3.0F) * f9;
+                matrixStack.mulPose(Axis.ZP.rotationDegrees(f10));
+            }
+
+            matrixStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+            matrixStack.scale(0.05625F, 0.05625F, 0.05625F);
+            matrixStack.translate(-4.0D, 0.0D, 0.0D);
+            VertexConsumer ivertexbuilder = buffer.getBuffer(RenderType.entityCutout(this.getTextureLocation(projectile)));
+            PoseStack.Pose matrixstack$entry = matrixStack.last();
+            Matrix4f matrix4f = matrixstack$entry.pose();
+            Matrix3f matrix3f = matrixstack$entry.normal();
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, -2, -2, 0.0F, 0.15625F, -1, 0, 0, packedLight);
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, -2, 2, 0.15625F, 0.15625F, -1, 0, 0, packedLight);
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, 2, 2, 0.15625F, 0.3125F, -1, 0, 0, packedLight);
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, 2, -2, 0.0F, 0.3125F, -1, 0, 0, packedLight);
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, 2, -2, 0.0F, 0.15625F, 1, 0, 0, packedLight);
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, 2, 2, 0.15625F, 0.15625F, 1, 0, 0, packedLight);
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, -2, 2, 0.15625F, 0.3125F, 1, 0, 0, packedLight);
+            this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -7, -2, -2, 0.0F, 0.3125F, 1, 0, 0, packedLight);
+
+            for(int j = 0; j < 4; ++j) {
+                matrixStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -8, -2, 0, 0.0F, 0.0F, 0, 1, 0, packedLight);
+                this.drawVertex(matrix4f, matrix3f, ivertexbuilder, 8, -2, 0, 0.5F, 0.0F, 0, 1, 0, packedLight);
+                this.drawVertex(matrix4f, matrix3f, ivertexbuilder, 8, 2, 0, 0.5F, 0.15625F, 0, 1, 0, packedLight);
+                this.drawVertex(matrix4f, matrix3f, ivertexbuilder, -8, 2, 0, 0.0F, 0.15625F, 0, 1, 0, packedLight);
+            }
+        } else if (projectile.is3D()) {
+            matrixStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, projectile.yRotO, projectile.getYRot()) - 180.0F));
+            matrixStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTicks, projectile.xRotO, projectile.getXRot())));
+
+            matrixStack.translate(0, -0.125f, 0.25f);
+            if (item.getItem() instanceof BlockItem && Block.byItem(item.getItem()).defaultBlockState().getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED){
+                matrixStack.translate(0.0F, 0.1875F, -0.3125F);
+                matrixStack.mulPose(Axis.XP.rotationDegrees(20.0F));
+                matrixStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+                float f8 = 0.375F;
+                matrixStack.scale(-f8, -f8, f8);
+            }
+            if(!crash) {
+                try {
+                    mc.getItemRenderer().renderStatic(item, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, packedLight, OverlayTexture.NO_OVERLAY, matrixStack, buffer,null, 0);
+                }
+                catch(Throwable e){
+                    crash = true;
+                }
+            }
+            else if(!crash2) {//some mods like techguns dont like to be rendered in THIRD_PERSON_RIGHT_HAND so try rendering NONE
+                try {
+                    mc.getItemRenderer().renderStatic(item, ItemDisplayContext.NONE, packedLight, OverlayTexture.NO_OVERLAY, matrixStack, buffer,null, 0);
+                }
+                catch(Throwable ee){
+                    crash2 = true;
+                }
+            }
+            else {
+                mc.getItemRenderer().renderStatic(new ItemStack(Blocks.DIRT), ItemDisplayContext.GROUND, packedLight, OverlayTexture.NO_OVERLAY, matrixStack, buffer,null, 0);
+            }
+        }
+        else{
+            matrixStack.scale(0.5F, 0.5F, 0.5F);
+            matrixStack.mulPose(this.entityRenderDispatcher.camera.rotation());
+            matrixStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            //mc.getItemRenderer().renderStatic(item, ItemTransforms.TransformType.NONE);
+            mc.getItemRenderer().renderStatic(item, ItemDisplayContext.GROUND, packedLight, OverlayTexture.NO_OVERLAY, matrixStack, buffer,null, 0);
+
+        }
+        if (projectile.is3D() && projectile.glows()) {
+            //RenderSystem.disableLighting();
+        }
+        matrixStack.popPose();
+        //RenderSystem.enableLighting();
+    }
+
+    protected ResourceLocation func_110779_a(EntityProjectile projectile) {
+        return projectile.isArrow() ? ARROW_TEXTURES : TextureAtlas.LOCATION_BLOCKS;
+    }
+
+    @Override
+	public ResourceLocation getTextureLocation(T par1Entity) {
+        return par1Entity.isArrow() ? ARROW_TEXTURES : TextureAtlas.LOCATION_BLOCKS;
 	}
 
-	@SuppressWarnings("unchecked")
-	public void doRenderProjectile(EntityProjectile projectile, double x, double y, double z, float partialTicks) {
-		Minecraft mc = Minecraft.getMinecraft();
-		GlStateManager.pushMatrix();
-		GlStateManager.translate(x, y, z);
-		GlStateManager.enableRescaleNormal();
-		float scale = projectile.getSize() / 10.0f;
-		ItemStack item = projectile.getItemDisplay();
-		GlStateManager.scale(scale, scale, scale);
-		if (projectile.isArrow()) {
-			EntityArrow arrow = null;
-			Render<Entity> render = null;
-			if (item.getItem() instanceof ItemArrow) {
-				arrow = ((ItemArrow) item.getItem()).createArrow(mc.world, item, mc.player);
-				render = mc.getRenderManager().getEntityClassRenderObject(arrow.getClass());
-			}
-			if (arrow == null) {
-				this.bindEntityTexture((T) projectile);
-				GlStateManager.rotate(projectile.prevRotationYaw + (projectile.rotationYaw - projectile.prevRotationYaw) * partialTicks - 90.0f, 0.0f, 1.0f, 0.0f);
-				GlStateManager.rotate(projectile.prevRotationPitch + (projectile.rotationPitch - projectile.prevRotationPitch) * partialTicks, 0.0f, 0.0f, 1.0f);
-			}
-			GlStateManager.enableRescaleNormal();
-			float f10 = projectile.arrowShake - partialTicks;
-			if (f10 > 0.0f) {
-				float f11 = -MathHelper.sin(f10 * 3.0f) * f10;
-				GlStateManager.rotate(f11, 0.0f, 0.0f, 1.0f);
-			}
-			if (this.renderOutlines) {
-				GlStateManager.enableColorMaterial();
-				GlStateManager.enableOutlineMode(this.getTeamColor((T) projectile));
-			}
-			if (arrow != null) {
-				arrow.rotationYaw = projectile.rotationYaw;
-				arrow.prevRotationYaw = projectile.prevRotationYaw;
-				arrow.rotationPitch = projectile.rotationPitch;
-				arrow.prevRotationPitch = projectile.prevRotationPitch;
-				GlStateManager.scale(2.0f, 2.0f, 2.0f);
-				render.doRender(arrow, 0.0d, 0.0d, 0.0d, 0.0f, 0.0f);
-			} else {
-				float f = 0.0f;
-				float f2 = 0.5f;
-				float f3 = 0.0f;
-				float f4 = 5.0f / 32.0f;
-				float f5 = 0.0f;
-				float f6 = 0.15625f;
-				float f7 = 5.0f / 32.0f;
-				float f8 = 10.0f / 32.0f;
-				float f9 = 0.05625f;
-				GlStateManager.rotate(45.0f, 1.0f, 0.0f, 0.0f);
-				GlStateManager.scale(f9, f9, f9);
-				GlStateManager.translate(-4.0f, 0.0f, 0.0f);
-
-				GlStateManager.glNormal3f(f9, 0.0f, 0.0f);
-				Tessellator tessellator = Tessellator.getInstance();
-				BufferBuilder BufferBuilder = tessellator.getBuffer();
-				BufferBuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-				BufferBuilder.pos(-7.0, -2.0, -2.0).tex(f5, f7).endVertex();
-				BufferBuilder.pos(-7.0, -2.0, 2.0).tex(f6, f7).endVertex();
-				BufferBuilder.pos(-7.0, 2.0, 2.0).tex(f6, f8).endVertex();
-				BufferBuilder.pos(-7.0, 2.0, -2.0).tex(f5, f8).endVertex();
-				tessellator.draw();
-				GlStateManager.glNormal3f(-f9, 0.0f, 0.0f);
-				BufferBuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-				BufferBuilder.pos(-7.0, 2.0, -2.0).tex(f5, f7).endVertex();
-				BufferBuilder.pos(-7.0, 2.0, 2.0).tex(f6, f7).endVertex();
-				BufferBuilder.pos(-7.0, -2.0, 2.0).tex(f6, f8).endVertex();
-				BufferBuilder.pos(-7.0, -2.0, -2.0).tex(f5, f8).endVertex();
-				tessellator.draw();
-				for (int j = 0; j < 4; ++j) {
-					GlStateManager.rotate(90.0f, 1.0f, 0.0f, 0.0f);
-					GlStateManager.glNormal3f(0.0f, 0.0f, f9);
-					BufferBuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-					BufferBuilder.pos(-8.0, -2.0, 0.0).tex(f, f3).endVertex();
-					BufferBuilder.pos(8.0, -2.0, 0.0).tex(f2, f3).endVertex();
-					BufferBuilder.pos(8.0, 2.0, 0.0).tex(f2, f4).endVertex();
-					BufferBuilder.pos(-8.0, 2.0, 0.0).tex(f, f4).endVertex();
-					tessellator.draw();
-				}
-			}
-			if (this.renderOutlines) {
-				GlStateManager.disableOutlineMode();
-				GlStateManager.disableColorMaterial();
-			}
-		}
-		else if (projectile.is3D()) {
-			GlStateManager.rotate(projectile.prevRotationYaw + (projectile.rotationYaw - projectile.prevRotationYaw) * partialTicks - 180.0f, 0.0f, 1.0f, 0.0f);
-			GlStateManager.rotate(projectile.prevRotationPitch + (projectile.rotationPitch - projectile.prevRotationPitch) * partialTicks, 1.0f, 0.0f, 0.0f);
-			GlStateManager.translate(0.0, -0.125, 0.25);
-			if (item.getItem() instanceof ItemBlock && Block.getBlockFromItem(item.getItem()).getDefaultState().getRenderType() == EnumBlockRenderType.ENTITYBLOCK_ANIMATED) {
-				GlStateManager.translate(0.0f, 0.1875f, -0.3125f);
-				GlStateManager.rotate(20.0f, 1.0f, 0.0f, 0.0f);
-				GlStateManager.rotate(45.0f, 0.0f, 1.0f, 0.0f);
-				float f12 = 0.375f;
-				GlStateManager.scale(-f12, -f12, f12);
-			}
-			if (!this.crash) {
-				try {
-					mc.getRenderItem().renderItem(item, ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND);
-				} catch (Throwable e) {
-					this.crash = true;
-				}
-			} else if (!this.crash2) {
-				try {
-					mc.getRenderItem().renderItem(item, ItemCameraTransforms.TransformType.NONE);
-				} catch (Throwable ee) {
-					this.crash2 = true;
-				}
-			} else {
-				mc.getRenderItem().renderItem(new ItemStack(Blocks.DIRT), ItemCameraTransforms.TransformType.GROUND);
-			}
-		}
-		else {
-			GlStateManager.enableRescaleNormal();
-			GlStateManager.scale(0.5f, 0.5f, 0.5f);
-			GlStateManager.rotate(-this.renderManager.playerViewY, 0.0f, 1.0f, 0.0f);
-			GlStateManager.rotate(this.renderManager.playerViewX, 1.0f, 0.0f, 0.0f);
-			this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-			try {
-				mc.getRenderItem().renderItem(item, ItemCameraTransforms.TransformType.NONE);
-			} catch (Exception e2) {
-				mc.getRenderItem().renderItem(new ItemStack(Blocks.DIRT), ItemCameraTransforms.TransformType.NONE);
-			}
-			GlStateManager.disableRescaleNormal();
-		}
-		if (projectile.is3D() && projectile.glows()) {
-			GlStateManager.disableLighting();
-		}
-		GlStateManager.disableRescaleNormal();
-		GlStateManager.popMatrix();
-		GlStateManager.enableLighting();
-	}
-
-	protected ResourceLocation getEntityTexture(@Nonnull T entity) {
-		return entity.isArrow() ? RenderProjectile.ARROW_TEXTURES : TextureMap.LOCATION_BLOCKS_TEXTURE;
-	}
+    public void drawVertex(Matrix4f matrix, Matrix3f normals, VertexConsumer vertexBuilder, int offsetX, int offsetY, int offsetZ, float textureX, float textureY, int p_229039_9_, int p_229039_10_, int p_229039_11_, int packedLightIn) {
+        vertexBuilder.vertex(matrix, (float)offsetX, (float)offsetY, (float)offsetZ).color(255, 255, 255, 255).uv(textureX, textureY).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLightIn).normal(normals, (float)p_229039_9_, (float)p_229039_11_, (float)p_229039_10_).endVertex();
+    }
 }

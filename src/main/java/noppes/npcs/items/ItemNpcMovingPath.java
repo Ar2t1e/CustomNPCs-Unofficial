@@ -2,138 +2,160 @@ package noppes.npcs.items;
 
 import java.util.List;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.api.item.INPCToolItem;
+import noppes.npcs.client.ClientEventHandler;
+import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.constants.EnumMenuType;
+import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketMenuSave;
+import noppes.npcs.packets.server.SPacketResetItemMoving;
+import noppes.npcs.util.Util;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.*;
-import noppes.npcs.api.item.INPCToolItem;
-import noppes.npcs.client.ClientGuiEventHandler;
-import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.IPermission;
-import noppes.npcs.util.Util;
+public class ItemNpcMovingPath extends Item implements INPCToolItem {
 
-public class ItemNpcMovingPath extends Item implements IPermission, INPCToolItem {
+   public ItemNpcMovingPath() {
+      super((new Properties()).stacksTo(1));
+   }
 
-	public ItemNpcMovingPath() {
-		this.setRegistryName(CustomNpcs.MODID, "npcmovingpath");
-		this.setUnlocalizedName("npcmovingpath");
-		this.setFull3D();
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
-	}
+   public static void register(@Nonnull EntityNPCInterface npc, @Nonnull ItemStack stack, @Nonnull Player player) {
+      CompoundTag compound = stack.getOrCreateTag();
+      if (compound.getInt("NPCID") != npc.getId() ||
+              !compound.getUUID("NPCUUID").equals(npc.getUUID()) ||
+              !compound.getString("NPCDIM").equals(npc.level().dimension().location().toString())) {
+         compound.putInt("NPCID", npc.getId());
+         compound.putUUID("NPCUUID", npc.getUUID());
+         compound.putString("NPCDIM", npc.level().dimension().location().toString());
+         player.sendSystemMessage(Component.translatable("message.pather.register", npc.getName(), stack.getDisplayName()));
+         if (player instanceof  ServerPlayer sPlayer) {
+            Packets.send(sPlayer, new PacketMenuSave(npc, EnumMenuType.MOVING_PATH));
+         }
+      }
+   }
 
-	@SideOnly(Side.CLIENT)
-	@Override
-	public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> list, @Nonnull ITooltipFlag flagIn) {
-        list.add(new TextComponentTranslation("info.item.moving.path").getFormattedText());
-		for (int i = 0; i < 3; i++) {
-			if (i == 1 || i == 2) {
-				list.add(new TextComponentTranslation("info.item.moving.path." + i,
-						new TextComponentTranslation("ai.movingpath").getFormattedText()).getFormattedText());
-				continue;
-			}
-			list.add(new TextComponentTranslation("info.item.moving.path." + i).getFormattedText());
-		}
-	}
+   public static @Nullable EntityNPCInterface getNpc(@Nonnull ItemStack stack, @Nonnull Level levelIn) {
+      CompoundTag compound = stack.getTag();
+      if (compound != null && compound.contains("NPCID", 3)) {
+         Level level = levelIn;
+         Entity entity = null;
+         if (compound.contains("NPCDIM", 8)) {
+            ResourceKey<Level> levelKey = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("NPCDIM")));
+            if (!level.dimension().equals(levelKey)) {
+               MinecraftServer server = level.getServer() != null ? level.getServer() : CustomNpcs.Server;
+               if (server != null) { level = server.getLevel(levelKey); }
+               else { level = null; }
+            }
+            if (level != null) {
+               entity = level.getEntity(compound.getInt("NPCID"));
+               if (!(entity instanceof EntityNPCInterface)) {
+                  entity = Util.instance.getEntityByUUID(compound.getUUID("NPCUUID"), level, true);
+               }
+            }
+         }
+         else { entity = level.getEntity(compound.getInt("NPCID")); }
+         if (!(entity instanceof EntityNPCInterface) && levelIn.isClientSide()) {
+            Packets.sendServerDelayed(new SPacketResetItemMoving(), stack, 5000);
+         }
+         return entity instanceof EntityNPCInterface npc ? npc : null;
+      }
+      return null;
+   }
 
-	/** Registered in EntityNPCInterface.processInteract() */
-	private EntityNPCInterface getNpc(ItemStack item, World world) {
-		if (world.isRemote || item.getTagCompound() == null) {
-			return null;
-		}
-		Entity entity = world.getEntityByID(item.getTagCompound().getInteger("NPCID"));
-		if (!(entity instanceof EntityNPCInterface)) {
-			return null;
-		}
-		return (EntityNPCInterface) entity;
-	}
+   public @Nonnull InteractionResultHolder<ItemStack> use(Level level, Player player, @Nonnull InteractionHand hand) {
+      ItemStack itemstack = player.getItemInHand(hand);
+      if (!level.isClientSide && player instanceof ServerPlayer sPlayer &&
+              CustomNpcsPermissions.hasPermission(sPlayer, CustomNpcsPermissions.TOOL_PATHER) &&
+              hand == InteractionHand.MAIN_HAND) {
+         EntityNPCInterface npc = getNpc(itemstack, level);
+         if (npc != null && (player.isCrouching() || npc.ais.getMovingType() == 2)) { NoppesUtilServer.sendOpenGui((ServerPlayer) player, EnumGuiType.MovingPath, npc); }
+         return new InteractionResultHolder<>(InteractionResult.SUCCESS, itemstack);
+      }
+      return new InteractionResultHolder<>(InteractionResult.PASS, itemstack);
+   }
 
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.MovingPathGet || e == EnumPacketServer.MovingPathSave;
-	}
+   public @Nonnull InteractionResult useOn(UseOnContext context) {
+      if (context.getLevel().isClientSide() || !(context.getPlayer() instanceof ServerPlayer player) ||
+              !CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.TOOL_MOUNTER) || context.getHand() != InteractionHand.MAIN_HAND) {
+         if (context.getLevel().isClientSide()) { ClientEventHandler.movingPath.clear(); }
+         return InteractionResult.FAIL;
+      }
+      ItemStack stack = context.getItemInHand();
+      EntityNPCInterface npc = getNpc(stack, context.getLevel());
+      if (npc != null) {
+         List<int[]> list = npc.ais.getMovingPath();
+         int[] pos = list.get(list.size() - 1);
+         int x = context.getClickedPos().getX();
+         int y = context.getClickedPos().getY();
+         int z = context.getClickedPos().getZ();
+         if (npc.ais.getMovingType() != 2) {
+            npc.ais.setStartPos(new BlockPos(x, y, z));
+            player.sendSystemMessage(Component.translatable("message.pather.home",
+                    ((char) 167) + "6" + x, ((char) 167) + "6" + y, ((char) 167) + "6" + z,
+                    npc.getName()));
+         }
+         else {
+            boolean added = true;
+            if (!list.isEmpty()) {
+               int[] p = list.get(list.size() - 1);
+               added = !(p[0] == x && p[1] == y && p[2] == z);
+            }
+            if (added) {
+               list.add(new int[] { x, y, z });
+               player.sendSystemMessage(Component.translatable("message.pather.added",
+                       ((char) 167) + "6" + x, ((char) 167) + "6" + y, ((char) 167) + "6" + z,
+                       npc.getName()));
+               double d0 = x - pos[0];
+               double d1 = y - pos[1];
+               double d2 = z - pos[2];
+               double distance = Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
+               if (distance > CustomNpcs.NpcNavRange) {
+                  player.sendSystemMessage(Component.translatable("message.pather.warn.added", ((char) 167) + "6" + CustomNpcs.NpcNavRange));
+               }
+               Packets.send(player, new PacketMenuSave(npc, EnumMenuType.AI));
+            }
+         }
+      }
+      return InteractionResult.SUCCESS;
+   }
 
-	public @Nonnull ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
-		ItemStack stack;
-		if (hand == EnumHand.OFF_HAND) {
-			return new ActionResult<>(EnumActionResult.PASS, player.getHeldItem(EnumHand.OFF_HAND));
-		}
-		stack = player.getHeldItem(hand);
-		if (!world.isRemote) {
-			if (CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.TOOL_MOUNTER)) {
-				EntityNPCInterface npc = this.getNpc(stack, world);
-				if (npc != null && (player.isSneaking() || npc.ais.getMovingType() == 2)) { NoppesUtilServer.sendOpenGui(player, EnumGuiType.MovingPath, npc); }
-				return new ActionResult<>(EnumActionResult.SUCCESS, stack);
-			}
-		}
-		return new ActionResult<>(EnumActionResult.PASS, stack);
-	}
-
-	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos bpos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (world.isRemote || !CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.TOOL_MOUNTER) || hand != EnumHand.MAIN_HAND) {
-			if (world.isRemote) { ClientGuiEventHandler.movingPath.clear(); }
-			return EnumActionResult.FAIL;
-		}
-		Entity rayTraceEntity = Util.instance.getLookEntity(player, 4.0d, false);
-		if (rayTraceEntity instanceof EntityNPCInterface) {
-			((EntityNPCInterface) rayTraceEntity).setAttackTarget(null);
-			if (player.getHeldItemMainhand().getTagCompound() == null || rayTraceEntity.getEntityId() != player.getHeldItemMainhand().getTagCompound().getInteger("NPCID")) {
-				player.sendMessage( new TextComponentTranslation("message.pather.reg", rayTraceEntity.getName(), player.getHeldItemMainhand().getDisplayName()));
-			}
-			player.getHeldItemMainhand().setTagInfo("NPCID", new NBTTagInt(rayTraceEntity.getEntityId()));
-			player.openContainer.detectAndSendChanges();
-			Server.sendData((EntityPlayerMP) player, EnumPacketClient.NPC_MOVING_PATH, rayTraceEntity.getEntityId(), ((EntityNPCInterface) rayTraceEntity).ais.writeToNBT(new NBTTagCompound()));
-			return EnumActionResult.FAIL;
-		}
-		ItemStack stack = player.getHeldItem(hand);
-		EntityNPCInterface npc = getNpc(stack, world);
-		if (npc == null) { return EnumActionResult.PASS; }
-		List<int[]> list = npc.ais.getMovingPath();
-		int[] pos = list.get(list.size() - 1);
-		int x = bpos.getX();
-		int y = bpos.getY();
-		int z = bpos.getZ();
-		if (npc.ais.getMovingType() != 2) {
-			npc.setHomePosAndDistance(new BlockPos(x, y, z), (int) npc.getMaximumHomeDistance());
-			player.sendMessage(new TextComponentTranslation("message.pather.home", ((char) 167) + "6" + x, ((char) 167) + "6" + y, ((char) 167) + "6" + z, npc.getName()));
-		}
-		else {
-			boolean added = true;
-			if (!list.isEmpty()) {
-				int[] p = list.get(list.size() - 1);
-				added = !(p[0] == x && p[1] == y && p[2] == z);
-			}
-			if (added) {
-				list.add(new int[] { x, y, z });
-				double d0 = x - pos[0];
-				double d1 = y - pos[1];
-				double d3 = z - pos[2];
-				double d4 = MathHelper.sqrt(d0 * d0 + d1 * d1 + d3 * d3);
-				player.sendMessage(new TextComponentTranslation("message.pather.add", ((char) 167) + "6" + x, ((char) 167) + "6" + y, ((char) 167) + "6" + z, npc.getName()));
-				if (d4 > CustomNpcs.NpcNavRange) { player.sendMessage(new TextComponentTranslation("message.pather.warn.add", ((char) 167) + "6" + CustomNpcs.NpcNavRange)); }
-			}
-		}
-		return EnumActionResult.SUCCESS;
-	}
+   // New from Unofficial (BetaZavr)
+   @OnlyIn(Dist.CLIENT)
+   @Override
+   public void appendHoverText(@Nonnull ItemStack stack, @Nullable Level worldIn, @Nonnull List<Component> list, @Nonnull TooltipFlag flagIn) {
+      list.add(Component.translatable("info.item.moving.path"));
+      for (int i = 0; i <= 6; i++) {
+         if (i == 1 || i == 2) {
+            list.add(Component.translatable("info.item.moving.path." + i, Component.translatable("ai.movingpath").getString()));
+            continue;
+         }
+         list.add(Component.translatable("info.item.moving.path." + i));
+      }
+   }
 
 }

@@ -1,31 +1,28 @@
 package noppes.npcs.api.block;
 
 import noppes.npcs.api.ITimers;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface IBlockScriptedDoor extends IBlock {
 
-	String getBlockModel();
+   ITimers getTimers();
 
-	float getHardness();
+   boolean getOpen();
 
-	boolean getOpen();
+   void setOpen(@ParamName("open") boolean open);
 
-	float getResistance();
+   void setBlockModel(@ParamName("name") String name);
 
-	String getSound(@ParamName("isOpen") boolean isOpen);
+   String getBlockModel();
 
-	ITimers getTimers();
+   float getHardness();
 
-	void setBlockModel(@ParamName("name") String name);
+   void setHardness(@ParamName("hardness") float hardness);
 
-	void setHardness(@ParamName("hardness") float hardness);
+   float getResistance();
 
-	void setOpen(@ParamName("open") boolean open);
+   void setResistance(@ParamName("resistance") float resistance);
 
-	void setResistance(@ParamName("resistance") float resistance);
-
-	void setSound(@ParamName("isOpen") boolean isOpen, @ParamName("song") String song);
+   String executeCommand(@ParamName("command") String command);
 
 }

@@ -2,76 +2,71 @@ package noppes.npcs.api.wrapper;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
-import noppes.npcs.api.constants.ItemType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.api.item.IItemBook;
 
 public class ItemBookWrapper extends ItemStackWrapper implements IItemBook {
 
-	protected ItemBookWrapper(ItemStack item) {
-		super(item);
-	}
+   protected ItemBookWrapper(ItemStack item) {
+      super(item);
+   }
 
-	@Override
-	public String getAuthor() {
-		return this.getTag().getString("author");
-	}
+   public String getTitle() {
+      return this.getTag().getString("title");
+   }
 
-	private NBTTagCompound getTag() {
-		NBTTagCompound comp = this.item.getTagCompound();
-		if (comp == null) {
-			this.item.setTagCompound(comp = new NBTTagCompound());
-		}
-		return comp;
-	}
+   public void setTitle(String title) {
+      this.getTag().putString("title", title);
+   }
 
-	@Override
-	public String[] getText() {
-		List<String> list = new ArrayList<>();
-		NBTTagList pages = this.getTag().getTagList("pages", 8);
-		for (int i = 0; i < pages.tagCount(); ++i) {
-			list.add(pages.getStringTagAt(i));
-		}
-		return list.toArray(new String[0]);
-	}
+   public String getAuthor() {
+      return this.getTag().getString("author");
+   }
 
-	@Override
-	public String getTitle() {
-		return this.getTag().getString("title");
-	}
+   public void setAuthor(String author) {
+      this.getTag().putString("author", author);
+   }
 
-	@Override
-	public int getType() {
-		return ItemType.BOOK.get();
-	}
+   public String[] getText() {
+      List<String> list = new ArrayList<>();
+      ListTag pages = this.getTag().getList("pages", 8);
 
-	@Override
-	public boolean isBook() {
-		return true;
-	}
+      for(int i = 0; i < pages.size(); ++i) {
+         list.add(pages.getString(i));
+      }
 
-	@Override
-	public void setAuthor(String author) {
-		this.getTag().setString("author", author);
-	}
+      return list.toArray(new String[0]);
+   }
 
-	@Override
-	public void setText(String ... pages) {
-		NBTTagList list = new NBTTagList();
-		if (pages != null) {
-			for (String page : pages) {
-				list.appendTag(new NBTTagString(page));
-			}
-		}
-		this.getTag().setTag("pages", list);
-	}
+   public void setText(String... pages) {
+      ListTag list = new ListTag();
+      if (pages != null) {
+         for (String page : pages) {
+            list.add(StringTag.valueOf(page));
+         }
+      }
 
-	@Override
-	public void setTitle(String title) {
-		this.getTag().setString("title", title);
-	}
+      this.getTag().put("pages", list);
+   }
+
+   private CompoundTag getTag() {
+      CompoundTag comp = this.item.getTag();
+      if (comp == null) {
+         this.item.setTag(comp = new CompoundTag());
+      }
+
+      return comp;
+   }
+
+   public boolean isBook() {
+      return true;
+   }
+
+   public int getType() {
+      return 1;
+   }
+
 }

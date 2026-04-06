@@ -1,19 +1,20 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface INPCAdvanced {
 
-	String getLine(@ParamName("type") int type, @ParamName("slot") int slot);
+   void setLine(@ParamName("type") int type, @ParamName("slot") int slot, @ParamName("text") String text, @ParamName("sound") String sound);
 
-	int getLineCount(@ParamName("type") int type);
+   String getLine(@ParamName("type") int type, @ParamName("slot") int slot);
 
-	String getSound(@ParamName("type") int type);
+   int getLineCount(@ParamName("type") int type);
 
-	void setLine(@ParamName("type") int type, @ParamName("slot") int slot,
-				 @ParamName("text") String text, @ParamName("sound") String sound);
+   String getSound(@ParamName("type") int type);
 
-	void setSound(@ParamName("type") int type, @ParamName("sound") String sound);
+   void setSound(@ParamName("type") int type, @ParamName("sound") String sound);
 
+   int getAnimationType();
+
+   void setAnimationType(int type);
 }

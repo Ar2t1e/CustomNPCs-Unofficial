@@ -1,94 +1,74 @@
 package noppes.npcs.controllers.data;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.*;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.Event;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
-import noppes.npcs.LogWriter;
 import noppes.npcs.api.event.NpcEvent;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.Util;
 
-public class NpcScriptData
-extends BaseScriptData {
-	
-	@Override
-	public ITextComponent noticeString(String type, Object event) {
-		ITextComponent message = new TextComponentString("NPC's Scripts ");
-		message.getStyle().setColor(TextFormatting.DARK_GRAY);
-		if (type != null) {
-			ITextComponent hook = new TextComponentString(" hook \"");
-			hook.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent hookType = new TextComponentString(type);
-			hookType.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent hookEnd = new TextComponentString("\"; ");
-			hookEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(hook).appendSibling(hookType).appendSibling(hookEnd);
-		}
-		if (event instanceof NpcEvent && ((NpcEvent) event).npc != null) {
-			EntityNPCInterface npc = (EntityNPCInterface) ((NpcEvent) event).npc.getMCEntity();
+public class NpcScriptData extends BaseScriptData {
 
-			ITextComponent mesNpc = new TextComponentString("NPC \"");
-			mesNpc.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent name = new TextComponentString(npc.getName());
-			name.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesUUID = new TextComponentString("\"; UUID: \"");
-			mesUUID.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent uuid = new TextComponentString(npc.getUniqueID().toString());
-			uuid.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesEnd = new TextComponentString("\" in ");
-			mesEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(mesNpc).appendSibling(name).appendSibling(mesUUID).appendSibling(uuid).appendSibling(mesEnd);
+    @Override
+    public MutableComponent noticeString(String type, Object event) {
+        MutableComponent message = Component.literal("NPC's Scripts").withStyle(ChatFormatting.DARK_GRAY);
+        if (type != null) {
+            message.append(Component.literal(" hook \"").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(type).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("\"; ").withStyle(ChatFormatting.DARK_GRAY));
+        }
+        else { message.append(Component.literal("; ").withStyle(ChatFormatting.DARK_GRAY)); }
+        boolean bo = event instanceof NpcEvent && ((NpcEvent) event).npc != null;
+        if (bo) {
+            String dimID = ((NpcEvent) event).npc.getWorld() == null ? "overworld" : ((NpcEvent) event).npc.getWorld().getMCLevel().dimensionTypeId().location().toString();
+            double x = Math.round(((NpcEvent) event).npc.getX() * 100.0d) / 100.0d;
+            double y = Math.round(((NpcEvent) event).npc.getY() * 100.0d) / 100.0d;
+            double z = Math.round(((NpcEvent) event).npc.getZ() * 100.0d) / 100.0d;
+            MutableComponent posClick = Component.literal("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
+            Style style = posClick.getStyle().withColor(ChatFormatting.BLUE);
+            style = style.withUnderlined(true);
+            style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + y + " "+z));
+            style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+            posClick.setStyle(style);
+            message.append(Component.literal("NPC \"").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(((NpcEvent) event).npc.getName()).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("\"; UUID: \"").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(((NpcEvent) event).npc.getUUID()).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("\" in ").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(posClick);
+        }
+        return message.append(Component.literal((bo ? "; " : "") +"Side: " + (isClient() ? "Client" : "Server")).withStyle(ChatFormatting.DARK_GRAY));
+    }
 
-			int dimID = npc.world == null ? 0 : npc.world.provider.getDimension();
-			double x = Math.round(npc.posX * 100.0d) / 100.0d;
-			double y = Math.round(npc.posY * 100.0d) / 100.0d;
-			double z = Math.round(npc.posZ * 100.0d) / 100.0d;
-			ITextComponent posClick = new TextComponentString("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
-			posClick.getStyle().setColor(TextFormatting.BLUE)
-					.setUnderlined(true)
-					.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + y + " "+z))
-					.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("script.hover.error.pos.tp")));
-			message = message.appendSibling(posClick);
-		}
-		ITextComponent side = new TextComponentString("; Side: " + (isClient() ? "Client" : "Server"));
-		side.getStyle().setColor(TextFormatting.DARK_GRAY);
-		return message.appendSibling(side);
-	}
-	
-	@Override
-	public void runScript(String type, Event event) {
-		super.runScript(type, event);
-		if (!this.isEnabled()) {
-			return;
-		}
-		try {
-			CustomNpcs.Server.addScheduledTask(() -> {
-				if (ScriptController.Instance.lastLoaded > this.lastInited) {
-					this.lastInited = ScriptController.Instance.lastLoaded;
-					if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) {
-						EventHooks.onNPCsInit(this);
-					}
-				}
-                for (ScriptContainer script : this.scripts) {
-                    script.run(type, event);
-                }
-			});
-		} catch (Exception e) { LogWriter.error(e); }
-	}
+    @Override
+    public void runScript(String type, Event event) {
+        if (isEnabled()) {
+            try {
+                CustomNpcs.Server.submit(() -> {
+                    if (ScriptController.Instance.lastLoaded > lastInited) {
+                        lastInited = ScriptController.Instance.lastLoaded;
+                        if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) {
+                            EventHooks.onNPCsInit(this);
+                        }
+                    }
+                    for (ScriptContainer script : scripts) { script.run(type, event); }
+                });
+            }
+            catch (Exception e) { LogWriter.error("Error:", e); }
+        }
+    }
 
-
-	public void readFromNBT(NBTTagCompound compound) {
-		super.readFromNBT(compound);
-		EventHooks.onNPCsInit(this);
-	}
+    @Override
+    public void load(CompoundTag compound) {
+        super.load(compound);
+        EventHooks.onNPCsInit(this);
+    }
 
 }

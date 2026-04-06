@@ -1,5 +1,13 @@
 package noppes.npcs.constants;
 
 public enum EnumAvailabilityQuest {
-	Always, After, Before, Active, NotActive, Completed, CanStart
+
+   Always,
+   After,
+   Before,
+   Active,
+   NotActive,
+   Completed,
+   CanStart
+
 }

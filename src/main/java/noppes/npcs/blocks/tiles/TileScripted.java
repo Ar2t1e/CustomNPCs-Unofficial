@@ -4,33 +4,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.EventHooks;
-import noppes.npcs.NBTTags;
-import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.api.ILayerModel;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.*;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.registries.ForgeRegistries;
+import noppes.npcs.*;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.block.ITextPlane;
 import noppes.npcs.api.wrapper.BlockScriptedWrapper;
@@ -40,633 +35,499 @@ import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.entity.data.DataTimers;
 import noppes.npcs.entity.data.TextBlock;
-import noppes.npcs.util.LayerModel;
 import noppes.npcs.util.ValueUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class TileScripted extends TileNpcEntity implements IScriptBlockHandler {
 
-public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlockHandler {
+   protected IBlock blockDummy = null;
+   protected short tickCount = 0;
 
-	public class TextPlane implements ITextPlane {
-		public float offsetX;
-		public float offsetY;
-		public float offsetZ;
-		public int rotationX;
-		public int rotationY;
-		public int rotationZ;
-		public float scale;
-		public String text;
-		public TextBlock textBlock;
-		public boolean textHasChanged;
+   public List<ScriptContainer> scripts = new ArrayList<>();
+   public BlockEntityTicker<BlockEntity> renderTileUpdate = null;
+   public String scriptLanguage = "ECMAScript";
+   public DataTimers timers = new DataTimers(this);
+   public BlockEntity renderTile;
+   public BlockState renderState;
 
-		public TextPlane() {
-			this.textHasChanged = true;
-			this.text = "";
-			this.rotationX = 0;
-			this.rotationY = 0;
-			this.rotationZ = 0;
-			this.offsetX = 0.0f;
-			this.offsetY = 0.0f;
-			this.offsetZ = 0.5f;
-			this.scale = 1.0f;
-		}
+   public boolean renderTileErrored = true;
+   public boolean needsClientUpdate = false;
+   public boolean enabled = false;
+   public boolean isPassible = false;
+   public boolean isLadder = false;
 
-		public NBTTagCompound getNBT() {
-			NBTTagCompound compound = new NBTTagCompound();
-			compound.setString("Text", this.text);
-			compound.setInteger("RotationX", this.rotationX);
-			compound.setInteger("RotationY", this.rotationY);
-			compound.setInteger("RotationZ", this.rotationZ);
-			compound.setFloat("OffsetX", this.offsetX);
-			compound.setFloat("OffsetY", this.offsetY);
-			compound.setFloat("OffsetZ", this.offsetZ);
-			compound.setFloat("Scale", this.scale);
-			return compound;
-		}
+   public int powering = 0;
+   public int activePowering = 0;
+   public int newPower = 0;
+   public int prevPower = 0;
+   public int lightValue = 0;
 
-		@Override
-		public float getOffsetX() {
-			return this.offsetX;
-		}
+   public float blockHardness = 5.0f;
+   public float blockResistance = 10.0f;
 
-		@Override
-		public float getOffsetY() {
-			return this.offsetY;
-		}
+   public long lastInited = -1L;
 
-		@Override
-		public float getOffsetZ() {
-			return this.offsetZ;
-		}
+   // Texts
+   public TileScripted.TextPlane text1 = new TileScripted.TextPlane();
+   public TileScripted.TextPlane text2 = new TileScripted.TextPlane();
+   public TileScripted.TextPlane text3 = new TileScripted.TextPlane();
+   public TileScripted.TextPlane text4 = new TileScripted.TextPlane();
+   public TileScripted.TextPlane text5 = new TileScripted.TextPlane();
+   public TileScripted.TextPlane text6 = new TileScripted.TextPlane();
 
-		@Override
-		public int getRotationX() {
-			return this.rotationX;
-		}
+   // Model
+   public int rotationX = 0;
+   public int rotationY = 0;
+   public int rotationZ = 0;
+   public float scaleX = 1.0f;
+   public float scaleY = 1.0f;
+   public float scaleZ = 1.0f;
+   public ItemStack itemModel = new ItemStack(CustomBlocks.scripted);
+   public Block blockModel = null;
 
-		@Override
-		public int getRotationY() {
-			return this.rotationY;
-		}
+   public TileScripted(BlockPos pos, BlockState state) {
+      super(CustomBlocks.tile_scripted, pos, state);
+   }
 
-		@Override
-		public int getRotationZ() {
-			return this.rotationZ;
-		}
+   public IBlock getBlock() {
+      if (blockDummy == null) { blockDummy = new BlockScriptedWrapper(getLevel(), CustomBlocks.scripted, getBlockPos()); }
+      return blockDummy;
+   }
 
-		@Override
-		public float getScale() {
-			return this.scale;
-		}
+   public void load(@NotNull CompoundTag compound) {
+      super.load(compound);
+      setNBT(compound);
+      setDisplayNBT(compound);
+      timers.load(compound);
+   }
 
-		@Override
-		public String getText() {
-			return this.text;
-		}
+   public void setNBT(CompoundTag compound) {
+      scripts = NBTTags.getScript(compound.getList("Scripts", 10), this);
+      scriptLanguage = compound.getString("ScriptLanguage");
+      enabled = compound.getBoolean("ScriptEnabled");
+      activePowering = powering = compound.getInt("BlockPowering");
+      prevPower = compound.getInt("BlockPrevPower");
+      if (compound.contains("BlockHardness")) {
+         blockHardness = compound.getFloat("BlockHardness");
+         blockResistance = compound.getFloat("BlockResistance");
+      }
+   }
 
-		public void setNBT(NBTTagCompound compound) {
-			this.setText(compound.getString("Text"));
-			this.rotationX = compound.getInteger("RotationX");
-			this.rotationY = compound.getInteger("RotationY");
-			this.rotationZ = compound.getInteger("RotationZ");
-			this.offsetX = compound.getFloat("OffsetX");
-			this.offsetY = compound.getFloat("OffsetY");
-			this.offsetZ = compound.getFloat("OffsetZ");
-			this.scale = compound.getFloat("Scale");
-		}
+   public void setDisplayNBT(CompoundTag compound) {
+      itemModel = ItemStack.of(compound.getCompound("ScriptBlockModel"));
+      if (itemModel.isEmpty()) { itemModel = new ItemStack(CustomBlocks.scripted); }
+      if (compound.contains("ScriptBlockModelBlock")) {
+         blockModel = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse(compound.getString("ScriptBlockModelBlock")));
+      }
+      renderTileUpdate = null;
+      renderTile = null;
+      renderTileErrored = false;
+      lightValue = compound.getInt("LightValue");
+      isLadder = compound.getBoolean("IsLadder");
+      isPassible = compound.getBoolean("IsPassible");
+      rotationX = compound.getInt("RotationX");
+      rotationY = compound.getInt("RotationY");
+      rotationZ = compound.getInt("RotationZ");
+      scaleX = compound.getFloat("ScaleX");
+      scaleY = compound.getFloat("ScaleY");
+      scaleZ = compound.getFloat("ScaleZ");
+      if (scaleX <= 0.0F) { scaleX = 1.0F; }
+      if (scaleY <= 0.0F) { scaleY = 1.0F; }
+      if (scaleZ <= 0.0F) { scaleZ = 1.0F; }
+      if (compound.contains("Text3")) {
+         text1.setNBT(compound.getCompound("Text1"));
+         text2.setNBT(compound.getCompound("Text2"));
+         text3.setNBT(compound.getCompound("Text3"));
+         text4.setNBT(compound.getCompound("Text4"));
+         text5.setNBT(compound.getCompound("Text5"));
+         text6.setNBT(compound.getCompound("Text6"));
+      }
+   }
 
-		@Override
-		public void setOffsetX(float x) {
-			x = ValueUtil.correctFloat(x, -1.0f, 1.0f);
-			if (this.offsetX == x) {
-				return;
-			}
-			this.offsetX = x;
-			TileScripted.this.needsClientUpdate = true;
-		}
+   public void saveAdditional(@NotNull CompoundTag compound) {
+      getNBT(compound);
+      getDisplayNBT(compound);
+      timers.save(compound);
+      super.saveAdditional(compound);
+   }
 
-		@Override
-		public void setOffsetY(float y) {
-			y = ValueUtil.correctFloat(y, -1.0f, 1.0f);
-			if (this.offsetY == y) {
-				return;
-			}
-			this.offsetY = y;
-			TileScripted.this.needsClientUpdate = true;
-		}
+   public CompoundTag getNBT(CompoundTag compound) {
+      compound.put("Scripts", NBTTags.nbtScript(scripts));
+      compound.putString("ScriptLanguage", scriptLanguage);
+      compound.putBoolean("ScriptEnabled", enabled);
+      compound.putInt("BlockPowering", powering);
+      compound.putInt("BlockPrevPower", prevPower);
+      compound.putFloat("BlockHardness", blockHardness);
+      compound.putFloat("BlockResistance", blockResistance);
+      return compound;
+   }
 
-		@Override
-		public void setOffsetZ(float z) {
-			z = ValueUtil.correctFloat(z, -1.0f, 1.0f);
-			if (this.offsetZ == z) {
-				return;
-			}
-			this.offsetZ = z;
-			TileScripted.this.needsClientUpdate = true;
-		}
+   public void getDisplayNBT(CompoundTag compound) {
+      CompoundTag itemCompound = new CompoundTag();
+      itemModel.save(itemCompound);
+      if (blockModel != null) {
+         ResourceLocation resourcelocation = ForgeRegistries.BLOCKS.getKey(blockModel);
+         compound.putString("ScriptBlockModelBlock", resourcelocation == null ? "" : resourcelocation.toString());
+      }
+      compound.put("ScriptBlockModel", itemCompound);
+      compound.putInt("LightValue", lightValue);
+      compound.putBoolean("IsLadder", isLadder);
+      compound.putBoolean("IsPassible", isPassible);
+      compound.putInt("RotationX", rotationX);
+      compound.putInt("RotationY", rotationY);
+      compound.putInt("RotationZ", rotationZ);
+      compound.putFloat("ScaleX", scaleX);
+      compound.putFloat("ScaleY", scaleY);
+      compound.putFloat("ScaleZ", scaleZ);
+      compound.put("Text1", text1.getNBT());
+      compound.put("Text2", text2.getNBT());
+      compound.put("Text3", text3.getNBT());
+      compound.put("Text4", text4.getNBT());
+      compound.put("Text5", text5.getNBT());
+      compound.put("Text6", text6.getNBT());
+   }
 
-		@Override
-		public void setRotationX(int x) {
-			x = ValueUtil.correctInt(x % 360, 0, 359);
-			if (this.rotationX == x) {
-				return;
-			}
-			this.rotationX = x;
-			TileScripted.this.needsClientUpdate = true;
-		}
+   @Override
+   public boolean isEnabled() {
+      return CustomNpcs.EnableScripting && enabled && ScriptController.HasStart && !scripts.isEmpty() && level != null && !level.isClientSide;
+   }
 
-		@Override
-		public void setRotationY(int y) {
-			y = ValueUtil.correctInt(y % 360, 0, 359);
-			if (this.rotationY == y) {
-				return;
-			}
-			this.rotationY = y;
-			TileScripted.this.needsClientUpdate = true;
-		}
+   @Override
+   public void clearConsoleText(Long key) {
+      for (ScriptContainer script : getScripts()) { script.console.remove(key); }
+   }
 
-		@Override
-		public void setRotationZ(int z) {
-			z = ValueUtil.correctInt(z % 360, 0, 359);
-			if (this.rotationZ == z) {
-				return;
-			}
-			this.rotationZ = z;
-			TileScripted.this.needsClientUpdate = true;
-		}
+   @Override
+   public void setLastInited(long timeMC) { lastInited = timeMC; }
 
-		@Override
-		public void setScale(float scale) {
-			if (this.scale == scale) {
-				return;
-			}
-			this.scale = scale;
-			TileScripted.this.needsClientUpdate = true;
-		}
+   public static void tick(Level level, BlockPos pos, BlockState state, TileScripted tile) {
+      if (tile.renderTileUpdate != null) {
+         try {
+            tile.renderTileUpdate.tick(level, pos, tile.renderState, tile.renderTile);
+         } catch (Exception var5) {
+            tile.renderTileUpdate = null;
+         }
+      }
 
-		@Override
-		public void setText(String text) {
-			if (this.text.equals(text)) {
-				return;
-			}
-			this.text = text;
-			this.textHasChanged = true;
-			TileScripted.this.needsClientUpdate = true;
-		}
-	}
-	public int activePowering;
-	private IBlock blockDummy;
-	public float blockHardness;
-	public Block blockModel;
-	public float blockResistance;
-	public boolean enabled;
-	public boolean isLadder;
-	public boolean isPassable;
-	public ItemStack itemModel;
-	public int metaModel;
-	public long lastInited;
-	public int lightValue;
-	public boolean needsClientUpdate;
-	public int newPower;
-	public int powering;
-	public int prevPower;
-	public TileEntity renderTile;
-	public boolean renderTileErrored;
-	public ITickable renderTileUpdate;
-	public int rotationX;
-	public int rotationY;
-	public int rotationZ;
-	public float scaleX;
-	public float scaleY;
-	public float scaleZ;
-	public String scriptLanguage;
-	public List<ScriptContainer> scripts;
-	public TextPlane text1;
-	public TextPlane text2;
-	public TextPlane text3;
-	public TextPlane text4;
-	public TextPlane text5;
-	public TextPlane text6;
+      ++tile.tickCount;
+      if (tile.prevPower != tile.newPower && tile.powering <= 0) {
+         EventHooks.onScriptBlockRedstonePower(tile, tile.prevPower, tile.newPower);
+         tile.prevPower = tile.newPower;
+      }
 
-	private short ticksExisted;
-	public DataTimers timers;
+      tile.timers.update();
+      if (tile.tickCount >= 10) {
+         EventHooks.onScriptBlockUpdate(tile);
+         tile.tickCount = 0;
+         if (tile.needsClientUpdate) {
+            tile.setChanged();
+            level.sendBlockUpdated(pos, state, state, 3);
+            tile.needsClientUpdate = false;
+         }
+      }
 
-	public ILayerModel[] layers;
+   }
 
-	public TileScripted() {
-		this.scripts = new ArrayList<>();
-		this.scriptLanguage = "ECMAScript";
-		this.enabled = false;
-		this.blockDummy = null;
-		this.timers = new DataTimers(this);
-		this.lastInited = -1L;
-		this.ticksExisted = 0;
-		this.itemModel = new ItemStack(CustomRegisters.scripted);
-		this.blockModel = null;
-		this.needsClientUpdate = false;
-		this.powering = 0;
-		this.activePowering = 0;
-		this.newPower = 0;
-		this.prevPower = 0;
-		this.isPassable = false;
-		this.isLadder = false;
-		this.lightValue = 0;
-		this.blockHardness = 5.0f;
-		this.blockResistance = 10.0f;
-		this.rotationX = 0;
-		this.rotationY = 0;
-		this.rotationZ = 0;
-		this.scaleX = 1.0f;
-		this.scaleY = 1.0f;
-		this.scaleZ = 1.0f;
-		this.renderTileErrored = true;
-		this.renderTileUpdate = null;
-		this.text1 = new TextPlane();
-		this.text2 = new TextPlane();
-		this.text3 = new TextPlane();
-		this.text4 = new TextPlane();
-		this.text5 = new TextPlane();
-		this.text6 = new TextPlane();
-		this.metaModel = 0;
-		this.layers = new ILayerModel[0];
-	}
+   @Override
+   public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+      handleUpdateTag(pkt.getTag());
+   }
 
-	public void clearConsole() {
-		for (ScriptContainer script : this.getScripts()) {
-			script.console.clear();
-		}
-	}
+   @Override
+   public void handleUpdateTag(CompoundTag tag) {
+      int light = lightValue;
+      setDisplayNBT(tag);
+      if (light != lightValue && level != null) {
+         level.getLightEngine().checkBlock(worldPosition);
+      }
+   }
 
-	public IBlock getBlock() {
-		if (this.blockDummy == null) {
-			this.blockDummy = new BlockScriptedWrapper(this.getWorld(), this.getBlockType(), this.getPos());
-		}
-		return this.blockDummy;
-	}
+   @Override
+   public ClientboundBlockEntityDataPacket getUpdatePacket() {
+      return ClientboundBlockEntityDataPacket.create(this);
+   }
 
-	public TreeMap<Long, String> getConsoleText() {
-		TreeMap<Long, String> map = new TreeMap<>();
-		int tab = 0;
-		for (ScriptContainer script : this.getScripts()) {
-			++tab;
-			for (Map.Entry<Long, String> entry : script.console.entrySet()) {
-				String log;
-				if (map.containsKey(entry.getKey())) { log = map.get(entry.getKey()) + "\n\n" + "ScriptTab " + tab + ":\n" + entry.getValue(); }
-				else { log = " ScriptTab " + tab + ":\n" + entry.getValue(); }
-				map.put(entry.getKey(), log);
-			}
-		}
-		return map;
-	}
+   @Override
+   public @NotNull CompoundTag getUpdateTag() {
+      CompoundTag compound = new CompoundTag();
+      compound.putInt("x", worldPosition.getX());
+      compound.putInt("y", worldPosition.getY());
+      compound.putInt("z", worldPosition.getZ());
+      getDisplayNBT(compound);
+      return compound;
+   }
 
-	@Override
-	public void clearConsoleText(Long key) {
-		for (ScriptContainer script : this.getScripts()) {
-			script.console.remove(key);
-		}
-	}
+   public void setItemModel(ItemStack item, Block b) {
+      if (item == null || item.isEmpty()) {
+         item = new ItemStack(CustomBlocks.scripted);
+      }
 
-	public void writeDisplayNBT(NBTTagCompound compound) {
-		NBTTagCompound stackcompound = new NBTTagCompound();
-		this.itemModel.writeToNBT(stackcompound);
-		if (this.blockModel != null) {
-			ResourceLocation resourcelocation = Block.REGISTRY.getNameForObject(this.blockModel);
-			compound.setString("ScriptBlockModelBlock", resourcelocation.toString());
-		}
-		compound.setTag("ScriptBlockModel", stackcompound);
-		compound.setInteger("LightValue", this.lightValue);
-		compound.setBoolean("IsLadder", this.isLadder);
-		compound.setBoolean("IsPassable", this.isPassable);
-		compound.setInteger("RotationX", this.rotationX);
-		compound.setInteger("RotationY", this.rotationY);
-		compound.setInteger("RotationZ", this.rotationZ);
-		compound.setFloat("ScaleX", this.scaleX);
-		compound.setFloat("ScaleY", this.scaleY);
-		compound.setFloat("ScaleZ", this.scaleZ);
-		compound.setTag("Text1", this.text1.getNBT());
-		compound.setTag("Text2", this.text2.getNBT());
-		compound.setTag("Text3", this.text3.getNBT());
-		compound.setTag("Text4", this.text4.getNBT());
-		compound.setTag("Text5", this.text5.getNBT());
-		compound.setTag("Text6", this.text6.getNBT());
-		compound.setInteger("ModelMeta", this.metaModel);
-		NBTTagList l = new NBTTagList();
-        for (ILayerModel layer : this.layers) {
-            l.appendTag(layer.getNbt().getMCNBT());
-        }
-		compound.setTag("Layers", l);
-	}
+      if (!NoppesUtilPlayer.compareItems(item, itemModel, false, false) || b == blockModel) {
+         itemModel = item;
+         blockModel = b;
+         needsClientUpdate = true;
+      }
+   }
 
-	@Override
-	public boolean getEnabled() {
-		return this.enabled;
-	}
+   public void setLightValue(int value) {
+      if (value != lightValue) {
+         lightValue = ValueUtil.correctInt(value, 0, 15);
+         needsClientUpdate = true;
+      }
+   }
 
-	public String getLanguage() {
-		return this.scriptLanguage;
-	}
+   public void setRedstonePower(int strength) {
+      if (powering != strength) {
+         prevPower = activePowering = ValueUtil.correctInt(strength, 0, 15);
+         if (level != null) { level.updateNeighborsAt(worldPosition, CustomBlocks.scripted); }
+         powering = activePowering;
+      }
+   }
 
-	public NBTTagCompound getNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.NBTScript(this.scripts));
-		compound.setString("ScriptLanguage", this.scriptLanguage);
-		compound.setBoolean("ScriptEnabled", this.enabled);
-		compound.setInteger("BlockPowering", this.powering);
-		compound.setInteger("BlockPrevPower", this.prevPower);
-		compound.setFloat("BlockHardness", this.blockHardness);
-		compound.setFloat("BlockResistance", this.blockResistance);
-		compound.setInteger("BlockMeta", this.metaModel);
-		return compound;
-	}
+   public void setScale(float x, float y, float z) {
+      if (scaleX != x || scaleY != y || scaleZ != z) {
+         scaleX = ValueUtil.correctFloat(x, 0.0F, 10.0F);
+         scaleY = ValueUtil.correctFloat(y, 0.0F, 10.0F);
+         scaleZ = ValueUtil.correctFloat(z, 0.0F, 10.0F);
+         needsClientUpdate = true;
+      }
+   }
 
-	@SideOnly(Side.CLIENT)
-	public @Nonnull AxisAlignedBB getRenderBoundingBox() {
-		return Block.FULL_BLOCK_AABB.offset(this.getPos());
-	}
+   public void setRotation(int x, int y, int z) {
+      if (rotationX != x || rotationY != y || rotationZ != z) {
+         rotationX = ValueUtil.correctInt(x, 0, 359);
+         rotationY = ValueUtil.correctInt(y, 0, 359);
+         rotationZ = ValueUtil.correctInt(z, 0, 359);
+         needsClientUpdate = true;
+      }
+   }
 
-	public List<ScriptContainer> getScripts() {
-		return this.scripts;
-	}
+   public void runScript(String type, Event event) {
+      if (isEnabled()) {
+         if (ScriptController.Instance.lastLoaded > lastInited) {
+            lastInited = ScriptController.Instance.lastLoaded;
+            if (!type.equals(EnumScriptType.INIT.function)) {
+               EventHooks.onScriptBlockInit(this);
+            }
+         }
+         for (ScriptContainer script : scripts) {
+            script.run(type, event);
+         }
+      }
+   }
 
-	@SuppressWarnings("deprecation")
-	public IBlockState getState() {
-		IBlockState state = null;
-		if (this.blockModel != null && this.itemModel != null) {
-			state = this.blockModel.getStateFromMeta(this.itemModel.getItemDamage());
-			if (this.metaModel > 0) {
-				try {
-					state = this.blockModel.getStateFromMeta(this.metaModel);
-					int i = 0;
-					for (IBlockState ibs : this.blockModel.getBlockState().getValidStates()) {
-						if (i == this.metaModel) {
-							state = ibs;
-							break;
-						}
-						i++;
-					}
-					if (state != null) {
-						this.blockModel = state.getBlock();
-					}
-				} catch (Exception e) {
-					this.metaModel = 0;
-				}
-			}
-		}
-		return state;
-	}
+   @Override
+   public boolean isClient() {
+      return getLevel() == null || getLevel().isClientSide;
+   }
 
-	public SPacketUpdateTileEntity getUpdatePacket() {
-		return new SPacketUpdateTileEntity(this.pos, 0, this.getUpdateTag());
-	}
+   @Override
+   public boolean getEnabled() {
+      return this.enabled;
+   }
 
-	public @Nonnull NBTTagCompound getUpdateTag() {
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("x", this.pos.getX());
-		compound.setInteger("y", this.pos.getY());
-		compound.setInteger("z", this.pos.getZ());
-		this.writeDisplayNBT(compound);
-		this.getNBT(compound);
-		return compound;
-	}
+   @Override
+   public void setEnabled(boolean bo) {
+      this.enabled = bo;
+   }
 
-	public void handleUpdateTag(@Nonnull NBTTagCompound tag) {
-		int light = this.lightValue;
-		this.setDisplayNBT(tag);
-		this.setNBT(tag);
-		if (light != this.lightValue) {
-			this.world.checkLight(this.pos);
-		}
-	}
+   @Override
+   public MutableComponent noticeString(String type, Object event) {
+      MutableComponent message = Component.literal("Scripted Block")
+              .withStyle(ChatFormatting.DARK_GRAY);
+      if (type != null) {
+         message.append(Component.literal(" hook \"").withStyle(ChatFormatting.DARK_GRAY))
+                 .append(Component.literal(type).withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal("\"; ").withStyle(ChatFormatting.DARK_GRAY));
+      }
+      else { message.append(Component.literal("; ").withStyle(ChatFormatting.DARK_GRAY)); }
+      String dimID = level == null ? "null" : level.dimensionTypeId().location().toString();
+      double x = 0.5d + Math.round(worldPosition.getX() * 100.0d) / 100.0d;
+      double y = 0.5d + Math.round(worldPosition.getY() * 100.0d) / 100.0d;
+      double z = 0.5d + Math.round(worldPosition.getZ() * 100.0d) / 100.0d;
+      MutableComponent posClick = Component.literal("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
+      Style style = posClick.getStyle().withColor(ChatFormatting.BLUE);
+      style = style.withUnderlined(true);
+      style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + y + " "+z));
+      style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+      posClick.setStyle(style);
+      message.append(Component.literal("in ").withStyle(ChatFormatting.DARK_GRAY))
+              .append(posClick);
+      return message.append(Component.literal("; Side: " + (isClient() ? "Client" : "Server")).withStyle(ChatFormatting.DARK_GRAY));
+   }
 
-	public boolean isClient() {
-		return this.getWorld().isRemote;
-	}
+   @Override
+   public String getLanguage() {
+      return this.scriptLanguage;
+   }
 
-	public boolean isEnabled() {
-		return this.enabled && ScriptController.HasStart && !this.scripts.isEmpty();
-	}
+   @Override
+   public void setLanguage(String lang) {
+      this.scriptLanguage = lang;
+   }
 
-	public ITextComponent noticeString(String type, Object event) {
-		ITextComponent message = new TextComponentString("");
-		message.getStyle().setColor(TextFormatting.DARK_GRAY);
-		if (type != null) {
-			ITextComponent hook = new TextComponentString("Hook \"");
-			hook.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent hookType = new TextComponentString(type);
-			hookType.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent hookEnd = new TextComponentString("\"; ");
-			hookEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(hook).appendSibling(hookType).appendSibling(hookEnd);
-		}
-		BlockPos pos = getPos();
-		ITextComponent mesBlock = new TextComponentString("Scripted Block in ");
-		mesBlock.getStyle().setColor(TextFormatting.DARK_GRAY);
-		int x = pos.getX();
-		int y = pos.getY();
-		int z = pos.getZ();
-		int dimID = world == null ? 0 : world.provider.getDimension();
-		ITextComponent posClick = new TextComponentString("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
-		posClick.getStyle().setColor(TextFormatting.BLUE)
-				.setUnderlined(true)
-				.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + (y + 1) + " "+z))
-				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("script.hover.error.pos.tp")));
-		ITextComponent side = new TextComponentString("; Side: " + (isClient() ? "Client" : "Server"));
-		side.getStyle().setColor(TextFormatting.DARK_GRAY);
-		return message.appendSibling(mesBlock).appendSibling(posClick).appendSibling(side);
-	}
+   @Override
+   public List<ScriptContainer> getScripts() {
+      return this.scripts;
+   }
 
-	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
-		this.handleUpdateTag(pkt.getNbtCompound());
-	}
+   @Override
+   public Map<Long, String> getConsoleText() {
+      Map<Long, String> map = new TreeMap<>();
+      int tab = 0;
+      for (ScriptContainer script : this.getScripts()) {
+         ++tab;
+         for (Entry<Long, String> entry : script.console.entrySet()) {
+            map.put(entry.getKey(), " tab " + tab + ":\n" + entry.getValue());
+         }
+      }
+      return map;
+   }
 
-	@Override
-	public void runScript(String type, Event event) {
-		if (!this.isEnabled()) {
-			return;
-		}
-		if (ScriptController.Instance.lastLoaded > this.lastInited) {
-			this.lastInited = ScriptController.Instance.lastLoaded;
-			if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) {
-				EventHooks.onScriptBlockInit(this);
-			}
-		}
-		for (ScriptContainer script : this.scripts) {
-			script.run(type, event);
-		}
-	}
+   @Override
+   public void clearConsole() {
+      for (ScriptContainer script : this.getScripts()) {
+         script.console.clear();
+      }
+   }
 
-	public void setDisplayNBT(NBTTagCompound compound) {
-		this.itemModel = new ItemStack(compound.getCompoundTag("ScriptBlockModel"));
-		if (this.itemModel.isEmpty()) {
-			this.itemModel = new ItemStack(CustomRegisters.scripted);
-		}
-		if (compound.hasKey("ScriptBlockModelBlock")) {
-			this.blockModel = Block.getBlockFromName(compound.getString("ScriptBlockModelBlock"));
-		}
-		this.renderTileUpdate = null;
-		this.renderTile = null;
-		this.renderTileErrored = false;
-		this.lightValue = compound.getInteger("LightValue");
-		this.isLadder = compound.getBoolean("IsLadder");
-		this.isPassable = compound.getBoolean("IsPassable");
-		this.rotationX = compound.getInteger("RotationX");
-		this.rotationY = compound.getInteger("RotationY");
-		this.rotationZ = compound.getInteger("RotationZ");
-		this.scaleX = compound.getFloat("ScaleX");
-		this.scaleY = compound.getFloat("ScaleY");
-		this.scaleZ = compound.getFloat("ScaleZ");
-		if (this.scaleX <= 0.0f) {
-			this.scaleX = 1.0f;
-		}
-		if (this.scaleY <= 0.0f) {
-			this.scaleY = 1.0f;
-		}
-		if (this.scaleZ <= 0.0f) {
-			this.scaleZ = 1.0f;
-		}
-		if (compound.hasKey("Text3")) {
-			this.text1.setNBT(compound.getCompoundTag("Text1"));
-			this.text2.setNBT(compound.getCompoundTag("Text2"));
-			this.text3.setNBT(compound.getCompoundTag("Text3"));
-			this.text4.setNBT(compound.getCompoundTag("Text4"));
-			this.text5.setNBT(compound.getCompoundTag("Text5"));
-			this.text6.setNBT(compound.getCompoundTag("Text6"));
-		}
-		this.metaModel = compound.getInteger("ModelMeta");
-		this.layers = new ILayerModel[compound.getTagList("Layers", 10).tagCount()];
-		for (int i = 0; i < compound.getTagList("Layers", 10).tagCount(); i++) {
-			this.layers[i] = new LayerModel(compound.getTagList("Layers", 10).getCompoundTagAt(i));
-		}
-	}
+   @OnlyIn(Dist.CLIENT)
+   public AABB getRenderBoundingBox() {
+      return Shapes.block().bounds().move(this.getBlockPos());
+   }
 
-	public void setEnabled(boolean bo) {
-		this.enabled = bo;
-	}
+   public class TextPlane implements ITextPlane {
+      public boolean textHasChanged = true;
+      public TextBlock textBlock;
+      public String text = "";
+      public int rotationX = 0;
+      public int rotationY = 0;
+      public int rotationZ = 0;
+      public float offsetX = 0.0F;
+      public float offsetY = 0.0F;
+      public float offsetZ = 0.5F;
+      public float scale = 1.0F;
 
-	public void setItemModel(ItemStack item, Block b) {
-		if (item == null || item.isEmpty()) {
-			item = new ItemStack(CustomRegisters.scripted);
-		}
-		if (NoppesUtilPlayer.compareItems(item, this.itemModel, false, false) && b != this.blockModel) {
-			return;
-		}
-		this.itemModel = item;
-		this.metaModel = b != null ? item.getItemDamage() : 0;
-		this.blockModel = b;
-		this.needsClientUpdate = true;
-	}
+      public String getText() {
+         return this.text;
+      }
 
-	public void setItemModel(ItemStack item, Block b, int meta) {
-		this.setItemModel(item, b);
-		this.metaModel = meta;
-	}
+      public void setText(String text) {
+         if (!this.text.equals(text)) {
+            this.text = text;
+            this.textHasChanged = true;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
 
-	public void setLanguage(String lang) {
-		this.scriptLanguage = lang;
-	}
+      public int getRotationX() {
+         return this.rotationX;
+      }
 
-	@Override
-	public void setLastInited(long timeMC) {
-		this.lastInited = timeMC;
-	}
+      public int getRotationY() {
+         return this.rotationY;
+      }
 
-	public void setLightValue(int value) {
-		if (value == this.lightValue) {
-			return;
-		}
-		this.lightValue = ValueUtil.correctInt(value, 0, 15);
-		this.needsClientUpdate = true;
-	}
+      public int getRotationZ() {
+         return this.rotationZ;
+      }
 
-	public void setRedstonePower(int strength) {
-		if (this.powering == strength) {
-			return;
-		}
-		int correctInt = ValueUtil.correctInt(strength, 0, 15);
-		this.activePowering = correctInt;
-		this.prevPower = correctInt;
-		this.world.notifyNeighborsOfStateChange(this.pos, this.getBlockType(), false);
-		this.powering = this.activePowering;
-	}
+      public void setRotationX(int x) {
+         x = ValueUtil.correctInt(x % 360, 0, 359);
+         if (this.rotationX != x) {
+            this.rotationX = x;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
 
-	public void setRotation(int x, int y, int z) {
-		if (this.rotationX == x && this.rotationY == y && this.rotationZ == z) {
-			return;
-		}
-		this.rotationX = ValueUtil.correctInt(x, 0, 359);
-		this.rotationY = ValueUtil.correctInt(y, 0, 359);
-		this.rotationZ = ValueUtil.correctInt(z, 0, 359);
-		this.needsClientUpdate = true;
-	}
+      public void setRotationY(int y) {
+         y = ValueUtil.correctInt(y % 360, 0, 359);
+         if (this.rotationY != y) {
+            this.rotationY = y;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
 
-	public void setScale(float x, float y, float z) {
-		if (this.scaleX == x && this.scaleY == y && this.scaleZ == z) {
-			return;
-		}
-		this.scaleX = ValueUtil.correctFloat(x, 0.0f, 10.0f);
-		this.scaleY = ValueUtil.correctFloat(y, 0.0f, 10.0f);
-		this.scaleZ = ValueUtil.correctFloat(z, 0.0f, 10.0f);
-		this.needsClientUpdate = true;
-	}
+      public void setRotationZ(int z) {
+         z = ValueUtil.correctInt(z % 360, 0, 359);
+         if (this.rotationZ != z) {
+            this.rotationZ = z;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
 
-	public void update() {
-		if (this.renderTileUpdate != null) {
-			try {
-				this.renderTileUpdate.update();
-			} catch (Exception e) {
-				this.renderTileUpdate = null;
-			}
-		}
-		++this.ticksExisted;
-		if (this.prevPower != this.newPower && this.powering <= 0) {
-			EventHooks.onScriptBlockRedstonePower(this, this.prevPower, this.newPower);
-			this.prevPower = this.newPower;
-		}
-		this.timers.update();
-		if (this.ticksExisted >= 10) {
-			if (isEnabled()) {
-				ScriptController.Instance.tryAdd(0, this);
-				EventHooks.onScriptBlockUpdate(this);
-			}
-			this.ticksExisted = 0;
-		}
-		if (this.needsClientUpdate) {
-			this.markDirty();
-			IBlockState state = this.world.getBlockState(this.pos);
-			this.world.notifyBlockUpdate(this.pos, state, state, 3);
-			this.needsClientUpdate = false;
-		}
-	}
+      public float getOffsetX() {
+         return this.offsetX;
+      }
 
-	public void setNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
-		this.scriptLanguage = compound.getString("ScriptLanguage");
-		this.enabled = compound.getBoolean("ScriptEnabled");
-		int pw = compound.getInteger("BlockPowering");
-		this.powering = pw;
-		this.activePowering = pw;
-		this.prevPower = compound.getInteger("BlockPrevPower");
-		if (compound.hasKey("BlockHardness")) {
-			this.blockHardness = compound.getFloat("BlockHardness");
-			this.blockResistance = compound.getFloat("BlockResistance");
-		}
-	}
+      public float getOffsetY() {
+         return this.offsetY;
+      }
 
-	@Override
-	public void readFromNBT(@Nonnull NBTTagCompound compound) {
-		super.readFromNBT(compound);
-		this.setNBT(compound);
-		this.setDisplayNBT(compound);
-		this.timers.readFromNBT(compound);
-	}
+      public float getOffsetZ() {
+         return this.offsetZ;
+      }
 
-	@Nonnull
-	@Override
-	public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-		this.getNBT(compound);
-		this.writeDisplayNBT(compound);
-		this.timers.writeToNBT(compound);
-		super.writeToNBT(compound);
-		return compound;
-	}
+      public void setOffsetX(float x) {
+         x = ValueUtil.correctFloat(x, -1.0F, 1.0F);
+         if (this.offsetX != x) {
+            this.offsetX = x;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
+
+      public void setOffsetY(float y) {
+         y = ValueUtil.correctFloat(y, -1.0F, 1.0F);
+         if (this.offsetY != y) {
+            this.offsetY = y;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
+
+      public void setOffsetZ(float z) {
+         z = ValueUtil.correctFloat(z, -1.0F, 1.0F);
+         if (this.offsetZ != z) {
+            this.offsetZ = z;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
+
+      public float getScale() {
+         return this.scale;
+      }
+
+      public void setScale(float scaleIn) {
+         if (scale != scaleIn) {
+            scale = scaleIn;
+            TileScripted.this.needsClientUpdate = true;
+         }
+      }
+
+      public CompoundTag getNBT() {
+         CompoundTag compound = new CompoundTag();
+         compound.putString("Text", this.text);
+         compound.putInt("RotationX", this.rotationX);
+         compound.putInt("RotationY", this.rotationY);
+         compound.putInt("RotationZ", this.rotationZ);
+         compound.putFloat("OffsetX", this.offsetX);
+         compound.putFloat("OffsetY", this.offsetY);
+         compound.putFloat("OffsetZ", this.offsetZ);
+         compound.putFloat("Scale", this.scale);
+         return compound;
+      }
+
+      public void setNBT(CompoundTag compound) {
+         this.setText(compound.getString("Text"));
+         this.rotationX = compound.getInt("RotationX");
+         this.rotationY = compound.getInt("RotationY");
+         this.rotationZ = compound.getInt("RotationZ");
+         this.offsetX = compound.getFloat("OffsetX");
+         this.offsetY = compound.getFloat("OffsetY");
+         this.offsetZ = compound.getFloat("OffsetZ");
+         this.scale = compound.getFloat("Scale");
+      }
+   }
+
+   public void init() { lastInited = -1; }
 
 }

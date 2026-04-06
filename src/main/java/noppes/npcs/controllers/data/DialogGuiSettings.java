@@ -1,13 +1,14 @@
 package noppes.npcs.controllers.data;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.Server;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSync;
 import noppes.npcs.util.ValueUtil;
 
+// New from Unofficial (BetaZavr)
+@SuppressWarnings("all")
 public class DialogGuiSettings {
 
     public boolean showNPC = true;
@@ -43,22 +44,22 @@ public class DialogGuiSettings {
     public ResourceLocation backTexture;
     public ResourceLocation windowTexture;
 
-    public void load(NBTTagCompound compound) {
+    public void load(CompoundTag compound) {
         showNPC = compound.getBoolean("ShowNPC");
         npcInLeft = compound.getBoolean("NPCInLeft");
 
-        setType(compound.getInteger("WindowType"));
-        setShowVerticalLines(compound.getInteger("ShowVerticalLines"));
-        setShowHorizontalLines(compound.getInteger("ShowHorizontalLines"));
-        backBorderColor = compound.getInteger("BackBorderColor");
-        backWindowColor = compound.getInteger("BackWindowColor");
-        linesColor = compound.getInteger("LinesColor");
-        scrollLineColor = compound.getInteger("ScrollLineColor");
-        hoverLineColor = compound.getInteger("HoverLineColor");
-        pointerColor = compound.getInteger("PointerColor");
-        sliderColor = compound.getInteger("SliderColor");
-        selectOptionLeftColor = compound.getInteger("SelectOptionLeftColor");
-        selectOptionRightColor = compound.getInteger("SelectOptionRightColor");
+        setType(compound.getInt("WindowType"));
+        setShowVerticalLines(compound.getInt("ShowVerticalLines"));
+        setShowHorizontalLines(compound.getInt("ShowHorizontalLines"));
+        backBorderColor = compound.getInt("BackBorderColor");
+        backWindowColor = compound.getInt("BackWindowColor");
+        linesColor = compound.getInt("LinesColor");
+        scrollLineColor = compound.getInt("ScrollLineColor");
+        hoverLineColor = compound.getInt("HoverLineColor");
+        pointerColor = compound.getInt("PointerColor");
+        sliderColor = compound.getInt("SliderColor");
+        selectOptionLeftColor = compound.getInt("SelectOptionLeftColor");
+        selectOptionRightColor = compound.getInt("SelectOptionRightColor");
 
         setNpcPos(compound.getFloat("NPCPosX"), compound.getFloat("NPCPosY"));
         setNpcScale(compound.getFloat("NPCScale"));
@@ -69,38 +70,38 @@ public class DialogGuiSettings {
 
         backTexture = null;
         windowTexture = null;
-        if (compound.hasKey("BackTexture", 8)) { backTexture = new ResourceLocation(compound.getString("BackTexture")); }
-        if (compound.hasKey("WindowTexture", 8)) { windowTexture = new ResourceLocation(compound.getString("WindowTexture")); }
+        if (compound.contains("BackTexture", 8)) { backTexture = new ResourceLocation(compound.getString("BackTexture")); }
+        if (compound.contains("WindowTexture", 8)) { windowTexture = new ResourceLocation(compound.getString("WindowTexture")); }
     }
 
-    public NBTTagCompound save() {
-        NBTTagCompound compound = new NBTTagCompound();
-        compound.setBoolean("ShowNPC", showNPC);
-        compound.setBoolean("NPCInLeft", npcInLeft);
+    public CompoundTag save() {
+        CompoundTag compound = new CompoundTag();
+        compound.putBoolean("ShowNPC", showNPC);
+        compound.putBoolean("NPCInLeft", npcInLeft);
 
-        compound.setInteger("WindowType", type);
-        compound.setInteger("ShowVerticalLines", showVerticalLines);
-        compound.setInteger("ShowHorizontalLines", showHorizontalLines);
-        compound.setInteger("BackBorderColor", backBorderColor);
-        compound.setInteger("BackWindowColor", backWindowColor);
-        compound.setInteger("LinesColor", linesColor);
-        compound.setInteger("ScrollLineColor", scrollLineColor);
-        compound.setInteger("HoverLineColor", hoverLineColor);
-        compound.setInteger("PointerColor", pointerColor);
-        compound.setInteger("SliderColor", sliderColor);
-        compound.setInteger("SelectOptionLeftColor", selectOptionLeftColor);
-        compound.setInteger("SelectOptionRightColor", selectOptionRightColor);
+        compound.putInt("WindowType", type);
+        compound.putInt("ShowVerticalLines", showVerticalLines);
+        compound.putInt("ShowHorizontalLines", showHorizontalLines);
+        compound.putInt("BackBorderColor", backBorderColor);
+        compound.putInt("BackWindowColor", backWindowColor);
+        compound.putInt("LinesColor", linesColor);
+        compound.putInt("ScrollLineColor", scrollLineColor);
+        compound.putInt("HoverLineColor", hoverLineColor);
+        compound.putInt("PointerColor", pointerColor);
+        compound.putInt("SliderColor", sliderColor);
+        compound.putInt("SelectOptionLeftColor", selectOptionLeftColor);
+        compound.putInt("SelectOptionRightColor", selectOptionRightColor);
 
-        compound.setFloat("NPCPosX", npcPos[0]);
-        compound.setFloat("NPCPosY", npcPos[1]);
-        compound.setFloat("NPCScale", npcScale);
-        compound.setFloat("BlurringLine", blurringLine);
+        compound.putFloat("NPCPosX", npcPos[0]);
+        compound.putFloat("NPCPosY", npcPos[1]);
+        compound.putFloat("NPCScale", npcScale);
+        compound.putFloat("BlurringLine", blurringLine);
 
-        compound.setDouble("WindowWidth", width);
-        compound.setDouble("OptionHeight", optionH);
+        compound.putDouble("WindowWidth", width);
+        compound.putDouble("OptionHeight", optionH);
 
-        if (backTexture != null) { compound.setString("BackTexture", backTexture.toString()); }
-        if (windowTexture != null) { compound.setString("WindowTexture", windowTexture.toString()); }
+        if (backTexture != null) { compound.putString("BackTexture", backTexture.toString()); }
+        if (windowTexture != null) { compound.putString("WindowTexture", windowTexture.toString()); }
 
         return compound;
     }
@@ -187,7 +188,7 @@ public class DialogGuiSettings {
     }
 
     public void update() {
-        if (CustomNpcs.Server != null) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.SYNC_UPDATE, EnumSync.DialogGuiSettings, save()); }
+        if (CustomNpcs.Server != null) { Packets.sendAll(new PacketSync(10, save(), false)); }
     }
 
     public ResourceLocation getBackgroundTexture() { return backTexture; }

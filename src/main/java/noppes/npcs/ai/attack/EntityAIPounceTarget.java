@@ -1,64 +1,45 @@
 package noppes.npcs.ai.attack;
 
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.util.math.MathHelper;
+import java.util.EnumSet;
+
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.util.Util;
 
-public class EntityAIPounceTarget extends EntityAIBase {
+import javax.annotation.Nonnull;
 
-	private final float leapSpeed;
-	private EntityLivingBase leapTarget;
-	private final EntityNPCInterface npc;
+public class EntityAIPounceTarget extends Goal {
 
-	public EntityAIPounceTarget(EntityNPCInterface leapingEntity) {
-		this.leapSpeed = 1.3f;
-		this.npc = leapingEntity;
-		this.setMutexBits(4);
-	}
+   protected final @Nonnull EntityNPCInterface npc;
+   protected final float leapSpeed = 1.3F;
+   protected LivingEntity leapTarget;
 
-	public float getAngleForXYZ(double varY, double horizontalDist) {
-		float g = 0.1f;
-		float var1 = this.leapSpeed * this.leapSpeed;
-		double var2 = g * horizontalDist;
-		double var3 = g * horizontalDist * horizontalDist + 2.0 * varY * var1;
-		double var4 = var1 * var1 - g * var3;
-		if (var4 < 0.0) {
-			return 90.0f;
-		}
-		float var5 = var1 - MathHelper.sqrt(var4);
-        return (float) Math.atan2(var5, var2) * 180.0f / 3.141592653589793f;
-	}
+   public EntityAIPounceTarget(@Nonnull EntityNPCInterface npcIn) {
+      npc = npcIn;
+      setFlags(EnumSet.of(Flag.JUMP));
+   }
 
-	public boolean shouldContinueExecuting() {
-		return !this.npc.onGround;
-	}
+   @Override
+   public boolean canUse() {
+      if (npc.onGround()) {
+         leapTarget = npc.getTarget();
+         if (leapTarget != null && npc.getSensing().hasLineOfSight(leapTarget)) {
+            return !npc.isInRange(leapTarget, 4.0D) && npc.isInRange(leapTarget, 8.0D) && npc.getRandom().nextInt(5) == 0;
+         }
+      }
+      return false;
+   }
 
-	public boolean shouldExecute() {
-		if (!this.npc.onGround) {
-			return false;
-		}
-		this.leapTarget = this.npc.getAttackTarget();
-		return this.leapTarget != null && this.npc.getEntitySenses().canSee(this.leapTarget)
-				&& !this.npc.isInRange(this.leapTarget, 4.0) && this.npc.isInRange(this.leapTarget, 8.0)
-				&& this.npc.getRNG().nextInt(5) == 0;
-	}
+   @Override
+   public boolean canContinueToUse() {
+      return !npc.onGround();
+   }
 
-	public void startExecuting() {
-		double varX = this.leapTarget.posX - this.npc.posX;
-		double varY = this.leapTarget.getEntityBoundingBox().minY - this.npc.getEntityBoundingBox().minY;
-		double varZ = this.leapTarget.posZ - this.npc.posZ;
-		float varF = MathHelper.sqrt(varX * varX + varZ * varZ);
-		float angle = this.getAngleForXYZ(varY, varF);
-		float yaw = (float) Math.atan2(varX, varZ) * 180.0f / 3.141592653589793f;
-		this.npc.motionX = MathHelper.sin(yaw / 180.0f * 3.1415927f) * MathHelper.cos(angle / 180.0f * 3.1415927f);
-		this.npc.motionZ = MathHelper.cos(yaw / 180.0f * 3.1415927f) * MathHelper.cos(angle / 180.0f * 3.1415927f);
-		this.npc.motionY = MathHelper.sin((angle + 1.0f) / 180.0f * 3.1415927f);
-		EntityNPCInterface npc = this.npc;
-		npc.motionX *= this.leapSpeed;
-		EntityNPCInterface npc2 = this.npc;
-		npc2.motionZ *= this.leapSpeed;
-		EntityNPCInterface npc3 = this.npc;
-		npc3.motionY *= this.leapSpeed;
-	}
+   @Override
+   public void start() {
+      Util.instance.jumpTowards(leapSpeed, npc, new Vec3(leapTarget.getX(), leapTarget.getBoundingBox().minY, leapTarget.getZ()));
+   }
+
 }

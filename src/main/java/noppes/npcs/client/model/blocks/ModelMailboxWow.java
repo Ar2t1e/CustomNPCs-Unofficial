@@ -1,32 +1,39 @@
 package noppes.npcs.client.model.blocks;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.renderer.RenderType;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
 
-public class ModelMailboxWow extends ModelBase {
+public class ModelMailboxWow extends Model {
 
-	ModelRenderer Shape1;
-	ModelRenderer Shape2;
-	ModelRenderer Shape3;
-	ModelRenderer Shape4;
+   NopModelPart Shape4 = new NopModelPart(128, 64, 59, 0);
+   NopModelPart Shape1;
+   NopModelPart Shape2;
+   NopModelPart Shape3;
 
-	public ModelMailboxWow() {
-		this.textureWidth = 128;
-		this.textureHeight = 64;
-		(this.Shape4 = new ModelRenderer(this, 59, 0)).addBox(0.0f, 0.0f, 0.0f, 8, 6, 0);
-		this.Shape4.setRotationPoint(-4.0f, -4.0f, 0.0f);
-		(this.Shape1 = new ModelRenderer(this, 0, 39)).addBox(0.0f, 0.0f, 0.0f, 8, 5, 8);
-		this.Shape1.setRotationPoint(-4.0f, 19.0f, -4.0f);
-		(this.Shape2 = new ModelRenderer(this, 0, 21)).addBox(0.0f, 0.0f, 0.0f, 6, 9, 6);
-		this.Shape2.setRotationPoint(-3.0f, 10.0f, -3.0f);
-		(this.Shape3 = new ModelRenderer(this, 0, 0)).addBox(0.0f, 0.0f, 0.0f, 12, 8, 12);
-		this.Shape3.setRotationPoint(-6.0f, 2.0f, -6.0f);
-	}
+   public ModelMailboxWow() {
+      super(RenderType::entityCutout);
+      this.Shape4.addBox(0.0F, 0.0F, 0.0F, 8.0F, 6.0F, 0.0F);
+      this.Shape4.setPos(-4.0F, -4.0F, 0.0F);
+      this.Shape1 = new NopModelPart(128, 64, 0, 39);
+      this.Shape1.addBox(0.0F, 0.0F, 0.0F, 8.0F, 5.0F, 8.0F);
+      this.Shape1.setPos(-4.0F, 19.0F, -4.0F);
+      this.Shape2 = new NopModelPart(128, 64, 0, 21);
+      this.Shape2.addBox(0.0F, 0.0F, 0.0F, 6.0F, 9.0F, 6.0F);
+      this.Shape2.setPos(-3.0F, 10.0F, -3.0F);
+      this.Shape3 = new NopModelPart(128, 64, 0, 0);
+      this.Shape3.addBox(0.0F, 0.0F, 0.0F, 12.0F, 8.0F, 12.0F);
+      this.Shape3.setPos(-6.0F, 2.0F, -6.0F);
+   }
 
-	public void render(float scale) {
-		this.Shape4.render(scale);
-		this.Shape1.render(scale);
-		this.Shape2.render(scale);
-		this.Shape3.render(scale);
-	}
+   public void renderToBuffer(@NotNull PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      this.Shape4.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape1.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape2.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape3.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+   }
+
 }

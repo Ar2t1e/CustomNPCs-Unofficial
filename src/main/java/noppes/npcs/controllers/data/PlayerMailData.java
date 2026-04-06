@@ -3,80 +3,85 @@ package noppes.npcs.controllers.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.handler.data.IPlayerData;
 
-public class PlayerMailData {
+public class PlayerMailData implements IPlayerData {
 
-	public final List<PlayerMail> playerMails = new ArrayList<>();
+   protected static final String dataName = "MailData";
 
-	public void addMail(PlayerMail mail) {
-		mail = mail.copy();
-		mail.timeWhenReceived = System.currentTimeMillis();
-		if (mail.timeWhenReceived <= 0L) {
-			mail.timeWhenReceived = 100000L;
-		}
-		mail.timeWillCome = 1000L * ((long) CustomNpcs.MailTimeWhenLettersWillBeReceived[0]
-				+ (long) (Math.random() * (double) (CustomNpcs.MailTimeWhenLettersWillBeReceived[1]
-						- CustomNpcs.MailTimeWhenLettersWillBeReceived[0])));
-		boolean found = true;
-		while (found) {
-			found = false;
-			for (PlayerMail m : this.playerMails) {
-				if (m.timeWhenReceived == mail.timeWhenReceived) {
-					mail.timeWhenReceived--;
-					found = true;
-					break;
-				}
-			}
-		}
-		this.playerMails.add(mail);
-	}
+   public final List<PlayerMail> playerMails = new ArrayList<>();
 
-	public PlayerMail get(long id) {
-		for (PlayerMail mail : this.playerMails) {
-			if (mail.timeWhenReceived == id) {
-				return mail;
-			}
-		}
-		return null;
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      ListTag list = compound.getList(dataName, 10);
+      playerMails.clear();
+      for (int i = 0; i < list.size(); ++i) {
+         PlayerMail mail = new PlayerMail();
+         mail.load(list.getCompound(i));
+         playerMails.add(mail);
+      }
+   }
 
-	public PlayerMail get(PlayerMail selected) {
-		for (PlayerMail mail : this.playerMails) {
-			if (mail.timeWhenReceived == selected.timeWhenReceived && mail.getSubject().equals(selected.getSubject())) {
-				return mail;
-			}
-		}
-		return null;
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      ListTag list = new ListTag();
+      for (PlayerMail mail : playerMails) { list.add(mail.save()); }
+      compound.put(dataName, list);
+      return compound;
+   }
 
-	public boolean hasMail() {
-		for (PlayerMail mail : this.playerMails) {
-			if (!mail.beenRead) {
-				return true;
-			}
-		}
-		return false;
-	}
+   public boolean hasMail() {
+      for (PlayerMail mail : playerMails) {
+         if (!mail.beenRead) { return true; }
+      }
+      return false;
+   }
 
-	public void loadNBTData(NBTTagCompound compound) {
-		NBTTagList list = compound.getTagList("MailData", 10);
-        this.playerMails.clear();
-		for (int i = 0; i < list.tagCount(); ++i) {
-			PlayerMail mail = new PlayerMail();
-			mail.readNBT(list.getCompoundTagAt(i));
-			this.playerMails.add(mail);
-		}
-	}
+   // New from Unofficial (BetaZavr)
+   public void clear() { playerMails.clear(); }
 
-	public NBTTagCompound saveNBTData(NBTTagCompound compound) {
-		NBTTagList list = new NBTTagList();
-		for (PlayerMail mail : this.playerMails) {
-			list.appendTag(mail.writeNBT());
-		}
-		compound.setTag("MailData", list);
-		return compound;
-	}
+   public void addMail(PlayerMail mail) {
+      mail = mail.copy();
+      mail.timeWhenReceived = System.currentTimeMillis();
+      if (mail.timeWhenReceived <= 0L) {
+         mail.timeWhenReceived = 100000L;
+      }
+      mail.timeWillCome = 1000L * ((long) CustomNpcs.MailTimeWhenLettersWillBeReceived[0]
+              + (long) (Math.random() * (double) (CustomNpcs.MailTimeWhenLettersWillBeReceived[1]
+              - CustomNpcs.MailTimeWhenLettersWillBeReceived[0])));
+      boolean found = true;
+      while (found) {
+         found = false;
+         for (PlayerMail m : playerMails) {
+            if (m.timeWhenReceived == mail.timeWhenReceived) {
+               mail.timeWhenReceived--;
+               found = true;
+               break;
+            }
+         }
+      }
+      playerMails.add(mail);
+   }
+
+   public PlayerMail get(long id) {
+      for (PlayerMail mail : playerMails) {
+         if (mail.timeWhenReceived == id) {
+            return mail;
+         }
+      }
+      return null;
+   }
+
+   public PlayerMail get(PlayerMail selected) {
+      for (PlayerMail mail : playerMails) {
+         if (mail.timeWhenReceived == selected.timeWhenReceived && mail.getSubject().equals(selected.getSubject())) {
+            return mail;
+         }
+      }
+      return null;
+   }
+
 }

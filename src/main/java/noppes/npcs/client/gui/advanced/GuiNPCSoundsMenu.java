@@ -1,75 +1,86 @@
 package noppes.npcs.client.gui.advanced;
 
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.client.Client;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import noppes.npcs.client.gui.select.SubGuiSoundSelection;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.constants.EnumMenuType;
 import noppes.npcs.entity.EntityNPCInterface;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketMenuSave;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
 public class GuiNPCSoundsMenu extends GuiNPCInterface2 implements ITextfieldListener {
 
-	protected GuiNpcTextField selectedField;
+   protected GuiTextFieldNop selectedField;
 
-	public GuiNPCSoundsMenu(EntityNPCInterface npc) {
-		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
-	}
+   public GuiNPCSoundsMenu(EntityNPCInterface npc) {
+      super(npc);
+      backGui = EnumGuiType.MainMenuAdvanced;
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.getID() == 6) { npc.advanced.disablePitch = button.getValue() == 0; }
-		else if (button.getID() < 10) { setSubGui(new SubGuiSoundSelection((selectedField = getTextField(button.getID())).getText())); }
-		else {
-			selectedField = getTextField(button.getID() - 10);
-			selectedField.setText("");
-			unFocused(selectedField);
-		}
-	}
+   @Override
+   public void init() {
+      super.init();
+      int x0 = guiLeft + 5;
+      int w = 80;
+      int x1 = x0 + w + 3;
+      int x2 = x1 + 203;
+      int x3 = x2 + 82;
+      int y = guiTop + 15;
+      for (int i = 0; i < 5; i++) {
+         String name = switch (i) {
+             case 1 -> "advanced.angersound";
+             case 2 -> "advanced.hurtsound";
+             case 3 -> "advanced.deathsound";
+             case 4 -> "advanced.stepsound";
+             default -> "advanced.idlesound";
+         };
+         addLabel(i, x0, y + 5, name)
+                 .setSize(w, 10);
+         addTextField(i, x1, y, 200, 20, npc.advanced.getSound(i));
+         addButton(i, x2, y, "gui.selectSound")
+                 .setSize(80, 20);
+         addButton(10 + i, x3, y, "X")
+                 .setSize(20, 20);
+         y += 23;
+      }
+      addLabel(5, x0, y + 5, "advanced.haspitch")
+              .setSize(w + 200, 10);
+      addYesNo(5, x2, y, npc.advanced.disablePitch)
+              .setSize(80, 20);
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		for (int i = 0; i < 5; i++) {
-			String name;
-			switch (i) {
-				case 1: name = "advanced.angersound"; break;
-				case 2: name = "advanced.hurtsound"; break;
-				case 3: name = "advanced.deathsound"; break;
-				case 4: name = "advanced.stepsound"; break;
-				default: name = "advanced.idlesound"; break;
-			}
-			addLabel(new GuiNpcLabel(i, name, guiLeft + 5, guiTop + 20 + i * 25));
-			addTextField(new GuiNpcTextField(i, this, guiLeft + 80, guiTop + 15 + i * 25, 200, 20, npc.advanced.getSound(i)));
-			addButton(new GuiNpcButton(i, guiLeft + 310, guiTop + 15 + i * 25, 80, 20, "gui.selectSound"));
-			addButton(new GuiNpcButton(10 + i, guiLeft + 285, guiTop + 15 + i * 25, 20, 20, "X"));
-		}
-		addLabel(new GuiNpcLabel(6, "advanced.haspitch", guiLeft + 5, guiTop + 150));
-		addButton(new GuiNpcButton(6, guiLeft + 120, guiTop + 145, 80, 20, new String[] { "gui.no", "gui.yes" }, (npc.advanced.disablePitch ? 0 : 1)));
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      if (button.id == 5) { npc.advanced.disablePitch = ((GuiButtonYesNo) button).getBoolean(); }
+      else if (button.id < 10) {
+         selectedField = getTextField(button.id);
+         setSubGui(new SubGuiSoundSelection(this, 0, npc, selectedField.getValue()));
+      }
+      else {
+         selectedField = getTextField(button.id - 10);
+         selectedField.setValue("");
+         unFocused(selectedField);
+      }
+   }
 
-	@Override
-	public void save() { Client.sendData(EnumPacketServer.MainmenuAdvancedSave, npc.advanced.save(new NBTTagCompound())); }
+   @Override
+   public void unFocused(GuiTextFieldNop textField) { npc.advanced.setSound(textField.id, textField.getValue()); }
 
-	@Override
-	public void subGuiClosed(GuiScreen subgui) {
-		SubGuiSoundSelection gss = (SubGuiSoundSelection) subgui;
-		if (gss.selectedResource != null) {
-			selectedField.setText(gss.selectedResource.toString());
-			unFocused(selectedField);
-		}
-	}
+   @Override
+   public void save() { Packets.sendServer(new SPacketMenuSave(EnumMenuType.ADVANCED, npc.advanced.save(new CompoundTag()))); }
 
-	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		npc.advanced.setSound(textfield.getID(), textfield.getText());
-		initGui();
-	}
+   @Override
+   public void subGuiClosed(Screen subgui) {
+      if (subgui instanceof SubGuiSoundSelection gui && gui.resource != null) {
+         selectedField.setValue(gui.resource.toString());
+         unFocused(selectedField);
+      }
+   }
 
 }

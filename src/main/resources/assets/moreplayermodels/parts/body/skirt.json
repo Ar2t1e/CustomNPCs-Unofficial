@@ -1,0 +1,67 @@
+{
+	"name": "part.skirt",
+	"render_type": "simple",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{ "name" : "part1", "empty": true, "rotate": [0, 0, 0] },
+			{ "name" : "inner1", "parent" : "part1", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner1", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner1", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part2", "empty": true, "rotate": [0, 36, 0] },
+			{ "name" : "inner2", "parent" : "part2", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner2", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner2", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part3", "empty": true, "rotate": [0, 72, 0] },
+			{ "name" : "inner3", "parent" : "part3", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner3", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner3", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part4", "empty": true, "rotate": [0, 108, 0] },
+			{ "name" : "inner4", "parent" : "part4", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner4", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner4", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part5", "empty": true, "rotate": [0, 144, 0] },
+			{ "name" : "inner5", "parent" : "part5", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner5", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner5", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part6", "empty": true, "rotate": [0, 180, 0] },
+			{ "name" : "inner6", "parent" : "part6", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner6", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner6", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part7", "empty": true, "rotate": [0, 216, 0] },
+			{ "name" : "inner7", "parent" : "part7", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner7", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner7", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part8", "empty": true, "rotate": [0, 252, 0] },
+			{ "name" : "inner8", "parent" : "part8", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner8", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner8", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part9", "empty": true, "rotate": [0, 288, 0] },
+			{ "name" : "inner9", "parent" : "part9", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner9", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner9", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] },
+			
+			{ "name" : "part10", "empty": true, "rotate": [0, 324, 0] },
+			{ "name" : "inner10", "parent" : "part10", "empty": true, "translate": [2.4, 8.8, 0], "rotate": [17.18, -11.5, -11.5] },
+			{ "parent" : "inner10", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west" },
+			{ "parent" : "inner10", "plane": true, "texture_position": [58, 18], "part_size": [9, 2], "direction": "west", "rotate": [0, -90, 0], "rotate_offset": [2.0, 0.0, 0.0] }
+		]
+	},
+	"texture": "moreplayermodels:textures/skirt/0.png",
+	"body_part": "body",
+	"menu": "part.body",
+	"preview_rotation": 135,
+	"translate": [0, 0, 0],
+	"scale": [1.7, 1.04, 1.6],
+	"rotate_offset": [0, 0, 0],
+	"rotate": [0, 0, 0],
+	"author": "Noppes"
+}

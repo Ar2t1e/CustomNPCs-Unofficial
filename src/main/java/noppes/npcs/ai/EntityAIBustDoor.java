@@ -1,61 +1,57 @@
 package noppes.npcs.ai;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.ai.EntityAIDoorInteract;
-import net.minecraft.util.EnumHand;
-import noppes.npcs.CustomNpcs;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.DoorInteractGoal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
 
-public class EntityAIBustDoor extends EntityAIDoorInteract {
+public class EntityAIBustDoor extends DoorInteractGoal {
 
-	private int breakingTime;
-	private int previousBreakProgress;
+   private int breakingTime;
+   private int field_75358_j = -1;
 
-	public EntityAIBustDoor(EntityLiving par1EntityLiving) {
-		super(par1EntityLiving);
-		this.previousBreakProgress = -1;
-	}
+   public EntityAIBustDoor(Mob entity) {
+      super(entity);
+   }
 
-	public void resetTask() {
-		super.resetTask();
-		this.entity.world.sendBlockBreakProgress(this.entity.getEntityId(), this.doorPosition, -1);
-	}
+   public boolean canUse() {
+      return super.canUse() && !this.isOpen();
+   }
 
-	public boolean shouldContinueExecuting() {
-		double var1 = this.entity.getDistanceSq(this.doorPosition);
-		return this.breakingTime <= 240 && !BlockDoor.isOpen(this.entity.world, this.doorPosition)
-				&& var1 < 4.0;
-	}
+   public void start() {
+      super.start();
+      this.breakingTime = 0;
+   }
 
-	public boolean shouldExecute() {
-		return super.shouldExecute() && !BlockDoor.isOpen(this.entity.world, this.doorPosition);
-	}
+   public boolean canContinueToUse() {
+      return this.breakingTime <= 240 && !this.isOpen() && this.mob.blockPosition().distSqr(this.doorPos) < 4.0D;
+   }
 
-	public void startExecuting() {
-		super.startExecuting();
-		this.breakingTime = 0;
-	}
+   public void stop() {
+      super.stop();
+      this.mob.level().destroyBlockProgress(this.mob.getId(), this.doorPos, -1);
+   }
 
-	public void updateTask() {
-		CustomNpcs.debugData.start(entity);
-		super.updateTask();
-		if (this.entity.getRNG().nextInt(20) == 0) {
-			this.entity.world.playEvent(null, 1010, this.doorPosition, 0);
-			this.entity.swingArm(EnumHand.MAIN_HAND);
-		}
-		++this.breakingTime;
-		int var1 = (int) (this.breakingTime / 240.0f * 10.0f);
-		if (var1 != this.previousBreakProgress) {
-			this.entity.world.sendBlockBreakProgress(this.entity.getEntityId(), this.doorPosition, var1);
-			this.previousBreakProgress = var1;
-		}
-		if (this.breakingTime == 240) {
-			this.entity.world.setBlockToAir(this.doorPosition);
-			this.entity.world.playEvent(null, 1012, this.doorPosition, 0);
-			this.entity.world.playEvent(null, 2001, this.doorPosition,
-					Block.getIdFromBlock(this.doorBlock));
-		}
-		CustomNpcs.debugData.end(entity);
-	}
+   public void tick() {
+      super.tick();
+      if (this.mob.getRandom().nextInt(20) == 0) {
+         this.mob.level().levelEvent(null, 1010, this.doorPos, 0);
+         this.mob.swing(InteractionHand.MAIN_HAND);
+      }
+
+      ++this.breakingTime;
+      int var1 = (int)((float)this.breakingTime / 240.0F * 10.0F);
+      if (var1 != this.field_75358_j) {
+         this.mob.level().destroyBlockProgress(this.mob.getId(), this.doorPos, var1);
+         this.field_75358_j = var1;
+      }
+
+      if (this.breakingTime == 240) {
+         this.mob.level().removeBlock(this.doorPos, false);
+         this.mob.level().levelEvent(null, 1012, this.doorPos, 0);
+         this.mob.level().levelEvent(null, 2001, this.doorPos, Block.getId(this.mob.level().getBlockState(this.doorPos)));
+      }
+   }
+
 }

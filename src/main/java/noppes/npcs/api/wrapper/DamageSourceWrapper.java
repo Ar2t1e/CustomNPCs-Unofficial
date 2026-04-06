@@ -1,6 +1,7 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.util.DamageSource;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import noppes.npcs.api.IDamageSource;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IEntity;
@@ -9,40 +10,20 @@ import java.util.Objects;
 
 public class DamageSourceWrapper implements IDamageSource {
 
-	private final DamageSource source;
+   private final DamageSource source;
 
-	public DamageSourceWrapper(DamageSource source) {
-		this.source = source;
-	}
+   public DamageSourceWrapper(DamageSource source) { this.source = source; }
 
-	@Override
-	public IEntity<?> getImmediateSource() {
-		return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.source.getImmediateSource());
-	}
+   public String getType() { return this.source.getMsgId(); }
 
-	@Override
-	public DamageSource getMCDamageSource() {
-		return this.source;
-	}
+   public boolean isUnblockable() { return this.source.is(DamageTypeTags.BYPASSES_ARMOR); }
 
-	@Override
-	public IEntity<?> getTrueSource() {
-		return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.source.getTrueSource());
-	}
+   public boolean isProjectile() { return this.source.is(DamageTypeTags.IS_PROJECTILE); }
 
-	@Override
-	public String getType() {
-		return this.source.getDamageType();
-	}
+   public DamageSource getMCDamageSource() { return this.source; }
 
-	@Override
-	public boolean isProjectile() {
-		return this.source.isProjectile();
-	}
+   public IEntity<?> getTrueSource() { return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.source.getEntity()); }
 
-	@Override
-	public boolean isUnblockable() {
-		return this.source.isUnblockable();
-	}
+   public IEntity<?> getImmediateSource() { return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.source.getDirectEntity()); }
 
 }

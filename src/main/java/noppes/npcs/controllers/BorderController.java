@@ -1,250 +1,238 @@
 package noppes.npcs.controllers;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.*;
-
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.handler.IBorderHandler;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.controllers.data.Zone3D;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.SPacketBorderClear;
+import noppes.npcs.packets.client.SPacketBorderData;
+import noppes.npcs.packets.client.PacketGuiUpdate;
+import noppes.npcs.shared.common.util.LogWriter;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.zip.GZIPInputStream;
 
 public class BorderController implements IBorderHandler {
 
-	private static BorderController instance;
-	public static BorderController getInstance() {
-		if (BorderController.instance == null) {
-			BorderController.instance = new BorderController();
-		}
-		return BorderController.instance;
-	}
-	public final Map<Integer, Zone3D> regions = new TreeMap<>();
+    protected static BorderController instance;
+    public final TreeMap<Integer, Zone3D> regions = new TreeMap<>();
 
-	public BorderController() {
-		BorderController.instance = this;
-		load();
-	}
+    public static BorderController getInstance() {
+        if (instance == null) { instance = new BorderController(); }
+        return instance;
+    }
 
-	public Zone3D createNew(int dimensionID, BlockPos pos) {
-		Zone3D reg = new Zone3D(getUnusedId(), dimensionID, pos.getX(), pos.getY(), pos.getZ());
-		regions.put(reg.getId(), reg);
-		return reg;
-	}
+    public BorderController() { loadRegions(); }
 
-	@Override
-	public Zone3D createNew(int dimensionId, IPos pos) {
-		return createNew(dimensionId, pos.getMCBlockPos());
-	}
+    public Zone3D createNew(String dimensionID, BlockPos pos) {
+        Zone3D reg = new Zone3D(getUnusedId(), dimensionID, pos.getX(), pos.getY(), pos.getZ());
+        regions.put(reg.getId(), reg);
+        return reg;
+    }
 
-	@Override
-	public Zone3D[] getAllRegions() {
-		return regions.values().toArray(new Zone3D[0]);
-	}
+    @Override
+    public Zone3D createNew(String dimensionId, IPos pos) {
+        return createNew(dimensionId, pos.getMCBlockPos());
+    }
 
-	public NBTTagCompound getNBT() {
-		NBTTagList list = new NBTTagList();
-		for (Zone3D region : regions.values()) {
-			NBTTagCompound nbtRegion = new NBTTagCompound();
-			region.save(nbtRegion);
-			list.appendTag(nbtRegion);
-		}
-		NBTTagCompound nbttagcompound = new NBTTagCompound();
-		nbttagcompound.setTag("Data", list);
-		return nbttagcompound;
-	}
+    @Override
+    public Zone3D[] getAllRegions() {
+        return regions.values().toArray(new Zone3D[0]);
+    }
 
-	public int getRegionID(int dimensionID, BlockPos pos) {
-		for (Zone3D reg : regions.values()) {
-			if (reg.contains(pos.getX(), pos.getY(), pos.getZ(), dimensionID)) {
-				return reg.getId();
-			}
-		}
-		return -1;
-	}
+    public CompoundTag getNBT() {
+        ListTag list = new ListTag();
+        for (Zone3D region : regions.values()) {
+            CompoundTag nbtRegion = new CompoundTag();
+            region.save(nbtRegion);
+            list.add(nbtRegion);
+        }
+        CompoundTag compound = new CompoundTag();
+        compound.put("Data", list);
+        return compound;
+    }
 
+    public int getRegionID(String dimensionID, Entity entity) {
+        for (Zone3D reg : regions.values()) {
+            if (reg.dimension.toString().equals(dimensionID) && reg.contains(entity.getX(), entity.getY(), entity.getZ(), entity.getBbHeight())) {
+                return reg.getId();
+            }
+        }
+        return -1;
+    }
 
-	@Override
-	public Zone3D getRegion(int regionId) {
-		return regions.get(regionId);
-	}
+    public int getRegionID(String dimensionID, BlockPos pos) {
+        for (Zone3D reg : regions.values()) {
+            if (reg.dimension.toString().equals(dimensionID) && reg.contains(pos.getX(), pos.getY(), pos.getZ(), 1.0d)) {
+                return reg.getId();
+            }
+        }
+        return -1;
+    }
 
-	@Override
-	public Zone3D[] getRegions(int dimensionId) {
-		List<Zone3D> regs = new ArrayList<>();
-		for (Zone3D reg : regions.values()) {
-			if (reg.dimensionID == dimensionId) {
-				regs.add(reg);
-			}
-		}
-		return regs.toArray(new Zone3D[0]);
-	}
+    @Override
+    public Zone3D getRegion(int regionId) {
+        return regions.get(regionId);
+    }
 
-	public List<Zone3D> getRegionsInWorld(int dimensionID) {
-		List<Zone3D> regs = new ArrayList<>();
-		for (Zone3D reg : regions.values()) {
-			if (reg.dimensionID == dimensionID) {
-				regs.add(reg);
-			}
-		}
-		return regs;
-	}
+    @Override
+    public Zone3D[] getRegions(String dimensionId) {
+        List<Zone3D> regs = new ArrayList<>();
+        for (Zone3D reg : regions.values()) {
+            if (reg.dimension.toString().equals(dimensionId)) { regs.add(reg); }
+        }
+        return regs.toArray(new Zone3D[0]);
+    }
 
-	@Override
-	public List<Zone3D> getNearestRegions(int dimensionId, double x, double y, double z, double distance) {
-		AxisAlignedBB searchBox = new AxisAlignedBB(x - distance, 0.0d, z - distance, x + distance + 1.0d, 255.0d, z + distance + 1.0d);
-		List<Zone3D> regionsIn = new ArrayList<>();
-		for (Zone3D reg : regions.values()) {
-			if (reg.dimensionID != dimensionId) { continue; }
-			if (searchBox.intersects(reg.getAxisAlignedBB())) { regionsIn.add(reg); }
-		}
-		return regionsIn;
-	}
+    public List<Zone3D> getRegionsInWorld(ResourceLocation location) {
+        List<Zone3D> regs = new ArrayList<>();
+        for (Zone3D reg : regions.values()) {
+            if (reg.dimension.equals(location)) { regs.add(reg); }
+        }
+        return regs;
+    }
 
-	public int getUnusedId() {
-		int id = 0;
-		while (regions.containsKey(id)) { id++; }
-		return id;
-	}
+    @Override
+    public List<Zone3D> getNearestRegions(String dimensionId, double x, double y, double z, double distance) {
+        AABB searchBox = new AABB(x - distance, 0.0d, z - distance, x + distance + 1.0d, 255.0d, z + distance + 1.0d);
+        List<Zone3D> regionsIn = new ArrayList<>();
+        for (Zone3D reg : regions.values()) {
+            if (!reg.dimension.toString().equals(dimensionId)) { continue; }
+            if (searchBox.intersects(reg.getAxisAlignedBB())) { regionsIn.add(reg); }
+        }
+        return regionsIn;
+    }
 
-	public Zone3D loadRegion(NBTTagCompound nbtRegion) {
-		if (nbtRegion == null || !nbtRegion.hasKey("ID", 3) || nbtRegion.getInteger("ID") < 0) {
-			return null;
-		}
-		int id = nbtRegion.getInteger("ID");
-		if (regions.containsKey(id)) {
-			regions.get(id).load(nbtRegion);
-			return regions.get(id);
-		}
-		Zone3D region = new Zone3D();
-		region.load(nbtRegion);
-		regions.put(region.getId(), region);
-		return regions.get(region.getId());
-	}
+    public int getUnusedId() {
+        int id = 0;
+        while (regions.containsKey(id)) { id++; }
+        return id;
+    }
 
-	private void load() {
-		CustomNpcs.debugData.start(null);
-		File saveDir = CustomNpcs.getWorldSaveDirectory();
-		if (saveDir == null) {
-			CustomNpcs.debugData.end(null);
-			return;
-		}
-		try {
-			File file = new File(saveDir, "borders.dat");
-			if (file.exists()) {
-				loadRegions(file);
-			}
-		}
-		catch (Exception e) {
-			try {
-				File file2 = new File(saveDir, "borders.dat_old");
-				if (file2.exists()) {
-					loadRegions(file2);
-				}
-			} catch (Exception ex) { LogWriter.error(ex); }
-		}
-		CustomNpcs.debugData.end(null);
-	}
+    public Zone3D loadRegion(CompoundTag nbtRegion) {
+        if (nbtRegion == null || !nbtRegion.contains("ID", 3) || nbtRegion.getInt("ID") < 0) {
+            return null;
+        }
+        int id = nbtRegion.getInt("ID");
+        if (regions.containsKey(id)) {
+            regions.get(id).load(nbtRegion);
+            regions.get(id);
+            return regions.get(id);
+        }
+        Zone3D region = new Zone3D();
+        region.load(nbtRegion);
+        regions.put(region.getId(), region);
+        return regions.get(region.getId());
+    }
 
-	private void loadRegions(File file) throws IOException {
-		loadRegions(CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())));
-	}
+    private void loadRegions() {
+        CustomNpcs.debugData.start("Mod");
+        File saveDir = CustomNpcs.getLevelSaveDirectory();
+        if (saveDir == null) {
+            return;
+        }
+        try {
+            File file = new File(saveDir, "borders.dat");
+            if (file.exists()) {
+                loadRegions(file);
+            }
+        } catch (Exception e) {
+            try {
+                File file2 = new File(saveDir, "borders.dat_old");
+                if (file2.exists()) { loadRegions(file2); }
+            } catch (Exception ex) { LogWriter.error("Error:", ex); }
+        }
+        CustomNpcs.debugData.end("Mod");
+    }
 
-	public void loadRegions(NBTTagCompound compound) {
-		regions.clear();
-		if (compound.hasKey("Data", 9)) {
-			for (int i = 0; i < compound.getTagList("Data", 10).tagCount(); ++i) {
-				loadRegion(compound.getTagList("Data", 10).getCompoundTagAt(i));
-			}
-		}
-	}
+    private void loadRegions(File file) throws IOException {
+        DataInputStream stream = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file))));
+        loadRegions(NbtIo.read(stream));
+        stream.close();
+    }
 
-	@Override
-	public boolean removeRegion(int region) {
-		if (region < 0 || regions.isEmpty()) {
-			return false;
-		}
-		regions.remove(region);
-		save();
-		return true;
-	}
+    public void loadRegions(CompoundTag compound) {
+        regions.clear();
+        if (compound.contains("Data", 9)) {
+            for (int i = 0; i < compound.getList("Data", 10).size(); ++i) {
+                loadRegion(compound.getList("Data", 10).getCompound(i));
+            }
+        }
+    }
 
-	@SuppressWarnings("all")
-	public void save() {
-		CustomNpcs.debugData.start(null);
-		try {
-			File saveDir = CustomNpcs.getWorldSaveDirectory();
-			File file = new File(saveDir, "borders.dat_new");
-			File file2 = new File(saveDir, "borders.dat_old");
-			File file3 = new File(saveDir, "borders.dat");
-			CompressedStreamTools.writeCompressed(getNBT(), Files.newOutputStream(file.toPath()));
-			if (file2.exists()) {
-				file2.delete();
-			}
-			file3.renameTo(file2);
-			if (file3.exists()) {
-				file3.delete();
-			}
-			file.renameTo(file3);
-			if (file.exists()) {
-				file.delete();
-			}
-		}
-		catch (Exception e) { LogWriter.error(e); }
-		CustomNpcs.debugData.end(null);
-	}
+    @Override
+    public boolean removeRegion(int region) {
+        if (region < 0 || regions.isEmpty()) {
+            return false;
+        }
+        regions.remove(region);
+        save();
+        return true;
+    }
 
-	public void sendTo(EntityPlayerMP player) {
-		Server.sendData(player, EnumPacketClient.BORDER_DATA, -1, new NBTTagCompound());
-		for (int id : regions.keySet()) {
-			if (id < 0 || regions.get(id).getId() < 0) {
-				continue;
-			}
-			NBTTagCompound nbtRegion = new NBTTagCompound();
-			regions.get(id).save(nbtRegion);
-			Server.sendDataDelayed(player, EnumPacketClient.BORDER_DATA, 10, id, nbtRegion);
-		}
-		Server.sendDataDelayed(player, EnumPacketClient.BORDER_DATA, 10, -2);
-	}
+    public void save() {
+        try {
+            File saveDir = CustomNpcs.getLevelSaveDirectory();
+            File file = new File(saveDir, "borders.dat_new");
+            File file1 = new File(saveDir, "borders.dat_old");
+            File file2 = new File(saveDir, "borders.dat");
+            NbtIo.writeCompressed(getNBT(), new FileOutputStream(file));
+            if (file1.exists() && !file1.delete()) { LogWriter.debug("Error delete \"" + file1.getName() + "\" file"); }
+            if (!file2.renameTo(file1) || (file2.exists() && !file2.delete())) { LogWriter.debug("Error delete or rename \"" + file2.getName() + "\" file"); }
+            if (!file.renameTo(file2) || (file.exists() && !file.delete())) { LogWriter.debug("Error delete or rename \"" + file.getName() + "\" file"); }
+        } catch (Exception e) { LogWriter.error("Error:", e); }
+    }
 
-	public void update() {
-		if (CustomNpcs.Server == null || CustomNpcs.Server.getPlayerList().getOnlinePlayerNames().length == 0 || regions.isEmpty()) { return; }
-		for (Zone3D reg : regions.values()) {
-			for (WorldServer w : CustomNpcs.Server.worlds) { reg.update(w); }
-		}
-	}
+    public void sendTo(ServerPlayer player) {
+        Packets.send(player, new SPacketBorderClear());
+        for (int id : regions.keySet()) {
+            if (id < 0 || regions.get(id).getId() < 0) { continue; }
+            CompoundTag nbtRegion = new CompoundTag();
+            regions.get(id).save(nbtRegion);
+            Packets.send(player, new SPacketBorderData(nbtRegion));
+        }
+        Packets.send(player, new PacketGuiUpdate());
+    }
 
-	public void update(int id) {
-		if (CustomNpcs.Server == null || CustomNpcs.Server.getPlayerList().getOnlinePlayerNames().length == 0) {
-			return;
-		}
-		if (id < 0) {
-			for (int i : regions.keySet()) {
-				NBTTagCompound nbtRegion = new NBTTagCompound();
-				regions.get(i).save(nbtRegion);
-				for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-					Server.sendDataDelayed(player, EnumPacketClient.BORDER_DATA, 10, i, nbtRegion);
-					Server.sendDataDelayed(player, EnumPacketClient.BORDER_DATA, 10, -2);
-				}
-			}
-		} else if (regions.containsKey(id)) {
-			NBTTagCompound nbtRegion = new NBTTagCompound();
-			regions.get(id).save(nbtRegion);
-			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-				Server.sendDataDelayed(player, EnumPacketClient.BORDER_DATA, 10, id, nbtRegion);
-				Server.sendDataDelayed(player, EnumPacketClient.BORDER_DATA, 10, -2);
-			}
-		}
-	}
+    public void update() {
+        if (CustomNpcs.Server == null || CustomNpcs.Server.getPlayerList().getPlayerCount() == 0 || regions.isEmpty()) { return; }
+        for (Zone3D reg : regions.values()) {
+            for (ServerLevel level : CustomNpcs.Server.getAllLevels()) { reg.update(level); }
+        }
+    }
+
+    public void update(int id) {
+        if (CustomNpcs.Server == null || CustomNpcs.Server.getPlayerList().getPlayers().isEmpty()) { return; }
+        if (id < 0) {
+            for (int i : regions.keySet()) {
+                CompoundTag nbtRegion = new CompoundTag();
+                regions.get(i).save(nbtRegion);
+                for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) {
+                    Packets.send(player, new SPacketBorderData(nbtRegion));
+                    Packets.send(player, new PacketGuiUpdate());
+                }
+            }
+        } else if (regions.containsKey(id)) {
+            CompoundTag nbtRegion = new CompoundTag();
+            regions.get(id).save(nbtRegion);
+            for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) {
+                Packets.send(player, new SPacketBorderData(nbtRegion));
+                Packets.send(player, new PacketGuiUpdate());
+            }
+        }
+    }
 
 }

@@ -1,40 +1,41 @@
 package noppes.npcs.api;
 
-@SuppressWarnings("all")
+import noppes.npcs.api.interfaces.ParamName;
+
 public interface IScoreboard {
 
-	IScoreboardObjective addObjective(@ParamName("player") String objective, @ParamName("criteria") String criteria);
+   IScoreboardObjective[] getObjectives();
 
-	IScoreboardTeam addTeam(@ParamName("player") String name);
+   IScoreboardObjective getObjective(@ParamName("name") String name);
 
-	void deletePlayerScore(@ParamName("player") String player, @ParamName("objective") String objective, @ParamName("datatag") String datatag);
+   boolean hasObjective(@ParamName("objective") String objective);
 
-	IScoreboardObjective getObjective(@ParamName("name") String name);
+   void removeObjective(@ParamName("objective") String objective);
 
-	IScoreboardObjective[] getObjectives();
+   IScoreboardObjective addObjective(@ParamName("objective") String objective, @ParamName("criteria") String criteria);
 
-	String[] getPlayerList();
+   void setPlayerScore(@ParamName("player") String player, @ParamName("objective") String objective, @ParamName("score") int score);
 
-	int getPlayerScore(@ParamName("player") String player, @ParamName("objective") String objective, @ParamName("datatag") String datatag);
+   int getPlayerScore(@ParamName("player") String player, @ParamName("objective") String objective);
 
-	IScoreboardTeam getPlayerTeam(@ParamName("player") String player);
+   boolean hasPlayerObjective(@ParamName("player") String player, @ParamName("objective") String objective);
 
-	IScoreboardTeam getTeam(@ParamName("name") String name);
+   void deletePlayerScore(@ParamName("player") String player, @ParamName("objective") String objective);
 
-	IScoreboardTeam[] getTeams();
+   IScoreboardTeam[] getTeams();
 
-	boolean hasObjective(@ParamName("objective") String objective);
+   boolean hasTeam(@ParamName("name") String name);
 
-	boolean hasPlayerObjective(@ParamName("player") String player, @ParamName("objective") String objective, @ParamName("datatag") String datatag);
+   IScoreboardTeam addTeam(@ParamName("name") String name);
 
-	boolean hasTeam(@ParamName("name") String name);
+   IScoreboardTeam getTeam(@ParamName("name") String name);
 
-	void removeObjective(@ParamName("objective") String objective);
+   void removeTeam(@ParamName("name") String name);
 
-	void removePlayerTeam(@ParamName("player") String player);
+   IScoreboardTeam getPlayerTeam(@ParamName("player") String player);
 
-	void removeTeam(@ParamName("name") String name);
+   void removePlayerTeam(@ParamName("player") String player);
 
-	void setPlayerScore(@ParamName("player") String player, @ParamName("objective") String objective, @ParamName("score") int score, @ParamName("datatag") String datatag);
+   String[] getPlayerList();
 
 }

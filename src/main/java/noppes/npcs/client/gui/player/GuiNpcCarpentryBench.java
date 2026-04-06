@@ -1,145 +1,165 @@
 package noppes.npcs.client.gui.player;
 
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.gui.recipebook.GuiRecipeBook;
-import net.minecraft.client.gui.recipebook.IRecipeShownListener;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.Slot;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
-import noppes.npcs.client.gui.util.GuiNpcButton;
 import noppes.npcs.containers.ContainerCarpentryBench;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 
-public class GuiNpcCarpentryBench
-extends GuiContainerNPCInterface
-implements IRecipeShownListener {
+// net.minecraft.client.gui.screens.inventory.InventoryScreen
+public class GuiNpcCarpentryBench extends GuiContainerNPCInterface<ContainerCarpentryBench> {
 
-	protected static final ResourceLocation CRAFTING_TABLE_GUI_TEXTURES = new ResourceLocation(CustomNpcs.MODID, "textures/gui/carpentry.png");
-	protected final ResourceLocation buttonTexture = new ResourceLocation("minecraft", "textures/gui/container/crafting_table.png");
-	protected final ContainerCarpentryBench container;
-	// from GuiCrafting
-	protected final GuiRecipeBook recipeBookGui = new GuiRecipeBook();
-	protected GuiNpcButton recipeButton;
-	protected boolean widthTooNarrow;
+   protected static final ResourceLocation resource = getResource("carpentry.png");
+   protected GuiButtonNop button;
 
-	public GuiNpcCarpentryBench(ContainerCarpentryBench cont) {
-		super(null, cont);
-		title = "";
-		allowUserInput = false;
-		closeOnEsc = true;
-		ySize = 180;
+   // New from Unofficial (BetaZavr)
+   protected final ResourceLocation buttonTexture = new ResourceLocation("minecraft", "textures/gui/recipe_button.png");
+   // from GuiCrafting
+   private final RecipeBookComponent recipeBookComponent = new RecipeBookComponent();
+   private boolean widthTooNarrow;
+   private boolean buttonClicked;
 
-		container = cont;
-		ScaledResolution scaleW = new ScaledResolution(mc);
-		guiLeft = (scaleW.getScaledWidth() - xSize) / 2;
-		guiTop = (scaleW.getScaledHeight() - ySize) / 2;
-	}
+   public GuiNpcCarpentryBench(ContainerCarpentryBench container, Inventory inv, Component titleIn) {
+      super(null, container, inv, titleIn);
+      imageHeight = 180;
+      //titleLabelX = 97;
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.getID() == 10) {
-			recipeBookGui.initVisuals(widthTooNarrow, ((ContainerCarpentryBench) inventorySlots).craftMatrix);
-			recipeBookGui.toggleVisibility();
-			guiLeft = recipeBookGui.updateScreenPosition(widthTooNarrow, width, xSize);
-			recipeButton.x = guiLeft + 5;
-			recipeButton.y = height / 2 - 49;
-		}
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
 
-	@Override
-	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-		GlStateManager.color(2.0f, 2.0f, 2.0f, 1.0f);
-		mc.getTextureManager().bindTexture(GuiNpcCarpentryBench.CRAFTING_TABLE_GUI_TEXTURES);
-		container.checkPos(recipeBookGui.isVisible());
-		drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
-		super.drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
-		fontRenderer.drawString(new TextComponentTranslation("tile.npccarpentybench.name").getFormattedText(), guiLeft + 4, guiTop + 4, CustomNpcResourceListener.DefaultTextColor);
-		fontRenderer.drawString(new TextComponentTranslation("container.inventory").getFormattedText(), guiLeft + 4, guiTop + 87, CustomNpcResourceListener.DefaultTextColor);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-	}
+      widthTooNarrow = width < 379;
+      recipeBookComponent.init(width, height, minecraft, widthTooNarrow, menu);
+      guiLeft = recipeBookComponent.updateScreenPosition(width, imageWidth);
+      button = new GuiButtonNop(this, 10, "", guiLeft + 5, height / 2 - 49, (b) -> {
+         recipeBookComponent.toggleVisibility();
+         guiLeft = recipeBookComponent.updateScreenPosition(width, imageWidth);
+         b.setPosition(guiLeft + 5, height / 2 - 49);
+      })
+              .setSize(20, 19)
+              .setTexture(buttonTexture)
+              .setUV(0, 0, 20 ,19);
+      button.isSimple = true;
+      add(button);
+      setInitialFocus(recipeBookComponent);
+   }
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		drawDefaultBackground();
-		if (recipeBookGui.isVisible() && widthTooNarrow) {
-			drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
-			recipeBookGui.render(mouseX, mouseY, partialTicks);
-		} else {
-			recipeBookGui.render(mouseX, mouseY, partialTicks);
-			super.drawScreen(mouseX, mouseY, partialTicks);
-			recipeBookGui.renderGhostRecipe(guiLeft, guiTop, true, partialTicks);
-		}
-		renderHoveredToolTip(mouseX, mouseY);
-		recipeBookGui.renderTooltip(guiLeft, guiTop, mouseX, mouseY);
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      setScreen(new GuiRecipes());
+   }
 
-	@Nonnull
-	@Override
-	public GuiRecipeBook func_194310_f() {
-		return recipeBookGui;
-	}
+   @Override
+   public void containerTick() { recipeBookComponent.tick(); }
 
-	@Override
-	protected void handleMouseClick(@Nonnull Slot slotIn, int slotId, int mouseButton, @Nonnull ClickType type) {
-		super.handleMouseClick(slotIn, slotId, mouseButton, type);
-		recipeBookGui.slotClicked(slotIn);
-	}
+   @Override
+   protected void renderLabels(@Nonnull GuiGraphics graphics, int mouseX, int mouseY) {
+      int x = titleLabelX + (recipeBookComponent.isVisible() ? 77 : 0);
+      int y = titleLabelY - 2;
+      graphics.drawString(font, Component.translatable("tile.npccarpentybench.name"), x, y, CustomNpcResourceListener.DefaultTextColor, false);
+      graphics.drawString(font, Component.translatable("container.inventory"), x, y + 84, CustomNpcResourceListener.DefaultTextColor, false);
+   }
 
-	protected boolean hasClickedOutside(int p_193983_1_, int p_193983_2_, int p_193983_3_, int p_193983_4_) {
-		boolean flag = p_193983_1_ < p_193983_3_ || p_193983_2_ < p_193983_4_ || p_193983_1_ >= p_193983_3_ + xSize || p_193983_2_ >= p_193983_4_ + ySize;
-		return recipeBookGui.hasClickedOutside(p_193983_1_, p_193983_2_, guiLeft, guiTop, xSize, ySize) && flag;
-	}
+   @Override
+   public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      wrapper.graphics = graphics;
+      wrapper.mouseX = mouseX;
+      wrapper.mouseY = mouseY;
+      ArrayList<Slot> slots = new ArrayList<>(menu.slots);
+      int x = mouseX;
+      int y = mouseY;
+      if (hasSubGui()) {
+         menu.slots.clear();
+         x = 0;
+         y = 0;
+      }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		widthTooNarrow = width < 379;
-		recipeBookGui.func_194303_a(width, height, mc, widthTooNarrow, ((ContainerCarpentryBench) inventorySlots).craftMatrix);
-		guiLeft = recipeBookGui.updateScreenPosition(widthTooNarrow, width, xSize);
-		addButton(recipeButton = new GuiNpcButton(10, guiLeft + 5, height / 2 - 49, 20, 19, 0, 168, buttonTexture).simple(true));
-	}
+      renderBackground(graphics);
+      if (recipeBookComponent.isVisible() && widthTooNarrow) {
+         renderBg(graphics, partialTicks, mouseX, mouseY);
+         recipeBookComponent.render(graphics, mouseX, mouseY, partialTicks);
+      } else {
+         recipeBookComponent.render(graphics, mouseX, mouseY, partialTicks);
+         super.render(graphics, mouseX, mouseY, partialTicks);
+         recipeBookComponent.renderGhostRecipe(graphics, guiLeft, guiTop, false, partialTicks);
+      }
+      renderTooltip(graphics, mouseX, mouseY);
+      recipeBookComponent.renderTooltip(graphics, guiLeft, guiTop, mouseX, mouseY);
 
-	@Override
-	protected boolean isPointInRegion(int rectX, int rectY, int rectWidth, int rectHeight, int pointX, int pointY) {
-		return (!widthTooNarrow || !recipeBookGui.isVisible()) && super.isPointInRegion(rectX, rectY, rectWidth, rectHeight, pointX, pointY);
-	}
+      for (IComponentGui component : new ArrayList<>(wrapper.components)) {
+         if (component instanceof Renderable renderable) { renderable.render(graphics, x, y, partialTicks); }
+      }
+      if (hasSubGui()) {
+         menu.slots.addAll(slots);
+         graphics.pose().pushPose();
+         graphics.pose().translate(0.0F, 0.0F, 100.0F);
+         wrapper.subgui.render(graphics, mouseX, mouseY, partialTicks);
+         graphics.pose().popPose();
+      }
+      else { renderTooltip(graphics, mouseX, mouseY); }
+   }
 
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui == null && recipeBookGui.keyPressed(typedChar, keyCode)) { return true; }
-		return super.keyCnpcsPressed(typedChar, keyCode);
-	}
+   @Override
+   protected void renderBg(@Nonnull GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
+      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+      menu.checkPos(recipeBookComponent.isVisible());
+      graphics.blit(resource, guiLeft, guiTop, 0, 0, imageWidth, imageHeight);
+      super.renderBg(graphics, partialTicks, mouseX, mouseY);
+      RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+   }
 
-	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (subgui == null && (widthTooNarrow || recipeBookGui.isVisible()) && recipeBookGui.mouseClicked(mouseX, mouseY, mouseButton)) {
-			return true;
-		}
-		return super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
-	}
+   @Override
+   protected boolean isHovering(int x, int y, int widthIn, int heightIn, double mouseX, double mouseY) {
+      return (!widthTooNarrow || !recipeBookComponent.isVisible()) && super.isHovering(x, y, widthIn, heightIn, mouseX, mouseY);
+   }
 
-	@Override
-	public void onGuiClosed() {
-		recipeBookGui.removed();
-		super.onGuiClosed();
-	}
+   @Override
+   public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+      if (recipeBookComponent.mouseClicked(mouseX, mouseY, mouseButton)) {
+         setFocused(recipeBookComponent);
+         return true;
+      }
+      return (!widthTooNarrow || !recipeBookComponent.isVisible()) && super.mouseClicked(mouseX, mouseY, mouseButton);
+   }
 
-	@Override
-	public void recipesUpdated() {
-		recipeBookGui.recipesUpdated();
-	}
+   @Override
+   public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+      if (buttonClicked) {
+         buttonClicked = false;
+         return true;
+      }
+      return super.mouseReleased(mouseX, mouseY, mouseButton);
+   }
 
-    @Override
-	public void updateScreen() {
-		super.updateScreen();
-		recipeBookGui.tick();
-	}
+   @Override
+   protected boolean hasClickedOutside(double mouseX, double mouseY, int left, int top, int mouseButton) {
+      boolean flag = mouseX < (double) left || mouseY < (double) top || mouseX >= (double)(left + imageWidth) || mouseY >= (double)(top + imageHeight);
+      return recipeBookComponent.hasClickedOutside(mouseX, mouseY, guiLeft, guiTop, imageWidth, imageHeight, mouseButton) && flag;
+   }
+
+   @Override
+   protected void slotClicked(@Nonnull Slot slot, int mouseX, int mouseY, @Nonnull ClickType type) {
+      super.slotClicked(slot, mouseX, mouseY, type);
+      recipeBookComponent.slotClicked(slot);
+   }
+
+   public void recipesUpdated() { recipeBookComponent.recipesUpdated(); }
+
+   public RecipeBookComponent getRecipeBookComponent() { return recipeBookComponent; }
 
 }

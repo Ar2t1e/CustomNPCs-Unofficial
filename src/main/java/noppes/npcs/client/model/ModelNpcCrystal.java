@@ -1,56 +1,63 @@
 package noppes.npcs.client.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.util.Mth;
+import noppes.npcs.entity.EntityNpcCrystal;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Quaternionf;
 
-import javax.annotation.Nonnull;
+public class ModelNpcCrystal<T extends EntityNpcCrystal> extends EntityModel<T> {
 
-public class ModelNpcCrystal extends ModelBase {
-	private final ModelRenderer field_41057_g;
-	private final ModelRenderer field_41058_h;
-	private final ModelRenderer field_41059_i;
-	float ticks;
+   private static final float SIN_45 = (float)Math.sin(0.7853981633974483D);
+   private final NopModelPart field_41057_g;
+   private final NopModelPart field_41058_h = new NopModelPart(64, 32, 0, 0);
+   private final NopModelPart field_41059_i;
+   float ticks;
+   float tickCount;
 
-	public ModelNpcCrystal() {
-		this.field_41058_h = new ModelRenderer(this, "glass");
-		this.field_41058_h.setTextureOffset(0, 0).addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8);
-		this.field_41057_g = new ModelRenderer(this, "cube");
-		this.field_41057_g.setTextureOffset(32, 0).addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8);
-		this.field_41059_i = new ModelRenderer(this, "base");
-		this.field_41059_i.setTextureOffset(0, 16).addBox(-6.0f, 16.0f, -6.0f, 12, 4, 12);
-	}
+   public ModelNpcCrystal() {
+      this.field_41058_h.addBox(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F);
+      this.field_41057_g = new NopModelPart(64, 32, 32, 0);
+      this.field_41057_g.addBox(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F);
+      this.field_41059_i = new NopModelPart(64, 32, 0, 16);
+      this.field_41059_i.addBox(-6.0F, 16.0F, -6.0F, 12.0F, 4.0F, 12.0F);
+   }
 
-	public void render(@Nonnull Entity par1Entity, float par2, float par3, float par4, float par5, float par6, float par7) {
-		GlStateManager.pushMatrix();
-		GlStateManager.scale(2.0f, 2.0f, 2.0f);
-		GlStateManager.translate(0.0f, -0.5f, 0.0f);
-		this.field_41059_i.render(par7);
-		float f = par1Entity.ticksExisted + this.ticks;
-		float f2 = MathHelper.sin(f * 0.2f) / 2.0f + 0.5f;
-		f2 += f2 * f2;
-		par3 = f * 3.0f;
-		par4 = f2 * 0.2f;
-		GlStateManager.rotate(par3, 0.0f, 1.0f, 0.0f);
-		GlStateManager.translate(0.0f, 0.1f + par4, 0.0f);
-		GlStateManager.rotate(60.0f, 0.7071f, 0.0f, 0.7071f);
-		this.field_41058_h.render(par7);
-		float sca = 0.875f;
-		GlStateManager.scale(sca, sca, sca);
-		GlStateManager.rotate(60.0f, 0.7071f, 0.0f, 0.7071f);
-		GlStateManager.rotate(par3, 0.0f, 1.0f, 0.0f);
-		this.field_41058_h.render(par7);
-		GlStateManager.scale(sca, sca, sca);
-		GlStateManager.rotate(60.0f, 0.7071f, 0.0f, 0.7071f);
-		GlStateManager.rotate(par3, 0.0f, 1.0f, 0.0f);
-		this.field_41057_g.render(par7);
-		GlStateManager.popMatrix();
-	}
+   public void setupAnim(@NotNull T p_225597_1_, float p_225597_2_, float p_225597_3_, float p_225597_4_, float p_225597_5_, float p_225597_6_) {
+   }
 
-	public void setLivingAnimations(@Nonnull EntityLivingBase entityLiving, float f6, float f5, float par9) {
-		this.ticks = par9;
-	}
+   public void prepareMobModel(T par1EntityLiving, float f6, float f5, float par9) {
+      this.ticks = par9;
+      this.tickCount = (float)par1EntityLiving.tickCount;
+   }
+
+   public void renderToBuffer(PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      mStack.pushPose();
+      mStack.scale(2.0F, 2.0F, 2.0F);
+      mStack.translate(0.0F, -0.5F, 0.0F);
+      this.field_41059_i.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      float f = this.tickCount + this.ticks;
+      float f1 = Mth.sin(f * 0.2F) / 2.0F + 0.5F;
+      f1 += f1 * f1;
+      float par3 = f * 3.0F;
+      float par4 = f1 * 0.2F;
+      mStack.mulPose(Axis.YP.rotationDegrees(par3));
+      mStack.translate(0.0F, 0.1F + par4, 0.0F);
+      mStack.mulPose((new Quaternionf()).setAngleAxis(1.0471976F, SIN_45, 0.0F, SIN_45));
+      this.field_41058_h.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      float sca = 0.875F;
+      mStack.scale(sca, sca, sca);
+      mStack.mulPose((new Quaternionf()).setAngleAxis(1.0471976F, SIN_45, 0.0F, SIN_45));
+      mStack.mulPose(Axis.YP.rotationDegrees(par3));
+      this.field_41058_h.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      mStack.scale(sca, sca, sca);
+      mStack.mulPose((new Quaternionf()).setAngleAxis(1.0471976F, SIN_45, 0.0F, SIN_45));
+      mStack.mulPose(Axis.YP.rotationDegrees(par3));
+      this.field_41057_g.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      mStack.popPose();
+   }
 }

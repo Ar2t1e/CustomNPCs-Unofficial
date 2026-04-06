@@ -1,317 +1,332 @@
 package noppes.npcs.client.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import noppes.npcs.entity.EntityNPCInterface;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.util.Mth;
+import noppes.npcs.entity.EntityNpcPony;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class ModelPonyArmor<T extends EntityNpcPony> extends EntityModel<T> {
 
-public class ModelPonyArmor extends ModelBase {
-	public boolean aimedBow;
-	public ModelRenderer Body;
-	public ModelRenderer BodyBack;
-	public ModelRenderer head;
-	public int heldItemRight;
-	public boolean isFlying;
-	public boolean isGlow;
-	public boolean isPegasus;
-	public boolean isSleeping;
-	public boolean isSneak;
-	public boolean isUnicorn;
-	public ModelRenderer LeftArm;
-	public ModelRenderer LeftArm2;
-	public ModelRenderer LeftLeg;
-	public ModelRenderer LeftLeg2;
-    public ModelRenderer rightarm;
-	public ModelRenderer rightarm2;
-	public ModelRenderer RightLeg;
-	public ModelRenderer RightLeg2;
+    public NopModelPart head;
+   public NopModelPart Body;
+   public NopModelPart BodyBack;
+   public NopModelPart rightArm;
+   public NopModelPart LeftArm;
+   public NopModelPart RightLeg;
+   public NopModelPart LeftLeg;
+   public NopModelPart rightArm2;
+   public NopModelPart LeftArm2;
+   public NopModelPart RightLeg2;
+   public NopModelPart LeftLeg2;
+   public boolean isPegasus = false;
+   public boolean isUnicorn = false;
+   public boolean isSleeping = false;
+   public boolean isFlying = false;
+   public boolean isSneak = false;
+   public boolean aimedBow;
+   public int heldItemRight;
 
-	public ModelPonyArmor(float f) {
-		this.isPegasus = false;
-		this.isUnicorn = false;
-		this.isSleeping = false;
-		this.isFlying = false;
-		this.isGlow = false;
-		this.isSneak = false;
-		this.init(f, 0.0f);
-	}
+   public ModelPonyArmor(float f) {
+      this.init(f, 0.0F);
+   }
 
-	public void init(float scale, float f) {
-		float f2 = 0.0f;
-		float f3 = 0.0f;
-		float f4 = 0.0f;
-		(this.head = new ModelRenderer(this, 0, 0)).addBox(-4.0f, -4.0f, -6.0f, 8, 8, 8, scale);
-		this.head.setRotationPoint(f2, f3, f4);
-		float f5 = 0.0f;
-		float f6 = 0.0f;
-		float f7 = 0.0f;
-		(this.Body = new ModelRenderer(this, 16, 16)).addBox(-4.0f, 4.0f, -2.0f, 8, 8, 4, scale);
-		this.Body.setRotationPoint(f5, f6 + f, f7);
-		(this.BodyBack = new ModelRenderer(this, 0, 0)).addBox(-4.0f, 4.0f, 6.0f, 8, 8, 8, scale);
-		this.BodyBack.setRotationPoint(f5, f6 + f, f7);
-		(this.rightarm = new ModelRenderer(this, 0, 16)).addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.rightarm.setRotationPoint(-3.0f, 8.0f + f, 0.0f);
-		this.LeftArm = new ModelRenderer(this, 0, 16);
-		this.LeftArm.mirror = true;
-		this.LeftArm.addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.LeftArm.setRotationPoint(3.0f, 8.0f + f, 0.0f);
-		(this.RightLeg = new ModelRenderer(this, 0, 16)).addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.RightLeg.setRotationPoint(-3.0f, 0.0f + f, 0.0f);
-		this.LeftLeg = new ModelRenderer(this, 0, 16);
-		this.LeftLeg.mirror = true;
-		this.LeftLeg.addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.LeftLeg.setRotationPoint(3.0f, 0.0f + f, 0.0f);
-		(this.rightarm2 = new ModelRenderer(this, 0, 16)).addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale * 0.5f);
-		this.rightarm2.setRotationPoint(-3.0f, 8.0f + f, 0.0f);
-		this.LeftArm2 = new ModelRenderer(this, 0, 16);
-		this.LeftArm2.mirror = true;
-		this.LeftArm2.addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale * 0.5f);
-		this.LeftArm2.setRotationPoint(3.0f, 8.0f + f, 0.0f);
-		(this.RightLeg2 = new ModelRenderer(this, 0, 16)).addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale * 0.5f);
-		this.RightLeg2.setRotationPoint(-3.0f, 0.0f + f, 0.0f);
-		this.LeftLeg2 = new ModelRenderer(this, 0, 16);
-		this.LeftLeg2.mirror = true;
-		this.LeftLeg2.addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale * 0.5f);
-		this.LeftLeg2.setRotationPoint(3.0f, 0.0f + f, 0.0f);
-	}
+   public void init(float strech, float f) {
+      float f2 = 0.0F;
+      float f3 = 0.0F;
+      float f4 = 0.0F;
+      this.head = new NopModelPart(64, 32, 0, 0);
+      this.head.addBox(-4.0F, -4.0F, -6.0F, 8.0F, 8.0F, 8.0F, strech);
+      this.head.setPos(f2, f3, f4);
+      float f5 = 0.0F;
+      float f6 = 0.0F;
+      float f7 = 0.0F;
+      this.Body = new NopModelPart(64, 32, 16, 16);
+      this.Body.addBox(-4.0F, 4.0F, -2.0F, 8.0F, 8.0F, 4.0F, strech);
+      this.Body.setPos(f5, f6 + f, f7);
+      this.BodyBack = new NopModelPart(64, 32, 0, 0);
+      this.BodyBack.addBox(-4.0F, 4.0F, 6.0F, 8.0F, 8.0F, 8.0F, strech);
+      this.BodyBack.setPos(f5, f6 + f, f7);
+      this.rightArm = new NopModelPart(64, 32, 0, 16);
+      this.rightArm.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech);
+      this.rightArm.setPos(-3.0F, 8.0F + f, 0.0F);
+      this.LeftArm = new NopModelPart(64, 32, 0, 16);
+      this.LeftArm.mirror = true;
+      this.LeftArm.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech);
+      this.LeftArm.setPos(3.0F, 8.0F + f, 0.0F);
+      this.RightLeg = new NopModelPart(64, 32, 0, 16);
+      this.RightLeg.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech);
+      this.RightLeg.setPos(-3.0F, 0.0F + f, 0.0F);
+      this.LeftLeg = new NopModelPart(64, 32, 0, 16);
+      this.LeftLeg.mirror = true;
+      this.LeftLeg.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech);
+      this.LeftLeg.setPos(3.0F, 0.0F + f, 0.0F);
+      this.rightArm2 = new NopModelPart(64, 32, 0, 16);
+      this.rightArm2.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech * 0.5F);
+      this.rightArm2.setPos(-3.0F, 8.0F + f, 0.0F);
+      this.LeftArm2 = new NopModelPart(64, 32, 0, 16);
+      this.LeftArm2.mirror = true;
+      this.LeftArm2.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech * 0.5F);
+      this.LeftArm2.setPos(3.0F, 8.0F + f, 0.0F);
+      this.RightLeg2 = new NopModelPart(64, 32, 0, 16);
+      this.RightLeg2.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech * 0.5F);
+      this.RightLeg2.setPos(-3.0F, 0.0F + f, 0.0F);
+      this.LeftLeg2 = new NopModelPart(64, 32, 0, 16);
+      this.LeftLeg2.mirror = true;
+      this.LeftLeg2.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F, strech * 0.5F);
+      this.LeftLeg2.setPos(3.0F, 0.0F + f, 0.0F);
+   }
 
-	public void render(@Nonnull Entity entity, float f, float f1, float f2, float f3, float f4, float scale) {
-		this.setRotationAngles(f, f1, f2, f3, f4, scale, entity);
-		this.head.render(scale);
-		this.Body.render(scale);
-		this.BodyBack.render(scale);
-		this.LeftArm.render(scale);
-		this.rightarm.render(scale);
-		this.LeftLeg.render(scale);
-		this.RightLeg.render(scale);
-		this.LeftArm2.render(scale);
-		this.rightarm2.render(scale);
-		this.LeftLeg2.render(scale);
-		this.RightLeg2.render(scale);
-	}
+   public void setupAnim(@NotNull T npc, float aniPosition, float aniSpeed, float age, float yHead, float xHead) {
+      if (!this.riding) {
+         this.riding = npc.currentAnimation == 1;
+      }
 
-	public void setRotationAngles(float f, float f1, float f2, float f3, float f4, float f5, @Nonnull Entity entity) {
-		EntityNPCInterface npc = (EntityNPCInterface) entity;
-		if (!this.isRiding) {
-			this.isRiding = (npc.currentAnimation == 1);
-		}
-		if (this.isSneak && (npc.currentAnimation == 7 || npc.currentAnimation == 2)) {
-			this.isSneak = false;
-		}
-        boolean rainboom = false;
-		float f6;
-		float f7;
-		if (this.isSleeping) {
-			f6 = 1.4f;
-			f7 = 0.1f;
-		} else {
-			f6 = f3 / 57.29578f;
-			f7 = f4 / 57.29578f;
-		}
-		this.head.rotateAngleY = f6;
-		this.head.rotateAngleX = f7;
-		float f8;
-		float f9;
-		float f10;
-		float f11;
-		if (!this.isFlying || !this.isPegasus) {
-			f8 = MathHelper.cos(f * 0.6662f + 3.141593f) * 0.6f * f1;
-			f9 = MathHelper.cos(f * 0.6662f) * 0.6f * f1;
-			f10 = MathHelper.cos(f * 0.6662f) * 0.3f * f1;
-			f11 = MathHelper.cos(f * 0.6662f + 3.141593f) * 0.3f * f1;
-			this.rightarm.rotateAngleY = 0.0f;
-			this.LeftArm.rotateAngleY = 0.0f;
-			this.RightLeg.rotateAngleY = 0.0f;
-			this.LeftLeg.rotateAngleY = 0.0f;
-			this.rightarm2.rotateAngleY = 0.0f;
-			this.LeftArm2.rotateAngleY = 0.0f;
-			this.RightLeg2.rotateAngleY = 0.0f;
-			this.LeftLeg2.rotateAngleY = 0.0f;
-		} else {
-			if (f1 < 0.9999f) {
-                f8 = MathHelper.sin(0.0f - f1 * 0.5f);
-				f9 = MathHelper.sin(0.0f - f1 * 0.5f);
-				f10 = MathHelper.sin(f1 * 0.5f);
-				f11 = MathHelper.sin(f1 * 0.5f);
-			} else {
-				rainboom = true;
-				f8 = 4.712f;
-				f9 = 4.712f;
-				f10 = 1.571f;
-				f11 = 1.571f;
-			}
-			this.rightarm.rotateAngleY = 0.2f;
-			this.LeftArm.rotateAngleY = -0.2f;
-			this.RightLeg.rotateAngleY = -0.2f;
-			this.LeftLeg.rotateAngleY = 0.2f;
-			this.rightarm2.rotateAngleY = 0.2f;
-			this.LeftArm2.rotateAngleY = -0.2f;
-			this.RightLeg2.rotateAngleY = -0.2f;
-			this.LeftLeg2.rotateAngleY = 0.2f;
-		}
-		if (this.isSleeping) {
-			f8 = 4.712f;
-			f9 = 4.712f;
-			f10 = 1.571f;
-			f11 = 1.571f;
-		}
-		this.rightarm.rotateAngleX = f8;
-		this.LeftArm.rotateAngleX = f9;
-		this.RightLeg.rotateAngleX = f10;
-		this.LeftLeg.rotateAngleX = f11;
-		this.rightarm.rotateAngleZ = 0.0f;
-		this.LeftArm.rotateAngleZ = 0.0f;
-		this.rightarm2.rotateAngleX = f8;
-		this.LeftArm2.rotateAngleX = f9;
-		this.RightLeg2.rotateAngleX = f10;
-		this.LeftLeg2.rotateAngleX = f11;
-		this.rightarm2.rotateAngleZ = 0.0f;
-		this.LeftArm2.rotateAngleZ = 0.0f;
-		if (this.heldItemRight != 0 && !rainboom && !this.isUnicorn) {
-			this.rightarm.rotateAngleX = this.rightarm.rotateAngleX * 0.5f - 0.3141593f;
-			this.rightarm2.rotateAngleX = this.rightarm2.rotateAngleX * 0.5f - 0.3141593f;
-		}
-		float f12 = 0.0f;
-		if (f5 > -9990.0f && !this.isUnicorn) {
-			f12 = MathHelper.sin(MathHelper.sqrt(f5) * 3.141593f * 2.0f) * 0.2f;
-		}
-		this.Body.rotateAngleY = f12 * 0.2f;
-		this.BodyBack.rotateAngleY = f12 * 0.2f;
-		float f13 = MathHelper.sin(this.Body.rotateAngleY) * 5.0f;
-		float f14 = MathHelper.cos(this.Body.rotateAngleY) * 5.0f;
-		float f15 = 4.0f;
-		if (this.isSneak && !this.isFlying) {
-			f15 = 0.0f;
-		}
-		if (this.isSleeping) {
-			f15 = 2.6f;
-		}
-		if (rainboom) {
-			this.rightarm.rotationPointZ = f13 + 2.0f;
-			this.rightarm2.rotationPointZ = f13 + 2.0f;
-			this.LeftArm.rotationPointZ = 0.0f - f13 + 2.0f;
-			this.LeftArm2.rotationPointZ = 0.0f - f13 + 2.0f;
-		} else {
-			this.rightarm.rotationPointZ = f13 + 1.0f;
-			this.rightarm2.rotationPointZ = f13 + 1.0f;
-			this.LeftArm.rotationPointZ = 0.0f - f13 + 1.0f;
-			this.LeftArm2.rotationPointZ = 0.0f - f13 + 1.0f;
-		}
-		this.rightarm.rotationPointX = 0.0f - f14 - 1.0f + f15;
-		this.rightarm2.rotationPointX = 0.0f - f14 - 1.0f + f15;
-		this.LeftArm.rotationPointX = f14 + 1.0f - f15;
-		this.LeftArm2.rotationPointX = f14 + 1.0f - f15;
-		this.RightLeg.rotationPointX = 0.0f - f14 - 1.0f + f15;
-		this.RightLeg2.rotationPointX = 0.0f - f14 - 1.0f + f15;
-		this.LeftLeg.rotationPointX = f14 + 1.0f - f15;
-		this.LeftLeg2.rotationPointX = f14 + 1.0f - f15;
-        this.rightarm.rotateAngleY += this.Body.rotateAngleY;
-        this.rightarm2.rotateAngleY += this.Body.rotateAngleY;
-        this.LeftArm.rotateAngleY += this.Body.rotateAngleY;
-        this.LeftArm2.rotateAngleY += this.Body.rotateAngleY;
-        this.LeftArm.rotateAngleX += this.Body.rotateAngleX;
-        this.LeftArm2.rotateAngleX += this.Body.rotateAngleX;
-		this.rightarm.rotationPointY = 8.0f;
-		this.LeftArm.rotationPointY = 8.0f;
-		this.rightarm2.rotationPointY = 8.0f;
-		this.LeftArm2.rotationPointY = 8.0f;
-		if (this.isSneak && !this.isFlying) {
-			float f19 = 0.4f;
-			float f20 = 7.0f;
-			float f21 = -4.0f;
-			this.Body.rotateAngleX = f19;
-			this.Body.rotationPointY = f20;
-			this.Body.rotationPointZ = f21;
-			this.BodyBack.rotateAngleX = f19;
-			this.BodyBack.rotationPointY = f20;
-			this.BodyBack.rotationPointZ = f21;
-			this.RightLeg.rotateAngleX -= 0.0f;
-			this.LeftLeg.rotateAngleX -= 0.0f;
-			this.rightarm.rotateAngleX -= 0.4f;
-			this.LeftArm.rotateAngleX -= 0.4f;
-			this.RightLeg.rotationPointZ = 10.0f;
-			this.LeftLeg.rotationPointZ = 10.0f;
-			this.RightLeg.rotationPointY = 7.0f;
-			this.LeftLeg.rotationPointY = 7.0f;
-			this.RightLeg2.rotateAngleX -= 0.0f;
-			this.LeftLeg2.rotateAngleX -= 0.0f;
-			this.rightarm2.rotateAngleX -= 0.4f;
-			this.LeftArm2.rotateAngleX -= 0.4f;
-			this.RightLeg2.rotationPointZ = 10.0f;
-			this.LeftLeg2.rotationPointZ = 10.0f;
-			this.RightLeg2.rotationPointY = 7.0f;
-			this.LeftLeg2.rotationPointY = 7.0f;
-			float f22;
-			float f23;
-			float f24;
-			if (this.isSleeping) {
-				f22 = 2.0f;
-				f23 = -1.0f;
-				f24 = 1.0f;
-			} else {
-				f22 = 6.0f;
-				f23 = -2.0f;
-				f24 = 0.0f;
-			}
-			this.head.rotationPointY = f22;
-			this.head.rotationPointZ = f23;
-			this.head.rotationPointX = f24;
-		} else {
-			float f25 = 0.0f;
-			float f26 = 0.0f;
-			float f27 = 0.0f;
-			this.Body.rotateAngleX = f25;
-			this.Body.rotationPointY = f26;
-			this.Body.rotationPointZ = f27;
-			this.BodyBack.rotateAngleX = f25;
-			this.BodyBack.rotationPointY = f26;
-			this.BodyBack.rotationPointZ = f27;
-			this.RightLeg.rotationPointZ = 10.0f;
-			this.LeftLeg.rotationPointZ = 10.0f;
-			this.RightLeg.rotationPointY = 8.0f;
-			this.LeftLeg.rotationPointY = 8.0f;
-			this.RightLeg2.rotationPointZ = 10.0f;
-			this.LeftLeg2.rotationPointZ = 10.0f;
-			this.RightLeg2.rotationPointY = 8.0f;
-			this.LeftLeg2.rotationPointY = 8.0f;
-			this.head.rotationPointY = 0.0f;
-			this.head.rotationPointZ = 0.0f;
-		}
-		if (this.isSleeping) {
-			this.rightarm.rotationPointZ += 6.0f;
-			this.LeftArm.rotationPointZ += 6.0f;
-			this.RightLeg.rotationPointZ -= 8.0f;
-			this.LeftLeg.rotationPointZ -= 8.0f;
-			this.rightarm.rotationPointY += 2.0f;
-			this.LeftArm.rotationPointY += 2.0f;
-			this.RightLeg.rotationPointY += 2.0f;
-			this.LeftLeg.rotationPointY += 2.0f;
-			this.rightarm2.rotationPointZ += 6.0f;
-			this.LeftArm2.rotationPointZ += 6.0f;
-			this.RightLeg2.rotationPointZ -= 8.0f;
-			this.LeftLeg2.rotationPointZ -= 8.0f;
-			this.rightarm2.rotationPointY += 2.0f;
-			this.LeftArm2.rotationPointY += 2.0f;
-			this.RightLeg2.rotationPointY += 2.0f;
-			this.LeftLeg2.rotationPointY += 2.0f;
-		}
-		if (this.aimedBow && !this.isUnicorn) {
-			this.rightarm.rotateAngleZ = 0.0f;
-			this.rightarm.rotateAngleY = -(0.1f) + this.head.rotateAngleY;
-			this.rightarm.rotateAngleX = 4.712f + this.head.rotateAngleX;
-			this.rightarm.rotateAngleZ += MathHelper.cos(f2 * 0.09f) * 0.05f + 0.05f;
-			this.rightarm.rotateAngleX += MathHelper.sin(f2 * 0.067f) * 0.05f;
-			this.rightarm2.rotateAngleZ = 0.0f;
-			this.rightarm2.rotateAngleY = -(0.1f - f2 * 0.6f) + this.head.rotateAngleY;
-			this.rightarm2.rotateAngleX = 4.712f + this.head.rotateAngleX;
-			this.rightarm2.rotateAngleX -= f2 * 1.2f - f2 * 0.4f;
-			this.rightarm2.rotateAngleZ += MathHelper.cos(f2 * 0.09f) * 0.05f + 0.05f;
-			this.rightarm2.rotateAngleX += MathHelper.sin(f2 * 0.067f) * 0.05f;
-			++this.rightarm.rotationPointZ;
-			++this.rightarm2.rotationPointZ;
-		}
-	}
+      if (this.isSneak && (npc.currentAnimation == 7 || npc.currentAnimation == 2)) {
+         this.isSneak = false;
+      }
+
+      boolean rainBoom = false;
+      float f6;
+      float f7;
+      if (this.isSleeping) {
+         f6 = 1.4F;
+         f7 = 0.1F;
+      } else {
+         f6 = yHead / 57.29578F;
+         f7 = xHead / 57.29578F;
+      }
+
+      this.head.yRot = f6;
+      this.head.xRot = f7;
+      float f8;
+      float f9;
+      float f10;
+      float f11;
+      if (this.isFlying && this.isPegasus) {
+         if (aniSpeed < 0.9999F) {
+            f8 = Mth.sin(0.0F - aniSpeed * 0.5F);
+            f9 = Mth.sin(0.0F - aniSpeed * 0.5F);
+            f10 = Mth.sin(aniSpeed * 0.5F);
+            f11 = Mth.sin(aniSpeed * 0.5F);
+         } else {
+            rainBoom = true;
+            f8 = 4.712F;
+            f9 = 4.712F;
+            f10 = 1.571F;
+            f11 = 1.571F;
+         }
+
+         this.rightArm.yRot = 0.2F;
+         this.LeftArm.yRot = -0.2F;
+         this.RightLeg.yRot = -0.2F;
+         this.LeftLeg.yRot = 0.2F;
+         this.rightArm2.yRot = 0.2F;
+         this.LeftArm2.yRot = -0.2F;
+         this.RightLeg2.yRot = -0.2F;
+         this.LeftLeg2.yRot = 0.2F;
+      } else {
+         f8 = Mth.cos(aniPosition * 0.6662F + 3.141593F) * 0.6F * aniSpeed;
+         f9 = Mth.cos(aniPosition * 0.6662F) * 0.6F * aniSpeed;
+         f10 = Mth.cos(aniPosition * 0.6662F) * 0.3F * aniSpeed;
+         f11 = Mth.cos(aniPosition * 0.6662F + 3.141593F) * 0.3F * aniSpeed;
+         this.rightArm.yRot = 0.0F;
+         this.LeftArm.yRot = 0.0F;
+         this.RightLeg.yRot = 0.0F;
+         this.LeftLeg.yRot = 0.0F;
+         this.rightArm2.yRot = 0.0F;
+         this.LeftArm2.yRot = 0.0F;
+         this.RightLeg2.yRot = 0.0F;
+         this.LeftLeg2.yRot = 0.0F;
+      }
+
+      if (this.isSleeping) {
+         f8 = 4.712F;
+         f9 = 4.712F;
+         f10 = 1.571F;
+         f11 = 1.571F;
+      }
+
+      this.rightArm.xRot = f8;
+      this.LeftArm.xRot = f9;
+      this.RightLeg.xRot = f10;
+      this.LeftLeg.xRot = f11;
+      this.rightArm.zRot = 0.0F;
+      this.LeftArm.zRot = 0.0F;
+      this.rightArm2.xRot = f8;
+      this.LeftArm2.xRot = f9;
+      this.RightLeg2.xRot = f10;
+      this.LeftLeg2.xRot = f11;
+      this.rightArm2.zRot = 0.0F;
+      this.LeftArm2.zRot = 0.0F;
+      if (this.heldItemRight != 0 && !rainBoom && !this.isUnicorn) {
+         this.rightArm.xRot = this.rightArm.xRot * 0.5F - 0.3141593F;
+         this.rightArm2.xRot = this.rightArm2.xRot * 0.5F - 0.3141593F;
+      }
+
+      float f13 = Mth.sin(this.Body.yRot) * 5.0F;
+      float f14 = Mth.cos(this.Body.yRot) * 5.0F;
+      float f15 = 4.0F;
+      if (this.isSneak && !this.isFlying) {
+         f15 = 0.0F;
+      }
+
+      if (this.isSleeping) {
+         f15 = 2.6F;
+      }
+
+      if (rainBoom) {
+         this.rightArm.z = f13 + 2.0F;
+         this.rightArm2.z = f13 + 2.0F;
+         this.LeftArm.z = 0.0F - f13 + 2.0F;
+         this.LeftArm2.z = 0.0F - f13 + 2.0F;
+      } else {
+         this.rightArm.z = f13 + 1.0F;
+         this.rightArm2.z = f13 + 1.0F;
+         this.LeftArm.z = 0.0F - f13 + 1.0F;
+         this.LeftArm2.z = 0.0F - f13 + 1.0F;
+      }
+
+      this.rightArm.x = 0.0F - f14 - 1.0F + f15;
+      this.rightArm2.x = 0.0F - f14 - 1.0F + f15;
+      this.LeftArm.x = f14 + 1.0F - f15;
+      this.LeftArm2.x = f14 + 1.0F - f15;
+      this.RightLeg.x = 0.0F - f14 - 1.0F + f15;
+      this.RightLeg2.x = 0.0F - f14 - 1.0F + f15;
+      this.LeftLeg.x = f14 + 1.0F - f15;
+      this.LeftLeg2.x = f14 + 1.0F - f15;
+      rightArm.yRot += this.Body.yRot;
+      rightArm2.yRot += this.Body.yRot;
+      LeftArm.yRot += this.Body.yRot;
+      LeftArm2.yRot += this.Body.yRot;
+      LeftArm.xRot += this.Body.yRot;
+      LeftArm2.xRot += this.Body.yRot;
+      this.rightArm.y = 8.0F;
+      this.LeftArm.y = 8.0F;
+      this.rightArm2.y = 8.0F;
+      this.LeftArm2.y = 8.0F;
+      float f20;
+      float f25;
+      float f28;
+      float f31;
+      float f33;
+      if (this.isSneak && !this.isFlying) {
+         f20 = 0.4F;
+         f25 = 7.0F;
+         f28 = -4.0F;
+         this.Body.xRot = f20;
+         this.Body.y = f25;
+         this.Body.z = f28;
+         this.BodyBack.xRot = f20;
+         this.BodyBack.y = f25;
+         this.BodyBack.z = f28;
+         RightLeg.xRot -= 0.0F;
+         LeftLeg.xRot -= 0.0F;
+         rightArm.xRot -= 0.4F;
+         LeftArm.xRot -= 0.4F;
+         this.RightLeg.z = 10.0F;
+         this.LeftLeg.z = 10.0F;
+         this.RightLeg.y = 7.0F;
+         this.LeftLeg.y = 7.0F;
+         RightLeg2.xRot -= 0.0F;
+         LeftLeg2.xRot -= 0.0F;
+         rightArm2.xRot -= 0.4F;
+         LeftArm2.xRot -= 0.4F;
+         this.RightLeg2.z = 10.0F;
+         this.LeftLeg2.z = 10.0F;
+         this.RightLeg2.y = 7.0F;
+         this.LeftLeg2.y = 7.0F;
+         float f35;
+         if (this.isSleeping) {
+            f31 = 2.0F;
+            f33 = -1.0F;
+            f35 = 1.0F;
+         } else {
+            f31 = 6.0F;
+            f33 = -2.0F;
+            f35 = 0.0F;
+         }
+         this.head.y = f31;
+         this.head.z = f33;
+         this.head.x = f35;
+      } else {
+         f20 = 0.0F;
+         f25 = 0.0F;
+         f28 = 0.0F;
+         this.Body.xRot = f20;
+         this.Body.y = f25;
+         this.Body.z = f28;
+         this.BodyBack.xRot = f20;
+         this.BodyBack.y = f25;
+         this.BodyBack.z = f28;
+         this.RightLeg.z = 10.0F;
+         this.LeftLeg.z = 10.0F;
+         this.RightLeg.y = 8.0F;
+         this.LeftLeg.y = 8.0F;
+         this.RightLeg2.z = 10.0F;
+         this.LeftLeg2.z = 10.0F;
+         this.RightLeg2.y = 8.0F;
+         this.LeftLeg2.y = 8.0F;
+         f31 = 0.0F;
+         f33 = 0.0F;
+         this.head.y = f31;
+         this.head.z = f33;
+      }
+
+      if (this.isSleeping) {
+         this.rightArm.z += 6.0F;
+         this.LeftArm.z += 6.0F;
+         this.RightLeg.z -= 8.0F;
+         this.LeftLeg.z -= 8.0F;
+         this.rightArm.y += 2.0F;
+         this.LeftArm.y += 2.0F;
+         this.RightLeg.y += 2.0F;
+         this.LeftLeg.y += 2.0F;
+         this.rightArm2.z += 6.0F;
+         this.LeftArm2.z += 6.0F;
+         this.RightLeg2.z -= 8.0F;
+         this.LeftLeg2.z -= 8.0F;
+         this.rightArm2.y += 2.0F;
+         this.LeftArm2.y += 2.0F;
+         this.RightLeg2.y += 2.0F;
+         this.LeftLeg2.y += 2.0F;
+      }
+
+      if (this.aimedBow && !this.isUnicorn) {
+         f20 = 0.0F;
+         f25 = 0.0F;
+         this.rightArm.zRot = 0.0F;
+         this.rightArm.yRot = -(0.1F - f20 * 0.6F) + this.head.yRot;
+         this.rightArm.xRot = 4.712F + this.head.xRot;
+         rightArm.xRot -= f20 * 1.2F - f25 * 0.4F;
+         rightArm.zRot += Mth.cos(age * 0.09F) * 0.05F + 0.05F;
+         rightArm.xRot += Mth.sin(age * 0.067F) * 0.05F;
+         this.rightArm2.zRot = 0.0F;
+         this.rightArm2.yRot = -(0.1F - f20 * 0.6F) + this.head.yRot;
+         this.rightArm2.xRot = 4.712F + this.head.xRot;
+         rightArm2.xRot -= f20 * 1.2F - f25 * 0.4F;
+         rightArm2.zRot += Mth.cos(age * 0.09F) * 0.05F + 0.05F;
+         rightArm2.xRot += Mth.sin(age * 0.067F) * 0.05F;
+         ++this.rightArm.z;
+         ++this.rightArm2.z;
+      }
+
+   }
+
+   public void renderToBuffer(@NotNull PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      this.head.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.Body.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.BodyBack.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.LeftArm.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.rightArm.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.LeftLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.RightLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.LeftArm2.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.rightArm2.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.LeftLeg2.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.RightLeg2.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+   }
+
 }

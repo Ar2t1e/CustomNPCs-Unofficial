@@ -2,104 +2,88 @@ package noppes.npcs.roles;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.common.ForgeChunkManager;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import noppes.npcs.api.constants.JobType;
-import noppes.npcs.api.entity.data.role.IJobChunkLoader;
 import noppes.npcs.controllers.ChunkController;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class JobChunkLoader extends JobInterface implements IJobChunkLoader {
+public class JobChunkLoader extends JobInterface {
 
-	private List<ChunkPos> chunks = new ArrayList<>();
-	private long playerLastSeen = 0L;
-	private int ticks = 20;
+   protected List<ChunkPos> chunks = new ArrayList<>();
+   protected int ticks = 20;
+   protected long playerLastSeen = -1L;
 
-	public JobChunkLoader(EntityNPCInterface npc) {
-		super(npc);
-		this.type = JobType.CHUNK_LOADER;
-	}
+   public JobChunkLoader(EntityNPCInterface npc) {
+      super(npc);
+      type = JobType.CHUNK_LOADER;
+   }
 
-	@Override
-	public boolean isWorking() {
-		return !chunks.isEmpty() || ChunkController.instance.hasToNpc(npc);
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      super.load(compound);
+      type = JobType.CHUNK_LOADER;
+      playerLastSeen = compound.getLong("ChunkPlayerLastSeen");
+   }
 
-	@Override
-	public boolean aiContinueExecute() {
-		return false;
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      super.save(compound);
+      compound.putLong("ChunkPlayerLastSeen", playerLastSeen);
+      return compound;
+   }
 
-	@Override
-	public boolean aiShouldExecute() {
-		--ticks;
-		if (ticks > 0) {
-			return false;
-		}
-		ticks = 20;
-		List<EntityPlayer> players = new ArrayList<>();
-		try {
-			players = this.npc.world.getEntitiesWithinAABB(EntityPlayer.class, npc.getEntityBoundingBox().grow(48.0, 48.0, 48.0));
-		}
-		catch (Exception ignored) { }
-		if (!players.isEmpty()) {
-			playerLastSeen = System.currentTimeMillis();
-		}
-		if (System.currentTimeMillis() > playerLastSeen + 600000L) {
-			ChunkController.instance.deleteNPC(npc);
-			chunks.clear();
-			return false;
-		}
-		ForgeChunkManager.Ticket ticket = ChunkController.instance.getTicket(npc);
-		if (ticket == null) {
-			return false;
-		}
-		List<ChunkPos> list = new ArrayList<>();
-		// 3x3
-		int x = MathHelper.floor(npc.posX);
-		int z = MathHelper.floor(npc.posZ);
-		for (int u = -1; u < 2; u++) {
-			for (int v = -1; v < 2; v++) {
-				list.add(new ChunkPos(x + u, z + v));
-			}
-		}
-		for (ChunkPos chunk : list) {
-			if (!chunks.contains(chunk)) {
-				ForgeChunkManager.forceChunk(ticket, chunk);
-			} else {
-				chunks.remove(chunk);
-			}
-		}
-		for (ChunkPos chunk : chunks) {
-			ForgeChunkManager.unforceChunk(ticket, chunk);
-		}
-		chunks = list;
-		return false;
-	}
+   @Override
+   public boolean aiContinueExecute() { return false; }
 
-    @Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = JobType.CHUNK_LOADER;
-		playerLastSeen = compound.getLong("ChunkPlayerLastSeen");
-	}
+   @Override
+   public boolean aiShouldExecute() {
+      --ticks;
+      if (ticks <= 0 && npc != null) {
+         ticks = 20;
+         List<Player> players = npc.level().getEntitiesOfClass(Player.class, npc.getBoundingBox().inflate(48.0D, 48.0D, 48.0D));
+         if (!players.isEmpty()) { playerLastSeen = System.currentTimeMillis(); }
 
-	@Override
-	public void reset() {
-		ChunkController.instance.deleteNPC(npc);
-		chunks.clear();
-		playerLastSeen = 0L;
-	}
+         if (playerLastSeen > -1L) {
+            if (System.currentTimeMillis() > playerLastSeen + 600000L) {
+               ChunkController.instance.unload((ServerLevel) npc.level(), npc.getUUID(), npc.chunkPosition().x, npc.chunkPosition().z);
+               chunks.clear();
+               playerLastSeen = -1L;
+               return false;
+            }
+            List<ChunkPos> list = new ArrayList<>();
+            int x = Mth.floor(npc.getX() / 16.0D);
+            int z = Mth.floor(npc.getZ() / 16.0D);
+            // New from Unofficial (BetaZavr) 3x3
+            for (int u = -1; u < 2; u++) {
+               for (int v = -1; v < 2; v++) {
+                  list.add(new ChunkPos(x + u, z + v));
+               }
+            }
+            for (ChunkPos chunk : list) {
+               if (!chunks.contains(chunk)) { ChunkController.instance.load((ServerLevel)npc.level(), npc.getUUID(), chunk.x, chunk.z); }
+            }
+            for (ChunkPos chunk : chunks) { ChunkController.instance.unload((ServerLevel)npc.level(), npc.getUUID(), chunk.x, chunk.z); }
+            chunks = list;
+         }
+      }
+      return false;
+   }
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setLong("ChunkPlayerLastSeen", this.playerLastSeen);
-		return compound;
-	}
+   @Override
+   public void reset() {
+      if (npc != null && !npc.isClientSide()) {
+         ChunkController.instance.unload((ServerLevel)npc.level(), npc.getUUID(), npc.chunkPosition().x, npc.chunkPosition().z);
+         chunks.clear();
+         playerLastSeen = 0L;
+      }
+   }
+
+   // New from Unofficial (BetaZavr)
+   @Override
+   public boolean isWorking() { return !chunks.isEmpty() || ChunkController.instance.hasToNpc(npc); }
 
 }

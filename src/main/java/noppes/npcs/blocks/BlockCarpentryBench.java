@@ -1,74 +1,73 @@
 package noppes.npcs.blocks;
 
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyInteger;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition.Builder;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileBlockAnvil;
 import noppes.npcs.constants.EnumGuiType;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.util.Objects;
 
 public class BlockCarpentryBench extends BlockInterface {
 
-	public static PropertyInteger ROTATION = PropertyInteger.create("rotation", 0, 3);
+   public static final IntegerProperty ROTATION = IntegerProperty.create("rotation", 0, 3);
 
-	public BlockCarpentryBench() {
-		super(Material.WOOD);
-		this.setName("npccarpentybench");
-		this.setHardness(5.0f);
-		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
-		this.setSoundType(SoundType.WOOD);
-	}
+   public BlockCarpentryBench() {
+      super(Properties.copy(Blocks.CRAFTING_TABLE).sound(SoundType.WOOD).strength(5.0F, 10.0F));
+   }
 
-	protected @Nonnull BlockStateContainer createBlockState() {
-		return new BlockStateContainer(this, BlockCarpentryBench.ROTATION);
-	}
+   /** @deprecated */
+   @Deprecated
+   public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult ray) {
+      if (!level.isClientSide) {
+         NoppesUtilServer.openContainerGui((ServerPlayer)player, EnumGuiType.PlayerAnvil, (buffer) -> buffer.writeBlockPos(pos));
+      }
 
-	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
-		return new TileBlockAnvil();
-	}
+      return InteractionResult.SUCCESS;
+   }
 
-	public int getMetaFromState(@Nonnull IBlockState state) {
-		return state.getValue(BlockCarpentryBench.ROTATION);
-	}
+   /** @deprecated */
+   @Deprecated
+   public @NotNull VoxelShape getOcclusionShape(@NotNull BlockState state, @NotNull BlockGetter getter, @NotNull BlockPos pos) {
+      return Shapes.empty();
+   }
 
-	public @Nonnull IBlockState getStateFromMeta(int meta) {
-		return this.getDefaultState().withProperty(BlockCarpentryBench.ROTATION, (meta % 4));
-	}
+   /** @deprecated */
+   @Deprecated
+   public boolean isPathfindable(@NotNull BlockState state, @NotNull BlockGetter getter, @NotNull BlockPos pos, @NotNull PathComputationType pathType) {
+      return false;
+   }
 
-	public boolean isFullCube(@Nonnull IBlockState state) {
-		return false;
-	}
+   protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+      builder.add(ROTATION);
+   }
 
-	public boolean isOpaqueCube(@Nonnull IBlockState state) {
-		return false;
-	}
+   public BlockState getStateForPlacement(BlockPlaceContext context) {
+      int var6 = Mth.floor((double)(Objects.requireNonNull(context.getPlayer()).getYRot() / 90.0F) + 0.5D) & 3;
+      return this.defaultBlockState().setValue(ROTATION, var6);
+   }
 
-	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (!par1World.isRemote) {
-			player.openGui(CustomNpcs.instance, EnumGuiType.PlayerAnvil.ordinal(), par1World, pos.getX(), pos.getY(),
-					pos.getZ());
-		}
-		return true;
-	}
-
-	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
-		int var6 = MathHelper.floor(entity.rotationYaw / 90.0f + 0.5) & 0x3;
-		world.setBlockState(pos, state.withProperty(BlockCarpentryBench.ROTATION, var6), 2);
-	}
+   public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
+      return new TileBlockAnvil(pos, state);
+   }
 
 }

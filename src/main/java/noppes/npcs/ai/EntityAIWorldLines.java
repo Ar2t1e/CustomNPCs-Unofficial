@@ -1,30 +1,28 @@
 package noppes.npcs.ai;
 
-import net.minecraft.entity.ai.EntityAIBase;
-import noppes.npcs.constants.AiMutex;
+import net.minecraft.world.entity.ai.goal.Goal;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class EntityAIWorldLines extends EntityAIBase {
+public class EntityAIWorldLines extends Goal {
 
-	private int cooldown;
-	private final EntityNPCInterface npc;
+   private final EntityNPCInterface npc;
+   private int cooldown = 100;
 
-	public EntityAIWorldLines(EntityNPCInterface npc) {
-		this.cooldown = 100;
-		this.npc = npc;
-		this.setMutexBits(AiMutex.PASSIVE);
-	}
+   public EntityAIWorldLines(EntityNPCInterface npc) {
+      this.npc = npc;
+   }
 
-	public boolean shouldExecute() {
-		if (this.cooldown > 0) {
-			--this.cooldown;
-		}
-		return !this.npc.isAttacking() && !this.npc.isKilled() && this.npc.advanced.hasWorldLines()
-				&& this.npc.getRNG().nextInt(1800) == 1;
-	}
+   public boolean canUse() {
+      if (this.cooldown > 0) {
+         --this.cooldown;
+      }
 
-	public void startExecuting() {
-		this.cooldown = 100;
-		this.npc.saySurrounding(this.npc.advanced.getWorldLine());
-	}
+      return !this.npc.isAttacking() && !this.npc.isKilled() && this.npc.advanced.hasLevelLines() && this.npc.getRandom().nextInt(1800) == 1;
+   }
+
+   public void start() {
+      this.cooldown = 100;
+      this.npc.saySurrounding(this.npc.advanced.getLevelLine());
+   }
+
 }

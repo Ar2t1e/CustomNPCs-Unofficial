@@ -1,35 +1,36 @@
 package noppes.npcs.api.handler;
 
-import noppes.npcs.api.ParamName;
 import noppes.npcs.api.handler.data.IDataElement;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
+import java.util.List;
+
 public interface IDataObject {
 
-	String get();
+    IDataElement getConstructor(@ParamName("index") Object index);
 
-	IDataElement[] getClasses();
+    IDataElement getClazz(@ParamName("index") Object index);
 
-	String getClassesInfo();
+    IDataElement getField(@ParamName("index") Object index);
 
-	IDataElement getClazz(@ParamName("name") String name);
+    IDataElement getMethod(@ParamName("index") Object index);
 
-	IDataElement[] getConstructors();
+    List<IDataElement> getConstructors();
 
-	String getConstructorsInfo();
+    List<IDataElement> getClasses();
 
-	IDataElement getField(@ParamName("name") String name);
+    List<IDataElement> getFields();
 
-	IDataElement[] getFields();
+    List<IDataElement> getMethods();
 
-	String getFieldsInfo();
+    String getConstructorsInfo();
 
-	String getInfo();
+    String getClassesInfo();
 
-	IDataElement getMethod(@ParamName("name") String name);
+    String getFieldsInfo();
 
-	IDataElement[] getMethods();
+    String getMethodsInfo();
 
-	String getMethodsInfo();
+    String getInfo();
 
 }

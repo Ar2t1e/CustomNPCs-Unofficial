@@ -1,0 +1,24 @@
+{
+	"name": "part.hair",
+	"render_type": "simple",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{
+				"texture_position": [56, 20],
+				"part_size": [8, 12],
+				"scale": [0.748, 0.75, 1.0]
+			}
+		]
+	},
+	"animation_type": "hair",
+	"texture": "moreplayermodels:textures/hair/3.png",
+	"body_part": "head",
+	"menu": "part.hair",
+	"preview_rotation": -135,
+	"translate": [0.0, 0.0, 0.0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [-3.99, 12, 3],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

@@ -1,7 +1,9 @@
 package noppes.npcs.api.entity.data.role;
 
-public interface IJobFarmer {
+import noppes.npcs.api.entity.data.INPCJob;
 
-	boolean isPlucking();
+public interface IJobFarmer extends INPCJob {
+
+   boolean isPlucking();
 
 }

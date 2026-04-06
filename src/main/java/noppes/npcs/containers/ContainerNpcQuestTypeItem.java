@@ -1,39 +1,50 @@
 package noppes.npcs.containers;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import noppes.npcs.CustomContainer;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.controllers.data.Quest;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class ContainerNpcQuestTypeItem extends AbstractContainerMenu {
 
-public class ContainerNpcQuestTypeItem extends Container {
+   public final int slotID;
+   public final QuestObjective task;
+   public final Slot slot;
 
-	public int slotID;
+   public ContainerNpcQuestTypeItem(int containerId, Inventory playerInventory, int slotIdIn) {
+      super(CustomContainer.container_questtypeitem, containerId);
+      Quest quest = NoppesUtilServer.getEditingQuest(playerInventory.player);
+      slotID = slotIdIn;
+      task = quest.questInterface.tasks[slotIdIn];
 
-	public ContainerNpcQuestTypeItem(EntityPlayer player, int slotID) { // Change
-		Quest quest = NoppesUtilServer.getEditingQuest(player);
-		this.slotID = slotID;
-		this.addSlotToContainer(new Slot(quest.questInterface.items, 0, 8, 92)); // New
-		this.putStackInSlot(0, quest.questInterface.items.getStackInSlot(slotID));
-		for (int i1 = 0; i1 < 3; ++i1) {
-			for (int l1 = 0; l1 < 9; ++l1) {
-				this.addSlotToContainer(new Slot(player.inventory, l1 + i1 * 9 + 9, 8 + l1 * 18, 113 + i1 * 18));
-			}
-		}
-		for (int j1 = 0; j1 < 9; ++j1) {
-			this.addSlotToContainer(new Slot(player.inventory, j1, 8 + j1 * 18, 171));
-		}
-	}
+      addSlot(slot = new Slot(quest.questInterface.items, 0, 8, 92)); // New
+      setItem(0, 0, quest.questInterface.items.getItem(slotID));
 
-	public boolean canInteractWith(@Nonnull EntityPlayer entityplayer) {
-		return true;
-	}
+      for(int y = 0; y < 3; ++y) {
+         for(int x = 0; x < 9; ++x) { addSlot(new Slot(playerInventory, x + y * 9 + 9, 8 + x * 18, 113 + y * 18)); }
+      }
+      for(int x = 0; x < 9; ++x) {
+         addSlot(new Slot(playerInventory, x, 8 + x * 18, 171));
+      }
+   }
 
-	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer player, int i) {
-		return ItemStack.EMPTY;
-	}
+   @Override
+   public void slotsChanged(@NotNull Container container) {
+      super.slotsChanged(container);
+      task.setItem(slot.getItem());
+   }
+
+   @Override
+   public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int i) { return ItemStack.EMPTY; }
+
+   @Override
+   public boolean stillValid(@NotNull Player playerIn) { return true; }
 
 }

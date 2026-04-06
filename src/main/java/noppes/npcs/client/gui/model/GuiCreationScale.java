@@ -3,138 +3,159 @@ package noppes.npcs.client.gui.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.inventory.Slot;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.ModelPartConfig;
-import noppes.npcs.client.gui.util.*;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.parts.ModelPartConfig;
 import noppes.npcs.constants.EnumParts;
-import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.entity.EntityNPCInterface;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 
 public class GuiCreationScale extends GuiCreationScreenInterface implements ISliderListener, ICustomScrollListener {
 
-	protected static EnumParts selected = EnumParts.HEAD;
-	protected final List<EnumParts> data = new ArrayList<>();
-	protected GuiCustomScroll scroll;
+   protected final List<EnumParts> data = new ArrayList<>();
+   protected GuiCustomScrollNop scroll;
+   protected static EnumParts selected = EnumParts.HEAD;
 
-	public GuiCreationScale(EntityNPCInterface npc, ContainerLayer container) {
-		super(npc, container);
-		active = 3;
-		xOffset = 140;
-	}
+   public GuiCreationScale(EntityNPCInterface npc) {
+      super(npc);
+      active = 3;
+      xOffset = 140;
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton == 0 && button.getID() == 13) {
-            playerdata.getPartConfig(GuiCreationScale.selected).notShared = button.getValue() == 0;
-			initGui();
-		}
-		super.buttonEvent(button, mouseButton);
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0); }
+      List<Component> list = new ArrayList<>();
+      EnumParts[] parts = new EnumParts[]{EnumParts.HEAD, EnumParts.BODY, EnumParts.ARM_LEFT, EnumParts.ARM_RIGHT, EnumParts.LEG_LEFT, EnumParts.LEG_RIGHT};
+      data.clear();
+      for (EnumParts part : parts) {
+         ModelPartConfig config;
+         if (part == EnumParts.ARM_RIGHT) {
+            config = playerdata.getPartConfig(EnumParts.ARM_LEFT);
+            if (!config.notShared) { continue; }
+         }
+         if (part == EnumParts.LEG_RIGHT) {
+            config = playerdata.getPartConfig(EnumParts.LEG_LEFT);
+            if (!config.notShared) { continue; }
+         }
+         data.add(part);
+         list.add(Component.translatable("part." + part.name));
+      }
+      add(scroll.setPos(guiLeft, guiTop + 46)
+              .setUnsortedList(list)
+              .setSelected(Component.translatable("part." + selected.name).toString())
+              .setSize(120, imageHeight - 50)
+              .disabledSearch());
+      ModelPartConfig config = playerdata.getPartConfig(selected);
+      int x0 = guiLeft + 122;
+      int x1 = guiLeft + 172;
+      int y = guiTop + 65;
+      addLabel(10, x0, y + 5, "scale.width")
+              .setColor(CustomNpcs.MainColor.getRGB());
+      addSlider(10, x1, y, config.scaleX - 0.5F)
+              .setSize(100, 20);
+      y += 22;
+      addLabel(11, x0, y + 5, "scale.height")
+              .setColor(CustomNpcs.MainColor.getRGB());
+      addSlider(11, x1, y, config.scaleY - 0.5F)
+              .setSize(100, 20);
+      y += 22;
+      addLabel(12, x0, y + 5, "scale.depth")
+              .setColor(CustomNpcs.MainColor.getRGB());
+      addSlider(12, x1, y, config.scaleZ - 0.5F)
+              .setSize(100, 20);
+      if (selected == EnumParts.ARM_LEFT || selected == EnumParts.LEG_LEFT) {
+         y += 22;
+         addLabel(13, x0, y + 5, "scale.shared")
+                 .setColor(CustomNpcs.MainColor.getRGB());
+         addYesNo(13, x1, y, config.notShared)
+                 .setSize(50, 20);
+      }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0); }
-		List<String> list = new ArrayList<>();
-		EnumParts[] parts = { EnumParts.HEAD, EnumParts.BODY, EnumParts.ARM_LEFT, EnumParts.ARM_RIGHT, EnumParts.LEG_LEFT, EnumParts.LEG_RIGHT };
-		data.clear();
-		for (EnumParts part : parts) {
-			Label_0210: {
-				if (part == EnumParts.ARM_RIGHT) {
-					ModelPartConfig config = playerdata.getPartConfig(EnumParts.ARM_LEFT);
-					if (!config.notShared) { break Label_0210; }
-				}
-				if (part == EnumParts.LEG_RIGHT) {
-					ModelPartConfig config = playerdata.getPartConfig(EnumParts.LEG_LEFT);
-					if (!config.notShared) { break Label_0210; }
-				}
-				data.add(part);
-				list.add(new TextComponentTranslation("part." + part.name).getFormattedText());
-			}
-		}
-		scroll.guiLeft = guiLeft;
-		scroll.guiTop = guiTop + 46;
-		scroll.setUnsortedList(list)
-				.setSelected(new TextComponentTranslation("part." + GuiCreationScale.selected.name).getFormattedText())
-				.setSize(100, ySize - 74);
-		addScroll(scroll);
-		ModelPartConfig config2 = playerdata.getPartConfig(GuiCreationScale.selected);
-		int y = guiTop + 65;
-		addLabel(new GuiNpcLabel(10, "scale.width", guiLeft + 102, y + 5, 16777215));
-		addSlider(new GuiNpcSlider(this, 10, guiLeft + 150, y, 100, 20, config2.scale[0] - 0.5f)
-				.setHoverText(new TextComponentTranslation("hover.scale.x").getFormattedText()));
-		addLabel(new GuiNpcLabel(11, "scale.height", guiLeft + 102, (y += 22) + 5, 16777215));
-		addSlider(new GuiNpcSlider(this, 11, guiLeft + 150, y, 100, 20, config2.scale[1] - 0.5f)
-				.setHoverText(new TextComponentTranslation("hover.scale.y").getFormattedText()));
-		addLabel(new GuiNpcLabel(12, "scale.depth", guiLeft + 102, (y += 22) + 5, 16777215));
-		addSlider(new GuiNpcSlider(this, 12, guiLeft + 150, y, 100, 20, config2.scale[2] - 0.5f)
-				.setHoverText(new TextComponentTranslation("hover.scale.z").getFormattedText()));
-		if (GuiCreationScale.selected == EnumParts.ARM_LEFT || GuiCreationScale.selected == EnumParts.LEG_LEFT) {
-			addLabel(new GuiNpcLabel(13, "scale.shared", guiLeft + 102, (y += 22) + 5, 16777215));
-			addButton(new GuiNpcButton(13, guiLeft + 150, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (config2.notShared ? 0 : 1))
-					.setHoverText("display.hover.part.pattern"));
-		}
-		for (Slot slot : inventorySlots.inventorySlots) {
-			slot.xPos = -5000;
-			slot.yPos = -5000;
-		}
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop guiButton) {
+      if (guiButton.id == 13) {
+         playerdata.getPartConfig(selected).notShared = guiButton.getValue() == 0;
+         init();
+      }
+   }
 
-	@Override
-	public void mouseDragged(GuiNpcSlider slider) {
-		super.mouseDragged(slider);
-		if (slider.getID() >= 10 && slider.getID() <= 12) {
-			int percent = (int) (50.0f + slider.sliderValue * 100.0f);
-			slider.setString(percent + "%");
-			ModelPartConfig config = playerdata.getPartConfig(GuiCreationScale.selected);
-			config.scale[slider.getID() - 10] = slider.sliderValue + 0.5f;
-			updateTranslate();
-		}
-	}
+   @Override
+   public void mouseDragged(GuiSliderNop slider) {
+      super.mouseDragged(slider);
+      if (slider.id >= 10 && slider.id <= 12) {
+         int percent = (int)(50.0F + slider.sliderValue * 100.0F);
+         slider.setString(percent + "%");
+         ModelPartConfig config = playerdata.getPartConfig(selected);
+         if (slider.id == 10) {
+            config.scaleX = slider.sliderValue + 0.5F;
+         }
 
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.hasSelected()) {
-			GuiCreationScale.selected = data.get(scroll.getSelect());
-			initGui();
-		}
-	}
+         if (slider.id == 11) {
+            config.scaleY = slider.sliderValue + 0.5F;
+         }
 
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
+         if (slider.id == 12) {
+            config.scaleZ = slider.sliderValue + 0.5F;
+         }
+         updateTranslate();
+      }
 
-	private void updateTranslate() {
-		for (EnumParts part : EnumParts.values()) {
-			ModelPartConfig config = playerdata.getPartConfig(part);
-			if (config != null) {
-				if (part == EnumParts.HEAD) { config.setTranslate(0.0f, playerdata.getBodyY(), 0.0f); }
-				else if (part == EnumParts.ARM_LEFT) {
-					ModelPartConfig body = playerdata.getPartConfig(EnumParts.BODY);
-					float x = (1.0f - body.scale[0]) * 0.25f + (1.0f - config.scale[0]) * 0.075f;
-					float y = playerdata.getBodyY() + (1.0f - config.scale[1]) * -0.1f;
-					config.setTranslate(-x, y, 0.0f);
-					if (!config.notShared) {
-						ModelPartConfig arm = playerdata.getPartConfig(EnumParts.ARM_RIGHT);
-						arm.copyValues(config);
-					}
-				} else if (part == EnumParts.ARM_RIGHT) {
-					ModelPartConfig body = playerdata.getPartConfig(EnumParts.BODY);
-					float x = (1.0f - body.scale[0]) * 0.25f + (1.0f - config.scale[0]) * 0.075f;
-					float y = playerdata.getBodyY() + (1.0f - config.scale[1]) * -0.1f;
-					config.setTranslate(x, y, 0.0f);
-				} else if (part == EnumParts.LEG_LEFT) {
-					config.setTranslate(config.scale[0] * 0.125f - 0.113f, playerdata.getLegsY(), 0.0f);
-					if (!config.notShared) {
-						ModelPartConfig leg = playerdata.getPartConfig(EnumParts.LEG_RIGHT);
-						leg.copyValues(config);
-					}
-				} else if (part == EnumParts.LEG_RIGHT) { config.setTranslate((1.0f - config.scale[0]) * 0.125f, playerdata.getLegsY(), 0.0f); }
-				else if (part == EnumParts.BODY) { config.setTranslate(0.0f, playerdata.getBodyY(), 0.0f); }
-			}
-		}
-	}
+   }
+
+   private void updateTranslate() {
+      for (EnumParts part : EnumParts.values()) {
+         ModelPartConfig config = playerdata.getPartConfig(part);
+         if (config != null) {
+            if (part == EnumParts.HEAD) {
+               config.setTranslate(0.0F, playerdata.getBodyY(), 0.0F);
+            } else {
+               ModelPartConfig leg;
+               float x;
+               float y;
+               if (part == EnumParts.ARM_LEFT) {
+                  leg = playerdata.getPartConfig(EnumParts.BODY);
+                  x = (1.0F - leg.scaleX) * 0.25F + (1.0F - config.scaleX) * 0.075F;
+                  y = playerdata.getBodyY() + (1.0F - config.scaleY) * -0.1F;
+                  config.setTranslate(-x, y, 0.0F);
+                  if (!config.notShared) {
+                     ModelPartConfig arm = playerdata.getPartConfig(EnumParts.ARM_RIGHT);
+                     arm.copyValues(config);
+                  }
+               } else if (part == EnumParts.ARM_RIGHT) {
+                  leg = playerdata.getPartConfig(EnumParts.BODY);
+                  x = (1.0F - leg.scaleX) * 0.25F + (1.0F - config.scaleX) * 0.075F;
+                  y = playerdata.getBodyY() + (1.0F - config.scaleY) * -0.1F;
+                  config.setTranslate(x, y, 0.0F);
+               } else if (part == EnumParts.LEG_LEFT) {
+                  config.setTranslate(config.scaleX * 0.125F - 0.113F, playerdata.getLegsY(), 0.0F);
+                  if (!config.notShared) {
+                     leg = playerdata.getPartConfig(EnumParts.LEG_RIGHT);
+                     leg.copyValues(config);
+                  }
+               } else if (part == EnumParts.LEG_RIGHT) {
+                  config.setTranslate((1.0F - config.scaleX) * 0.125F, playerdata.getLegsY(), 0.0F);
+               } else if (part == EnumParts.BODY) {
+                  config.setTranslate(0.0F, playerdata.getBodyY(), 0.0F);
+               }
+            }
+         }
+      }
+   }
+
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      if (scroll.hasSelected()) {
+         selected = data.get(scroll.getSelectedIndex());
+         init();
+      }
+   }
+
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 }

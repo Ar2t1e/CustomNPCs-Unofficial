@@ -1,25 +1,27 @@
 package noppes.npcs.api;
 
-@SuppressWarnings("all")
+import noppes.npcs.api.interfaces.ParamName;
+
 public interface IScoreboardObjective {
 
-	IScoreboardScore createScore(@ParamName("player") String player);
+   String getName();
 
-	String getCriteria();
+   String getDisplayName();
 
-	String getDisplayName();
+   void setDisplayName(@ParamName("name") String name);
 
-	String getName();
+   String getCriteria();
 
-	IScoreboardScore getScore(@ParamName("player") String player);
+   boolean isReadyOnly();
 
-	IScoreboardScore[] getScores();
+   IScoreboardScore[] getScores();
 
-	boolean hasScore(@ParamName("player") String player);
+   IScoreboardScore getScore(@ParamName("player") String player);
 
-	boolean isReadyOnly();
+   boolean hasScore(@ParamName("player") String player);
 
-	void removeScore(@ParamName("player") String player);
+   IScoreboardScore createScore(@ParamName("player") String player);
 
-	void setDisplayName(@ParamName("name") String name);
+   void removeScore(@ParamName("player") String player);
+
 }

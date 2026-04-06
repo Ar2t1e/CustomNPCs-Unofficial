@@ -1,0 +1,63 @@
+{
+	"name": "Propeller",
+	"render_type": "bedrock",
+	"texture": "moreplayermodels:textures/parts/hats/propeller_hat.png",
+	"body_part": "head",
+	"menu": "part.hats",
+	"preview_rotation": -45,
+	"translate": [0, 30, 0],
+	"rotate_offset": [0.0, 0.0, 0.0],
+	"scale": [1.2, 1.2, 1.2],
+	"rotate": [0.0, 0.0, 0.0],
+	"author": "Karltoffelchen",
+	"render_data" : {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.steve",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 3,
+					"visible_bounds_height": 3.5,
+					"visible_bounds_offset": [0, 1.25, 0]
+				},
+				"bones": [
+					{
+						"name": "hat",
+						"pivot": [0, 1, 0],
+						"cubes": [
+							{"origin": [-4, 34, -4], "size": [8, 1, 8], "uv": [0, 13]},
+							{"origin": [4, 31, -4], "size": [1, 3, 8], "uv": [18, 22]},
+							{"origin": [-4, 31, -5], "size": [8, 3, 10], "uv": [0, 0]},
+							{"origin": [-5, 31, -4], "size": [1, 3, 8], "uv": [0, 22]},
+							{"origin": [-4, 31, -7], "size": [8, 1, 2], "uv": [24, 13]}
+						]
+					},
+					{
+						"name": "propellor",
+						"parent": "hat",
+						"pivot": [0, 36, 0],
+						"cubes": [
+							{"origin": [-0.5, 34.4, -0.5], "size": [1, 2, 1], "uv": [0, 1]},
+							{"origin": [-2, 36, -0.5], "size": [4, 0, 1], "uv": [0, 0]}
+						]
+					}
+				]
+			}
+		]
+	},
+	"animation_data" : {
+		"static" : {
+			"animation_length" : 8,
+			"animation_speed" : 4.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"propellor" : {
+					"rotation": [[0, 0, 0], [0, 45, 0], [0, 90, 0],[0, 135, 0],[0, 180, 0],[0, 225, 0],[0, 270, 0],[0, 315, 0]]
+				}
+			}
+		}
+	}
+}

@@ -1,177 +1,149 @@
 package noppes.npcs.entity.data;
 
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.RangedAttribute;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.entity.data.IAttributeSet;
 import noppes.npcs.util.ValueUtil;
 
 public class AttributeSet implements IAttributeSet {
 
-	public IAttribute attr;
-	public double chance;
-	public DropSet parent;
-	public int slot; // -1:ALL, 0:MAINHAND, 1:OFFHAND, 2:FEET, 3:LEGS, 4:CHEST, 5:HEAD
-	public double[] values;
+    public Attribute attr;
+    public double chance;
+    public DropSet parent;
+    public int slot; // -1:ALL, 0:MAINHAND, 1:OFFHAND, 2:FEET, 3:LEGS, 4:CHEST, 5:HEAD
+    public double[] values;
 
-	public AttributeSet(DropSet p) {
-		this.parent = p;
-		this.values = new double[] { 0.0d, 0.05d };
-		this.attr = SharedMonsterAttributes.MAX_HEALTH;
-		this.chance = 100.0d;
-		this.slot = 0;
-	}
+    public AttributeSet(DropSet p) {
+        parent = p;
+        values = new double[] { 0.0d, 0.05d };
+        attr = new RangedAttribute(Attributes.MAX_HEALTH.getDescriptionId(), Attributes.MAX_HEALTH.getDefaultValue(),-1024.0d, 1024.0d);
+        chance = 100.0d;
+        slot = 0;
+    }
 
-	@Override
-	public String getAttribute() { return attr.getName(); }
+    @Override
+    public String getAttribute() { return attr.getDescriptionId(); }
 
-	@Override
-	public double getChance() {
-		return Math.round(this.chance * 10000.0d) / 10000.0d;
-	}
+    @Override
+    public double getChance() {
+        return Math.round(chance * 10000.0d) / 10000.0d;
+    }
 
-	public String getKey() {
-		String keyName = "";
-		char c = ((char) 167);
-		double ch = Math.round(this.chance * 10.0d) / 10.d;
-		String chance = String.valueOf(ch).replace(".", ",");
-		if (ch == (int) ch) {
-			chance = String.valueOf((int) ch);
-		}
-		chance += "%";
-		keyName += c + "e" + chance;
-		double v0 = Math.round(this.values[0] * 1000.0d) / 1000.d;
-		String tv0 = String.valueOf(v0).replace(".", ",");
-		if (v0 == (int) v0) {
-			tv0 = String.valueOf((int) v0);
-		}
-		double v1 = Math.round(this.values[1] * 1000.0d) / 1000.d;
-		String tv1 = String.valueOf(v1).replace(".", ",");
-		if (v1 == (int) v1) {
-			tv1 = String.valueOf((int) v1);
-		}
-		if (this.values[0] == this.values[1]) {
-			keyName += c + "7[" + c + "6" + tv0 + c + "7] ";
-		} else {
-			keyName += c + "7[" + c + "6" + tv0 + c + "7-" + c + "6" + tv1 + c + "7] ";
-		}
-		String name = new TextComponentTranslation("attribute.name." + this.attr.getName())
-				.getFormattedText();
-		if (name.equals("attribute.name." + this.attr.getName()) || name.equals("attribute.name.")) {
-			name = this.attr.getName();
-		}
-		keyName += c + "r" + name;
-		keyName += c + "8 #" + this.toString().substring(this.toString().indexOf("@") + 1);
-		return keyName;
-	}
-
-	@Override
-	public double getMaxValue() {
-		return this.values[1];
-	}
-
-	@Override
-	public double getMinValue() {
-		return this.values[0];
-	}
-
-	public NBTTagCompound getNBT() {
-		NBTTagCompound nbtAS = new NBTTagCompound();
-		NBTTagList list = new NBTTagList();
-		list.appendTag(new NBTTagDouble(this.values[0]));
-		list.appendTag(new NBTTagDouble(this.values[1]));
-		nbtAS.setTag("Values", list);
-		nbtAS.setString("Name", this.attr.getName());
-		nbtAS.setDouble("Chance", this.chance);
-		nbtAS.setInteger("Slot", this.slot);
-		return nbtAS;
-	}
-
-	@Override
-	public int getSlot() {
-		return this.slot;
-	}
-
-	public void load(NBTTagCompound nbtAS) {
-		double[] newVs = new double[2];
-		for (int i = 0; i < 2; i++) {
-			newVs[i] = nbtAS.getTagList("Values", 6).getDoubleAt(i);
-		}
-		this.values = newVs;
-		setAttribute(nbtAS.getString("Name"));
-		this.chance = nbtAS.getDouble("Chance");
-		this.slot = nbtAS.getInteger("Slot");
-	}
-
-	@Override
-	public void remove() {
-		this.parent.removeAttribute(this);
-	}
-
-	public void setAttribute(IAttribute attribute) {
-		this.attr = attribute;
-	}
-
-	@Override
-	public void setAttribute(String name) {
-        switch (name) {
-            case "generic.maxHealth":
-                this.attr = SharedMonsterAttributes.MAX_HEALTH;
-                break;
-            case "generic.followRange":
-                this.attr = SharedMonsterAttributes.FOLLOW_RANGE;
-                break;
-            case "generic.knockbackResistance":
-                this.attr = SharedMonsterAttributes.KNOCKBACK_RESISTANCE;
-                break;
-            case "generic.movementSpeed":
-                this.attr = SharedMonsterAttributes.MOVEMENT_SPEED;
-                break;
-            case "generic.attackDamage":
-                this.attr = SharedMonsterAttributes.ATTACK_DAMAGE;
-                break;
-            case "generic.attackSpeed":
-                this.attr = SharedMonsterAttributes.ATTACK_SPEED;
-                break;
-            case "generic.armor":
-                this.attr = SharedMonsterAttributes.ARMOR;
-                break;
-            case "generic.luck":
-                this.attr = SharedMonsterAttributes.LUCK;
-                break;
-            default:  // create
-                this.attr = (new RangedAttribute(null, name, 0.0D, -1024.0D, 1024.0D)).setShouldWatch(true);
-                break;
+    public Component getKey() {
+        MutableComponent keyName = Component.empty();
+        double ch = Math.round(chance * 10.0d) / 10.d;
+        String chance = String.valueOf(ch).replace(".", ",");
+        if (ch == (int) ch) { chance = String.valueOf((int) ch); }
+        chance += "%";
+        keyName.append(Component.literal(chance).withStyle(ChatFormatting.YELLOW));
+        double v0 = Math.round(values[0] * 1000.0d) / 1000.d;
+        String tv0 = String.valueOf(v0).replace(".", ",");
+        if (v0 == (int) v0) { tv0 = String.valueOf((int) v0); }
+        double v1 = Math.round(values[1] * 1000.0d) / 1000.d;
+        String tv1 = String.valueOf(v1).replace(".", ",");
+        if (v1 == (int) v1) { tv1 = String.valueOf((int) v1); }
+        if (values[0] == values[1]) {
+            keyName.append(Component.literal("[").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(tv0).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal("]").withStyle(ChatFormatting.GRAY));
+        } else {
+            keyName.append(Component.literal("[").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(tv0).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal("-").withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(tv1).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal("]").withStyle(ChatFormatting.GRAY)));
         }
-	}
+        MutableComponent name = Component.translatable("attribute.name." + attr.getDescriptionId());
+        if (name.getString().equals("attribute.name." + attr.getDescriptionId()) ||
+                name.getString().equals("attribute.name.")) { name = Component.literal(attr.getDescriptionId()); }
+        return keyName.append(name.withStyle(ChatFormatting.RESET));
+                //.append(Component.literal(" #" + toString().substring(toString().indexOf("@") + 1)).withStyle(ChatFormatting.DARK_GRAY));
+    }
 
-	@Override
-	public void setChance(double chance) {
-		double newChance = ValueUtil.correctDouble(chance, 0.0001d, 100.0d);
-		this.chance = Math.round(newChance * 10000.0d) / 10000.0d;
-	}
+    @Override
+    public double getMaxValue() { return values[1]; }
 
-	@Override
-	public void setSlot(int slot) {
-		if (slot < -1 || slot > 5) {
-			throw new CustomNPCsException("Slot has to be between -1 and 5, given was: " + slot);
-		}
-		this.slot = slot;
-	}
+    @Override
+    public double getMinValue() { return values[0]; }
 
-	@Override
-	public void setValues(double min, double max) {
-		double newMin = min;
-		double newMax = max;
-		if (min > max) {
-			newMin = max;
-			newMax = min;
-		}
-		this.values = new double[] { newMin, newMax };
-	}
+    public CompoundTag getNBT() {
+        CompoundTag nbtAS = new CompoundTag();
+        ListTag list = new ListTag();
+        list.add(DoubleTag.valueOf(values[0]));
+        list.add(DoubleTag.valueOf(values[1]));
+        nbtAS.put("Values", list);
+        nbtAS.putString("Name", attr.getDescriptionId());
+        nbtAS.putDouble("Chance", chance);
+        nbtAS.putInt("Slot", slot);
+        return nbtAS;
+    }
+
+    @Override
+    public int getSlot() {
+        return slot;
+    }
+
+    public void load(CompoundTag nbtAS) {
+        double[] newVs = new double[2];
+        for (int i = 0; i < 2; i++) { newVs[i] = nbtAS.getList("Values", 6).getDouble(i); }
+        values = newVs;
+        setAttribute(nbtAS.getString("Name"));
+        chance = nbtAS.getDouble("Chance");
+        slot = nbtAS.getInt("Slot");
+    }
+
+    @Override
+    public void remove() { parent.removeAttribute(this); }
+
+    @Override
+    public void setAttribute(Attribute attribute) { attr = attribute; }
+
+    @Override
+    public void setAttribute(String name) {
+        attr = switch (name) {
+            case "generic.maxHealth" -> Attributes.MAX_HEALTH;
+            case "generic.followRange" -> Attributes.FOLLOW_RANGE;
+            case "generic.knockbackResistance" -> Attributes.KNOCKBACK_RESISTANCE;
+            case "generic.movementSpeed" -> Attributes.MOVEMENT_SPEED;
+            case "generic.attackDamage" -> Attributes.ATTACK_DAMAGE;
+            case "generic.attackSpeed" -> Attributes.ATTACK_SPEED;
+            case "generic.armor" -> Attributes.ARMOR;
+            case "generic.luck" -> Attributes.LUCK;
+            default -> new RangedAttribute(name, 0.0D, -1024.0D, 1024.0D);
+        };
+    }
+
+    @Override
+    public void setChance(double chanceIn) {
+        double newChance = ValueUtil.correctDouble(chanceIn, 0.0001d, 100.0d);
+        chance = Math.round(newChance * 10000.0d) / 10000.0d;
+    }
+
+    @Override
+    public void setSlot(int slotIn) {
+        if (slotIn < -1 || slotIn > 5) {
+            throw new CustomNPCsException("Slot has to be between -1 and 5, given was: " + slotIn);
+        }
+        slot = slotIn;
+    }
+
+    @Override
+    public void setValues(double min, double max) {
+        double newMin = min;
+        double newMax = max;
+        if (min > max) {
+            newMin = max;
+            newMax = min;
+        }
+        values = new double[] { newMin, newMax };
+    }
+
 }

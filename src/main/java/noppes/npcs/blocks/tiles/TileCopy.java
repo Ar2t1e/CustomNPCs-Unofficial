@@ -1,69 +1,71 @@
 package noppes.npcs.blocks.tiles;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import noppes.npcs.CustomBlocks;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.util.Objects;
 
-public class TileCopy extends TileEntity {
-	public short height;
-	public short length;
-	public String name;
-	public short width;
+public class TileCopy extends BlockEntity {
 
-	public TileCopy() {
-		this.length = 10;
-		this.width = 10;
-		this.height = 10;
-		this.name = "";
-	}
+   public short length = 10;
+   public short width = 10;
+   public short height = 10;
+   public String name = "";
 
-	public @Nonnull AxisAlignedBB getRenderBoundingBox() {
-		return new AxisAlignedBB(this.pos.getX(), this.pos.getY(), this.pos.getZ(), (this.pos.getX() + this.width + 1), (this.pos.getY() + this.height + 1), (this.pos.getZ() + this.length + 1));
-	}
+   public TileCopy(BlockPos pos, BlockState state) {
+      super(CustomBlocks.tile_copy, pos, state);
+   }
 
-	public SPacketUpdateTileEntity getUpdatePacket() {
-		return new SPacketUpdateTileEntity(this.pos, 0, this.getUpdateTag());
-	}
+   public void load(@NotNull CompoundTag compound) {
+      super.load(compound);
+      this.length = compound.getShort("Length");
+      this.width = compound.getShort("Width");
+      this.height = compound.getShort("Height");
+      this.name = compound.getString("Name");
+   }
 
-	@Nonnull
-	public NBTTagCompound getUpdateTag() {
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("x", this.pos.getX());
-		compound.setInteger("y", this.pos.getY());
-		compound.setInteger("z", this.pos.getZ());
-		compound.setShort("Length", this.length);
-		compound.setShort("Width", this.width);
-		compound.setShort("Height", this.height);
-		return compound;
-	}
+   public void saveAdditional(CompoundTag compound) {
+      compound.putShort("Length", this.length);
+      compound.putShort("Width", this.width);
+      compound.putShort("Height", this.height);
+      compound.putString("Name", this.name);
+      super.saveAdditional(compound);
+   }
 
-	public void handleUpdateTag(@Nonnull NBTTagCompound compound) {
-		this.length = compound.getShort("Length");
-		this.width = compound.getShort("Width");
-		this.height = compound.getShort("Height");
-	}
+   public void handleUpdateTag(CompoundTag compound) {
+      this.length = compound.getShort("Length");
+      this.width = compound.getShort("Width");
+      this.height = compound.getShort("Height");
+   }
 
-	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
-		this.handleUpdateTag(pkt.getNbtCompound());
-	}
+   public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+      this.handleUpdateTag(Objects.requireNonNull(pkt.getTag()));
+   }
 
-	public void readFromNBT(@Nonnull NBTTagCompound compound) {
-		super.readFromNBT(compound);
-		this.length = compound.getShort("Length");
-		this.width = compound.getShort("Width");
-		this.height = compound.getShort("Height");
-		this.name = compound.getString("Name");
-	}
+   public ClientboundBlockEntityDataPacket getUpdatePacket() {
+      return ClientboundBlockEntityDataPacket.create(this);
+   }
 
-	public @Nonnull NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-		compound.setShort("Length", this.length);
-		compound.setShort("Width", this.width);
-		compound.setShort("Height", this.height);
-		compound.setString("Name", this.name);
-		return super.writeToNBT(compound);
-	}
+   public @NotNull CompoundTag getUpdateTag() {
+      CompoundTag compound = new CompoundTag();
+      compound.putInt("x", this.worldPosition.getX());
+      compound.putInt("y", this.worldPosition.getY());
+      compound.putInt("z", this.worldPosition.getZ());
+      compound.putShort("Length", this.length);
+      compound.putShort("Width", this.width);
+      compound.putShort("Height", this.height);
+      return compound;
+   }
+
+   public AABB getRenderBoundingBox() {
+      return new AABB(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ(), this.worldPosition.getX() + this.width + 1, this.worldPosition.getY() + this.height + 1, this.worldPosition.getZ() + this.length + 1);
+   }
+
 }

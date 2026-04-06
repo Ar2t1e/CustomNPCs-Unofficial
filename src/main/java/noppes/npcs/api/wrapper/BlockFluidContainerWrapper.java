@@ -1,42 +1,37 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.block.Block;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fluids.BlockFluidBase;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.fluids.IFluidBlock;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.api.block.IBlockFluidContainer;
 
 public class BlockFluidContainerWrapper extends BlockWrapper implements IBlockFluidContainer {
 
-	private final BlockFluidBase block;
+   private final IFluidBlock block;
 
-	public BlockFluidContainerWrapper(World world, Block block, BlockPos pos) {
-		super(world, block, pos);
-		this.block = (BlockFluidBase) block;
-	}
+   public BlockFluidContainerWrapper(Level level, Block block, BlockPos pos) {
+      super(level, block, pos);
+      this.block = (IFluidBlock)block;
+   }
 
-	@Override
-	public String getFluidName() {
-		return this.block.getFluid().getName();
-	}
+   public float getFluidPercentage() {
+      return this.block.getFilledPercentage(this.level.getMCLevel(), this.pos);
+   }
 
-	@Override
-	public float getFluidPercentage() {
-		return this.block.getFilledPercentage(this.world.getMCWorld(), this.pos);
-	}
+   public float getFluidDensity() {
+      return (float)this.block.getFluid().getFluidType().getDensity(this.level.getMCLevel().getFluidState(this.pos), this.level.getMCLevel(), this.pos);
+   }
 
-	@Override
-	public float getFluidValue() {
-		return this.block.getQuantaValue(this.world.getMCWorld(), this.pos);
-	}
+   public float getFluidTemperature() {
+      return (float)this.block.getFluid().getFluidType().getTemperature(this.level.getMCLevel().getFluidState(this.pos), this.level.getMCLevel(), this.pos);
+   }
 
-	@Override
-	public float getFluidDensity() {
-		return BlockFluidBase.getDensity(this.world.getMCWorld(), this.pos);
-	}
+   public String getFluidName() {
+      ResourceLocation registerName = ForgeRegistries.FLUID_TYPES.get().getKey(this.block.getFluid().getFluidType());
+      return registerName != null ? registerName.toString() : "minecraft:air";
+   }
 
-	@Override
-	public float getFluidTemperature() {
-		return BlockFluidBase.getTemperature(this.world.getMCWorld(), this.pos);
-	}
 }

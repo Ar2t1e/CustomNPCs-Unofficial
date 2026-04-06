@@ -1,0 +1,47 @@
+{
+	"name": "backpack",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"texture": "moreplayermodels:textures/parts/accessories/backpack.png",
+	"body_part": "body",
+	"menu": "part.body",
+	"preview_rotation": 140,
+	"translate": [0, 24, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Anfauglir/Valaron/Jakob",
+	"render_data" : {
+        "format_version": "1.12.0",
+	    "minecraft:geometry": [
+	    	{
+	    		"description": {
+	    			"identifier": "geometry.unknown",
+	    			"texture_width": 64,
+	    			"texture_height": 64,
+	    			"visible_bounds_width": 2,
+	    			"visible_bounds_height": 3.5,
+	    			"visible_bounds_offset": [0, 1.25, 0]
+	    		},
+	    		"bones": [
+	    			{
+	    				"name": "BODY",
+	    				"pivot": [0, 24, 0]
+	    			},
+	    			{
+	    				"name": "backpack",
+	    				"parent": "BODY",
+	    				"pivot": [0, 14, 3],
+	    				"cubes": [
+	    					{"origin": [-4, 14, 2], "size": [8, 10, 4], "uv": [0, 10]},
+	    					{"origin": [-5, 23, 4], "size": [10, 3, 3], "uv": [0, 24]},
+	    					{"origin": [-4.5, 19.5, 1.5], "size": [9, 5, 5], "inflate": 0.001, "uv": [0, 0]},
+	    					{"origin": [-3.5, 16.5, 6.25], "size": [7, 3, 0], "uv": [20, 10]},
+	    					{"origin": [-5, 13, 2], "size": [10, 3, 3], "inflate": 0.01, "uv": [0, 30]}
+	    				]
+	    			}
+	    		]
+	    	}
+	    ]
+	}
+}

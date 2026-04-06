@@ -1,29 +1,58 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.functions.gui.GuiComponentClicked;
+import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.wrapper.gui.CustomGuiButtonWrapper;
 
 public interface IButton extends ICustomGuiComponent {
 
-	int getHeight();
+   String getLabel();
 
-	String getLabel();
+   IButton setLabel(@ParamName("label") String label);
 
-	String getTexture();
+   ITexturedRect getTextureRect();
 
-	int getTextureX();
+   void setTextureRect(@ParamName("rect") ITexturedRect rect);
 
-	int getTextureY();
+   /** @deprecated */
+   @Deprecated
+   String getTexture();
 
-	int getWidth();
+   /** @deprecated */
+   @Deprecated
+   boolean hasTexture();
 
-	boolean hasTexture();
+   /** @deprecated */
+   @Deprecated
+   IButton setTexture(@ParamName("texture") String texture);
 
-	IButton setLabel(@ParamName("label") String label);
+   /** @deprecated */
+   @Deprecated
+   int getTextureX();
 
-	IButton setSize(@ParamName("width") int width, @ParamName("height") int height);
+   /** @deprecated */
+   @Deprecated
+   int getTextureY();
 
-	IButton setTexture(@ParamName("texture") String texture);
+   /** @deprecated */
+   @Deprecated
+   IButton setTextureOffset(@ParamName("textureX") int textureX, @ParamName("textureY") int textureY);
 
-	IButton setTextureOffset(@ParamName("textureX") int textureX, @ParamName("textureY") int textureY);
+   int getTextureHoverOffset();
+
+   IButton setTextureHoverOffset(@ParamName("height") int height);
+
+   IItemStack getDisplayItem();
+
+   IButton setDisplayItem(@ParamName("item") IItemStack item);
+
+   IButton setOnPress(@ParamName("onPress") GuiComponentClicked<IButton> onPress);
+
+   // New from Unofficial (BetaZavr)
+
+   IComponent getMCLabel();
+
+   IButton setMCLabel(@ParamName("component") IComponent component);
 
 }

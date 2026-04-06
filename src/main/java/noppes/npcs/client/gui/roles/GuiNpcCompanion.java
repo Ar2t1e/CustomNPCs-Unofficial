@@ -3,103 +3,122 @@ package noppes.npcs.client.gui.roles;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.client.Client;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.player.companion.GuiNpcCompanionTalents;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumCompanionStage;
 import noppes.npcs.constants.EnumCompanionTalent;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketNpcRoleCompanionUpdate;
+import noppes.npcs.packets.server.SPacketNpcRoleSave;
 import noppes.npcs.roles.RoleCompanion;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.ISliderListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
+public class GuiNpcCompanion extends GuiNPCInterface2
+        implements ITextfieldListener, ISliderListener {
 
-public class GuiNpcCompanion extends GuiNPCInterface2 implements ITextfieldListener, ISliderListener {
+   protected final List<GuiNpcCompanionTalents.GuiTalent> talents = new ArrayList<>();
+   protected final RoleCompanion role;
 
-	protected final List<GuiNpcCompanionTalents.GuiTalent> talents = new ArrayList<>();
-	protected final RoleCompanion role;
+   public GuiNpcCompanion(EntityNPCInterface npc) {
+      super(npc);
 
-	public GuiNpcCompanion(EntityNPCInterface npc) {
-		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
+      backGui = EnumGuiType.MainMenuAdvanced;
+      role = (RoleCompanion) npc.role;
+   }
 
-		role = (RoleCompanion) npc.advanced.roleInterface;
-	}
+   @Override
+   public void init() {
+      super.init();
+      talents.clear();
+      int x0 = guiLeft + 4;
+      int x1 = x0 + 66;
+      int x2 = x1 + 92;
+      int x3 = x0 + 29;
+      int y = guiTop + 5;
+      // stage
+      addButton(0, x1, y, false, role.stage.ordinal(),
+              EnumCompanionStage.BABY.name, EnumCompanionStage.CHILD.name, EnumCompanionStage.TEEN.name,
+              EnumCompanionStage.ADULT.name, EnumCompanionStage.FULLGROWN.name)
+              .setSize(90, 20);
+      addLabel(0, x0, y + 5, Component.translatable("companion.stage").append(":"))
+              .setSize(88, 20);
+      addButton(1, x2, y, "gui.update")
+              .setSize(90, 20);
+      // age
+      addYesNo(2, x1, y += 22, role.canAge)
+              .setSize(90, 20);
+      addLabel(2, x0, y + 5, Component.translatable("companion.age").append(":"))
+              .setSize(88, 20);
+      if (role.canAge) {
+         addTextField(2, x2 + 1, y + 1, 90, 18, role.ticksActive)
+                 .setMinMaxDefault(0, Integer.MAX_VALUE, 0);
+      }
+      // talents
+      talents.add(new GuiNpcCompanionTalents.GuiTalent(role, EnumCompanionTalent.INVENTORY, x0 += 2, y += 26));
+      addSlider(10, x3, y + 2, (float)role.getExp(EnumCompanionTalent.INVENTORY) / 5000.0F)
+              .setSize(100, 20);
+      talents.add(new GuiNpcCompanionTalents.GuiTalent(role, EnumCompanionTalent.ARMOR, x0, y += 26));
+      addSlider(11, x3, y + 2, (float)role.getExp(EnumCompanionTalent.ARMOR) / 5000.0F)
+              .setSize(100, 20);
+      talents.add(new GuiNpcCompanionTalents.GuiTalent(role, EnumCompanionTalent.SWORD, x0, y += 26));
+      addSlider(12, x3, y + 2, (float)role.getExp(EnumCompanionTalent.SWORD) / 5000.0F)
+              .setSize(100, 20);
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      for (GuiNpcCompanionTalents.GuiTalent gui : talents) { gui.init(minecraft, width, height); }
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				role.matureTo(EnumCompanionStage.values()[button.getValue()]);
-				if (role.canAge) { role.ticksActive = role.stage.matureAge; }
-				initGui();
-				break;
-			}
-			case 1: Client.sendData(EnumPacketServer.RoleCompanionUpdate, role.stage.ordinal()); break;
-			case 2: role.canAge = (button.getValue() == 1); initGui(); break;
-		}
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 0: {
+            role.matureTo(EnumCompanionStage.values()[button.getValue()]);
+            if (role.canAge) { role.ticksActive = role.stage.matureAge; }
+            init();
+            break;
+         }
+         case 1: Packets.sendServer(new SPacketNpcRoleCompanionUpdate(role.stage)); break;
+         case 2: role.canAge = ((GuiButtonYesNo) button).getBoolean(); init(); break;
+      }
+   }
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		for (GuiNpcCompanionTalents.GuiTalent talent : new ArrayList<>(talents)) { talent.drawScreen(mouseX, mouseY, partialTicks); }
-	}
+   @Override
+   public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      super.render(graphics, mouseX, mouseY, partialTicks);
+      for (GuiNpcCompanionTalents.GuiTalent talent : new ArrayList<>(talents)) { talent.render(graphics, mouseX, mouseY, partialTicks); }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		int y = guiTop + 4;
-		addButton(new GuiNpcButton(0, guiLeft + 70, y, 90, 20, new String[] { EnumCompanionStage.BABY.name, EnumCompanionStage.CHILD.name, EnumCompanionStage.TEEN.name, EnumCompanionStage.ADULT.name, EnumCompanionStage.FULL_GROWN.name }, role.stage.ordinal()));
-		addLabel(new GuiNpcLabel(0, "companion.stage", guiLeft + 4, y + 5));
-		addButton(new GuiNpcButton(1, guiLeft + 162, y, 90, 20, "gui.update"));
-		addButton(new GuiNpcButton(2, guiLeft + 70, y += 22, 90, 20, new String[] { "gui.no", "gui.yes" }, (role.canAge ? 1 : 0)));
-		addLabel(new GuiNpcLabel(2, "companion.age", guiLeft + 4, y + 5));
-		if (role.canAge) {
-			GuiNpcTextField textField = new GuiNpcTextField(2, this, guiLeft + 162, y, 140, 20, role.ticksActive + "");
-			textField.setMinMaxDefault(0, Integer.MAX_VALUE, 0);
-			addTextField(textField);
-		}
-		EnumCompanionTalent inventory = EnumCompanionTalent.INVENTORY;
-		talents.clear();
-		talents.add(new GuiNpcCompanionTalents.GuiTalent(role, inventory, guiLeft + 4, y += 26));
-		addSlider(new GuiNpcSlider(this, 10, guiLeft + 30, y + 2, 100, 20, role.getExp(EnumCompanionTalent.INVENTORY) / 5000.0f));
-		EnumCompanionTalent armor = EnumCompanionTalent.ARMOR;
-		talents.add(new GuiNpcCompanionTalents.GuiTalent(role, armor, guiLeft + 4, y += 26));
-		addSlider(new GuiNpcSlider(this, 11, guiLeft + 30, y + 2, 100, 20, role.getExp(EnumCompanionTalent.ARMOR) / 5000.0f));
-		EnumCompanionTalent sword = EnumCompanionTalent.SWORD;
-		talents.add(new GuiNpcCompanionTalents.GuiTalent(role, sword, guiLeft + 4, y += 26));
-		addSlider(new GuiNpcSlider(this, 12, guiLeft + 30, y + 2, 100, 20, role.getExp(EnumCompanionTalent.SWORD) / 5000.0f));
-		for (GuiNpcCompanionTalents.GuiTalent gui : talents) { gui.setWorldAndResolution(mc, width, height); }
-	}
+   @Override
+   public void save() { Packets.sendServer(new SPacketNpcRoleSave(role.save(new CompoundTag()))); }
 
-	@Override
-	public void mouseDragged(GuiNpcSlider slider) {
-		if (slider.sliderValue <= 0.0f) {
-			slider.setString("gui.disabled");
-			role.talents.remove(EnumCompanionTalent.values()[slider.getID() - 10]);
-		} else {
-			slider.displayString = ((int) Math.floor(slider.sliderValue * 5000.0f) + "/5000 exp");
-			role.setExp(EnumCompanionTalent.values()[slider.getID() - 10], (int) (slider.sliderValue * 5000.0f));
-		}
-	}
+   @Override
+   public void mouseDragged(GuiSliderNop slider) {
+      if (slider.sliderValue <= 0.0F) {
+         slider.setMessage(Component.translatable("gui.disabled"));
+         role.talents.remove(EnumCompanionTalent.values()[slider.id - 10]);
+      }
+      else {
+         slider.setMessage(Component.translatable((int)(slider.sliderValue * 5000.0F) + " exp"));
+         role.setExp(EnumCompanionTalent.values()[slider.id - 10], (int)(slider.sliderValue * 50.0F) * 100);
+      }
+   }
 
-	@Override
-	public void mousePressed(GuiNpcSlider slider) { }
+   @Override
+   public void mousePressed(GuiSliderNop slider) { }
 
-	@Override
-	public void mouseReleased(GuiNpcSlider slider) { }
+   @Override
+   public void mouseReleased(GuiSliderNop slider) { }
 
-	@Override
-	public void save() { Client.sendData(EnumPacketServer.RoleSave, role.save(new NBTTagCompound())); }
-
-	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		if (textfield.getID() == 2) { role.ticksActive = textfield.getInteger(); }
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      if (textField.id == 2) { role.ticksActive = textField.getInteger(); }
+   }
 
 }

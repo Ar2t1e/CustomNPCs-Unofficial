@@ -2,111 +2,100 @@ package noppes.npcs.api.wrapper;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.scoreboard.ScorePlayerTeam;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IScoreboardTeam;
 
-public class ScoreboardTeamWrapper implements IScoreboardTeam {
+public class
+ScoreboardTeamWrapper implements IScoreboardTeam {
 
-	private final Scoreboard board;
-	private final ScorePlayerTeam team;
+   private final PlayerTeam team;
+   private final Scoreboard board;
 
-	protected ScoreboardTeamWrapper(ScorePlayerTeam team, Scoreboard board) {
-		this.team = team;
-		this.board = board;
-	}
+   protected ScoreboardTeamWrapper(PlayerTeam team, Scoreboard board) {
+      this.team = team;
+      this.board = board;
+   }
 
-	@Override
-	public void addPlayer(String player) {
-		this.board.addPlayerToTeam(player, this.getName());
-	}
+   public String getName() {
+      return this.team.getName();
+   }
 
-	@Override
-	public void clearPlayers() {
-		List<String> list = new ArrayList<>(this.team.getMembershipCollection());
-		for (String player : list) {
-			this.board.removePlayerFromTeam(player, this.team);
-		}
-	}
+   public String getDisplayName() {
+      return this.team.getDisplayName().getString();
+   }
 
-	@Override
-	public String getColor() {
-		String prefix = this.team.getPrefix();
-		if (prefix.isEmpty()) {
-			return null;
-		}
-		for (TextFormatting format : TextFormatting.values()) {
-			if (prefix.equals(format.toString()) && format != TextFormatting.RESET) {
-				return format.getFriendlyName();
-			}
-		}
-		return null;
-	}
+   public void setDisplayName(String name) {
+      if (!name.isEmpty() && name.length() <= 32) {
+         this.team.setDisplayName(Component.translatable(name));
+      } else {
+         throw new CustomNPCsException("Score team display name must be between 1-32 characters: %s", name);
+      }
+   }
 
-	@Override
-	public String getDisplayName() {
-		return this.team.getDisplayName();
-	}
+   public void addPlayer(String player) {
+      this.board.addPlayerToTeam(player, this.team);
+   }
 
-	@Override
-	public boolean getFriendlyFire() {
-		return this.team.getAllowFriendlyFire();
-	}
+   public void removePlayer(String player) {
+      this.board.removePlayerFromTeam(player, this.team);
+   }
 
-	@Override
-	public String getName() {
-		return this.team.getName();
-	}
+   public String[] getPlayers() {
+      List<String> list = new ArrayList<>(this.team.getPlayers());
+      return list.toArray(new String[0]);
+   }
 
-	@Override
-	public String[] getPlayers() {
-		List<String> list = new ArrayList<>(this.team.getMembershipCollection());
-		return list.toArray(new String[0]);
-	}
+   public void clearPlayers() {
+      List<String> list = new ArrayList<>(this.team.getPlayers());
+      for (String player : list) {
+         this.board.removePlayerFromTeam(player, this.team);
+      }
+   }
 
-	@Override
-	public boolean getSeeInvisibleTeamPlayers() {
-		return this.team.getSeeFriendlyInvisiblesEnabled();
-	}
+   public boolean getFriendlyFire() {
+      return this.team.isAllowFriendlyFire();
+   }
 
-	@Override
-	public boolean hasPlayer(String player) {
-		return this.board.getPlayersTeam(player) != null;
-	}
+   public void setFriendlyFire(boolean bo) {
+      this.team.setAllowFriendlyFire(bo);
+   }
 
-	@Override
-	public void removePlayer(String player) {
-		this.board.removePlayerFromTeam(player, this.team);
-	}
+   public void setColor(String color) {
+      ChatFormatting enumchatformatting = ChatFormatting.getByName(color);
+      if (enumchatformatting != null && !enumchatformatting.isFormat()) {
+         this.team.setPlayerPrefix(Component.literal(enumchatformatting.toString()));
+         this.team.setPlayerSuffix(Component.literal(ChatFormatting.RESET.toString()));
+      } else {
+         throw new CustomNPCsException("Not a proper color name: %s", color);
+      }
+   }
 
-	@Override
-	public void setColor(String color) {
-		TextFormatting enumchatformatting = TextFormatting.getValueByName(color);
-		if (enumchatformatting == null || enumchatformatting.isFancyStyling()) {
-			throw new CustomNPCsException("Not a proper color name: %s", color);
-		}
-		this.team.setPrefix(enumchatformatting.toString());
-		this.team.setSuffix(TextFormatting.RESET.toString());
-	}
+   public String getColor() {
+      Component prefix = team.getPlayerPrefix();
+      if (!prefix.getString().isEmpty()) {
+         ChatFormatting[] var2 = ChatFormatting.values();
+         for (ChatFormatting format : var2) {
+            if (prefix.getString().equals(format.toString()) && format != ChatFormatting.RESET) {
+               return format.getName();
+            }
+         }
+      }
+      return null;
+   }
 
-	@Override
-	public void setDisplayName(String name) {
-		if (name.isEmpty() || name.length() > 32) {
-			throw new CustomNPCsException("Score team display name must be between 1-32 characters: %s", name);
-		}
-		this.team.setDisplayName(name);
-	}
+   public void setSeeInvisibleTeamPlayers(boolean bo) {
+      this.team.setSeeFriendlyInvisibles(bo);
+   }
 
-	@Override
-	public void setFriendlyFire(boolean bo) {
-		this.team.setAllowFriendlyFire(bo);
-	}
+   public boolean getSeeInvisibleTeamPlayers() {
+      return this.team.canSeeFriendlyInvisibles();
+   }
 
-	@Override
-	public void setSeeInvisibleTeamPlayers(boolean bo) {
-		this.team.setSeeFriendlyInvisiblesEnabled(bo);
-	}
+   public boolean hasPlayer(String player) {
+      return this.board.getPlayersTeam(player) != null;
+   }
 }

@@ -3,258 +3,312 @@ package noppes.npcs.client.gui.model;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import net.minecraft.client.renderer.entity.NPCRendererHelper;
-import net.minecraft.client.renderer.entity.RenderLivingBase;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.inventory.Slot;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagByte;
-import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.containers.ContainerLayer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import noppes.npcs.controllers.CobblemonHelper;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityFakeLiving;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
+public class GuiCreationExtra extends GuiCreationScreenInterface implements ICustomScrollListener, ITextfieldListener {
 
-public class GuiCreationExtra extends GuiCreationScreenInterface implements ICustomScrollListener {
+   protected final String[] ignoredTags = new String[]{"CanBreakDoors", "Bred", "PlayerCreated", "HasReproduced"};
+   protected final String[] grimmsTags = new String[]{"DataSkin", "DataHair", "DataFace", "DataUniform", "DataGemstone", "DataVisor", "DataGloves", "DataCape"};
+   protected GuiCustomScrollNop scroll;
+   protected Map<String, GuiType> data = new HashMap<>();
+   protected GuiType selected;
+   public int nextAvailableFieldId = 0;
 
-	public abstract static class GuiType {
+   public GuiCreationExtra(EntityNPCInterface npc) {
+      super(npc);
+      active = 2;
+   }
 
-		public String name;
+   @Override
+   public void init() {
+      super.init();
+      if (entity == null) { return; }
+      data = getData(entity);
+      if (scroll == null) {
+         List<String> list = new ArrayList<>(data.keySet());
+         scroll = addScroll(0).setList(list);
+         if (!list.isEmpty()) { scroll.setSelected(list.get(0)); }
+      }
+      selected = data.get(scroll.getSelected());
+      if (selected != null) {
+         add(scroll.setPos(guiLeft, guiTop + 46)
+                 .setSize(100, imageHeight - 74));
+         selected.init();
+      }
+   }
 
-		public GuiType(String nameIn) { name = nameIn; }
+   public Map<String, GuiType> getData(LivingEntity entity) {
+      Map<String, GuiType> data = new HashMap<>();
+      CompoundTag compound = getExtras(entity);
+      Set<String> keys = compound.getAllKeys();
+      Iterator<String> var5 = keys.iterator();
+      while(true) {
+         String name;
+         do {
+            if (!var5.hasNext()) {
+               if (PixelmonHelper.isPixelmon(entity)) {
+                  data.put("Model", new GuiCreationExtra.GuiTypePixelmon("Model"));
+               }
+               if (CobblemonHelper.isPokemon(entity)) {
+                  data.put("CobblemonModel", new GuiCreationExtra.GuiTypeCobblemon("CobblemonModel"));
+               }
 
-		public void buttonEvent(GuiNpcButton button) { }
+               if (Objects.equals(entity.getEncodeId(), "tgvstyle.Dog")) {
+                  data.put("Breed", new GuiCreationExtra.GuiTypeDoggyStyle("Breed"));
+               }
+               return data;
+            }
+            name = var5.next();
+         } while(isIgnored(name));
 
-		public void initGui() { }
+         Tag base = compound.get(name);
+         if (name.equals("Age")) {
+            data.put("Child", new GuiCreationExtra.GuiTypeBoolean("Child", entity.isBaby()));
+         } else if (name.equals("Color") && Objects.requireNonNull(base).getId() == 1) {
+            data.put("Color", new GuiCreationExtra.GuiTypeByte("Color", compound.getByte("Color")));
+         } else if (base != null && base.getId() == 3) {
+            data.put(name, new GuiCreationExtra.GuiTypeInt(name, compound.getInt(name)));
+         } else if (base != null && base.getId() == 1) {
+            byte b = ((ByteTag)base).getAsByte();
+            if (b == 0 || b == 1) {
+               if (playerdata.extra.contains(name)) {
+                  b = playerdata.extra.getByte(name);
+               }
+               data.put(name, new GuiCreationExtra.GuiTypeBoolean(name, b == 1));
+            }
+         }
+      }
+   }
 
-		void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { }
+   private boolean isIgnored(String tag) {
+      for (String s : ignoredTags) {
+         if (s.equals(tag)) {
+            return true;
+         }
+      }
+      return false;
+   }
 
-	}
+   private boolean isGrimms(String tag) {
+      for (String s : grimmsTags) {
+         if (s.equals(tag)) {
+            return true;
+         }
+      }
+      return false;
+   }
 
-	protected class GuiTypeBoolean extends GuiType {
+   @SuppressWarnings("unchecked")
+   private void updateTexture() {
+      LivingEntity entity = playerdata.getEntity(npc);
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      EntityRenderer<LivingEntity> render = (EntityRenderer<LivingEntity>) minecraft.getEntityRenderDispatcher().getRenderer(entity);
+      npc.display.setSkinTexture(render.getTextureLocation(entity).toString());
+   }
 
-		protected boolean bo;
+   private CompoundTag getExtras(LivingEntity entity) {
+      CompoundTag fake = new CompoundTag();
+      (new EntityFakeLiving(entity.level())).addAdditionalSaveData(fake);
+      CompoundTag compound = new CompoundTag();
+      try { entity.addAdditionalSaveData(compound); } catch (Throwable ignored) {}
+      Set<String> keys = fake.getAllKeys();
+      for (String name : keys) { compound.remove(name); }
+      return compound;
+   }
 
-		public GuiTypeBoolean(String name, boolean boIn) {
-			super(name);
-			bo = boIn;
-		}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      if (scroll.id == 0) { init(); }
+      else if (selected != null) { selected.scrollClicked(scroll); }
+   }
 
-		@Override
-		public void buttonEvent(GuiNpcButton button) {
-			if (button.id != 11) { return; }
-			bo = ((GuiNpcButtonYesNo) button).getBoolean();
-			if (name.equals("Child")) {
-				playerdata.extra.setInteger("Age", bo ? -24000 : 0);
-				playerdata.clearEntity();
-			} else {
-				playerdata.extra.setBoolean(name, bo);
-				playerdata.clearEntity();
-				updateTexture();
-			}
-		}
+   @Override
+   public void buttonEvent(GuiButtonNop guiButton) {
+      if (selected != null) { selected.buttonEvent(guiButton);}
+   }
 
-		@Override
-		public void initGui() {
-			addButton(new GuiNpcButtonYesNo(11, guiLeft + 120, guiTop + 50, 60, 20, bo));
-		}
+   @Override
+   public void unFocused(GuiTextFieldNop textfield) {
+      if (selected != null) { selected.unFocused(textfield); }
+   }
 
-	}
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
-	protected class GuiTypeByte extends GuiType {
+   class GuiTypeBoolean extends GuiType {
+      private boolean bo;
 
-		protected final byte b;
+      public GuiTypeBoolean(String name, boolean boIn) {
+         super(name);
+         bo = boIn;
+      }
 
-		public GuiTypeByte(String name, byte byteIn) {
-			super(name);
-			b = byteIn;
-		}
+      @Override
+      public void init() {
+         addYesNo(11, guiLeft + 120, guiTop + 50, bo)
+                 .setSize(60, 20);
+      }
 
-		@Override
-		public void buttonEvent(GuiNpcButton button) {
-			if (button.id != 11) { return; }
-			playerdata.extra.setByte(name, (byte) button.getValue());
-			playerdata.clearEntity();
-			updateTexture();
-		}
+      @Override
+      public void buttonEvent(GuiButtonNop button) {
+         if (button.id == 11) {
+            bo = ((GuiButtonYesNo)button).getBoolean();
+            if (name.equals("Child")) {
+               playerdata.extra.putInt("Age", bo ? -24000 : 0);
+               playerdata.clearEntity();
+            } else {
+               playerdata.extra.putBoolean(name, bo);
+               playerdata.clearEntity();
+               updateTexture();
+            }
+         }
+      }
+   }
 
-		@Override
-		public void initGui() {
-			addButton(new GuiButtonBiDirectional(11, guiLeft + 120, guiTop + 45, 50, 20,
-					new String[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" }, b));
-		}
+   class GuiTypeByte extends GuiType {
 
-	}
+      protected final byte b;
 
-	protected class GuiTypeDoggyStyle extends GuiType {
+      public GuiTypeByte(String name, byte bo) {
+         super(name);
+         b = bo;
+      }
 
-		public GuiTypeDoggyStyle(String name) { super(name); }
+      @Override
+      public void init() {
+         Object[] numbs = new Object[16];
+         for (int i = 0; i < 16; i++) { numbs[i] = i; }
+         addButton(11, guiLeft + 120, guiTop + 45, true, b, numbs)
+                 .setSize(50, 20);
+      }
 
-		@Override
-		public void buttonEvent(@Nonnull GuiNpcButton button) {
-			if (button.id != 11) { return; }
-			EntityLivingBase entity = playerdata.getEntity(npc);
-			playerdata.setExtra(entity, "breed", button.getValue() + "");
-			updateTexture();
-		}
+      @Override
+      public void buttonEvent(GuiButtonNop button) {
+         if (button.id == 11) {
+            playerdata.extra.putByte(name, (byte)button.getValue());
+            playerdata.clearEntity();
+            updateTexture();
+         }
+      }
+   }
 
-		@Override
-		public void initGui() {
-			Enum<?> breed = null;
-			try {
-				Method method = entity.getClass().getMethod("getBreedID", Class[].class);
-				breed = (Enum<?>) method.invoke(entity, (Object) new Class[0]);
-			} catch (Exception e) { LogWriter.error(e); }
-            if (breed != null) {
-				addButton(new GuiButtonBiDirectional(11, guiLeft + 120,
-								guiTop + 45, 50, 20,
-								new String[]{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-										"14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26"},
-								breed.ordinal()));
-			}
-		}
-	}
+   class GuiTypeInt extends GuiType {
 
-	protected class GuiTypePixelmon extends GuiType {
+      protected final int initVal;
+      protected int fieldId;
 
-		public GuiTypePixelmon(String name) { super(name); }
+      public GuiTypeInt(String name, int b) {
+         super(name);
+         initVal = b;
+         fieldId = nextAvailableFieldId++;
+      }
 
-		@Override
-		public void initGui() {
-			GuiCustomScroll scroll = new GuiCustomScroll(GuiCreationExtra.this, 1);
-			scroll.setSize(120, 200);
-			scroll.guiLeft = guiLeft + 120;
-			scroll.guiTop = guiTop + 20;
-			addScroll(scroll);
-			scroll.setList(PixelmonHelper.getPixelmonList());
-			scroll.setSelected(PixelmonHelper.getName(entity));
-		}
+      @Override
+      public void init() {
+         addTextField(11, guiLeft + 120, guiTop + 45, 50, 20, initVal)
+                 .setNumbersOnly();
+      }
 
-		@Override
-		public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-			String name = scroll.getSelected();
-			playerdata.setExtra(entity, "name", name);
-			updateTexture();
-		}
+      @Override
+      public void unFocused(GuiTextFieldNop textfield) {
+         if (textfield.id == 11) {
+            playerdata.extra.putInt(name, textfield.getInteger());
+            playerdata.clearEntity();
+            updateTexture();
+         }
+      }
+   }
 
-	}
+   class GuiTypePixelmon extends GuiType {
 
-	public String[] booleanTags;
+      public GuiTypePixelmon(String name) {
+         super(name);
+      }
 
-	private Map<String, GuiType> data;
+      @Override
+      public void init() {
+         addScroll(1)
+                 .setPos(guiLeft + 120, guiTop + 20)
+                 .setSize(120, 200)
+                 .setList(PixelmonHelper.getPixelmonList())
+                 .setSelected(PixelmonHelper.getName(entity));
+      }
 
-	private final String[] ignoredTags;
+      @Override
+      public void scrollClicked(GuiCustomScrollNop scroll) {
+         String name = scroll.getSelected();
+         playerdata.setExtra(entity, "name", name);
+         updateTexture();
+      }
+   }
 
-	private GuiCustomScroll scroll;
+   class GuiTypeCobblemon extends GuiType {
+      public GuiTypeCobblemon(String name) {
+         super(name);
+      }
 
-	private GuiType selected;
+      @Override
+      public void init() {
+         GuiCustomScrollNop scrollIn = addScroll(1)
+                 .setPos(guiLeft + 120, guiTop + 20)
+                 .setSize(120, 200)
+                 .setList(CobblemonHelper.getTypes());
+         ResourceLocation rt = CobblemonHelper.getType(entity);
+         if (rt != null) { scrollIn.setSelected(rt.toString()); }
+      }
 
-	public GuiCreationExtra(EntityNPCInterface npc, ContainerLayer container) {
-		super(npc, container);
-		ignoredTags = new String[] { "CanBreakDoors", "Bred", "PlayerCreated", "HasReproduced" };
-		booleanTags = new String[0];
-		data = new HashMap<>();
-		active = 2;
-	}
+      @Override
+      public void scrollClicked(GuiCustomScrollNop scroll) {
+         String name = scroll.getSelected();
+         playerdata.setExtra(entity, "CobblemonModel", name);
+         updateTexture();
+      }
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton == 1 && selected != null) { selected.buttonEvent(button); }
-		super.buttonEvent(button, mouseButton);
-	}
+   class GuiTypeDoggyStyle extends GuiType {
+      public GuiTypeDoggyStyle(String name) {
+         super(name);
+      }
 
-	public Map<String, GuiType> getData(EntityLivingBase entity) {
-		Map<String, GuiType> data = new HashMap<>();
-		NBTTagCompound compound = getExtras(entity);
-		Set<String> keys = compound.getKeySet();
-		for (String name : keys) {
-			if (isIgnored(name)) { continue; }
-			NBTBase base = compound.getTag(name);
-			if (name.equals("Age")) { data.put("Child", new GuiTypeBoolean("Child", entity.isChild())); }
-			else if (name.equals("Color") && base.getId() == 1) { data.put("Color", new GuiTypeByte("Color", compound.getByte("Color"))); }
-			else {
-				if (base.getId() != 1) { continue; }
-				byte b = ((NBTTagByte) base).getByte();
-				if (b != 0 && b != 1) { continue; }
-				if (playerdata.extra.hasKey(name)) { b = playerdata.extra.getByte(name); }
-				data.put(name, new GuiTypeBoolean(name, b == 1));
-			}
-		}
-		if (PixelmonHelper.isPixelmon(entity)) { data.put("Model", new GuiTypePixelmon("Model")); }
-		if (Objects.equals(EntityList.getEntityString(entity), "tgvstyle.Dog")) { data.put("Breed", new GuiTypeDoggyStyle("Breed")); }
-		return data;
-	}
+      @Override
+      public void init() {
+         Enum<?> breed = null;
+         try {
+            Method method = entity.getClass().getMethod("getBreedID");
+            breed = (Enum<?>) method.invoke(entity);
+         } catch (Exception ignored) {}
+         if (breed !=null) {
+            Object[] numbs = new Object[16];
+            for (int i = 0; i < 27; i++) { numbs[i] = i; }
+            addButton(11, guiLeft + 120, guiTop + 45, true, breed.ordinal(), numbs)
+                    .setSize(50, 20);
+         }
+      }
 
-	private NBTTagCompound getExtras(EntityLivingBase entity) {
-		NBTTagCompound fake = new NBTTagCompound();
-		new EntityFakeLiving(entity.world).writeEntityToNBT(fake);
-		NBTTagCompound compound = new NBTTagCompound();
-		try { entity.writeEntityToNBT(compound); } catch (Exception e) { LogWriter.error(e); }
-		Set<String> keys = fake.getKeySet();
-		for (String name : keys) { compound.removeTag(name); }
-		return compound;
-	}
-
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (entity == null) {
-			openGui(new GuiCreationParts(npc, (ContainerLayer) inventorySlots));
-			return;
-		}
-		if (scroll == null) {
-			data = getData(entity);
-			scroll = new GuiCustomScroll(this, 0);
-			List<String> list = new ArrayList<>(data.keySet());
-			scroll.setList(list);
-			if (list.isEmpty()) { return; }
-			scroll.setSelected(list.get(0));
-		}
-		scroll.guiLeft = guiLeft;
-		scroll.guiTop = guiTop + 46;
-		if (scroll.hasSelected()) { scroll.setHoverText("display.hover.part." + scroll.getList().get(scroll.getSelect()).toLowerCase()); }
-		addScroll(scroll.setSize(100, ySize - 74));
-		selected = data.get(scroll.getSelected());
-		if (selected != null) { selected.initGui(); }
-		for (Slot slot : inventorySlots.inventorySlots) {
-			slot.xPos = -5000;
-			slot.yPos = -5000;
-		}
-	}
-
-	private boolean isIgnored(String tag) {
-		for (String s : ignoredTags) {
-			if (s.equals(tag)) { return true; }
-		}
-		return false;
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 0) { initGui(); }
-		else {
-			if (selected != null) { selected.scrollClicked(mouseX, mouseY, mouseButton, scroll); }
-			if (getButton(11) != null) {
-				if (scroll.hasSelected()) { getButton(11).setHoverText("display.hover.part." + scroll.getSelected().toLowerCase()); }
-				else { getButton(11).setHoverText((Object) null); }
-			}
-		}
-	}
-
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
-
-	@SuppressWarnings("unchecked")
-	private void updateTexture() {
-		EntityLivingBase entity = playerdata.getEntity(npc);
-		@SuppressWarnings("rawtypes")
-		RenderLivingBase render = (RenderLivingBase) mc.getRenderManager().getEntityRenderObject(entity);
-        if (render != null) { npc.display.setSkinTexture(NPCRendererHelper.getTexture(render, entity)); }
-	}
+      @Override
+      public void buttonEvent(GuiButtonNop button) {
+         if (button.id == 11) {
+            LivingEntity entity = playerdata.getEntity(npc);
+            playerdata.setExtra(entity, "breed", button.getMessage().toString());
+            updateTexture();
+         }
+      }
+   }
 
 }

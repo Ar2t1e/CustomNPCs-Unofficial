@@ -1,5 +1,5 @@
 {
     "variants": {
-        "normal": { "model": "customnpcs:npcscripted" }
+        "": { "model": "customnpcs:block/npcscripted" }
     }
 }

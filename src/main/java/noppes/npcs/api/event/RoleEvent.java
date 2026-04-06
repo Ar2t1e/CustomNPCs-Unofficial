@@ -1,132 +1,135 @@
 package noppes.npcs.api.event;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import noppes.npcs.api.EventName;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.eventbus.api.Cancelable;
+import noppes.npcs.api.entity.data.role.ITransportLocation;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.IPlayerMail;
-import noppes.npcs.api.entity.data.role.ITransportLocation;
+import noppes.npcs.api.entity.data.role.IRoleTransporter;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.constants.EnumScriptType;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+
 public class RoleEvent extends CustomNPCsEvent {
 
-	@EventName(EnumScriptType.ROLE)
-	public static class BankUnlockedEvent extends RoleEvent {
-		public int slot;
+   public final ICustomNpc<?> npc;
+   public final IPlayer<?> player;
 
-		public BankUnlockedEvent(EntityPlayer player, ICustomNpc<?> npc, int slotIn) {
-			super(player, npc);
-			slot = slotIn;
-		}
-	}
+   public RoleEvent(Player player, ICustomNpc<?> npc) {
+      this.npc = npc;
+      this.player = (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player);
+   }
 
-	@EventName(EnumScriptType.ROLE)
-	public static class BankUpgradedEvent extends RoleEvent {
-		public int slot;
+   @EventName(EnumScriptType.ROLE)
+   public static class BankUpgradedEvent extends RoleEvent {
+      public final int slot;
 
-		public BankUpgradedEvent(EntityPlayer player, ICustomNpc<?> npc, int slotIn) {
-			super(player, npc);
-			slot = slotIn;
-		}
-	}
+      public BankUpgradedEvent(Player player, ICustomNpc<?> npc, int slot) {
+         super(player, npc);
+         this.slot = slot;
+      }
+   }
 
-	@EventName(EnumScriptType.ROLE)
-	public static class FollowerFinishedEvent extends RoleEvent {
-		public FollowerFinishedEvent(EntityPlayer player, ICustomNpc<?> npc) {
-			super(player, npc);
-		}
-	}
+   @EventName(EnumScriptType.ROLE)
+   public static class BankUnlockedEvent extends RoleEvent {
+      public final int slot;
 
-	@Cancelable
-	@EventName(EnumScriptType.ROLE)
-	public static class FollowerHireEvent extends RoleEvent {
-		public int days;
+      public BankUnlockedEvent(Player player, ICustomNpc<?> npc, int slot) {
+         super(player, npc);
+         this.slot = slot;
+      }
+   }
 
-		public FollowerHireEvent(EntityPlayer player, ICustomNpc<?> npc, int daysIn) {
-			super(player, npc);
-			days = daysIn;
-		}
-	}
+   // Changed from Unofficial (BetaZavr)
+   @EventName(EnumScriptType.ROLE)
+   public static class TradeFailedEvent extends RoleEvent {
 
-	@Cancelable
-	@EventName(EnumScriptType.ROLE)
-	public static class MailmanEvent extends RoleEvent {
-		public IPlayerMail mail;
+      public Map<IItemStack, Integer> currency;
+      public IItemStack sold;
 
-		public MailmanEvent(EntityPlayer player, ICustomNpc<?> npc, IPlayerMail mailIn) {
-			super(player, npc);
-			mail = mailIn;
-		}
-	}
+      public TradeFailedEvent(Player player, ICustomNpc<?> npc, ItemStack soldIn, Map<ItemStack, Integer> items) {
+         super(player, npc);
+         currency = new LinkedHashMap<>();
+         for (ItemStack stack : items.keySet()) {
+            if (stack == null || stack.isEmpty()) { continue; }
+            currency.put(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack), items.get(stack));
+         }
+         sold = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(soldIn.copy());
+      }
+   }
 
-	@EventName(EnumScriptType.ROLE)
-	public static class TradeFailedEvent extends RoleEvent {
+   // Changed from Unofficial (BetaZavr)
+   @Cancelable
+   @EventName(EnumScriptType.ROLE)
+   public static class TraderEvent extends RoleEvent {
 
-		public Map<IItemStack, Integer> currency;
-		public IItemStack sold;
+      public Map<IItemStack, Integer> currency;
+      public IItemStack sold;
 
-		public TradeFailedEvent(EntityPlayer player, ICustomNpc<?> npc, ItemStack soldIn, Map<ItemStack, Integer> items) {
-			super(player, npc);
-			currency = new LinkedHashMap<>();
-			for (ItemStack stack : items.keySet()) {
-				if (stack == null || stack.isEmpty()) { continue; }
-				currency.put(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack), items.get(stack));
-			}
-			sold = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(soldIn.copy());
-		}
-	}
+      public TraderEvent(Player player, ICustomNpc<?> npc, ItemStack soldIn, Map<ItemStack, Integer> items) {
+         super(player, npc);
+         currency = new LinkedHashMap<>();
+         for (ItemStack stack : items.keySet()) {
+            if (stack == null || stack.isEmpty()) { continue; }
+            currency.put(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack), items.get(stack));
+         }
+         sold = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(soldIn);
+      }
+   }
 
-	@Cancelable
-	@EventName(EnumScriptType.ROLE)
-	public static class TraderEvent extends RoleEvent {
+   @EventName(EnumScriptType.ROLE)
+   public static class FollowerFinishedEvent extends RoleEvent {
+      public FollowerFinishedEvent(Player player, ICustomNpc<?> npc) {
+         super(player, npc);
+      }
+   }
 
-		public Map<IItemStack, Integer> currency;
-		public IItemStack sold;
+   @Cancelable
+   @EventName(EnumScriptType.ROLE)
+   public static class FollowerHireEvent extends RoleEvent {
+      public int days;
 
-		public TraderEvent(EntityPlayer player, ICustomNpc<?> npc, ItemStack soldIn, Map<ItemStack, Integer> items) {
-			super(player, npc);
-			currency = new LinkedHashMap<>();
-			for (ItemStack stack : items.keySet()) {
-				if (stack == null || stack.isEmpty()) { continue; }
-				currency.put(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack), items.get(stack));
-			}
-			sold = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(soldIn);
-		}
-	}
+      public FollowerHireEvent(Player player, ICustomNpc<?> npc, int days) {
+         super(player, npc);
+         this.days = days;
+      }
+   }
 
-	@Cancelable
-	@EventName(EnumScriptType.ROLE)
-	public static class TransporterUnlockedEvent extends RoleEvent {
-		public TransporterUnlockedEvent(EntityPlayer player, ICustomNpc<?> npc) {
-			super(player, npc);
-		}
-	}
+   @Cancelable
+   @EventName(EnumScriptType.ROLE)
+   public static class MailmanEvent extends RoleEvent {
+      public final IPlayerMail mail;
 
-	@Cancelable
-	@EventName(EnumScriptType.ROLE)
-	public static class TransporterUseEvent extends RoleEvent {
-		public ITransportLocation location;
+      public MailmanEvent(Player player, ICustomNpc<?> npc, IPlayerMail mail) {
+         super(player, npc);
+         this.mail = mail;
+      }
+   }
 
-		public TransporterUseEvent(EntityPlayer player, ICustomNpc<?> npc, ITransportLocation locationIn) {
-			super(player, npc);
-			location = locationIn;
-		}
-	}
+   @Cancelable
+   @EventName(EnumScriptType.ROLE)
+   public static class TransporterUnlockedEvent extends RoleEvent {
+      public TransporterUnlockedEvent(Player player, ICustomNpc<?> npc) {
+         super(player, npc);
+      }
+   }
 
-	public ICustomNpc<?> npc;
-	public IPlayer<?> player;
+   @Cancelable
+   @EventName(EnumScriptType.ROLE)
+   public static class TransporterUseEvent extends RoleEvent {
+      public final ITransportLocation location;
 
-	public RoleEvent(EntityPlayer playerIn, ICustomNpc<?> npcIn) {
-		npc = npcIn;
-		player = (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(playerIn);
-	}
+      public TransporterUseEvent(Player player, ICustomNpc<?> npc, ITransportLocation location) {
+         super(player, npc);
+         this.location = location;
+      }
+   }
 
 }

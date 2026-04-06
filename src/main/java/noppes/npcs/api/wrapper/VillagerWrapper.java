@@ -1,47 +1,35 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.entity.passive.EntityVillager;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.village.MerchantRecipeList;
-import noppes.npcs.api.constants.EntityType;
-import noppes.npcs.api.entity.IPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.trading.MerchantOffers;
 import noppes.npcs.api.entity.IVillager;
-import noppes.npcs.reflection.entity.passive.EntityVillagerReflection;
 
-@SuppressWarnings("rawtypes")
-public class VillagerWrapper<T extends EntityVillager> extends EntityLivingWrapper<T> implements IVillager {
+public class VillagerWrapper<T extends Villager> extends EntityLivingWrapper<T> implements IVillager<T> {
 
-	public VillagerWrapper(T entity) {
-		super(entity);
-	}
+   public VillagerWrapper(T entity) {
+      super(entity);
+   }
 
-	public String getCareer() {
-		return this.entity.getProfessionForge().getCareer(EntityVillagerReflection.getCareerID(entity)).getName();
-	}
+   @Override
+   public String getProfession() { return entity.getVillagerData().getProfession().toString(); }
 
-	@SuppressWarnings("deprecation")
-	public int getProfession() {
-		return this.entity.getProfession();
-	}
+   @Override
+   public String villagerType() { return entity.getVillagerData().getType().toString(); }
 
-	@Override
-	public MerchantRecipeList getRecipes(IPlayer player) {
-		return this.entity.getRecipes(player.getMCEntity());
-	}
+   @Override
+   public int getType() {
+      return 9;
+   }
 
-	@Override
-	public int getType() {
-		return EntityType.VILLAGER.get();
-	}
+   @Override
+   public boolean typeOf(int type) { return type == 9 || super.typeOf(type); }
 
-	@Override
-	public IInventory getVillagerInventory() {
-		return this.entity.getVillagerInventory();
-	}
+   @Override
+   public Container getMCVillagerContainer() { return entity.getInventory(); }
 
-	@Override
-	public boolean typeOf(int type) {
-		return type == EntityType.VILLAGER.get() || super.typeOf(type);
-	}
+   @Override
+   public MerchantOffers getMCRecipes() { return entity.getOffers(); }
 
 }

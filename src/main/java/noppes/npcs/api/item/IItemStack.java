@@ -1,103 +1,101 @@
 package noppes.npcs.api.item;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IEntity;
-import noppes.npcs.api.entity.IEntityLiving;
+import noppes.npcs.api.entity.IMob;
 import noppes.npcs.api.entity.data.IData;
 
 @SuppressWarnings("all")
 public interface IItemStack {
 
-	void addEnchantment(@ParamName("id") int id, @ParamName("level") int level);
+   int getStackSize();
 
-	void addEnchantment(@ParamName("name") String name, @ParamName("level") int level);
+   void setStackSize(@ParamName("size") int size);
 
-	boolean compare(@ParamName("name") IItemStack item, @ParamName("name") boolean ignoreNBT);
+   int getMaxStackSize();
 
-	IItemStack copy();
+   boolean isDamageable();
 
-	void damageItem(@ParamName("name") int damage, @ParamName("name") IEntityLiving<?> living);
+   int getDamage();
 
-	double getAttackDamage();
+   void setDamage(@ParamName("value") int value);
 
-	double getAttribute(@ParamName("name") String name);
+   int getMaxDamage();
 
-	String getDisplayName();
+   double getAttackDamage();
 
-	int getFoodLevel();
+   void damageItem(@ParamName("damage") int damage, @ParamName("living") IMob<?> living);
 
-	int getItemDamage();
+   void addEnchantment(@ParamName("id") String id, @ParamName("strenght") int strenght);
 
-	String getItemName();
+   boolean isEnchanted();
 
-	INbt getItemNbt();
+   boolean hasEnchant(@ParamName("id") String id);
 
-	String[] getLore();
+   boolean removeEnchant(@ParamName("id") String id);
 
-	int getMaxItemDamage();
+   @SuppressWarnings("all")
+   boolean isBlock();
 
-	int getMaxStackSize();
+   boolean isWearable();
 
-	ItemStack getMCItemStack();
+   boolean hasCustomName();
 
-	String getName();
+   void setCustomName(@ParamName("name") String name);
 
-	INbt getNbt();
+   String getDisplayName();
 
-	int getStackSize();
+   String getItemName();
 
-	IData getStoreddata();
+   String getName();
 
-	IData getTempdata();
+   @SuppressWarnings("all")
+   /** @deprecated */
+   boolean isBook();
 
-	int getType();
+   IItemStack copy();
 
-	boolean hasAttribute(@ParamName("name") String name);
+   ItemStack getMCItemStack();
 
-	boolean hasCustomName();
+   INbt getNbt();
 
-	boolean hasEnchant(@ParamName("name") int id);
+   boolean hasNbt();
 
-	boolean hasEnchant(@ParamName("name") String name);
+   void removeNbt();
 
-	boolean hasNbt();
+   INbt getItemNbt();
 
-	@Deprecated
-	boolean isBlock();
+   boolean isEmpty();
 
-	@Deprecated
-	boolean isBook();
+   int getType();
 
-	boolean isEmpty();
+   String[] getLore();
 
-	boolean isEnchanted();
+   void setLore(@ParamName("lore") String[] lore);
 
-	boolean isWearable();
+   @SuppressWarnings("all")
+   /** @deprecated */
+   void setAttribute(@ParamName("name") String name, @ParamName("value") double value);
 
-	boolean removeEnchant(@ParamName("id") int id);
+   void setAttribute(@ParamName("name") String name, @ParamName("value") double value, @ParamName("slot") int slot);
 
-	boolean removeEnchant(@ParamName("name") String name);
+   double getAttribute(@ParamName("name") String name);
 
-	void removeNbt();
+   boolean hasAttribute(@ParamName("name") String name);
 
-	@Deprecated
-	void setAttribute(@ParamName("name") String name, @ParamName("value") double value);
+   IData getTempdata();
 
-	void setAttribute(@ParamName("name") String name, @ParamName("value") double value, @ParamName("slot") int slot);
+   IData getStoreddata();
 
-	void setCustomName(@ParamName("name") String name);
+   int getFoodLevel();
 
-	void setItemDamage(@ParamName("value") int value);
+   boolean compare(@ParamName("item") IItemStack item, @ParamName("ignoreNBT") boolean ignoreNBT);
 
-	void setLore(@ParamName("lore") String[] lore);
+   // New from Unofficial (BetaZavr)
+   IEntity<?> getOwner();
 
-	void setStackSize(@ParamName("size") int size);
-
-	// New from Unofficial (BetaZavr)
-	IEntity<?> getOwner();
-
-	void setOwner(@ParamName("entity") IEntity<?> entity);
+   void setOwner(@ParamName("entity") IEntity<?> entity);
 
 }

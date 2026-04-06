@@ -1,16 +1,18 @@
 package noppes.npcs.client.model.animation;
 
-import net.minecraft.client.model.ModelBiped;
-import net.minecraft.entity.Entity;
-import noppes.npcs.client.model.ModelRendererAlt;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class AniPoint {
+public class AniPoint implements AnimationBase {
 
-	public static void setRotationAngles(float ignoredLimbSwing, float ignoredLimbSwingAmount, float ignoredAgeInTicks, float netHeadYaw, float ignoredHeadPitch, float ignoredScale, Entity ignoredEntity, ModelBiped model) {
-		model.bipedRightArm.rotateAngleX = -1.570796f;
-		model.bipedRightArm.rotateAngleY = netHeadYaw / 57.295776f;
-		model.bipedRightArm.rotateAngleZ = 0.0f;
-		if (model.bipedRightArm instanceof ModelRendererAlt) { ((ModelRendererAlt) model.bipedRightArm).setIsNormal(true); }
-	}
+   public void animatePost(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+      model.rightArm.xRot = -1.570796F;
+      model.rightArm.yRot = netHeadYaw / 57.295776F;
+      model.rightArm.zRot = 0.0F;
+   }
+
+   public void animatePre(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+   }
 
 }

@@ -1,49 +1,59 @@
 package noppes.npcs.api.event;
 
-import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import noppes.npcs.api.NpcAPI;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
+import net.minecraftforge.eventbus.api.Cancelable;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.handler.data.ICustomParticle;
-import noppes.npcs.particles.CustomParticle;
+import noppes.npcs.api.interfaces.EventFunction;
+import noppes.npcs.client.ClientProxy;
+import noppes.npcs.client.particles.CustomParticle;
 
-import java.util.Objects;
+import javax.annotation.Nonnull;
 
 public class CustomParticleEvent extends CustomNPCsEvent {
 
-	public static class CreateEvent extends CustomParticleEvent {
+    private static final String TICK = "customParticleTick";
+    private static final String RENDER = "customParticleRender";
+    private static final String CREATE = "customParticleCreate";
 
-		public CreateEvent(CustomParticle particle, EntityPlayerSP player) {
-			super(particle, player);
-		}
+    public final @Nonnull String name;
+    public @Nonnull ICustomParticle particle;
+    public IPlayer<?> player;
 
-	}
+    public CustomParticleEvent(@Nonnull CustomParticle particleIn, @Nonnull String nameIn) {
+        particle = particleIn;
+        name = nameIn;
+        player = CustomNpcs.proxy.getPlayerData(null).scriptData.getPlayer();
+    }
 
-	@Cancelable
-	public static class RenderEvent extends CustomParticleEvent {
+    @EventFunction(CREATE)
+    public static class CreateEvent extends CustomParticleEvent {
+        public CreateEvent(@Nonnull CustomParticle particle) { super(particle, CREATE); }
+    }
 
-		public RenderEvent(CustomParticle particle, EntityPlayerSP player) {
-			super(particle, player);
-		}
+    @Cancelable
+    @EventFunction(TICK)
+    public static class UpdateEvent extends CustomParticleEvent {
+        public UpdateEvent(@Nonnull CustomParticle particle) { super(particle, TICK); }
+    }
 
-	}
+    @Cancelable
+    @EventFunction(RENDER)
+    public static class RenderEvent extends CustomParticleEvent {
 
-	@Cancelable
-	public static class UpdateEvent extends CustomParticleEvent {
+        public @Nonnull VertexConsumer consumer;
+        public @Nonnull Camera camera;
+        public float partialTicks;
 
-		public UpdateEvent(CustomParticle particle, EntityPlayerSP player) {
-			super(particle, player);
-		}
+        public RenderEvent(@Nonnull CustomParticle particle, @Nonnull VertexConsumer consumerIn, @Nonnull Camera cameraIn, float partialTicksIn) {
+            super(particle, RENDER);
+            consumer = consumerIn;
+            camera = cameraIn;
+            partialTicks = partialTicksIn;
+        }
 
-	}
-
-	public ICustomParticle particle;
-	public IPlayer<?> player;
-
-	public CustomParticleEvent(CustomParticle particle, EntityPlayerSP player) {
-		super();
-		this.particle = particle;
-		this.player = player == null ? null : (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player);
-	}
+    }
 
 }

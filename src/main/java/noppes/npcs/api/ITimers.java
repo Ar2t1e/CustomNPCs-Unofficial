@@ -1,18 +1,19 @@
 package noppes.npcs.api;
 
-@SuppressWarnings("all")
+import noppes.npcs.api.interfaces.ParamName;
+
 public interface ITimers {
 
-	void clear();
+   void start(@ParamName("id") int id, @ParamName("ticks") int ticks, @ParamName("repeat") boolean repeat);
 
-	void forceStart(@ParamName("id") int id, @ParamName("ticks") int ticks, @ParamName("repeat") boolean repeat);
+   void forceStart(@ParamName("id") int id, @ParamName("ticks") int ticks,@ParamName("repeat")  boolean repeat);
 
-	boolean has(@ParamName("id") int id);
+   boolean has(@ParamName("id") int id);
 
-	void reset(@ParamName("id") int id);
+   boolean stop(@ParamName("id") int id);
 
-	void start(@ParamName("id") int id, @ParamName("ticks") int ticks, @ParamName("repeat") boolean repeat);
+   void reset(@ParamName("id") int id);
 
-	boolean stop(@ParamName("id") int id);
+   void clear();
 
 }

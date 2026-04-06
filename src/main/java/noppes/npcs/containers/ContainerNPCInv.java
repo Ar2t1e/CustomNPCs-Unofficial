@@ -1,112 +1,95 @@
 package noppes.npcs.containers;
 
-import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemArmor;
-import net.minecraft.item.ItemBow;
-import net.minecraft.item.ItemShield;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.*;
+import noppes.npcs.CustomContainer;
+import noppes.npcs.containers.slots.SlotNPCArmor;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.entity.data.DataInventory;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class ContainerNPCInv extends AbstractContainerMenu {
 
-public class ContainerNPCInv extends Container {
+   public ContainerNPCInv(int containerId, Inventory playerInventory, int entityId) {
+      super(CustomContainer.container_inv, containerId);
+      EntityNPCInterface npc = (EntityNPCInterface) playerInventory.player.level().getEntity(entityId);
+      DataInventory inv = npc != null ? npc.inventory : new DataInventory(null);
+      addSlot(new SlotNPCArmor(inv, 0, 9, 22, EquipmentSlot.HEAD));
+      addSlot(new SlotNPCArmor(inv, 1, 9, 40, EquipmentSlot.CHEST));
+      addSlot(new SlotNPCArmor(inv, 2, 9, 58, EquipmentSlot.LEGS));
+      addSlot(new SlotNPCArmor(inv, 3, 9, 76, EquipmentSlot.FEET));
+      addSlot(new Slot(inv, 4, 81, 22));
+      addSlot(new Slot(inv, 5, 81, 40));
+      addSlot(new Slot(inv, 6, 81, 58));
+      /*
+      // AW mod
+      if (ArmourersWorkshopApi.isAvailable()) {
+         addSlot(new AWSlotOutfit(inv, 7, 27, 4));
+         addSlot(new AWSlotWings(inv, 8, 45, 4));
+      }
+      /**/
+      // player inventory
+      for(int x = 0; x < 3; ++x) {
+         for(int y = 0; y < 9; ++y) { addSlot(new Slot(playerInventory, y + x * 9 + 9, y * 18 + 8, 113 + x * 18)); }
+      }
+      // player hotbar
+      for(int x = 0; x < 9; ++x) { addSlot(new Slot(playerInventory, x, x * 18 + 8, 171)); }
+   }
 
-	public ContainerNPCInv(EntityNPCInterface npc, EntityPlayer player) {
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 0, 9, 22, EntityEquipmentSlot.HEAD));
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 1, 9, 40, EntityEquipmentSlot.CHEST));
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 2, 9, 58, EntityEquipmentSlot.LEGS));
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 3, 9, 76, EntityEquipmentSlot.FEET));
-		addSlotToContainer(new Slot(npc.inventory, 4, 81, 22));
-		addSlotToContainer(new Slot(npc.inventory, 5, 81, 40));
-		addSlotToContainer(new Slot(npc.inventory, 6, 81, 58));
-		if (ArmourersWorkshopApi.isAvailable()) {
-			addSlotToContainer(new AWSlotOutfit(npc.inventory, 7, 27, 4));
-			addSlotToContainer(new AWSlotWings(npc.inventory, 8, 45, 4));
-		}
-		for (int i1 = 0; i1 < 3; ++i1) {
-			for (int l2 = 0; l2 < 9; ++l2) {
-				addSlotToContainer(new Slot(player.inventory, l2 + i1 * 9 + 9, l2 * 18 + 8, 113 + i1 * 18));
-			}
-		}
-		for (int j1 = 0; j1 < 9; ++j1) {
-			addSlotToContainer(new Slot(player.inventory, j1, j1 * 18 + 8, 171));
-		}
-	}
+   @Override
+   public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int index) {
+      Slot slot = slots.get(index);
+      if (slot.hasItem()) {
+         ItemStack inSlot = slot.getItem();
+         if (index >= 16) { // player inventory
+            if (inSlot.getItem() instanceof ArmorItem armorItem) {
+               Slot armSlot = switch (armorItem.getEquipmentSlot()) {
+                  case CHEST -> slots.get(1);
+                  case LEGS -> slots.get(2);
+                  case FEET -> slots.get(3);
+                  default -> slots.get(0);
+               };
+               ItemStack armorStack = armSlot.getItem().copy();
+               armSlot.set(inSlot);
+               slot.set(armorStack);
+            }
+            else if (inSlot.getItem() instanceof SwordItem || inSlot.getItem() instanceof BowItem) {
+               Slot wpnSlot = slots.get(4);
+               ItemStack wpnStack = wpnSlot.getItem().copy();
+               wpnSlot.set(inSlot);
+               slot.set(wpnStack);
+            }
+            else if (inSlot.getItem() instanceof ShieldItem) {
+               Slot sldSlot = slots.get(6);
+               ItemStack offStack = sldSlot.getItem().copy();
+               sldSlot.set(inSlot);
+               slot.set(offStack);
+            }
+            else {
+               Slot pjcSlot = slots.get(5);
+               ItemStack pjcStack = pjcSlot.getItem().copy();
+               pjcSlot.set(inSlot);
+               slot.set(pjcStack);
+            } // any projective
+         }
+         else if (playerIn.getInventory().add(inSlot)) { // equipment
+            slot.set(ItemStack.EMPTY);
+            playerIn.inventoryMenu.broadcastChanges();
+            if (playerIn instanceof ServerPlayer player) {
+               player.connection.send(new ClientboundContainerSetSlotPacket(-2, 0, player.getInventory().selected, player.getInventory().getItem(player.getInventory().selected)));
+            }
+         }
+      }
+      return ItemStack.EMPTY;
+   }
 
-	@Override
-	public boolean canInteractWith(@Nonnull EntityPlayer entityplayer) { return true; }
-
-	@Override
-	public @Nonnull ItemStack slotClick(int slotId, int dragType, @Nonnull ClickType clickTypeIn, @Nonnull EntityPlayer player) {
-		if (clickTypeIn == ClickType.QUICK_MOVE && dragType == 0) { // shift + LMB
-			if (slotId < 0) { return ItemStack.EMPTY; }
-			Slot slot = inventorySlots.get(slotId);
-			if (slot == null || !slot.canTakeStack(player) || !slot.getHasStack()) { return ItemStack.EMPTY; }
-			ItemStack stackInClickSlot = slot.getStack();
-			if (slotId < 7) { // take off your equipment
-				if (player.inventory.addItemStackToInventory(stackInClickSlot)) { slot.putStack(ItemStack.EMPTY); }
-			}
-			else if (stackInClickSlot.getItem() instanceof ItemArmor) {
-				Slot armSlot;
-				switch (((ItemArmor) stackInClickSlot.getItem()).armorType) {
-					case HEAD:
-						armSlot = inventorySlots.get(0);
-						break;
-					case CHEST:
-						armSlot = inventorySlots.get(1);
-						break;
-					case LEGS:
-						armSlot = inventorySlots.get(2);
-						break;
-					case FEET:
-						armSlot = inventorySlots.get(3);
-						break;
-					default:
-						armSlot = null;
-						break;
-				}
-				if (armSlot != null) {
-					ItemStack stackInArmSlot = armSlot.getStack().copy();
-					armSlot.putStack(stackInClickSlot);
-					slot.putStack(stackInArmSlot);
-				}
-			}
-			else if (stackInClickSlot.getItem() instanceof ItemSword || stackInClickSlot.getItem() instanceof ItemBow) {
-				Slot wpnSlot = inventorySlots.get(4);
-				if (wpnSlot != null) {
-					ItemStack stackInWpnSlot = wpnSlot.getStack().copy();
-					wpnSlot.putStack(stackInClickSlot);
-					slot.putStack(stackInWpnSlot);
-				}
-			}
-			else if (stackInClickSlot.getItem() instanceof ItemShield) {
-				Slot sldSlot = inventorySlots.get(6);
-				if (sldSlot != null) {
-					ItemStack stackInSldSlot = sldSlot.getStack().copy();
-					sldSlot.putStack(stackInClickSlot);
-					slot.putStack(stackInSldSlot);
-				}
-			}
-			else {
-				Slot pjcSlot = inventorySlots.get(5);
-				if (pjcSlot != null) {
-					ItemStack stackInPjcSlot = pjcSlot.getStack().copy();
-					pjcSlot.putStack(stackInClickSlot);
-					slot.putStack(stackInPjcSlot);
-				}
-			} // any projective
-			return ItemStack.EMPTY;
-		}
-		return super.slotClick(slotId, dragType, clickTypeIn, player);
-	}
-
-	@Override
-	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer playerIn, int index) { return ItemStack.EMPTY; }
+   @Override
+   public boolean stillValid(@NotNull Player playerIn) { return true; }
 
 }

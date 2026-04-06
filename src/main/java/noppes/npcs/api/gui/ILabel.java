@@ -1,29 +1,32 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface ILabel extends ICustomGuiComponent {
 
-	int getColor();
+   String getText();
 
-	int getHeight();
+   ILabel setText(@ParamName("label") String label);
 
-	float getScale();
+   int getColor();
 
-	String getText();
+   ILabel setColor(@ParamName("color") int color);
 
-	int getWidth();
+   float getScale();
 
-	boolean isShadow();
+   ILabel setScale(@ParamName("scale") float scale);
 
-	ILabel setColor(@ParamName("color") int color);
+   boolean getCentered();
 
-	ILabel setScale(@ParamName("scale") float scale);
+   ILabel setCentered(@ParamName("bo") boolean bo);
 
-	void setShadow(@ParamName("showShadow") boolean showShadow);
+   // New from Unofficial (BetaZavr)
+   boolean isShadow();
 
-	ILabel setSize(@ParamName("width") int width, @ParamName("height") int height);
+   void setShadow(@ParamName("showShadow") boolean showShadow);
 
-	ILabel setText(@ParamName("label") String label);
+   IComponent getMCText();
+
+   ILabel setMCText(@ParamName("component") IComponent component);
 
 }

@@ -1,26 +1,31 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
+import javax.annotation.Nonnull;
+
 public interface IDataElement {
 
-	String getData();
+    int getId();
 
-	String getName();
+    String getInfo();
 
-	Object getObject();
+    @Nonnull String getName();
 
-	Class<?> getParent();
+    String getObfuscatedName();
 
-	int getType();
+    @Nonnull Object getObject();
 
-	Object getValue();
+    @Nonnull Class<?> getParentClass();
 
-	Object invoke(@ParamName("values") Object[] values);
+    int getType();
 
-	boolean isBelong(@ParamName("clazz") Class<?> clazz);
+    Object getValue();
 
-	boolean setValue(@ParamName("value") Object value);
+    Object invoke(@ParamName("values") Object[] values);
+
+    boolean isBelong(@ParamName("clazz") Class<?> clazz);
+
+    boolean setValue(@ParamName("value") Object value);
 
 }

@@ -1,81 +1,64 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.ItemStack;
+import java.util.Objects;
+import java.util.UUID;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.constants.EntityType;
 import noppes.npcs.api.entity.IEntityItem;
 import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.reflection.entity.item.EntityItemReflection;
+import noppes.npcs.mixin.world.entity.item.IItemEntityMixin;
+import noppes.npcs.util.ValueUtil;
 
-import java.util.Objects;
+public class EntityItemWrapper<T extends ItemEntity> extends EntityWrapper<T> implements IEntityItem<T> {
 
-@SuppressWarnings("rawtypes")
-public class EntityItemWrapper<T extends EntityItem> extends EntityWrapper<T> implements IEntityItem {
+   public EntityItemWrapper(T entity) {
+      super(entity);
+   }
 
-	public EntityItemWrapper(T entity) {
-		super(entity);
-	}
+   public String getOwner() {
+      return this.entity.getOwner() == null ? null : this.entity.getOwner().getUUID().toString();
+   }
 
-	@Override
-	public long getAge() {
-		return EntityItemReflection.getAge(entity); // parent getAge() is only Client
-	}
+   public void setOwner(String uuid) {
+      this.entity.setThrower(UUID.fromString(uuid));
+   }
 
-	@Override
-	public IItemStack getItem() {
-		return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(this.entity.getItem());
-	}
+   public int getPickupDelay() {
+      return ((IItemEntityMixin) entity).getPickupDelay();
+   }
 
-	@Override
-	public int getLifeSpawn() {
-		return this.entity.lifespan;
-	}
+   public void setPickupDelay(int delay) {
+      this.entity.setPickUpDelay(delay);
+   }
 
-	@Override
-	public String getOwner() {
-		return this.entity.getOwner();
-	}
+   public int getType() {
+      return 6;
+   }
 
-	@Override
-	public int getPickupDelay() {
-		return this.entity.pickupDelay;
-	}
+   public long getAge() {
+      return this.entity.getAge();
+   }
 
-	@Override
-	public int getType() {
-		return EntityType.ITEM.get();
-	}
+   public void setAge(long age) {
+      ((IItemEntityMixin) entity).setAge((int) ValueUtil.correctLong(age, -2147483648L, 2147483647L));
+   }
 
-	@Override
-	public void setAge(long age) {
-		EntityItemReflection.setAge(entity, (int) Math.max(Math.min(age, 2147483647L), 0));
-	}
+   public int getLifeSpawn() {
+      return this.entity.lifespan;
+   }
 
-	@Override
-	public void setItem(IItemStack item) {
-		ItemStack stack = (item == null) ? ItemStack.EMPTY : item.getMCItemStack();
-		this.entity.setItem(stack);
-	}
+   public void setLifeSpawn(int age) {
+      this.entity.lifespan = age;
+   }
 
-	@Override
-	public void setLifeSpawn(int age) {
-		this.entity.lifespan = age;
-	}
+   public IItemStack getItem() {
+      return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(this.entity.getItem());
+   }
 
-	@Override
-	public void setOwner(String name) {
-		this.entity.setOwner(name);
-	}
-
-	@Override
-	public void setPickupDelay(int delay) {
-		this.entity.setPickupDelay(delay);
-	}
-
-	@Override
-	public boolean typeOf(int type) {
-		return type == EntityType.ITEM.get() || super.typeOf(type);
-	}
+   public void setItem(IItemStack item) {
+      ItemStack stack = item == null ? ItemStack.EMPTY : item.getMCItemStack();
+      this.entity.setItem(stack);
+   }
 
 }

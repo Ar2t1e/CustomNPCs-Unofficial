@@ -1,28 +1,26 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.scoreboard.Score;
+import net.minecraft.world.scores.Score;
 import noppes.npcs.api.IScoreboardScore;
 
 public class ScoreboardScoreWrapper implements IScoreboardScore {
 
-	private final Score score;
+   private final Score score;
 
-	public ScoreboardScoreWrapper(Score score) {
-		this.score = score;
-	}
+   public ScoreboardScoreWrapper(Score score) {
+      this.score = score;
+   }
 
-	@Override
-	public String getPlayerName() {
-		return this.score.getPlayerName();
-	}
+   public int getValue() {
+      return this.score.getScore();
+   }
 
-	@Override
-	public int getValue() {
-		return this.score.getScorePoints();
-	}
+   public void setValue(int val) {
+      this.score.setScore(val);
+   }
 
-	@Override
-	public void setValue(int val) {
-		this.score.setScorePoints(val);
-	}
+   public String getPlayerName() {
+      return this.score.getOwner();
+   }
+
 }

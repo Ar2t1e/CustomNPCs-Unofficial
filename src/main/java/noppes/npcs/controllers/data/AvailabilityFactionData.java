@@ -5,11 +5,12 @@ import noppes.npcs.constants.EnumAvailabilityFactionType;
 
 public class AvailabilityFactionData {
 
-	public EnumAvailabilityFactionType factionAvailable;
-	public EnumAvailabilityFaction factionStance;
+    public EnumAvailabilityFactionType factionAvailable;
+    public EnumAvailabilityFaction factionStance;
 
-	public AvailabilityFactionData(EnumAvailabilityFactionType available, EnumAvailabilityFaction stance) {
-		this.factionAvailable = available;
-		this.factionStance = stance;
-	}
+    public AvailabilityFactionData(EnumAvailabilityFactionType availableType, EnumAvailabilityFaction stance) {
+        factionAvailable = availableType;
+        factionStance = stance;
+    }
+
 }

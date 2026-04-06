@@ -2,10 +2,8 @@ package noppes.npcs.api;
 
 public interface IDimension {
 
-	int getId();
+   String getId();
 
-	String getName();
-
-	String getSuffix();
+   String getEffectsLocation();
 
 }

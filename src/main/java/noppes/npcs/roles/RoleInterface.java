@@ -1,64 +1,77 @@
 package noppes.npcs.roles;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.entity.data.INPCRole;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class RoleInterface implements INPCRole {
+public abstract class RoleInterface implements INPCRole {
 
-	public EntityNPCInterface npc;
-	public RoleType type = RoleType.DEFAULT;
+   public static final RoleInterface NONE = new RoleInterface(null) {
 
-	public RoleInterface(EntityNPCInterface npc) {
-		this.npc = npc;
-	}
+      @Override
+      public CompoundTag save(CompoundTag compound) { return compound; }
 
-	public boolean aiContinueExecute() {
-		return false;
-	}
+      @Override
+      public void load(CompoundTag compound) { }
 
-	public void aiDeathExecute(Entity ignoredAttackingEntity) { }
+      @Override
+      public int getType() { return RoleType.NONE.get(); }
 
-	public boolean aiShouldExecute() {
-		return false;
-	}
+      @Override
+      public RoleType getEnumType() { return RoleType.NONE; }
 
-	public void aiStartExecuting() { }
+   };
 
-	public void aiUpdateTask() { }
+   public EntityNPCInterface npc;
 
-	public void clientUpdate() { }
+   // New from Unofficial (BetaZavr)
+   public RoleType type = RoleType.NONE;
 
-	public boolean defendOwner() {
-		return true;
-	}
+   public RoleInterface(EntityNPCInterface npcIn) { npc = npcIn; }
 
-	public void delete() { }
+   public void killed() { }
 
-	public void interact(EntityPlayer player) { }
+   public void delete() { }
 
-	public boolean isFollowing() {
-		return false;
-	}
+   public void aiDeathExecute(Entity attackingEntity) { }
 
-	public void killed() { }
+   public boolean aiShouldExecute() {
+      return false;
+   }
 
-	// New from Unofficial (BetaZavr)
-	public void load(NBTTagCompound compound) {
-		type = RoleType.get(compound.getInteger("Type"));
-	}
+   public boolean aiContinueExecute() {
+      return false;
+   }
 
-	public NBTTagCompound save(NBTTagCompound compound) {
-		compound.setInteger("Type", type.get());
-		return compound;
-	}
+   public void aiStartExecuting() { }
 
-	@Override
-	public int getType() { return type.get(); }
+   public void aiUpdateTask() { }
 
-	public RoleType getEnumType() { return type; }
+   public boolean defendOwner() {
+      return false;
+   }
 
+   public boolean isFollowing() {
+      return false;
+   }
+
+   public void clientUpdate() { }
+
+   // New from Unofficial (BetaZavr)
+   public void load(CompoundTag compound) { type = RoleType.get(compound.getInt("Type")); }
+
+   public CompoundTag save(CompoundTag compound) {
+      compound.putInt("Type", type.get());
+      return compound;
+   }
+
+   @Override
+   public int getType() { return type.get(); }
+
+   public RoleType getEnumType() { return type; }
+
+   public void interact(Player player) { }
 }

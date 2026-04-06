@@ -1,74 +1,68 @@
 package noppes.npcs.controllers.data;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import noppes.npcs.constants.EnumQuestTask;
-import noppes.npcs.quests.QuestObjective;
+import noppes.npcs.client.gui.util.quests.QuestObjective;
+
+import java.util.ArrayList;
 
 public class QuestData {
 
-	public final NBTTagCompound extraData = new NBTTagCompound();
-	public boolean isCompleted = false;
-	public Quest quest;
+   public Quest quest;
+   public long startIn = System.currentTimeMillis();
+   public boolean isCompleted;
+   public final CompoundTag extraData = new CompoundTag();
 
-	public QuestData(Quest quest) {
-		this.quest = quest;
-		int pos = 0;
-		for (QuestObjective task : quest.questInterface.tasks) {
-			if (task.getEnumType() == EnumQuestTask.KILL || task.getEnumType() == EnumQuestTask.AREAKILL
-					|| task.getEnumType() == EnumQuestTask.MANUAL) {
-				if (!this.extraData.hasKey("Targets", 9)) {
-					this.extraData.setTag("Targets", new NBTTagList());
-				}
-				NBTTagCompound nbt = new NBTTagCompound();
-				nbt.setString("Slot", task.getTargetName());
-				nbt.setInteger("Value", 0);
-				nbt.setInteger("ObjectPos", pos);
-				this.extraData.getTagList("Targets", 10).appendTag(nbt);
-			} else if (task.getEnumType() == EnumQuestTask.CRAFT) {
-				if (task.getItem().isEmpty()) {
-					continue;
-				}
-				if (this.extraData.hasKey("Crafts", 9)) {
-					this.extraData.setTag("Crafts", new NBTTagList());
-				}
-				NBTTagCompound nbt = new NBTTagCompound();
-				nbt.setTag("Item", task.getItemStack().writeToNBT(new NBTTagCompound()));
-				nbt.setInteger("Value", 0);
-				nbt.setInteger("ObjectPos", pos);
-				this.extraData.getTagList("Crafts", 10).appendTag(nbt);
-			} else if (task.getEnumType() == EnumQuestTask.LOCATION) {
-				if (this.extraData.hasKey("Locations", 9)) {
-					this.extraData.setTag("Locations", new NBTTagList());
-				}
-				NBTTagCompound nbt = new NBTTagCompound();
-				nbt.setString("Location", task.getTargetName());
-				nbt.setBoolean("Found", false);
-				nbt.setInteger("ObjectPos", pos);
-				this.extraData.getTagList("Locations", 10).appendTag(nbt);
-			}
-			pos++;
-		}
-	}
+   public QuestData(Quest questIn) {
+      quest = questIn;
+      int pos = 0;
+      for (QuestObjective task : quest.questInterface.tasks) {
+         if (task.getEnumType() == EnumQuestTask.KILL || task.getEnumType() == EnumQuestTask.AREAKILL || task.getEnumType() == EnumQuestTask.MANUAL) {
+            if (!extraData.contains("Targets", 9)) { extraData.put("Targets", new ListTag()); }
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("Slot", task.getTargetName());
+            nbt.putInt("Value", 0);
+            nbt.putInt("ObjectPos", pos);
+            extraData.getList("Targets", 10).add(nbt);
+         }
+         else if (task.getEnumType() == EnumQuestTask.CRAFT) {
+            if (task.getItem().isEmpty()) { continue; }
+            if (extraData.contains("Crafts", 9)) { extraData.put("Crafts", new ListTag()); }
+            CompoundTag nbt = new CompoundTag();
+            nbt.put("Item", task.getItemStack().save(new CompoundTag()));
+            nbt.putInt("Value", 0);
+            nbt.putInt("ObjectPos", pos);
+            extraData.getList("Crafts", 10).add(nbt);
+         }
+         else if (task.getEnumType() == EnumQuestTask.LOCATION) {
+            if (extraData.contains("Locations", 9)) { extraData.put("Locations", new ListTag()); }
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("Location", task.getTargetName());
+            nbt.putBoolean("Found", false);
+            nbt.putInt("ObjectPos", pos);
+            extraData.getList("Locations", 10).add(nbt);
+         }
+         pos++;
+      }
+   }
 
-	public void readEntityFromNBT(NBTTagCompound nbttagcompound) {
-		this.isCompleted = nbttagcompound.getBoolean("QuestCompleted");
-		List<String> list = new ArrayList<>(extraData.getKeySet());
-		for (String key : list) {
-			this.extraData.removeTag(key);
-		}
-		list = new ArrayList<>(nbttagcompound.getCompoundTag("ExtraData").getKeySet());
-		for (String key : list) {
-			this.extraData.setTag(key, nbttagcompound.getCompoundTag("ExtraData").getTag(key));
-		}
-	}
+   public void save(CompoundTag compound) {
+      compound.putBoolean("QuestCompleted", isCompleted);
+      compound.putLong("StartIn", startIn);
+      compound.put("ExtraData", extraData);
+   }
 
-	public void writeEntityToNBT(NBTTagCompound nbttagcompound) {
-		nbttagcompound.setBoolean("QuestCompleted", this.isCompleted);
-		nbttagcompound.setTag("ExtraData", this.extraData);
-	}
+   public QuestData load(CompoundTag compound) {
+      isCompleted = compound.getBoolean("QuestCompleted");
+      startIn = compound.getLong("StartIn");
+      for (String key : new ArrayList<>(extraData.getAllKeys())) { extraData.remove(key); }
+      for (String key : new ArrayList<>(compound.getCompound("ExtraData").getAllKeys())) {
+         Tag tag = compound.getCompound("ExtraData").get(key);
+         if (tag != null) { extraData.put(key, tag); }
+      }
+      return this;
+   }
 
 }

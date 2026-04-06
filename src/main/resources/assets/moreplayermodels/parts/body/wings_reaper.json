@@ -1,0 +1,38 @@
+{
+	"name": "part.wings",
+	"render_type": "simple",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{
+				"name": "left_wing",
+				"texture_position": [56, 16],
+				"part_size": [8, 16],
+				"scale": [1.0, 1.0, 1.0],
+				"translate": [2, 2.5, 1.0],
+				"rotate": [41.0, -30.0, -30.0],
+				"rotate_offset": [8, 14.0, 0.0],
+				"mirror": true
+			},
+			{
+				"name": "right_wing",
+				"texture_position": [56, 16],
+				"part_size": [8, 16],
+				"scale": [1.0, 1.0, 1.0],
+				"translate": [-2, 2.5, 1.0],
+				"rotate": [41.0, 30.0, 30.0],
+				"rotate_offset": [-8, 14.0, 0.0]
+			}
+		]
+	},
+	"animation_type": "wings",
+	"texture": "moreplayermodels:textures/wings/2.png",
+	"body_part": "body",
+	"menu": "part.wings",
+	"preview_rotation": 135,
+	"translate": [0, 0.0, 0.0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0, 0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

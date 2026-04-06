@@ -1,191 +1,184 @@
 package noppes.npcs.client.gui;
 
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.ai.EntityAIAnimation;
 import noppes.npcs.entity.data.DataAI;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
+public class SubGuiNpcMovement extends GuiBasic implements ITextfieldListener {
 
-public class SubGuiNpcMovement extends SubGuiInterface implements ITextfieldListener {
+   protected final DataAI ai;
 
-	protected static final String[] walkingTypes = new String[] { "ai.standing", "ai.wandering", "ai.movingpath" };
-	protected static final String[] navigationTypes = new String[] { "movement.ground", "movement.flying", "movement.swimming" };
-	protected static final String[] animationTypes = new String[] { "stats.normal", "movement.sitting", "movement.lying", "movement.hug", "movement.sneaking", "movement.dancing", "movement.aiming", "movement.crawling" };
-	protected static final String[] rotationTypes = new String[] { "movement.body", "movement.manual", "movement.stalking", "movement.head", "movement.stalking.2" };
+   public SubGuiNpcMovement(DataAI ais) {
+      super();
+      ai = ais;
+      setBackground("menubg.png");
 
-	private final DataAI ais;
+      imageWidth = 256;
+      imageHeight = 216;
+   }
 
-	public SubGuiNpcMovement(DataAI aisIn) {
-		super(0);
-		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 216;
-		closeOnEsc = true;
+   @Override
+   public void init() {
+      super.init();
+      int x0 = guiLeft + 4;
+      int x1 = x0 + 76;
+      int y = guiTop + 4;
+      addLabel(0, x0, y + 5, "movement.type");
+      addButton(0, x1, y, false, ai.getMovingType(), "ai.standing", "ai.wandering", "ai.movingpath")
+              .setSize(100, 20)
+              .setHoverTexts("ai.hover.walking.type");
+      y += 22;
+      addButton(15, x1, y, false, ai.movementType, "movement.ground", "movement.flying", "movement.swimming")
+              .setSize(100, 20)
+              .setHoverTexts("ai.hover.walking");
+      addLabel(15, x0, y + 5, "movement.navigation");
+      if (ai.getMovingType() == 1) {
+         addTextField(4, x1 += 20, y += 22, 60, 20, ai.walkingRange)
+                 .setMinMaxDefault(0, 1000, 10)
+                 .setHoverTexts("ai.hover.walking.range");
+         addLabel(4, x0, y + 5, "gui.range");
+         addTextField(10, x1, y += 22, 60, 20, ai.activeRange)
+                 .setMinMaxDefault(32, 1000, 10);
+         addLabel(10, x0, y + 5, "gui.active range");
+         addYesNo(5, x1, y += 22, ai.npcInteracting)
+                 .setSize(50, 20)
+                 .setHoverTexts("ai.hover.interact");
+         addLabel(5, x0, y + 5, "movement.wanderinteract");
+         addYesNo(9, x1 - 20, y += 22, ai.movingPause)
+                 .setSize(80, 20)
+                 .setHoverTexts("ai.hover.moving.pause");
+         addLabel(9, x0, y + 5, "movement.pauses");
+      }
+      else if (ai.getMovingType() == 0) {
+         addLabel(17, x0, y + 27, "spawner.posoffset");
+         addLabel(7, guiLeft + 89, y + 27, "X:");
+         addTextField(7, x1 + 19, y += 22, 24, 20, ai.bodyOffsetX)
+                 .setMinMaxDefault(0.0f, 10.0f, 5.0f)
+                 .setHoverTexts("ai.hover.offset.x");
+         addLabel(8, guiLeft + 125, y + 5, "Y:");
+         addTextField(8, guiLeft + 135, y, 24, 20, ai.bodyOffsetY)
+                 .setMinMaxDefault(0.0f, 100.0f, 5.0f)
+                 .setHoverTexts("ai.hover.offset.y");
+         addLabel(9, guiLeft + 161, y + 5, "Z:");
+         addTextField(9, guiLeft + 171, y, 24, 20, ai.bodyOffsetZ)
+                 .setMinMaxDefault(0.0f, 10.0f, 5.0f)
+                 .setHoverTexts("ai.hover.offset.z");
+         addButton(3, x1, y += 22, false, ai.animationType,
+                 "stats.normal", "movement.sitting", "movement.lying", "movement.hug", "movement.sneaking",
+                 "movement.dancing", "movement.aiming", "movement.crawling").setSize(100, 20)
+                 .setHoverTexts("ai.hover.walking.anim");
+         addLabel(3, x0, y + 5, "movement.animation");
+         if (ai.animationType != 2) {
+            addButton(4, x1, y += 22, false, ai.getStandingType(), "movement.body", "movement.manual", "movement.stalking", "movement.head")
+                    .setSize(80, 20)
+                    .setHoverTexts("ai.hover.rotation");
+            addLabel(1, x0, y + 5, "movement.rotation");
+         }
+         else {
+            addTextField(5, x1 + 19, y += 22, 40, 20, ai.orientation)
+                    .setMinMaxDefault(0, 359, 0)
+                    .setHoverTexts("ai.hover.interact");
+            addLabel(6, x0, y + 5, "movement.rotation");
+            addLabel(5, guiLeft + 142, y + 5, "(0-359)");
+         }
+         if (ai.getStandingType() == 1 || ai.getStandingType() == 3) {
+            addTextField(5, guiLeft + 165, y, 40, 20, ai.orientation)
+                    .setMinMaxDefault(0, 359, 0)
+                    .setHoverTexts("ai.hover.interact");
+            addLabel(5, guiLeft + 207, y + 5, "(0-359)");
+         }
+      }
+      if (ai.getMovingType() != 0) {
+         addButton(12, x1, y += 22, false, EntityAIAnimation.getWalkingAnimationGuiIndex(ai.animationType),
+                 "stats.normal", "movement.sneaking", "movement.aiming", "movement.dancing", "movement.crawling", "movement.hug")
+                 .setSize(100, 20)
+                 .setHoverTexts("ai.hover.walking.anim");
+         addLabel(12, x0, y + 5, "movement.animation");
+      }
+      if (ai.getMovingType() == 2) {
+         x1 = guiLeft + 80;
+         addButton(8, x1, y += 22, false, ai.movingPattern, "ai.looping", "ai.backtracking")
+                 .setSize(80, 20)
+                 .setHoverTexts("ai.hover.path.closed");
+         addLabel(8, x0, y + 5, "movement.name");
+         addYesNo(9, x1, y += 22, ai.movingPause).setSize(80, 20);
+         addLabel(9, x0, y + 5, "movement.pauses");
+      }
+      x1 = guiLeft + 100;
+      addYesNo(13, x1, y += 22, ai.stopAndInteract)
+              .setSize(50, 20)
+              .setHoverTexts("ai.hover.stop.interact");
+      addLabel(13, x0, y + 5, "movement.stopinteract");
+      addTextField(14, x1 - 20, y += 22, 50, 18, ai.getWalkingSpeed())
+              .setMinMaxDefault(0, 100, ai.getWalkingSpeed())
+              .setHoverTexts("ai.hover.walking.speed");
+      addLabel(14, x0, y + 5, "stats.movespeed");
+      addTextField(15, x1 - 20, y += 22, 50, 18, ai.stepheight)
+              .setMinMaxDefault(0.1d, 3.0d, ai.stepheight)
+              .setHoverTexts("ai.hover.step.height");
+      addLabel(16, x0, y + 5, "stats.stepheight");
+      addButton(66, guiLeft + 190, guiTop + 190, "gui.done")
+              .setSize(60, 20)
+              .setHoverTexts("hover.back");
+   }
 
-		ais = aisIn;
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 0: {
+            ai.setMovingType(button.getValue());
+            if (ai.getMovingType() != 0) {
+               ai.animationType = 0;
+               ai.setStandingType(0);
+               ai.bodyOffsetX = ai.bodyOffsetY = ai.bodyOffsetZ = 5.0F;
+            }
+            init();
+            break;
+         }
+         case 3: {
+            ai.animationType = button.getValue();
+            init();
+            break;
+         }
+         case 4: {
+            ai.setStandingType(button.getValue());
+            init();
+            break;
+         }
+         case 5: ai.npcInteracting = button.getValue() == 1; break;
+         case 8: ai.movingPattern = button.getValue(); break;
+         case 9: ai.movingPause = button.getValue() == 1; break;
+         case 12: {
+            ai.animationType = switch (button.getValue()) {
+               case 1 -> 4;
+               case 2 -> 6;
+               case 3 -> 5;
+               case 4 -> 7;
+               case 5 -> 3;
+               default -> 0;
+            };
+            break;
+         }
+         case 13: ai.stopAndInteract = button.getValue() == 1; break;
+         case 15: ai.movementType = button.getValue(); break;
+         case 66: onClose(); break;
+      }
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				ais.setMovingType(button.getValue());
-				if (ais.getMovingType() != 0) {
-					ais.animationType = 0;
-					ais.setStandingType(0);
-                    float f = 5.0f;
-					ais.bodyOffsetZ = f;
-					ais.bodyOffsetY = f;
-					ais.bodyOffsetX = f;
-				}
-				initGui();
-				break;
-			}
-			case 2: ais.movingPause = (button.getValue() == 1); break;
-			case 4: ais.setAnimation(button.getValue()); initGui(); break;
-			case 5: ais.npcInteracting = (button.getValue() == 1); break;
-			case 7: ais.setStandingType(button.getValue()); initGui(); break;
-			case 8: ais.movingPattern = button.getValue(); break;
-			case 13: ais.stopAndInteract = (button.getValue() == 1); break;
-			case 15: ais.movementType = button.getValue(); break;
-			case 66: onClosed(); break;
-		}
-	}
-
-	@Override
-	public void initGui() {
-		super.initGui();
-		int y = guiTop + 4;
-		int lId = 0;
-		addLabel(new GuiNpcLabel(lId++, "movement.type", guiLeft + 4, y + 5));
-		GuiNpcButton button = new GuiNpcButton(0, guiLeft + 80, y, 100, 20, walkingTypes, ais.getMovingType());
-		button.setHoverText("ai.hover.walking.type");
-		addButton(button);
-		y += 22;
-		button = new GuiNpcButton(15, guiLeft + 80, y, 100, 20, navigationTypes, ais.movementType);
-		button.setHoverText("ai.hover.walking");
-		addButton(button);
-		addLabel(new GuiNpcLabel(lId++, "movement.navigation", guiLeft + 4, y + 5));
-		GuiNpcTextField textField;
-		if (ais.getMovingType() == 1) {
-			y += 22;
-			textField = new GuiNpcTextField(4, this, guiLeft + 100, y, 40, 20, ais.walkingRange + "");
-			textField.setMinMaxDefault(0, 1000, 10);
-			textField.setHoverText("ai.hover.walking.range");
-			addTextField(textField);
-			addLabel(new GuiNpcLabel(lId++, "gui.range", guiLeft + 4, y + 5));
-			y += 22;
-			button = new GuiNpcButton(5, guiLeft + 100, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (ais.npcInteracting ? 1 : 0));
-			button.setHoverText("ai.hover.offset.r");
-			addButton(button);
-			addLabel(new GuiNpcLabel(lId++, "movement.wanderinteract", guiLeft + 4, y + 5));
-			y += 22;
-			button = new GuiNpcButton(2, guiLeft + 80, y, 80, 20, new String[] { "gui.no", "gui.yes" }, (ais.movingPause ? 1 : 0));
-			button.setHoverText("ai.hover.offset.r");
-			addButton(button);
-			addLabel(new GuiNpcLabel(lId++, "movement.pauses", guiLeft + 4, y + 5));
-		}
-		else if (ais.getMovingType() == 0) {
-			y += 22;
-			addLabel(new GuiNpcLabel(lId++, "spawner.posoffset", guiLeft + 4, y + 5));
-			// x
-			addLabel(new GuiNpcLabel(lId++, "X:", guiLeft + 115, y + 5));
-			textField = new GuiNpcTextField(7, this, guiLeft + 99, y, 24, 20, ais.bodyOffsetX + "");
-			textField.setMinMaxDoubleDefault(0.0d, 10.0d, 5.0d);
-			textField.setHoverText("ai.hover.offset.x");
-			addTextField(textField);
-			// y
-			addLabel(new GuiNpcLabel(lId++, "Y:", guiLeft + 125, y + 5));
-			textField = new GuiNpcTextField(8, this, guiLeft + 135, y, 24, 20, ais.bodyOffsetY + "");
-			textField.setMinMaxDoubleDefault(0.0d, 10.0d, 5.0d);
-			textField.setHoverText("ai.hover.offset.y");
-			addTextField(textField);
-			// z
-			addLabel(new GuiNpcLabel(lId++, "Z:", guiLeft + 161, y + 5));
-			textField = new GuiNpcTextField(9, this, guiLeft + 171, y, 24, 20, ais.bodyOffsetZ + "");
-			textField.setMinMaxDoubleDefault(0.0d, 10.0d, 5.0d);
-			textField.setHoverText("ai.hover.offset.z");
-			addTextField(textField);
-			y += 22;
-			button = new GuiNpcButton(4, guiLeft + 80, y, 100, 20, animationTypes, ais.animationType);
-			button.setHoverText("ai.hover.walking.anim");
-			addButton(button);
-			addLabel(new GuiNpcLabel(lId++, "movement.animation", guiLeft + 4, y + 5));
-			if (ais.animationType != 2) {
-				y += 22;
-				button = new GuiNpcButton(7, guiLeft + 80, y, 80, 20, rotationTypes, ais.getStandingType());
-				button.setHoverText("ai.hover.rotation");
-				addButton(button);
-				addLabel(new GuiNpcLabel(lId++, "movement.rotation", guiLeft + 4, y + 5));
-			} else {
-				y += 22;
-				textField = new GuiNpcTextField(5, this, guiLeft + 99, y, 40, 20, ais.orientation + "");
-				textField.setMinMaxDefault(0, 359, 0);
-				textField.setHoverText("ai.hover.interact");
-				addTextField(textField);
-				addLabel(new GuiNpcLabel(lId++, "movement.rotation", guiLeft + 4, y + 5));
-				addLabel(new GuiNpcLabel(lId++, "(0-359)", guiLeft + 142, y + 5));
-			}
-			if (ais.getStandingType() == 1 || ais.getStandingType() == 3 || ais.getStandingType() == 4) {
-				textField = new GuiNpcTextField(5, this, guiLeft + 165, y, 40, 20, ais.orientation + "");
-				textField.setMinMaxDefault(0, 359, 0);
-				textField.setHoverText("ai.hover.interact");
-				addTextField(textField);
-				addLabel(new GuiNpcLabel(lId++, "(0-359)", guiLeft + 207, y + 5));
-			}
-		}
-		if (ais.getMovingType() != 0) {
-			y += 22;
-			button = new GuiNpcButton(4, guiLeft + 80, y, 100, 20, animationTypes, ais.animationType);
-			button.setHoverText("ai.hover.walking.anim");
-			addButton(button);
-			addLabel(new GuiNpcLabel(lId++, "movement.animation", guiLeft + 4, y + 5));
-		}
-		if (ais.getMovingType() == 2) {
-			y += 22;
-			button = new GuiNpcButton(8, guiLeft + 80, y, 80, 20, new String[] { "ai.looping", "ai.backtracking" }, ais.movingPattern);
-			button.setHoverText("ai.hover.path.closed");
-			addButton(button);
-			addLabel(new GuiNpcLabel(lId++, "movement.name", guiLeft + 4, y + 5));
-			y += 22;
-			button = new GuiNpcButton(2, guiLeft + 80, y, 80, 20, new String[] { "gui.no", "gui.yes" }, (ais.movingPause ? 1 : 0));
-			button.setHoverText("ai.hover.walking.stop");
-			addButton(button);
-			addLabel(new GuiNpcLabel(lId++, "movement.pauses", guiLeft + 4, y + 5));
-		}
-		y += 22;
-		button = new GuiNpcButton(13, guiLeft + 100, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (ais.stopAndInteract ? 1 : 0));
-		button.setHoverText("ai.hover.stop.interact");
-		addButton(button);
-		addLabel(new GuiNpcLabel(lId++, "movement.stopinteract", guiLeft + 4, y + 5));
-		y += 22;
-		textField = new GuiNpcTextField(14, this, guiLeft + 80, y, 50, 18, ais.getWalkingSpeed() + "");
-		textField.setMinMaxDefault(0, 10, 4);
-		textField.setHoverText("ai.hover.walking.speed");
-		addTextField(textField);
-		addLabel(new GuiNpcLabel(lId++, "stats.movespeed", guiLeft + 5, y + 5));
-		y += 22;
-		textField = new GuiNpcTextField(15, this, guiLeft + 80, y, 50, 18, ais.stepheight + "");
-		textField.setMinMaxDoubleDefault(0.1d, 3.0d, ais.stepheight);
-		textField.setHoverText("ai.hover.step.height");
-		addTextField(textField);
-		addLabel(new GuiNpcLabel(lId, "stats.stepheight", guiLeft + 5, y + 5));
-		button = new GuiNpcButton(66, guiLeft + 190, guiTop + 190, 60, 20, "gui.done");
-		button.setHoverText("hover.back");
-		addButton(button);
-	}
-
-	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		switch (textfield.getID()) {
-			case 4: ais.walkingRange = textfield.getInteger(); break;
-			case 5: ais.orientation = textfield.getInteger(); npc.rotationYaw = textfield.getInteger(); break;
-			case 7: ais.bodyOffsetX = (float) (Math.round(textfield.getDouble() * 100.0d) / 100.0d); initGui(); break;
-			case 8: ais.bodyOffsetY = (float) (Math.round(textfield.getDouble() * 100.0d) / 100.0d); initGui(); break;
-			case 9: ais.bodyOffsetZ = (float) (Math.round(textfield.getDouble() * 100.0d) / 100.0d); initGui(); break;
-			case 14: ais.setWalkingSpeed(textfield.getInteger()); break;
-			case 15: ais.stepheight = (float) textfield.getDouble(); break;
-		}
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      switch (textField.id) {
+         case 4: ai.walkingRange = textField.getInteger(); break;
+         case 5: ai.orientation = textField.getInteger(); break;
+         case 7: ai.bodyOffsetX = textField.getFloat(); break;
+         case 8: ai.bodyOffsetY = textField.getFloat(); break;
+         case 9: ai.bodyOffsetZ = textField.getFloat(); break;
+         case 10: ai.activeRange = textField.getInteger(); break;
+         case 14: ai.setWalkingSpeed(textField.getInteger()); break;
+         case 15: ai.stepheight = textField.getFloat(); break;
+      }
+   }
 
 }

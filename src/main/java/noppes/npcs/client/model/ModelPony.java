@@ -1,694 +1,766 @@
 package noppes.npcs.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-
-import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
-
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.resources.IResource;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import noppes.npcs.LogWriter;
-import noppes.npcs.entity.EntityNPCInterface;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.Mth;
 import noppes.npcs.entity.EntityNpcPony;
+import noppes.npcs.shared.client.model.ModelPlaneRenderer;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
 
-public class ModelPony extends ModelBase {
+public class ModelPony<T extends EntityNpcPony> extends EntityModel<T> {
 
-	public boolean aimedBow;
-	public ModelRenderer Body;
-	public ModelPlaneRenderer[] BodyPiece;
-	public ModelRenderer Head;
-	public ModelRenderer[] Headpiece;
-	public int heldItemRight;
-	public ModelRenderer Helmet;
-	public boolean isFlying;
-	public boolean isPegasus;
-	public boolean isSleeping;
-	public boolean isSneak;
-	public boolean isUnicorn;
-	public ModelRenderer LeftArm;
-	public ModelRenderer LeftLeg;
-	public ModelRenderer[] LeftWing;
-	public ModelRenderer[] LeftWingExt;
-    public ModelRenderer RightArm;
-	public ModelRenderer RightLeg;
-	public ModelRenderer[] RightWing;
-	public ModelRenderer[] RightWingExt;
-	public ModelPlaneRenderer[] Tail;
-	public ModelRenderer unicornarm;
-	private float WingRotateAngleZ;
+   public float WingRotateAngleX;
+   public float WingRotateAngleY;
+   public float WingRotateAngleZ;
+   public float TailRotateAngleY;
+   public NopModelPart Head;
+   public NopModelPart[] Headpiece;
+   public NopModelPart Helmet;
+   public NopModelPart Body;
+   public ModelPlaneRenderer[] BodyPiece;
+   public NopModelPart RightArm;
+   public NopModelPart LeftArm;
+   public NopModelPart RightLeg;
+   public NopModelPart LeftLeg;
+   public NopModelPart unicornArm;
+   public ModelPlaneRenderer[] Tail;
+   public NopModelPart[] LeftWing;
+   public NopModelPart[] RightWing;
+   public NopModelPart[] LeftWingExt;
+   public NopModelPart[] RightWingExt;
+   public boolean isPegasus;
+   public boolean isUnicorn;
+   public boolean isFlying;
+   public boolean isSleeping;
+   public boolean isSneak;
+   public boolean aimedBow;
+   public int heldItemRight;
 
-	public ModelPony(float f) {
-		this.init(f, 0.0f);
-	}
+   public ModelPony() {
+      this.init(0.0F, 0.0F);
+   }
 
-	public void init(float scale, float f) {
-		float f2 = 0.0f;
-		float f3 = 0.0f;
-		float f4 = 0.0f;
-		(this.Head = new ModelRenderer(this, 0, 0)).addBox(-4.0f, -4.0f, -6.0f, 8, 8, 8, scale);
-		this.Head.setRotationPoint(f2, f3 + f, f4);
-		this.Headpiece = new ModelRenderer[3];
-		(this.Headpiece[0] = new ModelRenderer(this, 12, 16)).addBox(-4.0f, -6.0f, -1.0f, 2, 2, 2, scale);
-		this.Headpiece[0].setRotationPoint(f2, f3 + f, f4);
-		(this.Headpiece[1] = new ModelRenderer(this, 12, 16)).addBox(2.0f, -6.0f, -1.0f, 2, 2, 2, scale);
-		this.Headpiece[1].setRotationPoint(f2, f3 + f, f4);
-		(this.Headpiece[2] = new ModelRenderer(this, 56, 0)).addBox(-0.5f, -10.0f, -4.0f, 1, 4, 1, scale);
-		this.Headpiece[2].setRotationPoint(f2, f3 + f, f4);
-		(this.Helmet = new ModelRenderer(this, 32, 0)).addBox(-4.0f, -4.0f, -6.0f, 8, 8, 8, scale + 0.5f);
-		this.Helmet.setRotationPoint(f2, f3, f4);
-		float f5 = 0.0f;
-		float f6 = 0.0f;
-		float f7 = 0.0f;
-		(this.Body = new ModelRenderer(this, 16, 16)).addBox(-4.0f, 4.0f, -2.0f, 8, 8, 4, scale);
-		this.Body.setRotationPoint(f5, f6 + f, f7);
-		this.BodyPiece = new ModelPlaneRenderer[13];
-		(this.BodyPiece[0] = new ModelPlaneRenderer(this, 24, 0)).addSidePlane(-4.0f, 4.0f, 2.0f, 8, 8, scale);
-		this.BodyPiece[0].setRotationPoint(f5, f6 + f, f7);
-		(this.BodyPiece[1] = new ModelPlaneRenderer(this, 24, 0)).addSidePlane(4.0f, 4.0f, 2.0f, 8, 8, scale);
-		this.BodyPiece[1].setRotationPoint(f5, f6 + f, f7);
-		(this.BodyPiece[2] = new ModelPlaneRenderer(this, 24, 0)).addTopPlane(-4.0f, 4.0f, 2.0f, 8, 8, scale);
-		this.BodyPiece[2].setRotationPoint(f2, f3 + f, f4);
-		(this.BodyPiece[3] = new ModelPlaneRenderer(this, 24, 0)).addTopPlane(-4.0f, 12.0f, 2.0f, 8, 8, scale);
-		this.BodyPiece[3].setRotationPoint(f2, f3 + f, f4);
-		(this.BodyPiece[4] = new ModelPlaneRenderer(this, 0, 20)).addSidePlane(-4.0f, 4.0f, 10.0f, 8, 4, scale);
-		this.BodyPiece[4].setRotationPoint(f5, f6 + f, f7);
-		(this.BodyPiece[5] = new ModelPlaneRenderer(this, 0, 20)).addSidePlane(4.0f, 4.0f, 10.0f, 8, 4, scale);
-		this.BodyPiece[5].setRotationPoint(f5, f6 + f, f7);
-		(this.BodyPiece[6] = new ModelPlaneRenderer(this, 24, 0)).addTopPlane(-4.0f, 4.0f, 10.0f, 8, 4, scale);
-		this.BodyPiece[6].setRotationPoint(f2, f3 + f, f4);
-		(this.BodyPiece[7] = new ModelPlaneRenderer(this, 24, 0)).addTopPlane(-4.0f, 12.0f, 10.0f, 8, 4, scale);
-		this.BodyPiece[7].setRotationPoint(f2, f3 + f, f4);
-		(this.BodyPiece[8] = new ModelPlaneRenderer(this, 24, 0)).addBackPlane(-4.0f, 4.0f, 14.0f, 8, 8, scale);
-		this.BodyPiece[8].setRotationPoint(f2, f3 + f, f4);
-		(this.BodyPiece[9] = new ModelPlaneRenderer(this, 32, 0)).addTopPlane(-1.0f, 10.0f, 8.0f, 2, 6, scale);
-		this.BodyPiece[9].setRotationPoint(f2, f3 + f, f4);
-		(this.BodyPiece[10] = new ModelPlaneRenderer(this, 32, 0)).addTopPlane(-1.0f, 12.0f, 8.0f, 2, 6, scale);
-		this.BodyPiece[10].setRotationPoint(f2, f3 + f, f4);
-		this.BodyPiece[11] = new ModelPlaneRenderer(this, 32, 0);
-		this.BodyPiece[11].mirror = true;
-		this.BodyPiece[11].addSidePlane(-1.0f, 10.0f, 8.0f, 2, 6, scale);
-		this.BodyPiece[11].setRotationPoint(f2, f3 + f, f4);
-		(this.BodyPiece[12] = new ModelPlaneRenderer(this, 32, 0)).addSidePlane(1.0f, 10.0f, 8.0f, 2, 6, scale);
-		this.BodyPiece[12].setRotationPoint(f2, f3 + f, f4);
-		(this.RightArm = new ModelRenderer(this, 40, 16)).addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.RightArm.setRotationPoint(-3.0f, 8.0f + f, 0.0f);
-		this.LeftArm = new ModelRenderer(this, 40, 16);
-		this.LeftArm.mirror = true;
-		this.LeftArm.addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.LeftArm.setRotationPoint(3.0f, 8.0f + f, 0.0f);
-		(this.RightLeg = new ModelRenderer(this, 40, 16)).addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.RightLeg.setRotationPoint(-3.0f, 0.0f + f, 0.0f);
-		this.LeftLeg = new ModelRenderer(this, 40, 16);
-		this.LeftLeg.mirror = true;
-		this.LeftLeg.addBox(-2.0f, 4.0f, -2.0f, 4, 12, 4, scale);
-		this.LeftLeg.setRotationPoint(3.0f, 0.0f + f, 0.0f);
-		(this.unicornarm = new ModelRenderer(this, 40, 16)).addBox(-3.0f, -2.0f, -2.0f, 4, 12, 4, scale);
-		this.unicornarm.setRotationPoint(-5.0f, 2.0f + f, 0.0f);
-		float f8 = 0.0f;
-		float f9 = 8.0f;
-		float f10 = -14.0f;
-		float f11 = 0.0f - f8;
-		float f12 = 10.0f - f9;
-		float f13 = 0.0f;
-		this.Tail = new ModelPlaneRenderer[10];
-		(this.Tail[0] = new ModelPlaneRenderer(this, 32, 0)).addTopPlane(-2.0f + f8, -7.0f + f9, 16.0f + f10, 4, 4,
-				scale);
-		this.Tail[0].setRotationPoint(f11, f12 + f, f13);
-		(this.Tail[1] = new ModelPlaneRenderer(this, 32, 0)).addTopPlane(-2.0f + f8, 9.0f + f9, 16.0f + f10, 4, 4,
-				scale);
-		this.Tail[1].setRotationPoint(f11, f12 + f, f13);
-		(this.Tail[2] = new ModelPlaneRenderer(this, 32, 0)).addBackPlane(-2.0f + f8, -7.0f + f9, 16.0f + f10, 4, 8,
-				scale);
-		this.Tail[2].setRotationPoint(f11, f12 + f, f13);
-		(this.Tail[3] = new ModelPlaneRenderer(this, 32, 0)).addBackPlane(-2.0f + f8, -7.0f + f9, 20.0f + f10, 4, 8,
-				scale);
-		this.Tail[3].setRotationPoint(f11, f12 + f, f13);
-		(this.Tail[4] = new ModelPlaneRenderer(this, 32, 0)).addBackPlane(-2.0f + f8, 1.0f + f9, 16.0f + f10, 4, 8,
-				scale);
-		this.Tail[4].setRotationPoint(f11, f12 + f, f13);
-		(this.Tail[5] = new ModelPlaneRenderer(this, 32, 0)).addBackPlane(-2.0f + f8, 1.0f + f9, 20.0f + f10, 4, 8,
-				scale);
-		this.Tail[5].setRotationPoint(f11, f12 + f, f13);
-		this.Tail[6] = new ModelPlaneRenderer(this, 36, 0);
-		this.Tail[6].mirror = true;
-		this.Tail[6].addSidePlane(2.0f + f8, -7.0f + f9, 16.0f + f10, 8, 4, scale);
-		this.Tail[6].setRotationPoint(f11, f12 + f, f13);
-		(this.Tail[7] = new ModelPlaneRenderer(this, 36, 0)).addSidePlane(-2.0f + f8, -7.0f + f9, 16.0f + f10, 8, 4,
-				scale);
-		this.Tail[7].setRotationPoint(f11, f12 + f, f13);
-		this.Tail[8] = new ModelPlaneRenderer(this, 36, 0);
-		this.Tail[8].mirror = true;
-		this.Tail[8].addSidePlane(2.0f + f8, 1.0f + f9, 16.0f + f10, 8, 4, scale);
-		this.Tail[8].setRotationPoint(f11, f12 + f, f13);
-		(this.Tail[9] = new ModelPlaneRenderer(this, 36, 0)).addSidePlane(-2.0f + f8, 1.0f + f9, 16.0f + f10, 8, 4,
-				scale);
-		this.Tail[9].setRotationPoint(f11, f12 + f, f13);
-		float f14 = 0.0f;
-		float f15 = 0.0f;
-		float f16 = 0.0f;
-		(this.LeftWing = new ModelRenderer[3])[0] = new ModelRenderer(this, 56, 16);
-		this.LeftWing[0].mirror = true;
-		this.LeftWing[0].addBox(4.0f, 5.0f, 2.0f, 2, 6, 2, scale);
-		this.LeftWing[0].setRotationPoint(f14, f15 + f, f16);
-		this.LeftWing[1] = new ModelRenderer(this, 56, 16);
-		this.LeftWing[1].mirror = true;
-		this.LeftWing[1].addBox(4.0f, 5.0f, 4.0f, 2, 8, 2, scale);
-		this.LeftWing[1].setRotationPoint(f14, f15 + f, f16);
-		this.LeftWing[2] = new ModelRenderer(this, 56, 16);
-		this.LeftWing[2].mirror = true;
-		this.LeftWing[2].addBox(4.0f, 5.0f, 6.0f, 2, 6, 2, scale);
-		this.LeftWing[2].setRotationPoint(f14, f15 + f, f16);
-		this.RightWing = new ModelRenderer[3];
-		(this.RightWing[0] = new ModelRenderer(this, 56, 16)).addBox(-6.0f, 5.0f, 2.0f, 2, 6, 2, scale);
-		this.RightWing[0].setRotationPoint(f14, f15 + f, f16);
-		(this.RightWing[1] = new ModelRenderer(this, 56, 16)).addBox(-6.0f, 5.0f, 4.0f, 2, 8, 2, scale);
-		this.RightWing[1].setRotationPoint(f14, f15 + f, f16);
-		(this.RightWing[2] = new ModelRenderer(this, 56, 16)).addBox(-6.0f, 5.0f, 6.0f, 2, 6, 2, scale);
-		this.RightWing[2].setRotationPoint(f14, f15 + f, f16);
-		float f17 = f2 + 4.5f;
-		float f18 = f3 + 5.0f;
-		float f19 = f4 + 6.0f;
-		(this.LeftWingExt = new ModelRenderer[7])[0] = new ModelRenderer(this, 56, 19);
-		this.LeftWingExt[0].mirror = true;
-		this.LeftWingExt[0].addBox(0.0f, 0.0f, 0.0f, 1, 8, 2, scale + 0.1f);
-		this.LeftWingExt[0].setRotationPoint(f17, f18 + f, f19);
-		this.LeftWingExt[1] = new ModelRenderer(this, 56, 19);
-		this.LeftWingExt[1].mirror = true;
-		this.LeftWingExt[1].addBox(0.0f, 8.0f, 0.0f, 1, 6, 2, scale + 0.1f);
-		this.LeftWingExt[1].setRotationPoint(f17, f18 + f, f19);
-		this.LeftWingExt[2] = new ModelRenderer(this, 56, 19);
-		this.LeftWingExt[2].mirror = true;
-		this.LeftWingExt[2].addBox(0.0f, -1.2f, -0.2f, 1, 8, 2, scale - 0.2f);
-		this.LeftWingExt[2].setRotationPoint(f17, f18 + f, f19);
-		this.LeftWingExt[3] = new ModelRenderer(this, 56, 19);
-		this.LeftWingExt[3].mirror = true;
-		this.LeftWingExt[3].addBox(0.0f, 1.8f, 1.3f, 1, 8, 2, scale - 0.1f);
-		this.LeftWingExt[3].setRotationPoint(f17, f18 + f, f19);
-		this.LeftWingExt[4] = new ModelRenderer(this, 56, 19);
-		this.LeftWingExt[4].mirror = true;
-		this.LeftWingExt[4].addBox(0.0f, 5.0f, 2.0f, 1, 8, 2, scale);
-		this.LeftWingExt[4].setRotationPoint(f17, f18 + f, f19);
-		this.LeftWingExt[5] = new ModelRenderer(this, 56, 19);
-		this.LeftWingExt[5].mirror = true;
-		this.LeftWingExt[5].addBox(0.0f, 0.0f, -0.2f, 1, 6, 2, scale + 0.3f);
-		this.LeftWingExt[5].setRotationPoint(f17, f18 + f, f19);
-		this.LeftWingExt[6] = new ModelRenderer(this, 56, 19);
-		this.LeftWingExt[6].mirror = true;
-		this.LeftWingExt[6].addBox(0.0f, 0.0f, 0.2f, 1, 3, 2, scale + 0.2f);
-		this.LeftWingExt[6].setRotationPoint(f17, f18 + f, f19);
-		float f20 = f2 - 4.5f;
-		float f21 = f3 + 5.0f;
-		float f22 = f4 + 6.0f;
-		(this.RightWingExt = new ModelRenderer[7])[0] = new ModelRenderer(this, 56, 19);
-		this.RightWingExt[0].mirror = true;
-		this.RightWingExt[0].addBox(0.0f, 0.0f, 0.0f, 1, 8, 2, scale + 0.1f);
-		this.RightWingExt[0].setRotationPoint(f20, f21 + f, f22);
-		this.RightWingExt[1] = new ModelRenderer(this, 56, 19);
-		this.RightWingExt[1].mirror = true;
-		this.RightWingExt[1].addBox(0.0f, 8.0f, 0.0f, 1, 6, 2, scale + 0.1f);
-		this.RightWingExt[1].setRotationPoint(f20, f21 + f, f22);
-		this.RightWingExt[2] = new ModelRenderer(this, 56, 19);
-		this.RightWingExt[2].mirror = true;
-		this.RightWingExt[2].addBox(0.0f, -1.2f, -0.2f, 1, 8, 2, scale - 0.2f);
-		this.RightWingExt[2].setRotationPoint(f20, f21 + f, f22);
-		this.RightWingExt[3] = new ModelRenderer(this, 56, 19);
-		this.RightWingExt[3].mirror = true;
-		this.RightWingExt[3].addBox(0.0f, 1.8f, 1.3f, 1, 8, 2, scale - 0.1f);
-		this.RightWingExt[3].setRotationPoint(f20, f21 + f, f22);
-		this.RightWingExt[4] = new ModelRenderer(this, 56, 19);
-		this.RightWingExt[4].mirror = true;
-		this.RightWingExt[4].addBox(0.0f, 5.0f, 2.0f, 1, 8, 2, scale);
-		this.RightWingExt[4].setRotationPoint(f20, f21 + f, f22);
-		this.RightWingExt[5] = new ModelRenderer(this, 56, 19);
-		this.RightWingExt[5].mirror = true;
-		this.RightWingExt[5].addBox(0.0f, 0.0f, -0.2f, 1, 6, 2, scale + 0.3f);
-		this.RightWingExt[5].setRotationPoint(f20, f21 + f, f22);
-		this.RightWingExt[6] = new ModelRenderer(this, 56, 19);
-		this.RightWingExt[6].mirror = true;
-		this.RightWingExt[6].addBox(0.0f, 0.0f, 0.2f, 1, 3, 2, scale + 0.2f);
-		this.RightWingExt[6].setRotationPoint(f20, f21 + f, f22);
-		this.WingRotateAngleZ = this.LeftWingExt[0].rotateAngleZ;
-	}
+   public void init(float ignoredStrech, float f) {
+      float f2 = 0.0F;
+      float f3 = 0.0F;
+      float f4 = 0.0F;
+      this.Head = new NopModelPart(64, 32, 0, 0);
+      this.Head.addBox(-4.0F, -4.0F, -6.0F, 8.0F, 8.0F, 8.0F);
+      this.Head.setPos(f2, f3 + f, f4);
+      this.Headpiece = new NopModelPart[3];
+      this.Headpiece[0] = new NopModelPart(64, 32, 12, 16);
+      this.Headpiece[0].addBox(-4.0F, -6.0F, -1.0F, 2.0F, 2.0F, 2.0F);
+      this.Headpiece[0].setPos(f2, f3 + f, f4);
+      this.Headpiece[1] = new NopModelPart(64, 32, 12, 16);
+      this.Headpiece[1].addBox(2.0F, -6.0F, -1.0F, 2.0F, 2.0F, 2.0F);
+      this.Headpiece[1].setPos(f2, f3 + f, f4);
+      this.Headpiece[2] = new NopModelPart(64, 32, 56, 0);
+      this.Headpiece[2].addBox(-0.5F, -10.0F, -4.0F, 1.0F, 4.0F, 1.0F);
+      this.Headpiece[2].setPos(f2, f3 + f, f4);
+      this.Helmet = new NopModelPart(64, 32, 32, 0);
+      this.Helmet.addBox(-4.0F, -4.0F, -6.0F, 8.0F, 8.0F, 8.5F);
+      this.Helmet.setPos(f2, f3, f4);
+      float f5 = 0.0F;
+      float f6 = 0.0F;
+      float f7 = 0.0F;
+      this.Body = new NopModelPart(64, 32, 16, 16);
+      this.Body.addBox(-4.0F, 4.0F, -2.0F, 8.0F, 8.0F, 4.0F);
+      this.Body.setPos(f5, f6 + f, f7);
+      this.BodyPiece = new ModelPlaneRenderer[13];
+      this.BodyPiece[0] = new ModelPlaneRenderer(64, 32, 24, 0);
+      this.BodyPiece[0].addSidePlane(-4.0F, 4.0F, 2.0F, 8, 8);
+      this.BodyPiece[0].setPos(f5, f6 + f, f7);
+      this.BodyPiece[1] = new ModelPlaneRenderer(64, 32, 24, 0);
+      this.BodyPiece[1].addSidePlane(4.0F, 4.0F, 2.0F, 8, 8);
+      this.BodyPiece[1].setPos(f5, f6 + f, f7);
+      this.BodyPiece[2] = new ModelPlaneRenderer(64, 32, 24, 0);
+      this.BodyPiece[2].addTopPlane(-4.0F, 4.0F, 2.0F, 8, 8);
+      this.BodyPiece[2].setPos(f2, f3 + f, f4);
+      this.BodyPiece[3] = new ModelPlaneRenderer(64, 32, 24, 0);
+      this.BodyPiece[3].addTopPlane(-4.0F, 12.0F, 2.0F, 8, 8);
+      this.BodyPiece[3].setPos(f2, f3 + f, f4);
+      this.BodyPiece[4] = new ModelPlaneRenderer(64, 32, 0, 20);
+      this.BodyPiece[4].addSidePlane(-4.0F, 4.0F, 10.0F, 8, 4);
+      this.BodyPiece[4].setPos(f5, f6 + f, f7);
+      this.BodyPiece[5] = new ModelPlaneRenderer(64, 32, 0, 20);
+      this.BodyPiece[5].addSidePlane(4.0F, 4.0F, 10.0F, 8, 4);
+      this.BodyPiece[5].setPos(f5, f6 + f, f7);
+      this.BodyPiece[6] = new ModelPlaneRenderer(64, 32, 24, 0);
+      this.BodyPiece[6].addTopPlane(-4.0F, 4.0F, 10.0F, 8, 4);
+      this.BodyPiece[6].setPos(f2, f3 + f, f4);
+      this.BodyPiece[7] = new ModelPlaneRenderer(64, 32, 24, 0);
+      this.BodyPiece[7].addTopPlane(-4.0F, 12.0F, 10.0F, 8, 4);
+      this.BodyPiece[7].setPos(f2, f3 + f, f4);
+      this.BodyPiece[8] = new ModelPlaneRenderer(64, 32, 24, 0);
+      this.BodyPiece[8].addBackPlane(-4.0F, 4.0F, 14.0F, 8, 8);
+      this.BodyPiece[8].setPos(f2, f3 + f, f4);
+      this.BodyPiece[9] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.BodyPiece[9].addTopPlane(-1.0F, 10.0F, 8.0F, 2, 6);
+      this.BodyPiece[9].setPos(f2, f3 + f, f4);
+      this.BodyPiece[10] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.BodyPiece[10].addTopPlane(-1.0F, 12.0F, 8.0F, 2, 6);
+      this.BodyPiece[10].setPos(f2, f3 + f, f4);
+      this.BodyPiece[11] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.BodyPiece[11].mirror = true;
+      this.BodyPiece[11].addSidePlane(-1.0F, 10.0F, 8.0F, 2, 6);
+      this.BodyPiece[11].setPos(f2, f3 + f, f4);
+      this.BodyPiece[12] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.BodyPiece[12].addSidePlane(1.0F, 10.0F, 8.0F, 2, 6);
+      this.BodyPiece[12].setPos(f2, f3 + f, f4);
+      this.RightArm = new NopModelPart(64, 32, 40, 16);
+      this.RightArm.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F);
+      this.RightArm.setPos(-3.0F, 8.0F + f, 0.0F);
+      this.LeftArm = new NopModelPart(64, 32, 40, 16);
+      this.LeftArm.mirror = true;
+      this.LeftArm.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F);
+      this.LeftArm.setPos(3.0F, 8.0F + f, 0.0F);
+      this.RightLeg = new NopModelPart(64, 32, 40, 16);
+      this.RightLeg.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F);
+      this.RightLeg.setPos(-3.0F, 0.0F + f, 0.0F);
+      this.LeftLeg = new NopModelPart(64, 32, 40, 16);
+      this.LeftLeg.mirror = true;
+      this.LeftLeg.addBox(-2.0F, 4.0F, -2.0F, 4.0F, 12.0F, 4.0F);
+      this.LeftLeg.setPos(3.0F, 0.0F + f, 0.0F);
+      this.unicornArm = new NopModelPart(64, 32, 40, 16);
+      this.unicornArm.addBox(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F);
+      this.unicornArm.setPos(-5.0F, 2.0F + f, 0.0F);
+      float f8 = 0.0F;
+      float f9 = 8.0F;
+      float f10 = -14.0F;
+      float f11 = 0.0F - f8;
+      float f12 = 10.0F - f9;
+      float f13 = 0.0F;
+      this.Tail = new ModelPlaneRenderer[10];
+      this.Tail[0] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.Tail[0].addTopPlane(-2.0F + f8, -7.0F + f9, 16.0F + f10, 4, 4);
+      this.Tail[0].setPos(f11, f12 + f, f13);
+      this.Tail[1] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.Tail[1].addTopPlane(-2.0F + f8, 9.0F + f9, 16.0F + f10, 4, 4);
+      this.Tail[1].setPos(f11, f12 + f, f13);
+      this.Tail[2] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.Tail[2].addBackPlane(-2.0F + f8, -7.0F + f9, 16.0F + f10, 4, 8);
+      this.Tail[2].setPos(f11, f12 + f, f13);
+      this.Tail[3] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.Tail[3].addBackPlane(-2.0F + f8, -7.0F + f9, 20.0F + f10, 4, 8);
+      this.Tail[3].setPos(f11, f12 + f, f13);
+      this.Tail[4] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.Tail[4].addBackPlane(-2.0F + f8, 1.0F + f9, 16.0F + f10, 4, 8);
+      this.Tail[4].setPos(f11, f12 + f, f13);
+      this.Tail[5] = new ModelPlaneRenderer(64, 32, 32, 0);
+      this.Tail[5].addBackPlane(-2.0F + f8, 1.0F + f9, 20.0F + f10, 4, 8);
+      this.Tail[5].setPos(f11, f12 + f, f13);
+      this.Tail[6] = new ModelPlaneRenderer(64, 32, 36, 0);
+      this.Tail[6].mirror = true;
+      this.Tail[6].addSidePlane(2.0F + f8, -7.0F + f9, 16.0F + f10, 8, 4);
+      this.Tail[6].setPos(f11, f12 + f, f13);
+      this.Tail[7] = new ModelPlaneRenderer(64, 32, 36, 0);
+      this.Tail[7].addSidePlane(-2.0F + f8, -7.0F + f9, 16.0F + f10, 8, 4);
+      this.Tail[7].setPos(f11, f12 + f, f13);
+      this.Tail[8] = new ModelPlaneRenderer(64, 32, 36, 0);
+      this.Tail[8].mirror = true;
+      this.Tail[8].addSidePlane(2.0F + f8, 1.0F + f9, 16.0F + f10, 8, 4);
+      this.Tail[8].setPos(f11, f12 + f, f13);
+      this.Tail[9] = new ModelPlaneRenderer(64, 32, 36, 0);
+      this.Tail[9].addSidePlane(-2.0F + f8, 1.0F + f9, 16.0F + f10, 8, 4);
+      this.Tail[9].setPos(f11, f12 + f, f13);
+      this.TailRotateAngleY = this.Tail[0].yRot;
+      float f14 = 0.0F;
+      float f15 = 0.0F;
+      float f16 = 0.0F;
+      this.LeftWing = new NopModelPart[3];
+      this.LeftWing[0] = new NopModelPart(64, 32, 56, 16);
+      this.LeftWing[0].mirror = true;
+      this.LeftWing[0].addBox(4.0F, 5.0F, 2.0F, 2.0F, 6.0F, 2.0F);
+      this.LeftWing[0].setPos(f14, f15 + f, f16);
+      this.LeftWing[1] = new NopModelPart(64, 32, 56, 16);
+      this.LeftWing[1].mirror = true;
+      this.LeftWing[1].addBox(4.0F, 5.0F, 4.0F, 2.0F, 8.0F, 2.0F);
+      this.LeftWing[1].setPos(f14, f15 + f, f16);
+      this.LeftWing[2] = new NopModelPart(64, 32, 56, 16);
+      this.LeftWing[2].mirror = true;
+      this.LeftWing[2].addBox(4.0F, 5.0F, 6.0F, 2.0F, 6.0F, 2.0F);
+      this.LeftWing[2].setPos(f14, f15 + f, f16);
+      this.RightWing = new NopModelPart[3];
+      this.RightWing[0] = new NopModelPart(64, 32, 56, 16);
+      this.RightWing[0].addBox(-6.0F, 5.0F, 2.0F, 2.0F, 6.0F, 2.0F);
+      this.RightWing[0].setPos(f14, f15 + f, f16);
+      this.RightWing[1] = new NopModelPart(64, 32, 56, 16);
+      this.RightWing[1].addBox(-6.0F, 5.0F, 4.0F, 2.0F, 8.0F, 2.0F);
+      this.RightWing[1].setPos(f14, f15 + f, f16);
+      this.RightWing[2] = new NopModelPart(64, 32, 56, 16);
+      this.RightWing[2].addBox(-6.0F, 5.0F, 6.0F, 2.0F, 6.0F, 2.0F);
+      this.RightWing[2].setPos(f14, f15 + f, f16);
+      float f17 = f2 + 4.5F;
+      float f18 = f3 + 5.0F;
+      float f19 = f4 + 6.0F;
+      this.LeftWingExt = new NopModelPart[7];
+      this.LeftWingExt[0] = new NopModelPart(64, 32, 56, 19);
+      this.LeftWingExt[0].mirror = true;
+      this.LeftWingExt[0].addBox(0.0F, 0.0F, 0.0F, 1.0F, 8.0F, 2.1F);
+      this.LeftWingExt[0].setPos(f17, f18 + f, f19);
+      this.LeftWingExt[1] = new NopModelPart(64, 32, 56, 19);
+      this.LeftWingExt[1].mirror = true;
+      this.LeftWingExt[1].addBox(0.0F, 8.0F, 0.0F, 1.0F, 6.0F, 2.1F);
+      this.LeftWingExt[1].setPos(f17, f18 + f, f19);
+      this.LeftWingExt[2] = new NopModelPart(64, 32, 56, 19);
+      this.LeftWingExt[2].mirror = true;
+      this.LeftWingExt[2].addBox(0.0F, -1.2F, -0.2F, 1.0F, 8.0F, 1.8F);
+      this.LeftWingExt[2].setPos(f17, f18 + f, f19);
+      this.LeftWingExt[3] = new NopModelPart(64, 32, 56, 19);
+      this.LeftWingExt[3].mirror = true;
+      this.LeftWingExt[3].addBox(0.0F, 1.8F, 1.3F, 1.0F, 8.0F, 1.9F);
+      this.LeftWingExt[3].setPos(f17, f18 + f, f19);
+      this.LeftWingExt[4] = new NopModelPart(64, 32, 56, 19);
+      this.LeftWingExt[4].mirror = true;
+      this.LeftWingExt[4].addBox(0.0F, 5.0F, 2.0F, 1.0F, 8.0F, 2.0F);
+      this.LeftWingExt[4].setPos(f17, f18 + f, f19);
+      this.LeftWingExt[5] = new NopModelPart(64, 32, 56, 19);
+      this.LeftWingExt[5].mirror = true;
+      this.LeftWingExt[5].addBox(0.0F, 0.0F, -0.2F, 1.0F, 6.0F, 2.3F);
+      this.LeftWingExt[5].setPos(f17, f18 + f, f19);
+      this.LeftWingExt[6] = new NopModelPart(64, 32, 56, 19);
+      this.LeftWingExt[6].mirror = true;
+      this.LeftWingExt[6].addBox(0.0F, 0.0F, 0.2F, 1.0F, 3.0F, 2.2F);
+      this.LeftWingExt[6].setPos(f17, f18 + f, f19);
+      float f20 = f2 - 4.5F;
+      float f21 = f3 + 5.0F;
+      float f22 = f4 + 6.0F;
+      this.RightWingExt = new NopModelPart[7];
+      this.RightWingExt[0] = new NopModelPart(64, 32, 56, 19);
+      this.RightWingExt[0].mirror = true;
+      this.RightWingExt[0].addBox(0.0F, 0.0F, 0.0F, 1.0F, 8.0F, 2.1F);
+      this.RightWingExt[0].setPos(f20, f21 + f, f22);
+      this.RightWingExt[1] = new NopModelPart(64, 32, 56, 19);
+      this.RightWingExt[1].mirror = true;
+      this.RightWingExt[1].addBox(0.0F, 8.0F, 0.0F, 1.0F, 6.0F, 2.1F);
+      this.RightWingExt[1].setPos(f20, f21 + f, f22);
+      this.RightWingExt[2] = new NopModelPart(64, 32, 56, 19);
+      this.RightWingExt[2].mirror = true;
+      this.RightWingExt[2].addBox(0.0F, -1.2F, -0.2F, 1.0F, 8.0F, 1.8F);
+      this.RightWingExt[2].setPos(f20, f21 + f, f22);
+      this.RightWingExt[3] = new NopModelPart(64, 32, 56, 19);
+      this.RightWingExt[3].mirror = true;
+      this.RightWingExt[3].addBox(0.0F, 1.8F, 1.3F, 1.0F, 8.0F, 1.9F);
+      this.RightWingExt[3].setPos(f20, f21 + f, f22);
+      this.RightWingExt[4] = new NopModelPart(64, 32, 56, 19);
+      this.RightWingExt[4].mirror = true;
+      this.RightWingExt[4].addBox(0.0F, 5.0F, 2.0F, 1.0F, 8.0F, 2.0F);
+      this.RightWingExt[4].setPos(f20, f21 + f, f22);
+      this.RightWingExt[5] = new NopModelPart(64, 32, 56, 19);
+      this.RightWingExt[5].mirror = true;
+      this.RightWingExt[5].addBox(0.0F, 0.0F, -0.2F, 1.0F, 6.0F, 2.3F);
+      this.RightWingExt[5].setPos(f20, f21 + f, f22);
+      this.RightWingExt[6] = new NopModelPart(64, 32, 56, 19);
+      this.RightWingExt[6].mirror = true;
+      this.RightWingExt[6].addBox(0.0F, 0.0F, 0.2F, 1.0F, 3.0F, 2.2F);
+      this.RightWingExt[6].setPos(f20, f21 + f, f22);
+      this.WingRotateAngleX = this.LeftWingExt[0].xRot;
+      this.WingRotateAngleY = this.LeftWingExt[0].yRot;
+      this.WingRotateAngleZ = this.LeftWingExt[0].zRot;
+   }
 
-	public void render(@Nonnull Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-		EntityNpcPony pony = (EntityNpcPony) entity;
-		if (pony.textureLocation != pony.checked && pony.textureLocation != null) {
-			try {
-				IResource resource = Minecraft.getMinecraft().getResourceManager().getResource(pony.textureLocation);
-				BufferedImage bufferedimage = ImageIO.read(resource.getInputStream());
-				pony.isPegasus = false;
-				pony.isUnicorn = false;
-				Color color = new Color(bufferedimage.getRGB(0, 0), true);
-                Color color3 = new Color(136, 202, 240, 255);
-				Color color4 = new Color(209, 159, 228, 255);
-				Color color5 = new Color(254, 249, 252, 255);
-                if (color.equals(color3)) {
-					pony.isPegasus = true;
-				}
-				if (color.equals(color4)) {
-					pony.isUnicorn = true;
-				}
-				if (color.equals(color5)) {
-					pony.isPegasus = true;
-					pony.isUnicorn = true;
-				}
-				pony.checked = pony.textureLocation;
-			} catch (IOException e) { LogWriter.error(e); }
-		}
-		this.isSleeping = pony.isPlayerSleeping();
-		this.isUnicorn = pony.isUnicorn;
-		this.isPegasus = pony.isPegasus;
-		this.isSneak = pony.isSneaking();
-        pony.getHeldItemMainhand();
-        this.heldItemRight = 1;
-		this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-		GlStateManager.pushMatrix();
-		if (this.isSleeping) {
-			GlStateManager.rotate(90.0f, 1.0f, 0.0f, 0.0f);
-			GlStateManager.translate(0.0f, -0.5f, -0.9f);
-		}
-        this.Head.render(f5);
-		this.Headpiece[0].render(f5);
-		this.Headpiece[1].render(f5);
-		if (this.isUnicorn) {
-			this.Headpiece[2].render(f5);
-		}
-		this.Helmet.render(f5);
-		this.Body.render(f5);
-        for (ModelPlaneRenderer planeRenderer : this.BodyPiece) {
-            planeRenderer.render(f5);
-        }
-		this.LeftArm.render(f5);
-		this.RightArm.render(f5);
-		this.LeftLeg.render(f5);
-		this.RightLeg.render(f5);
-        for (ModelPlaneRenderer modelPlaneRenderer : this.Tail) {
-            modelPlaneRenderer.render(f5);
-        }
-		if (this.isPegasus) {
-			if (this.isFlying || this.isSneak) {
-                for (ModelRenderer modelRenderer : this.LeftWingExt) {
-                    modelRenderer.render(f5);
-                }
-                for (ModelRenderer modelRenderer : this.RightWingExt) {
-                    modelRenderer.render(f5);
-                }
-			} else {
-                for (ModelRenderer modelRenderer : this.LeftWing) {
-                    modelRenderer.render(f5);
-                }
-                for (ModelRenderer modelRenderer : this.RightWing) {
-                    modelRenderer.render(f5);
-                }
-			}
-		}
-		GlStateManager.popMatrix();
-	}
+   public void setupAnim(T npc, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+      if (npc.textureLocation != npc.checked && npc.textureLocation != null) {
+         Resource resource = Minecraft.getInstance().getResourceManager().getResource(npc.textureLocation).orElse(null);
+         if (resource != null) {
+            try {
+               BufferedImage bufferedimage = ImageIO.read(resource.open());
+               npc.isPegasus = false;
+               npc.isUnicorn = false;
+               Color color = new Color(bufferedimage.getRGB(0, 0), true);
+               Color color2 = new Color(136, 202, 240, 255);
+               Color color3 = new Color(209, 159, 228, 255);
+               Color color4 = new Color(254, 249, 252, 255);
+               if (color.equals(color2)) {
+                  npc.isPegasus = true;
+               }
 
-	public void setRotationAngles(float f, float f1, float f2, float f3, float f4, float f5, @Nonnull Entity entity) {
-		EntityNPCInterface npc = (EntityNPCInterface) entity;
-		this.isRiding = npc.isRiding();
-		if (this.isSneak && (npc.currentAnimation == 7 || npc.currentAnimation == 2)) {
-			this.isSneak = false;
-		}
-        boolean rainboom = false;
-		float f6;
-		float f7;
-		if (this.isSleeping) {
-			f6 = 1.4f;
-			f7 = 0.1f;
-		} else {
-			f6 = f3 / 57.29578f;
-			f7 = f4 / 57.29578f;
-		}
-		this.Head.rotateAngleY = f6;
-		this.Head.rotateAngleX = f7;
-		this.Headpiece[0].rotateAngleY = f6;
-		this.Headpiece[0].rotateAngleX = f7;
-		this.Headpiece[1].rotateAngleY = f6;
-		this.Headpiece[1].rotateAngleX = f7;
-		this.Headpiece[2].rotateAngleY = f6;
-		this.Headpiece[2].rotateAngleX = f7;
-		this.Helmet.rotateAngleY = f6;
-		this.Helmet.rotateAngleX = f7;
-		this.Headpiece[2].rotateAngleX = f7 + 0.5f;
-		float f8;
-		float f9;
-		float f10;
-		float f11;
-		if (!this.isFlying || !this.isPegasus) {
-			f8 = MathHelper.cos(f * 0.6662f + 3.141593f) * 0.6f * f1;
-			f9 = MathHelper.cos(f * 0.6662f) * 0.6f * f1;
-			f10 = MathHelper.cos(f * 0.6662f) * 0.3f * f1;
-			f11 = MathHelper.cos(f * 0.6662f + 3.141593f) * 0.3f * f1;
-			this.RightArm.rotateAngleY = 0.0f;
-			this.unicornarm.rotateAngleY = 0.0f;
-			this.LeftArm.rotateAngleY = 0.0f;
-			this.RightLeg.rotateAngleY = 0.0f;
-			this.LeftLeg.rotateAngleY = 0.0f;
-		} else {
-			if (f1 < 0.9999f) {
-                f8 = MathHelper.sin(0.0f - f1 * 0.5f);
-				f9 = MathHelper.sin(0.0f - f1 * 0.5f);
-				f10 = MathHelper.sin(f1 * 0.5f);
-				f11 = MathHelper.sin(f1 * 0.5f);
-			} else {
-				rainboom = true;
-				f8 = 4.712f;
-				f9 = 4.712f;
-				f10 = 1.571f;
-				f11 = 1.571f;
-			}
-			this.RightArm.rotateAngleY = 0.2f;
-			this.LeftArm.rotateAngleY = -0.2f;
-			this.RightLeg.rotateAngleY = -0.2f;
-			this.LeftLeg.rotateAngleY = 0.2f;
-		}
-		if (this.isSleeping) {
-			f8 = 4.712f;
-			f9 = 4.712f;
-			f10 = 1.571f;
-			f11 = 1.571f;
-		}
-		this.RightArm.rotateAngleX = f8;
-		this.unicornarm.rotateAngleX = 0.0f;
-		this.LeftArm.rotateAngleX = f9;
-		this.RightLeg.rotateAngleX = f10;
-		this.LeftLeg.rotateAngleX = f11;
-		this.RightArm.rotateAngleZ = 0.0f;
-		this.unicornarm.rotateAngleZ = 0.0f;
-		this.LeftArm.rotateAngleZ = 0.0f;
-        for (ModelPlaneRenderer planeRenderer : this.Tail) {
-            if (rainboom) {
-                planeRenderer.rotateAngleZ = 0.0f;
+               if (color.equals(color3)) {
+                  npc.isUnicorn = true;
+               }
+
+               if (color.equals(color4)) {
+                  npc.isPegasus = true;
+                  npc.isUnicorn = true;
+               }
+
+               npc.checked = npc.textureLocation;
+            } catch (IOException ignored) { }
+         }
+      }
+
+      this.isSleeping = npc.isSleeping();
+      this.isUnicorn = npc.isUnicorn;
+      this.isPegasus = npc.isPegasus;
+      this.isSneak = npc.isCrouching();
+      npc.getMainHandItem();
+      this.heldItemRight = 1;
+      this.riding = npc.isPassenger();
+      if (this.isSneak && (npc.currentAnimation == 7 || npc.currentAnimation == 2)) {
+         this.isSneak = false;
+      }
+
+      boolean rainBoom = false;
+      float f6;
+      float f7;
+      if (this.isSleeping) {
+         f6 = 1.4F;
+         f7 = 0.1F;
+      } else {
+         f6 = headPitch / 57.29578F;
+         f7 = netHeadYaw / 57.29578F;
+      }
+
+      this.Head.yRot = f6;
+      this.Head.xRot = f7;
+      this.Headpiece[0].yRot = f6;
+      this.Headpiece[0].xRot = f7;
+      this.Headpiece[1].yRot = f6;
+      this.Headpiece[1].xRot = f7;
+      this.Headpiece[2].yRot = f6;
+      this.Headpiece[2].xRot = f7;
+      this.Helmet.yRot = f6;
+      this.Helmet.xRot = f7;
+      this.Headpiece[2].xRot = f7 + 0.5F;
+      float f8;
+      float f9;
+      float f10;
+      float f11;
+      if (this.isFlying && this.isPegasus) {
+         if (limbSwingAmount < 0.9999F) {
+            f8 = Mth.sin(0.0F - limbSwingAmount * 0.5F);
+            f9 = Mth.sin(0.0F - limbSwingAmount * 0.5F);
+            f10 = Mth.sin(limbSwingAmount * 0.5F);
+            f11 = Mth.sin(limbSwingAmount * 0.5F);
+         } else {
+            rainBoom = true;
+            f8 = 4.712F;
+            f9 = 4.712F;
+            f10 = 1.571F;
+            f11 = 1.571F;
+         }
+
+         this.RightArm.yRot = 0.2F;
+         this.LeftArm.yRot = -0.2F;
+         this.RightLeg.yRot = -0.2F;
+         this.LeftLeg.yRot = 0.2F;
+      } else {
+         f8 = Mth.cos(limbSwing * 0.6662F + 3.141593F) * 0.6F * limbSwingAmount;
+         f9 = Mth.cos(limbSwing * 0.6662F) * 0.6F * limbSwingAmount;
+         f10 = Mth.cos(limbSwing * 0.6662F) * 0.3F * limbSwingAmount;
+         f11 = Mth.cos(limbSwing * 0.6662F + 3.141593F) * 0.3F * limbSwingAmount;
+         this.RightArm.yRot = 0.0F;
+         this.unicornArm.yRot = 0.0F;
+         this.LeftArm.yRot = 0.0F;
+         this.RightLeg.yRot = 0.0F;
+         this.LeftLeg.yRot = 0.0F;
+      }
+
+      if (this.isSleeping) {
+         f8 = 4.712F;
+         f9 = 4.712F;
+         f10 = 1.571F;
+         f11 = 1.571F;
+      }
+
+      this.RightArm.xRot = f8;
+      this.unicornArm.xRot = 0.0F;
+      this.LeftArm.xRot = f9;
+      this.RightLeg.xRot = f10;
+      this.LeftLeg.xRot = f11;
+      this.RightArm.zRot = 0.0F;
+      this.unicornArm.zRot = 0.0F;
+      this.LeftArm.zRot = 0.0F;
+      for (ModelPlaneRenderer planeRenderer : this.Tail) {
+         if (rainBoom) {
+            planeRenderer.zRot = 0.0F;
+         } else {
+            planeRenderer.zRot = Mth.cos(limbSwing * 0.8F) * 0.2F * limbSwingAmount;
+         }
+      }
+
+      if (this.heldItemRight != 0 && !rainBoom && !this.isUnicorn) {
+         this.RightArm.xRot = this.RightArm.xRot * 0.5F - 0.3141593F;
+      }
+
+      float f12 = 0.0F;
+      this.Body.yRot = (float)((double)f12 * 0.2D);
+
+      int i1;
+      for(i1 = 0; i1 < this.BodyPiece.length; ++i1) {
+         this.BodyPiece[i1].yRot = (float)((double)f12 * 0.2D);
+      }
+
+      for(i1 = 0; i1 < this.LeftWing.length; ++i1) {
+         this.LeftWing[i1].yRot = (float)((double)f12 * 0.2D);
+      }
+
+      for(i1 = 0; i1 < this.RightWing.length; ++i1) {
+         this.RightWing[i1].yRot = (float)((double)f12 * 0.2D);
+      }
+
+      for(i1 = 0; i1 < this.Tail.length; ++i1) {
+         this.Tail[i1].yRot = f12;
+      }
+
+      float f13 = Mth.sin(this.Body.yRot) * 5.0F;
+      float f14 = Mth.cos(this.Body.yRot) * 5.0F;
+      float f15 = 4.0F;
+      if (this.isSneak && !this.isFlying) {
+         f15 = 0.0F;
+      }
+
+      if (this.isSleeping) {
+         f15 = 2.6F;
+      }
+
+      if (rainBoom) {
+         this.RightArm.z = f13 + 2.0F;
+         this.LeftArm.z = 0.0F - f13 + 2.0F;
+      } else {
+         this.RightArm.z = f13 + 1.0F;
+         this.LeftArm.z = 0.0F - f13 + 1.0F;
+      }
+
+      this.RightArm.x = 0.0F - f14 - 1.0F + f15;
+      this.LeftArm.x = f14 + 1.0F - f15;
+      this.RightLeg.x = 0.0F - f14 - 1.0F + f15;
+      this.LeftLeg.x = f14 + 1.0F - f15;
+      RightArm.yRot += this.Body.yRot;
+      LeftArm.xRot += this.Body.yRot;
+      LeftArm.yRot += this.Body.yRot;
+      this.RightArm.y = 8.0F;
+      this.LeftArm.y = 8.0F;
+      float f20;
+      float f26;
+      float f30;
+      int l3;
+      float f39;
+      int l4;
+      float f44;
+      int j5;
+      float f48;
+      float f50;
+      float f52;
+      float f55;
+      float f57;
+      float f58;
+      float f61;
+      float f35;
+      float f41;
+      float f46;
+      if (this.isSneak && !this.isFlying) {
+         f20 = 0.4F;
+         f26 = 7.0F;
+         f30 = -4.0F;
+         this.Body.xRot = f20;
+         this.Body.y = f26;
+         this.Body.z = f30;
+
+         for(l3 = 0; l3 < this.BodyPiece.length; ++l3) {
+            this.BodyPiece[l3].xRot = f20;
+            this.BodyPiece[l3].y = f26;
+            this.BodyPiece[l3].z = f30;
+         }
+
+         f35 = 3.5F;
+         f39 = 6.0F;
+
+         for(l4 = 0; l4 < this.LeftWingExt.length; ++l4) {
+            this.LeftWingExt[l4].xRot = (float)((double)f20 + 2.3561947345733643D);
+            this.LeftWingExt[l4].y = f26 + f35;
+            this.LeftWingExt[l4].z = f30 + f39;
+            this.LeftWingExt[l4].xRot = 2.5F;
+            this.LeftWingExt[l4].zRot = -6.0F;
+         }
+
+         f41 = 4.5F;
+         f44 = 6.0F;
+
+         for(j5 = 0; j5 < this.LeftWingExt.length; ++j5) {
+            this.RightWingExt[j5].xRot = (float)((double)f20 + 2.3561947345733643D);
+            this.RightWingExt[j5].y = f26 + f41;
+            this.RightWingExt[j5].z = f30 + f44;
+            this.RightWingExt[j5].xRot = 2.5F;
+            this.RightWingExt[j5].zRot = 6.0F;
+         }
+         RightLeg.xRot -= 0.0F;
+         LeftLeg.xRot -= 0.0F;
+         RightArm.xRot -= 0.4F;
+         unicornArm.xRot += 0.4F;
+         LeftArm.xRot -= 0.4F;
+         this.RightLeg.z = 10.0F;
+         this.LeftLeg.z = 10.0F;
+         this.RightLeg.y = 7.0F;
+         this.LeftLeg.y = 7.0F;
+         if (this.isSleeping) {
+            f46 = 2.0F;
+            f48 = -1.0F;
+            f50 = 1.0F;
+         } else {
+            f46 = 6.0F;
+            f48 = -2.0F;
+            f50 = 0.0F;
+         }
+
+         this.Head.y = f46;
+         this.Head.z = f48;
+         this.Head.x = f50;
+         this.Helmet.y = f46;
+         this.Helmet.z = f48;
+         this.Helmet.x = f50;
+         this.Headpiece[0].y = f46;
+         this.Headpiece[0].z = f48;
+         this.Headpiece[0].x = f50;
+         this.Headpiece[1].y = f46;
+         this.Headpiece[1].z = f48;
+         this.Headpiece[1].x = f50;
+         this.Headpiece[2].y = f46;
+         this.Headpiece[2].z = f48;
+         this.Headpiece[2].x = f50;
+         f52 = 0.0F;
+         f55 = 8.0F;
+         f57 = -14.0F;
+         f58 = 0.0F - f52;
+         f61 = 9.0F - f55;
+         float f62 = -4.0F - f57;
+         float f63 = 0.0F;
+         for (ModelPlaneRenderer modelPlaneRenderer : this.Tail) {
+            modelPlaneRenderer.x = f58;
+            modelPlaneRenderer.y = f61;
+            modelPlaneRenderer.z = f62;
+            modelPlaneRenderer.xRot = f63;
+         }
+      } else {
+         f20 = 0.0F;
+         f26 = 0.0F;
+         f30 = 0.0F;
+         this.Body.xRot = f20;
+         this.Body.y = f26;
+         this.Body.z = f30;
+
+         for(l3 = 0; l3 < this.BodyPiece.length; ++l3) {
+            this.BodyPiece[l3].xRot = f20;
+            this.BodyPiece[l3].y = f26;
+            this.BodyPiece[l3].z = f30;
+         }
+
+         if (this.isPegasus) {
+            if (!this.isFlying) {
+               for(l3 = 0; l3 < this.LeftWing.length; ++l3) {
+                  this.LeftWing[l3].xRot = (float)((double)f20 + 1.5707964897155762D);
+                  this.LeftWing[l3].y = f26 + 13.0F;
+                  this.LeftWing[l3].z = f30 - 3.0F;
+               }
+
+               for(l3 = 0; l3 < this.RightWing.length; ++l3) {
+                  this.RightWing[l3].xRot = (float)((double)f20 + 1.5707964897155762D);
+                  this.RightWing[l3].y = f26 + 13.0F;
+                  this.RightWing[l3].z = f30 - 3.0F;
+               }
             } else {
-                planeRenderer.rotateAngleZ = MathHelper.cos(f * 0.8f) * 0.2f * f1;
+               f35 = 5.5F;
+               f39 = 3.0F;
+
+               for(l4 = 0; l4 < this.LeftWingExt.length; ++l4) {
+                  this.LeftWingExt[l4].xRot = (float)((double)f20 + 1.5707964897155762D);
+                  this.LeftWingExt[l4].y = f26 + f35;
+                  this.LeftWingExt[l4].z = f30 + f39;
+               }
+
+               f41 = 6.5F;
+               f44 = 3.0F;
+
+               for(j5 = 0; j5 < this.RightWingExt.length; ++j5) {
+                  this.RightWingExt[j5].xRot = (float)((double)f20 + 1.5707964897155762D);
+                  this.RightWingExt[j5].y = f26 + f41;
+                  this.RightWingExt[j5].z = f30 + f44;
+               }
             }
-        }
-		if (this.heldItemRight != 0 && !rainboom && !this.isUnicorn) {
-			this.RightArm.rotateAngleX = this.RightArm.rotateAngleX * 0.5f - 0.3141593f;
-		}
-		float f12 = 0.0f;
-		if (f5 > -9990.0f && !this.isUnicorn) {
-			f12 = MathHelper.sin(MathHelper.sqrt(f5) * 3.141593f * 2.0f) * 0.2f;
-		}
-		this.Body.rotateAngleY = f12 * 0.2f;
-        for (ModelPlaneRenderer planeRenderer : this.BodyPiece) {
-            planeRenderer.rotateAngleY = f12 * 0.2f;
-        }
-        for (ModelRenderer modelRenderer : this.LeftWing) {
-            modelRenderer.rotateAngleY = f12 * 0.2f;
-        }
-        for (ModelRenderer modelRenderer : this.RightWing) {
-            modelRenderer.rotateAngleY = f12 * 0.2f;
-        }
-        for (ModelPlaneRenderer planeRenderer : this.Tail) {
-            planeRenderer.rotateAngleY = f12;
-        }
-		float f13 = MathHelper.sin(this.Body.rotateAngleY) * 5.0f;
-		float f14 = MathHelper.cos(this.Body.rotateAngleY) * 5.0f;
-		float f15 = 4.0f;
-		if (this.isSneak && !this.isFlying) {
-			f15 = 0.0f;
-		}
-		if (this.isSleeping) {
-			f15 = 2.6f;
-		}
-		if (rainboom) {
-			this.RightArm.rotationPointZ = f13 + 2.0f;
-			this.LeftArm.rotationPointZ = 0.0f - f13 + 2.0f;
-		} else {
-			this.RightArm.rotationPointZ = f13 + 1.0f;
-			this.LeftArm.rotationPointZ = 0.0f - f13 + 1.0f;
-		}
-		this.RightArm.rotationPointX = 0.0f - f14 - 1.0f + f15;
-		this.LeftArm.rotationPointX = f14 + 1.0f - f15;
-		this.RightLeg.rotationPointX = 0.0f - f14 - 1.0f + f15;
-		this.LeftLeg.rotationPointX = f14 + 1.0f - f15;
-		this.RightArm.rotateAngleY += this.Body.rotateAngleY;
-		this.LeftArm.rotateAngleY += this.Body.rotateAngleY;
-		this.LeftArm.rotateAngleX += this.Body.rotateAngleX;
-		this.RightArm.rotationPointY = 8.0f;
-		this.LeftArm.rotationPointY = 8.0f;
-		this.RightLeg.rotationPointY = 4.0f;
-		this.LeftLeg.rotationPointY = 4.0f;
-		if (f5 > -9990.0f) {
-			float f16;
-			f16 = 1.0f - f5;
-			f16 *= f16 * f16;
-			f16 = 1.0f - f16;
-			float f17 = MathHelper.sin(f16 * 3.141593f);
-			float f18 = MathHelper.sin(f5 * 3.141593f);
-			float f19 = f18 * -(this.Head.rotateAngleX - 0.7f) * 0.75f;
-            this.unicornarm.rotateAngleX -= (float) (f17 * 1.2 + f19);
-            this.unicornarm.rotateAngleY += this.Body.rotateAngleY * 2.0f;
-            this.unicornarm.rotateAngleZ = f18 * -0.4f;
-        }
-		if (this.isSneak && !this.isFlying) {
-			float f20 = 0.4f;
-			float f21 = 7.0f;
-			float f22 = -4.0f;
-			this.Body.rotateAngleX = f20;
-			this.Body.rotationPointY = f21;
-			this.Body.rotationPointZ = f22;
-            for (ModelPlaneRenderer modelPlaneRenderer : this.BodyPiece) {
-                modelPlaneRenderer.rotateAngleX = f20;
-                modelPlaneRenderer.rotationPointY = f21;
-                modelPlaneRenderer.rotationPointZ = f22;
+         }
+
+         this.RightLeg.z = 10.0F;
+         this.LeftLeg.z = 10.0F;
+         this.RightLeg.y = 8.0F;
+         this.LeftLeg.y = 8.0F;
+         f35 = Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;
+         f39 = Mth.sin(ageInTicks * 0.067F) * 0.05F;
+         unicornArm.zRot += f35;
+         unicornArm.xRot += f39;
+         if (this.isPegasus && this.isFlying) {
+            this.WingRotateAngleY = Mth.sin(ageInTicks * 0.067F * 8.0F);
+            this.WingRotateAngleZ = Mth.sin(ageInTicks * 0.067F * 8.0F);
+
+            for(l4 = 0; l4 < this.LeftWingExt.length; ++l4) {
+               this.LeftWingExt[l4].xRot = 2.5F;
+               this.LeftWingExt[l4].zRot = -this.WingRotateAngleZ - 4.712F - 0.4F;
             }
-			float f23 = 3.5f;
-			float f24 = 6.0f;
-            for (ModelRenderer modelRenderer : this.LeftWingExt) {
-                modelRenderer.rotateAngleX = f20 + 2.3561947345733643f;
-                modelRenderer.rotationPointY = f21 + f23;
-                modelRenderer.rotationPointZ = f22 + f24;
-                modelRenderer.rotateAngleX = 2.5f;
-                modelRenderer.rotateAngleZ = -6.0f;
+
+            for(l4 = 0; l4 < this.RightWingExt.length; ++l4) {
+               this.RightWingExt[l4].xRot = 2.5F;
+               this.RightWingExt[l4].zRot = this.WingRotateAngleZ + 4.712F + 0.4F;
             }
-			float f25 = 4.5f;
-			float f26 = 6.0f;
-			for (int i5 = 0; i5 < this.LeftWingExt.length; ++i5) {
-				this.RightWingExt[i5].rotateAngleX = f20 + 2.3561947345733643f;
-				this.RightWingExt[i5].rotationPointY = f21 + f25;
-				this.RightWingExt[i5].rotationPointZ = f22 + f26;
-				this.RightWingExt[i5].rotateAngleX = 2.5f;
-				this.RightWingExt[i5].rotateAngleZ = 6.0f;
-			}
-			this.RightLeg.rotateAngleX -= 0.0f;
-			this.LeftLeg.rotateAngleX -= 0.0f;
-			this.RightArm.rotateAngleX -= 0.4f;
-			this.unicornarm.rotateAngleX += 0.4f;
-			this.LeftArm.rotateAngleX -= 0.4f;
-			this.RightLeg.rotationPointZ = 10.0f;
-			this.LeftLeg.rotationPointZ = 10.0f;
-			this.RightLeg.rotationPointY = 7.0f;
-			this.LeftLeg.rotationPointY = 7.0f;
-			float f27;
-			float f28;
-			float f29;
-			if (this.isSleeping) {
-				f27 = 2.0f;
-				f28 = -1.0f;
-				f29 = 1.0f;
-			} else {
-				f27 = 6.0f;
-				f28 = -2.0f;
-				f29 = 0.0f;
-			}
-			this.Head.rotationPointY = f27;
-			this.Head.rotationPointZ = f28;
-			this.Head.rotationPointX = f29;
-			this.Helmet.rotationPointY = f27;
-			this.Helmet.rotationPointZ = f28;
-			this.Helmet.rotationPointX = f29;
-			this.Headpiece[0].rotationPointY = f27;
-			this.Headpiece[0].rotationPointZ = f28;
-			this.Headpiece[0].rotationPointX = f29;
-			this.Headpiece[1].rotationPointY = f27;
-			this.Headpiece[1].rotationPointZ = f28;
-			this.Headpiece[1].rotationPointX = f29;
-			this.Headpiece[2].rotationPointY = f27;
-			this.Headpiece[2].rotationPointZ = f28;
-			this.Headpiece[2].rotationPointX = f29;
-			float f30 = 0.0f;
-			float f31 = 8.0f;
-			float f32 = -14.0f;
-			float f33 = 0.0f - f30;
-			float f34 = 9.0f - f31;
-			float f35 = -4.0f - f32;
-			float f36 = 0.0f;
-            for (ModelPlaneRenderer modelPlaneRenderer : this.Tail) {
-                modelPlaneRenderer.rotationPointX = f33;
-                modelPlaneRenderer.rotationPointY = f34;
-                modelPlaneRenderer.rotationPointZ = f35;
-                modelPlaneRenderer.rotateAngleX = f36;
+         }
+
+         if (this.isSleeping) {
+            f41 = 2.0F;
+            f44 = 1.0F;
+            f46 = 1.0F;
+         } else {
+            f41 = 0.0F;
+            f44 = 0.0F;
+            f46 = 0.0F;
+         }
+
+         this.Head.y = f41;
+         this.Head.z = f44;
+         this.Head.x = f46;
+         this.Helmet.y = f41;
+         this.Helmet.z = f44;
+         this.Helmet.x = f46;
+         this.Headpiece[0].y = f41;
+         this.Headpiece[0].z = f44;
+         this.Headpiece[0].x = f46;
+         this.Headpiece[1].y = f41;
+         this.Headpiece[1].z = f44;
+         this.Headpiece[1].x = f46;
+         this.Headpiece[2].y = f41;
+         this.Headpiece[2].z = f44;
+         this.Headpiece[2].x = f46;
+         f48 = 0.0F;
+         f50 = 8.0F;
+         f52 = -14.0F;
+         f55 = 0.0F - f48;
+         f57 = 9.0F - f50;
+         f58 = 0.0F - f52;
+         f61 = 0.5F * limbSwingAmount;
+
+         int l5;
+         for(l5 = 0; l5 < this.Tail.length; ++l5) {
+            this.Tail[l5].x = f55;
+            this.Tail[l5].y = f57;
+            this.Tail[l5].z = f58;
+            if (rainBoom) {
+               this.Tail[l5].xRot = 1.571F + 0.1F * Mth.sin(limbSwing);
+            } else {
+               this.Tail[l5].xRot = f61;
             }
-		} else {
-			float f37 = 0.0f;
-			float f38 = 0.0f;
-			float f39 = 0.0f;
-			this.Body.rotateAngleX = f37;
-			this.Body.rotationPointY = f38;
-			this.Body.rotationPointZ = f39;
-            for (ModelPlaneRenderer planeRenderer : this.BodyPiece) {
-                planeRenderer.rotateAngleX = f37;
-                planeRenderer.rotationPointY = f38;
-                planeRenderer.rotationPointZ = f39;
+         }
+
+         for(l5 = 0; l5 < this.Tail.length; ++l5) {
+            if (!rainBoom) {
+               ModelPlaneRenderer var50 = this.Tail[l5];
+               var50.xRot += f39;
             }
-			if (this.isPegasus) {
-				if (!this.isFlying) {
-                    for (ModelRenderer modelRenderer : this.LeftWing) {
-                        modelRenderer.rotateAngleX = f37 + 1.5707964897155762f;
-                        modelRenderer.rotationPointY = f38 + 13.0f;
-                        modelRenderer.rotationPointZ = f39 - 3.0f;
-                    }
-                    for (ModelRenderer modelRenderer : this.RightWing) {
-                        modelRenderer.rotateAngleX = f37 + 1.5707964897155762f;
-                        modelRenderer.rotationPointY = f38 + 13.0f;
-                        modelRenderer.rotationPointZ = f39 - 3.0f;
-                    }
-				} else {
-					float f40 = 5.5f;
-					float f41 = 3.0f;
-                    for (ModelRenderer modelRenderer : this.LeftWingExt) {
-                        modelRenderer.rotateAngleX = f37 + 1.5707964897155762f;
-                        modelRenderer.rotationPointY = f38 + f40;
-                        modelRenderer.rotationPointZ = f39 + f41;
-                    }
-					float f42 = 6.5f;
-					float f43 = 3.0f;
-                    for (ModelRenderer modelRenderer : this.RightWingExt) {
-                        modelRenderer.rotateAngleX = f37 + 1.5707964897155762f;
-                        modelRenderer.rotationPointY = f38 + f42;
-                        modelRenderer.rotationPointZ = f39 + f43;
-                    }
-				}
-			}
-			this.RightLeg.rotationPointZ = 10.0f;
-			this.LeftLeg.rotationPointZ = 10.0f;
-			this.RightLeg.rotationPointY = 8.0f;
-			this.LeftLeg.rotationPointY = 8.0f;
-			float f44 = MathHelper.cos(f2 * 0.09f) * 0.05f + 0.05f;
-			float f45 = MathHelper.sin(f2 * 0.067f) * 0.05f;
-			this.unicornarm.rotateAngleZ += f44;
-			this.unicornarm.rotateAngleX += f45;
-			if (this.isPegasus && this.isFlying) {
-				this.WingRotateAngleZ = MathHelper.sin(f2 * 0.067f * 8.0f);
-                for (ModelRenderer modelRenderer : this.LeftWingExt) {
-                    modelRenderer.rotateAngleX = 2.5f;
-                    modelRenderer.rotateAngleZ = -this.WingRotateAngleZ - 4.712f - 0.4f;
-                }
-                for (ModelRenderer modelRenderer : this.RightWingExt) {
-                    modelRenderer.rotateAngleX = 2.5f;
-                    modelRenderer.rotateAngleZ = this.WingRotateAngleZ + 4.712f + 0.4f;
-                }
-			}
-			float f46;
-			float f47;
-			float f48;
-			if (this.isSleeping) {
-				f46 = 2.0f;
-				f47 = 1.0f;
-				f48 = 1.0f;
-			} else {
-				f46 = 0.0f;
-				f47 = 0.0f;
-				f48 = 0.0f;
-			}
-			this.Head.rotationPointY = f46;
-			this.Head.rotationPointZ = f47;
-			this.Head.rotationPointX = f48;
-			this.Helmet.rotationPointY = f46;
-			this.Helmet.rotationPointZ = f47;
-			this.Helmet.rotationPointX = f48;
-			this.Headpiece[0].rotationPointY = f46;
-			this.Headpiece[0].rotationPointZ = f47;
-			this.Headpiece[0].rotationPointX = f48;
-			this.Headpiece[1].rotationPointY = f46;
-			this.Headpiece[1].rotationPointZ = f47;
-			this.Headpiece[1].rotationPointX = f48;
-			this.Headpiece[2].rotationPointY = f46;
-			this.Headpiece[2].rotationPointZ = f47;
-			this.Headpiece[2].rotationPointX = f48;
-			float f49 = 0.0f;
-			float f50 = 8.0f;
-			float f51 = -14.0f;
-			float f52 = 0.0f - f49;
-			float f53 = 9.0f - f50;
-			float f54 = 0.0f - f51;
-			float f55 = 0.5f * f1;
-            for (ModelPlaneRenderer modelPlaneRenderer : this.Tail) {
-                modelPlaneRenderer.rotationPointX = f52;
-                modelPlaneRenderer.rotationPointY = f53;
-                modelPlaneRenderer.rotationPointZ = f54;
-                if (rainboom) {
-                    modelPlaneRenderer.rotateAngleX = 1.571f + 0.1f * MathHelper.sin(f);
-                } else {
-                    modelPlaneRenderer.rotateAngleX = f55;
-                }
+         }
+      }
+
+      this.LeftWingExt[2].xRot -= 0.85F;
+      this.LeftWingExt[3].xRot -= 0.75F;
+      this.LeftWingExt[4].xRot -= 0.5F;
+      this.LeftWingExt[6].xRot -= 0.85F;
+      this.RightWingExt[2].xRot -= 0.85F;
+      this.RightWingExt[3].xRot -= 0.75F;
+      this.RightWingExt[4].xRot -= 0.5F;
+      this.RightWingExt[6].xRot -= 0.85F;
+      this.BodyPiece[9].xRot += 0.5F;
+      this.BodyPiece[10].xRot += 0.5F;
+      this.BodyPiece[11].xRot += 0.5F;
+      this.BodyPiece[12].xRot += 0.5F;
+      if (rainBoom) {
+         for (ModelPlaneRenderer modelPlaneRenderer : this.Tail) {
+            modelPlaneRenderer.y += 6.0F;
+            ++modelPlaneRenderer.z;
+         }
+      }
+
+      if (this.isSleeping) {
+         this.RightArm.z += 6.0F;
+         this.LeftArm.z += 6.0F;
+         this.RightLeg.z -= 8.0F;
+         this.LeftLeg.z -= 8.0F;
+         this.RightArm.y += 2.0F;
+         this.LeftArm.y += 2.0F;
+         this.RightLeg.y += 2.0F;
+         this.LeftLeg.y += 2.0F;
+      }
+
+      if (this.aimedBow) {
+         f20 = 0.0F;
+         f26 = 0.0F;
+         this.unicornArm.zRot = 0.0F;
+         this.unicornArm.yRot = -(0.1F - f20 * 0.6F) + this.Head.yRot;
+         this.unicornArm.xRot = 4.712F + this.Head.xRot;
+         unicornArm.xRot -= f20 * 1.2F - f26 * 0.4F;
+         unicornArm.zRot += Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;
+         unicornArm.xRot += Mth.sin(ageInTicks * 0.067F) * 0.05F;
+         if (!this.isUnicorn) {
+            ++this.RightArm.z;
+         }
+      }
+
+   }
+
+   public void renderToBuffer(PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      mStack.pushPose();
+      if (this.isSleeping) {
+         mStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+         mStack.translate(0.0F, -0.5F, -0.9F);
+      }
+
+      this.Head.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.Headpiece[0].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.Headpiece[1].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      if (this.isUnicorn) {
+         this.Headpiece[2].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      }
+
+      this.Helmet.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.Body.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+
+      int l;
+      for(l = 0; l < this.BodyPiece.length; ++l) {
+         this.BodyPiece[l].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      }
+
+      this.LeftArm.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.RightArm.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.LeftLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      this.RightLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+
+      for(l = 0; l < this.Tail.length; ++l) {
+         this.Tail[l].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      }
+
+      if (this.isPegasus) {
+         if (!this.isFlying && !this.isSneak) {
+            for(l = 0; l < this.LeftWing.length; ++l) {
+               this.LeftWing[l].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
             }
-            for (ModelPlaneRenderer planeRenderer : this.Tail) {
-                if (!rainboom) {
-                    planeRenderer.rotateAngleX += f45;
-                }
+
+            for(l = 0; l < this.RightWing.length; ++l) {
+               this.RightWing[l].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
             }
-		}
-		this.LeftWingExt[2].rotateAngleX -= 0.85f;
-		this.LeftWingExt[3].rotateAngleX -= 0.75f;
-		this.LeftWingExt[4].rotateAngleX -= 0.5f;
-		this.LeftWingExt[6].rotateAngleX -= 0.85f;
-		this.RightWingExt[2].rotateAngleX -= 0.85f;
-		this.RightWingExt[3].rotateAngleX -= 0.75f;
-		this.RightWingExt[4].rotateAngleX -= 0.5f;
-		this.RightWingExt[6].rotateAngleX -= 0.85f;
-		this.BodyPiece[9].rotateAngleX += 0.5f;
-		this.BodyPiece[10].rotateAngleX += 0.5f;
-		this.BodyPiece[11].rotateAngleX += 0.5f;
-		this.BodyPiece[12].rotateAngleX += 0.5f;
-		if (rainboom) {
-            for (ModelPlaneRenderer modelPlaneRenderer : this.Tail) {
-                modelPlaneRenderer.rotationPointY += 6.0f;
-                ++modelPlaneRenderer.rotationPointZ;
+         } else {
+            for(l = 0; l < this.LeftWingExt.length; ++l) {
+               this.LeftWingExt[l].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
             }
-		}
-		if (this.isSleeping) {
-			this.RightArm.rotationPointZ += 6.0f;
-			this.LeftArm.rotationPointZ += 6.0f;
-			this.RightLeg.rotationPointZ -= 8.0f;
-			this.LeftLeg.rotationPointZ -= 8.0f;
-			this.RightArm.rotationPointY += 2.0f;
-			this.LeftArm.rotationPointY += 2.0f;
-			this.RightLeg.rotationPointY += 2.0f;
-			this.LeftLeg.rotationPointY += 2.0f;
-		}
-		if (this.aimedBow) {
-			if (this.isUnicorn) {
-				float f56 = 0.0f;
-				float f57 = 0.0f;
-				this.unicornarm.rotateAngleZ = 0.0f;
-				this.unicornarm.rotateAngleY = -(0.1f - f56 * 0.6f) + this.Head.rotateAngleY;
-				this.unicornarm.rotateAngleX = 4.712f + this.Head.rotateAngleX;
-				this.unicornarm.rotateAngleX -= f56 * 1.2f - f57 * 0.4f;
-                this.unicornarm.rotateAngleZ += MathHelper.cos(f2 * 0.09f) * 0.05f + 0.05f;
-				this.unicornarm.rotateAngleX += MathHelper.sin(f2 * 0.067f) * 0.05f;
-			} else {
-				float f59 = 0.0f;
-				float f60 = 0.0f;
-				this.RightArm.rotateAngleZ = 0.0f;
-				this.RightArm.rotateAngleY = -(0.1f - f59 * 0.6f) + this.Head.rotateAngleY;
-				this.RightArm.rotateAngleX = 4.712f + this.Head.rotateAngleX;
-				this.RightArm.rotateAngleX -= f59 * 1.2f - f60 * 0.4f;
-				this.RightArm.rotateAngleZ += MathHelper.cos(f2 * 0.09f) * 0.05f + 0.05f;
-				this.RightArm.rotateAngleX += MathHelper.sin(f2 * 0.067f) * 0.05f;
-				++this.RightArm.rotationPointZ;
-			}
-		}
-	}
+
+            for(l = 0; l < this.RightWingExt.length; ++l) {
+               this.RightWingExt[l].render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+            }
+         }
+      }
+
+      mStack.popPose();
+   }
 }

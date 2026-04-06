@@ -1,0 +1,80 @@
+{
+	"name": "horns.bull",
+	"render_type": "bedrock",
+	"texture": "moreplayermodels:textures/horns/0.png",
+	"body_part": "head",
+	"menu": "gui.headwear",
+	"preview_rotation": -45,
+	"translate": [0, 0, 0],
+	"rotate_offset": [0.0, 0.0, 0.0],
+	"scale": [1, 1, 1],
+	"rotate": [0.0, -90.0, 0.0],
+	"author": "AnxiousChilds",
+	"render_data" : {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.unknown",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 1,
+					"visible_bounds_height": 1.5,
+					"visible_bounds_offset": [0, 0.25, 0]
+				},
+				"bones": [
+					{
+						"name": "right_horn",
+						"pivot": [0, 7, 4],
+						"cubes": [
+							{"origin": [-2, 6, 4], "size": [2, 2, 2], "uv": [36, 16]}
+						]
+					},
+					{
+						"name": "bone",
+						"parent": "right_horn",
+						"pivot": [0, 6, 4],
+						"rotation": [17.5, -14.5, -5],
+						"cubes": [
+							{"origin": [-1.5, 5.4, 6.1], "size": [2, 2, 2], "uv": [12, 16]}
+						]
+					},
+					{
+						"name": "bone2",
+						"parent": "bone",
+						"pivot": [1, 6, 8],
+						"rotation": [0, -30, 5],
+						"cubes": [
+							{"origin": [-0.7, 5.7, 7.9], "size": [1, 1, 2], "uv": [13, 17]}
+						]
+					},
+					{
+						"name": "left_horn",
+						"pivot": [0, 7, -4],
+						"cubes": [
+							{"origin": [-2, 6, -6], "size": [2, 2, 2], "uv": [36, 16], "mirror": true}
+						]
+					},
+					{
+						"name": "bone3",
+						"parent": "left_horn",
+						"pivot": [0, 6, -4],
+						"rotation": [-17.5, 14.5, -5],
+						"cubes": [
+							{"origin": [-1.5, 5.4, -8.1], "size": [2, 2, 2], "uv": [12, 16], "mirror": true}
+						]
+					},
+					{
+						"name": "bone4",
+						"parent": "bone3",
+						"pivot": [1, 6, -8],
+						"rotation": [0, 30, 5],
+						"cubes": [
+							{"origin": [-0.7, 5.7, -9.9], "size": [1, 1, 2], "uv": [13, 17], "mirror": true}
+						]
+					}
+				]
+			}
+		]
+	}
+}

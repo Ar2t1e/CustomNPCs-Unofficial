@@ -2,408 +2,487 @@ package noppes.npcs.client.gui.global;
 
 import java.util.*;
 
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.SubGuiEditBankAccess;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.util.GuiContainerNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.containers.ContainerManageBanks;
+import noppes.npcs.controllers.BankController;
 import noppes.npcs.controllers.data.Bank;
-import noppes.npcs.controllers.data.Bank.CeilSettings;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.world.inventory.ISlotMixin;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.*;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.util.Util;
+import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
 
-public class GuiNPCManageBanks extends GuiContainerNPCInterface2
-		implements IScrollData, ICustomScrollListener, ITextfieldListener, IGuiData, GuiYesNoCallback {
+public class GuiNpcManageBanks
+        extends GuiContainerNPCInterface2<ContainerManageBanks>
+        implements IScrollData, ICustomScrollListener, ITextfieldListener, IGuiData {
 
-	protected final HashMap<String, Integer> data = new HashMap<>();
-	protected final ContainerManageBanks container;
-	protected GuiCustomScroll scroll;
-	protected Bank bank = new Bank();
-	protected String selected = "";
-	protected boolean isWait;
-	protected int ceil = 0;
-	protected int waitTime = 30;
+   protected final HashMap<Component, Integer> data = new HashMap<>();
+   protected final ContainerManageBanks container;
+   protected final Bank bank = new Bank();
+   protected GuiCustomScrollNop scroll;
+   protected Component selected = Component.empty();
+   protected boolean isWait;
+   protected int ceil = 0;
 
-	public GuiNPCManageBanks(EntityNPCInterface npc, ContainerManageBanks cont) {
-		super(npc, cont);
-		setBackground("inventorymenu.png");
-		drawDefaultBackground = false;
-		closeOnEsc = true;
-		ySize = 200;
-		parentGui = EnumGuiType.MainMenuGlobal;
+   public GuiNpcManageBanks(ContainerManageBanks containerIn, Inventory inv, Component titleIn) {
+      super(NoppesUtilServer.getEditingNpc(Minecraft.getInstance().player), containerIn, inv, titleIn);
+      setBackground("inventorymenu.png");
+      drawDefaultBackground = false;
+      closeOnEsc = true;
+      imageHeight = 200;
+      backGui = EnumGuiType.MainMenuGlobal;
 
-		container = cont;
-	}
+      container = containerIn;
+      isWait = true;
+      Packets.sendServer(new SPacketBanksGet());
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				if (ceil == button.getValue()) { return; }
-				save();
-				ceil = button.getValue();
-				Client.sendData(EnumPacketServer.BankGet, bank.id, ceil);
-				isWait = true;
-				waitTime = 30;
-				initGui();
-				break;
-			} // ceil
-			case 1: {
-				ceil = bank.ceilSettings.size();
-				Client.sendData(EnumPacketServer.BankAddCeil, bank.id, ceil);
-				isWait = true;
-				waitTime = 30;
-				initGui();
-				break;
-			} // add ceil
-			case 2: {
-				if (!data.containsKey(selected) || !bank.ceilSettings.containsKey(ceil)) { return; }
-				String msg = new TextComponentTranslation("bank.hover.ceil.del").getFormattedText();
-				while (msg.contains("<br>")) { msg = msg.replace("<br>", "" + ((char) 10)); }
-				GuiYesNo guiyesno = new GuiYesNo(this, new TextComponentTranslation("gui.bank", ": ID:" + bank.id + " \"" + bank.name + "\"; " + new TextComponentTranslation("gui.ceil", ": ID:" + (ceil + 1)).getFormattedText()).getFormattedText(), msg, 1);
-				displayGuiScreen(guiyesno);
-				break;
-			} // remove ceil
-			case 3: bank.isPublic = ((GuiNpcCheckBox) button).isSelected(); break; // public
-			case 6: {
-				save();
-				scroll.clear();
-				StringBuilder t = new StringBuilder("New");
-				while (data.containsKey(t.toString())) { t.append("_"); }
-				selected = t.toString();
-				Bank bank = new Bank();
-				bank.name = selected;
-				NBTTagCompound compound = new NBTTagCompound();
-				bank.writeToNBT(compound);
-				Client.sendData(EnumPacketServer.BankSave, compound);
-				isWait = true;
-				waitTime = 30;
-				initGui();
-				break;
-			} // add bank
-			case 7: {
-				if (!data.containsKey(selected)) { return; }
-				String msg = new TextComponentTranslation("bank.hover.del").getFormattedText();
-				while (msg.contains("<br>")) { msg = msg.replace("<br>", "" + ((char) 10)); }
-				GuiYesNo guiyesno = new GuiYesNo(this, new TextComponentTranslation("gui.bank", ": ID:" + bank.id + " \"" + bank.name + "\"").getFormattedText(), msg, 0);
-				displayGuiScreen(guiyesno);
-				break;
-			} // remove bank
-			case 8: {
-				if (bank == null) { return; }
-				setSubGui(new SubGuiEditBankAccess(0, bank));
-				break;
-			} // settings
-		}
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0).setSize(160, 185); }
+      if (isWait) { return; }
+      int x = guiLeft + 255;
+      int y = guiTop + 5;
+      add(scroll.setPos(x, y));
+      scroll.setSelected(selected);
+      selected = scroll.getNormalSelected();
+      for (int slotId = 0; slotId < 2; slotId++) {
+         ((ISlotMixin) container.getSlot(slotId)).setX(selected.getString().isEmpty() ? -5000 : 180);
+         ((ISlotMixin) container.getSlot(slotId)).setY(selected.getString().isEmpty() ? -5000 : slotId == 0 ? 107 : 166);
+      }
+      List<Component> list = scroll.getNormalList();
+      LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+      if (list != null && !list.isEmpty()) {
+         int i = 0;
+         for (Component key : list) {
+            hts.put(i, Collections.singletonList(Component.literal("ID: " + data.get(key))));
+            i++;
+         }
+      }
+      scroll.setHoverTexts(hts);
+      Component change = Component.translatable("bank.hover.change");
+      // add bank
+      y += scroll.height + 24;
+      addButton(6, x, y, "gui.add")
+              .setSize(50, 20)
+              .setHoverTexts("bank.hover.add");
+      // del bank
+      addButton(7, x + scroll.width - 50, y, "gui.remove")
+              .setSize(50, 20)
+              .setIsEnabled(!selected.getString().isEmpty() && data.size() > 1)
+              .setHoverTexts(Component.translatable("bank.hover.del")
+                      .append(change));
+      // name
+      int x0 = guiLeft + 5;
+      x = x0 + 45;
+      y = guiTop + 6;
+      int lId = 0;
+      addLabel(lId++, x0, y + 4, Component.translatable("gui.name").append(":"))
+              .setSize(68, 10)
+              .setIsVisible(!selected.getString().isEmpty());
+      addTextField(0, x, y, 202, 18, bank.name)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setMaxStringLength(20)
+              .setHoverTexts(Component.translatable("bank.hover.name")
+                      .append("<br>\"").append(Component.translatable(bank.name)).append("\""));
+      // cells
+      y += 22;
+      addLabel(lId++, x0, y + 4, Component.translatable("gui.ceil", ":"))
+              .setSize(68, 10)
+              .setIsVisible(!selected.getString().isEmpty());
+      List<String> csIds = new ArrayList<>();
+      for (int i = 0; i < bank.ceilSettings.size(); i++) { csIds.add("" + (i + 1)); }
+      addButton(0, x, y, true, ceil, csIds.toArray(new Object[0]))
+              .setSize(66, 20)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setHoverTexts(Component.translatable("bank.hover.ceil", "" + bank.ceilSettings.size()));
+      // add ceil
+      addButton(1, x + 68, y, "gui.add")
+              .setSize(66, 20)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setHoverTexts(Component.translatable("bank.hover.ceil.add").append(change));
+      // del ceil
+      addButton(2, x + 137, y, "gui.remove")
+              .setSize(66, 20)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setIsEnabled(ceil > 0)
+              .setHoverTexts(Component.translatable("bank.hover.ceil.add").append(change));
+      // slots
+      y += 22;
+      Bank.CeilSettings cs = bank.ceilSettings.get(ceil);
+      int sc = cs.startCells;
+      int mc = cs.maxCells;
+      // min
+      addLabel(lId++, x0, y + 4, Component.translatable("gui.start").append(":"))
+              .setSize(68, 10)
+              .setIsVisible(!selected.getString().isEmpty());
+      addTextField(1, x + 1, y + 1, 64, 18, "" + sc)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setMinMaxDefault(1, mc, sc)
+              .setHoverTexts(Component.translatable("bank.hover.slots.min").append(change));
+      // max
+      addLabel(lId++, x + 68, y + 4, Component.translatable("gui.max").append(":"))
+              .setSize(48, 10)
+              .setIsVisible(!selected.getString().isEmpty());
+      addTextField(2, x + 138, y + 1, 64, 18, "" + mc)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setMinMaxDefault(1, 198, mc)
+              .setHoverTexts(Component.translatable("bank.hover.slots.max").append(change));
+      // is public
+      addCheckBox(3, x0, (y += 22), "bank.public.true", "bank.public.false", bank.isPublic)
+              .setSize(180, 16)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setHoverTexts("bank.hover.public");
+      // setting names
+      MutableComponent hoverOwner = Component.translatable("bank.hover.settings");
+      if (!bank.owner.isEmpty()) {
+         hoverOwner.append("<br>")
+                 .append(Component.empty()
+                         .append(Component.translatable("bank.owner").append(": ").withStyle(ChatFormatting.GRAY))
+                         .append(bank.owner));
+      }
+      // lock settings
+      addButton(8, x0 + 182, y, "")
+              .setTexture(AbstractWidget.WIDGETS_LOCATION) // lock
+              .setUV(bank.owner.isEmpty() ? 20 : 0, 146, 20, 20)
+              .setSize(20, 20)
+              .setIsVisible(!selected.getString().isEmpty() && bank.isPublic)
+              .setHoverTexts(hoverOwner);
+      // is free
+      addCheckBox(4, x0, y + 22, "bank.free.true", "bank.free.false", cs.isFree)
+              .setSize(180, 16)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setHoverTexts("bank.hover.free");
 
-	@Override
-	public void subGuiClosed(GuiScreen gui) {
-		if (gui instanceof SubGuiEditBankAccess) {
-			SubGuiEditBankAccess subGui = (SubGuiEditBankAccess) gui;
-			if (bank.isChanging != subGui.isChanging) { bank.isChanging = subGui.isChanging; }
-			if (!bank.owner.equals(subGui.owner)) { bank.owner = subGui.owner; }
-			if (subGui.names.size() != bank.access.size()) {
-				bank.access.clear();
-				bank.access.addAll(subGui.names);
-			} else {
-				for (String name : subGui.names) {
-					if (bank.access.contains(name)) { continue; }
-					bank.access.clear();
-					bank.access.addAll(subGui.names);
-					break;
-				}
-			}
-		}
-	}
+      // open money
+      x = guiLeft + 201;
+      y = guiTop + 95;
+      addLabel(lId++, x - 22, y, Component.translatable("bank.tab.cost").append(":"))
+              .setSize(68, 10)
+              .setIsVisible(!selected.getString().isEmpty());
+      addTextField(3, x, y += 31, 51, 12, "" + cs.openMoney)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setMinMaxDefault(0, Integer.MAX_VALUE, cs.openMoney)
+              .setHoverTexts("bank.hover.open.money");
+      addTextField(5, x, y += 14, 51, 12, "" + cs.openDonat)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setMinMaxDefault(0, Integer.MAX_VALUE, cs.openDonat)
+              .setHoverTexts("bank.hover.open.donat");
+      // upgrade money
+      addLabel(lId, x - 22, y += 14, Component.translatable("bank.upg.cost").append(":"))
+              .setSize(68, 10)
+              .setIsVisible(!selected.getString().isEmpty());
+      addTextField(4, x, y += 31, 51, 12, "" + cs.upgradeMoney)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setMinMaxDefault(0, Integer.MAX_VALUE, cs.upgradeMoney)
+              .setHoverTexts("bank.hover.upgrade.money");
+      addTextField(6, x, y + 14, 51, 12, "" + cs.upgradeDonat)
+              .setIsVisible(!selected.getString().isEmpty())
+              .setMinMaxDefault(0, Integer.MAX_VALUE, cs.upgradeDonat)
+              .setHoverTexts("bank.hover.upgrade.donat");
+   }
 
-	@Override
-	public void confirmClicked(boolean result, int id) {
-		NoppesUtil.openGUI(player, this);
-		if (!result) { return; }
-		switch (id) {
-			case 0: {
-				if (!data.containsKey(selected)) { return; }
-				Client.sendData(EnumPacketServer.BankRemove, data.get(selected), -1);
-				isWait = true;
-				waitTime = 30;
-				initGui();
-				break;
-			} // remove bank
-			case 1: {
-				if (!data.containsKey(selected) || !bank.ceilSettings.containsKey(ceil)) { return; }
-				Client.sendData(EnumPacketServer.BankRemove, data.get(selected), ceil);
-				isWait = true;
-				waitTime = 30;
-				initGui();
-				break;
-			} // remove ceil
-		}
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 0: {
+            if (ceil == button.getValue()) { return; }
+            save();
+            ceil = button.getValue();
+            init();
+            break;
+         } // select ceil
+         case 1: {
+            ceil = bank.addCeil().ceil;
+            init();
+            break;
+         } // add ceil
+         case 2: {
+            if (!data.containsKey(selected) || !bank.ceilSettings.containsKey(ceil) || bank.ceilSettings.size() < 2) { return; }
+            String msg = getMessage("bank.hover.ceil.del");
+            ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+               if (bo && data.containsKey(selected) && bank.ceilSettings.size() > 1 && bank.ceilSettings.containsKey(ceil)) {
+                  bank.removeCeil(ceil);
+                  ceil = ValueUtil.correctInt(ceil - 1, 0, Integer.MAX_VALUE);
+                  init();
+               }
+               NoppesUtil.openGUI(player, this);
+            },
+                    Component.translatable("bank.name", ": ID:" + bank.id + " \"" + bank.name + "\"; " +
+                            Util.instance.getOldFormattedText(Component.translatable("gui.ceil", ": ID:" + (ceil + 1)))),
+                    Component.literal(msg));
+            setScreen(guiYesNo);
+            break;
+         } // remove ceil
+         case 3: bank.isPublic = ((GuiCheckBoxNop) button).selected(); init(); break; // is public
+         case 4: bank.ceilSettings.get(ceil).isFree = ((GuiCheckBoxNop) button).selected(); break; // is public
+         case 6: {
+            save();
+            Bank b = BankController.getInstance().addNewBank();
+            ceil = 0;
+            selected = Component.literal(b.name);
+            bank.load(b.save());
+            Packets.sendServer(new SPacketBankSave(ceil, b.save()));
+            Packets.sendServer(new SPacketBankGet(bank.id, ceil));
+            init();
+            break;
+         } // add bank
+         case 7: {
+            if (!data.containsKey(selected)) { return; }
+            String msg = getMessage("bank.hover.del");
+            ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+               if (bo && data.containsKey(selected)) {
+                  Packets.sendServer(new SPacketBankRemove(bank.id));
+                  ceil = 0;
+                  selected = Component.empty();
+                  scroll.clear();
+                  BankController.getInstance().removeBank(bank.id);
+                  init();
+               }
+               NoppesUtil.openGUI(player, this);
+            },
+                    Component.translatable("bank.name", ": ID:" + bank.id + " \"" + bank.name + "\""),
+                    Component.literal(msg));
+            setScreen(guiYesNo);
+            break;
+         } // remove bank
+         case 8: {
+            if (bank == null) { return; }
+            setSubGui(new SubGuiEditBankAccess(bank));
+            break;
+         } // settings
+      }
+   }
 
-	@Override
-	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-		super.drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
-		if (isWait || waitTime > 0 || subgui != null) { return; }
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		for (int slotId = 0; slotId < 2; ++slotId) {
-            inventorySlots.getSlot(slotId).xPos = selected.isEmpty() ? -5000 : 180;
-			inventorySlots.getSlot(slotId).yPos = selected.isEmpty() ? -5000 : slotId == 0 ? 123 : 159;
-			int x = guiLeft + inventorySlots.getSlot(slotId).xPos;
-			int y = guiTop + inventorySlots.getSlot(slotId).yPos;
-			mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-			drawTexturedModalRect(x - 1, y - 1, 0, 0, 18, 18);
-		}
-		if (!selected.isEmpty()) {
-			int x = guiLeft + 5;
-			int y = guiTop + 12;
-			fontRenderer.drawString(new TextComponentTranslation("gui.name").getFormattedText() + ":", x, y, CustomNpcResourceListener.DefaultTextColor);
-			fontRenderer.drawString(new TextComponentTranslation("gui.ceil").getFormattedText() + ":", x, (y += 22), CustomNpcResourceListener.DefaultTextColor);
-			fontRenderer.drawString(new TextComponentTranslation("gui.start").getFormattedText() + ":", x, (y += 22), CustomNpcResourceListener.DefaultTextColor);
-			fontRenderer.drawString(new TextComponentTranslation("gui.max").getFormattedText() + ":", x + 126, y, CustomNpcResourceListener.DefaultTextColor);
-			x = guiLeft + 179;
-			y = guiTop + 112;
-			fontRenderer.drawString(new TextComponentTranslation("bank.tab.cost").getFormattedText() + ":", x, y, CustomNpcResourceListener.DefaultTextColor);
-			fontRenderer.drawString(new TextComponentTranslation("bank.upg.cost").getFormattedText() + ":", x, y + 36, CustomNpcResourceListener.DefaultTextColor);
-		}
-	}
+   @Override
+   protected void renderBg(@Nonnull GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
+      super.renderBg(graphics, partialTicks, mouseX, mouseY);
+      if (isWait || hasSubGui()) { return; }
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      PoseStack matrixStack = graphics.pose();
+      for (int slotId = 0; slotId < 2; ++slotId) {
+         Slot slot = container.getSlot(slotId);
+         int x = guiLeft + slot.x;
+         int y = guiTop + slot.y;
+         graphics.blit(GuiBasic.RESOURCE_SLOT, x - 1, y - 1, 0, 0, 18, 18);
+         matrixStack.pushPose();
+         matrixStack.translate(x + 2, y + 15, 0.0f);
+         float s = 16.0f / 250.f;
+         matrixStack.scale(s, s, s);
+         graphics.blit(GuiBasic.MONEY, 0, 0, 0, 0, 256, 256);
+         matrixStack.translate(0.0f, 256.0f, 0.0f);
+         graphics.blit(GuiBasic.DONAT, 0, 0, 0, 0, 256, 256);
+         matrixStack.popPose();
+      }
+   }
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		if (isWait || waitTime > 0) {
-			if (!isWait) {
-				waitTime--;
-				if (waitTime == 0) { initGui(); }
-			}
-			String text = new TextComponentTranslation("gui.wait", ": " + new TextComponentTranslation("gui.wait.data").getFormattedText()).getFormattedText();
-			fontRenderer.drawString(text, guiLeft + (width - fontRenderer.getStringWidth(text)) / 2, guiTop + 60, CustomNpcs.LableColor.getRGB());
-			return;
-		}
-		if (subgui != null || !CustomNpcs.ShowDescriptions || selected.isEmpty()) { return; }
-		int x = guiLeft + 179;
-		int y = guiTop + 112;
-		if (isMouseHover(mouseX, mouseY, x, y, 60, 12)) {
-			drawHoverText("bank.tab.cost.info", "" + bank.ceilSettings.get(ceil).startCells, "" + bank.ceilSettings.get(ceil).maxCells);
-		}
-		else if (isMouseHover(mouseX, mouseY, x, y + 36, 60, 12)) {
-			drawHoverText("bank.upg.cost.info", "" + bank.ceilSettings.get(ceil).startCells, "" + bank.ceilSettings.get(ceil).maxCells);
-		}
-	}
+   @Override
+   public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      super.render(graphics, mouseX, mouseY, partialTicks);
+      if (isWait) {
+         if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+         Component text = Component.translatable("gui.wait", ": " + Component.translatable("gui.wait.data").getString());
+         graphics.drawString(minecraft.font, text, guiLeft + (width - minecraft.font.width(text)) / 2, guiTop + 60, CustomNpcResourceListener.DefaultTextColor, false);
+         return;
+      }
+      if (hasSubGui() || !CustomNpcs.ShowDescriptions || selected.getString().isEmpty()) { return; }
+      for (int slotId = 0; slotId < 2; ++slotId) {
+         Slot slot = container.getSlot(slotId);
+         if (!slot.hasItem() && isMouseHover(mouseX, mouseY, guiLeft + slot.x, guiTop + slot.y, 18, 18)) {
+            drawHoverText("bank." + (slotId == 0 ? "tab" : "upg") + ".cost.info");
+         }
+      }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(160, 180); }
-		if (isWait || waitTime > 0) { return; }
-		int x = guiLeft + 254;
-		int y = guiTop + 8;
-		scroll.guiLeft = x;
-		scroll.guiTop = y;
-		addScroll(scroll);
-		if (!selected.isEmpty()) { scroll.setSelected(selected); }
-		List<String> list = scroll.getList();
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		if (list != null && !list.isEmpty()) {
-			int i = 0;
-			for (String key : list) {
-				hts.put(i, Collections.singletonList("ID: " + data.get(key)));
-				i++;
-			}
-		}
-		scroll.setHoverTexts(hts);
-		// add bank
-		y += scroll.height + 2;
-		addButton(new GuiNpcButton(6, x, y, 50, 20, "gui.add")
-				.setHoverText("bank.hover.add"));
-		// del bank
-		addButton(new GuiNpcButton(7, x + scroll.width - 50, y, 50, 20, "gui.remove")
-				.setIsEnable(!selected.isEmpty() && data.size() > 1)
-				.setHoverText(new TextComponentTranslation("bank.hover.del").appendSibling(new TextComponentTranslation("bank.hover.change")).getFormattedText()));
-		// name
-		x = guiLeft + 75;
-		y = guiTop + 8;
-		addTextField(new GuiNpcTextField(0, this, x, y, 160, 16, selected)
-				.setIsVisible(!selected.isEmpty())
-				.setHoverText("bank.hover.name"));
-		getTextField(0).setMaxStringLength(20);
-		// cells
-		y += 22;
-		List<String> csIds = new ArrayList<>();
-		if (bank != null) {
-			for (int i = 0; i < bank.ceilSettings.size(); i++) { csIds.add("" + (i + 1)); }
-		}
-		addButton(new GuiButtonBiDirectional(0, x, y, 50, 20, csIds.toArray(new String[0]), ceil)
-				.setIsVisible(!selected.isEmpty())
-				.setHoverText("bank.hover.ceil", "" + bank.ceilSettings.size()));
-		// add ceil
-		addButton(new GuiNpcButton(1, x + 55, y, 50, 20, "gui.add")
-				.setIsVisible(!selected.isEmpty())
-				.setHoverText(new TextComponentTranslation("bank.hover.ceil.add").appendSibling(new TextComponentTranslation("bank.hover.change")).getFormattedText()));
-		// del ceil
-		addButton(new GuiNpcButton(2, x + 110, y, 50, 20, "gui.remove")
-				.setIsVisible(!selected.isEmpty())
-				.setIsEnable(ceil > 0)
-				.setHoverText(new TextComponentTranslation("bank.hover.ceil.add").appendSibling(new TextComponentTranslation("bank.hover.change")).getFormattedText()));
-		// slots
-		y += 22;
-		CeilSettings cs = bank.ceilSettings.get(ceil);
-		int sc = cs.startCells;
-		int mc = cs.maxCells;
-		// min
-		addTextField(new GuiNpcTextField(1, this, x, y, 50, 18, "" + sc)
-				.setIsVisible(!selected.isEmpty())
-				.setMinMaxDefault(1, mc, sc)
-				.setHoverText(new TextComponentTranslation("bank.hover.slots.min").appendSibling(new TextComponentTranslation("bank.hover.change")).getFormattedText()));
-		// max
-		addTextField(new GuiNpcTextField(2, this, x + 110, y, 50, 18, "" + mc)
-				.setIsVisible(!selected.isEmpty())
-				.setMinMaxDefault(1, 198, mc)
-				.setHoverText(new TextComponentTranslation("bank.hover.slots.max").appendSibling(new TextComponentTranslation("bank.hover.change")).getFormattedText()));
-		// is public
-		addButton(new GuiNpcCheckBox(3, x, (y += 18), 160, 16, "bank.public.true", "bank.public.false", bank.isPublic)
-				.setIsVisible(!selected.isEmpty())
-				.setHoverText("bank.hover.public"));
-		// setting names
-		addButton(new GuiNpcButton(8, x, y + 20, 20, 20, 20, 146, GuiNPCInterface.WIDGETS)
-				.setHoverText("bank.hover.settings")
-				.setIsVisible(!selected.isEmpty() && bank.isPublic));
-		// open money
-		addTextField(new GuiNpcTextField(3, this, x += 126, y += 52, 50, 18, "" + cs.openMoney)
-				.setIsVisible(!selected.isEmpty())
-				.setMinMaxDefault(0, Integer.MAX_VALUE, cs.openMoney)
-				.setHoverText("bank.hover.open.money"));
-		// upgrade money
-		addTextField(new GuiNpcTextField(4, this, x, y + 36, 50, 18, "" + cs.upgradeMoney)
-				.setIsVisible(!selected.isEmpty())
-				.setMinMaxDefault(0, Integer.MAX_VALUE, cs.upgradeMoney)
-				.setHoverText("bank.hover.upgrade.money"));
-	}
+   @Override
+   public void setGuiData(CompoundTag compound) {
+      bank.load(compound);
+      if (compound.contains("CurrentCeil", 3)) { ceil = compound.getInt("CurrentCeil"); }
+      container.setBank(bank, ceil);
+      selected = Component.translatable(bank.name);
+      isWait = false;
+      init();
+   }
 
-	@Override
-	public void initPacket() {
-		Client.sendData(EnumPacketServer.BanksGet);
-		isWait = false;
-		waitTime = 30;
-	}
+   @Override
+   public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
+      data.clear();
+      Map<Component, Integer> map = new HashMap<>();
+      for (Map.Entry<String, Integer> entry : dataMap.entrySet()) {
+         map.put(Component.empty()
+                 .append(Component.literal("ID:" + entry.getValue() + " ").withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal(entry.getKey()).withStyle(ChatFormatting.RESET)), entry.getValue());
+      }
+      data.putAll(map);
+      scroll.setNormalList(new ArrayList<>(data.keySet()))
+              .setSelected(selected);
+      selected = scroll.getNormalSelected();
+      if (data.containsKey(selected)) {
+         Bank b = BankController.getInstance().getBank(data.get(selected));
+         if (b != null) {
+            bank.load(b.save());
+         }
+      }
+      isWait = false;
+      init();
+   }
 
-	@Override
-	public void save() {
-		if (selected != null && data.containsKey(selected) && bank != null && bank.ceilSettings.containsKey(ceil)) {
-			bank.ceilSettings.get(ceil).openStack = container.getSlot(0).getStack();
-			bank.ceilSettings.get(ceil).upgradeStack = container.getSlot(1).getStack();
-			NBTTagCompound compound = new NBTTagCompound();
-			bank.writeToNBT(compound);
-			isWait = true;
-			waitTime = 30;
-			initGui();
-			Client.sendData(EnumPacketServer.BankSave, compound);
-		}
-	}
+   @Override
+   public void setSelected(String selectedIn) { }
 
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 0 && !scroll.getSelected().equals(selected)) {
-			save();
-			ceil = 0;
-			selected = scroll.getSelected();
-			Client.sendData(EnumPacketServer.BankGet, data.get(selected), 0);
-			isWait = true;
-			waitTime = 30;
-			initGui();
-		}
-	}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      if (scroll.id == 0 && !selected.getString().equals(scroll.getSelected()) && data.containsKey(scroll.getNormalSelected())) {
+         save();
+         ceil = 0;
+         selected = scroll.getNormalSelected();
+         int id = data.get(selected);
+         Bank b = BankController.getInstance().getBank(id);
+         if (b != null) { bank.load(b.save()); }
+         Packets.sendServer(new SPacketBankGet(id, ceil));
+         isWait = true;
+         init();
+      }
+   }
 
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
+   @Override
+   public void save() {
+      if (selected != null && data.containsKey(selected) && bank != null && bank.id >= 0 && bank.ceilSettings.containsKey(ceil)) {
+         bank.ceilSettings.get(ceil).openStack = container.getSlot(0).getItem();
+         bank.ceilSettings.get(ceil).upgradeStack = container.getSlot(1).getItem();
+         Packets.sendServer(new SPacketBankSave(ceil, bank.save()));
+      }
+   }
 
-	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		data.clear();
-		data.putAll(dataMap);
-		scroll.setList(dataList);
-		isWait = false;
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      if (bank.id == -1) { return; }
+      switch (textField.id) {
+         case 0: {
+            String name = textField.getValue();
+            if (!name.isEmpty()) {
+               boolean has = false;
+               Component old = null;
+               for (Component c : data.keySet()) {
+                  if (c.getString().equals(name)) { has = true; break; }
+                  if (c.getString().equals(bank.name)) { old = c; }
+               }
+               if (!has && old != null) {
+                  data.remove(old);
+                  bank.name = name;
+                  selected = Component.translatable(name);
+                  data.put(selected, bank.id);
+                  scroll.replace(old, selected);
+               }
+            }
+            break;
+         } // name
+         case 1: {
+            if (!textField.isInteger()) {
+               textField.setValue(textField.def);
+               return;
+            }
+            bank.ceilSettings.get(ceil).startCells = textField.getInteger();
+            break;
+         } // startCells
+         case 2: {
+            if (!textField.isInteger()) {
+               textField.setValue(textField.def);
+               return;
+            }
+            bank.ceilSettings.get(ceil).maxCells = textField.getInteger();
+            break;
+         } // maxCells
+         case 3: {
+            if (!textField.isInteger()) {
+               textField.setValue(textField.def);
+               return;
+            }
+            bank.ceilSettings.get(ceil).openMoney = textField.getInteger();
+            break;
+         } // open money
+         case 4: {
+            if (!textField.isInteger()) {
+               textField.setValue(textField.def);
+               return;
+            }
+            bank.ceilSettings.get(ceil).upgradeMoney = textField.getInteger();
+            break;
+         } // upgrade money
+         case 5: {
+            if (!textField.isInteger()) {
+               textField.setValue(textField.def);
+               return;
+            }
+            bank.ceilSettings.get(ceil).openDonat = textField.getInteger();
+            break;
+         } // open donat
+         case 6: {
+            if (!textField.isInteger()) {
+               textField.setValue(textField.def);
+               return;
+            }
+            bank.ceilSettings.get(ceil).upgradeDonat = textField.getInteger();
+            break;
+         } // upgrade donat
+      }
+   }
 
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		if (bank == null) { bank = new Bank(); }
-		bank.readFromNBT(compound);
-		if (compound.hasKey("CurrentCeil", 3)) { ceil = compound.getInteger("CurrentCeil"); }
-		container.setBank(bank, ceil);
-		selected = bank.name;
-		isWait = false;
-	}
+   @Override
+   public void subGuiClosed(Screen subgui) {
+      if (subgui instanceof SubGuiEditBankAccess gui) {
+         if (bank.isChanging != gui.isChanging) { bank.isChanging = gui.isChanging; }
+         if (!bank.owner.equals(gui.owner)) { bank.owner = gui.owner; }
+         if (gui.names.size() != bank.access.size()) {
+            bank.access.clear();
+            bank.access.addAll(gui.names);
+         } else {
+            for (String name : gui.names) {
+               if (bank.access.contains(name)) { continue; }
+               bank.access.clear();
+               bank.access.addAll(gui.names);
+               break;
+            }
+         }
+      }
+   }
 
-	@Override
-	public void setSelected(String sel) {
-		scroll.setSelected(sel);
-		selected = scroll.getSelected() == null ? "" : scroll.getSelected();
-		isWait = false;
-	}
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
-	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		if (bank.id == -1) { return; }
-		switch (textField.getID()) {
-			case 0: {
-				String name = textField.getText();
-				if (!name.isEmpty() && !data.containsKey(name)) {
-					String old = bank.name;
-					data.remove(bank.name);
-					bank.name = name;
-					data.put(bank.name, bank.id);
-					selected = name;
-					scroll.replace(old, bank.name);
-				}
-				break;
-			} // name
-			case 1: {
-				if (!textField.isInteger()) {
-					textField.setText("" + textField.def);
-					return;
-				}
-				bank.ceilSettings.get(ceil).startCells = textField.getInteger();
-				break;
-			} // startCells
-			case 2: {
-				if (!textField.isInteger()) {
-					textField.setText("" + textField.def);
-					return;
-				}
-				bank.ceilSettings.get(ceil).maxCells = textField.getInteger();
-				break;
-			} // maxCells
-			case 3: {
-				if (!textField.isInteger()) {
-					textField.setText("" + textField.def);
-					return;
-				}
-				bank.ceilSettings.get(ceil).openMoney = textField.getInteger();
-				break;
-			} // open money
-			case 4: {
-				if (!textField.isInteger()) {
-					textField.setText("" + textField.def);
-					return;
-				}
-				bank.ceilSettings.get(ceil).upgradeMoney = textField.getInteger();
-				break;
-			} // upgrade money
-		}
-	}
+   private String getMessage(String locKey) {
+      String str = Component.translatable(locKey).getString();
+      while (str.contains("<br>")) { str = str.replace("<br>", "" + ((char) 10)); }
+      return str;
+   }
 
 }

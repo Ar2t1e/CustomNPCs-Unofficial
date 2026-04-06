@@ -1,19 +1,19 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface ILine {
 
-	boolean getShowText();
+   String getText();
 
-	String getSound();
+   void setText(@ParamName("text") String text);
 
-	String getText();
+   String getSound();
 
-	void setShowText(@ParamName("show") boolean show);
+   void setSound(@ParamName("sound") String sound);
 
-	void setSound(@ParamName("sound") String sound);
+   boolean getShowText();
 
-	void setText(@ParamName("text") String text);
+   void setShowText(@ParamName("show") boolean show);
 
 }

@@ -3,166 +3,168 @@ package noppes.npcs.controllers.data;
 import java.util.List;
 import java.util.Objects;
 
-import net.minecraft.nbt.NBTTagCompound;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.handler.data.IKeySetting;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.controllers.KeyController;
+import noppes.npcs.mixin.client.IKeyMappingMixin;
 
 public class KeyConfig implements IKeySetting {
 
-	public String name, category;
-	private int id;
-	public int keyId, modifer; // 0-none, 1-Shift, 2-Ctrl, 3-Alt
+    private Object parent;
+    private int id;
+    public String name = "key.custom.name";
+    public String category = "key.custom.category";
+    public int keyId = InputConstants.KEY_Z;
+    public int modifer = 2; // 0-none, 1-Shift, 2-Ctrl, 3-Alt
 
-	public KeyConfig(int id) {
-		this.name = "key.custom.name";
-		this.category = "key.custom.category";
-		this.keyId = 44;
-		this.modifer = 2;
-		if (id < 0) {
-			id *= -1;
-		}
-		this.id = id;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof KeyConfig)) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		KeyConfig key = (KeyConfig) obj;
-		if (this.id != key.id || this.keyId != key.keyId || this.modifer != key.modifer) {
-			return false;
-		}
-        return this.name.equals(key.name) && this.category.equals(key.category);
+    public KeyConfig(int idIn) {
+        if (idIn < 0) { idIn *= -1; }
+        id = idIn;
     }
 
-	@Override
-	public String getCategory() {
-		return this.category;
-	}
+    public void load(CompoundTag nbtKey) {
+        name = nbtKey.getString("Name");
+        category = nbtKey.getString("Category");
+        id = nbtKey.getInt("ID");
+        keyId = nbtKey.getInt("KeyID");
+        if (keyId < 0) { keyId *= -1; }
+        if (keyId < InputConstants.KEY_1 ||
+                keyId == InputConstants.KEY_RCONTROL || keyId == InputConstants.KEY_LCONTROL ||
+                keyId == InputConstants.KEY_RSHIFT || keyId == InputConstants.KEY_LSHIFT ||
+                keyId == InputConstants.KEY_RALT || keyId == InputConstants.KEY_LALT) {
+            keyId = InputConstants.KEY_Z;
+        }
+        modifer = nbtKey.getInt("ModiferType") % 4;
+        if (modifer < 0) { modifer *= -1; }
+    }
 
-	@Override
-	public int getId() {
-		return this.id;
-	}
+    public CompoundTag save() {
+        CompoundTag nbtKey = new CompoundTag();
+        nbtKey.putString("Name", name);
+        nbtKey.putString("Category", category);
+        nbtKey.putInt("KeyID", keyId);
+        nbtKey.putInt("ModiferType", modifer);
+        nbtKey.putInt("ID", id);
+        return nbtKey;
+    }
 
-	@Override
-	public int getKeyId() {
-		return this.keyId;
-	}
+    @OnlyIn(Dist.CLIENT)
+    public Object getMCKeyBinding() {
+        if (parent == null) {
+            try {
+                Class<?> cls = Class.forName("net.minecraft.client.KeyMapping");
+                parent = cls.getConstructor(String.class, int.class, String.class).newInstance("", 0, "");
+            }
+            catch (Exception ignored) { }
+        }
+        if (parent != null) {
+            String oldName = ((IKeyMappingMixin) parent).getName();
+            InputConstants.Key oldKey = ((IKeyMappingMixin) parent).getKey();
+            if (oldKey.getValue() != keyId) {
+                ClientProxy.removeKeyFromMAP(parent);
+                InputConstants.Key key = InputConstants.Type.KEYSYM.getOrCreate(keyId);
+                ((IKeyMappingMixin) parent).setKey(key);
+                ((IKeyMappingMixin) parent).setDefaultKey(key);
+            }
+            ((IKeyMappingMixin) parent).setName(name);
+            ((IKeyMappingMixin) parent).setCategory(category);
+            if (!oldName.equals(name)) {
+                ((IKeyMappingMixin) parent).getAll().remove(oldName);
+                ClientProxy.addKeyToAll(name, parent);
+            }
+            ClientProxy.tryAddKeyToMap(parent);
+            ((IKeyMappingMixin) parent).getCategories().add(category);
+        }
+        return parent;
+    }
 
-	@Override
-	public int getModiferType() {
-		return this.modifer;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof KeyConfig key)) { return false; }
+        if (obj == this) { return true; }
+        if (id != key.id || keyId != key.keyId || modifer != key.modifer) { return false; }
+        return name.equals(key.name) && category.equals(key.category);
+    }
 
-	@Override
-	public String getName() {
-		return this.name;
-	}
+    @Override
+    public String getCategory() { return category; }
 
-	@Override
-	public INbt getNbt() {
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(this.write());
-	}
+    @Override
+    public int getId() { return id; }
 
-	public boolean isActive(int key, List<Integer> keyPress) {
-		if (this.keyId != key) {
-			return false;
-		}
-		switch (this.modifer) {
-		case 1:
-			return keyPress.contains(54) || keyPress.contains(42);
-		case 2:
-			return keyPress.contains(157) || keyPress.contains(29);
-		case 3:
-			return keyPress.contains(184) || keyPress.contains(56);
-		default:
-			return true;
-		}
-	}
+    @Override
+    public int getKeyId() { return keyId; }
 
-	public void read(NBTTagCompound nbtKey) {
-		this.name = nbtKey.getString("Name");
-		this.category = nbtKey.getString("Category");
-		this.id = nbtKey.getInteger("ID");
-		this.keyId = nbtKey.getInteger("KeyID");
-		if (this.keyId < 0) {
-			this.keyId *= -1;
-		}
-		if (this.keyId < 2 || this.keyId == 157 || this.keyId == 29 || this.keyId == 54 || this.keyId == 42
-				|| this.keyId == 184 || this.keyId == 56) {
-			this.keyId = 44;
-		}
-		this.modifer = nbtKey.getInteger("ModiferType") % 4;
-		if (this.modifer < 0) {
-			this.modifer *= -1;
-		}
-	}
+    @Override
+    public int getModiferType() { return modifer; }
 
-	@Override
-	public void setCategory(String name) {
-		if (name == null || name.isEmpty()) {
-			name = "key.custom.category";
-		}
-		this.category = name;
-		KeyController.getInstance().update(this.id);
-	}
+    @Override
+    public String getName() { return name; }
 
-	@Override
-	public void setKeyId(int keyId) {
-		if (keyId < 2) {
-			throw new CustomNPCsException("Key ID:" + keyId + " must be greater than 2");
-		}
-		if (keyId == 157 || keyId == 29 || keyId == 54 || keyId == 42 || keyId == 184 || keyId == 56) {
-			throw new CustomNPCsException("Key ID:" + keyId + " cannot be of type Ctrl, Alt or Shift");
-		}
-		this.keyId = keyId;
-		KeyController.getInstance().update(this.id);
-	}
+    @Override
+    public INbt getNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(save()); }
 
-	@Override
-	public void setModiferType(int type) {
-		if (type < 0 || type > 3) {
-			throw new CustomNPCsException("Modifer Type must be between 0 and 3");
-		}
-		this.modifer = type;
-	}
+    public boolean isActive(int key, List<Integer> keyPress) {
+        if (keyId != key) { return false; }
+        // 0-none, 1-Shift, 2-Ctrl, 3-Alt
+        return switch (modifer) {
+            case 1 -> keyPress.contains(InputConstants.KEY_LSHIFT) || keyPress.contains(InputConstants.KEY_RSHIFT);
+            case 2 -> keyPress.contains(InputConstants.KEY_LCONTROL) || keyPress.contains(InputConstants.KEY_RCONTROL);
+            case 3 -> keyPress.contains(InputConstants.KEY_LALT) || keyPress.contains(InputConstants.KEY_RALT);
+            default -> true;
+        };
+    }
 
-	@Override
-	public void setName(String name) {
-		if (name == null || name.isEmpty()) {
-			name = "key.custom.name";
-		}
-		this.name = name;
-		KeyController.getInstance().update(this.id);
-	}
+    @Override
+    public void setCategory(String name) {
+        if (name == null || name.isEmpty()) { name = "key.custom.category"; }
+        category = name;
+        KeyController.getInstance().update(id);
+    }
 
-	@Override
-	public void setNbt(INbt nbt) {
-		this.read(nbt.getMCNBT());
-	}
+    @Override
+    public void setKeyId(int keyIdIn) {
+        if (keyIdIn < InputConstants.KEY_1) {
+            throw new CustomNPCsException("Key ID:" + keyIdIn + " must be greater than " + InputConstants.KEY_1);
+        }
+        if (keyIdIn == InputConstants.KEY_RCONTROL || keyIdIn == InputConstants.KEY_LCONTROL ||
+                keyIdIn == InputConstants.KEY_RSHIFT || keyIdIn == InputConstants.KEY_LSHIFT ||
+                keyIdIn == InputConstants.KEY_RALT || keyIdIn == InputConstants.KEY_LALT) {
+            throw new CustomNPCsException("Key ID:" + keyIdIn + " cannot be of type Ctrl, Alt or Shift");
+        }
+        keyId = keyIdIn;
+        KeyController.getInstance().update(id);
+    }
 
-	@Override
-	public String toString() {
-		return "KeyConfig { ID: " + this.id + "; keyID: " + this.keyId + "; modiferType: " + this.modifer + ", name: \""
-				+ this.name + "\"; category: \"" + this.category + "\"}";
-	}
+    @Override
+    public void setModiferType(int type) {
+        if (type < 0 || type > 3) {
+            throw new CustomNPCsException("Modifer Type must be between 0 and 3");
+        }
+        modifer = type;
+    }
 
-	public NBTTagCompound write() {
-		NBTTagCompound nbtKey = new NBTTagCompound();
-		nbtKey.setString("Name", this.name);
-		nbtKey.setString("Category", this.category);
-		nbtKey.setInteger("KeyID", this.keyId);
-		nbtKey.setInteger("ModiferType", this.modifer);
-		nbtKey.setInteger("ID", this.id);
-		return nbtKey;
-	}
+    @Override
+    public void setName(String nameIn) {
+        if (nameIn == null || nameIn.isEmpty()) { nameIn = "key.custom.name"; }
+        name = nameIn;
+        KeyController.getInstance().update(id);
+    }
+
+    @Override
+    public void setNbt(INbt nbt) { load(nbt.getMCNBT()); }
+
+    @Override
+    public String toString() {
+        return "KeyConfig { ID: " + id + "; keyID: " + keyId + "; modiferType: " + modifer + ", name: \""
+                + name + "\"; category: \"" + category + "\"}";
+    }
 
 }

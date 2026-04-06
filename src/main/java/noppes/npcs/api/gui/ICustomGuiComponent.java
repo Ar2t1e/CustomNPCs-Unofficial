@@ -1,33 +1,50 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
-import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.interfaces.ParamName;
+
+import java.util.UUID;
 
 public interface ICustomGuiComponent {
 
-	String[] getHoverText();
+   int getId();
 
-	IItemStack getHoverStack();
+   ICustomGuiComponent setId(@ParamName("id") int id);
 
-	int getId();
+   UUID getUniqueID();
 
-	int getPosX();
+   int getPosX();
 
-	int getPosY();
+   int getPosY();
 
-	boolean hasHoverText();
+   ICustomGuiComponent setPos(@ParamName("x") int x, @ParamName("y") int y);
 
-	void offSet(@ParamName("type") int type);
+   int getWidth();
 
-	@SuppressWarnings("all")
-	ICustomGuiComponent setHoverStack(@ParamName("item") IItemStack item);
+   int getHeight();
 
-	ICustomGuiComponent setHoverText(@ParamName("hover") String hover);
+   ICustomGuiComponent setSize(@ParamName("width") int width, @ParamName("height") int height);
 
-	ICustomGuiComponent setHoverText(@ParamName("hovers") String[] hovers);
+   boolean hasHoverText();
 
-	ICustomGuiComponent setId(@ParamName("id") int id);
+   String[] getHoverText();
 
-	ICustomGuiComponent setPos(@ParamName("x") int x, @ParamName("y") int y);
+   ICustomGuiComponent setHoverText(@ParamName("text") String text);
+
+   ICustomGuiComponent setHoverText(@ParamName("texts") String[] texts);
+
+   boolean getEnabled();
+
+   ICustomGuiComponent setEnabled(@ParamName("bo") boolean bo);
+
+   boolean getVisible();
+
+   ICustomGuiComponent setVisible(@ParamName("bo") boolean bo);
+
+   int getType();
+
+   // New from Unofficial (BetaZavr)
+   int getOffsetType();
+
+   void offSet(@ParamName("offsetType") int offsetType, @ParamName("windowSize") double[] windowSize);
 
 }

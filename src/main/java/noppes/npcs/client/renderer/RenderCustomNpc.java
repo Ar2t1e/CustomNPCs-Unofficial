@@ -1,241 +1,314 @@
 package noppes.npcs.client.renderer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.entity.NPCRendererHelper;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderLivingBase;
-import net.minecraft.client.renderer.entity.layers.LayerCustomHead;
-import net.minecraft.client.renderer.entity.layers.LayerRenderer;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.EnumAction;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.CustomRegisters;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.HumanoidModel.ArmPose;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider.Context;
+import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.player.Player;
+import noppes.npcs.CustomItems;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.api.constants.AnimationKind;
-import noppes.npcs.client.layer.*;
-import noppes.npcs.client.model.ModelNpcAlt;
-import noppes.npcs.constants.EnumParts;
+import noppes.npcs.client.layer.LayerGlow;
+import noppes.npcs.client.layer.LayerHeadwear;
+import noppes.npcs.client.layer.LayerNpcCloak;
+import noppes.npcs.client.layer.LayerParts;
+import noppes.npcs.client.layer.LayerPreRender;
+import noppes.npcs.client.layer.LayerNpcElytra;
+import noppes.npcs.client.parts.ModelData;
+import noppes.npcs.constants.BodyPart;
+import noppes.npcs.controllers.CobblemonHelper;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.client.renderer.entity.ILivingRendererMixin;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterface<T> {
+public class RenderCustomNpc<T extends EntityCustomNpc, M extends HumanoidModel<T>>
+		extends RenderNPCInterface<T, M> {
 
-	private EntityLivingBase entity;
-	public ModelBiped npcmodel;
 	private float partialTicks;
-	private RenderLivingBase<EntityLivingBase> renderEntity;
+	private LivingEntity entity;
+	private @Nullable T npc;
+	public M npcModel;
+	public Model otherModel;
+	public HumanoidArmorLayer<T, M, M> armorLayer;
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public RenderCustomNpc(ModelBiped model) {
-		super(model, 0.5f);
-		npcmodel = (ModelBiped) mainModel;
-		addLayer(new LayerEyes(this));
-		addLayer(new LayerHead(this));
-		addLayer(new LayerArms(this));
-		addLayer(new LayerLegs(this));
-		addLayer(new LayerBody(this));
-		addLayer(new LayerNpcCloak(this));
-		addLayer(new LayerCustomModels(this));
-		addLayer(new LayerCustomHead(npcmodel.bipedHead));
-		addLayer(new LayerCustomHeldItem(this));
-		boolean smallArmsIn = model instanceof ModelNpcAlt && ((ModelNpcAlt) model).smallArmsIn;
-		boolean isClassicPlayer = model instanceof ModelNpcAlt && ((ModelNpcAlt) model).isClassicPlayer;
-		addLayer(new LayerCustomArmor(this, false, smallArmsIn, isClassicPlayer));
-	}
+	@SuppressWarnings("rawtypes")
+	public List npcLayers = new ArrayList<>();
 
-	@Override
-	protected void applyRotations(@Nonnull T npc, float handleRotation, float rotationYaw, float partialTicks) {
-		if (renderEntity != null && !(renderEntity instanceof RenderCustomNpc)) {
-			NPCRendererHelper.applyRotations(renderEntity, entity, handleRotation, rotationYaw, partialTicks);
-			return;
-		}
-		if (npc.isEntityAlive()) {
-			super.applyRotations(npc, handleRotation, rotationYaw, partialTicks);
-			return;
-		}
-		GlStateManager.rotate(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
-		if (npc.deathTime > 0) {
-			if (npc.animation.hasAnimation(AnimationKind.DIES)) {
-				if (!npc.animation.isAnimated(AnimationKind.DIES)) { npc.animation.tryRunAnimation(AnimationKind.DIES); }
-				return;
-			}
-			float f = ((float) npc.deathTime + partialTicks - 1.0F) / 20.0F * 1.6F;
-			f = MathHelper.sqrt(f);
-			if (f > 1.0F) {
-				f = 1.0F;
-			}
-			GlStateManager.rotate(f * getDeathMaxRotation(npc), 0.0F, 0.0F, 1.0F);
-		} else {
-			String s = TextFormatting.getTextWithoutFormattingCodes(npc.getName());
-			if (("Dinnerbone".equals(s) || "Grumm".equals(s))) {
-				GlStateManager.translate(0.0F, npc.height + 0.1F, 0.0F);
-				GlStateManager.rotate(180.0F, 0.0F, 0.0F, 1.0F);
+	@SuppressWarnings("rawtypes")
+	private LivingEntityRenderer renderEntity;
+
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private final RenderLayer customRenderLayer = new RenderLayer(this) {
+		public void render(@Nonnull PoseStack mStack, @Nonnull MultiBufferSource typeBuffer, int lightMapUV, @Nonnull Entity entityIn,
+						   float limbSwing, float limbSwingAmount, float partialTicks, float age, float netHeadYaw, float headPitch) {
+			for (Object o : ((ILivingRendererMixin) renderEntity).getLayers()) {
+				((RenderLayer) o).render(mStack, typeBuffer, lightMapUV, entity, limbSwing, limbSwingAmount, partialTicks, age, netHeadYaw, headPitch);
 			}
 		}
-	}
+	};
+	private final HumanoidModel<T> renderModel;
 
 	@SuppressWarnings("unchecked")
+	public RenderCustomNpc(Context manager, M model) {
+		super(manager, model, 0.5F);
+		npcModel = model;
+		addLayer(new CustomHeadLayer<>(this, manager.getModelSet(), manager.getItemInHandRenderer()));
+		addLayer(new LayerHeadwear<>(this));
+		addLayer(new LayerNpcCloak<>(this));
+		addLayer(new LayerNpcElytra<>(manager, this));
+		addLayer(new LayerParts<>(this));
+		addLayer(new ItemInHandLayer<>(this, manager.getItemInHandRenderer()));
+		addLayer(new LayerGlow<>(this));
+		armorLayer = new HumanoidArmorLayer<>(this,
+				(M) new HumanoidModel<T>(manager.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
+				(M) new HumanoidModel<T>(manager.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)),
+				manager.getModelManager());
+		addLayer(armorLayer);
+		renderModel = new HumanoidModel<>(manager.bakeLayer(ModelLayers.PLAYER)) {
+
+			@Override
+			public void renderToBuffer(@Nonnull PoseStack mStack, @Nonnull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+				if (npc != null) {
+					int color = npc.display.getTint();
+					if (color < new Color(0xFFFFFF).getRGB()) {
+						red = (float)(color >> 16 & 255) / 255.0F;
+						green = (float)(color >> 8 & 255) / 255.0F;
+						blue = (float)(color & 255) / 255.0F;
+					}
+				}
+				otherModel.renderToBuffer(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+			}
+
+			@Override
+			@SuppressWarnings("rawtypes")
+			public void setupAnim(@Nonnull T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+				if (otherModel instanceof EntityModel em) {
+					em.setupAnim(entity, limbSwing, limbSwingAmount, ((ILivingRendererMixin) renderEntity).callGetBob(entity, Minecraft.getInstance().getPartialTick()), netHeadYaw, headPitch);
+				}
+			}
+
+			@Override
+			@SuppressWarnings("rawtypes")
+			public void prepareMobModel(@Nonnull T npc, float animationPos, float animationSpeed, float partialTicks) {
+				if (PixelmonHelper.isPixelmon(entity)) {
+					Model pixModel = (Model)PixelmonHelper.getModel(entity);
+					if (pixModel != null) {
+						otherModel = pixModel;
+						PixelmonHelper.setupModel(entity, pixModel);
+					}
+				}
+				if (otherModel instanceof HumanoidModel) {
+					HumanoidModel<T> bm = (HumanoidModel<T>)otherModel;
+					bm.swimAmount = npc.getSwimAmount(partialTicks);
+					bm.crouching = npcModel.crouching;
+				}
+				if (otherModel instanceof EntityModel em) {
+					em.riding = entity.isPassenger() && entity.getVehicle() != null && entity.getVehicle().shouldRiderSit();
+					em.young = entity.isBaby();
+					em.attackTime = getAttackAnim(npc, partialTicks);
+					em.prepareMobModel(entity, animationPos, animationSpeed, partialTicks);
+				}
+			}
+		};
+	}
+
 	@Override
-	public void doRender(@Nonnull T npc, double d, double d1, double d2, float f, float partialTicks) {
-		this.partialTicks = partialTicks;
-		entity = npc.modelData.getEntity(npc);
+	public @Nonnull Vec3 getRenderOffset(T npc, float partialTicks) {
+		float xOffset = 0.0F;
+		float yOffset = npc.currentAnimation == 0 ? npc.ais.bodyOffsetY / 10.0F - 0.5F : 0.0F;
+		float zOffset = 0.0F;
+		if (npc.isAlive()) {
+			if (npc.isSleeping()) {
+				xOffset = (float)(-Math.cos(Math.toRadians(180 - npc.ais.orientation)));
+				zOffset = (float)(-Math.sin(Math.toRadians(npc.ais.orientation)));
+				yOffset += 0.14F;
+			} else if (npc.currentAnimation != 1 && !npc.isPassenger()) {
+				if (npc.isCrouching()) {
+					yOffset = (float)((double)yOffset - 0.125D);
+				}
+			}
+			else { yOffset -= 0.5F - npc.modelData.getLegsY() * 0.8F; }
+		}
+		return new Vec3(xOffset, yOffset * ((float)npc.display.getSize() / 5.0F), zOffset);
+	}
+
+	void hideParts() {
+		if (npc instanceof EntityCustomNpc) {
+			ModelData data = ModelData.get(npc);
+			npcModel.leftLeg.visible = !data.hiddenParts.contains(BodyPart.LEFT_LEG);
+			npcModel.rightLeg.visible = !data.hiddenParts.contains(BodyPart.RIGHT_LEG);
+			npcModel.leftArm.visible = !data.hiddenParts.contains(BodyPart.LEFT_ARM);
+			npcModel.rightArm.visible = !data.hiddenParts.contains(BodyPart.RIGHT_ARM);
+			npcModel.body.visible = !data.hiddenParts.contains(BodyPart.BODY);
+			npcModel.head.visible = !data.hiddenParts.contains(BodyPart.HEAD);
+			npcModel.hat.visible = !data.hiddenParts.contains(BodyPart.HEAD);
+			if (npcModel instanceof PlayerModel) {
+				@SuppressWarnings("unchecked")
+				PlayerModel<T> playerModel = (PlayerModel<T>) npcModel;
+				playerModel.jacket.visible = !data.hiddenParts.contains(BodyPart.BODY);
+				playerModel.leftSleeve.visible = !data.hiddenParts.contains(BodyPart.LEFT_ARM);
+				playerModel.rightSleeve.visible = !data.hiddenParts.contains(BodyPart.RIGHT_ARM);
+				playerModel.leftPants.visible = !data.hiddenParts.contains(BodyPart.LEFT_LEG);
+				playerModel.rightPants.visible = !data.hiddenParts.contains(BodyPart.RIGHT_LEG);
+			}
+		}
+
+	}
+
+	@Override
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public void render(@Nonnull T npcIn, float entityYaw, float partialTicksIn, @Nonnull PoseStack matrixStack, @Nonnull MultiBufferSource buffer, int packedLight) {
+		npc = npcIn;
+		if (CustomNpcs.EnableInvisibleNpcs && CustomNpcs.InvisibilityAlgorithm > 0) {
+			Player player = Minecraft.getInstance().player;
+			if (player != null &&
+					!npc.display.isVisibleTo(player) &&
+					!player.isSpectator() &&
+					player.getMainHandItem().getItem() != CustomItems.wand) { return; }
+		}
+		partialTicks = partialTicksIn;
+		Entity prevEntity = entity;
+		entity = npcIn.modelData.getEntity(npc);
+		if (prevEntity != null && entity == null) {
+			model = npcModel;
+			renderEntity = null;
+			layers.clear();
+			layers.addAll(npcLayers);
+		}
+		Iterator<RenderLayer<T, M>> var9;
 		if (entity != null) {
-			Render<?> render = renderManager.getEntityRenderObject(entity);
-			if (render instanceof RenderLivingBase) {
-				renderEntity = (RenderLivingBase<EntityLivingBase>) render;
+			EntityRenderer<? super LivingEntity> render = entityRenderDispatcher.getRenderer(entity);
+			if (npc.modelData.simpleRender) {
+				renderEntity = null;
+				matrixStack.pushPose();
+				render.render(entity, entityYaw, partialTicks, matrixStack, buffer, packedLight);
+				renderNameTag(npc, Component.empty(), matrixStack, buffer, packedLight);
+				matrixStack.popPose();
+				return;
+			}
+			if (render instanceof LivingEntityRenderer) {
+				renderEntity = (LivingEntityRenderer) render;
+				otherModel = renderEntity.getModel();
+				if (CobblemonHelper.Enabled && CobblemonHelper.isPokemon(entity)) { otherModel = CobblemonHelper.getPokemonModel(entity); }
+				model = (M) renderModel;
+				layers.clear();
+				layers.add(customRenderLayer);
+				layers.add(new LayerGlow<>(this));
+				if (render instanceof RenderCustomNpc) {
+					List<RenderLayer<T, M>> listLayers = ((ILivingRendererMixin) renderEntity).getLayers();
+					for (RenderLayer<T, M> layer : new ArrayList<>(listLayers)) {
+						if (layer instanceof LayerPreRender) {
+							((LayerPreRender)layer).preRender((EntityCustomNpc) entity);
+						}
+					}
+				}
 			} else {
 				renderEntity = null;
 				entity = null;
+				model = npcModel;
+				layers.clear();
+				layers.addAll(npcLayers);
 			}
 		} else {
-			renderEntity = null;
-			List<LayerRenderer<T>> list = layerRenderers;
-			for (LayerRenderer<T> layer : list) {
-				if (layer instanceof LayerPreRender) { ((LayerPreRender)layer).preRender(npc); }
-			}
-		}
-		npcmodel.rightArmPose = getPose(npc, npc.getHeldItemMainhand());
-		npcmodel.leftArmPose = getPose(npc, npc.getHeldItemOffhand());
-		super.doRender(npc, d, d1, d2, f, partialTicks);
-	}
-
-	public ModelBiped.ArmPose getPose(T npc, ItemStack item) {
-		if (NoppesUtilServer.IsItemStackNull(item)) {
-			return ModelBiped.ArmPose.EMPTY;
-		}
-		if (npc.getItemInUseCount() > 0) {
-			EnumAction enumaction = item.getItemUseAction();
-			if (enumaction == EnumAction.BLOCK) {
-				return ModelBiped.ArmPose.BLOCK;
-			}
-			if (enumaction == EnumAction.BOW) {
-				return ModelBiped.ArmPose.BOW_AND_ARROW;
-			}
-		}
-		return ModelBiped.ArmPose.ITEM;
-	}
-
-	@Override
-	protected float handleRotationFloat(@Nonnull T par1EntityLivingBase, float partialTicks) {
-		if (renderEntity != null) {
-			return NPCRendererHelper.handleRotationFloat(entity, partialTicks, renderEntity);
-		}
-		return super.handleRotationFloat(par1EntityLivingBase, partialTicks);
-	}
-
-	@Override
-	protected void preRenderCallback(@Nonnull T npc, float f) {
-		if (renderEntity != null) {
-			renderColor(npc);
-			int size = npc.display.getSize();
-			if (entity instanceof EntityNPCInterface) {
-				((EntityNPCInterface) entity).display.setSize(5);
-			}
-			NPCRendererHelper.preRenderCallback(entity, f, renderEntity);
-			npc.display.setSize(size);
-			GlStateManager.scale(0.2f * npc.display.getSize(), 0.2f * npc.display.getSize(), 0.2f * npc.display.getSize());
-		} else {
-			super.preRenderCallback(npc, f);
-		}
-	}
-
-	protected void renderLayers(@Nonnull T npc, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scaleIn) {
-		if (entity != null && renderEntity != null) {
-			NPCRendererHelper.drawLayers(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scaleIn, renderEntity);
-		} else {
-			Map<EnumParts, Boolean> sp = npc.animation.showParts;
-			for (LayerRenderer<T> layerrenderer : layerRenderers) {
-				String layerName = layerrenderer.getClass().getSimpleName();
-				if (npc.modelData.isDisableLayer(layerName)) { continue; }
-				if ((layerrenderer instanceof LayerEyes || layerrenderer instanceof LayerHead || layerName.equals("LayerCustomHead")) && !sp.get(EnumParts.HEAD)) { continue; }
-				if (ArmourersWorkshopApi.isAvailable() && layerName.equals("LayerCustomHead") && ArmourersWorkshopApi.getSkinNBTUtils().hasSkinDescriptor(npc.getItemStackFromSlot(EntityEquipmentSlot.HEAD))) { continue; }
-				if ((layerrenderer instanceof LayerBody || layerrenderer instanceof LayerNpcCloak) && !sp.get(EnumParts.BODY)) { continue; }
-				if (layerName.equals("SkinLayerRendererCustomNPC")) { continue; }
-				boolean flag = setBrightness(npc, partialTicks, layerrenderer.shouldCombineTextures());
-				layerrenderer.doRenderLayer(npc, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scaleIn);
-				if (flag) { unsetBrightness(); }
-			}
-		}
-	}
-
-	@Override
-	protected void renderModel(@Nonnull T npc, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor) {
-		if (renderEntity != null) {
-			boolean isInvisible = npc.isInvisible();
-			if (npc.display.getVisible() == 1) {
-				isInvisible = npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player);
-			} else if (npc.display.getVisible() == 2) {
-				isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand;
-			}
-			if (isInvisible) {
-				GlStateManager.enableBlendProfile(GlStateManager.Profile.TRANSPARENT_MODEL);
-			}
-			ModelBase model = renderEntity.getMainModel();
-			if (PixelmonHelper.isPixelmon(entity)) {
-				ModelBase pixModel = (ModelBase) PixelmonHelper.getModel(entity);
-				if (pixModel != null) {
-					model = pixModel;
-					PixelmonHelper.setupModel(entity, pixModel);
+			hideParts();
+			var9 = layers.iterator();
+			while(var9.hasNext()) {
+				RenderLayer<T, M> layer = var9.next();
+				if (layer instanceof LayerPreRender) {
+					((LayerPreRender)layer).preRender(npc);
 				}
 			}
-			model.swingProgress = mainModel.swingProgress;
-			model.isRiding = (entity.isRiding() && entity.getRidingEntity() != null && entity.getRidingEntity().shouldRiderSit());
-			model.setLivingAnimations(entity, limbSwing, limbSwingAmount, partialTicks);
-			model.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, entity);
-			model.isChild = entity.isChild();
-			NPCRendererHelper.renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, renderEntity, model, Objects.requireNonNull(getEntityTexture(npc)));
-
-			if (!npc.display.getOverlayTexture().isEmpty()) {
-				GlStateManager.depthFunc(515);
-				if (npc.textureGlowLocation == null) {
-					npc.textureGlowLocation = new ResourceLocation(npc.display.getOverlayTexture());
-				}
-				float f1 = 1.0f;
-				GlStateManager.enableBlend();
-				GlStateManager.blendFunc(1, 1);
-				GlStateManager.disableLighting();
-                GlStateManager.depthMask(!npc.isInvisible());
-				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-				GlStateManager.pushMatrix();
-				GlStateManager.scale(1.001f, 1.001f, 1.001f);
-				NPCRendererHelper.renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, renderEntity, model, npc.textureGlowLocation);
-				GlStateManager.popMatrix();
-				GlStateManager.enableLighting();
-				GlStateManager.color(1.0f, 1.0f, 1.0f, f1);
-				GlStateManager.depthFunc(515);
-				GlStateManager.disableBlend();
-			}
-			if (isInvisible) {
-				GlStateManager.disableBlendProfile(GlStateManager.Profile.TRANSPARENT_MODEL);
-			}
 		}
-		else {
-			super.renderModel(npc, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor);
-		}
+		npcModel.rightArmPose = getPose(npc, npc.getMainHandItem());
+		npcModel.leftArmPose = getPose(npc, npc.getOffhandItem());
+		super.render(npc, entityYaw, partialTicks, matrixStack, buffer, packedLight);
+		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public void setLightmap(@Nonnull EntityCustomNpc npc) {
-		super.setLightmap((T) npc);
+	protected RenderType getRenderType(@Nonnull T entityIn, boolean isNorman, boolean isTranslucent, boolean isOutline) {
+		ResourceLocation resourcelocation = getTextureLocation(entityIn);
+		if (isNorman && model == renderModel) {
+			return otherModel.renderType(resourcelocation);
+		} else {
+			return entity == null ? model.renderType(resourcelocation) : super.getRenderType(entityIn, isNorman, isTranslucent, isOutline);
+		}
 	}
 
-	public List<LayerRenderer<T>> getLayers() { return new ArrayList<>(layerRenderers); }
+	public ArmPose getPose(T npc, ItemStack item) {
+		if (NoppesUtilServer.isItemStackNull(item)) {
+			return ArmPose.EMPTY;
+		} else {
+			if (npc.getUseItemRemainingTicks() > 0) {
+				UseAnim enumAction = item.getUseAnimation();
+				if (enumAction == UseAnim.BLOCK) {
+					return ArmPose.BLOCK;
+				}
+				if (enumAction == UseAnim.BOW) {
+					return ArmPose.BOW_AND_ARROW;
+				}
+			}
+			return ArmPose.ITEM;
+		}
+	}
+
+	@Override
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	protected void scale(@Nonnull T npcIn, @Nonnull PoseStack matrixScale, float f) {
+		if (renderEntity != null) {
+			renderColor(npcIn);
+			int size = npcIn.display.getSize();
+			if (entity instanceof EntityNPCInterface) { ((EntityNPCInterface)entity).display.setSize(5); }
+			EntityRenderer<? super LivingEntity> render = entityRenderDispatcher.getRenderer(entity);
+			if (!npcIn.modelData.simpleRender && render instanceof LivingEntityRenderer standardRender) {
+				matrixScale.pushPose();
+				((ILivingRendererMixin) standardRender).callScale(entity, matrixScale, partialTicks);
+				if (matrixScale.last().normal().isFinite()) {
+					matrixScale.popPose();
+					((ILivingRendererMixin) standardRender).callScale(entity, matrixScale, partialTicks);
+				} else {
+					matrixScale.popPose();
+				}
+			}
+			if (!npcIn.modelData.simpleRender && render instanceof LivingEntityRenderer standardRender) {
+				((ILivingRendererMixin) standardRender).callScale(entity, matrixScale, partialTicks);
+			}
+			npcIn.display.setSize(size);
+			matrixScale.scale(0.2F * (float) npcIn.display.getSize(), 0.2F * (float) npcIn.display.getSize(), 0.2F * (float) npcIn.display.getSize());
+		} else {
+			super.scale(npcIn, matrixScale, f);
+		}
+	}
 
 }

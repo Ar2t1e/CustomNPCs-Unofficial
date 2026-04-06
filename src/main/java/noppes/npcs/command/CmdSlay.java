@@ -1,164 +1,149 @@
 package noppes.npcs.command;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.boss.EntityDragon;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.item.EntityXPOrb;
-import net.minecraft.entity.monster.EntityGhast;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.passive.EntityHorse;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import noppes.npcs.LogWriter;
-import noppes.npcs.api.CommandNoppesBase;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.Entity.RemovalReason;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.horse.Horse;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Ghast;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.entity.EntityNPCInterface;
 
-import javax.annotation.Nonnull;
+public class CmdSlay {
 
-public class CmdSlay extends CommandNoppesBase {
+   static Map<String, Class<?>> slayMap = new LinkedHashMap<>();
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+   private static Map<String, Class<?>> getSlay(Level level) {
+      if (!slayMap.isEmpty()) { return slayMap; }
+      slayMap.put("all", LivingEntity.class);
+      slayMap.put("mobs", Monster.class);
+      slayMap.put("animals", Animal.class);
+      slayMap.put("items", ItemEntity.class);
+      slayMap.put("xporbs", ExperienceOrb.class);
+      slayMap.put("npcs", EntityNPCInterface.class);
 
-	public Map<String, Class<?>> slayMap = new HashMap<>();
+      for (ResourceLocation resource : ForgeRegistries.ENTITY_TYPES.getKeys()) {
+         EntityType<?> ent = ForgeRegistries.ENTITY_TYPES.getValue(resource);
+         if (ent != null && ent.getCategory() != MobCategory.MISC) {
+            String name = ent.getDescriptionId();
+            try {
+               Entity e = ent.create(level);
+               if (e != null) {
+                  e.remove(RemovalReason.DISCARDED);
+                  Class<? extends Entity> cls = e.getClass();
+                  if (!EntityNPCInterface.class.isAssignableFrom(cls) && LivingEntity.class.isAssignableFrom(cls)) {
+                     slayMap.put(name.toLowerCase(), cls);
+                  }
+               }
+            } catch (Throwable ignored) {}
+         }
+      }
 
-	public CmdSlay() {
-        this.slayMap.put("all", EntityLivingBase.class);
-		this.slayMap.put("mobs", EntityMob.class);
-		this.slayMap.put("animals", EntityAnimal.class);
-		this.slayMap.put("items", EntityItem.class);
-		this.slayMap.put("xporbs", EntityXPOrb.class);
-		this.slayMap.put("npcs", EntityNPCInterface.class);
-		for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-			String name = ent.getName();
-			Class<? extends Entity> cls = ent.getEntityClass();
-			if (EntityNPCInterface.class.isAssignableFrom(cls)) { continue; }
-			if (!EntityLivingBase.class.isAssignableFrom(cls)) { continue; }
-			this.slayMap.put(name.toLowerCase(), cls);
-		}
-		this.slayMap.remove("monster");
-		this.slayMap.remove("mob");
-	}
+      slayMap.remove("monster");
+      slayMap.remove("mob");
+      return slayMap;
+   }
 
-	private boolean delete(Entity entity, ArrayList<Class<?>> toDelete) {
-		for (Class<?> delete : toDelete) {
-			if (delete == EntityAnimal.class && entity instanceof EntityHorse) {
-				continue;
-			}
-			if (delete.isAssignableFrom(entity.getClass())) {
-				return entity.isDead = true;
-			}
-		}
-		return false;
-	}
+   public static LiteralArgumentBuilder<CommandSourceStack> register() {
+       return Commands.literal("slay")
+               .requires((source) -> source.hasPermission(4))
+               .then(Commands.argument("type", StringArgumentType.word())
+                       .then(Commands.argument("range", IntegerArgumentType.integer(1))
+                               .executes((context) -> {
+                                  ArrayList<Class<?>> toDelete = new ArrayList<>();
+                                  boolean deleteNPCs = false;
+                                  String delete = StringArgumentType.getString(context, "type");
+                                  Class<?> cls = getSlay((context.getSource()).getLevel()).get(delete);
+                                  if (cls != null) {
+                                     toDelete.add(cls);
+                                  }
+                                  if (delete.equals("mobs")) {
+                                     toDelete.add(Ghast.class);
+                                     toDelete.add(EnderDragon.class);
+                                  }
+                                  if (delete.equals("npcs")) {
+                                     deleteNPCs = true;
+                                  }
+                                  int count = 0;
+                                  int range = IntegerArgumentType.getInteger(context, "range");
+                                  AABB box = (new AABB((context.getSource()).getPosition(), (context.getSource()).getPosition().add(1.0D, 1.0D, 1.0D))).inflate(range, range, range);
+                                  List<? extends Entity> list = (context.getSource()).getLevel().getEntitiesOfClass(LivingEntity.class, box);
+                                  Iterator<? extends Entity> var9 = list.iterator();
+                                  while(true) {
+                                     Entity entity;
+                                     do {
+                                        do {
+                                           do {
+                                              if (!var9.hasNext()) {
+                                                 if (toDelete.contains(ExperienceOrb.class)) {
+                                                    list = (context.getSource()).getLevel().getEntitiesOfClass(ExperienceOrb.class, box);
 
-	@Override
-	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		if (args == null) {
-			sender.sendMessage(new TextComponentString("/noppes slay " + getUsage()));
-			return;
-		}
-		ArrayList<Class<?>> toDelete = new ArrayList<>();
-		boolean deleteNPCs = false;
-		for (String delete : args) {
-			delete = delete.toLowerCase();
-			Class<?> cls = this.slayMap.get(delete);
-			if (cls != null) {
-				toDelete.add(cls);
-			}
-			if (delete.equals("mobs")) {
-				toDelete.add(EntityGhast.class);
-				toDelete.add(EntityDragon.class);
-			}
-			if (delete.equals("npcs")) {
-				deleteNPCs = true;
-			}
-		}
-		int count = 0;
-		int range = 120;
-		try { range = Integer.parseInt(args[args.length - 1]); }
-		catch (Exception e) { LogWriter.error(e); }
+                                                    for(var9 = list.iterator(); var9.hasNext(); ++count) {
+                                                       entity = var9.next();
+                                                       entity.setRemoved(RemovalReason.DISCARDED);
+                                                    }
+                                                 }
+                                                 if (toDelete.contains(ItemEntity.class)) {
+                                                    list = (context.getSource()).getLevel().getEntitiesOfClass(ItemEntity.class, box);
 
-		AxisAlignedBB box = new AxisAlignedBB(sender.getPosition(), sender.getPosition().add(1, 1, 1)).grow(range, range, range);
-		List<? extends Entity> list = new ArrayList<>();
-		try {
-			list = sender.getEntityWorld().getEntitiesWithinAABB(EntityLivingBase.class, box);
-		}
-		catch (Exception ignored) { }
-		for (Entity entity : list) {
-			if (entity instanceof EntityPlayer) {
-				continue;
-			}
-			if (entity instanceof EntityTameable && ((EntityTameable) entity).isTamed()) {
-				continue;
-			}
-			if (entity instanceof EntityNPCInterface && !deleteNPCs) {
-				continue;
-			}
-			if (!this.delete(entity, toDelete)) {
-				continue;
-			}
-			++count;
-		}
-		if (toDelete.contains(EntityXPOrb.class)) {
-			list.clear();
-			try {
-				list = sender.getEntityWorld().getEntitiesWithinAABB(EntityXPOrb.class, box);
-			}
-			catch (Exception ignored) { }
-			for (Entity entity : list) {
-				entity.isDead = true;
-				++count;
-			}
-		}
-		if (toDelete.contains(EntityItem.class)) {
-			list.clear();
-			try {
-				list = sender.getEntityWorld().getEntitiesWithinAABB(EntityItem.class, box);
-			}
-			catch (Exception ignored) { }
-			for (Entity entity : list) {
-				entity.isDead = true;
-				++count;
-			}
-		}
-		sender.sendMessage(new TextComponentTranslation(count + " entities deleted"));
-	}
+                                                    for(var9 = list.iterator(); var9.hasNext(); ++count) {
+                                                       entity = var9.next();
+                                                       entity.setRemoved(RemovalReason.DISCARDED);
+                                                    }
+                                                 }
+                                                 int finalCount = count;
+                                                 (context.getSource()).sendSuccess(() -> Component.translatable(finalCount + " entities deleted"), false);
+                                                 return 1;
+                                              }
+                                              entity = var9.next();
+                                           } while(entity instanceof Player);
+                                        } while(entity instanceof TamableAnimal && ((TamableAnimal)entity).isTame());
+                                     } while(entity instanceof EntityNPCInterface && !deleteNPCs);
+                                     if (delete(entity, toDelete)) { ++count; }
+                                  }
+                               })
+                       )
+               );
+   }
 
-	@Override
-	public String getDescription() {
-		return "Kills given entity within range. Also has all, mobs, animal options. Can have multiple types";
-	}
+   private static boolean delete(Entity entity, ArrayList<Class<?>> toDelete) {
+      Iterator<Class<?>> var2 = toDelete.iterator();
 
-	@Nonnull
-	public String getName() {
-		return "slay";
-	}
+      Class<?> delete;
+      do {
+         do {
+            if (!var2.hasNext()) {
+               return false;
+            }
 
-	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
-		return CommandBase.getListOfStringsMatchingLastWord(args, this.slayMap.keySet().toArray(new String[0]));
-	}
+            delete = var2.next();
+         } while(delete == Animal.class && entity instanceof Horse);
+      } while(!delete.isAssignableFrom(entity.getClass()));
 
-	@Override
-	public String getUsage() {
-		return "<type>.. [range]";
-	}
+      entity.setRemoved(RemovalReason.DISCARDED);
+      return true;
+   }
+
 }

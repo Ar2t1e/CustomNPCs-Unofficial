@@ -1,0 +1,371 @@
+{
+	"name": "part.legs",
+	"hidden_parts": ["right_leg", "left_leg"],
+	"render_type": "bedrock",
+	"render_data": {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.steve",
+					"texture_width": 64,
+					"texture_height": 32,
+					"visible_bounds_width": 4,
+					"visible_bounds_height": 2.5,
+					"visible_bounds_offset": [0, 0.75, 0]
+				},
+				"bones": [
+					{
+						"name": "spider_body",
+						"pivot": [0, 0, 0],
+						"cubes": [
+							{"origin": [-3, 5.25, 0], "size": [6, 6, 6], "inflate": 0.5, "uv": [0, 0]},
+							{"origin": [-5, 4, 7.5], "size": [10, 8, 12], "inflate": 1, "uv": [0, 12]}
+						]
+					},
+					{
+						"name": "left_hind_leg",
+						"parent": "spider_body",
+						"pivot": [3.5, 8, 4],
+						"rotation": [-10, -42.5, 42.5],
+						"cubes": [
+							{"origin": [3, 7, 3], "size": [16, 2, 2], "uv": [18, 0]}
+						]
+					},
+					{
+						"name": "right_hind_leg",
+						"parent": "spider_body",
+						"pivot": [-3.5, 8, 4],
+						"rotation": [-10, 42.5, -42.5],
+						"cubes": [
+							{"origin": [-19, 7, 3], "size": [16, 2, 2], "uv": [18, 0], "mirror": true}
+						]
+					},
+					{
+						"name": "left_middle_hind_leg",
+						"parent": "spider_body",
+						"pivot": [3.5, 8, 3],
+						"rotation": [0, -15, 32.5],
+						"cubes": [
+							{"origin": [3, 7, 2.5], "size": [16, 2, 2], "uv": [18, 0]}
+						]
+					},
+					{
+						"name": "right_middle_hind_leg",
+						"parent": "spider_body",
+						"pivot": [-3.5, 8, 3],
+						"rotation": [0, 15, -32.5],
+						"cubes": [
+							{"origin": [-19, 7, 2.5], "size": [16, 2, 2], "uv": [18, 0], "mirror": true}
+						]
+					},
+					{
+						"name": "left_middle_front_leg",
+						"parent": "spider_body",
+						"pivot": [3.5, 8, 3],
+						"rotation": [0, 15, 32.5],
+						"cubes": [
+							{"origin": [3, 7, 2], "size": [16, 2, 2], "uv": [18, 0]}
+						]
+					},
+					{
+						"name": "right_middle_front_leg",
+						"parent": "spider_body",
+						"pivot": [-3.5, 8, 3],
+						"rotation": [0, -15, -32.5],
+						"cubes": [
+							{"origin": [-19, 7, 2], "size": [16, 2, 2], "uv": [18, 0], "mirror": true}
+						]
+					},
+					{
+						"name": "left_front_leg",
+						"parent": "spider_body",
+						"pivot": [3.5, 8, 2],
+						"rotation": [7.5, 47.5, 42.5],
+						"cubes": [
+							{"origin": [3, 7, 1.5], "size": [16, 2, 2], "uv": [18, 0]}
+						]
+					},
+					{
+						"name": "right_front_leg",
+						"parent": "spider_body",
+						"pivot": [-3.5, 8, 2],
+						"rotation": [7.5, -47.5, -42.5],
+						"cubes": [
+							{"origin": [-19, 7, 1.5], "size": [16, 2, 2], "uv": [18, 0], "mirror": true}
+						]
+					}
+				]
+			}
+		]
+	},
+	"texture": "moreplayermodels:textures/legs/2.png",
+	"body_part": "legs",
+	"menu": "part.legs",
+	"animation_data" : {
+		"walk" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"spider_body" : {
+				},
+				"left_hind_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				},
+				"left_middle_hind_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"left_middle_front_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				},
+				"left_front_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"right_hind_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"right_middle_hind_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				},
+				"right_middle_front_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"right_front_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				}
+			}
+		},
+		"fly" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"left_hind_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				},
+				"left_middle_hind_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"left_middle_front_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				},
+				"left_front_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"right_hind_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"right_middle_hind_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				},
+				"right_middle_front_leg" : {
+					"rotation": [[0, 20, 0], [0, 0, 0], [0, -20, 0]]
+				},
+				"right_front_leg" : {
+					"rotation": [[0, -20, 0], [0, 0, 0], [0, 20, 0]]
+				}
+			}
+		},
+		"idle" : {
+			"animation_length" : 1,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"bones" : {
+				"spider_body" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"left_hind_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"left_middle_hind_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"left_middle_front_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"left_front_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"right_hind_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"right_middle_hind_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"right_middle_front_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"right_front_leg" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				}
+			}
+		},
+		"crouch" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"spider_body" : {
+					"translate": [[0, -2, -6], [0, -2, -6], [0, -2, -6]],
+					"rotation": [[-30, 0, 0], [-30, 0, 0], [-30, 0, 0]]
+				},
+				"left_hind_leg" : {
+					"rotation": [[0, -14, 0], [0, 0, 0], [0, 14, 0]]
+				},
+				"left_middle_hind_leg" : {
+					"rotation": [[0, 14, 0], [0, 0, 0], [0, -14, 0]]
+				},
+				"left_middle_front_leg" : {
+					"rotation": [[0, -14, 0], [0, 0, 0], [0, 14, 0]]
+				},
+				"left_front_leg" : {
+					"rotation": [[0, 14, 0], [0, 0, 0], [0, -14, 0]]
+				},
+				"right_hind_leg" : {
+					"rotation": [[0, 14, 0], [0, 0, 0], [0, -14, 0]]
+				},
+				"right_middle_hind_leg" : {
+					"rotation": [[0, -14, 0], [0, 0, 0], [0, 14, 0]]
+				},
+				"right_middle_front_leg" : {
+					"rotation": [[0, 14, 0], [0, 0, 0], [0, -14, 0]]
+				},
+				"right_front_leg" : {
+					"rotation": [[0, -14, 0], [0, 0, 0], [0, 14, 0]]
+				}
+			}
+		},
+		"sit" : {
+			"animation_length" : 1,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"bones" : {
+				"spider_body" : {
+					"translate": [[0, -3, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"left_hind_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"left_middle_hind_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"left_middle_front_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"left_front_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"right_hind_leg" : {
+					"rotation": [[0, 0, 20]]
+				},
+				"right_middle_hind_leg" : {
+					"rotation": [[0, 0, 20]]
+				},
+				"right_middle_front_leg" : {
+					"rotation": [[0, 0, 20]]
+				},
+				"right_front_leg" : {
+					"rotation": [[0, 0, 20]]
+				}
+			}
+		},
+		"sleep" : {
+			"animation_length" : 1,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"bones" : {
+				"spider_body" : {
+					"translate": [[0, -11, -8]],
+					"rotation": [[-90, 0, 0]]
+				},
+				"left_hind_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"left_middle_hind_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"left_middle_front_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"left_front_leg" : {
+					"rotation": [[0, 0, -20]]
+				},
+				"right_hind_leg" : {
+					"rotation": [[0, 0, 20]]
+				},
+				"right_middle_hind_leg" : {
+					"rotation": [[0, 0, 20]]
+				},
+				"right_middle_front_leg" : {
+					"rotation": [[0, 0, 20]]
+				},
+				"right_front_leg" : {
+					"rotation": [[0, 0, 20]]
+				}
+			}
+		},
+		"crawl" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"bones" : {
+				"spider_body" : {
+					"translate": [[0, -11, -7], [0, -11, -7], [0, -11, -7]],
+					"rotation": [[-90, 0, 0], [-90, 0, 0], [-90, 0, 0]]
+				},
+				"left_hind_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, -20, -30], [0, 0, -30], [0, 20, -30]]
+				},
+				"left_middle_hind_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, 20, -30], [0, 0, -30], [0, -20, -30]]
+				},
+				"left_middle_front_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, -20, -30], [0, 0, -30], [0, 20, -30]]
+				},
+				"left_front_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, 20, -30], [0, 0, -30], [0, -20, -30]]
+				},
+				"right_hind_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, 20, 30], [0, 0, 30], [0, -20, 30]]
+				},
+				"right_middle_hind_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, -20, 30], [0, 0, 30], [0, 20, 30]]
+				},
+				"right_middle_front_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, 20, 30], [0, 0, 30], [0, -20, 30]]
+				},
+				"right_front_leg" : {
+					"translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+					"rotation": [[0, -20, 30], [0, 0, 30], [0, 20, 30]]
+				}
+			}
+		}
+	},
+	"preview_rotation": 45,
+	"translate": [0, 11.4, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, -12, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

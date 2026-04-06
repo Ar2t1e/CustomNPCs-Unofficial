@@ -1,8 +1,7 @@
 package noppes.npcs.controllers.data;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import noppes.npcs.constants.EnumAvailabilityStackData;
-import noppes.npcs.util.ValueUtil;
 
 public class AvailabilityStackData {
 
@@ -12,18 +11,19 @@ public class AvailabilityStackData {
 
     public AvailabilityStackData() {}
 
-    public AvailabilityStackData(NBTTagCompound compound) {
-        int i = ValueUtil.correctInt(compound.getInteger("type"), 0, EnumAvailabilityStackData.values().length - 1);
-        type = EnumAvailabilityStackData.values()[i];
+    public AvailabilityStackData(CompoundTag compound) {
+        int t = compound.getInt("type");
+        if (t < 0) { t *= -1; }
+        type = EnumAvailabilityStackData.values()[t % EnumAvailabilityStackData.values().length];
         ignoreNBT = compound.getBoolean("ignoreNBT");
         ignoreDamage = compound.getBoolean("ignoreDamage");
     }
 
-    public NBTTagCompound writeToNBT() {
-        NBTTagCompound compound = new NBTTagCompound();
-        compound.setInteger("type", type.ordinal());
-        compound.setBoolean("ignoreNBT", ignoreNBT);
-        compound.setBoolean("ignoreDamage", ignoreDamage);
+    public CompoundTag save() {
+        CompoundTag compound = new CompoundTag();
+        compound.putInt("type", type.ordinal());
+        compound.putBoolean("ignoreNBT", ignoreNBT);
+        compound.putBoolean("ignoreDamage", ignoreDamage);
         return compound;
     }
 

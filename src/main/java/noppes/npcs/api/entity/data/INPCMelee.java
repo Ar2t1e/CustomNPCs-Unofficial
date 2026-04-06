@@ -1,31 +1,31 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface INPCMelee {
 
-	int getDelay();
+   int getStrength();
 
-	int getEffectStrength();
+   void setStrength(@ParamName("strength") int strength);
 
-	int getEffectTime();
+   int getDelay();
 
-	int getEffectType();
+   void setDelay(@ParamName("speed") int speed);
 
-	int getKnockback();
+   double getRange();
 
-	double getRange();
+   void setRange(@ParamName("range") double range);
 
-	int getStrength();
+   int getKnockback();
 
-	void setDelay(@ParamName("speed") int speed);
+   void setKnockback(@ParamName("knockback") int knockback);
 
-	void setEffect(@ParamName("type") int type, @ParamName("strength") int strength, @ParamName("time") int time);
+   int getEffectType();
 
-	void setKnockback(@ParamName("knockback") int knockback);
+   int getEffectTime();
 
-	void setRange(@ParamName("range") double range);
+   int getEffectStrength();
 
-	void setStrength(@ParamName("strength") int strength);
+   void setEffect(@ParamName("type") int type, @ParamName("strength") int strength, @ParamName("time") int time);
 
 }

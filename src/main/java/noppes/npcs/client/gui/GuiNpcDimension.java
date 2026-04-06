@@ -1,143 +1,163 @@
 package noppes.npcs.client.gui;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.ClientHandler;
-import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import org.lwjgl.input.Keyboard;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import noppes.npcs.api.gui.IDimensionGetter;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
+import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDimensionTeleport;
+import noppes.npcs.packets.server.SPacketDimensionsGet;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 
-import javax.annotation.Nonnull;
+public class GuiNpcDimension extends GuiNPCInterface
+        implements IDimensionGetter, IGuiData, ICustomScrollListener {
 
-public class GuiNpcDimension extends GuiNPCInterface implements IScrollData, ICustomScrollListener {
+   protected final HashMap<Component, ResourceLocation> data = new HashMap<>();
+   protected GuiCustomScrollNop scroll;
 
-	protected final HashMap<String, Integer> data = new HashMap<>();
-	protected GuiCustomScroll scroll;
+   public GuiNpcDimension() {
+      super();
+      setBackground("menubg.png");
+      imageWidth = 256;
 
-	public GuiNpcDimension() {
-		super();
-		setBackground("menubg.png");
-		xSize = 256;
-	}
+      Packets.sendServer(new SPacketDimensionsGet());
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1: {
-				player.sendMessage(new TextComponentTranslation("gui.wip"));
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				int id = data.get(scroll.getSelected());
-				if (!ClientHandler.getInstance().has(id)) { return; }
-				CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, id, 0, 0);
-				break;
-			} // settings
-			case 2: CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, 0, 0, 0); break; // add
-			case 3: {
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				int id = data.get(scroll.getSelected());
-				if (!ClientHandler.getInstance().has(id)) { return; }
-				Client.sendData(EnumPacketServer.DimensionDelete, id);
-				break;
-			} // remove
-			case 4: tp(); break;
-		}
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0).setSize(186, 199); }
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      if (!scroll.hasSelected()) {
+         for (Component key : data.keySet()) {
+            if (data.get(key).equals(minecraft.player != null ?
+                    minecraft.player.level().dimension().location() : Level.OVERWORLD.location())) { scroll.setSelected(key); }
+         }
+      }
+      add(scroll.setPos(guiLeft + 4, guiTop + 4));
+      ResourceLocation id = data.getOrDefault(scroll.getNormalSelected(), Level.OVERWORLD.location());
+      // title
+      addLabel(0, guiLeft, guiTop + 4, "gui.dimensions")
+              .setCenter(imageWidth);
+      // settings
+      addButton(1, guiLeft + 192, guiTop + 36, "gui.settings")
+              .setSize(60, 20)
+              .setIsEnabled(scroll.hasSelected() && DimensionController.has(id))
+              .setHoverTexts("dimensions.hover.settings");
+      // add
+      addButton(2, guiLeft + 192, guiTop + 80, "gui.add")
+              .setSize(60, 20)
+              .setHoverTexts("dimensions.hover.add");
+      // del
+      addButton(3, guiLeft + 192, guiTop + 102, "gui.remove")
+              .setSize(60, 20)
+              .setIsEnabled(scroll.hasSelected() && DimensionController.has(id))
+              .setHoverTexts("dimensions.hover.del");
+      // tp to
+      addButton(4, guiLeft + 192, guiTop + 14, "TP")
+              .setSize(60, 20)
+              .setIsEnabled(scroll.hasSelected())
+              .setHoverTexts("dimensions.hover.tp");
+   }
 
-	public void confirmClicked(boolean flag, int i) {
-		if (flag) { Client.sendData(EnumPacketServer.RemoteDelete, data.get(scroll.getSelected())); }
-		NoppesUtil.openGUI(player, this);
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 1: {
+            player.sendSystemMessage(Component.translatable("gui.wip"));
+            if (data.containsKey(scroll.getNormalSelected())) {
+               ResourceLocation id = data.get(scroll.getNormalSelected());
+               if (DimensionController.has(id)) {
+                  //CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, id, 0, 0);
+               }
+            }
+            break;
+         } // settings
+         case 2: {
+            player.sendSystemMessage(Component.translatable("gui.wip"));
+            //CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, 0, 0, 0);
+            break;
+         } // add
+         case 3: {
+            if (data.containsKey(scroll.getNormalSelected())) {
+               player.sendSystemMessage(Component.translatable("gui.wip"));
+               ResourceLocation id = data.get(scroll.getNormalSelected());
+               if (DimensionController.has(id)) {
+                  /*ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+                     if (agree) {
+                        Client.sendData(EnumPacketServer.DimensionDelete, id);
+                     }
+                     NoppesUtil.openGUI(player, this);
+                  },
+                          Component.literal("ID: " + id),
+                          Component.translatable("message.delete"));
+                  setScreen(guiYesNo);*/
+               }
+            }
+            break;
+         } // remove
+         case 4: tp(); break;
+      }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		int id = 0;
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(186, 199); }
-		scroll.guiLeft = guiLeft + 4;
-		scroll.guiTop = guiTop + 14;
-		addScroll(scroll);
-		if (scroll.getSelect() == -1) {
-			for (String key : data.keySet()) {
-				if (data.get(key) == mc.player.world.provider.getDimension()) { scroll.setSelected(key); }
-			}
-		}
-		if (data.containsKey(scroll.getSelected())) { id = data.get(scroll.getSelected()); }
-		// title
-		addLabel(new GuiNpcLabel(0, "gui.dimensions", guiLeft, guiTop + 4)
-				.setCenter(xSize));
-		// settings
-		addButton(new GuiNpcButton(1, guiLeft + 192, guiTop + 36, 60, 20, "gui.settings")
-				.setIsEnable(scroll.getSelect() >= 0 && ClientHandler.getInstance().has(id))
-				.setHoverText("dimensions.hover.settings"));
-		// add
-		addButton(new GuiNpcButton(2, guiLeft + 192, guiTop + 80, 60, 20, "gui.add")
-				.setHoverText("dimensions.hover.add"));
-		// del
-		addButton(new GuiNpcButton(3, guiLeft + 192, guiTop + 102, 60, 20, "gui.remove")
-				.setIsEnable(scroll.getSelect() >= 0 && ClientHandler.getInstance().has(id))
-				.setHoverText("dimensions.hover.del"));
-		// pt
-		addButton(new GuiNpcButton(4, guiLeft + 192, guiTop + 14, 60, 20, "TP")
-				.setIsEnable(scroll.getSelect() >= 0)
-				.setHoverText("dimensions.hover.tp"));
-	}
+   @Override
+   public void resetDimension() { init(); }
 
-	@Override
-	public void initPacket() {
-		Client.sendData(EnumPacketServer.DimensionsGet);
-	}
+   // New from Unofficial (BetaZavr)
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) { init(); }
 
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui != null) { return subgui.keyCnpcsPressed(typedChar, keyCode); }
-		if (keyCode == Keyboard.KEY_ESCAPE || isInventoryKey(keyCode)) {
-			onClosed();
-			return true;
-		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
-	}
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { tp(); }
 
-    @Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { initGui(); }
+   @Override
+   public void setGuiData(CompoundTag compound) {
+      data.clear();
+      ListTag dimsData = compound.getList("Data", 10);
+      List<Component> list = new ArrayList<>();
+      List<Component> suffixes = new ArrayList<>();
+      for (int i = 0; i < dimsData.size(); i++) {
+         CompoundTag nbt = dimsData.getCompound(i);
+         boolean isDel = nbt.getBoolean("deleted");
+         ChatFormatting color = isDel ? ChatFormatting.DARK_GRAY : ChatFormatting.GRAY;
+         ResourceLocation id = new ResourceLocation(nbt.getString("name"));
+         Component key = Component.empty()
+                 .append(Component.literal("\"").withStyle(color))
+                 .append(Component.translatable(nbt.getString("name")).withStyle(isDel ? ChatFormatting.GRAY : ChatFormatting.RESET))
+                 .append(Component.literal("\"").withStyle(color));
+         list.add(key);
+         data.put(key, id);
+         boolean isMC = Level.OVERWORLD.location().equals(id) || Level.NETHER.location().equals(id) || Level.END.location().equals(id);
+         Component sfx = Component.empty()
+                 .append(Component.literal(isMC ? "MC" : "Mod").withStyle(isMC ? ChatFormatting.AQUA : ChatFormatting.GOLD))
+                 .append(Component.literal(".").withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal(isDel ? "delete" : nbt.getBoolean("loaded") ? "loaded" : "unloaded")
+                         .withStyle(isDel ? ChatFormatting.GRAY : nbt.getBoolean("loaded") ? ChatFormatting.GREEN : ChatFormatting.RED));
+         suffixes.add(sfx);
+      }
+      scroll.setUnsortedList(list)
+              .setSuffixes(suffixes);
+      init();
+   }
 
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { tp(); }
-
-	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		data.clear();
-		TreeMap<Integer, String> m = new TreeMap<>();
-		// reverse K V
-		for (String key : dataMap.keySet()) { m.put(dataMap.get(key), key); }
-		List<String> l = new ArrayList<>();
-		List<String> s = new ArrayList<>();
-		String c = "" + ((char) 167);
-		for (int id : m.keySet()) {
-			String[] t = m.get(id).split("&");
-			String r = t[0].equals("delete") ? "8" : "7";
-			String str = c + r + "ID:" + (t[0].equals("delete") ? c + "7" : c + "6") + id + c + r + " - \"" + (t[0].equals("delete") ? c + "7" : c + "r") + new TextComponentTranslation(t[1]).getFormattedText() + c + r + "\"" + (t.length >= 3 && !t[2].isEmpty() ? " [" + t[2] + "]" : "");
-			l.add(str);
-			String p = c + (id > 99 ? "6NPC" : "bMC") + c + r + ".";
-			s.add(p + (t[0].equals("delete") ? c + "7delete" : t[0].equals("true") ? c + "aloaded" : c + "cunloaded"));
-			data.put(str, id);
-		}
-		scroll.setUnsortedList(l).setSuffixes(s);
-		initGui();
-	}
-
-	@Override
-	public void setSelected(String selected) { getButton(3).setDisplayText(selected); }
-
-	private void tp() {
-		if (!data.containsKey(scroll.getSelected())) {return; }
-		Client.sendData(EnumPacketServer.DimensionTeleport, data.get(scroll.getSelected()));
-		onClosed();
-	}
+   private void tp() {
+      if (data.containsKey(scroll.getNormalSelected())) {
+         Packets.sendServer(new SPacketDimensionTeleport(data.get(scroll.getNormalSelected())));
+         onClose();
+      }
+   }
 
 }

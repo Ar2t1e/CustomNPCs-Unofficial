@@ -1,86 +1,109 @@
 package noppes.npcs.roles;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.LogWriter;
+import java.util.EnumSet;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.data.INPCJob;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class JobInterface implements INPCJob {
+import javax.annotation.Nullable;
 
-	public EntityNPCInterface npc;
-	public boolean overrideMainHand = false;
-	public boolean overrideOffHand = false;
-	public JobType type = JobType.DEFAULT;
+public abstract class JobInterface implements INPCJob {
 
-	public JobInterface(EntityNPCInterface npcIn) { npc = npcIn; }
+   public static final JobInterface NONE = new JobInterface(null) {
 
-	public boolean aiContinueExecute() { return this.aiShouldExecute(); }
+      @Override
+      public CompoundTag save(CompoundTag compound) { return compound; }
 
-	public void aiDeathExecute(Entity attackingEntity) { }
+      @Override
+      public void load(CompoundTag compound) { }
 
-	public boolean aiShouldExecute() { return false; }
+      @Override
+      public int getType() { return JobType.NONE.get(); }
 
-	public void aiStartExecuting() { }
+      @Override
+      public JobType getEnumType() { return JobType.NONE; }
 
-	public void aiUpdateTask() { }
+   };
 
-	public void delete() { }
+   public @Nullable EntityNPCInterface npc;
+   public boolean overrideMainHand = false;
+   public boolean overrideOffHand = false;
 
-	public JobType getEnumType() { return this.type; }
+   // New from Unofficial (BetaZavr)
+   public JobType type = JobType.NONE;
 
-	public IItemStack getMainhand() { return null; }
+   public JobInterface(@Nullable EntityNPCInterface npcIn) { npc = npcIn; }
 
-	public int getMutexBits() { return 0; }
+   public void killed() { }
 
-	public IItemStack getOffhand() { return null; }
+   public void delete() { }
 
-	@Override
-	public int getType() { return type.get(); }
+   public void aiDeathExecute(Entity attackingEntity) { }
 
-	@Override
-	public boolean isWorking() { return false; }
+   public boolean aiShouldExecute() { return false; }
 
-	public boolean isFollowing() { return false; }
+   public boolean aiContinueExecute() { return aiShouldExecute(); }
 
-	public String itemToString(ItemStack item) {
-		if (item == null || item.isEmpty()) { return ""; }
-		return Item.REGISTRY.getNameForObject(item.getItem()) + " - " + item.getItemDamage();
-	}
+   public void aiStartExecuting() { }
 
-	public void killed() { }
+   public void aiUpdateTask() { }
 
-	public void load(NBTTagCompound compound) {
-		this.type = JobType.get(compound.getInteger("Type"));
-	}
+   public void reset() { }
 
-	public void reset() { }
+   public void stop() { }
 
-	public void resetTask() { }
+   public IItemStack getMainhand() {
+      return null;
+   }
 
-	public ItemStack stringToItem(String s) {
-		if (s.isEmpty()) { return ItemStack.EMPTY; }
-		int damage = 0;
-		if (s.contains(" - ")) {
-			String[] split = s.split(" - ");
-			if (split.length == 2) {
-				try { damage = Integer.parseInt(split[1]); }
-				catch (Exception e) { LogWriter.error(e); }
-				s = split[0];
-			}
-		}
-		Item item = Item.getByNameOrId(s);
-		if (item == null) { return ItemStack.EMPTY; }
-		return new ItemStack(item, 1, damage);
-	}
+   public IItemStack getOffhand() {
+      return null;
+   }
 
-	public NBTTagCompound save(NBTTagCompound compound) {
-		compound.setInteger("Type", this.type.get());
-		return compound;
-	}
+   public boolean isFollowing() {
+      return false;
+   }
+
+   public EnumSet<Flag> getFlags() {
+      return EnumSet.noneOf(Flag.class);
+   }
+
+   public ItemStack stringToItem(String s) {
+      Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(s));
+      return s.isEmpty() || item == null ? ItemStack.EMPTY : new ItemStack(item);
+   }
+
+   public String itemToString(ItemStack item) {
+      ResourceLocation registryName = ForgeRegistries.ITEMS.getKey(item.getItem());
+      if (registryName == null) { registryName = new ResourceLocation("minecraft", "air"); }
+      return !item.isEmpty() ? registryName.toString() : "";
+   }
+
+   // New from Unofficial (BetaZavr)
+   public void load(CompoundTag compound) { type = JobType.get(compound.getInt("Type")); }
+
+   public CompoundTag save(CompoundTag compound) {
+      compound.putInt("Type", type.get());
+      return compound;
+   }
+
+   @Override
+   public boolean isWorking() { return false; }
+
+   @Override
+   public int getType() { return type.get(); }
+
+   public JobType getEnumType() { return type; }
+
+   public void interact(Player player) { }
 
 }

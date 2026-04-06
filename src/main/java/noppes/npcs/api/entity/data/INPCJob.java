@@ -2,7 +2,7 @@ package noppes.npcs.api.entity.data;
 
 public interface INPCJob {
 
-	int getType();
+    int getType();
 
     boolean isWorking();
 

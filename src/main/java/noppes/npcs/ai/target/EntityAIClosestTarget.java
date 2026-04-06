@@ -1,65 +1,61 @@
 package noppes.npcs.ai.target;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
-import com.google.common.base.Predicate;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
-import net.minecraft.entity.ai.EntityAITarget;
-import net.minecraft.entity.monster.EntityMob;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.scores.Team;
+import noppes.npcs.constants.EnumSeeTarget;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.CustomNPCsScheduler;
+import org.jetbrains.annotations.NotNull;
 
-public class EntityAIClosestTarget extends EntityAITarget {
+/*
+* AI to find nearest target to attack:
+*/
+public class EntityAIClosestTarget<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
 
-	private final int targetChance;
-	private EntityLivingBase targetEntity;
-	private final Predicate<EntityLivingBase> targetEntitySelector;
-	private final EntityAINearestAttackableTarget.Sorter theNearestAttackableTargetSorter;
+   private int unseenTicks1;
 
-	public EntityAIClosestTarget(EntityNPCInterface npcIn, int targetChanceIn, boolean directLOS, boolean onlyNearby, Predicate<EntityLivingBase> attackEntitySelector) {
-		super(npcIn, directLOS, onlyNearby);
-		targetChance = targetChanceIn;
-		theNearestAttackableTargetSorter = new EntityAINearestAttackableTarget.Sorter(npcIn);
-        setMutexBits(1);
-		targetEntitySelector = attackEntitySelector;
-	}
+   public EntityAIClosestTarget(EntityNPCInterface npc, Class<T> c, int range, EnumSeeTarget mustSee, boolean mustReach, @Nullable Predicate<LivingEntity> selector) {
+      super(npc, c, range, mustSee != EnumSeeTarget.NONE && mustSee != EnumSeeTarget.BLIND, mustReach, selector);
+      if (npc.ais.attackInvisible) { targetConditions.ignoreInvisibilityTesting(); }
+      if (mustSee == EnumSeeTarget.NONE || mustSee == EnumSeeTarget.BLIND) { targetConditions.ignoreLineOfSight(); }
+   }
 
-	public boolean shouldExecute() {
-		if ((targetChance > 0 && taskOwner.getRNG().nextInt(targetChance) != 0)) { return false; }
-		CustomNPCsScheduler.runTack(() -> {
-			CustomNpcs.debugData.start(taskOwner);
-			try {
-				double dist = getTargetDistance();
+   @Override
+   public void start() {
+      unseenTicks1 = 0;
+      mob.setTarget(target);
+      super.start();
+   }
 
-				List<EntityLivingBase> list = new ArrayList<>();
-				for (Entity entity : new ArrayList<>(taskOwner.world.loadedEntityList)) {
-					if (!(entity instanceof EntityLivingBase) ||
-							!entity.isEntityAlive() ||
-							taskOwner.getDistance(entity) > dist ||
-							!targetEntitySelector.apply((EntityLivingBase) entity))
-					{ continue; }
-					list.add((EntityLivingBase) entity);
-				}
+   @Override
+   public void stop() {
+      if (mob.getTarget() != null) { mob.setTarget(null); }
+      targetMob = null;
+   }
 
-				if (!list.isEmpty()) {
-					list.sort(theNearestAttackableTargetSorter);
-					targetEntity = list.get(0);
-					taskOwner.setAttackTarget(targetEntity);
-					if (targetEntity instanceof EntityMob && ((EntityMob) targetEntity).getAttackTarget() == null) {
-						((EntityMob) targetEntity).setAttackTarget(taskOwner);
-					}
-					super.startExecuting();
-				}
-			} catch (Exception e) { LogWriter.error(e); }
-			CustomNpcs.debugData.end(taskOwner);
-		});
-		return false;
-	}
+   @Override
+   public boolean canContinueToUse() {
+      LivingEntity target = mob.getTarget();
+      if (target == null) { target = targetMob; }
+      if (target == null || !mob.canAttack(target)) { return false; }
+      Team team = mob.getTeam();
+      Team team1 = target.getTeam();
+      if (team != null && team1 == team) { return false; }
+      double dist = getFollowDistance();
+      if (mob.distanceToSqr(target) > dist * dist) { return false; }
+      if (mustSee) {
+         if (mob.getSensing().hasLineOfSight(target)) { unseenTicks1 = 0; }
+         else if (++unseenTicks1 > reducedTickDelay(unseenMemoryTicks)) { return false; }
+      }
+      mob.setTarget(target);
+      return true;
+   }
+
+   @Override
+   protected @NotNull AABB getTargetSearchArea(double value) { return mob.getBoundingBox().inflate(value, value, value); }
 
 }

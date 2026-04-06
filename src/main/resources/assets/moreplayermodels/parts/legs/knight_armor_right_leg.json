@@ -1,0 +1,58 @@
+{
+	"name": "knight_armor_right_leg",
+	"parent": "moreplayermodels:parts/legs/knight_armor_legs.json",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"texture": "moreplayermodels:textures/armor/knight_armor.png",
+	"body_part": "legs",
+	"menu": "part.legs",
+	"animation_type": "legs",
+	"preview_rotation": 40,
+	"translate": [0, 0 ,0],
+	"scale": [1, 1, 1],
+	"rotate_offset": [0, 0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"can_use_player_skin" : false,
+	"author": "Anfauglir/Valaron/Jakob",
+	"render_data" : {
+        "format_version": "1.12.0",
+	    "minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.steve",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 3,
+					"visible_bounds_height": 3.5,
+					"visible_bounds_offset": [0, 1.25, 0]
+				},
+				"bones": [
+					{
+						"name": "right_leg",
+						"pivot": [-2, 12, 0]
+					},
+					{
+						"name": "upper_part4",
+						"parent": "right_leg",
+						"pivot": [-1, 11, 0],
+						"rotation": [0, 0, -80],
+						"cubes": [
+							{"origin": [-4, 11, -3], "size": [4, 4, 6], "inflate": -0.3, "uv": [32, 10], "mirror": true},
+							{"origin": [-1, 11, -3], "size": [2, 4, 6], "inflate": -0.15, "uv": [46, 4], "mirror": true}
+						]
+					},
+					{
+						"name": "lower_part4",
+						"parent": "right_leg",
+						"pivot": [-1.25, 8, 0],
+						"rotation": [0, 0, -95],
+						"cubes": [
+							{"origin": [-4.25, 8, -3], "size": [4, 4, 6], "inflate": -0.29, "uv": [32, 0], "mirror": true},
+							{"origin": [-1.25, 8, -3], "size": [2, 4, 6], "inflate": -0.16, "uv": [46, 14], "mirror": true}
+						]
+					}
+				]
+			}
+	    ]
+	}
+}

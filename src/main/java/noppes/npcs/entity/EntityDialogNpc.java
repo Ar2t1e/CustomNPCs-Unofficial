@@ -1,34 +1,31 @@
 package noppes.npcs.entity;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumHand;
-import net.minecraft.world.World;
-
-import javax.annotation.Nonnull;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import noppes.npcs.CustomEntities;
+import org.jetbrains.annotations.NotNull;
 
 public class EntityDialogNpc extends EntityNPCInterface {
 
-	public EntityDialogNpc(World world) {
-		super(world);
-	}
+   public EntityDialogNpc(Level world) {
+      super(CustomEntities.entityCustomNpc, world);
+   }
 
-	@Override
-	public boolean isInvisible() {
-		return true;
-	}
+   public boolean isInvisibleTo(@NotNull Player player) {
+      return true;
+   }
 
-	@Override
-	public boolean isInvisibleToPlayer(@Nonnull EntityPlayer player) {
-		return true;
-	}
+   public boolean isInvisible() {
+      return true;
+   }
 
-	@Override
-	public void onUpdate() {
-	}
+   public void tick() {
+   }
 
-	@Override
-	public boolean processInteract(@Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
-		return false;
-	}
+   public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+      return InteractionResult.FAIL;
+   }
 
 }

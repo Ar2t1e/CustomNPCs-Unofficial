@@ -1,26 +1,38 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.functions.gui.GuiComponentClicked;
 
-@SuppressWarnings("all")
 public interface IScroll extends ICustomGuiComponent {
 
-	int getDefaultSelection();
+   String[] getList();
 
-	int getHeight();
+   IScroll setList(@ParamName("list") String[] list);
 
-	String[] getList();
+   @Deprecated
+   int getDefaultSelection();
 
-	int getWidth();
+   @Deprecated
+   IScroll setDefaultSelection(@ParamName("selection") int selection);
 
-	boolean isMultiSelect();
+   int[] getSelection();
 
-	IScroll setDefaultSelection(@ParamName("defaultSelection") int defaultSelection);
+   IScroll setSelection(@ParamName("selection") int... selection);
 
-	IScroll setList(@ParamName("list") String[] list);
+   String[] getSelectionList();
 
-	IScroll setMultiSelect(@ParamName("multiSelect") boolean multiSelect);
+   IScroll setSelectionList(@ParamName("list") String... list);
 
-	IScroll setSize(@ParamName("width") int width, @ParamName("height") int height);
+   boolean isMultiSelect();
+
+   IScroll setMultiSelect(@ParamName("multiSelect") boolean multiSelect);
+
+   IScroll setOnClick(@ParamName("onClick") GuiComponentClicked<IScroll> onClick);
+
+   IScroll setOnDoubleClick(@ParamName("onDoubleClick") GuiComponentClicked<IScroll> onDoubleClick);
+
+   boolean getHasSearch();
+
+   IScroll setHasSearch(@ParamName("bo") boolean bo);
 
 }

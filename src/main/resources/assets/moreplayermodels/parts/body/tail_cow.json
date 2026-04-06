@@ -1,0 +1,43 @@
+{
+	"name": "Cow Tail",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"render_data" : {
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.steve",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "CowTail",
+					"pivot": [0, 1, -1],
+					"rotation": [-5, 0, 0],
+					"cubes": [
+						{"origin": [-0.5, 8, -10.2], "size": [1, 1, 4.2], "pivot": [0, 1, -1], "rotation": [-72.4413, -0.49538, -0.20117], "uv": [11, 6]},
+						{"origin": [-0.5, 11.5, -9], "size": [1, 1, 4], "pivot": [0, 1, -1], "rotation": [-42.4413, -0.49538, -0.20117], "uv": [11, 6]},
+						{"origin": [-1, 7.8, -7], "size": [2, 2, 3], "pivot": [0, 1, -1], "rotation": [-69.9413, -0.49538, -0.20117], "uv": [11, 6]},
+						{"origin": [-0.5, 8.2, -5], "size": [1, 1, 1.5], "pivot": [0, 1, -1], "rotation": [-69.9413, -0.49538, -0.20117], "uv": [11, 6]}
+					]
+				}
+			]
+		}
+	]
+	},
+	"texture": "moreplayermodels:textures/entity/white_noise.png",
+	"body_part": "body",
+	"menu": "part.tail",
+	"animation_inherit": "tails",
+	"preview_rotation": 135,
+	"translate": [0, 12, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, -12, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "DaniUwU"
+}

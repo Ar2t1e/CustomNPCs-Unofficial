@@ -1,0 +1,52 @@
+{
+	"name": "part.tail",
+	"render_type": "simple",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{ "name" : "tail", "empty": true, "translate": [0, 0, 0], "rotate": [0, 0, 0] },
+
+			{ "name" : "part1", "parent" : "tail", "empty": true, "translate": [0, 2, 2], "rotate": [0, 0, 0] },
+			{ "parent" : "part1", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "east", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part1", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "west", "rotate_offset": [1.5, -1.5, -1.5] },
+			{ "parent" : "part1", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "south", "rotate_offset": [-1.5, -1.5, 1.5] },
+			{ "parent" : "part1", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "north", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part1", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "down", "rotate_offset": [-1.5, 1.5, -1.5] },
+			{ "parent" : "part1", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "up", "rotate_offset": [-1.5, -1.5, -1.5] },
+			
+			{ "name" : "part2", "parent" : "tail", "empty": true, "translate": [0, 4.5, 4], "rotate": [0, 0, 0] },
+			{ "parent" : "part2", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "east", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part2", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "west", "rotate_offset": [1.5, -1.5, -1.5] },
+			{ "parent" : "part2", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "south", "rotate_offset": [-1.5, -1.5, 1.5] },
+			{ "parent" : "part2", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "north", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part2", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "down", "rotate_offset": [-1.5, 1.5, -1.5] },
+			{ "parent" : "part2", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "up", "rotate_offset": [-1.5, -1.5, -1.5] },
+			
+			{ "name" : "part3", "parent" : "tail", "empty": true, "translate": [0, 7, 5.75], "rotate": [0, 0, 0] },
+			{ "parent" : "part3", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "east", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part3", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "west", "rotate_offset": [1.5, -1.5, -1.5] },
+			{ "parent" : "part3", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "south", "rotate_offset": [-1.5, -1.5, 1.5] },
+			{ "parent" : "part3", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "north", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part3", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "down", "rotate_offset": [-1.5, 1.5, -1.5] },
+			{ "parent" : "part3", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "up", "rotate_offset": [-1.5, -1.5, -1.5] },
+			
+			{ "name" : "part4", "parent" : "tail", "empty": true, "translate": [0, 9, 8], "rotate": [0, 0, 0] },
+			{ "parent" : "part4", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "east", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part4", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "west", "rotate_offset": [1.5, -1.5, -1.5] },
+			{ "parent" : "part4", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "south", "rotate_offset": [-1.5, -1.5, 1.5] },
+			{ "parent" : "part4", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "north", "rotate_offset": [-1.5, -1.5, -1.5] },
+			{ "parent" : "part4", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "down", "rotate_offset": [-1.5, 1.5, -1.5] },
+			{ "parent" : "part4", "plane": true, "texture_position": [52, 16], "part_size": [3, 3], "direction": "up", "rotate_offset": [-1.5, -1.5, -1.5] }
+		]
+	},
+	"texture": "moreplayermodels:textures/tail/1.png",
+	"body_part": "body",
+	"menu": "part.tail",
+	"animation_inherit": "tails",
+	"preview_rotation": 135,
+	"translate": [0, 9.5, 0.5],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0.0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

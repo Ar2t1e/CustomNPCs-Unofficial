@@ -1,89 +1,78 @@
 package noppes.npcs.api.block;
 
-import noppes.npcs.api.ILayerModel;
 import noppes.npcs.api.ITimers;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
 @SuppressWarnings("all")
 public interface IBlockScripted extends IBlock {
 
-	ILayerModel createLayerModel();
+   void setModel(@ParamName("item") IItemStack item);
 
-	String executeCommand(@ParamName("command") String command);
+   void setModel(@ParamName("name") String name);
 
-	float getHardness();
+   IItemStack getModel();
 
-	boolean getIsLadder();
+   ITimers getTimers();
 
-	boolean getIsPassable();
+   void setRedstonePower(@ParamName("strength") int strength);
 
-	ILayerModel[] getLayerModels();
+   int getRedstonePower();
 
-	int getLight();
+   void setIsLadder(@ParamName("bo") boolean bo);
 
-	IItemStack getModel();
+   boolean getIsLadder();
 
-	int getRedstonePower();
+   void setIsWaterlogged(@ParamName("bo") boolean bo);
 
-	float getResistance();
+   boolean getIsWaterlogged();
 
-	int getRotationX();
+   void setLight(@ParamName("value") int value);
 
-	int getRotationY();
+   int getLight();
 
-	int getRotationZ();
+   void setScale(@ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
 
-	float getScaleX();
+   float getScaleX();
 
-	float getScaleY();
+   float getScaleY();
 
-	float getScaleZ();
+   float getScaleZ();
 
-	ITextPlane getTextPlane();
+   void setRotation(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	ITextPlane getTextPlane2();
+   int getRotationX();
 
-	ITextPlane getTextPlane3();
+   int getRotationY();
 
-	ITextPlane getTextPlane4();
+   int getRotationZ();
 
-	ITextPlane getTextPlane5();
+   String executeCommand(@ParamName("command") String command);
 
-	ITextPlane getTextPlane6();
+   boolean getIsPassible();
 
-	ITimers getTimers();
+   void setIsPassible(@ParamName("bo") boolean bo);
 
-	boolean removeLayerModel(@ParamName("layer") ILayerModel layer);
+   float getHardness();
 
-	boolean removeLayerModel(@ParamName("id") int id);
+   void setHardness(@ParamName("hardness") float hardness);
 
-	void setHardness(@ParamName("hardness") float hardness);
+   float getResistance();
 
-	void setIsLadder(@ParamName("enabled") boolean enabled);
+   void setResistance(@ParamName("resistance") float resistance);
 
-	void setIsPassible(@ParamName("passable") boolean passable);
+   ITextPlane getTextPlane();
 
-	void setLight(@ParamName("value") int value);
+   ITextPlane getTextPlane2();
 
-	void setModel(@ParamName("block") IBlock block);
+   ITextPlane getTextPlane3();
 
-	void setModel(@ParamName("item") IItemStack item);
+   ITextPlane getTextPlane4();
 
-	void setModel(@ParamName("name") String name);
+   ITextPlane getTextPlane5();
 
-	void setModel(@ParamName("blockName") String blockName, @ParamName("meta") int meta);
+   ITextPlane getTextPlane6();
 
-	void setRedstonePower(@ParamName("power") int power);
-
-	void setResistance(@ParamName("resistance") float resistance);
-
-	void setRotation(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
-
-	void setScale(@ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
-
-	void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
-
-	void updateModel();
+   void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
 
 }

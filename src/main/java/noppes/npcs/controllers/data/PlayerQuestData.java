@@ -1,110 +1,152 @@
 package noppes.npcs.controllers.data;
 
 import java.util.HashMap;
+import java.util.Set;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
-import noppes.npcs.Server;
-import noppes.npcs.constants.EnumPacketClient;
+import noppes.npcs.api.handler.data.IPlayerData;
 import noppes.npcs.constants.EnumQuestCompletion;
+import noppes.npcs.constants.EnumQuestRepeat;
 import noppes.npcs.controllers.QuestController;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.quests.QuestInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketAchievement;
+import noppes.npcs.packets.client.PacketChat;
+import noppes.npcs.client.gui.util.quests.QuestInterface;
 
-public class PlayerQuestData {
+public class PlayerQuestData implements IPlayerData {
 
-	public HashMap<Integer, QuestData> activeQuests = new HashMap<>(); // [qID, data]
-	public HashMap<Integer, Long> finishedQuests = new HashMap<>(); // [qID, time]
-	public boolean updateClient; // ServerTickHandler.onPlayerTick() 114
+   public final HashMap<Integer, QuestData> activeQuests = new HashMap<>();
+   protected final HashMap<Integer, Long> finishedQuests = new HashMap<>();
+   public long overworldTime = 0L;
 
-	public PlayerQuestData() {
-	}
+   // New from Unofficial (BetaZavr)
+   public boolean updateClient;
 
-	public boolean checkQuestCompletion(EntityPlayer player, QuestData data) {
-		QuestInterface inter = data.quest.questInterface;
-		if (inter.isCompleted(player)) {
-			if (data.isCompleted && data.quest.completion == EnumQuestCompletion.Npc) { return false; }
-			if (!data.quest.complete(player, data)) {
-				Server.sendData((EntityPlayerMP) player, EnumPacketClient.MESSAGE, "quest.completed",
-						data.quest.getTitle(), 2);
-				Server.sendData((EntityPlayerMP) player, EnumPacketClient.CHAT, "quest.completed", ": ",
-						data.quest.getTitle());
-			}
-			data.isCompleted = true;
-			this.updateClient = true;
-			EventHooks.onQuestFinished(PlayerData.get(player).scriptData, data.quest);
-			return true;
-		}
-		return false;
-	}
+   @Override
+   public void load(CompoundTag mainCompound) {
+      CompoundTag compound;
+      if (mainCompound == null) { return; }
+      if (mainCompound.contains("QuestData", 10)) { compound = mainCompound.getCompound("QuestData"); }
+      else if (mainCompound.contains("CompletedQuests", 9) || mainCompound.contains("ActiveQuests", 9)) { compound = mainCompound; }
+      else { return; }
+      ListTag list = compound.getList("ActiveQuests", 10);
+      activeQuests.clear();
+      for(int i = 0; i < list.size(); ++i) {
+         CompoundTag nbt = list.getCompound(i);
+         int id = nbt.getInt("Quest");
+         Quest quest = QuestController.instance.quests.get(id);
+         if (quest != null) {
+            activeQuests.put(id, new QuestData(quest).load(nbt));
+         }
+      }
+      list = compound.getList("CompletedQuests", 10);
+      finishedQuests.clear();
+      for(int i = 0; i < list.size(); ++i) {
+         CompoundTag nbt = list.getCompound(i);
+         int id = nbt.getInt("Quest");
+         if (!activeQuests.containsKey(id)) { finishedQuests.put(id, nbt.getLong("Date")); }
+      }
+   }
 
-	public QuestData getQuestCompletion(EntityPlayer player, EntityNPCInterface npc) {
-		for (QuestData data : this.activeQuests.values()) {
-			Quest quest = data.quest;
-			if (quest != null && quest.completer != null && quest.completion == EnumQuestCompletion.Npc && quest.completer.getName().equals(npc.getName()) && quest.questInterface.isCompleted(player)) {
-				return data;
-			}
-		}
-		return null;
-	}
+   @Override
+   public CompoundTag save(CompoundTag mainCompound) {
+      CompoundTag compound = new CompoundTag();
+      ListTag listCompletedQuests = new ListTag();
+      for (int quest : finishedQuests.keySet()) {
+         CompoundTag nbt = new CompoundTag();
+         nbt.putInt("Quest", quest);
+         nbt.putLong("Date", finishedQuests.get(quest));
+         listCompletedQuests.add(nbt);
+      }
+      compound.put("CompletedQuests", listCompletedQuests);
 
-	public void loadNBTData(NBTTagCompound mainCompound) {
-		if (mainCompound == null) {
-			return;
-		}
-		NBTTagCompound compound = mainCompound.getCompoundTag("QuestData");
+      ListTag listActiveQuests = new ListTag();
+      for (int quest : activeQuests.keySet()) {
+         CompoundTag nbt = new CompoundTag();
+         nbt.putInt("Quest", quest);
+         activeQuests.get(quest).save(nbt);
+         listActiveQuests.add(nbt);
+      }
+      compound.put("ActiveQuests", listActiveQuests);
 
-		HashMap<Integer, Long> finishedMap = new HashMap<>();
-		if (compound.hasKey("CompletedQuests", 9) && compound.getTagList("CompletedQuests", 10).tagCount() > 0) {
-			for (int i = 0; i < compound.getTagList("CompletedQuests", 10).tagCount(); ++i) {
-				NBTTagCompound dataNBT = compound.getTagList("CompletedQuests", 10).getCompoundTagAt(i);
-				finishedMap.put(dataNBT.getInteger("Quest"), dataNBT.getLong("Date"));
-			}
-		}
-		this.finishedQuests = finishedMap;
+      mainCompound.put("QuestData", compound);
+      return compound;
+   }
 
-		HashMap<Integer, QuestData> activeMap = new HashMap<>();
-		if (compound.hasKey("ActiveQuests", 9) && compound.getTagList("ActiveQuests", 10).tagCount() > 0) {
-			for (int i = 0; i < compound.getTagList("ActiveQuests", 10).tagCount(); ++i) {
-				NBTTagCompound dataNBT = compound.getTagList("ActiveQuests", 10).getCompoundTagAt(i);
-				int id = dataNBT.getInteger("Quest");
-				Quest quest = QuestController.instance.quests.get(id);
-				if (quest != null) {
-					QuestData data = new QuestData(quest);
-					data.readEntityFromNBT(dataNBT);
-					activeMap.put(id, data);
-				}
-			}
-		}
-		this.activeQuests = activeMap;
+   public void clear() {
+      activeQuests.clear();
+      finishedQuests.clear();
+   }
 
-	}
+   public QuestData getQuestCompletion(Player player, EntityNPCInterface npc) {
+      for (QuestData data : activeQuests.values()) {
+         Quest quest = data.quest;
+         if (quest != null && quest.completer != null && quest.completion == EnumQuestCompletion.Npc && quest.completer.getName().getString().equals(npc.getName().getString()) && quest.questInterface.isCompleted(player)) {
+            return data;
+         }
+      }
+      return null;
+   }
 
-	public void saveNBTData(NBTTagCompound mainCompound) {
-		NBTTagCompound compound = new NBTTagCompound();
+   public boolean checkQuestCompletion(Player player, QuestData data) {
+      QuestInterface inter = data.quest.questInterface;
+      if (inter.isCompleted(player)) {
+         if (data.isCompleted && data.quest.completion == EnumQuestCompletion.Npc) { return false; }
+         if (!data.quest.complete(player, data)) {
+            Packets.send((ServerPlayer)player, new PacketAchievement(Component.translatable("quest.completed"), Component.translatable(data.quest.title), 2, new CompoundTag()));
+            Packets.send((ServerPlayer)player, new PacketChat(Component.translatable("quest.completed").append(": ").append(Component.translatable(data.quest.title))));
+         }
+         data.isCompleted = true;
+         updateClient = true;
+         EventHooks.onQuestFinished(PlayerData.get(player).scriptData, data.quest);
+         return true;
+      }
+      return false;
+   }
 
-		NBTTagList finishedList = new NBTTagList();
-		for (int quest : this.finishedQuests.keySet()) {
-			NBTTagCompound nbttagcompound = new NBTTagCompound();
-			nbttagcompound.setInteger("Quest", quest);
-			nbttagcompound.setLong("Date", this.finishedQuests.get(quest));
-			finishedList.appendTag(nbttagcompound);
-		}
-		compound.setTag("CompletedQuests", finishedList);
+   public boolean finish(Quest quest, Player player) {
+      if (quest != null) {
+         activeQuests.remove(quest.id);
+         if (quest.repeat == EnumQuestRepeat.RLDAILY || quest.repeat == EnumQuestRepeat.RLWEEKLY) {
+            finishedQuests.put(quest.id, System.currentTimeMillis());
+         }
+         else {
+            if (player != null) {
+               MinecraftServer server = player.getServer();
+               if (server == null) { server = CustomNpcs.Server; }
+               if (server != null) { finishedQuests.put(quest.id, server.overworld().getGameTime()); }
+               else { finishedQuests.put(quest.id, player.level().getGameTime()); }
+            }
+            else { finishedQuests.put(quest.id, System.currentTimeMillis()); }
+         }
+         updateClient = true;
+         return true;
+      }
+      return false;
+   }
 
-		NBTTagList activeList = new NBTTagList();
-		for (int id : this.activeQuests.keySet()) {
-			NBTTagCompound nbt = new NBTTagCompound();
-			nbt.setInteger("Quest", id);
-			this.activeQuests.get(id).writeEntityToNBT(nbt);
-			activeList.appendTag(nbt);
-		}
-		compound.setTag("ActiveQuests", activeList);
+   public void removeFinishedQuest(int questId) {
+      finishedQuests.remove(questId);
+      updateClient = true;
+   }
 
-		mainCompound.setTag("QuestData", compound);
-	}
+   public boolean hasFinishedQuest(int questId) { return finishedQuests.containsKey(questId); }
+
+   public Set<Integer> getFinishedQuest() { return finishedQuests.keySet(); }
+
+   public long getFinishedTime(int questId) { return finishedQuests.get(questId); }
+
+   public void clearFinishedQuests() {
+      finishedQuests.clear();
+      updateClient = true;
+   }
 
 }

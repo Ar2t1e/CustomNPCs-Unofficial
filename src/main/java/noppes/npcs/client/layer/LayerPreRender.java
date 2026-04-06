@@ -4,6 +4,6 @@ import noppes.npcs.entity.EntityCustomNpc;
 
 public interface LayerPreRender {
 
-	void preRender(EntityCustomNpc npc);
+   void preRender(EntityCustomNpc npc);
 
 }

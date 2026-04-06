@@ -1,57 +1,66 @@
 package noppes.npcs.api;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IPos {
 
-	IPos add(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+   double getX();
 
-	IPos add(@ParamName("pos") IPos pos);
+   double getY();
 
-	double distanceTo(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+   double getZ();
 
-	double distanceTo(@ParamName("pos") IPos pos);
+   IPos up();
 
-	IPos down();
+   IPos up(@ParamName("n") double n);
 
-	IPos down(@ParamName("n") double n);
+   IPos down();
 
-	IPos east();
+   IPos down(@ParamName("n") double n);
 
-	IPos east(@ParamName("n") double n);
+   IPos north();
 
-	BlockPos getMCBlockPos();
+   IPos north(@ParamName("n") double n);
 
-	double getX();
+   IPos east();
 
-	double getY();
+   IPos east(@ParamName("n") double n);
 
-	double getZ();
+   IPos south();
 
-	double[] normalize();
+   IPos south(@ParamName("n") double n);
 
-	IPos north();
+   IPos west();
 
-	IPos north(@ParamName("n") double n);
+   IPos west(@ParamName("n") double n);
 
-	IPos offset(@ParamName("direction") int direction);
+   IPos add(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	IPos offset(@ParamName("direction") int direction, @ParamName("n") double n);
+   IPos add(@ParamName("pos") IPos pos);
 
-	IPos south();
+   IPos subtract(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	IPos south(@ParamName("n") double n);
+   IPos subtract(@ParamName("pos") IPos pos);
 
-	IPos subtract(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+   double[] normalize();
 
-	IPos subtract(@ParamName("pos") IPos pos);
+   BlockPos getMCBlockPos();
 
-	IPos up();
+   IPos offset(@ParamName("direction") int direction);
 
-	IPos up(@ParamName("n") double n);
+   IPos offset(@ParamName("direction") int direction, @ParamName("n") double n);
 
-	IPos west();
+   IPos offset(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	IPos west(@ParamName("n") double n);
+   double distanceTo(@ParamName("pos") IPos pos);
+
+   // New from Unofficial (BetaZavr)
+   double distanceTo(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+
+   Vec3 getMCVec3();
+
+   IPos rotate(int rotation);
 
 }

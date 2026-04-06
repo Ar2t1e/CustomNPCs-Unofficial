@@ -1,30 +1,29 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.item.EntityItem;
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.entity.item.ItemEntity;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
-public interface IEntityItem<T extends EntityItem> extends IEntity<T> {
+public interface IEntityItem<T extends ItemEntity> extends IEntity<T> {
 
-	long getAge();
+   String getOwner();
 
-	IItemStack getItem();
+   void setOwner(@ParamName("uuid") String uuid);
 
-	int getLifeSpawn();
+   int getPickupDelay();
 
-	String getOwner();
+   void setPickupDelay(@ParamName("delay") int delay);
 
-	int getPickupDelay();
+   long getAge();
 
-	void setAge(@ParamName("age") long age);
+   void setAge(@ParamName("age") long age);
 
-	void setItem(@ParamName("item") IItemStack item);
+   int getLifeSpawn();
 
-	void setLifeSpawn(@ParamName("age") int age);
+   void setLifeSpawn(@ParamName("age") int age);
 
-	void setOwner(@ParamName("name") String name);
+   IItemStack getItem();
 
-	void setPickupDelay(@ParamName("delay") int delay);
+   void setItem(@ParamName("item") IItemStack item);
 
 }

@@ -1,56 +1,51 @@
 package noppes.npcs.api.entity.data;
 
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface INpcAttribute {
 
-	IAttributeModifier addModifier(@ParamName("modifier") IAttributeModifier modifier);
+    IAttributeModifier addModifier(@ParamName("modifier") IAttributeModifier modifier);
 
-	IAttributeModifier addModifier(@ParamName("modifierName") String modifierName, @ParamName("amount") double amount, @ParamName("operation") int operation);
+    IAttributeModifier addModifier(@ParamName("modifierName") String modifierName, @ParamName("amount") double amount, @ParamName("operation") int operation);
 
-	double getBaseValue();
+    double getBaseValue();
 
-	String getDisplayName();
+    double getMaxValue();
 
-	double getMaxValue();
+    AttributeInstance getMCAttribute();
 
-	IAttributeInstance getMCAttribute();
+    Attribute getMCBaseAttribute();
 
-	IAttribute getMCBaseAttribute();
+    double getMinValue();
 
-	double getMinValue();
+    IAttributeModifier getModifier(@ParamName("uuidOrName") String uuidOrName);
 
-	IAttributeModifier getModifier(@ParamName("uuidOrName") String uuidOrName);
+    IAttributeModifier[] getModifiers();
 
-	IAttributeModifier[] getModifiers();
+    IAttributeModifier[] getModifiersByOperation(@ParamName("operation") int operation);
 
-	IAttributeModifier[] getModifiersByOperation(@ParamName("operation") int operation);
+    String getName();
 
-	String getName();
+    double getTotalValue();
 
-	double getTotalValue();
+    boolean hasModifier(@ParamName("modifier") IAttributeModifier modifier);
 
-	boolean hasModifier(@ParamName("modifier") IAttributeModifier modifier);
+    boolean hasModifier(@ParamName("uuidOrName") String uuidOrName);
 
-	boolean hasModifier(@ParamName("uuidOrName") String uuidOrName);
+    boolean isCustom();
 
-	boolean isCustom();
+    void removeAllModifiers();
 
-	void removeAllModifiers();
+    boolean removeModifier(@ParamName("modifier") IAttributeModifier modifier);
 
-	boolean removeModifier(@ParamName("modifier") IAttributeModifier modifier);
+    boolean removeModifier(@ParamName("uuid") String uuid);
 
-	boolean removeModifier(@ParamName("uuid") String uuid);
+    void setBaseValue(@ParamName("baseValue") double baseValue);
 
-	void setBaseValue(@ParamName("baseValue") double baseValue);
+    void setMaxValue(@ParamName("maxValue") double maxValue);
 
-	void setDisplayName(@ParamName("displayName") String displayName);
-
-	void setMaxValue(@ParamName("maxValue") double maxValue);
-
-	void setMinValue(@ParamName("minValue") double minValue);
+    void setMinValue(@ParamName("minValue") double minValue);
 
 }

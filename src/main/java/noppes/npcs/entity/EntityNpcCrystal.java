@@ -1,32 +1,34 @@
 package noppes.npcs.entity;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistries;
+import noppes.npcs.CustomEntities;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.model.part.ModelData;
 
 public class EntityNpcCrystal extends EntityNPCInterface {
 
-	public EntityNpcCrystal(World world) {
-		super(world);
-		this.scaleX = 0.7f;
-		this.scaleY = 0.7f;
-		this.scaleZ = 0.7f;
-		this.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/crystal/EnderCrystal.png");
-	}
+   public EntityNpcCrystal(EntityType<? extends EntityNPCInterface> type, Level world) {
+      super(type, world);
+      this.scaleX = 0.7F;
+      this.scaleY = 0.7F;
+      this.scaleZ = 0.7F;
+      this.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/crystal/endercrystal.png");
+   }
 
-	@Override
-	public void onUpdate() {
-		this.setNoAI(this.isDead = true);
-		if (!this.world.isRemote) {
-			NBTTagCompound compound = new NBTTagCompound();
-			this.writeToNBT(compound);
-			EntityCustomNpc npc = new EntityCustomNpc(this.world);
-			npc.readFromNBT(compound);
-			ModelData data = npc.modelData;
-			data.setEntityClass(EntityNpcCrystal.class);
-			this.world.spawnEntity(npc);
-		}
-		super.onUpdate();
-	}
+   public void tick() {
+      this.discard();
+      this.setNoAi(true);
+      if (!this.level().isClientSide) {
+         CompoundTag compound = new CompoundTag();
+         this.addAdditionalSaveData(compound);
+         EntityCustomNpc npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, this.level());
+         npc.readAdditionalSaveData(compound);
+         npc.modelData.setEntity(ForgeRegistries.ENTITY_TYPES.getKey(CustomEntities.entityNpcCrystal));
+         this.level().addFreshEntity(npc);
+      }
+      super.tick();
+   }
+
 }

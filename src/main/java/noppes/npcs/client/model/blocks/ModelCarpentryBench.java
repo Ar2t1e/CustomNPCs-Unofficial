@@ -1,80 +1,93 @@
 package noppes.npcs.client.model.blocks;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.renderer.RenderType;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
 
-public class ModelCarpentryBench extends ModelBase {
+public class ModelCarpentryBench extends Model {
 
-	final ModelRenderer Backboard;
-	final ModelRenderer Blueprint;
-	final ModelRenderer Bottom_plate;
-	final ModelRenderer Desktop;
-	final ModelRenderer Leg1;
-	final ModelRenderer Leg2;
-	final ModelRenderer Leg3;
-	final ModelRenderer Leg4;
-	final ModelRenderer Vice_Base1;
-	final ModelRenderer Vice_Base2;
-	final ModelRenderer Vice_Crank;
-	final ModelRenderer Vice_Jaw1;
-	final ModelRenderer Vice_Jaw2;
-	final ModelRenderer Vice_Screw;
+   NopModelPart Leg1 = new NopModelPart(128, 64, 0, 0);
+   NopModelPart Leg2;
+   NopModelPart Leg3;
+   NopModelPart Leg4;
+   NopModelPart Bottom_plate;
+   NopModelPart Desktop;
+   NopModelPart Backboard;
+   NopModelPart Vice_Jaw1;
+   NopModelPart Vice_Jaw2;
+   NopModelPart Vice_Base1;
+   NopModelPart Vice_Base2;
+   NopModelPart Vice_Crank;
+   NopModelPart Vice_Screw;
+   NopModelPart Blueprint;
 
-	public ModelCarpentryBench() {
-		this.textureWidth = 128;
-		this.textureHeight = 64;
-		(this.Leg1 = new ModelRenderer(this, 0, 0)).addBox(0.0f, 0.0f, 0.0f, 2, 14, 2);
-		this.Leg1.setRotationPoint(6.0f, 10.0f, 5.0f);
-		(this.Leg2 = new ModelRenderer(this, 0, 0)).addBox(0.0f, 0.0f, 0.0f, 2, 14, 2);
-		this.Leg2.setRotationPoint(6.0f, 10.0f, -5.0f);
-		(this.Leg3 = new ModelRenderer(this, 0, 0)).addBox(0.0f, 0.0f, 0.0f, 2, 14, 2);
-		this.Leg3.setRotationPoint(-8.0f, 10.0f, 5.0f);
-		(this.Leg4 = new ModelRenderer(this, 0, 0)).addBox(0.0f, 0.0f, 0.0f, 2, 14, 2);
-		this.Leg4.setRotationPoint(-8.0f, 10.0f, -5.0f);
-		(this.Bottom_plate = new ModelRenderer(this, 0, 24)).addBox(0.0f, 0.0f, 0.0f, 14, 1, 10);
-		this.Bottom_plate.setRotationPoint(-7.0f, 21.0f, -4.0f);
-		this.Bottom_plate.setTextureSize(130, 64);
-		(this.Desktop = new ModelRenderer(this, 0, 3)).addBox(0.0f, 0.0f, 0.0f, 18, 2, 13);
-		this.Desktop.setRotationPoint(-9.0f, 9.0f, -6.0f);
-		(this.Backboard = new ModelRenderer(this, 0, 18)).addBox(-1.0f, 0.0f, 0.0f, 18, 5, 1);
-		this.Backboard.setRotationPoint(-8.0f, 7.0f, 7.0f);
-		(this.Vice_Jaw1 = new ModelRenderer(this, 54, 18)).addBox(0.0f, 0.0f, 0.0f, 3, 2, 1);
-		this.Vice_Jaw1.setRotationPoint(3.0f, 6.0f, -8.0f);
-		(this.Vice_Jaw2 = new ModelRenderer(this, 54, 21)).addBox(0.0f, 0.0f, 0.0f, 3, 2, 1);
-		this.Vice_Jaw2.setRotationPoint(3.0f, 6.0f, -6.0f);
-		(this.Vice_Base1 = new ModelRenderer(this, 38, 30)).addBox(0.0f, 0.0f, 0.0f, 3, 1, 3);
-		this.Vice_Base1.setRotationPoint(3.0f, 8.0f, -5.0f);
-		(this.Vice_Base2 = new ModelRenderer(this, 38, 25)).addBox(0.0f, 0.0f, 0.0f, 1, 2, 2);
-		this.Vice_Base2.setRotationPoint(4.0f, 7.0f, -5.0f);
-		(this.Vice_Crank = new ModelRenderer(this, 54, 24)).addBox(0.0f, 0.0f, 0.0f, 1, 5, 1);
-		this.Vice_Crank.setRotationPoint(6.0f, 6.0f, -9.0f);
-		(this.Vice_Screw = new ModelRenderer(this, 44, 25)).addBox(0.0f, 0.0f, 0.0f, 1, 1, 4);
-		this.Vice_Screw.setRotationPoint(4.0f, 8.0f, -8.0f);
-		(this.Blueprint = new ModelRenderer(this, 31, 18)).addBox(0.0f, 0.0f, 0.0f, 8, 0, 7);
-		this.Blueprint.setRotationPoint(0.0f, 9.0f, 1.0f);
-		this.setRotation(this.Blueprint);
-	}
+   public ModelCarpentryBench() {
+      super(RenderType::entityCutoutNoCull);
+      this.Leg1.addBox(0.0F, 0.0F, 0.0F, 2.0F, 14.0F, 2.0F);
+      this.Leg1.setPos(6.0F, 10.0F, 5.0F);
+      this.Leg2 = new NopModelPart(128, 64, 0, 0);
+      this.Leg2.addBox(0.0F, 0.0F, 0.0F, 2.0F, 14.0F, 2.0F);
+      this.Leg2.setPos(6.0F, 10.0F, -5.0F);
+      this.Leg3 = new NopModelPart(128, 64, 0, 0);
+      this.Leg3.addBox(0.0F, 0.0F, 0.0F, 2.0F, 14.0F, 2.0F);
+      this.Leg3.setPos(-8.0F, 10.0F, 5.0F);
+      this.Leg4 = new NopModelPart(128, 64, 0, 0);
+      this.Leg4.addBox(0.0F, 0.0F, 0.0F, 2.0F, 14.0F, 2.0F);
+      this.Leg4.setPos(-8.0F, 10.0F, -5.0F);
+      this.Bottom_plate = new NopModelPart(128, 64, 0, 24);
+      this.Bottom_plate.addBox(0.0F, 0.0F, 0.0F, 14.0F, 1.0F, 10.0F);
+      this.Bottom_plate.setPos(-7.0F, 21.0F, -4.0F);
+      this.Bottom_plate.setTexSize(130, 64);
+      this.Desktop = new NopModelPart(128, 64, 0, 3);
+      this.Desktop.addBox(0.0F, 0.0F, 0.0F, 18.0F, 2.0F, 13.0F);
+      this.Desktop.setPos(-9.0F, 9.0F, -6.0F);
+      this.Backboard = new NopModelPart(128, 64, 0, 18);
+      this.Backboard.addBox(-1.0F, 0.0F, 0.0F, 18.0F, 5.0F, 1.0F);
+      this.Backboard.setPos(-8.0F, 7.0F, 7.0F);
+      this.Vice_Jaw1 = new NopModelPart(128, 64, 54, 18);
+      this.Vice_Jaw1.addBox(0.0F, 0.0F, 0.0F, 3.0F, 2.0F, 1.0F);
+      this.Vice_Jaw1.setPos(3.0F, 6.0F, -8.0F);
+      this.Vice_Jaw2 = new NopModelPart(128, 64, 54, 21);
+      this.Vice_Jaw2.addBox(0.0F, 0.0F, 0.0F, 3.0F, 2.0F, 1.0F);
+      this.Vice_Jaw2.setPos(3.0F, 6.0F, -6.0F);
+      this.Vice_Base1 = new NopModelPart(128, 64, 38, 30);
+      this.Vice_Base1.addBox(0.0F, 0.0F, 0.0F, 3.0F, 1.0F, 3.0F);
+      this.Vice_Base1.setPos(3.0F, 8.0F, -5.0F);
+      this.Vice_Base2 = new NopModelPart(128, 64, 38, 25);
+      this.Vice_Base2.addBox(0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 2.0F);
+      this.Vice_Base2.setPos(4.0F, 7.0F, -5.0F);
+      this.Vice_Crank = new NopModelPart(128, 64, 54, 24);
+      this.Vice_Crank.addBox(0.0F, 0.0F, 0.0F, 1.0F, 5.0F, 1.0F);
+      this.Vice_Crank.setPos(6.0F, 6.0F, -9.0F);
+      this.Vice_Screw = new NopModelPart(128, 64, 44, 25);
+      this.Vice_Screw.addBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 4.0F);
+      this.Vice_Screw.setPos(4.0F, 8.0F, -8.0F);
+      this.Blueprint = new NopModelPart(128, 64, 31, 18);
+      this.Blueprint.addBox(0.0F, 0.0F, 0.0F, 8.0F, 0.0F, 7.0F);
+      this.Blueprint.setPos(0.0F, 9.0F, 1.0F);
+      this.Blueprint.xRot = 0.3271718F;
+      this.Blueprint.yRot = 0.1487144F;
+      this.Blueprint.zRot = 0.0F;
+   }
 
-	public void render(float scale) {
-		this.Leg1.render(scale);
-		this.Leg2.render(scale);
-		this.Leg3.render(scale);
-		this.Leg4.render(scale);
-		this.Bottom_plate.render(scale);
-		this.Desktop.render(scale);
-		this.Backboard.render(scale);
-		this.Vice_Jaw1.render(scale);
-		this.Vice_Jaw2.render(scale);
-		this.Vice_Base1.render(scale);
-		this.Vice_Base2.render(scale);
-		this.Vice_Crank.render(scale);
-		this.Vice_Screw.render(scale);
-		this.Blueprint.render(scale);
-	}
+   public void renderToBuffer(@NotNull PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      this.Leg1.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Leg2.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Leg3.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Leg4.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Bottom_plate.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Desktop.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Backboard.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Vice_Jaw1.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Vice_Jaw2.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Vice_Base1.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Vice_Base2.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Vice_Crank.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Vice_Screw.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Blueprint.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+   }
 
-	private void setRotation(ModelRenderer model) {
-		model.rotateAngleX = 0.3271718f;
-		model.rotateAngleY = 0.1487144f;
-		model.rotateAngleZ = 0.0f;
-	}
 }

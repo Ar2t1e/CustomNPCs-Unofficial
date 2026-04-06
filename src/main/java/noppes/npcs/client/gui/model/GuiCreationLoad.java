@@ -5,56 +5,48 @@ import java.util.List;
 
 import noppes.npcs.client.controllers.Preset;
 import noppes.npcs.client.controllers.PresetController;
-import noppes.npcs.client.gui.util.GuiCustomScroll;
-import noppes.npcs.client.gui.util.GuiNpcButton;
-import noppes.npcs.client.gui.util.ICustomScrollListener;
-import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.entity.EntityNPCInterface;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
 public class GuiCreationLoad extends GuiCreationScreenInterface implements ICustomScrollListener {
 
-	protected final List<String> list = new ArrayList<>();
-	protected GuiCustomScroll scroll;
+   protected final List<String> list = new ArrayList<>();
+   protected GuiCustomScrollNop scroll;
 
-	public GuiCreationLoad(EntityNPCInterface npc, ContainerLayer container) {
-		super(npc, container);
+   public GuiCreationLoad(EntityNPCInterface npc) {
+      super(npc);
+      active = 5;
+      xOffset = 60;
+      PresetController.instance.load();
+   }
 
-		active = 5;
-		xOffset = 60;
-		PresetController.instance.load();
-	}
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0); }
+      list.clear();
+      for (Preset preset : PresetController.instance.presets.values()) { list.add(preset.name); }
+      add(scroll.setPos(guiLeft, guiTop + 45)
+              .setSize(100, imageHeight - 96)
+              .setList(list));
+      addButton(10, guiLeft, guiTop + imageHeight - 46, "gui.remove")
+              .setSize(120, 20);
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton == 0 && button.getID() == 10 && scroll.hasSelected()) {
-			PresetController.instance.removePreset(scroll.getSelected());
-			initGui();
-		}
-		super.buttonEvent(button, mouseButton);
-	}
+   public void buttonEvent(GuiButtonNop guiButton) {
+      if (guiButton.id == 10 && scroll.hasSelected()) {
+         PresetController.instance.removePreset(scroll.getSelected());
+         init();
+      }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0); }
-		list.clear();
-		for (Preset preset : PresetController.instance.presets.values()) { list.add(preset.name); }
-		scroll.guiLeft = guiLeft;
-		scroll.guiTop = guiTop + 45;
-		addScroll(scroll.setList(list).setSize(100, ySize - 96));
-		addButton(new GuiNpcButton(10, guiLeft, guiTop + ySize - 46, 120, 20, "gui.remove"));
-	}
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      Preset preset = PresetController.instance.getPreset(scroll.getSelected());
+      playerdata.load(preset.data.save());
+      init();
+   }
 
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		Preset preset = PresetController.instance.getPreset(scroll.getSelected());
-		playerdata.load(preset.data.save());
-		initGui();
-	}
-
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 }

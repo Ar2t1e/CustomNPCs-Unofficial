@@ -1,202 +1,151 @@
 package noppes.npcs.controllers;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.TreeMap;
-
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.server.level.ServerPlayer;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
 import noppes.npcs.api.handler.IKeyBinding;
 import noppes.npcs.api.handler.data.IKeySetting;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
 import noppes.npcs.controllers.data.KeyConfig;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSyncRemove;
+import noppes.npcs.packets.client.PacketSyncUpdate;
+import noppes.npcs.shared.common.util.LogWriter;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.TreeMap;
 
 public class KeyController implements IKeyBinding {
 
-	private static KeyController instance;
-	public static KeyController getInstance() {
-		if (newInstance()) {
-			KeyController.instance = new KeyController();
-		}
-		return KeyController.instance;
-	}
-	private static boolean newInstance() {
-		if (KeyController.instance == null) {
-			return true;
-		}
-		return CustomNpcs.Dir != null && !KeyController.instance.filePath.equals(CustomNpcs.Dir.getAbsolutePath());
-	}
+    protected static KeyController instance;
+    protected final TreeMap<Integer, IKeySetting> keybindings = new TreeMap<>();
 
-	public final TreeMap<Integer, IKeySetting> keybindings = new TreeMap<>();
+    public static KeyController getInstance() {
+        if (instance == null) { instance = new KeyController(); }
+        return instance;
+    }
 
-	private String filePath;
+    @Override
+    public KeyConfig createKeySetting() {
+        KeyConfig ac = new KeyConfig(getUnusedId());
+        keybindings.put(ac.getId(), ac);
+        update(ac.getId());
+        return ac;
+    }
 
-	public KeyController() {
-		KeyController.instance = this;
-		this.filePath = CustomNpcs.Dir.getAbsolutePath();
-		this.loadKeys();
-	}
+    @Override
+    public KeyConfig getKeySetting(int id) { return (KeyConfig) keybindings.get(id); }
 
-	@Override
-	public IKeySetting createKeySetting() {
-		KeyConfig ac = new KeyConfig(this.getUnusedId());
-		this.keybindings.put(ac.getId(), ac);
-		this.update(ac.getId());
-		return ac;
-	}
+    public KeyConfig getKeySetting(String name, String category, int keyId, String modifier) {
+        for (IKeySetting kb : keybindings.values()) {
+            if (kb.getKeyId() != keyId) { continue; }
+            KeyConfig kc = (KeyConfig) kb;
+            if (!kc.name.equals(name) || !kc.category.equals(category)) { continue; }
+            switch (modifier.toLowerCase()) {
+                case "shift": {
+                    if (kc.modifer == 1) { return kc; }
+                    break;
+                }
+                case "control": {
+                    if (kc.modifer == 2) { return kc; }
+                    break;
+                }
+                case "alt": {
+                    if (kc.modifer == 3) { return kc; }
+                    break;
+                }
+                default: return kc;
+            }
+        }
+        return null;
+    }
 
-	@Override
-	public IKeySetting getKeySetting(int id) {
-		return this.keybindings.get(id);
-	}
+    @Override
+    public IKeySetting[] getKeySettings() { return keybindings.values().toArray(new IKeySetting[0]); }
 
-	@SuppressWarnings("all")
-	public IKeySetting getKeySetting(String name, String category, int keyId, String modifier) {
-		for (IKeySetting kb : this.keybindings.values()) {
-			if (kb.getKeyId() != keyId) {
-				continue;
-			}
-			KeyConfig kc = (KeyConfig) kb;
-			if (!kc.name.equals(name) || !kc.category.equals(category)) {
-				continue;
-			}
-			switch (modifier.toLowerCase()) {
-			case "shift":
-				if (kc.modifer == 1) {
-					return kc;
-				}
-				break;
-			case "control":
-				if (kc.modifer == 2) {
-					return kc;
-				}
-				break;
-			case "alt":
-				if (kc.modifer == 3) {
-					return kc;
-				}
-				break;
-			default:
-				return kc;
-			}
-		}
-		return null;
-	}
+    public CompoundTag getNBT() {
+        ListTag list = new ListTag();
+        for (int id : keybindings.keySet()) {
+            CompoundTag nbtKey = ((KeyConfig) keybindings.get(id)).save();
+            nbtKey.putInt("ID", id);
+            list.add(nbtKey);
+        }
+        CompoundTag compound = new CompoundTag();
+        compound.put("Data", list);
+        return compound;
+    }
 
-	@Override
-	public IKeySetting[] getKeySettings() {
-		return this.keybindings.values().toArray(new IKeySetting[0]);
-	}
+    public int getUnusedId() {
+        int id = 0;
+        for (int i : keybindings.keySet()) {
+            if (i >= id) { id = i + 1; }
+        }
+        return id;
+    }
 
-	public NBTTagCompound getNBT() {
-		NBTTagList list = new NBTTagList();
-		for (int id : this.keybindings.keySet()) {
-			NBTTagCompound nbtKey = ((KeyConfig) this.keybindings.get(id)).write();
-			nbtKey.setInteger("ID", id);
-			list.appendTag(nbtKey);
-		}
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setTag("Data", list);
-		return compound;
-	}
+    private void loadDefaultKeys() {
+        KeyConfig ac = new KeyConfig(0);
+        keybindings.put(0, ac);
+        save();
+    }
 
-	public int getUnusedId() {
-		int id = 0;
-		for (int i : this.keybindings.keySet()) {
-			if (i >= id) {
-				id = i + 1;
-			}
-		}
-		return id;
-	}
+    public void loadKey(CompoundTag nbtKey) {
+        if (nbtKey == null || !nbtKey.contains("ID", 3) || nbtKey.getInt("ID") < 0) { return; }
+        int id = nbtKey.getInt("ID");
+        KeyConfig ac;
+        if (keybindings.containsKey(id)) {
+            ((KeyConfig) keybindings.get(id)).load(nbtKey);
+            keybindings.get(id);
+            return;
+        }
+        ac = new KeyConfig(id);
+        ac.load(nbtKey);
+        keybindings.put(id, ac);
+        keybindings.get(id);
+    }
 
-	private void loadDefaultKeys() {
-		KeyConfig ac = new KeyConfig(0);
-		this.keybindings.put(0, ac);
-		this.save();
-	}
+    public void loadKeys() {
+        CustomNpcs.debugData.start(null);
+        File saveDir = CustomNpcs.Dir;
+        if (saveDir == null) { return; }
+        try {
+            File file = new File(saveDir, "keys.dat");
+            if (file.exists()) { loadKeys(file); }
+            else { loadDefaultKeys(); }
+        }
+        catch (Exception e) { loadDefaultKeys(); }
+        CustomNpcs.debugData.end(null);
+    }
 
-	public void loadKey(NBTTagCompound nbtKey) {
-		if (nbtKey == null || !nbtKey.hasKey("ID", 3) || nbtKey.getInteger("ID") < 0) {
-			return;
-		}
-		int id = nbtKey.getInteger("ID");
-		KeyConfig ac;
-		if (this.keybindings.containsKey(id)) {
-			((KeyConfig) this.keybindings.get(id)).read(nbtKey);
-			this.keybindings.get(id);
-			return;
-		}
-		ac = new KeyConfig(id);
-		ac.read(nbtKey);
-		this.keybindings.put(id, ac);
-		this.keybindings.get(id);
-	}
+    private void loadKeys(File file) throws IOException { loadKeys(NbtIo.readCompressed(file)); }
 
-	private void loadKeys() {
-		CustomNpcs.debugData.start(null);
-		File saveDir = CustomNpcs.Dir;
-		if (saveDir == null) {
-			return;
-		}
-		this.filePath = saveDir.getName();
-		try {
-			File file = new File(saveDir, "keys.dat");
-			if (file.exists()) {
-				this.loadKeys(file);
-			} else {
-				this.loadDefaultKeys();
-			}
-		} catch (Exception e) {
-			this.loadDefaultKeys();
-		}
-		CustomNpcs.debugData.end(null);
-	}
+    public void loadKeys(CompoundTag compound) {
+        keybindings.clear();
+        if (compound != null) {
+            if (compound.contains("Data", 9)) {
+                for (int i = 0; i < compound.getList("Data", 10).size(); ++i) {
+                    loadKey(compound.getList("Data", 10).getCompound(i));
+                }
+            }
+        }
+    }
 
-	private void loadKeys(File file) throws IOException {
-		this.loadKeys(CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())));
-	}
+    @Override
+    public void removeKeySetting(int id) { keybindings.remove(id); }
 
-	public void loadKeys(NBTTagCompound compound) {
-		if (compound == null) {
-			return;
-		}
-		this.keybindings.clear();
-		if (compound.hasKey("Data", 9)) {
-			for (int i = 0; i < compound.getTagList("Data", 10).tagCount(); ++i) {
-				this.loadKey(compound.getTagList("Data", 10).getCompoundTagAt(i));
-			}
-		}
-	}
+    public void save() {
+        CustomNpcs.debugData.start(null);
+        try { NbtIo.writeCompressed(getNBT(), new File(CustomNpcs.Dir, "keys.dat")); }
+        catch (Exception e) { LogWriter.error(e); }
+        CustomNpcs.debugData.end(null);
+    }
 
-	@Override
-	public void removeKeySetting(int id) {
-		this.keybindings.remove(id);
-	}
-
-	public void save() {
-		CustomNpcs.debugData.start(null);
-		try {
-			CompressedStreamTools.writeCompressed(this.getNBT(), Files.newOutputStream(new File(CustomNpcs.Dir, "keys.dat").toPath()));
-		} catch (Exception e) { LogWriter.error(e); }
-		CustomNpcs.debugData.end(null);
-	}
-
-	public void update(int id) {
-		IKeySetting kb = this.keybindings.get(id);
-		if (kb != null) {
-			Server.sendToAll(CustomNpcs.Server, EnumPacketClient.SYNC_UPDATE, EnumSync.KeysData,
-					((KeyConfig) kb).write());
-		} // change or add
-		else {
-			Server.sendToAll(CustomNpcs.Server, EnumPacketClient.SYNC_REMOVE, EnumSync.KeysData, id);
-		} // remove
-	}
+    public void update(int id) {
+        IKeySetting kb = keybindings.get(id);
+        if (kb != null) { Packets.sendAll(new PacketSyncUpdate(0, 9, kb.getNbt().getMCNBT())); } // change or add
+        else { Packets.sendAll(new PacketSyncRemove(id, 8)); } // remove
+    }
 
 }

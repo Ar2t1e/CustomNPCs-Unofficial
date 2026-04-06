@@ -1,31 +1,30 @@
 package noppes.npcs.api.handler.data;
 
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface IKeySetting {
 
-	String getCategory();
+    String getCategory();
 
-	int getId();
+    int getId();
 
-	int getKeyId();
+    int getKeyId();
 
-	int getModiferType();
+    int getModiferType();
 
-	String getName();
+    String getName();
 
-	INbt getNbt();
+    INbt getNbt();
 
-	void setCategory(@ParamName("name") String name);
+    void setCategory(@ParamName("name") String name);
 
-	void setKeyId(@ParamName("keyId") int keyId);
+    void setKeyId(@ParamName("keyId") int keyId);
 
-	void setModiferType(@ParamName("type") int type);
+    void setModiferType(@ParamName("type") int type);
 
-	void setName(@ParamName("name") String name);
+    void setName(@ParamName("name") String name);
 
-	void setNbt(@ParamName("nbt") INbt nbt);
+    void setNbt(@ParamName("nbt") INbt nbt);
 
 }

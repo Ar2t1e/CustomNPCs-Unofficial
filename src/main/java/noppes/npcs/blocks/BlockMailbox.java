@@ -1,99 +1,81 @@
 package noppes.npcs.blocks;
 
-import java.util.ArrayList;
-
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyInteger;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.Server;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition.Builder;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.blocks.tiles.TileMailbox;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiOpen;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.util.Objects;
 
+@SuppressWarnings("all")
 public class BlockMailbox extends BlockInterface {
 
-	public static PropertyInteger ROTATION = PropertyInteger.create("rotation", 0, 3);
-	public static PropertyInteger TYPE = PropertyInteger.create("type", 0, 2);
+   public static final IntegerProperty ROTATION = IntegerProperty.create("rotation", 0, 3);
+   public final int type;
 
-	public BlockMailbox() {
-		super(Material.IRON);
-		this.setName("npcmailbox");
-		this.setSoundType(SoundType.METAL);
-		this.setHardness(5.0f);
-		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
-	}
+   public BlockMailbox(int type) {
+      super(Properties.copy(Blocks.IRON_BLOCK).sound(SoundType.METAL).strength(5.0F, 10.0F));
+      this.type = type;
+   }
 
-	protected @Nonnull BlockStateContainer createBlockState() {
-		return new BlockStateContainer(this, BlockMailbox.TYPE, BlockMailbox.ROTATION);
-	}
+   public @NotNull String getDescriptionId() {
+      return "block." + CustomNpcs.MODID + ".npcmailbox";
+   }
 
-	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
-		return new TileMailbox();
-	}
+   /** @deprecated */
+   @Deprecated
+   public @NotNull VoxelShape getOcclusionShape(@NotNull BlockState state, @NotNull BlockGetter getter, @NotNull BlockPos pos) {
+      return Shapes.empty();
+   }
 
-	public int damageDropped(@Nonnull IBlockState state) {
-		return state.getValue(BlockMailbox.TYPE);
-	}
+   /** @deprecated */
+   @Deprecated
+   public boolean isPathfindable(@NotNull BlockState state, @NotNull BlockGetter getter, @NotNull BlockPos pos, @NotNull PathComputationType pathType) {
+      return false;
+   }
 
-	public @Nonnull ArrayList<ItemStack> getDrops(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
-		ArrayList<ItemStack> ret = new ArrayList<>();
-		int damage = state.getValue(BlockMailbox.TYPE);
-		ret.add(new ItemStack(this, 1, damage));
-		return ret;
-	}
+   /** @deprecated */
+   @Deprecated
+   public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult ray) {
+      if (!level.isClientSide) {
+         Packets.send((ServerPlayer)player, new PacketGuiOpen(EnumGuiType.PlayerMailbox, pos));
+      }
+      return InteractionResult.SUCCESS;
+   }
 
-	public int getMetaFromState(@Nonnull IBlockState state) {
-		return state.getValue(BlockMailbox.ROTATION) | state.getValue(BlockMailbox.TYPE) << 2;
-	}
+   protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+      builder.add(ROTATION);
+   }
 
-	public @Nonnull IBlockState getStateFromMeta(int meta) {
-		return this.getDefaultState().withProperty(BlockMailbox.TYPE, ((meta >> 2) % 3))
-				.withProperty(BlockMailbox.ROTATION, ((meta | 0x4) % 4));
-	}
+   public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
+      int l = Mth.floor((double)(Objects.requireNonNull(context.getPlayer()).getYRot() * 4.0F / 360.0F) + 0.5D) & 3;
+      return this.defaultBlockState().setValue(ROTATION, l % 4);
+   }
 
-	public void getSubBlocks(@Nonnull CreativeTabs par2CreativeTabs, @Nonnull NonNullList<ItemStack> par3List) {
-		par3List.add(new ItemStack(this, 1, 0));
-		par3List.add(new ItemStack(this, 1, 1));
-		par3List.add(new ItemStack(this, 1, 2));
-	}
-
-	public boolean isFullCube(@Nonnull IBlockState state) {
-		return false;
-	}
-
-	public boolean isOpaqueCube(@Nonnull IBlockState state) {
-		return false;
-	}
-
-	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (!par1World.isRemote) {
-			Server.sendData((EntityPlayerMP) player, EnumPacketClient.GUI, EnumGuiType.PlayerMailbox, pos.getX(), pos.getY(), pos.getZ());
-		}
-		return true;
-	}
-
-	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
-		int l = MathHelper.floor(entity.rotationYaw * 4.0f / 360.0f + 0.5) & 0x3;
-		world.setBlockState(pos, state.withProperty(BlockMailbox.TYPE, stack.getItemDamage()).withProperty(BlockMailbox.ROTATION, (l % 4)), 2);
-	}
+   public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
+      return (new TileMailbox(pos, state)).setModel(type);
+   }
 
 }

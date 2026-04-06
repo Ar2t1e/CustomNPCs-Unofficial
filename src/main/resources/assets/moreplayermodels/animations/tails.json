@@ -1,0 +1,72 @@
+{
+  "walk" : {
+    "animation_length" : 3,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "tail" : {
+        "rotation": [[15, -20, 0], [15, 0, 0], [15, 20, 0]]
+      }
+    }
+  },
+  "idle" : {
+    "animation_length" : 4,
+    "animation_speed" : 0.7,
+    "additional" : true,
+    "bones" : {
+      "tail" : {
+        "rotation": [[0, -1, 0], [4, 0, 0], [0, 0, 0],[0, 1, 0]]
+      }
+    }
+  },
+  "fly" : {
+    "animation_length" : 3,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "tail" : {
+        "rotation": [[15, -20, 0], [15, 0, 0], [15, 20, 0]]
+      }
+    }
+  },
+  "fly_idle" : {
+    "animation_length" : 4,
+    "animation_speed" : 0.7,
+    "additional" : true,
+    "bones" : {
+      "tail" : {
+        "rotation": [[0, -1, 0], [4, 0, 0], [0, 0, 0],[0, 1, 0]]
+      }
+    }
+  },
+  "wag" : {
+    "animation_length" : 2,
+    "animation_speed" : 3.0,
+    "additional" : true,
+    "bones" : {
+      "tail" : {
+        "rotation": [[10, -20, 0], [10, 20, 0]]
+      }
+    }
+  },
+  "sleep" : {
+    "animation_length" : 1,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "tail" : {
+        "rotation": [[-45, 0, 0]]
+      }
+    }
+  },
+  "crawl" : {
+    "animation_length" : 1,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "tail" : {
+        "rotation": [[-45, 0, 0]]
+      }
+    }
+  }
+}

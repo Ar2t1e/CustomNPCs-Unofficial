@@ -1,125 +1,119 @@
 package noppes.npcs.api;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.IData;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
 @SuppressWarnings("all")
 public interface IWorld {
 
-	void broadcast(@ParamName("message") String message);
+   @Deprecated
+   IEntity<?>[] getNearbyEntities(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z,
+                                  @ParamName("range") double range, @ParamName("type") int type);
 
-	IEntity<?> createEntity(@ParamName("id") String id);
+   IEntity<?>[] getNearbyEntities(@ParamName("pos") IPos pos, @ParamName("range") double range, @ParamName("type") int type);
 
-	IEntity<?> createEntityFromNBT(@ParamName("nbt") INbt nbt);
+   @Deprecated
+   IEntity<?> getClosestEntity(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z,
+                               @ParamName("range") double range, @ParamName("type") int type);
 
-	IItemStack createItem(@ParamName("name") String name, @ParamName("damage") int damage, @ParamName("size") int size);
+   IEntity<?> getClosestEntity(@ParamName("pos") IPos pos, @ParamName("range") double range, @ParamName("type") int type);
 
-	IItemStack createItemFromNbt(@ParamName("texture") INbt nbt);
+   IEntity<?>[] getAllEntities(@ParamName("type") int type);
 
-	void explode(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
-				 @ParamName("range") float range, @ParamName("fire") boolean fire, @ParamName("grief") boolean grief);
+   long getTime();
 
-	void forcePlaySoundAt(@ParamName("categoryType") int categoryType, @ParamName("pos") IPos pos,
-						  @ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
+   void setTime(@ParamName("ticks") long ticks);
 
-	IEntity<?>[] getAllEntities(@ParamName("type") int type);
+   long getTotalTime();
 
-	IPlayer<?>[] getAllPlayers();
+   @Deprecated
+   IBlock getBlock(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	String getBiomeName(@ParamName("x") int x, @ParamName("z") int z);
+   IBlock getBlock(@ParamName("pos") IPos pos);
 
-	@Deprecated
-	IBlock getBlock(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   @Deprecated
+   void setBlock(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z,
+                 @ParamName("name") String name);
 
-	IBlock getBlock(@ParamName("pos") IPos pos);
+   IBlock setBlock(@ParamName("pos") IPos pos, @ParamName("name") String name);
 
-	@Deprecated
-	IEntity<?> getClone(@ParamName("tab") int tab, @ParamName("name") String name);
+   @Deprecated
+   void removeBlock(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	@Deprecated
-	IEntity<?> getClosestEntity(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z,
-								@ParamName("range") int range, @ParamName("type") int type);
+   void removeBlock(@ParamName("pos") IPos pos);
 
-	IEntity<?> getClosestEntity(@ParamName("pos") IPos pos, @ParamName("range") int range, @ParamName("type") int type);
+   float getLightValue(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	IDimension getDimension();
+   IPlayer<?> getPlayer(@ParamName("name") String name);
 
-	IEntity<?> getEntity(@ParamName("uuid") String uuid);
+   boolean isDay();
 
-	IEntity<?>[] getEntitys(@ParamName("type") int type);
+   boolean isRaining();
 
-	float getLightValue(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   IDimension getDimension();
 
-	BlockPos getMCBlockPos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   void setRaining(@ParamName("bo") boolean bo);
 
-	World getMCWorld();
+   void thunderStrike(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	String getName();
+   void playSoundAt(@ParamName("pos") IPos pos, @ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
 
-	@Deprecated
-	IEntity<?>[] getNearbyEntities(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z,
-								   @ParamName("range") int range, @ParamName("type") int type);
+   void spawnParticle(@ParamName("particle") String particle, @ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
+                      @ParamName("dx") double dx, @ParamName("dy") double dy, @ParamName("dz") double dz,
+                      @ParamName("speed") double speed, @ParamName("count") int count);
 
-	IEntity<?>[] getNearbyEntities(@ParamName("pos") IPos pos, @ParamName("range") int range, @ParamName("type") int type);
+   void broadcast(@ParamName("message") String message);
 
-	IPlayer<?> getPlayer(@ParamName("name") String name);
+   IScoreboard getScoreboard();
 
-	int getRedstonePower(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   IData getTempdata();
 
-	IScoreboard getScoreboard();
+   IData getStoreddata();
 
-	IBlock getSpawnPoint();
+   IItemStack createItem(@ParamName("name") String name, @ParamName("size") int size);
 
-	IData getStoreddata();
+   IItemStack createItemFromNbt(@ParamName("nbt") INbt nbt);
 
-	IData getTempdata();
+   void explode(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
+                @ParamName("range") float range, @ParamName("fire") boolean fire, @ParamName("grief") boolean grief);
 
-	long getTime();
+   IPlayer<?>[] getAllPlayers();
 
-	long getTotalTime();
+   String getBiomeName(@ParamName("x") int x, @ParamName("z") int z);
 
-	boolean isDay();
+   void spawnEntity(@ParamName("entity") IEntity<?> entity);
 
-	boolean isRaining();
+   @Deprecated
+   IEntity<?> spawnClone(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
+                         @ParamName("tab") int tab, @ParamName("name") String name);
 
-	void playSoundAt(@ParamName("pos") IPos pos, @ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
+   @Deprecated
+   IEntity<?> getClone(@ParamName("tab") int tab, @ParamName("name") String name);
 
-	@Deprecated
-	void removeBlock(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   int getRedstonePower(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void removeBlock(@ParamName("pos") IPos pos);
+   Level getMCLevel();
 
-	@Deprecated
-	void setBlock(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z,
-				  @ParamName("name") String name, @ParamName("name") int meta);
+   BlockPos getMCBlockPos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void setBlock(@ParamName("pos") IPos pos, @ParamName("name") String name, @ParamName("meta") int meta);
+   IEntity<?> getEntity(@ParamName("uuid") String uuid);
 
-	void setRaining(@ParamName("bo") boolean bo);
+   IEntity<?> createEntityFromNBT(@ParamName("nbt") INbt nbt);
 
-	void setSpawnPoint(@ParamName("block") IBlock block);
+   IEntity<?> createEntity(@ParamName("id") String id);
 
-	void setTime(@ParamName("ticks") long ticks);
+   IBlock getSpawnPoint();
 
-	@Deprecated
-	IEntity<?> spawnClone(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
-						  @ParamName("tab") int tab, @ParamName("name") String name);
+   void setSpawnPoint(@ParamName("block") IBlock block);
 
-	void spawnEntity(@ParamName("entity") IEntity<?> entity);
+   String getName();
 
-	void spawnParticle(@ParamName("particle") String particle, @ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
-					   @ParamName("dx") double dx, @ParamName("dy") double dy, @ParamName("dz") double dz,
-					   @ParamName("speed") double speed, @ParamName("count") int count);
-
-	void thunderStrike(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
-
-	void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
-
-	String getId();
+   void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
 
 }

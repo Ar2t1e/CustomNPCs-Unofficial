@@ -5,22 +5,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import net.minecraftforge.common.config.Configuration;
-
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.FIELD })
+@Target({ElementType.FIELD})
 public @interface ConfigProp {
 
-	String def() default "";
+   String def() default "";
 
-	String info() default "";
+   String info() default "";
 
-	String max() default "";
+   String max() default "";
 
-	String min() default "";
+   String min() default "";
 
-	String name() default "";
+   String name() default "";
 
-	String type() default Configuration.CATEGORY_GENERAL;
+   String type() default "common"; // "client", "server"
 
 }

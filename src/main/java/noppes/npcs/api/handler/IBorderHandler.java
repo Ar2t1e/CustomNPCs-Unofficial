@@ -1,27 +1,26 @@
 package noppes.npcs.api.handler;
 
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.IBorder;
 import noppes.npcs.controllers.data.Zone3D;
 
 import java.util.List;
 
-@SuppressWarnings("all")
 public interface IBorderHandler {
 
-	IBorder createNew(@ParamName("dimensionId") int dimensionId, @ParamName("pos") IPos pos);
+    IBorder createNew(@ParamName("dimensionId") String dimensionId, @ParamName("pos") IPos pos);
 
-	IBorder[] getAllRegions();
+    IBorder[] getAllRegions();
 
-	IBorder getRegion(@ParamName("regionId") int regionId);
+    IBorder getRegion(@ParamName("regionId") int regionId);
 
-	IBorder[] getRegions(@ParamName("dimensionId") int dimensionId);
+    IBorder[] getRegions(@ParamName("dimensionId") String dimensionId);
 
-	boolean removeRegion(@ParamName("regionId") int regionId);
+    boolean removeRegion(@ParamName("regionId") int regionId);
 
-	List<Zone3D> getNearestRegions(@ParamName("dimensionId") int dimensionId,
-								   @ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
-								   @ParamName("distance") double distance);
+    List<Zone3D> getNearestRegions(@ParamName("dimensionId") String dimensionId,
+                                   @ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
+                                   @ParamName("distance") double distance);
 
 }

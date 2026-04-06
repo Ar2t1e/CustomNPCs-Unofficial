@@ -1,19 +1,17 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.village.MerchantRecipeList;
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.trading.MerchantOffers;
 
-@SuppressWarnings("all")
-public interface IVillager<T extends EntityMob> extends IEntityLiving<T> {
+public interface IVillager<T extends Mob> extends IMob<T> {
 
-	MerchantRecipeList getRecipes(@ParamName("player") IPlayer<?> player);
+    MerchantOffers getMCRecipes();
 
-	IInventory getVillagerInventory();
+    Container getMCVillagerContainer();
 
-	String getCareer();
+    String getProfession();
 
-	int getProfession();
+    String villagerType();
 
 }

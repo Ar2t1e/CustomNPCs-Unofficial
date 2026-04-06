@@ -1,0 +1,62 @@
+package noppes.npcs.mixin.client.gui.worldselection;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
+import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.level.storage.LevelSummary;
+import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.shared.common.util.LogWriter;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(value = WorldSelectionList.WorldListEntry.class, priority = 498)
+public class SelectWorldScreenMixin {
+
+    @Final @Shadow private Minecraft minecraft;
+    @Final @Shadow private SelectWorldScreen screen;
+    @Final @Shadow private LevelSummary summary;
+
+    @Inject(
+            at = {@At("HEAD")},
+            method = "loadWorld",
+            cancellable = true
+    )
+    private void npcsLoadWorld(CallbackInfo ci) {
+        try {
+            ScriptController sData = ScriptController.Instance;
+            ScriptController.setLevelKey(summary.getLevelName()+"_"+summary.getLevelId()+"_"+summary.getWorldVersionName().getString()+"_"+summary.getSettings().gameType());
+            if (sData.notAgreement(ScriptController.getLevelKey())) {
+                ci.cancel();
+                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                Screen backScreen = minecraft.screen;
+                minecraft.setScreen(new ConfirmScreen((agree) -> {
+                    if (agree && minecraft.getLevelSource().levelExists(summary.getLevelId())) {
+                        sData.setAgreement(ScriptController.getLevelKey(), true);
+                        minecraft.forceSetScreen(new GenericDirtMessageScreen(Component.translatable("selectWorld.data_read")));
+                        minecraft.createWorldOpenFlows().loadLevel(screen, summary.getLevelId());
+                    }
+                    else {
+                        minecraft.setScreen(backScreen);
+                        ScriptController.setLevelKey("");
+                    }
+                },
+                        Component.empty(),
+                        Component.translatable("system.check.scripts.agree"),
+                        Component.translatable("gui.agree"),
+                        Component.translatable("gui.cancel")));
+            }
+        }
+        catch (Exception e) { LogWriter.error("Error while checking user agreement: "); }
+    }
+
+}

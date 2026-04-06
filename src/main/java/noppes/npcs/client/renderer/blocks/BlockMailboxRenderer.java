@@ -1,55 +1,45 @@
 package noppes.npcs.client.renderer.blocks;
 
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.blocks.BlockMailbox;
+import noppes.npcs.blocks.tiles.TileMailbox;
 import noppes.npcs.client.model.blocks.ModelMailboxUS;
 import noppes.npcs.client.model.blocks.ModelMailboxWow;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
+public class BlockMailboxRenderer<T extends TileMailbox> implements BlockEntityRenderer<T> {
 
-public class BlockMailboxRenderer<T extends TileEntity> extends TileEntitySpecialRenderer<T> {
+	private final ModelMailboxUS model = new ModelMailboxUS();
+	private final ModelMailboxWow model2 = new ModelMailboxWow();
+	private static final RenderType type1 = RenderType.entityCutout(new ResourceLocation(CustomNpcs.MODID, "textures/models/mailbox1.png"));
+	private static final RenderType type2 = RenderType.entityCutout(new ResourceLocation(CustomNpcs.MODID, "textures/models/mailbox2.png"));
+	private static final RenderType type3 = RenderType.entityCutout(new ResourceLocation(CustomNpcs.MODID, "textures/models/mailbox3.png"));
 
-	public static final ResourceLocation text1 = new ResourceLocation(CustomNpcs.MODID, "textures/models/mailbox1.png");
-	public static final ResourceLocation text2 = new ResourceLocation(CustomNpcs.MODID, "textures/models/mailbox2.png");
-	public static final ResourceLocation text3 = new ResourceLocation(CustomNpcs.MODID, "textures/models/mailbox3.png");
-	public static final ModelMailboxUS model = new ModelMailboxUS();
-	public static final ModelMailboxWow model2 = new ModelMailboxWow();
-	private final int type;
+	public BlockMailboxRenderer(Context ignoredDispatcher) { }
 
-	public BlockMailboxRenderer(int i) {
-		this.type = i;
-	}
-
-	public void render(@Nullable TileEntity te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
+	public void render(T te, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource buffer, int light, int overlay) {
 		int meta = 0;
-		int type = this.type;
-		if (te != null && te.getPos() != BlockPos.ORIGIN) {
-			meta = (te.getBlockMetadata() | 0x4);
-			type = te.getBlockMetadata() >> 2;
+		int type = te.getModel();
+		if (te.getBlockPos() != BlockPos.ZERO) {
+			int rot = te.getBlockState().getValue(BlockMailbox.ROTATION);
+			meta = (rot | 0x4);
 		}
-		GlStateManager.pushMatrix();
-		GlStateManager.enableLighting();
-		GlStateManager.disableBlend();
-		GlStateManager.translate(x + 0.5f, y + 1.5f, z + 0.5f);
-		GlStateManager.rotate(180.0f, 0.0f, 0.0f, 1.0f);
-		GlStateManager.rotate((90 * meta), 0.0f, 1.0f, 0.0f);
-		if (type == 0) {
-			this.bindTexture(BlockMailboxRenderer.text1);
-			model.render(0.0625f);
-		}
-		if (type == 1) {
-			this.bindTexture(BlockMailboxRenderer.text2);
-			model2.render(0.0625f);
-		}
-		if (type == 2) {
-			this.bindTexture(BlockMailboxRenderer.text3);
-			model2.render(0.0625f);
-		}
-		GlStateManager.popMatrix();
+		matrixStack.pushPose();
+		matrixStack.translate(0.5F, 1.5F, 0.5F);
+		matrixStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+		matrixStack.mulPose(Axis.YP.rotationDegrees((float)(90 * meta)));
+		if (type == 0) { model.renderToBuffer(matrixStack, buffer.getBuffer(type1), light, overlay, 1.0F, 1.0F, 1.0F, 1.0F); }
+		else if (type == 1) { model2.renderToBuffer(matrixStack, buffer.getBuffer(type2), light, overlay, 1.0F, 1.0F, 1.0F, 1.0F); }
+		else if (type == 2) { model2.renderToBuffer(matrixStack, buffer.getBuffer(type3), light, overlay, 1.0F, 1.0F, 1.0F, 1.0F); }
+		matrixStack.popPose();
 	}
 
 }

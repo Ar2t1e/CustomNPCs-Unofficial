@@ -1,97 +1,89 @@
 package noppes.npcs.api.wrapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.pathfinding.Path;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.pathfinding.PathPoint;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityLiving;
-import noppes.npcs.api.entity.IEntityLivingBase;
+import noppes.npcs.api.entity.IMob;
 
-@SuppressWarnings("rawtypes")
-public class EntityLivingWrapper<T extends EntityLiving> extends EntityLivingBaseWrapper<T> implements IEntityLiving {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-	public EntityLivingWrapper(T entity) {
-		super(entity);
-	}
+public class EntityLivingWrapper<T extends Mob> extends EntityLivingBaseWrapper<T> implements IMob<T> {
 
-	@Override
-	public boolean canSeeEntity(IEntity entity) {
-		return this.entity.getEntitySenses().canSee(entity.getMCEntity());
-	}
+   public EntityLivingWrapper(T entity) {
+      super(entity);
+   }
 
-	@Override
-	public void clearNavigation() {
-		this.entity.getNavigator().clearPath();
-	}
+   public void navigateTo(double x, double y, double z, double speed) {
+      entity.getNavigation().stop();
+      entity.getNavigation().moveTo(x, y, z, speed * 0.7D);
+   }
 
-	@Override
-	public IEntityLivingBase getAttackTarget() {
-		IEntityLivingBase base = (IEntityLivingBase) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.getAttackTarget());
-		return (base != null) ? base : super.getAttackTarget();
-	}
+   public void clearNavigation() {
+      this.entity.getNavigation().stop();
+   }
 
-	@Override
-	public IPos getNavigationPath() {
-		if (!this.isNavigating()) {
-			return null;
-		}
-		PathPoint point = Objects.requireNonNull(this.entity.getNavigator().getPath()).getFinalPathPoint();
-		if (point == null) {
-			return null;
-		}
-		return new BlockPosWrapper(new BlockPos(point.x, point.y, point.z));
-	}
+   public IPos getNavigationPath() {
+      if (!this.isNavigating()) {
+         return null;
+      }
+      Node point = Objects.requireNonNull(this.entity.getNavigation().getPath()).getEndNode();
+      return point == null ? null : new BlockPosWrapper(new BlockPos(point.x, point.y, point.z));
+   }
 
-	@Override
-	public boolean isAttacking() {
-		return super.isAttacking() || this.entity.getAttackTarget() != null;
-	}
+   public boolean isNavigating() {
+      return !this.entity.getNavigation().isDone();
+   }
 
-	@Override
-	public boolean isNavigating() {
-		return !this.entity.getNavigator().noPath();
-	}
+   public boolean isAttacking() {
+      return super.isAttacking() || this.entity.getTarget() != null;
+   }
 
-	@Override
-	public void jump() {
-		this.entity.getJumpHelper().setJumping();
-	}
+   public void setAttackTarget(IEntityLiving<T> living) {
+      if (living == null) {
+         this.entity.setTarget(null);
+      } else {
+         this.entity.setTarget(living.getMCEntity());
+      }
+      super.setAttackTarget(living);
+   }
 
-	@Override
-	public void navigateTo(double x, double y, double z, double speed) {
-		this.entity.getNavigator().clearPath();
-		this.entity.getNavigator().tryMoveToXYZ(x, y, z, speed * 0.7);
-	}
+   @SuppressWarnings("unchecked")
+   public IEntityLiving<T> getAttackTarget() {
+      IEntityLiving<T> base = (IEntityLiving<T>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.getTarget());
+      return base != null ? base : super.getAttackTarget();
+   }
 
-	@Override
-	public void navigateTo(Integer[][] posses, double speed) {
-		PathNavigate nav = this.entity.getNavigator();
-		nav.clearPath();
-		List<PathPoint> points = new ArrayList<>();
-		for (Integer[] posId : posses) {
-			if (posId == null || posId.length < 3) {
-				return;
-			}
-			points.add(new PathPoint(posId[0], posId[1], posId[2]));
-		}
-		nav.setPath(new Path(points.toArray(new PathPoint[0])), speed);
-	}
+   public boolean canSeeEntity(IEntity<?> entity) {
+      return this.entity.getSensing().hasLineOfSight(entity.getMCEntity());
+   }
 
-	@Override
-	public void setAttackTarget(IEntityLivingBase living) {
-		if (living == null) {
-			this.entity.setAttackTarget(null);
-		} else {
-			this.entity.setAttackTarget(living.getMCEntity());
-		}
-		super.setAttackTarget(living);
-	}
+   public void jump() {
+      this.entity.getJumpControl().jump();
+   }
+
+
+   // New from Unofficial (BetaZavr)
+   @Override
+   public void navigateTo(IPos[] posses, double speed) {
+      PathNavigation nav = entity.getNavigation();
+      nav.stop();
+      List<Node> points = new ArrayList<>();
+      BlockPos endPos = BlockPos.ZERO;
+      for (IPos pos : posses) {
+         if (pos == null) { return; }
+         BlockPos bp = pos.getMCBlockPos();
+         points.add(new Node(bp.getX(), bp.getY(), bp.getZ()));
+         endPos = bp;
+      }
+      nav.moveTo(new Path(points, endPos, false), speed * 0.7D);
+   }
+
 }

@@ -1,21 +1,23 @@
 package noppes.npcs.api;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.eventhandler.EventBus;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IEntity;
@@ -23,125 +25,128 @@ import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.IData;
 import noppes.npcs.api.entity.data.INpcAttribute;
 import noppes.npcs.api.entity.data.IPlayerMail;
+import noppes.npcs.api.gui.IComponent;
 import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.handler.*;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.overlay.IOverlay;
 import noppes.npcs.api.wrapper.WrapperNpcAPI;
-import noppes.npcs.client.util.ResourceData;
+import noppes.npcs.shared.client.gui.util.ResourceData;
+import noppes.npcs.shared.common.util.LogWriter;
 
-@SuppressWarnings("all")
+import javax.annotation.Nullable;
+
 public abstract class NpcAPI {
 
-	private static NpcAPI instance = null;
+   private static NpcAPI instance = null;
 
-	public static NpcAPI Instance() {
-		if (NpcAPI.instance != null) {
-			return NpcAPI.instance;
-		}
-		if (!IsAvailable()) {
-			return null;
-		}
-		try {
-			NpcAPI.instance = WrapperNpcAPI.Instance();
-		}
-		catch (Exception e) { LogWriter.error(e); }
-		return NpcAPI.instance;
-	}
+   public static @Nullable NpcAPI Instance() {
+      if (instance != null) { return instance;}
+      if (!IsAvailable()) { return null; }
+      try { NpcAPI.instance = WrapperNpcAPI.Instance(); }
+      catch (Exception e) { LogWriter.error(e); }
+      return instance;
+   }
 
-	public static boolean IsAvailable() {
-		return Loader.isModLoaded(CustomNpcs.MODID);
-	}
+   public static boolean IsAvailable() { return ModList.get().isLoaded(CustomNpcs.MODID); }
 
-	public abstract ICustomGui createCustomGui(@ParamName("id") int id, @ParamName("width") int width, @ParamName("height") int height, @ParamName("pauseGame") boolean pauseGame);
+   public abstract ICustomNpc<?> createNPC(@ParamName("levelMC") Level levelMC);
 
-	public abstract IPlayerMail createMail(@ParamName("sender") String sender, @ParamName("title") String title);
+   public abstract ICustomNpc<?> spawnNPC(@ParamName("levelMC") Level levelMC, @ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	public abstract ICustomNpc<?> createNPC(@ParamName("worldMC") World worldMC);
+   public abstract IEntity<?> getIEntity(@ParamName("entityMC") Entity entityMC);
 
-	public abstract EventBus events();
+   public abstract IBlock getIBlock(@ParamName("levelMC") Level levelMC, @ParamName("posMC") BlockPos posMC);
 
-	public abstract String executeCommand(@ParamName("world") IWorld world, @ParamName("command") String command);
+   public abstract IContainer getIContainer(@ParamName("containerMC") AbstractContainerMenu containerMC);
 
-	public abstract IPlayer<?>[] getAllPlayers();
+   public abstract IContainer getIContainer(@ParamName("inventoryMC") Container inventoryMC);
 
-	public abstract IAnimationHandler getAnimations();
+   public abstract IItemStack getIItemStack(@ParamName("stackMC") ItemStack stackMC);
 
-	public abstract IBorderHandler getBorders();
+   public abstract IWorld getIWorld(@ParamName("levelMC") Level levelMC);
 
-	public abstract ICloneHandler getClones();
+   public abstract IWorld getIWorld(@ParamName("dimensionName") String dimensionName);
 
-	public abstract IDimensionHandler getCustomDimension();
+   public abstract IWorld getIWorld(@ParamName("dimensionTypeMC") DimensionType dimensionTypeMC);
 
-	public abstract IDialogHandler getDialogs();
+   public abstract IWorld[] getIWorlds();
 
-	public abstract IFactionHandler getFactions();
+   public abstract INbt getINbt(@ParamName("nbtMC") CompoundTag nbtMC);
 
-	public abstract File getGlobalDir();
+   public abstract IPos getIPos(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	public abstract INpcAttribute getIAttribute(@ParamName("attributeMC") IAttributeInstance attributeMC);
+   public abstract IFactionHandler getFactions();
 
-	public abstract IBlock getIBlock(@ParamName("worldMC") World worldMC, @ParamName("posMC") BlockPos posMC);
+   public abstract IRecipeHandler getRecipes();
 
-	public abstract IContainer getIContainer(@ParamName("containerMC") Container containerMC);
+   public abstract IQuestHandler getQuests();
 
-	public abstract IContainer getIContainer(@ParamName("inventoryMC") IInventory inventoryMC);
+   public abstract IDialogHandler getDialogs();
 
-	public abstract IDamageSource getIDamageSource(@ParamName("damageMC") DamageSource damageMC);
+   public abstract ICloneHandler getClones();
 
-	public abstract IEntityDamageSource getIDamageSource(@ParamName("name") String name, @ParamName("entity") IEntity<?> entity);
+   public abstract IDamageSource getIDamageSource(@ParamName("damageMC") DamageSource damageMC);
 
-	public abstract IEntity<?> getIEntity(@ParamName("entityMC") Entity entityMC);
+   public abstract INbt stringToNbt(@ParamName("str") String str);
 
-	public abstract IItemStack getIItemStack(@ParamName("stackMC") ItemStack stackMC);
+   public abstract IPlayerMail createMail(@ParamName("sender") String sender, @ParamName("title") String title);
 
-	public abstract IKeyBinding getIKeyBinding();
+   public abstract ICustomGui createCustomGui(@ParamName("id") int id, @ParamName("width") int width, @ParamName("height") int height,
+                                              @ParamName("pauseGame") boolean pauseGame, @ParamName("player") IPlayer<?> player);
 
-	public abstract INbt getINbt(@ParamName("nbtMC") NBTTagCompound nbtMC);
+   public abstract IOverlay createOverlay(@ParamName("id") int id);
 
-	public abstract IPlayer<?> getIPlayer(@ParamName("nameOrUUID") String nameOrUUID);
+   public abstract IEventBus events();
 
-	public abstract IPos getIPos(@ParamName("posMC") BlockPos posMC);
+   public abstract File getGlobalDir();
 
-	public abstract IPos getIPos(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+   public abstract File getLevelDir();
 
-	public abstract IWorld getIWorld(@ParamName("dimensionName") String dimensionName);
+   public abstract boolean hasPermissionNode(@ParamName("permission") String permission);
 
-	public abstract IWorld getIWorld(@ParamName("dimensionId") int dimensionId);
+   public abstract String executeCommand(@ParamName("world") IWorld level, @ParamName("command") String command);
 
-	public abstract IWorld getIWorld(@ParamName("worldMC") World worldMC);
+   public abstract String getRandomName(@ParamName("dictionary") int dictionary, @ParamName("gender") int gender);
 
-	public abstract IWorld[] getIWorlds();
+   // New from Unofficial (BetaZavr)
+   public abstract IPlayer<?>[] getAllPlayers();
 
-	public abstract IMarcetHandler getMarkets();
+   public abstract IBorderHandler getBorders();
 
-	public abstract IMethods getMethods();
+   public abstract IDimensionHandler getCustomDimension();
 
-	public abstract IQuestHandler getQuests();
+   public abstract INpcAttribute getIAttribute(@ParamName("attributeMC") AttributeInstance attributeMC);
 
-	public abstract String getRandomName(@ParamName("dictionary") int dictionary, @ParamName("gender") int gender);
+   public abstract IEntityDamageSource getIDamageSource(@ParamName("name") String name, @ParamName("entity") IEntity<?> entity);
 
-	public abstract INbt getRawPlayerData(@ParamName("uuid") String uuid, @ParamName("name") String name);
+   public abstract IKeyBinding getIKeyBinding();
 
-	public abstract IRecipeHandler getRecipes();
+   public abstract IPlayer<?> getIPlayer(@ParamName("nameOrUUID") String nameOrUUID);
 
-	public abstract File getWorldDir();
+   public abstract IPos getIPos(@ParamName("posMC") BlockPos posMC);
 
-	public abstract boolean hasPermissionNode(@ParamName("permission") String permission);
+   public abstract IMarcetHandler getMarkets();
 
-	public abstract void registerCommand(@ParamName("command") CommandNoppesBase command);
+   public abstract IMethods getMethods();
 
-	public abstract void registerPermissionNode(@ParamName("permission") String permission, @ParamName("defaultType") int defaultType);
+   public abstract INbt getRawPlayerData(@ParamName("uuid") String uuid, @ParamName("name") String name);
 
-	public abstract ICustomNpc<?> spawnNPC(@ParamName("worldMC") World worldMC, @ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   public abstract ICustomPlayerData getPlayerData(@ParamName("player") IPlayer<?> player);
 
-	public abstract INbt stringToNbt(@ParamName("str") String str);
+   public abstract ResourceData getResourceData(@ParamName("texture") ResourceLocation texture, @ParamName("u") int u, @ParamName("v") int v, @ParamName("width") int width, @ParamName("height") int height);
 
-	public abstract ICustomPlayerData getPlayerData(@ParamName("player") IPlayer<?> player);
+   public abstract IData getTempdata();
 
-	public abstract ResourceData getResourceData(@ParamName("texture") ResourceLocation texture, @ParamName("u") int u, @ParamName("v") int v, @ParamName("width") int width, @ParamName("height") int height);
+   public abstract IData getStoreddata();
 
-	public abstract IData getTempdata();
+   public abstract IComponent getIComponent(String text);
 
-	public abstract IData getStoreddata();
+   public abstract List<?> createList();
+
+   public abstract Map<?, ?> createMap();
+
+   public abstract Map<?, ?> createTreeMap();
 
 }

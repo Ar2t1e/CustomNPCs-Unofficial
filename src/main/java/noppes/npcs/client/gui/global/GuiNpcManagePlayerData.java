@@ -1,689 +1,772 @@
 package noppes.npcs.client.gui.global;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.Client;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.SubGuiDataSend;
 import noppes.npcs.client.gui.SubGuiEditText;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.select.SubGuiDialogSelection;
+import noppes.npcs.client.gui.select.SubGuiNpcFactionSelection;
+import noppes.npcs.client.gui.select.SubGuiNpcTransportSelection;
+import noppes.npcs.client.gui.select.SubGuiQuestSelection;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.constants.EnumPlayerData;
 import noppes.npcs.containers.ContainerNPCBank;
-import noppes.npcs.controllers.BankController;
-import noppes.npcs.controllers.DialogController;
-import noppes.npcs.controllers.FactionController;
-import noppes.npcs.controllers.MarcetController;
-import noppes.npcs.controllers.QuestController;
-import noppes.npcs.controllers.TransportController;
+import noppes.npcs.controllers.*;
+import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.controllers.data.Faction;
 import noppes.npcs.controllers.data.Marcet;
 import noppes.npcs.controllers.data.TransportLocation;
 import noppes.npcs.entity.EntityNPCInterface;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.*;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.*;
+import noppes.npcs.shared.common.util.ComponentOrderComparator;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.Util;
 
 public class GuiNpcManagePlayerData extends GuiNPCInterface2
-		implements  IScrollData, ICustomScrollListener, GuiYesNoCallback, IGuiData, ITextfieldListener {
+        implements IScrollData, ICustomScrollListener, IGuiData, ITextfieldListener, GuiSelectionListener {
 
-	protected HashMap<String, Integer> data = new HashMap<>();
-	protected HashMap<String, String> scrollData = new HashMap<>();
-	protected EnumPlayerData selection = EnumPlayerData.Players;
-	protected NBTTagCompound gameData = null;
-	protected GuiCustomScroll scroll;
-	protected boolean isOnline = false;
-	protected String search = "";
-	protected String selected = null;
-	protected String selectedPlayer = null;
+   protected static final SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss dd MMM yyyy (EEE)");
 
-	public GuiNpcManagePlayerData(EntityNPCInterface npc) {
-		super(npc);
-		parentGui = EnumGuiType.MainMenuGlobal;
+   protected final Map<Component, Integer> data = new HashMap<>();
+   protected HashMap<Component, Component> scrollData = new HashMap<>();
+   protected CompoundTag gameData = new CompoundTag();
+   protected GuiCustomScrollNop scroll;
+   protected boolean isOnline = false;
+   protected int totalPlayers = 0;
+   protected Component selected = Component.empty();
+   public EnumPlayerData selection = EnumPlayerData.Players;
+   public Component selectedPlayer = Component.empty();
 
-		Client.sendData(EnumPacketServer.PlayerDataGet, selection);
-	}
+   public GuiNpcManagePlayerData(EntityNPCInterface npc) {
+      super(npc);
+      backGui = EnumGuiType.MainMenuGlobal;
+      Packets.sendServer(new SPacketPlayerDataGet(selection, selectedPlayer.getString()));
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		GuiNpcTextField.unfocus();
-		String title = selectedPlayer;
-		switch (selection) {
-			case Quest: title = new TextComponentTranslation("quest.quest").getFormattedText(); break;
-			case Dialog: title = new TextComponentTranslation("dialog.dialog").getFormattedText(); break;
-			case Transport: title = new TextComponentTranslation("global.transport").getFormattedText(); break;
-			case Bank: title = new TextComponentTranslation("global.banks").getFormattedText(); break;
-			case Factions: title = new TextComponentTranslation("menu.factions").getFormattedText(); break;
-			case Game: title = new TextComponentTranslation("gui.game").getFormattedText(); break;
-		}
-		int id = button.getID();
-		if (id == 0) {
-			if (selection == EnumPlayerData.Players || !scroll.hasSelected()) {
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						new TextComponentTranslation("global.playerdata").getFormattedText() + ": " + title,
-						new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 0);
-				displayGuiScreen(guiyesno);
-			} else {
-				Client.sendData(EnumPacketServer.PlayerDataSet, selection.ordinal(), selectedPlayer, 1, data.get(scrollData.get(scroll.getSelected())));
-			}
-		} // del
-		else if (id >= 1 && id <= 6 || id == 9) {
-			if (selectedPlayer == null && id != 1) { return; }
-			if (selection == EnumPlayerData.Game) { save(); }
-			if (id == 9) { selection = EnumPlayerData.Game; }
-			else { selection = EnumPlayerData.values()[id - 1]; }
-			initButtons();
-			scroll.clear();
-			data.clear();
-			Client.sendData(EnumPacketServer.PlayerDataGet, selection, selectedPlayer);
-			selected = null;
-			getTextField(0).setText("");
-		}
-		else if (id == 7) {
-			GuiYesNo guiyesno = new GuiYesNo(this,
-					new TextComponentTranslation("gui.wipe").getFormattedText() + "?",
-					new TextComponentTranslation("data.hover.wipe").getFormattedText().replace("<br>",
-							"" + ((char) 10)),
-					7);
-			displayGuiScreen(guiyesno);
-		}
-		else if (id == 12) {
-			GuiYesNo guiyesno = new GuiYesNo(this,
-					new TextComponentTranslation("gui.cleaning").getFormattedText() + "?",
-					new TextComponentTranslation("data.hover.cleaning").getFormattedText().replace("<br>",
-							"" + ((char) 10)),
-					12);
-			displayGuiScreen(guiyesno);
-		}
-		else if (id == 8) { // Add
-			SubGuiEditText subgui = new SubGuiEditText(0, "");
-			subgui.label = "gui.add";
-			switch (selection) {
-				case Quest: {
-					subgui.hovers[0] = "";
-					for (int i : QuestController.instance.quests.keySet()) {
-						if (data.containsValue(i)) { continue; }
-						if (!subgui.hovers[0].isEmpty()) { subgui.hovers[0] += ", "; }
-						subgui.hovers[0] += i;
-					}
-					subgui.hovers[0] = new TextComponentTranslation("gui.options").getFormattedText() + " ID:<br>" + subgui.hovers[0];
-					break;
-				}
-				case Dialog: {
-					subgui.hovers[0] = "";
-					for (int i : DialogController.instance.dialogs.keySet()) {
-						if (data.containsValue(i)) { continue; }
-						if (!subgui.hovers[0].isEmpty()) { subgui.hovers[0] += ", "; }
-						subgui.hovers[0] += i;
-					}
-					subgui.hovers[0] = new TextComponentTranslation("gui.options").getFormattedText() + " ID:<br>" + subgui.hovers[0];
-					break;
-				}
-				case Transport: {
-					break;
-				}
-				case Bank: {
-					subgui.hovers[0] = "";
-					for (int i : BankController.getInstance().banks.keySet()) {
-						if (data.containsValue(i)) { continue; }
-						if (!subgui.hovers[0].isEmpty()) { subgui.hovers[0] += ", "; }
-						subgui.hovers[0] += i;
-					}
-					subgui.hovers[0] = new TextComponentTranslation("gui.options").getFormattedText() + " ID:<br>" + subgui.hovers[0];
-					break;
-				}
-				case Factions: {
-					subgui.hovers[0] = "";
-					for (int i : FactionController.instance.factions.keySet()) {
-						if (data.containsValue(i)) { continue; }
-						if (!subgui.hovers[0].isEmpty()) { subgui.hovers[0] += ", "; }
-						subgui.hovers[0] += i;
-					}
-					subgui.hovers[0] = new TextComponentTranslation("gui.options").getFormattedText() + " ID:<br>" + ((char) 167) + "6" + subgui.hovers[0];
-					break;
-				}
-			}
-			setSubGui(subgui);
-		}
-		else if (id == 10) {
-			GuiYesNo guiyesno = new GuiYesNo(this,
-					new TextComponentTranslation("global.playerdata").getFormattedText() + ": " + title,
-					new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 1);
-			displayGuiScreen(guiyesno);
-		} // del all
-		else if (id == 11) { editData(); } // edit
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0).setSize(301, 174); }
+      add(scroll.setPos(guiLeft + 7, guiTop + 16));
+      selected = Component.empty();
+      addLabel(0, guiLeft + 10, guiTop + 6, Component.translatable("data.all.players").append(":"))
+              .setSize(296, 10);
+      int x = guiLeft + 313;
+      int y = guiTop + 16;
+      int w = 99;
+      // main buttons
+      addButton(1, x, y, "playerdata.players")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.list");
+      addButton(2, x, (y += 22), "quest.quest")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.quests");
+      addButton(3, x, (y += 22), "dialog.dialog")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.dialogs");
+      addButton(4, x, (y += 22), "global.transport")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.transports");
+      addButton(5, x, (y += 22), "global.banks")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.banks");
+      addButton(6, x, (y += 22), "menu.factions")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.factions");
+      addButton(9, x, (y += 22), "gui.game")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.game");
+      addButton(7, x, (y += 22), "gui.wipe")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.wipe");
+      addButton(12, x, y + 22, "gui.cleaning")
+              .setSize(w, 20)
+              .setHoverTexts("data.hover.cleaning");
+      // edit data buttons
+      y = guiTop + 170;
+      x = guiLeft + 7;
+      w = 73;
+      addButton(8, x, (y += 22), "gui.add")
+              .setSize(w, 20)
+              .setHoverTexts("hover.add");
+      addButton(0, (x += w + 3), y, "gui.remove")
+              .setSize(w, 20)
+              .setHoverTexts("hover.delete");
+      addButton(10, (x += w + 3), y, "gui.remove.all")
+              .setSize(w, 20)
+              .setHoverTexts("hover.delete.all");
+      addButton(11, x + w + 3, y, "selectServer.edit")
+              .setSize(w, 20)
+              .setHoverTexts("hover.edit");
+      initButtons();
+      if (selection == EnumPlayerData.Game) {
+         y = guiTop + 18;
+         addLabel(2, guiLeft + 10, y + 5, "gui.money");
+         addTextField(1, guiLeft + 66, y, 120, 20, "" + gameData.getLong("Money"))
+                 .setMinMaxDefault(0, Long.MAX_VALUE, gameData.getLong("Money"))
+                 .setHoverTexts("data.hover.money", "" + Long.MAX_VALUE);
+         addLabel(3, guiLeft + 10, y + 25, Component.translatable("global.market").append(":"))
+                 .setHoverTexts("data.hover.markets");
+      }
+   }
 
-	public void confirmClicked(boolean result, int id) {
-		String sel = selected;
-		String playerName = selectedPlayer;
-		EnumPlayerData epd = selection;
-		NoppesUtil.openGUI(player, this);
-		selected = sel;
-		selectedPlayer = playerName;
-		selection = epd;
-		if (!result) { return; }
-		if (id == 0) {
-			if (selection != EnumPlayerData.Players) { return; }
-			data.clear();
-			Client.sendData(EnumPacketServer.PlayerDataRemove, selection, selectedPlayer, selected);
-			selected = null;
-			selectedPlayer = null;
-			scroll.setSelect(-1);
-			initButtons();
-		}
-		else if (id == 1) { Client.sendData(EnumPacketServer.PlayerDataSet, selection.ordinal(), selectedPlayer, 3, -1); }
-		else if (id == 7) {
-			selection = EnumPlayerData.Wipe;
-			initButtons();
-			scroll.clear();
-			data.clear();
-			Client.sendData(EnumPacketServer.PlayerDataRemove, selection, selectedPlayer, selected);
-			selected = null;
-			selectedPlayer = null;
-			scroll.setSelect(-1);
-		}
-		else if (id == 12) {
-			SubGuiDataSend subgui = new SubGuiDataSend(0);
-			setSubGui(subgui);
-		}
-	}
+   public void initButtons() {
+      boolean hasPlayer = selectedPlayer != null && !selectedPlayer.getString().isEmpty();
+      getButton(0).setIsVisible(true)
+              .setIsEnabled(hasPlayer && scroll.hasSelected()); // remove
+      getButton(1).setIsEnabled(selection != EnumPlayerData.Players && hasPlayer);
+      getButton(2).setIsEnabled(selection != EnumPlayerData.Quest && hasPlayer);
+      getButton(3).setIsEnabled(selection != EnumPlayerData.Dialog && hasPlayer);
+      getButton(4).setIsEnabled(selection != EnumPlayerData.Transport && hasPlayer);
+      getButton(5).setIsEnabled(selection != EnumPlayerData.Bank && hasPlayer);
+      getButton(6).setIsEnabled(selection != EnumPlayerData.Factions && hasPlayer);
+      getButton(9).setIsEnabled(selection != EnumPlayerData.Game && hasPlayer);
+      boolean canEdit = selection != EnumPlayerData.Players && selection != EnumPlayerData.Wipe;
+      getButton(8).setIsVisible(true); // add
+      getButton(10).setIsVisible(true); // remove.all
+      getButton(11).setIsVisible(true); // selectServer.edit"
+      getButton(12).setIsEnabled(selection == EnumPlayerData.Players);
+      if (scroll != null) {
+         if (selection != EnumPlayerData.Game) {
+            scroll.setPos(guiLeft + 7, guiTop + 16)
+                    .setSize(301, 174);
+         }
+         else {
+            scroll.setPos(guiLeft + 7, guiTop + 52)
+                    .setSize(120, 138);
+         }
+      }
+      if (getLabel(2) != null) { getLabel(2).setIsEnabled(selection == EnumPlayerData.Game); }
+      if (getLabel(3) != null) { getLabel(3).setIsEnabled(selection == EnumPlayerData.Game); }
+      if (getTextField(1) != null) { getTextField(1).setIsVisible(selection == EnumPlayerData.Game); }
+      switch (selection) {
+         case Quest:
+         case Transport: {
+            getButton(8).setIsEnabled(canEdit && hasPlayer);
+            getButton(10).setIsEnabled(canEdit && hasPlayer && !scroll.getList().isEmpty());
+            getButton(11).setIsEnabled(canEdit && hasPlayer && scroll.hasSelected());
+            break;
+         }
+         case Dialog:  {
+            getButton(8).setIsEnabled(canEdit && hasPlayer);
+            getButton(10).setIsEnabled(canEdit && hasPlayer && !scroll.getList().isEmpty());
+            getButton(11).setIsEnabled(false);
+            break;
+         }
+         case Bank: {
+            getButton(8).setIsEnabled(canEdit && hasPlayer && data.size() < BankController.getInstance().getBanks().size());
+            getButton(10).setIsEnabled(canEdit && hasPlayer && !scroll.getList().isEmpty());
+            getButton(11).setIsEnabled(canEdit && hasPlayer && scroll != null && scroll.hasSelected());
+            break;
+         }
+         case Factions: {
+            getButton(8).setIsEnabled(canEdit && hasPlayer && data.size() < FactionController.instance.factions.size());
+            getButton(10).setIsEnabled(canEdit && hasPlayer && !scroll.getList().isEmpty());
+            getButton(11).setIsEnabled(canEdit && hasPlayer && scroll != null && scroll.hasSelected());
+            break;
+         }
+         case Game: {
+            getButton(0).setIsEnabled(canEdit && hasPlayer && scroll.hasSelected());
+            getButton(8).setIsVisible(false);
+            getButton(10).setIsEnabled(canEdit && hasPlayer && gameData != null);
+            getButton(11).setIsEnabled(canEdit && hasPlayer && scroll.hasSelected());
+            break;
+         }
+         default: {
+            getButton(8).setIsVisible(false);
+            getButton(10).setIsVisible(false);
+            getButton(11).setIsVisible(false);
+         }
+      }
+      if (!hasPlayer) {
+         getLabel(0).setMessage(Component.translatable("data.all.players")
+                 .append(" (")
+                 .append(scroll.getList() == null ? "1" : "" + scroll.getList().size())
+                 .append(")")
+         );
+      }
+      else {
+         if (selection == EnumPlayerData.Players) { totalPlayers = scroll.getList() == null ? 1 : scroll.getList().size(); }
+         getLabel(0).setMessage(Component.translatable("data.sel.player")
+                 .append(" (" + totalPlayers + "): ")
+                 .append(Component.literal(selectedPlayer.getString()).withStyle(isOnline ? ChatFormatting.DARK_GREEN : ChatFormatting.DARK_RED).withStyle(ChatFormatting.BOLD)));
+      }
+   }
 
-	private void editData() {
-		if (!scroll.hasSelected()) { return; }
-		switch (selection) {
-			case Bank: Client.sendData(EnumPacketServer.BankShow, selection, selectedPlayer, data.get(scrollData.get(scroll.getSelected()))); break;
-			case Factions: {
-				int factionId = data.get(scrollData.get(scroll.getSelected()));
-				SubGuiEditText subgui = new SubGuiEditText(1, "");
-				Faction f = FactionController.instance.factions.get(factionId);
-				String v = scroll.getHoversTexts().get(scroll.getSelect()).get(0);
-				int value = -1;
-				try { value = Integer.parseInt(v.substring(v.indexOf(((char) 167) + "3") + 2)); } catch (Exception e) { LogWriter.error(e); }
-				if (f != null) { subgui.numbersOnly = new int[] { 0, f.friendlyPoints * 2, value }; }
-				else { subgui.numbersOnly = new int[] { 0, Integer.MAX_VALUE, value }; }
-				subgui.text[0] = "" + value;
-				subgui.label = "gui.set.new.value";
-				setSubGui(subgui);
-				break;
-			}
-			case Game: {
-				if (gameData == null || !data.containsKey(scroll.getSelected())) { return; }
-				SubGuiEditText subgui = new SubGuiEditText(2, "");
-				subgui.initGui();
-				subgui.getTextField(0).setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
-				int m = 3, s = 0, id = data.get(scroll.getSelected());
-				MarcetController mData = MarcetController.getInstance();
-				for (int i = 0; i < gameData.getCompoundTag("GameData").getTagList("MarketData", 10).tagCount(); i++) {
-					NBTTagCompound nbt = gameData.getCompoundTag("GameData").getTagList("MarketData", 10).getCompoundTagAt(i);
-					if (id != nbt.getInteger("MarketID")) { continue; }
-					s = nbt.getInteger("Slot");
-					Marcet marcet = mData.getMarcet(id);
-					if (marcet == null) { break; }
-					m = marcet.markup.size() - 1;
-					break;
-				}
-				subgui.text[0] = "" + s;
-				subgui.getTextField(0).setMinMaxDefault(0, m, s);
-				subgui.label = "gui.set.new.value";
-				setSubGui(subgui);
-			}
-		}
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      MutableComponent title = switch (selection) {
+         case Quest -> Component.translatable("quest.quest");
+         case Dialog -> Component.translatable("dialog.dialog");
+         case Transport -> Component.translatable("global.transport");
+         case Bank -> Component.translatable("global.banks");
+         case Factions -> Component.translatable("menu.factions");
+         case Game -> Component.translatable("gui.game");
+         default -> (MutableComponent) selectedPlayer;
+      };
+      if (button.id == 0) {
+         if (selection == EnumPlayerData.Players || !scroll.hasSelected()) {
+            ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+               if (bo && data.containsKey(selected)) {
+                  Packets.sendServer(new SPacketPlayerDataRemove(selection, selectedPlayer.getString(), data.get(selected)));
+                  data.clear();
+                  selected = Component.empty();
+                  selectedPlayer = Component.empty();
+                  scroll.setSelect(-1);
+                  initButtons();
+               }
+               NoppesUtil.openGUI(player, this);
+            },
+                    Component.empty()
+                            .append(Component.translatable("global.playerdata").append(": ").withStyle(ChatFormatting.GRAY))
+                            .append(title.withStyle(ChatFormatting.RESET)),
+                    Component.translatable("message.delete"));
+            setScreen(guiYesNo);
+         }
+         else if (data.containsKey(scrollData.get(scroll.getNormalSelected()))) {
+            Packets.sendServer(new SPacketPlayerDataRemove(selection, selectedPlayer.getString(), data.get(scrollData.get(scroll.getNormalSelected()))));
+         }
+      } // del
+      else if (button.id >= 1 && button.id <= 6 || button.id == 9) {
+         if (selectedPlayer.getString().isEmpty() && button.id != 1) { return; }
+         if (selection == EnumPlayerData.Game) { save(); }
+         if (button.id == 9) { selection = EnumPlayerData.Game; }
+         else { selection = EnumPlayerData.values()[button.id - 1]; }
+         scroll.clear();
+         data.clear();
+         selected = Component.empty();
+         initButtons();
+         Packets.sendServer(new SPacketPlayerDataGet(selection, selectedPlayer.getString()));
+      }
+      else if (button.id == 7) {
+         String mes = Component.translatable("data.hover.wipe").getString().replace("<br>", "" + (char) 10);
+         ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+            if (bo) {
+               selection = EnumPlayerData.Wipe;
+               scroll.clear();
+               Packets.sendServer(new SPacketPlayerDataRemove(selection, "1noppes", 0));
+               data.clear();
+               selected = Component.empty();
+               selectedPlayer = Component.empty();
+               scroll.setSelect(-1);
+               selection = EnumPlayerData.Players;
+               initButtons();
+            }
+            NoppesUtil.openGUI(player, this);
+         },
+                 Component.translatable("gui.wipe").append("?"),
+                 Component.literal(mes));
+         setScreen(guiYesNo);
+      } // wipe
+      else if (button.id == 8) {
+         switch (selection) {
+            case Quest: setSubGui(new SubGuiQuestSelection(-1)); return;
+            case Dialog: setSubGui(new SubGuiDialogSelection(-1)); return;
+            case Transport: setSubGui(new SubGuiNpcTransportSelection(-1)); return;
+            case Factions: setSubGui(new SubGuiNpcFactionSelection(this, -1)); return;
+            case Bank: {
+               List<Component> hovers = new ArrayList<>();
+               hovers.add(Component.translatable("gui.options").append(" ID:"));
+               StringBuilder ids = new StringBuilder();
+               for (Bank bank : BankController.getInstance().getBanks()) {
+                  if (data.containsValue(bank.id)) { continue; }
+                  if (!ids.isEmpty()) { ids.append(", "); }
+                  ids.append(bank.id);
+               }
+               hovers.add(Component.literal(ids.toString()).withStyle(ChatFormatting.GOLD));
+               SubGuiEditText subgui = new SubGuiEditText(0, "");
+               subgui.label = "gui.add";
+               subgui.hovers.put(0, hovers);
+               setSubGui(subgui);
+               break;
+            }
+         }
+      } // Add
+      else if (button.id == 10) {
+         ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+            if (bo) {
+               Packets.sendServer(new SPacketPlayerDataRemove(selection, selectedPlayer.getString(), -1));
+            }
+            NoppesUtil.openGUI(player, this);
+         },
+                 Component.translatable("global.playerdata").append(": ").append(title),
+                 Component.translatable("message.delete"));
+         setScreen(guiYesNo);
+      } // Del all data
+      else if (button.id == 11) { editData(); } // edit
+      else if (button.id == 12) {
+         String mes = Component.translatable("data.hover.cleaning").getString().replace("<br>", "" + (char) 10);
+         ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+            if (bo) {
+               SubGuiDataSend subgui = new SubGuiDataSend();
+               setSubGui(subgui);
+            }
+            NoppesUtil.openGUI(player, this);
+         },
+                 Component.translatable("gui.cleaning").append("?"),
+                 Component.literal(mes));
+         setScreen(guiYesNo);
+      } // cleaning
+   }
 
-	public void initButtons() {
-		boolean hasPlayer = selectedPlayer != null && !selectedPlayer.isEmpty();
-		getButton(0).setIsVisible(true);
-		getButton(0).setIsEnable(hasPlayer);
-		getButton(1).setIsEnable(selection != EnumPlayerData.Players && hasPlayer);
-		getButton(2).setIsEnable(selection != EnumPlayerData.Quest && hasPlayer);
-		getButton(3).setIsEnable(selection != EnumPlayerData.Dialog && hasPlayer);
-		getButton(4).setIsEnable(selection != EnumPlayerData.Transport && hasPlayer);
-		getButton(5).setIsEnable(selection != EnumPlayerData.Bank && hasPlayer);
-		getButton(6).setIsEnable(selection != EnumPlayerData.Factions && hasPlayer);
-		getButton(9).setIsEnable(selection != EnumPlayerData.Game && hasPlayer);
-		boolean canEdit = selection != EnumPlayerData.Players && selection != EnumPlayerData.Wipe;
-		getButton(8).setIsVisible(true);
-		getButton(10).setIsVisible(true);
-		getButton(11).setIsVisible(true);
-		getButton(12).setIsEnable(selection == EnumPlayerData.Players);
+   @Override
+   public void save() {
+      ContainerNPCBank.editPlayerBankData = null;
+      if (selection == EnumPlayerData.Game) {
+         boolean hasPlayer = selectedPlayer != null && !selectedPlayer.getString().isEmpty();
+         if (hasPlayer && gameData != null) {
+            Packets.sendServer(new SPacketPlayerDataSet(EnumPlayerData.Game, selectedPlayer.getString(), 0, gameData));
+         }
+      }
+   }
 
-		if (scroll != null) {
-			if (selection != EnumPlayerData.Game) {
-				scroll.guiLeft = guiLeft + 7;
-				scroll.guiTop = guiTop + 16;
-				scroll.setSize(300, 152);
-			} else {
-				scroll.guiLeft = guiLeft + 7;
-				scroll.guiTop = guiTop + 52;
-				scroll.setSize(120, 138);
-			}
-		}
-		getLabel(1).setIsEnable(selection != EnumPlayerData.Game);
-		getTextField(0).setIsVisible(selection != EnumPlayerData.Game);
-		if (getLabel(2) != null) { getLabel(2).setIsEnable(selection == EnumPlayerData.Game); }
-		if (getLabel(3) != null) { getLabel(3).setIsEnable(selection == EnumPlayerData.Game); }
-		if (getTextField(1) != null) { getTextField(1).setIsVisible(selection == EnumPlayerData.Game); }
-		switch (selection) {
-			case Quest:
-				case Dialog:
-				case Transport: {
-				getButton(8).setIsEnable(canEdit && hasPlayer);
-				getButton(10).setIsEnable(canEdit && hasPlayer && !scroll.getList().isEmpty());
-				getButton(11).setIsEnable(false);
-				break;
-			}
-			case Bank: {
-				getButton(8).setIsEnable(canEdit && hasPlayer && data.size() < BankController.getInstance().banks.size());
-				getButton(10).setIsEnable(canEdit && hasPlayer && !scroll.getList().isEmpty());
-				getButton(11).setIsEnable(canEdit && hasPlayer && scroll != null && scroll.hasSelected());
-				break;
-			}
-			case Factions: {
-				getButton(8).setIsEnable(canEdit && hasPlayer && data.size() < FactionController.instance.factions.size());
-				getButton(10).setIsEnable(canEdit && hasPlayer && !scroll.getList().isEmpty());
-				getButton(11).setIsEnable(canEdit && hasPlayer && scroll != null && scroll.hasSelected());
-				break;
-			}
-			case Game: {
-				getButton(0).setIsEnable(canEdit && hasPlayer && scroll.hasSelected());
-				getButton(8).setIsVisible(false);
-				getButton(10).setIsEnable(canEdit && hasPlayer && gameData != null);
-				getButton(11).setIsEnable(canEdit && hasPlayer && scroll.hasSelected());
-				break;
-			}
-			default: {
-				getButton(8).setIsVisible(false);
-				getButton(10).setIsVisible(false);
-				getButton(11).setIsVisible(false);
-			}
-		}
-		if (!hasPlayer) { getLabel(0).setLabel(new TextComponentTranslation("data.all.players").getFormattedText() + " (" + (scroll.getList() == null ? "1" : scroll.getList().size()) + ")"); }
-		else { getLabel(0).setLabel(new TextComponentTranslation("data.sel.player", ((char) 167) + (isOnline ? "2" : "4") + ((char) 167) + "l" + selectedPlayer).getFormattedText() + ((char) 167) + "r (" + (scroll.getList() == null ? "1" : scroll.getList().size()) + ")"); }
-	}
+   @Override
+   public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
+      if (selection == EnumPlayerData.Game) { return; }
+      data.clear();
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(300, 152); }
-		scroll.guiLeft = guiLeft + 7;
-		scroll.guiTop = guiTop + 16;
-		addScroll(scroll);
-		selected = null;
-		addLabel(new GuiNpcLabel(0, "data.all.players", guiLeft + 10, guiTop + 6));
-		int x = guiLeft + 313, y = guiTop + 16, w = 99;
-		addButton(new GuiNpcButton(1, x, y, w, 20, "playerdata.players")
-				.setHoverText("data.hover.list"));
-		addButton(new GuiNpcButton(2, x, (y += 22), w, 20, "quest.quest")
-				.setHoverText("data.hover.quests"));
-		addButton(new GuiNpcButton(3, x, (y += 22), w, 20, "dialog.dialog")
-				.setHoverText("data.hover.dialogs"));
-		addButton(new GuiNpcButton(4, x, (y += 22), w, 20, "global.transport")
-				.setHoverText("data.hover.transports"));
-		addButton(new GuiNpcButton(5, x, (y += 22), w, 20, "global.banks")
-				.setHoverText("data.hover.banks"));
-		addButton(new GuiNpcButton(6, x, (y += 22), w, 20, "menu.factions")
-				.setHoverText("data.hover.factions"));
-		addButton(new GuiNpcButton(9, x, (y += 22), w, 20, "gui.game")
-				.setHoverText("data.hover.game"));
-		addButton(new GuiNpcButton(7, x, (y += 22), w, 20, "gui.wipe")
-				.setHoverText("data.hover.wipe"));
-		addButton(new GuiNpcButton(12, x, y + 22, w, 20, "gui.cleaning")
-				.setHoverText("data.hover.cleaning"));
-		y = guiTop + 170;
-		addLabel(new GuiNpcLabel(1, "gui.found", guiLeft + 10, y + 5));
-		addTextField(new GuiNpcTextField(0, this, guiLeft + 66, y, 240, 20, search)
-				.setHoverText("data.hover.found"));
-		x = guiLeft + 7;
-		w = 73;
-		addButton(new GuiNpcButton(8, x, (y += 22), w, 20, "gui.add")
-				.setHoverText("hover.add"));
-		addButton(new GuiNpcButton(0, (x += w + 3), y, w, 20, "gui.remove")
-				.setHoverText("hover.delete"));
-		addButton(new GuiNpcButton(10, (x += w + 3), y, w, 20, "gui.remove.all")
-				.setHoverText("hover.delete.all"));
-		addButton(new GuiNpcButton(11, x + w + 3, y, w, 20, "selectServer.edit")
-				.setHoverText("hover.edit"));
-		initButtons();
-		if (selection == EnumPlayerData.Game) {
-			y = guiTop + 18;
-			addLabel(new GuiNpcLabel(2, "gui.money", guiLeft + 10, y + 5));
-			addTextField(new GuiNpcTextField(1, this, guiLeft + 66, y, 120, 20, "" + gameData.getLong("Money"))
-					.setMinMaxDefault(0, Long.MAX_VALUE, gameData.getLong("Money"))
-					.setHoverText("data.hover.money", "" + Long.MAX_VALUE));
-			addLabel(new GuiNpcLabel(3, new TextComponentTranslation("global.market").getFormattedText() + ":", guiLeft + 10, y + 25)
-					.setHoverText("data.hover.markets"));
-		}
-	}
+      data.putAll(Util.instance.convertStringMap(dataMap));
+      setCurrentList();
+      if (selection == EnumPlayerData.Players && selectedPlayer != null) {
+         scroll.setSelected(selectedPlayer);
+         selected = selectedPlayer;
+      }
+      if (selection == EnumPlayerData.Wipe) { selection = EnumPlayerData.Players; }
+      initButtons();
+      if (ContainerNPCBank.editPlayerBankData != null) {
+         buttonEvent(new GuiButtonNop(this, 5, "", 0, 0, null));
+         ContainerNPCBank.editPlayerBankData = null;
+      }
+   }
 
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		boolean bo = super.keyCnpcsPressed(typedChar, keyCode);
-		if (!bo) {
-			if (selection == EnumPlayerData.Wipe || search.equals(getTextField(0).getText())) { return false; }
-			search = getTextField(0).getText().toLowerCase();
-			setCurrentList();
-		}
-		return bo;
-	}
+   @Override
+   public void setSelected(String selected) { }
 
-	@Override
-	public void save() {
-		ContainerNPCBank.editPlayerBankData = null;
-		if (selection == EnumPlayerData.Game) {
-			boolean hasPlayer = selectedPlayer != null && !selectedPlayer.isEmpty();
-			if (hasPlayer && gameData != null) { Client.sendData(EnumPacketServer.PlayerDataSet, selection.ordinal(), selectedPlayer, 0, gameData); }
-		}
-	}
+   @Override
+   public void setGuiData(CompoundTag compound) {
+      if (selection != EnumPlayerData.Game || !compound.contains("GameData", 10)) { return; }
+      gameData = compound;
+      Map<Integer, Integer> map = new TreeMap<>();
+      for (int i = 0; i < compound.getCompound("GameData").getList("MarketData", 10).size(); i++) {
+         CompoundTag nbt = compound.getCompound("GameData").getList("MarketData", 10).getCompound(i);
+         map.put(nbt.getInt("MarketID"), nbt.getInt("Slot"));
+      }
+      List<Component> list = new ArrayList<>();
+      MarcetController mData = MarcetController.getInstance();
+      data.clear();
+      int i = 0;
+      LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+      for (int id : map.keySet()) {
+         Component key = Component.empty()
+                 .append(Component.literal("ID:" + id + " ").withStyle(ChatFormatting.GRAY))
+                 .append(Component.translatable("bank.slot").append(": ").withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal("" + map.get(id)).withStyle(ChatFormatting.RESET));
+         list.add(key);
+         data.put(key, id);
+         Marcet m = mData.getMarcet(id);
+         List<Component> hList = new ArrayList<>();
+         if (m != null) {
+            hList.add(Component.literal("ID:" + id + " \"" + m.getName() + "\""));
+            hList.add(Component.translatable("gui.max").append(": " + (m.markup.size() - 1)));
+         } else {
+            hList.add(Component.translatable("global.market").append(" - ").append(Component.translatable("quest.notfound")));
+         }
+         hts.put(i, hList);
+         i++;
+      }
+      scroll.setUnsortedList(list).setHoverTexts(hts);
+      init();
+   }
 
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		selected = scroll.getSelected();
-		if (selection == EnumPlayerData.Players) {
-			selectedPlayer = selected;
-			isOnline = data.get(selected) == 1;
-		}
-		initButtons();
-	}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      if (!selected.getString().equals(scroll.getSelected())) {
+         selected = scroll.getNormalSelected();
+         if (selection == EnumPlayerData.Players) {
+            selectedPlayer = selected;
+            isOnline = data.get(selected) == 1;
+         }
+         initButtons();
+      }
+   }
 
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { editData(); }
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { editData(); }
 
-	private void setCurrentList() {
-		if (scroll == null) { return; }
-		List<String> list = new ArrayList<>();
-		List<String> hovers = new ArrayList<>();
-		List<String> suffixes = new ArrayList<>();
-		List<Integer> colors = new ArrayList<>();
-		if (selection == EnumPlayerData.Wipe) { selection = EnumPlayerData.Players; }
-		switch (selection) {
-			case Players: {
-				List<String> listOn = new ArrayList<>();
-				List<String> listOff = new ArrayList<>();
-				for (String name : data.keySet()) {
-					if (search.isEmpty() || name.toLowerCase().contains(search)) {
-						if (data.get(name) == 1) { listOn.add(name); }
-						else { listOff.add(name); }
-					}
-				}
-				Collections.sort(listOn);
-				Collections.sort(listOff);
-				list = listOn;
-				list.addAll(listOff);
-				for (String name : list) {
-					suffixes.add(new TextComponentTranslation(data.get(name) == 0 ? "gui.offline" : "gui.online").getFormattedText());
-				}
-				break;
-			}
-			case Quest: {
-				Map<String, Map<Integer, String>> mapA = new TreeMap<>();
-				Map<String, Map<Integer, String>> mapF = new TreeMap<>();
-				for (String str : data.keySet()) {
-					String cat = str.substring(0, str.indexOf(": "));
-					String name = str.substring(str.indexOf(": ") + 2);
-					Map<String, Map<Integer, String>> map;
-					if (name.endsWith("(Active quest)")) {
-						name = name.substring(0, name.lastIndexOf("(Active quest)"));
-						map = mapA;
-					} else {
-						name = name.substring(0, name.lastIndexOf("(Finished quest)"));
-						map = mapF;
-					}
-					if (!map.containsKey(cat)) { map.put(cat, new TreeMap<>()); }
-					map.get(cat).put(data.get(str), name);
-				}
-				for (String cat : mapA.keySet()) {
-					ITextComponent sfx = new TextComponentTranslation("availability.active");
-					sfx.getStyle().setColor(TextFormatting.GREEN);
-					for (int id : mapA.get(cat).keySet()) {
-						suffixes.add(sfx.getFormattedText());
-						String key = ((char) 167) + "aID:" + id + ((char) 167) + "7 " + cat + ": \"" + ((char) 167) + "r" + mapA.get(cat).get(id) + ((char) 167) + "7\"";
-						list.add(key);
-						for (String str : data.keySet()) {
-							if (data.get(str) == id) {
-								scrollData.put(key, str);
-								break;
-							}
-						}
-					}
-				}
-				for (String cat : mapF.keySet()) {
-					ITextComponent sfx = new TextComponentTranslation("quest.complete");
-					sfx.getStyle().setColor(TextFormatting.LIGHT_PURPLE);
-					for (int id : mapF.get(cat).keySet()) {
-						suffixes.add(sfx.getFormattedText());
-						String key = ((char) 167) + "dID:" + id + ((char) 167) + "7 " + cat + ": \"" + ((char) 167) + "r" + mapF.get(cat).get(id) + ((char) 167) + "7\"";
-						list.add(key);
-						for (String str : data.keySet()) {
-							if (data.get(str) == id) {
-								scrollData.put(key, str);
-								break;
-							}
-						}
-					}
-				}
-				break;
-			}
-			case Dialog: {
-				Map<Integer, String> map = new TreeMap<>();
-				for (String str : data.keySet()) { map.put(data.get(str), ((char) 167) + "7ID:" + data.get(str) + " " + str.replace(": ", ": " + ((char) 167) + "r")); }
-				for (int id : map.keySet()) {
-					list.add(map.get(id));
-					for (String str : data.keySet()) {
-						if (data.get(str) == id) {
-							scrollData.put(map.get(id), str);
-							break;
-						}
-					}
-				}
-				break;
-			}
-			case Transport: {
-				Map<Integer, String> map = new TreeMap<>();
-				for (String str : data.keySet()) { map.put(data.get(str), ((char) 167) + "7" + str.replace(": ", ": " + ((char) 167) + "r")); }
-				for (int id : map.keySet()) {
-					list.add(map.get(id));
-					String catData = "cat null", locData = "loc null", pos = "pos null";
-					TransportLocation loc = TransportController.getInstance().getTransport(id);
-					if (loc != null) {
-						catData = ((char) 167) + "7" + new TextComponentTranslation("drop.category").getFormattedText()
-								+ ((char) 167) + "7: \"" + ((char) 167) + "r"
-								+ new TextComponentTranslation(loc.category.title).getFormattedText() + ((char) 167)
-								+ "7\" ID: " + ((char) 167) + "6" + loc.category.id;
-						locData = ((char) 167) + "7" + new TextComponentTranslation("gui.location").getFormattedText()
-								+ ((char) 167) + "7: \"" + ((char) 167) + "r"
-								+ new TextComponentTranslation(loc.name).getFormattedText() + ((char) 167) + "7\" ID: "
-								+ ((char) 167) + "6" + id;
-						pos = ((char) 167) + "7" + new TextComponentTranslation("parameter.world").getFormattedText()
-								+ ((char) 167) + "7 ID: " + ((char) 167) + "a" + loc.dimension + ((char) 167) + "7; "
-								+ new TextComponentTranslation("parameter.position").getFormattedText() + ((char) 167)
-								+ "7 X:" + ((char) 167) + "b" + loc.getX() + ((char) 167) + "7 Y:" + ((char) 167) + "b"
-								+ loc.getY() + ((char) 167) + "7 Z:" + ((char) 167) + "b" + loc.getZ();
-					}
-					hovers.add(catData + "<br>" + locData + "<br>" + pos);
-					for (String str : data.keySet()) {
-						if (data.get(str) == id) {
-							scrollData.put(map.get(id), str);
-							break;
-						}
-					}
-				}
-				break;
-			}
-			case Bank: {
-				for (String str : data.keySet()) {
-					list.add(str);
-					hovers.add("ID: " + data.get(str));
-					scrollData.put(str, str);
-				}
-				Collections.sort(list);
-				break;
-			}
-			case Factions: {
-				Map<String, String> mapH = new HashMap<>();
-				Map<String, Integer> mapC = new HashMap<>();
-				scrollData.clear();
-				for (String str : data.keySet()) {
-					if (search.isEmpty() || str.toLowerCase().contains(search)) {
-						String[] l = str.split(";");
-						String key = new TextComponentTranslation(l[0]).getFormattedText() + ((char) 167) + "7 (ID:" + data.get(str) + ")";
-						list.add(key);
-						int value = -1;
-						try { value = Integer.parseInt(l[1]); } catch (Exception e) { LogWriter.error(e); }
-						scrollData.put(key, str);
-						int color = 0xFFFFFF;
-						String hover = new TextComponentTranslation("type.value").getFormattedText() + ": " + ((char) 167) + "3" + value;
-						Faction f = FactionController.instance.factions.get(data.get(str));
-						if (f != null) {
-							hover += "<br>" + new TextComponentTranslation("gui.attitude").getFormattedText() + ": ";
-							ITextComponent add;
-							if (value < f.neutralPoints) {
-								add = new TextComponentTranslation("faction.unfriendly");
-								add.getStyle().setColor(TextFormatting.DARK_RED);
-							} else if (value < f.friendlyPoints) {
-								add = new TextComponentTranslation("faction.neutral");
-								add.getStyle().setColor(TextFormatting.GOLD);
-							} else {
-								add = new TextComponentTranslation("faction.friendly");
-								add.getStyle().setColor(TextFormatting.DARK_GREEN);
-							}
-							hover += add.getFormattedText();
-							color = f.color;
-						}
-						mapH.put(key, hover);
-						mapC.put(key, color);
-					}
-				}
-				Collections.sort(list);
-				for (String key : list) {
-					hovers.add(mapH.get(key));
-					colors.add(mapC.get(key));
-				}
-				break;
-			}
-		}
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		if (!hovers.isEmpty()) {
-			int i = 0;
-			for (String str : hovers) {
-				hts.put(i, Arrays.asList(str.split("<br>")));
-				i++;
-			}
-		}
-		scroll.setUnsortedList(list)
-				.setSuffixes(!suffixes.isEmpty() ? suffixes : null)
-				.setColors(!colors.isEmpty() ? colors : null)
-				.setHoverTexts(hts);
-	}
+   @Override
+   public void subGuiClosed(Screen subgui) {
+      if (subgui instanceof SubGuiEditText gui) {
+         if (gui.id == 0) {
+            try { Packets.sendServer(new SPacketPlayerDataSet(selection, selectedPlayer.getString(), Integer.parseInt(gui.text[0]), null)); } catch (Exception ignored) { }
+         } // add
+         else if (gui.id == 1) {
+            try {
+               CompoundTag nbt = new CompoundTag();
+               nbt.putInt("value", Integer.parseInt(gui.text[0]));
+               Packets.sendServer(new SPacketPlayerDataSet(selection, selectedPlayer.getString(), data.get(scrollData.get(scroll.getNormalSelected())), nbt));
+            } catch (Exception e) { LogWriter.error(e); }
+         } // set
+         else if (gui.id == 2) {
+            if (gameData == null || !data.containsKey(scroll.getNormalSelected())) {
+               return;
+            }
+            int id = data.get(scroll.getNormalSelected());
+            for (int i = 0; i < gameData.getCompound("GameData").getList("MarketData", 10).size(); i++) {
+               CompoundTag nbt = gameData.getCompound("GameData").getList("MarketData", 10).getCompound(i);
+               if (id != nbt.getInt("MarketID")) { continue; }
+               nbt.putInt("Slot", gui.getTextField(0).getInteger());
+               break;
+            }
+            setGuiData(gameData);
+         } // change market slot
+         return;
+      }
+      if (subgui instanceof SubGuiDataSend gui) { Packets.sendServer(new SPacketPlayerDataCleaning(gui.time)); }
+   }
 
-	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		if (selection == EnumPlayerData.Game) { return; }
-		data.clear();
-		data.putAll(dataMap);
-		setCurrentList();
-		if (selection == EnumPlayerData.Players && selectedPlayer != null) {
-			scroll.setSelected(selectedPlayer);
-			selected = selectedPlayer;
-		}
-		if (selection == EnumPlayerData.Wipe) {
-			selection = EnumPlayerData.Players;
-		}
-		initButtons();
-		if (ContainerNPCBank.editPlayerBankData != null) {
-			buttonEvent(new GuiNpcButton(5, 0, 0, ""), 1);
-			ContainerNPCBank.editPlayerBankData = null;
-		}
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      if (hasSubGui() && wrapper.subgui instanceof SubGuiDataSend gui) {
+         gui.unFocused(textField);
+         return;
+      }
+      if (textField.id != 1 || gameData == null || !textField.isLong()) { return; }
+      gameData.getCompound("GameData").putLong("Money", textField.getLong());
+   }
 
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		if (selection != EnumPlayerData.Game || !compound.hasKey("GameData", 10)) { return; }
-		gameData = compound;
-		Map<Integer, Integer> map = new TreeMap<>();
-		for (int i = 0; i < compound.getCompoundTag("GameData").getTagList("MarketData", 10).tagCount(); i++) {
-			NBTTagCompound nbt = compound.getCompoundTag("GameData").getTagList("MarketData", 10).getCompoundTagAt(i);
-			map.put(nbt.getInteger("MarketID"), nbt.getInteger("Slot"));
-		}
-		List<String> list = new ArrayList<>();
-		MarcetController mData = MarcetController.getInstance();
-		data.clear();
-		int i = 0;
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		for (int id : map.keySet()) {
-			String key = ((char) 167) + "7ID:" + id + " "
-					+ (new TextComponentTranslation("bank.slot").getFormattedText()) + ((char) 167) + "r: "
-					+ map.get(id);
-			list.add(key);
-			data.put(key, id);
-			Marcet m = mData.getMarcet(id);
-			List<String> hList = new ArrayList<>();
-			if (m != null) {
-				hList.add("ID:" + id + " \"" + m.getName() + "\"");
-				hList.add(new TextComponentTranslation("gui.max").getFormattedText() + ": " + (m.markup.size() - 1));
-			} else {
-				hList.add(new TextComponentTranslation("global.market").getFormattedText() + " - " + new TextComponentTranslation("quest.notfound").getFormattedText());
-			}
-			hts.put(i, hList);
-			i++;
-		}
-		scroll.setUnsortedList(list).setHoverTexts(hts);
-		initGui();
-	}
+   @Override
+   public void selected(int id, String name) {
+      if (!data.containsValue(id)) {
+         data.put(Component.empty(), id);
+         Packets.sendServer(new SPacketPlayerDataSet(selection, selectedPlayer.getString(), id, null));
+      }
+   }
 
-	@Override
-	public void setSelected(String selected) { }
+   // New from Unofficial (BetaZavr)
+   private void editData() {
+      if (!scroll.hasSelected()) { return; }
+      switch (selection) {
+         case Quest: {
+            Packets.sendServer(new SPacketPlayerDataSet(selection, selectedPlayer.getString(), -1 * data.get(scrollData.get(scroll.getNormalSelected())), null));
+            break;
+         }
+         case Bank: {
+            ContainerNPCBank.editPlayerBankData = selectedPlayer.getString();
+            Packets.sendServer(new SPacketBankOpenPlayer(data.get(scrollData.get(scroll.getNormalSelected())), selectedPlayer.getString()));
+            break;
+         }
+         case Factions: {
+            int factionId = data.get(scrollData.get(scroll.getNormalSelected()));
+            SubGuiEditText subgui = new SubGuiEditText(1, "");
+            Faction f = FactionController.instance.factions.get(factionId);
+            String v = Util.instance.deleteColor(scroll.getHoversTexts().get(scroll.getSelectedIndex()).get(1).getString());
+            int value = -1;
+            try { value = Integer.parseInt(v.substring(v.lastIndexOf(" ") + 1)); } catch (Exception e) { LogWriter.error(e); }
+            if (f != null) { subgui.numbersOnly = new int[] { 0, f.friendlyPoints * 2, value }; }
+            else { subgui.numbersOnly = new int[] { 0, Integer.MAX_VALUE, value }; }
+            subgui.text[0] = "" + value;
+            subgui.label = "gui.set.new.value";
+            setSubGui(subgui);
+            break;
+         }
+         case Game: {
+            if (gameData == null || !data.containsKey(scroll.getNormalSelected())) { return; }
+            SubGuiEditText subgui = new SubGuiEditText(2, "");
+            subgui.init();
+            subgui.getTextField(0).setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
+            int m = 3;
+            int s = 0;
+            int id = data.get(scroll.getNormalSelected());
+            MarcetController mData = MarcetController.getInstance();
+            for (int i = 0; i < gameData.getCompound("GameData").getList("MarketData", 10).size(); i++) {
+               CompoundTag nbt = gameData.getCompound("GameData").getList("MarketData", 10).getCompound(i);
+               if (id != nbt.getInt("MarketID")) { continue; }
+               s = nbt.getInt("Slot");
+               Marcet marcet = mData.getMarcet(id);
+               if (marcet == null) { break; }
+               m = marcet.markup.size() - 1;
+               break;
+            }
+            subgui.text[0] = "" + s;
+            subgui.getTextField(0).setMinMaxDefault(0, m, s);
+            subgui.label = "gui.set.new.value";
+            setSubGui(subgui);
+         }
+      }
+   }
 
-	@Override
-	public void subGuiClosed(GuiScreen subgui) {
-		if (subgui instanceof SubGuiEditText) {
-			if (((SubGuiEditText) subgui).getId() == 0) {
-				try { Client.sendData(EnumPacketServer.PlayerDataSet, selection.ordinal(), selectedPlayer, 0, Integer.parseInt(((SubGuiEditText) subgui).text[0])); } catch (Exception e) { LogWriter.error(e); }
-			} // add
-			else if (((SubGuiEditText) subgui).getId() == 1) {
-				try {
-					Client.sendData(EnumPacketServer.PlayerDataSet, selection.ordinal(), selectedPlayer, 2, data.get(scrollData.get(scroll.getSelected())), Integer.parseInt(((SubGuiEditText) subgui).text[0]));
-				} catch (Exception e) { LogWriter.error(e); }
-			} // set
-			else if (((SubGuiEditText) subgui).getId() == 2) {
-				if (gameData == null || !data.containsKey(scroll.getSelected())) {
-					return;
-				}
-				int id = data.get(scroll.getSelected());
-				for (int i = 0; i < gameData.getCompoundTag("GameData").getTagList("MarketData", 10).tagCount(); i++) {
-					NBTTagCompound nbt = gameData.getCompoundTag("GameData").getTagList("MarketData", 10).getCompoundTagAt(i);
-					if (id != nbt.getInteger("MarketID")) {
-						continue;
-					}
-					nbt.setInteger("Slot", ((SubGuiEditText) subgui).getTextField(0).getInteger());
-					break;
-				}
-				setGuiData(gameData);
-			} // change market slot
-			return;
-		}
-		if (subgui instanceof SubGuiDataSend) { Client.sendData(EnumPacketServer.PlayerDataCleaning, ((SubGuiDataSend) subgui).time); }
-	}
+   private void setCurrentList() {
+      if (scroll == null) { return; }
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      List<Component> list = new ArrayList<>();
+      List<Component> hovers = new ArrayList<>();
+      List<Component> suffixes = new ArrayList<>();
+      if (selection == EnumPlayerData.Wipe) { selection = EnumPlayerData.Players; }
+      String search = scroll.getSearchValue();
+      switch (selection) {
+         case Players: {
+            List<Component> listOn = new ArrayList<>();
+            List<Component> listOff = new ArrayList<>();
+            for (Component name : data.keySet()) {
+               if (search.isEmpty() || name.getString().toLowerCase().contains(search)) {
+                  if (data.get(name) == 1) { listOn.add(name); }
+                  else { listOff.add(name); }
+               }
+            }
+            listOn.sort(new ComponentOrderComparator());
+            listOff.sort(new ComponentOrderComparator());
+            list = listOn;
+            list.addAll(listOff);
+            for (Component name : list) {
+               suffixes.add(Component.translatable(data.get(name) == 0 ? "gui.offline" : "gui.online"));
+            }
+            break;
+         }
+         case Quest: {
+            Map<String, Map<Integer, String>> mapA = new TreeMap<>();
+            Map<String, Map<Integer, String>> mapF = new TreeMap<>();
+            Map<String, Component> mapH = new LinkedHashMap<>();
+            for (Component str : data.keySet()) {
+               String line = Util.instance.getOldFormattedText(str);
+               String cat = line.substring(0, line.indexOf(": "));
+               String name = line.substring(line.indexOf(": ") + 2);
+               Map<String, Map<Integer, String>> map;
+               MutableComponent hover = Component.empty()
+                       .append(Component.literal("ID: ").withStyle(ChatFormatting.GRAY))
+                       .append(Component.literal("" + data.get(str)).withStyle(ChatFormatting.GOLD));
+               String h = "A";
+               if (name.endsWith("(Active quest)")) {
+                  name = name.substring(0, name.lastIndexOf("(Active quest)"));
+                  map = mapA;
+               }
+               else {
+                  h = "F";
+                  name = name.substring(0, name.lastIndexOf("(Finished quest)"));
+                  if (name.contains("(") && name.contains(")") && name.lastIndexOf(")") > name.lastIndexOf("(") && minecraft.level != null) {
+                     try {
+                        String l = name.substring(name.lastIndexOf("(") + 1, name.lastIndexOf(")"));
+                        long v = Long.parseLong(l);
+                        name = name.substring(0, name.lastIndexOf("("));
+                        long time = v;
+                        if (v < 1321603200000L) { time = System.currentTimeMillis() - (CustomNpcs.proxy.getPlayerData(player).questData.overworldTime - v) * 50L; }
+                        long ago = (System.currentTimeMillis() - time) / 50L;
+                        hover.append("<br>")
+                                .append(Component.translatable("availability.completed").append(": ").withStyle(ChatFormatting.GRAY))
+                                .append(Component.literal(formatter.format(new Date(time))))
+                                .append("<br>")
+                                .append(Component.translatable("mailbox.timesend", Util.instance.ticksToElapsedTime(ago, false, false, false)).withStyle(ChatFormatting.GRAY));
+                     } catch (Exception ignored) { }
+                  }
+                  map = mapF;
+               }
+               if (!map.containsKey(cat)) { map.put(cat, new TreeMap<>()); }
+               map.get(cat).put(data.get(str), name);
+               mapH.put(h + cat + name, hover);
+            }
+            for (String cat : mapA.keySet()) {
+               Component sfx = Component.translatable("availability.active").withStyle(ChatFormatting.GREEN);
+               for (int id : mapA.get(cat).keySet()) {
+                  suffixes.add(sfx);
+                  Component key = Component.empty()
+                          .append(Component.literal("ID:" + id + " ").withStyle(ChatFormatting.DARK_GRAY))
+                          .append(Component.literal(cat + ": \"").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal(mapA.get(cat).get(id)))
+                          .append(Component.literal("\"").withStyle(ChatFormatting.GRAY));
+                  list.add(key);
+                  hovers.add(mapH.get("A" + cat + mapA.get(cat).get(id)));
+                  for (Component str : data.keySet()) {
+                     if (data.get(str) == id) {
+                        scrollData.put(key, str);
+                        break;
+                     }
+                  }
+               }
+            }
+            for (String cat : mapF.keySet()) {
+               Component sfx = Component.translatable("quest.complete").withStyle(ChatFormatting.LIGHT_PURPLE);
+               for (int id : mapF.get(cat).keySet()) {
+                  suffixes.add(sfx);
+                  Component key = Component.empty()
+                          .append(Component.literal("ID:" + id + " ").withStyle(ChatFormatting.DARK_GRAY))
+                          .append(Component.literal(cat + ": \"").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal(mapF.get(cat).get(id)))
+                          .append(Component.literal("\"").withStyle(ChatFormatting.GRAY));
+                  list.add(key);
+                  hovers.add(mapH.get("F" + cat + mapF.get(cat).get(id)));
+                  for (Component str : data.keySet()) {
+                     if (data.get(str) == id) {
+                        scrollData.put(key, str);
+                        break;
+                     }
+                  }
+               }
+            }
+            break;
+         }
+         case Dialog: {
+            Map<Integer, Component> map = new TreeMap<>();
+            for (Component str : data.keySet()) {
+               String line = Util.instance.getOldFormattedText(str);
+               String cat = line.substring(0, line.indexOf(": "));
+               String name = line.substring(line.indexOf(": ") + 2);
+               map.put(data.get(str), Component.empty()
+                       .append(Component.literal("ID:" + data.get(str) + " ").withStyle(ChatFormatting.DARK_GRAY))
+                       .append(Component.literal(cat + ": ").withStyle(ChatFormatting.GRAY))
+                       .append(Component.literal(name).withStyle(ChatFormatting.RESET)));
+               hovers.add(Component.empty()
+                       .append(Component.literal("ID: ").withStyle(ChatFormatting.GRAY))
+                       .append(Component.literal("" + data.get(str)).withStyle(ChatFormatting.GOLD)));
+            }
+            for (int id : map.keySet()) {
+               list.add(map.get(id));
+               for (Component str : data.keySet()) {
+                  if (data.get(str) == id) {
+                     scrollData.put(map.get(id), str);
+                     break;
+                  }
+               }
+            }
+            break;
+         }
+         case Transport: {
+            Map<Integer, Component> map = new TreeMap<>();
+            for (Component str : data.keySet()) {
+               String line = Util.instance.getOldFormattedText(str);
+               String cat = line.substring(0, line.indexOf(": "));
+               String name = line.substring(line.indexOf(": ") + 2);
+               map.put(data.get(str), Component.empty()
+                       .append(Component.literal("ID:" + data.get(str) + " ").withStyle(ChatFormatting.DARK_GRAY))
+                       .append(Component.literal(cat + ": ").withStyle(ChatFormatting.GRAY))
+                       .append(Component.literal(name).withStyle(ChatFormatting.RESET)));
+            }
+            for (int id : map.keySet()) {
+               list.add(map.get(id));
+               MutableComponent catData = Component.literal("cat null");
+               MutableComponent locData = Component.literal("loc null");
+               MutableComponent pos = Component.literal("pos null");
+               TransportLocation loc = TransportController.getInstance().getTransport(id);
+               if (loc != null) {
+                  catData = Component.empty()
+                          .append(Component.translatable("drop.category").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal(": \"").withStyle(ChatFormatting.GRAY))
+                          .append(Component.translatable(loc.category.title).withStyle(ChatFormatting.RESET))
+                          .append(Component.literal("\" ID: ").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + loc.category.id).withStyle(ChatFormatting.GOLD));
+                  locData = Component.empty()
+                          .append(Component.translatable("gui.location").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal(": \"").withStyle(ChatFormatting.GRAY))
+                          .append(Component.translatable(loc.name).withStyle(ChatFormatting.RESET))
+                          .append(Component.literal("\" ID: ").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + id).withStyle(ChatFormatting.GOLD));
+                  pos = Component.empty()
+                          .append(Component.translatable("parameter.world").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal(" ID:\"").withStyle(ChatFormatting.GRAY))
+                          .append(Component.translatable(loc.dimension.location().toString()).withStyle(ChatFormatting.GREEN))
+                          .append(Component.literal("\"").withStyle(ChatFormatting.GRAY))
+                          .append("<br>")
+                          .append(Component.translatable("parameter.position").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal(" X:").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + loc.getX()).withStyle(ChatFormatting.AQUA))
+                          .append(Component.literal(" Y:").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + loc.getY()).withStyle(ChatFormatting.AQUA))
+                          .append(Component.literal(" Z:").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + loc.getZ()).withStyle(ChatFormatting.AQUA));
+               }
+               hovers.add(catData.append("<br>").append(locData).append("<br>").append(pos));
+               for (Component str : data.keySet()) {
+                  if (data.get(str) == id) {
+                     scrollData.put(map.get(id), str);
+                     break;
+                  }
+               }
+            }
+            break;
+         }
+         case Bank: {
+            for (Component str : data.keySet()) {
+               Component key = Component.empty()
+                       .append(Component.literal("ID:" + data.get(str) + " ").withStyle(ChatFormatting.DARK_GRAY))
+                       .append(((MutableComponent) str).withStyle(ChatFormatting.RESET));
+               list.add(key);
+               hovers.add(Component.literal("ID: " + data.get(str)));
+               scrollData.put(key, str);
+            }
+            list.sort(new ComponentOrderComparator());
+            break;
+         }
+         case Factions: {
+            Map<Component, Component> map = new HashMap<>();
+            scrollData.clear();
+            for (Component str : data.keySet()) {
+               String line = Util.instance.getOldFormattedText(str);
+               if (search.isEmpty() || line.toLowerCase().contains(search)) {
+                  String[] l = line.split(";");
+                  int value = -1;
+                  try { value = Integer.parseInt(l[1]); } catch (Exception e) { LogWriter.error(e); }
+                  int color = 0xFFFFFF;
+                  MutableComponent hover = Component.empty()
+                          .append(Component.literal("ID: "))
+                          .append(Component.literal("" + data.get(str)).withStyle(ChatFormatting.GOLD))
+                          .append("<br>")
+                          .append(Component.translatable("type.value").append(": "))
+                          .append(Component.literal("" + value).withStyle(ChatFormatting.DARK_AQUA));
+                  Faction f = FactionController.instance.factions.get(data.get(str));
+                  if (f != null) {
+                     hover.append("<br>").append(Component.translatable("gui.attitude")).append(": ");
+                     if (value < f.neutralPoints) { hover.append(Component.translatable("faction.unfriendly").withStyle(ChatFormatting.DARK_RED)); }
+                     else if (value < f.friendlyPoints) { hover.append(Component.translatable("faction.neutral").withStyle(ChatFormatting.GOLD)); }
+                     else { hover.append(Component.translatable("faction.friendly").withStyle(ChatFormatting.DARK_GREEN)); }
+                     color = f.color;
+                  }
 
-	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		if (subgui != null && subgui instanceof SubGuiDataSend) {
-			((SubGuiDataSend) subgui).unFocused(textField);
-			return;
-		}
-		if (textField.getID() != 1 || gameData == null || !textField.isLong()) {
-			return;
-		}
-		gameData.getCompoundTag("GameData").setLong("Money", textField.getLong());
-	}
+                  MutableComponent key = Component.empty()
+                          .append(Component.translatable(l[0]));
+                  Style style = key.getStyle().withColor(color);
+                  key.setStyle(style);
+
+                  list.add(key);
+                  scrollData.put(key, str);
+                  map.put(key, hover);
+               }
+            }
+            list.sort(new ComponentOrderComparator());
+            for (Component key : list) { hovers.add(map.getOrDefault(key, Component.empty())); }
+            break;
+         }
+      }
+      LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+      if (!hovers.isEmpty()) {
+         int i = 0;
+         for (Component str : hovers) {
+            if (str.getString().contains("<br>")) {
+               List<Component> lines = new ArrayList<>();
+               String[] ls = Util.instance.getOldFormattedText(str).split("<br>");
+               for (String l : ls) { lines.add(Component.literal(l)); }
+               hts.put(i, lines);
+            }
+            else { hts.put(i, List.of(str)); }
+            i++;
+         }
+      }
+      scroll.setUnsortedList(list)
+              .setSuffixes(!suffixes.isEmpty() ? suffixes : null)
+              .setHoverTexts(hts);
+   }
 
 }

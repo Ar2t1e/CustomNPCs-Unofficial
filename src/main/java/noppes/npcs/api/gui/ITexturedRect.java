@@ -1,31 +1,30 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.wrapper.gui.CustomGuiTexturedRectWrapper;
 
 public interface ITexturedRect extends ICustomGuiComponent {
 
-	int getColor();
+   String getTexture();
 
-	int getHeight();
+   ITexturedRect setTexture(@ParamName("texture") String texture);
 
-	float getScale();
+   float getScale();
 
-	String getTexture();
+   ITexturedRect setScale(@ParamName("scale") float scale);
 
-	int getTextureX();
+   int getTextureX();
 
-	int getTextureY();
+   int getTextureY();
 
-	int getWidth();
+   CustomGuiTexturedRectWrapper setTextureMaxSize(@ParamName("width") int width, @ParamName("height") int height);
 
-	ITexturedRect setColor(@ParamName("color") int color);
+   ITexturedRect setTextureOffset(@ParamName("offsetX") int offsetX, @ParamName("offsetY") int offsetY);
 
-	ITexturedRect setScale(@ParamName("scale") float scale);
+   ITexturedRect setRepeatingTexture(@ParamName("width") int width, @ParamName("height") int height, @ParamName("borderSize") int borderSize);
 
-	ITexturedRect setSize(@ParamName("width") int width, @ParamName("height") int height);
+   int getTextureMaxX();
 
-	ITexturedRect setTexture(@ParamName("texture") String texture);
-
-	ITexturedRect setTextureOffset(@ParamName("textureX") int textureX, @ParamName("textureY") int textureY);
+   int getTextureMaxY();
 
 }

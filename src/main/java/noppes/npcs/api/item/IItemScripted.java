@@ -1,32 +1,38 @@
 package noppes.npcs.api.item;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 @SuppressWarnings("all")
 public interface IItemScripted extends IItemStack {
 
-	int getColor();
+   boolean hasTexture(@ParamName("damage") int damage);
 
-	int getDurabilityColor();
+   @Deprecated
+   String getTexture(@ParamName("damage") int damage);
 
-	boolean getDurabilityShow();
+   String getTexture();
 
-	double getDurabilityValue();
+   @Deprecated
+   void setTexture(@ParamName("damage") int damage, @ParamName("texture") String texture);
 
-	String getTexture(@ParamName("damage") int damage);
+   void setTexture(@ParamName("texture") String texture);
 
-	boolean hasTexture(@ParamName("damage") int damage);
+   void setMaxStackSize(@ParamName("size") int size);
 
-	void setColor(@ParamName("color") int color);
+   double getDurabilityValue();
 
-	void setDurabilityColor(@ParamName("color") int color);
+   void setDurabilityValue(@ParamName("value") float value);
 
-	void setDurabilityShow(@ParamName("bo") boolean bo);
+   boolean getDurabilityShow();
 
-	void setDurabilityValue(@ParamName("value") float value);
+   void setDurabilityShow(@ParamName("bo") boolean bo);
 
-	void setMaxStackSize(@ParamName("size") int size);
+   int getDurabilityColor();
 
-	void setTexture(@ParamName("damage") int damage, @ParamName("texture") String texture);
+   void setDurabilityColor(@ParamName("color") int color);
+
+   int getColor();
+
+   void setColor(@ParamName("color") int color);
 
 }

@@ -1,0 +1,38 @@
+{
+	"name": "part.snout",
+	"render_type": "bedrock",
+	"texture": "moreplayermodels:textures/snout/0.png",
+	"body_part": "head",
+	"menu": "part.snout",
+	"preview_rotation": -45,
+	"translate": [0, 0, 0],
+	"rotate_offset": [0.0, 1.5, 4.0],
+	"scale": [1, 1, 1],
+	"rotate": [0.0, 0.0, 0.0],
+	"author": "Noppes",
+	"render_data" : {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.unknown",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 1,
+					"visible_bounds_height": 1.5,
+					"visible_bounds_offset": [0, 0.25, 0]
+				},
+				"bones": [
+					{
+						"name": "snout",
+						"pivot": [0, 0, 0],
+						"rotation": [0, 0, 0],
+						"cubes": [
+							{"origin": [-2, -1.5, -1], "size": [4, 3, 1], "uv": [24, 0]}
+						]
+					}
+				]
+			}
+		]
+	}
+}

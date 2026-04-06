@@ -1,168 +1,217 @@
 package noppes.npcs.client.gui.availability;
 
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.Client;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumAvailabilityStackData;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.containers.ContainerAvailabilityInv;
+import noppes.npcs.containers.ContainerNpcAvailabilityItem;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.AvailabilityStackData;
-import noppes.npcs.util.Util;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketSetSlotIndex;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class SubGuiNpcAvailabilityItemStacks extends GuiContainerNPCInterface implements ICustomScrollListener {
+// New from Unofficial (BetaZavr)
+public class SubGuiNpcAvailabilityItemStacks
+        extends GuiContainerNPCInterface<ContainerNpcAvailabilityItem>
+        implements ICustomScrollListener {
+
+    public static Screen parent;
+    public static SubGuiNpcAvailability setting;
 
     protected final Availability availability;
-    protected final ContainerAvailabilityInv cont;
-    protected GuiCustomScroll scroll;
+    protected final ContainerNpcAvailabilityItem cont;
+    protected GuiCustomScrollNop scroll;
+    protected final Map<Component, Integer> dataIDs = new HashMap<>();
     protected int reset = 0;
-    public static SubGuiNpcAvailability setting;
-    public static GuiScreen parent;
 
-    public SubGuiNpcAvailabilityItemStacks(ContainerAvailabilityInv container) {
-        super(null, container);
+    public SubGuiNpcAvailabilityItemStacks(ContainerNpcAvailabilityItem container, Inventory inv, Component ignoredTitle) {
+        super(NoppesUtilServer.getEditingNpc(Minecraft.getInstance().player), container, inv, Component.empty());
         setBackground("itemsetup.png");
-        title = "Availability Stacks";
         drawDefaultBackground = true;
-        closeOnEsc = true;
-        xSize = 176;
-        ySize = 202;
+        imageWidth = 176;
+        imageHeight = 202;
 
-        availability = container.availability;
         cont = container;
+        availability = container.availability;
     }
 
     @Override
-    public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-        if (mouseButton != 0) { return; }
+    public void buttonEvent(GuiButtonNop button) {
         AvailabilityStackData aData = availability.stacksData.get(cont.slot.getSlotIndex());
-        switch (button.getID()) {
+        switch (button.id) {
             case 0: {
-                aData.ignoreDamage = button.getValue() == 0;
-                button.setHoverText("gui.ignoreDamage." + button.getValue());
+                aData.ignoreDamage = !((GuiButtonYesNo) button).getBoolean();
+                button.setHoverTexts("gui.ignoreDamage." + button.getValue());
                 break;
             }
             case 1: {
-                aData.ignoreNBT = button.getValue() == 0;
-                button.setHoverText("gui.ignoreNBT." + button.getValue());
+                aData.ignoreNBT = !((GuiButtonYesNo) button).getBoolean();
+                button.setHoverTexts("gui.ignoreNBT." + button.getValue());
                 break;
             }
             case 2: {
                 aData.type = EnumAvailabilityStackData.values()[(aData.type.ordinal() + 1) % EnumAvailabilityStackData.values().length];
-                button.setHoverText("availability.hover.stack.type." + aData.type.name().toLowerCase());
-                initGui();
+                button.setHoverTexts("availability.hover.stack.type." + aData.type.name().toLowerCase());
+                init();
                 break;
             }
-            case 66: onClosed(); break;
+            case 66: {
+                onClose();
+                break;
+            }
         }
     }
 
     @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        drawDefaultBackground();
-        super.drawScreen(mouseX, mouseY, partialTicks);
+    protected void renderBg(@Nonnull GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
+        super.renderBg(graphics, partialTicks, mouseX, mouseY);
+        if (background != null) {
+            // add up
+            graphics.blit(background, guiLeft, guiTop - 12, 0, 0, imageWidth, 16);
+            // add down
+            graphics.blit(background, guiLeft, guiTop + imageHeight - 4, 0, 188, imageWidth, 14);
+        }
+    }
+
+    @Override
+    public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        super.render(graphics, mouseX, mouseY, partialTicks);
         if (reset > 0) {
             reset--;
-            if (reset == 0) { initGui(); }
+            if (reset == 0) { init(); }
         }
     }
 
     @Override
-    public void initGui() {
-        super.initGui();
-        int x = guiLeft + 8;
-        int y = guiTop + 3;
+    public void init() {
+        super.init();
+        int x = guiLeft + 7;
+        int y = guiTop + 4;
+        int lId = 0;
+        // title
+        addLabel(lId++, x - 1, y - 12, "availability.available.8")
+                .setSize(imageWidth - 12, 12)
+                .setCenter(imageWidth - 12);
         // exit
-        addButton(new GuiNpcButton(66, guiLeft + xSize / 2 - 35, guiTop + 189, 70, 20, "gui.done")
-                .setHoverText("hover.back"));
+        addButton(66, guiLeft + imageWidth / 2 - 35, guiTop + 189, "gui.done")
+                .setSize(70, 18)
+                .setHoverTexts("hover.back");
         // data
-        List<String> list = new ArrayList<>();
-        List<String> suffixes = new ArrayList<>();
+        List<Component> list = new ArrayList<>();
+        List<Component> suffixes = new ArrayList<>();
         List<ItemStack> stacks = new ArrayList<>();
-        char c = ((char) 167);
-        String select = "";
-        for (int i = 0; i < cont.inv.getSizeInventory(); i++) {
-            ItemStack stack = cont.inv.getStackInSlot(i);
+        Component select = Component.empty();
+        dataIDs.clear();
+        for (int i = 0; i < cont.inv.getContainerSize(); i++) {
+            ItemStack stack = cont.inv.getItem(i);
             AvailabilityStackData aData = availability.stacksData.get(i);
-            String name, suffix;
-            if (stack.isEmpty()) { name = Util.instance.deleteColor(new TextComponentTranslation("info.item.cloner.empty.0").getFormattedText()); }
+            Component name;
+            if (stack.isEmpty()) { name = Component.literal(Component.translatable("info.item.cloner.empty.0").getString()); }
             else {
                 name = stack.getDisplayName();
-                if (stack.getCount() > 1) { name += " x" + stack.getCount(); }
+                if (stack.getCount() > 1) { ((MutableComponent) name).append(Component.literal(" x" + stack.getCount())); }
             }
-            if (aData.type == EnumAvailabilityStackData.Always) { suffix = c + "aA"; }
-            else if (aData.type == EnumAvailabilityStackData.Contains) { suffix = c + "bC"; }
-            else { suffix = c + "cE"; }
-            String key = c + "7" + (i + 1) + ": " + c + "r" + name;
+            Component suffix = switch (aData.type) {
+                case Always -> Component.literal("A").withStyle(ChatFormatting.GREEN);
+                case Contains -> Component.literal("C").withStyle(ChatFormatting.AQUA);
+                case Except -> Component.literal("E").withStyle(ChatFormatting.RED);
+            };
+            Component key = Component.empty()
+                    .append(Component.literal((i + 1) + ": ").withStyle(ChatFormatting.GRAY))
+                    .append(name);
             list.add(key);
             stacks.add(stack);
             suffixes.add(suffix);
+            dataIDs.put(key, i);
             if (i == cont.slot.getSlotIndex()) { select = key; }
         }
-        if (scroll == null) { (scroll = new GuiCustomScroll(this, 0)).setSize(102, 107); }
-        scroll.setList(list)
+        if (scroll == null) { scroll = addScroll(0).setSize(102, 107); }
+        scroll.setUnsortedList(list)
                 .setStacks(stacks)
                 .setSuffixes(suffixes);
-        scroll.guiLeft = guiLeft + 70;
-        scroll.guiTop = guiTop + 4;
-        if (!select.isEmpty()) { scroll.setSelected(select); }
-        addScroll(scroll);
+        if (!select.getString().isEmpty()) { scroll.setSelected(select); }
+        add(scroll.setPos(guiLeft + 70, guiTop + 4));
         // ignore damage
         AvailabilityStackData aData = availability.stacksData.get(cont.slot.getSlotIndex());
-        addLabel(new GuiNpcLabel(0, "gui.ignoreDamage", x, y + 2));
-        addButton(new GuiNpcButton(0, x, y += 12, 50, 14, new String[] { "gui.yes", "gui.no" }, aData == null || aData.ignoreDamage ? 0 : 1)
-                .setHoverText("gui.ignoreDamage." + (aData == null || aData.ignoreDamage ? 0 : 1)));
+        addLabel(lId++, x + 1, y, "gui.ignoreDamage")
+                .setSize(60, 12);
+        addYesNo(0, x, y += 10, aData != null && aData.ignoreDamage)
+                .setSize(50, 14)
+                .setHoverTexts("gui.ignoreDamage." + (aData != null && aData.ignoreDamage ? 1 : 0));
         // ignore nbt
-        addLabel(new GuiNpcLabel(1, "gui.ignoreNBT", x, (y += 16) + 2));
-        addButton(new GuiNpcButton(1, x, y += 12, 50, 14, new String[] { "gui.yes", "gui.no" }, aData == null || aData.ignoreNBT ? 0 : 1)
-                .setHoverText("gui.ignoreNBT." + (aData == null || aData.ignoreNBT ? 0 : 1)));
+        addLabel(lId++, x + 1, y += 15, "gui.ignoreNBT")
+                .setSize(60, 12);
+        addYesNo(1, x, y += 10, aData != null && aData.ignoreNBT)
+                .setSize(50, 14)
+                .setHoverTexts("gui.ignoreNBT." + (aData != null && aData.ignoreNBT ? 1 : 0));
         // type
-        addLabel(new GuiNpcLabel(2, "gui.type", x, (y += 16) + 2));
-        addButton(new GuiNpcButton(2, x, y + 12, 50, 14, "availability." + (aData == null ? "always" : aData.type.name().toLowerCase()))
-                .setHoverText("availability.hover.stack.type." + (aData == null ? "always" : aData.type.name().toLowerCase())));
+        addLabel(lId++, x + 1, y += 15, "gui.type")
+                .setSize(60, 12);
+        addButton(2, x, y + 10, "availability." + (aData == null ? "always" : aData.type.name().toLowerCase()))
+                .setSize(50, 14)
+                .setHoverTexts("availability.hover.stack.type." + (aData == null ? "always" : aData.type.name().toLowerCase()));
         // id slot
-        addLabel(new GuiNpcLabel(3, "ID: " + cont.slot.getSlotIndex(), x + 20, guiTop + 87));
+        addLabel(lId, x + 20, y + 31, "ID: " + cont.slot.getSlotIndex())
+                .setSize(40, 12);
     }
 
     @Override
-    public void onClosed() {
-        super.onClosed();
-        if (parent != null) { displayGuiScreen(parent); }
+    public void onClose() {
+        super.onClose();
+        if (parent != null) { setScreen(parent); }
     }
 
     @Override
     public void save() {
         if (setting != null) {
-            NBTTagCompound compound = new NBTTagCompound();
+            CompoundTag compound = new CompoundTag();
             availability.save(compound); // temp availability
             setting.availability.load(compound); // edit availability
         }
     }
 
     @Override
-    protected void handleMouseClick(@Nonnull Slot slotIn, int slotId, int mouseButton, @Nonnull ClickType type) {
-        super.handleMouseClick(slotIn, slotId, mouseButton, type);
-        if (slotIn == cont.slot) { reset = 3; }
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        boolean bo = super.mouseClicked(mouseX, mouseY, mouseButton);
+        for(int i = 0; i < menu.slots.size(); ++i) {
+            Slot slot = menu.slots.get(i);
+            if (isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY) && slot.isActive() && slot == cont.slot) {
+                reset = 3;
+                return bo;
+            }
+        }
+        return bo;
     }
 
     @Override
-    public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-        cont.slot.setSlotIndex(scroll.getSelect(), true);
+    public void scrollClicked(GuiCustomScrollNop scroll) {
+        if (!dataIDs.containsKey(scroll.getNormalSelected())) { return; }
+        cont.slot.setSlotIndex(dataIDs.get(scroll.getNormalSelected()), true);
         scroll.setSelect(cont.slot.getSlotIndex());
-        Client.sendData(EnumPacketServer.AvailabilitySlot, cont.slot.getSlotIndex());
-        initGui();
+        Packets.sendServer(new SPacketSetSlotIndex(cont.slot.getSlotIndex()));
+        init();
     }
 
     @Override
-    public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
+    public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 }

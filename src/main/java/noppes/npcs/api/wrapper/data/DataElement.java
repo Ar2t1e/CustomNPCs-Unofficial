@@ -1,266 +1,240 @@
 package noppes.npcs.api.wrapper.data;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.List;
-import java.util.Map;
 
-import noppes.npcs.LogWriter;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.handler.data.IDataElement;
 import noppes.npcs.api.wrapper.DataObject;
-import noppes.npcs.util.Util;
+
+import javax.annotation.Nonnull;
 
 public class DataElement implements IDataElement {
 
-	private final Object data; // parent Object
-	private String name;
-	private final Object object; // this
-	private Class<?> parent; // parent Class
+    protected final @Nonnull Object parent; // parent Object
+    protected final @Nonnull Object object; // this
+    protected final @Nonnull Class<?> parentClazz; // parent Class
+    protected final int id;
+    protected final String obfuscated;
+    protected final String name;
 
-	public DataElement(Object object, Object clazz) {
-		this.object = object;
-		this.data = clazz;
-		this.parent = null;
-		if (object instanceof Method) {
-			this.name = ((Method) object).getName();
-			this.parent = ((Method) object).getDeclaringClass();
-		} else if (object instanceof Field) {
-			this.name = ((Field) object).getName();
-			this.parent = ((Field) object).getDeclaringClass();
-		} else if (object instanceof Constructor) {
-			this.name = "";
-			this.parent = ((Constructor<?>) object).getDeclaringClass();
-		} else if (object instanceof Class) {
-			this.name = object.getClass().getName();
-			this.parent = clazz.getClass();
-		}
-	}
+    public DataElement(@Nonnull Object objectIn, @Nonnull Object parentIn, @Nonnull Integer idIn) {
+        id = idIn;
+        object = objectIn;
+        parent = parentIn;
+        String tempName = "";
+        String tempObf = "";
+        if (objectIn instanceof Method method) {
+            tempName = method.getName();
+            tempObf = DataObject.getObfuscatedName(tempName);
+            parentClazz = method.getDeclaringClass();
+        }
+        else if (objectIn instanceof Field field) {
+            tempName = field.getName();
+            tempObf = DataObject.getObfuscatedName(tempName);
+            parentClazz = field.getDeclaringClass();
+        }
+        else if (objectIn instanceof Constructor<?> constructor) {
+            parentClazz = constructor.getDeclaringClass();
+        }
+        else if (objectIn instanceof Class<?> clazz) {
+            parentClazz = clazz;
+            tempName = parentClazz.getName();
+        }
+        else { parentClazz = parentIn.getClass(); }
+        name = tempName;
+        obfuscated = tempObf;
+    }
 
-	@Override
-	public boolean equals(Object object) {
-		if (object == null) {
-			return false;
-		}
-		if (this.object instanceof Method) {
-			if (!(object instanceof Method)) {
-				return false;
-			}
-			Method m0 = (Method) this.object;
-			Method m1 = (Method) object;
-			Parameter[] p0 = m0.getParameters();
-			Parameter[] p1 = m1.getParameters();
-			if (p0.length != p1.length) {
-				return false;
-			}
-			for (int p = 0; p < p0.length; p++) {
-				if (p0[p].getType() != p1[p].getType()) {
-					return false;
-				}
-			}
-			return m0.getName().equals(m1.getName()) && m0.getReturnType() == m1.getReturnType()
-					&& m0.getDeclaringClass() == m1.getDeclaringClass();
-		} else if (this.object instanceof Field) {
-			if (!(object instanceof Field)) {
-				return false;
-			}
-			Field f0 = (Field) this.object;
-			Field f1 = (Field) object;
-			return f0.getName().equals(f1.getName()) && f0.getType() == f1.getType()
-					&& f0.getDeclaringClass() == f1.getDeclaringClass();
-		} else if (this.object instanceof Constructor) {
-			if (!(object instanceof Constructor)) {
-				return false;
-			}
-			Constructor<?> c0 = (Constructor<?>) this.object;
-			Constructor<?> c1 = (Constructor<?>) object;
-			Parameter[] p0 = c0.getParameters();
-			Parameter[] p1 = c1.getParameters();
-			if (p0.length != p1.length) {
-				return false;
-			}
-			for (int p = 0; p < p0.length; p++) {
-				if (p0[p].getType() != p1[p].getType()) {
-					return false;
-				}
-			}
-			return c0.getDeclaringClass() == c1.getDeclaringClass();
-		}
-		return this.equals(object);
-	}
+    @Override
+    public boolean equals(Object objectIn) {
+        if (objectIn == null) { return false; }
+        if (object instanceof Method m0) {
+            if (!(objectIn instanceof Method m1)) { return false; }
+            Parameter[] p0 = m0.getParameters();
+            Parameter[] p1 = m1.getParameters();
+            if (p0.length != p1.length) { return false; }
+            for (int p = 0; p < p0.length; p++) {
+                if (p0[p].getType() != p1[p].getType()) { return false; }
+            }
+            return m0.getName().equals(m1.getName()) && m0.getReturnType() == m1.getReturnType() && m0.getDeclaringClass() == m1.getDeclaringClass();
+        }
+        else if (object instanceof Field f0) {
+            if (!(objectIn instanceof Field f1)) { return false; }
+            return f0.getName().equals(f1.getName()) && f0.getType() == f1.getType()
+                    && f0.getDeclaringClass() == f1.getDeclaringClass();
+        }
+        else if (object instanceof Constructor<?> c0) {
+            if (!(objectIn instanceof Constructor<?> c1)) { return false; }
+            Parameter[] p0 = c0.getParameters();
+            Parameter[] p1 = c1.getParameters();
+            if (p0.length != p1.length) { return false; }
+            for (int p = 0; p < p0.length; p++) {
+                if (p0[p].getType() != p1[p].getType()) { return false; }
+            }
+            return c0.getDeclaringClass() == c1.getDeclaringClass();
+        }
+        return equals(objectIn);
+    }
 
-	@Override
-	public String getData() {
-		String key;
-		if (this.object instanceof Method) {
-			Method m = (Method) this.object;
-			int md = m.getModifiers();
-			if (Modifier.isPrivate(md)) { key = "private "; }
-			else if (Modifier.isProtected(md)) { key = "protected "; }
-			else if (Modifier.isPublic(md)) { key = "public "; }
-			else { key = "default "; }
-			if (Modifier.isStatic(md)) { key += "static "; }
-			if (Modifier.isSynchronized(md)) { key += "synchronized "; }
-			if (Modifier.isFinal(md)) { key += "final "; }
-			StringBuilder body = new StringBuilder("(");
-			for (Parameter p : m.getParameters()) {
-				if (!body.toString().equals("(")) { body.append(", "); }
-				body.append(p.getType().getName());
-			}
-			body.append(")");
-			key += Util.getAgrName(m.getReturnType()) + " " + m.getName() + body;
-			String obfName = DataObject.getObfuscatedName(m.getName());
-			if (!obfName.isEmpty()) { key += " {obf_name=\""  + obfName + "\"}"; }
-		}
-		else if (this.object instanceof Field) {
-			Field f = (Field) this.object;
-			int md = f.getModifiers();
-			if (Modifier.isPrivate(md)) { key = "private "; }
-			else if (Modifier.isProtected(md)) { key = "protected "; }
-			else if (Modifier.isPublic(md)) { key = "public "; }
-			else { key = "default "; }
-			if (Modifier.isStatic(md)) { key += "static "; }
-			if (Modifier.isFinal(md)) { key += "final "; }
-			key += Util.getAgrName(f.getType()) + " " + f.getName();
-			String obfName = DataObject.getObfuscatedName(f.getName());
-			if (!obfName.isEmpty()) { key += " {obf_name=\""  + obfName + "\"}"; }
-			f.setAccessible(true);
-		}
-		else if (this.object instanceof Constructor) {
-			StringBuilder body = new StringBuilder("(");
-			int md = ((Constructor<?>) this.object).getModifiers();
-			if (Modifier.isPrivate(md)) { key = "private "; }
-			else if (Modifier.isProtected(md)) { key = "protected "; }
-			else if (Modifier.isPublic(md)) { key = "public "; }
-			else { key = "default "; }
-			Class<?>[] params = ((Constructor<?>) this.object).getParameterTypes();
-			for (Class<?> p : params) {
-				if (!body.toString().equals("(")) { body.append(", "); }
-				body.append(Util.getAgrName(p));
-			}
-			body.append(")");
-			key += data.getClass().getSimpleName() + body;
-		}
-		else if (this.object instanceof Class) {
-			int md = ((Class<?>) this.object).getModifiers();
-			if (Modifier.isPrivate(md)) { key = "private "; }
-			else if (Modifier.isProtected(md)) { key = "protected "; }
-			else if (Modifier.isPublic(md)) { key = "public "; }
-			else { key = "default "; }
-			key += Util.getAgrName((Class<?>) this.object);
-		}
-		else { key = this.data.toString(); }
-		return key;
-	}
+    @Override
+    public int getId() { return id; }
 
-	@Override
-	public String getName() {
-		return this.name;
-	}
+    @Override
+    public String getInfo() {
+        StringBuilder key = new StringBuilder();
+        if (object instanceof Method method) {
+            int modifiers = method.getModifiers();
+            if (Modifier.isPrivate(modifiers)) { key.append("private "); }
+            else if (Modifier.isProtected(modifiers)) { key.append("protected "); }
+            else if (Modifier.isPublic(modifiers)) { key.append("public "); }
+            else { key.append("default "); }
+            if (Modifier.isStatic(modifiers)) { key.append("static "); }
+            if (Modifier.isSynchronized(modifiers)) { key.append("synchronized "); }
+            if (Modifier.isFinal(modifiers)) { key.append("final "); }
+            key.append(DataObject.getAgrName(method.getReturnType(), method.getReturnType(), null)).append(" ");
+            String obfName = DataObject.getObfuscatedName(method.getName());
+            if (!obfName.isEmpty()) { key.append(" {obf_name=\"").append(obfName).append("\"}"); }
+            key.append(method.getName()).append("(");
+            StringBuilder body = new StringBuilder();
+            for (Parameter p : method.getParameters()) {
+                if (!body.isEmpty()) { body.append(", "); }
+                body.append(DataObject.getAgrName(p.getType(), p.getType(), null))
+                        .append(" ");
+                boolean found = false;
+                for (Annotation a : p.getAnnotations()) {
+                    if (a instanceof ParamName pName) {
+                        body.append(pName.value());
+                        found = true;
+                    }
+                }
+                if (!found) { body.append(p.getName()); }
+            }
+            key.append(body).append(")");
+        }
+        else if (object instanceof Field field) {
+            int modifiers = field.getModifiers();
+            if (Modifier.isPrivate(modifiers)) { key.append("private "); }
+            else if (Modifier.isProtected(modifiers)) { key.append("protected "); }
+            else if (Modifier.isPublic(modifiers)) { key.append("public "); }
+            else { key.append("default "); }
+            if (Modifier.isStatic(modifiers)) { key.append("static "); }
+            if (Modifier.isFinal(modifiers)) { key.append("final "); }
+            key.append(DataObject.getAgrName(field.getType(), field.getGenericType(), getValue())).append(" ");
+            String obfName = DataObject.getObfuscatedName(field.getName());
+            if (!obfName.isEmpty()) { key.append(obfName).append(" / "); }
+            key.append(field.getName());
+        }
+        else if (object instanceof Constructor<?> constructor) {
+            int modifiers = constructor.getModifiers();
+            if (Modifier.isPrivate(modifiers)) { key.append("private "); }
+            else if (Modifier.isProtected(modifiers)) { key.append("protected "); }
+            else if (Modifier.isPublic(modifiers)) { key.append("public "); }
+            else { key.append("default "); }
+            // Arguments:
+            key.append(parentClazz.getSimpleName()).append("(");
+            StringBuilder body = new StringBuilder();
+            for (Parameter p : constructor.getParameters()) {
+                if (!body.isEmpty()) { body.append(", "); }
+                body.append(DataObject.getAgrName(p.getType(), p.getType(), null))
+                        .append(" ");
+                boolean found = false;
+                for (Annotation a : p.getAnnotations()) {
+                    if (a instanceof ParamName pName) {
+                        body.append(pName.value());
+                        found = true;
+                    }
+                }
+                if (!found) { body.append(p.getName()); }
+            }
+            key.append(body).append(");");
+        }
+        else if (object instanceof Class<?> clazz) {
+            int modifiers = clazz.getModifiers();
+            if (Modifier.isPrivate(modifiers)) { key.append("private "); }
+            else if (Modifier.isProtected(modifiers)) { key.append("protected "); }
+            else if (Modifier.isPublic(modifiers)) { key.append("public "); }
+            else { key.append("default "); }
+            key.append(DataObject.getAgrName(clazz, clazz.getGenericSuperclass(), null));
+        } // subclass
+        else { return parent.toString(); }
+        return key.toString();
+    }
 
-	@Override
-	public Object getObject() {
-		return this.object;
-	}
+    @Override
+    public @Nonnull String getName() { return name; }
 
-	@Override
-	public Class<?> getParent() {
-		try {
-			return parent != null ? parent : Class.forName("java.lang.Object");
-		} catch (ClassNotFoundException e) { LogWriter.error(e); }
-		return null;
-	}
+    @Override
+    public String getObfuscatedName() { return obfuscated; }
 
-	@Override
-	public int getType() {
-		if (this.object instanceof Constructor) {
-			return 0;
-		}
-		if (this.object instanceof Class) {
-			return 1;
-		}
-		if (this.object instanceof Field) {
-			return 2;
-		}
-		if (this.object instanceof Method) {
-			return 3;
-		}
-		return -1;
-	}
+    @Override
+    public @Nonnull Object getObject() { return object; }
 
-	@Override
-	public Object getValue() {
-		if (this.object instanceof Method) {
-			return ((Method) this.object).getReturnType();
-		}
-		else if (this.object instanceof Field) {
-			if (data.getClass() == Class.class) { return null; }
-			try {
-				Field field = (Field) object;
-				field.setAccessible(true);
-				Object obj = field.get(data);
-				if (obj == null) { return "null"; }
-				String value = obj.toString();
-				if (obj.getClass().isArray()) {
-					Class<?> ct = obj.getClass().getComponentType();
-					String key = Util.getAgrName(ct);
-					return key + "[]" + value.substring(value.indexOf("@"));
-				}
-				else if (obj instanceof List || obj instanceof Map) {
-					return Util.getAgrName(obj.getClass()) + value;
-				}
-				return value;
-			} catch (Exception e) { LogWriter.error(e); }
-		}
-		return this.object;
-	}
+    @Override
+    public @Nonnull Class<?> getParentClass() { return parentClazz; }
 
-	@Override
-	public Object invoke(Object[] values) {
-		if (this.object instanceof Method) {
-			((Method) this.object).setAccessible(true);
-			try {
-				((Method) this.object).invoke(this.data, values);
-			} catch (Exception e) { LogWriter.error(e); }
-		}
-		return null;
-	}
+    @Override
+    public int getType() {
+        if (object instanceof Constructor) { return 0; }
+        if (object instanceof Class) { return 1; }
+        if (object instanceof Field) { return 2; }
+        if (object instanceof Method) { return 3; }
+        return -1;
+    }
 
-	@Override
-	public boolean isBelong(Class<?> cz) {
-		if (parent == null) { return false; }
-		return parent.isAssignableFrom(cz);
-	}
+    @Override
+    public Object getValue() {
+        if (object instanceof Method) { return ((Method) object).getReturnType(); }
+        else if (object instanceof Field field) {
+            try {
+                field.trySetAccessible();
+                return field.get(parent);
+            }
+            catch (Exception e) { throw new CustomNPCsException(e, "Error get field value"); }
+        }
+        return object;
+    }
 
-	@Override
-	public boolean setValue(Object value) {
-		if (this.object instanceof Field) {
-			Field f = ((Field) this.object);
-			int mod = f.getModifiers();
-			if (Modifier.isFinal(mod)) {
-				try {
-					Field modifiersField = Field.class.getDeclaredField("modifiers");
-					modifiersField.setAccessible(true);
-					modifiersField.setInt(f, mod - Modifier.FINAL - (Modifier.isPrivate(mod) ? Modifier.PRIVATE : 0));
-					f.setAccessible(true);
-					f.set(Modifier.isStatic(mod) ? null : data, value);
-					modifiersField.setInt(f, mod);
-					return true;
-				}
-				catch (Exception e) {
-					LogWriter.error(e);
-					return false;
-				}
-			}
-			try {
-				f.setAccessible(true);
-				f.set(data, value);
-				return true;
-			}
-			catch (Exception e) {
-				throw new CustomNPCsException(e, "Error set value.");
-			}
-		}
-		return false;
-	}
+    @Override
+    public Object invoke(Object[] values) {
+        if (object instanceof Method method) {
+            try {
+                method.trySetAccessible();
+                method.invoke(parent, values);
+            }
+            catch (Exception e) { throw new CustomNPCsException(e, "Error invoke method"); }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isBelong(Class<?> cz) { return parentClazz.isAssignableFrom(cz); }
+
+    @Override
+    public boolean setValue(Object value) {
+        if (object instanceof Field field) {
+            int mod = field.getModifiers();
+            if (Modifier.isFinal(mod)) {
+                try {
+                    Field modifiersField = Field.class.getDeclaredField("modifiers");
+                    modifiersField.trySetAccessible();
+                    modifiersField.setInt(field, mod - Modifier.FINAL - (Modifier.isPrivate(mod) ? Modifier.PRIVATE : 0));
+                    field.trySetAccessible();
+                    field.set(Modifier.isStatic(mod) ? null : parent, value);
+                    modifiersField.setInt(field, mod);
+                    return true;
+                }
+                catch (Exception e) { throw new CustomNPCsException(e, "Error set final value"); }
+            }
+            try {
+                field.trySetAccessible();
+                field.set(parent, value);
+                return true;
+            }
+            catch (Exception e) { throw new CustomNPCsException(e, "Error set value"); }
+        }
+        return false;
+    }
 
 }

@@ -1,249 +1,300 @@
 package noppes.npcs.client.controllers;
 
-import java.lang.reflect.Field;
-import java.util.Map;
-
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.ISound;
-import net.minecraft.client.audio.PositionedSound;
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.audio.SoundManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import noppes.npcs.LogWriter;
-import noppes.npcs.api.mixin.client.audio.IPositionedSoundMixin;
-import noppes.npcs.api.mixin.client.audio.ISoundHandlerMixin;
-import noppes.npcs.api.mixin.client.audio.ISoundManagerMixin;
-import noppes.npcs.api.mixin.client.audio.ISoundSystemMixin;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance.Attenuation;
+import net.minecraft.client.sounds.ChannelAccess;
+import net.minecraft.client.sounds.SoundEngine;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import noppes.npcs.client.ClientTickHandler;
+import noppes.npcs.client.TranslateUtil;
 import noppes.npcs.client.util.MusicData;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.client.sounds.ISoundEngineMixin;
+import noppes.npcs.mixin.client.sounds.ISoundManagerMixin;
 import noppes.npcs.roles.JobBard;
-import paulscode.sound.Library;
-import paulscode.sound.SoundSystem;
-import paulscode.sound.Source;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomNPCsScheduler;
+
+import javax.annotation.Nullable;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.SourceDataLine;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Objects;
 
 public class MusicController {
 
-	public static MusicController Instance;
+   public static MusicController Instance;
 
-	public String music = "", song = "";
-	public EntityNPCInterface musicBard = null, songBard = null;
-	public boolean unloadMusicBard = false, unloadSongBard = false;
+   // New Unofficial (Goodbird)
+   SimpleSoundInstance dialogSound = null;
 
-	public MusicController() {
-		MusicController.Instance = this;
-	}
+   // New from Unofficial (BetaZavr)
+   public @Nullable ResourceLocation song;
+   public @Nullable ResourceLocation music;
+   public @Nullable Entity songBard;
+   public @Nullable Entity musicBard;
+   public @Nullable SoundInstance playingSong;
+   public @Nullable SoundInstance playingMusic;
+   public boolean unloadMusicBard = false;
+   public boolean unloadSongBard = false;
 
-	public void bardPlaySound(String song, boolean isStreamer, EntityNPCInterface npc) {
-		stopSound(song, isStreamer ? SoundCategory.AMBIENT : SoundCategory.MUSIC);
-		ISound.AttenuationType aType = ISound.AttenuationType.LINEAR;
-		ResourceLocation res = new ResourceLocation(song);
-		float x = (float) npc.posX;
-		float y = (float) npc.posY;
-		float z = (float) npc.posZ;
-		if (isStreamer) {
-			this.song = song;
-			this.songBard = npc;
-		} else {
-			this.music = song;
-			this.musicBard = npc;
-			aType = ISound.AttenuationType.NONE;
-			x = 0.0f;
-			y = 0.0f;
-			z = 0.0f;
-			for (MusicData md : ClientTickHandler.musics.values()) {
-				if (!md.name.isEmpty() && md.name.indexOf("minecraft") == 0) {
-					Minecraft.getMinecraft().getSoundHandler().stop(md.name, SoundCategory.MUSIC);
-				}
-			}
-		}
-		Minecraft.getMinecraft().getSoundHandler().playSound(new PositionedSoundRecord(res, isStreamer ? SoundCategory.AMBIENT : SoundCategory.MUSIC, 1.0f, 1.0f, false, 0, aType, x, y, z));
-	}
+   public MusicController() { Instance = this; }
 
-	public void checkBards(EntityPlayer player) {
-		if (this.music.isEmpty()) {
-			if (this.musicBard != null) {
-				this.musicBard = null;
-			}
-		} else {
-			if (this.musicBard == null || !(this.musicBard.advanced.jobInterface instanceof JobBard)) {
-				this.stopSound(this.music, SoundCategory.MUSIC);
-			} else {
-				Entity entity = player.world.getEntityByID(this.musicBard.getEntityId());
-				if (entity == null) {
-					this.unloadMusicBard = true;
-					JobBard job = (JobBard) this.musicBard.advanced.jobInterface;
-					if (job.hasOffRange) {
-						int x = job.range[1], y = job.range[1], z = job.range[1];
-						if (!job.isRange) {
-							x = job.maxPos[0];
-							y = job.maxPos[1];
-							z = job.maxPos[2];
-						}
-						int xD = (int) Math.abs(player.posX - musicBard.posX);
-						int yD = (int) Math.abs(player.posY - musicBard.posY);
-						int zD = (int) Math.abs(player.posZ - musicBard.posZ);
-						if (xD > x || yD > y || zD > z) {
-							this.stopSound(this.song, SoundCategory.MUSIC);
-						}
-					}
-				}
-			}
-		}
+   public boolean isPlaying(ResourceLocation resource) {
+      SoundEngine soundEngine = ((ISoundManagerMixin) Minecraft.getInstance().getSoundManager()).getSoundEngine();
+      if (soundEngine instanceof ISoundEngineMixin mix && mix.getLoaded()) {
+         Map<SoundInstance, Integer> soundDeleteTime = mix.getSoundDeleteTime();
+         Map<SoundInstance, ChannelAccess.ChannelHandle> instanceToChannel = mix.getInstanceToChannel();
+         for (SoundInstance sound : soundDeleteTime.keySet()) {
+            if (sound.getLocation().equals(resource) &&
+                    soundDeleteTime.containsKey(sound) && soundDeleteTime.get(sound) <= mix.getTickCount() ||
+                    instanceToChannel.containsKey(sound)) { return true; }
+         }
+      }
+      return false;
+   }
 
-		if (this.song.isEmpty()) {
-			if (this.songBard != null) {
-				this.songBard = null;
-			}
-		} else {
-			if (this.songBard == null || !(this.songBard.advanced.jobInterface instanceof JobBard)) {
-				this.stopSound(this.song, SoundCategory.AMBIENT);
-			} else {
-				Entity entity = player.world.getEntityByID(this.songBard.getEntityId());
-				if (entity == null) {
-					this.unloadSongBard = true;
-					JobBard job = (JobBard) this.songBard.advanced.jobInterface;
-					if (job != null && job.hasOffRange) {
-						int x = job.range[1], y = job.range[1], z = job.range[1];
-						if (!job.isRange) {
-							x = job.maxPos[0];
-							y = job.maxPos[1];
-							z = job.maxPos[2];
-						}
-						int xD = (int) Math.abs(player.posX - songBard.posX);
-						int yD = (int) Math.abs(player.posY - songBard.posY);
-						int zD = (int) Math.abs(player.posZ - songBard.posZ);
-						if (xD > x || yD > y || zD > z) {
-							this.stopSound(this.song, SoundCategory.AMBIENT);
-						}
-					}
-				}
-			}
-		}
-	}
+   public void playSound(SoundSource category, String sound, double x, double y, double z, float volume, float pitch) {
+      if (category == null || sound == null || sound.isEmpty()) { return; }
+      ResourceLocation res = new ResourceLocation(sound);
+      if (category == SoundSource.MUSIC && isPlaying(res)) { return; }
+      Attenuation aType = Attenuation.LINEAR;
+      Minecraft mc = Minecraft.getInstance();
+      if (category == SoundSource.MUSIC) {
+         mc.getSoundManager().stop(music, SoundSource.MUSIC);
+         aType = Attenuation.NONE;
+         x = mc.player != null ? (float) mc.player.getX() : 0.0f;
+         y = mc.player != null ? (float) mc.player.getY() + 0.5f : 0.0f;
+         z = mc.player != null ? (float) mc.player.getZ() : 0.0f;
+      }
+      Minecraft.getInstance().getSoundManager().play(
+              new SimpleSoundInstance(res, category, volume, pitch,
+                      SoundInstance.createUnseededRandom(), false, 0, aType, x, y, z, false));
+   }
 
-	public void forcePlaySound(SoundCategory cat, String sound, float x, float y, float z, float volume, float pitch) {
-		if (cat == null || sound == null || sound.isEmpty()) {
-			return;
-		}
-		ISound.AttenuationType aType = ISound.AttenuationType.LINEAR;
-		Minecraft mc = Minecraft.getMinecraft();
-		if (cat == SoundCategory.MUSIC) {
-			Minecraft.getMinecraft().getSoundHandler().stop("", SoundCategory.MUSIC);
-			aType = ISound.AttenuationType.NONE;
-			x = mc.player != null ? (float) mc.player.posX : 0.0f;
-			y = mc.player != null ? (float) mc.player.posY + 0.5f : 0.0f;
-			z = mc.player != null ? (float) mc.player.posZ : 0.0f;
-		}
-		mc.getSoundHandler().playSound(new PositionedSoundRecord(new ResourceLocation(sound), cat, volume, pitch, false, 0, aType, x, y, z));
-	}
+   public void stopSound(@Nullable ResourceLocation soundIn, SoundSource category) {
+      Minecraft.getInstance().getSoundManager().stop(soundIn, category);
+      if (category == SoundSource.AMBIENT && soundIn == null || Objects.equals(soundIn, song)) {
+         song = null;
+         playingSong = null;
+         songBard = null;
+      }
+      else if (category == SoundSource.MUSIC && soundIn == null || Objects.equals(soundIn, music)) {
+         music = null;
+         musicBard = null;
+         playingMusic = null;
+      }
+   }
 
-	public boolean isBardPlaying(String song, boolean isStreamer) { // check Any Bards
-		return isPlaying(song) || (isStreamer ? !song.isEmpty() && isPlaying(this.song) : !music.isEmpty() && isPlaying(this.music));
-	}
+   public void stopSounds() {
+      SoundManager handler = Minecraft.getInstance().getSoundManager();
+      for (SoundSource soundSource : SoundSource.values()) { handler.stop(null, soundSource); }
+      song = null;
+      music = null;
+      songBard = null;
+      musicBard = null;
+      playingSong = null;
+      playingMusic = null;
+   }
 
-	public boolean isPlaying(String music) {
-		if (music == null || music.isEmpty()) {
-			return false;
-		}
-		ResourceLocation resource = new ResourceLocation(music);
-		SoundManager sm = ((ISoundHandlerMixin) Minecraft.getMinecraft().getSoundHandler()).npcs$getSndManager();
-		Map<String, ISound> playingSounds = ((ISoundManagerMixin) sm).npcs$getPlayingSounds();
-		if (playingSounds == null) {
-			return false;
-		}
-		for (ISound sound : playingSounds.values()) {
-			if (sound.getSound().getSoundLocation().equals(resource) || sound.getSoundLocation().equals(resource)) {
-				return true;
-			}
-		}
-		return false;
-	}
+   public void playStreaming(ResourceLocation sound, Entity entity, boolean isLooping) {
+      if (!isPlaying(sound)) {
+         stopSounds();
+         song = sound;
+         if (song != null) {
+            songBard = entity;
+            Minecraft.getInstance().getSoundManager().play(playingSong = new SimpleSoundInstance(sound, SoundSource.RECORDS, 4.0F, 1.0F,
+                    SoundInstance.createUnseededRandom(), isLooping, 0,
+                    Attenuation.LINEAR, entity.getX(), entity.getY(), entity.getZ(), false));
+         }
+      }
+   }
 
-	public void playSound(SoundCategory category, String music, float x, float y, float z, float volume, float pitch) {
-		if (this.isPlaying(music)) {
-			return;
-		}
-		ISound.AttenuationType aType = ISound.AttenuationType.LINEAR;
-		ResourceLocation res = new ResourceLocation(music);
-		if (category == SoundCategory.MUSIC) {
-			aType = ISound.AttenuationType.NONE;
-			x = 0.0f;
-			y = 0.0f;
-			z = 0.0f;
-		}
-		Minecraft.getMinecraft().getSoundHandler().playSound(new PositionedSoundRecord(res, category, volume, pitch, false, 0, aType, x, y, z));
-	}
+   public void playMusic(ResourceLocation sound, Entity entity, boolean isLooping) {
+      if (!isPlaying(sound)) {
+         stopMusics();
+         music = sound;
+         if (music != null) {
+            musicBard = entity;
+            Minecraft.getInstance().getSoundManager().play(playingSong = new SimpleSoundInstance(sound, SoundSource.MUSIC, 1.0F, 1.0F,
+                    SoundInstance.createUnseededRandom(), isLooping, 0,
+                    Attenuation.NONE, 0, 0, 0, false));
+         }
+      }
+   }
 
-	public void setNewPosSong(String song, float x, float y, float z) {
-		if (song == null || song.isEmpty()) {
-			return;
-		}
-		ResourceLocation resource = new ResourceLocation(song);
-		SoundManager sm = ((ISoundHandlerMixin) Minecraft.getMinecraft().getSoundHandler()).npcs$getSndManager();
-		Map<String, ISound> playingSounds = ((ISoundManagerMixin) sm).npcs$getPlayingSounds();
-		if (playingSounds == null) { return; }
-		String uuid = null;
-		for (String id : playingSounds.keySet()) {
-			ISound sound = playingSounds.get(id);
-			if (sound.getSound().getSoundLocation().equals(resource)
-					|| sound.getSoundLocation().equals(resource) && sound instanceof PositionedSound) {
-				((IPositionedSoundMixin) sound).npcs$setXPosF(x);
-				((IPositionedSoundMixin) sound).npcs$setYPosF(y);
-				((IPositionedSoundMixin) sound).npcs$setZPosF(z);
-				uuid = id;
-				break;
-			}
-		}
-		System.out
-				.println("New pos song uuid: \"" + uuid + "\" to [" + (int) x + ", " + (int) y + ", " + (int) z + "]");
-		if (uuid != null) {
-			SoundSystem sndSystem = null;
-			for (Field f : sm.getClass().getDeclaredFields()) {
-				if (f.getType().getName().contains("SoundSystem")) {
-					try {
-						f.setAccessible(true);
-						sndSystem = (SoundSystem) f.get(sm);
-					}
-					catch (IllegalAccessException e) { LogWriter.debug(e.toString()); }
-					break;
-				}
-			}
-			if (sndSystem == null) { return; }
-			Library soundLibrary = ((ISoundSystemMixin) sndSystem).npcs$getSoundLibrary();
-			if (soundLibrary == null) { return; }
-			Source source = soundLibrary.getSources().get(uuid);
-			if (source != null && source.position != null) {
-				source.position.x = x;
-				source.position.y = y;
-				source.position.z = z;
-			}
-		}
-	}
+   public void speak(String languageKey, String text, float volume) {
+      CustomNPCsScheduler.runTack(() -> {
+         try {
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null) { return; }
+            URLConnection connection = new URL(String.format(TranslateUtil.AudioUrl, URLEncoder.encode(text, StandardCharsets.UTF_8), languageKey)).openConnection();
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            connection.setRequestProperty("User-Agent", "Chrome/99.0.4844.51");
+            connection.setConnectTimeout(10000);
+            InputStream stream = connection.getInputStream();
 
-	public void stopSound(String song, SoundCategory category) {
-		if (song == null) {
-			song = "";
-		}
-		Minecraft.getMinecraft().getSoundHandler().stop(song, category);
-		if (category == SoundCategory.AMBIENT) {
-			this.song = "";
-			this.songBard = null;
-		} else if (category == SoundCategory.MUSIC) {
-			this.music = "";
-			this.musicBard = null;
-		}
-	}
+            // Reading all bytes from a stream
+            byte[] audioBytes = stream.readAllBytes();
+            // Using SourceDataLine to Play Sound
+            AudioFormat format = new AudioFormat(
+                    16000f, // Sampling frequency
+                    16, // Bit depth
+                    1, // Number of channels (mono)
+                    true, // Signed PCM
+                    false // Little-endian
+            );
+            DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+            SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem.getLine(info);
+            sourceDataLine.open(format);
+            sourceDataLine.start();
 
-	public void stopSounds() {
-		Minecraft.getMinecraft().getSoundHandler().stopSounds();
-		this.song = "";
-		this.songBard = null;
-		this.music = "";
-		this.musicBard = null;
-	}
+            // Applying Volume and Pitch
+            // Adjusting Volume by Changing Signal Amplitude
+            float adjustedVolume = Math.min(Math.max(volume, 0f), 1f);  // Limit the volume value within [0, 1]
+            for (int i = 0; i < audioBytes.length; i++) {
+               // Apply a loudness factor to each sample
+               audioBytes[i] = (byte) ((float) audioBytes[i] * adjustedVolume);
+            }
 
+            // Let's start playback
+            sourceDataLine.write(audioBytes, 0, audioBytes.length);
+            sourceDataLine.drain();
+            sourceDataLine.stop();
+            sourceDataLine.close();
+
+            // Closing Streams
+            stream.close();
+         } catch (Exception e) {
+            LogWriter.error("Error while playing translation \"" + languageKey + "\"", e);
+         }
+      });
+   }
+
+   // New from Unofficial (Goodbird)
+   public void playSoundDialog(SoundSource category, ResourceLocation sound, BlockPos pos, float volume, float pitch) {
+      if (dialogSound != null) { Minecraft.getInstance().getSoundManager().stop(dialogSound); }
+      Minecraft.getInstance().getSoundManager().play(dialogSound = new SimpleSoundInstance(sound,
+              category, volume, pitch, SoundInstance.createUnseededRandom(),
+              false, 0, Attenuation.LINEAR,
+              (float)pos.getX() + 0.5F, pos.getY(), (float)pos.getZ() + 0.5F, false));
+   }
+
+   // New from Unofficial (BetaZavr)
+   public void bardPlaySound(ResourceLocation sound, boolean isStreamer, EntityNPCInterface npc) {
+      stopSound(sound, isStreamer ? SoundSource.AMBIENT : SoundSource.MUSIC);
+      Attenuation aType = Attenuation.LINEAR;
+      float x = (float) npc.getX();
+      float y = (float) npc.getY();
+      float z = (float) npc.getZ();
+      if (isStreamer) {
+         song = sound;
+         songBard = npc;
+      }
+      else {
+         music = sound;
+         musicBard = npc;
+         aType = Attenuation.NONE;
+         x = 0.0f;
+         y = 0.0f;
+         z = 0.0f;
+         for (MusicData md : ClientTickHandler.musics) {
+            if (!md.name.isEmpty() && md.name.indexOf("minecraft") == 0) {
+               Minecraft.getInstance().getSoundManager().stop(md.resource, SoundSource.MUSIC);
+            }
+         }
+      }
+      Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(sound, isStreamer ? SoundSource.AMBIENT : SoundSource.MUSIC, 1.0f, 1.0f,
+              SoundInstance.createUnseededRandom(), false, 0, aType, x, y, z, false));
+   }
+
+   public boolean isBardPlaying(ResourceLocation soundIn, boolean isStreamer) { // check Any Bards
+      return isPlaying(soundIn) || (isStreamer ? song != null && isPlaying(song) : music != null && isPlaying(music));
+   }
+
+   public void checkBards(Player player) {
+      if (music == null) {
+         if (musicBard != null) { musicBard = null; }
+         if (playingMusic != null) { playingMusic = null; }
+      }
+      else {
+         if (!(musicBard instanceof EntityNPCInterface cnpc) || !(cnpc.job instanceof JobBard)) {
+            stopSound(music, SoundSource.MUSIC);
+         }
+         else {
+            Entity entity = player.level().getEntity(musicBard.getId());
+            if (entity == null) {
+               unloadMusicBard = true;
+               JobBard job = (JobBard) cnpc.job;
+               if (job.hasOffRange) {
+                  int x = job.range[1], y = job.range[1], z = job.range[1];
+                  if (!job.isRange) {
+                     x = job.maxPos[0];
+                     y = job.maxPos[1];
+                     z = job.maxPos[2];
+                  }
+                  int xD = (int) Math.abs(player.getX() - musicBard.getX());
+                  int yD = (int) Math.abs(player.getY() - musicBard.getY());
+                  int zD = (int) Math.abs(player.getZ() - musicBard.getZ());
+                  if (xD > x || yD > y || zD > z) { stopSound(song, SoundSource.MUSIC); }
+               }
+            }
+         }
+      }
+      if (song == null) {
+         if (songBard != null) { songBard = null; }
+         if (playingSong != null) { playingSong = null; }
+      }
+      else {
+         if (!(songBard instanceof EntityNPCInterface) || !(((EntityNPCInterface) songBard).job instanceof JobBard)) {
+            stopSound(song, SoundSource.AMBIENT);
+         } else {
+            Entity entity = player.level().getEntity(songBard.getId());
+            if (entity == null) {
+               unloadSongBard = true;
+               JobBard job = (JobBard) ((EntityNPCInterface) songBard).job;
+               if (job != null && job.hasOffRange) {
+                  int x = job.range[1], y = job.range[1], z = job.range[1];
+                  if (!job.isRange) {
+                     x = job.maxPos[0];
+                     y = job.maxPos[1];
+                     z = job.maxPos[2];
+                  }
+                  int xD = (int) Math.abs(player.getX() - musicBard.getX());
+                  int yD = (int) Math.abs(player.getY() - songBard.getY());
+                  int zD = (int) Math.abs(player.getZ() - songBard.getZ());
+                  if (xD > x || yD > y || zD > z) { stopSound(song, SoundSource.AMBIENT); }
+               }
+            }
+         }
+      }
+   }
+
+   public void stopMusics() {
+      Minecraft.getInstance().getSoundManager().stop(null, SoundSource.MUSIC);
+      music = null;
+      musicBard = null;
+      playingMusic = null;
+   }
+
+   public void checkBards(LocalPlayer player) { }
+
+   public void setNewPosSong(ResourceLocation mSong, double x, double y, double z) {
+
+   }
 }

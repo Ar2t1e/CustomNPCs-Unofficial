@@ -1,38 +1,28 @@
 package noppes.npcs.command;
 
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.constants.EnumGuiType;
 
-import javax.annotation.Nonnull;
+public class CmdPermissions {
 
-public class CmdPermissions extends CommandNoppesBase {
+    public static final SimpleCommandExceptionType NO_PERMISSION = new SimpleCommandExceptionType(Component.translatable("availability.permission"));
 
-    public int getRequiredPermissionLevel() {
-        return 4;
+    public static ArgumentBuilder<CommandSourceStack,?> register() {
+        return Commands.literal("permissions")
+                .requires((source) -> true)
+                .executes((context) -> {
+                    if (!CustomNpcsPermissions.hasPermission(context.getSource().getPlayer(), CustomNpcsPermissions.EDIT_PERMISSION)) { throw NO_PERMISSION.create(); }
+                    if (context.getSource().getPlayer() != null) {
+                        NoppesUtilServer.sendOpenGui(context.getSource().getPlayer(), EnumGuiType.PermissionsEdit, null);
+                    }
+                    return 1;
+                });
     }
 
-    @Override
-    public String getDescription() {
-        return "Permission manager";
-    }
-
-    @Nonnull
-    public String getName() {
-        return "permissions";
-    }
-
-    @SubCommand(desc = "Open GUI manager", permission = 4)
-    public void open(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        if (!CustomNpcsPermissions.hasPermission(sender instanceof EntityPlayerMP ? (EntityPlayerMP) sender : null,
-                CustomNpcsPermissions.EDIT_PERMISSION)) { throw new CommandException("availability.permission"); }
-        if (sender instanceof EntityPlayerMP) {
-            NoppesUtilServer.sendOpenGui((EntityPlayerMP) sender, EnumGuiType.PermissionsEdit, null);
-        }
-    }
 }

@@ -1,111 +1,90 @@
 package noppes.npcs.ai.attack;
 
-import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.pathfinding.Path;
-import net.minecraft.pathfinding.PathPoint;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import java.util.EnumSet;
+import java.util.List;
+
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
+import noppes.npcs.constants.EnumSeeTarget;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.common.util.LogWriter;
 
-import java.util.Objects;
+public class EntityAIAvoidTarget extends Goal {
 
-public class EntityAIAvoidTarget extends EntityAICustom {
+   private final EntityNPCInterface npc;
+   private Entity closestLivingEntity;
+   private final float distanceFromEntity;
+   private Path entityPathEntity;
+   private final PathNavigation entityPathNavigate;
 
-	private int[] runPos;
+    public EntityAIAvoidTarget(EntityNPCInterface npc) {
+      this.npc = npc;
+      this.distanceFromEntity = (float)this.npc.stats.aggroRange;
+      this.entityPathNavigate = npc.getNavigation();
+      this.setFlags(EnumSet.of(Flag.MOVE));
+   }
 
-	public EntityAIAvoidTarget(EntityNPCInterface npc) {
-		super(npc);
-	}
+   public boolean canUse() {
+      LivingEntity target = this.npc.getTarget();
+      if (target == null) {
+         return false;
+      } else {
+         Class<? extends Entity> targetEntityClass = target.getClass();
+         if (Player.class.isAssignableFrom(targetEntityClass)) {
+            this.closestLivingEntity = this.npc.level().getNearestPlayer(this.npc, this.distanceFromEntity);
+            if (this.closestLivingEntity == null) {
+               return false;
+            }
+         } else {
+            List<? extends Entity> var1 = this.npc.level().getEntitiesOfClass(targetEntityClass, this.npc.getBoundingBox().inflate(this.distanceFromEntity, 3.0D, this.distanceFromEntity));
+            if (var1.isEmpty()) {
+               return false;
+            }
+            this.closestLivingEntity = var1.get(0);
+         }
 
-	@Override
-	public void updateTask() {
-		super.updateTask();
-		if (this.isFriend || this.npc.ticksExisted % (this.tickRate * 2) > 3) {
-			return;
-		}
-		range = (double) npc.stats.aggroRange / 2;
-		tacticalRange = (int) range;
-		if (range < 4) {
-			range = 4;
-		}
-		isRanged = distance < range;
-		if (!isRanged) {
-			return;
-		}
-		if (this.inMove) {
-			if (this.runPos == null) {
-				this.npc.getNavigator().clearPath();
-			} else {
-				PathPoint point = Objects.requireNonNull(this.npc.getNavigator().getPath()).getFinalPathPoint();
-				if (point == null || point.x < this.runPos[0] - 2 && point.x > this.runPos[0] + 2
-						|| point.y < this.runPos[1] - 2 && point.y > this.runPos[1] + 2
-						|| point.z < this.runPos[2] - 2 && point.z > this.runPos[2] + 2) {
-					this.runPos = null;
-					this.npc.getNavigator().clearPath();
-				}
-			}
-		} else {
-			this.runPos = null;
-			Path path = null;
-			Vec3d vec3d = npc.getPositionEyes(1.0f);
+         if (!npc.canSee(closestLivingEntity) && npc.ais.directLOS != EnumSeeTarget.NONE && npc.ais.directLOS != EnumSeeTarget.BLIND) {
+            return false;
+         }
+         Vec3 var2 = DefaultRandomPos.getPosAway(this.npc, 16, 7, new Vec3(this.closestLivingEntity.getX(), this.closestLivingEntity.getY(), this.closestLivingEntity.getZ()));
+         if (var2 != null && var2 != Vec3.ZERO) {
+            if (this.closestLivingEntity.distanceToSqr(var2.x, var2.y, var2.z) < this.closestLivingEntity.distanceToSqr(this.npc)) {
+               return false;
+            } else {
+               this.entityPathEntity = this.entityPathNavigate.createPath(var2.x, var2.y, var2.z, 0);
+               return this.entityPathEntity != null;
+            }
+         } else {
+            return false;
+         }
+      }
+   }
 
-			final Vec3d vec3d2 = getVec3d();
+   public boolean canContinueToUse() {
+      return !this.entityPathNavigate.isDone();
+   }
 
-			Vec3d vec3d3 = vec3d.addVector(vec3d2.x * tacticalRange, vec3d2.y * tacticalRange,
-					vec3d2.z * tacticalRange);
-			RayTraceResult rayTrace = npc.world.rayTraceBlocks(vec3d, vec3d3, npc.ais.avoidsWater, false, true);
-			if (rayTrace != null) {
-				BlockPos pos = rayTrace.getBlockPos().offset(rayTrace.sideHit);
-				if (npc.getDistance(pos.getX(), pos.getY(), pos.getZ()) >= 4) {
-					path = this.npc.getNavigator().getPathToXYZ(pos.getX(), pos.getY(), pos.getZ());
-				}
-			}
-			if (path == null) {
-				Vec3d vec = RandomPositionGenerator.findRandomTarget(this.npc, this.tacticalRange, 2);
-				if (vec != null) {
-					path = this.npc.getNavigator().getPathToXYZ(vec.x, vec.y, vec.z);
-				}
-			}
-			if (path != null) {
-				this.npc.getNavigator().setPath(path, 1.3d);
-				PathPoint point = path.getFinalPathPoint();
-				if (point != null) {
-					if (this.runPos == null) {
-						this.runPos = new int[] { point.x, point.y, point.z };
-					} else {
-						this.runPos[0] = point.x;
-						this.runPos[1] = point.y;
-						this.runPos[2] = point.z;
-					}
-				}
-			}
-		}
+   public void start() {
+      this.entityPathNavigate.moveTo(this.entityPathEntity, 1.0D);
+   }
 
-	}
+   public void stop() {
+      this.closestLivingEntity = null;
+      this.npc.setTarget(null);
+   }
 
-	private Vec3d getVec3d() {
-		float yaw;
-		double xVal = npc.posX - target.posX, zVal = npc.posZ - target.posZ;
-		double rad = 180.0d / Math.PI;
-		if (xVal == 0.0d) {
-			yaw = (float) (target.posZ > npc.posZ ? 180.0d : 0.0d);
-		} else {
-			final double v = Math.atan(zVal / xVal) * rad;
-			if (xVal <= 0.0d) {
-				yaw = (float) (90.0d + v);
-			} else {
-				yaw = (float) (270.0d + v);
-			}
-		}
-		yaw %= 360.0F;
+   public void tick() {
+      if (this.npc.isInRange(this.closestLivingEntity, 7.0D)) {
+         this.npc.getNavigation().setSpeedModifier(1.2D);
+      } else {
+         this.npc.getNavigation().setSpeedModifier(1.0D);
+      }
 
-		float f = MathHelper.cos(-yaw * 0.017453292F - (float) Math.PI);
-		float f1 = MathHelper.sin(-yaw * 0.017453292F - (float) Math.PI);
-		float f2 = -MathHelper.cos(-0.0f);
-		float f3 = MathHelper.sin(-0.0f);
-        return new Vec3d(f1 * f2, f3, f * f2);
-	}
-
+   }
 }

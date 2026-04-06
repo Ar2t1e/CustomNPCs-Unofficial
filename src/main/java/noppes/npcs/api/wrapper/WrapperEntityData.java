@@ -1,177 +1,121 @@
 package noppes.npcs.api.wrapper;
 
 import java.lang.reflect.Field;
-import java.util.*;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.passive.EntityVillager;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityDispatcher;
-import net.minecraftforge.common.capabilities.CapabilityInject;
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityProvider;
+import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
 import noppes.npcs.api.entity.IEntity;
-import noppes.npcs.api.handler.capability.IWrapperEntityDataHandler;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityProjectile;
-import noppes.npcs.api.mixin.entity.IEntityMixin;
+import noppes.npcs.shared.common.util.LogWriter;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class WrapperEntityData implements ICapabilityProvider {
 
-public class WrapperEntityData implements IWrapperEntityDataHandler, ICapabilityProvider {
+   private static final Field capField;
+   public static Capability<WrapperEntityData> ENTITYDATA_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
+   private final LazyOptional<WrapperEntityData> instance = LazyOptional.of(() -> this);
+   public IEntity<?> base;
+   private static final WrapperEntityData backup = new WrapperEntityData(null);
+   private static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "entitydata");
 
-	@CapabilityInject(IWrapperEntityDataHandler.class)
-	public static Capability<IWrapperEntityDataHandler> WRAPPER_ENTITY_DATA_CAPABILITY = null;
-	private static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "entitydata");
+   public WrapperEntityData(IEntity<?> base) {
+      this.base = base;
+   }
 
-	public static IEntity<?> get(Entity entity) {
-		if (entity == null || entity.world == null) {
-			return null;
-		}
-		WrapperEntityData data = (WrapperEntityData) entity.getCapability(WrapperEntityData.WRAPPER_ENTITY_DATA_CAPABILITY, null);
-		if (entity instanceof EntityPlayer) {
-			String k = (entity.world == null || entity.world.isRemote ? "client_" : "server_") + entity.getUniqueID();
-			if (data != null && !PlayerWrapper.map.containsKey(k)) {
-				PlayerWrapper.map.put(k, data);
-			}
-			if (PlayerWrapper.map.get(k) != null && !PlayerWrapper.map.get(k).equals(data)) {
-				WrapperEntityData.setTempData(PlayerWrapper.map.get(k), data);
-				PlayerWrapper.map.put(k, data);
-			}
-		}
-		if (data == null) {
-			LogWriter.warn("Unable to get EntityData for " + entity);
-			WrapperEntityData ret = WrapperEntityData.getData(entity);
-			CapabilityDispatcher capabilities = ((IEntityMixin) entity).npcs$getCapabilities();
-			if (capabilities != null) {
-				// "capabilities" does not want to be converted to the created mixin interface under any circumstances
-				Field fieldCaps = null;
-				for (Field f : capabilities.getClass().getDeclaredFields()) {
-					if (f.getName().equals("caps")) {
-						fieldCaps = f;
-						break;
-					}
-				}
-				if (fieldCaps != null) {
-					try {
-						fieldCaps.setAccessible(true);
-						ICapabilityProvider[] caps = (ICapabilityProvider[]) fieldCaps.get(capabilities);
-						if (caps != null) {
-							List<ICapabilityProvider> list = new ArrayList<>();
-							Collections.addAll(list, caps);
-							list.add(ret);
-							fieldCaps.set(capabilities, list.toArray(new ICapabilityProvider[0]));
-						}
-					}
-					catch (Exception e) { LogWriter.error(e); }
-				}
-			} else {
-				Map<ResourceLocation, ICapabilityProvider> m = new HashMap<>();
-				m.put(WrapperEntityData.key, ret);
-				((IEntityMixin) entity).npcs$setCapabilities(new CapabilityDispatcher(m, null));
-			}
-			return ret.base;
-		}
-		return data.base;
-	}
+   public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> capability, Direction facing) {
+      return capability == ENTITYDATA_CAPABILITY ? this.instance.cast() : LazyOptional.empty();
+   }
 
-	public static WrapperEntityData getData(Entity entity) {
-		if (entity == null) {
-			return null;
-		}
-		if (entity instanceof EntityPlayer) {
-			return new WrapperEntityData(new PlayerWrapper<EntityPlayer>((EntityPlayer) entity));
-		}
-		if (PixelmonHelper.isPixelmon(entity)) {
-			return new WrapperEntityData(new PixelmonWrapper<EntityTameable>((EntityTameable) entity));
-		}
-		if (entity instanceof EntityVillager) {
-			return new WrapperEntityData(new VillagerWrapper<EntityVillager>((EntityVillager) entity));
-		}
-		if (entity instanceof EntityAnimal) {
-			return new WrapperEntityData(new AnimalWrapper<EntityAnimal>((EntityAnimal) entity));
-		}
-		if (entity instanceof EntityMob) {
-			return new WrapperEntityData(new MonsterWrapper<EntityMob>((EntityMob) entity));
-		}
-		if (entity instanceof EntityLiving) {
-			return new WrapperEntityData(new EntityLivingWrapper<EntityLiving>((EntityLiving) entity));
-		}
-		if (entity instanceof EntityLivingBase) {
-			return new WrapperEntityData(new EntityLivingBaseWrapper<EntityLivingBase>((EntityLivingBase) entity));
-		}
-		if (entity instanceof EntityItem) {
-			return new WrapperEntityData(new EntityItemWrapper<EntityItem>((EntityItem) entity));
-		}
-		if (entity instanceof EntityProjectile) {
-			return new WrapperEntityData(new ProjectileWrapper<EntityProjectile>((EntityProjectile) entity));
-		}
-		if (entity instanceof EntityThrowable) {
-			return new WrapperEntityData(new ThrowableWrapper<EntityThrowable>((EntityThrowable) entity));
-		}
-		if (entity instanceof EntityArrow) {
-			return new WrapperEntityData(new ArrowWrapper<EntityArrow>((EntityArrow) entity));
-		}
-		return new WrapperEntityData(new EntityWrapper<Entity>(entity));
-	}
+   public static IEntity<?> get(Entity entity) {
+      if (entity == null || entity.position() == Vec3.ZERO) { return null; }
+      try {
+         CapabilityDispatcher dispatcher = (CapabilityDispatcher) capField.get(entity);
+         if (dispatcher == null) {
+            LogWriter.warn("Unable to get EntityData for " + entity);
+            return getData(entity).base;
+         }
+         else {
+            if (entity instanceof Player && entity.level().isClientSide() && PlayerWrapper.clientWrapperPlayerData != null) {
+               return PlayerWrapper.clientWrapperPlayerData.base;
+            }
+            WrapperEntityData data = dispatcher.getCapability(ENTITYDATA_CAPABILITY, null).orElse(backup);
+            if (data == backup) {
+               if (!entity.level().isClientSide()) { LogWriter.warn("Unable to get EntityData for " + entity); }
+               data = getData(entity);
+            }
+            if (data != null && entity instanceof Player  && entity.level().isClientSide() && PlayerWrapper.clientWrapperPlayerData == null) {
+               PlayerWrapper.clientWrapperPlayerData = data;
+            }
+            return data == null ? null : data.base;
+         }
+      } catch (IllegalAccessException e) {
+         LogWriter.error(e);
+      }
+      return null;
+   }
 
-	public static void register(AttachCapabilitiesEvent<Entity> event) {
-		if (CustomNpcs.EnableScripting) { event.addCapability(WrapperEntityData.key, getData(event.getObject())); }
-	}
+   public static void register(AttachCapabilitiesEvent<Entity> event) {
+      event.addCapability(key, getData(event.getObject()));
+   }
 
-	private static void setTempData(WrapperEntityData oldData, WrapperEntityData newData) {
-		if (oldData == null || newData == null || oldData.base == null || newData.base == null) {
-			return;
-		}
-        oldData.base.getTempdata().getKeys();
-        for (String key : oldData.base.getTempdata().getKeys()) {
-            try { newData.base.getTempdata().put(key, oldData.base.getTempdata().get(key)); }
-			catch (Exception e) { LogWriter.error(e); }
-        }
-    }
+   private static WrapperEntityData getData(Entity entity) {
+      if (entity != null) {
+         if (entity instanceof Player) {
+            return new WrapperEntityData(new PlayerWrapper<>((Player)entity));
+         } else if (PixelmonHelper.isPixelmon(entity)) {
+            return new WrapperEntityData(new PixelmonWrapper<>((TamableAnimal) entity));
+         } else if (entity instanceof Villager) {
+            return new WrapperEntityData(new VillagerWrapper<>((Villager)entity));
+         } else if (entity instanceof Animal) {
+            return new WrapperEntityData(new AnimalWrapper<>((Animal)entity));
+         } else if (entity instanceof Monster) {
+            return new WrapperEntityData(new MonsterWrapper<>((Monster)entity));
+         } else if (entity instanceof Mob) {
+            return new WrapperEntityData(new EntityLivingWrapper<>((Mob)entity));
+         } else if (entity instanceof LivingEntity) {
+            return new WrapperEntityData(new EntityLivingBaseWrapper<>((LivingEntity)entity));
+         } else if (entity instanceof ItemEntity) {
+            return new WrapperEntityData(new EntityItemWrapper<>((ItemEntity)entity));
+         } else if (entity instanceof EntityProjectile) {
+            return new WrapperEntityData(new ProjectileWrapper<>((EntityProjectile)entity));
+         } else if (entity instanceof ThrowableProjectile) {
+            return new WrapperEntityData(new ThrowableWrapper<>((ThrowableProjectile)entity));
+         } else {
+            return entity instanceof AbstractArrow ? new WrapperEntityData(new ArrowWrapper<>((AbstractArrow)entity)) : new WrapperEntityData(new EntityWrapper<>(entity));
+         }
+      }
+      else { return null; }
+   }
 
-	public IEntity<?> base;
-
-	public WrapperEntityData() {
-	}
-
-	public WrapperEntityData(IEntity<?> base) {
-		this.base = base;
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> T getCapability(@Nonnull Capability<T> capability, EnumFacing facing) {
-		if (this.hasCapability(capability, facing)) {
-			return (T) this;
-		}
-		return null;
-	}
-
-	@Override
-	public NBTTagCompound getNBT() {
-		return new NBTTagCompound();
-	}
-
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) {
-		return capability == WrapperEntityData.WRAPPER_ENTITY_DATA_CAPABILITY;
-	}
-
-	@Override
-	public void setNBT(NBTTagCompound compound) {
-	}
+   static {
+      Field f = null;
+      try {
+         f = CapabilityProvider.class.getDeclaredField("capabilities");
+         f.trySetAccessible();
+      }
+      catch (NoSuchFieldException e) { LogWriter.error(e); }
+      capField = f;
+   }
 
 }

@@ -1,0 +1,80 @@
+{
+	"name": "part.legs",
+	"render_type": "bedrock",
+	"hidden_parts": ["right_leg", "left_leg"],
+	"render_data" : {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.unknown",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 1,
+					"visible_bounds_height": 1.5,
+					"visible_bounds_offset": [0, 0.25, 0]
+				},
+				"bones": [
+					{
+						"name": "animal_body",
+						"pivot": [0, 17, 0],
+						"cubes": [
+							{"origin": [-5, 11, 1], "size": [10, 10, 22], "inflate": 0.01, "uv": [0, 32]}
+						]
+					},
+					{
+						"name": "right_hind_leg",
+						"parent": "animal_body",
+						"pivot": [-3, 14, 21],
+						"cubes": [
+							{"origin": [-5, 0, 19], "size": [4, 11, 4], "uv": [48, 21]}
+						]
+					},
+					{
+						"name": "right_front_leg",
+						"parent": "animal_body",
+						"pivot": [3, 14, 3],
+						"cubes": [
+							{"origin": [-5, 0, 1], "size": [4, 11, 4], "uv": [48, 21]}
+						]
+					},
+					{
+						"name": "left_hind_leg",
+						"parent": "animal_body",
+						"pivot": [3, 14, 21],
+						"cubes": [
+							{"origin": [1, 0, 19], "size": [4, 11, 4], "uv": [48, 21]}
+						]
+					},
+					{
+						"name": "left_front_leg",
+						"parent": "animal_body",
+						"pivot": [-3, 14, 3],
+						"cubes": [
+							{"origin": [1, 0, 1], "size": [4, 11, 4], "uv": [48, 21]}
+						]
+					},
+					{
+						"name": "tail",
+						"parent": "animal_body",
+						"pivot": [0, 20, 22],
+						"rotation": [45, 0, 0],
+						"cubes": [
+							{"origin": [-1.5, 5, 19], "size": [3, 14, 4], "uv": [42, 36]}
+						]
+					}
+				]
+			}
+		]
+	},
+	"texture": "minecraft:textures/entity/horse/horse_white.png",
+	"body_part": "legs",
+	"menu": "part.legs",
+	"animation_inherit" : "quadruped",
+	"preview_rotation": 45,
+	"translate": [0, 12, -1],
+	"scale": [0.79, 0.76, 0.79],
+	"rotate_offset": [0, -12, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

@@ -1,83 +1,53 @@
 package noppes.npcs.ai.target;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.player.EntityPlayer;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.constants.AiMutex;
+import java.util.EnumSet;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.player.Player;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.Util;
 
-public class EntityAIWatchClosest extends EntityAIBase {
+public class EntityAIWatchClosest extends Goal {
 
-	private final float chance;
-	protected Entity closestEntity;
-	private int lookTime;
-	private final float maxDistance;
-	private final EntityNPCInterface npc;
-	private final Class<?> watchedClass;
+   protected final Class<? extends LivingEntity> watchedClass;
+   protected final TargetingConditions predicate;
+   protected final EntityNPCInterface npc;
+   protected final float maxDistance;
+   protected Entity closestEntity;
+   protected int lookTime;
 
-	public EntityAIWatchClosest(EntityNPCInterface npcIn, Class<?> watchedClassIn, float maxDistanceIn) {
-		npc = npcIn;
-		watchedClass = watchedClassIn;
-		maxDistance = maxDistanceIn;
-		chance = 0.002f;
-		setMutexBits(AiMutex.LOOK);
-	}
+   public EntityAIWatchClosest(EntityNPCInterface npcIn, Class<? extends LivingEntity> limbSwingAmountClass, float distance) {
+      npc = npcIn;
+      watchedClass = limbSwingAmountClass;
+      maxDistance = distance;
+      setFlags(EnumSet.of(Flag.LOOK));
+      predicate = TargetingConditions.forNonCombat().range(distance);
+   }
 
-	@Override
-	public void resetTask() {
-		closestEntity = null;
-	}
+   public boolean canUse() {
+       if (npc.getRandom().nextFloat() < 0.002F && !npc.isInteracting()) {
+         if (npc.getTarget() != null) { closestEntity = npc.getTarget(); }
+         if (watchedClass == Player.class) { closestEntity = npc.level().getNearestPlayer(npc, maxDistance); }
+         else { closestEntity = npc.level().getNearestEntity(watchedClass, predicate, npc, npc.getX(), npc.getEyeY(), npc.getZ(), npc.getBoundingBox().inflate(maxDistance, 3.0D, maxDistance)); }
+      }
+      return closestEntity != null;
+   }
 
-	@Override
-	public boolean shouldContinueExecuting() {
-		return !npc.isInteracting() && !npc.isAttacking() && closestEntity.isEntityAlive()
-				&& npc.isEntityAlive() && npc.isInRange(closestEntity, maxDistance)
-				&& lookTime > 0;
-	}
+   public boolean canContinueToUse() {
+      if (!npc.isInteracting() && !npc.isAttacking() && closestEntity.isAlive() && npc.isAlive()) {
+         return npc.isInRange(closestEntity, maxDistance) && lookTime > 0;
+      }
+      return false;
+   }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
-		if (npc.getRNG().nextFloat() >= chance || npc.isInteracting()) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		if (npc.getAttackTarget() != null) { closestEntity = npc.getAttackTarget(); }
-		else {
-			if (npc.isMoving() || npc.ais.getStandingType() != 0 && npc.ais.getStandingType() != 2) {
-				CustomNpcs.debugData.end(npc);
-				return false;
-			}
-			if (watchedClass == EntityPlayer.class) { closestEntity = npc.world.getClosestPlayerToEntity(npc, maxDistance); }
-			else { closestEntity = npc.world.findNearestEntityWithinAABB((Class<Entity>) watchedClass, npc.getEntityBoundingBox().grow(maxDistance, 3.0, maxDistance), npc); }
-		}
-		if (closestEntity != null) {
-			if (closestEntity instanceof EntityLivingBase) {
-				CustomNpcs.debugData.end(npc);
-				return npc.canSee(closestEntity);
-			}
-			CustomNpcs.debugData.end(npc);
-			return npc.canSee(closestEntity);
-		}
-		CustomNpcs.debugData.end(npc);
-		return false;
-	}
+   public void start() { lookTime = 60 + npc.getRandom().nextInt(60); }
 
-	@Override
-	public void startExecuting() {
-		lookTime = 60 + npc.getRNG().nextInt(60);
-	}
+   public void stop() { closestEntity = null; }
 
-	@Override
-	public void updateTask() {
-		CustomNpcs.debugData.start(npc);
-		npc.getLookHelper().setLookPosition(closestEntity.posX, closestEntity.posY + closestEntity.getEyeHeight(), closestEntity.posZ, 10.0f, npc.getVerticalFaceSpeed());
-		--lookTime;
-		CustomNpcs.debugData.end(npc);
-	}
+   public void tick() {
+      npc.getLookControl().setLookAt(closestEntity.getX(), closestEntity.getY() + (double) closestEntity.getEyeHeight(), closestEntity.getZ(), 10.0F, (float) npc.getMaxHeadXRot());
+      --lookTime;
+   }
 
 }

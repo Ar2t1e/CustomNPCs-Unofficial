@@ -1,0 +1,41 @@
+{
+	"name": "Cow Horns",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"render_data" : {
+		"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.steve",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "CowHorns",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-2, 32, -3], "size": [1, 2, 1], "pivot": [0, 0, 0], "rotation": [0, 0, 8], "uv": [8, 3]},
+						{"origin": [15, 30, -3], "size": [1, 2, 1], "pivot": [0, 0, 0], "rotation": [0, 0, -22], "uv": [8, 3]},
+						{"origin": [-16, 30, -3], "size": [1, 2, 1], "pivot": [0, 0, 0], "rotation": [0, 0, 22], "uv": [8, 3]},
+						{"origin": [1, 32, -3], "size": [1, 2, 1], "pivot": [0, 0, 0], "rotation": [0, 0, -8], "uv": [8, 3]}
+					]
+				}
+			]
+		}
+	]
+	},
+	"texture": "moreplayermodels:textures/entity/white_noise.png",
+	"body_part": "head",
+	"menu": "gui.headwear",
+	"preview_rotation": 315,
+	"translate": [0, 12, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, -12, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "DaniUwU"
+}

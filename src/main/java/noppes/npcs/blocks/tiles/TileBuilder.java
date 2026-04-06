@@ -1,244 +1,224 @@
 package noppes.npcs.blocks.tiles;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.ITileEntityProvider;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.NBTTags;
+import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.BlockData;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.JobBuilder;
 import noppes.npcs.schematics.SchematicWrapper;
-import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 
-public class TileBuilder extends TileEntity implements ITickable {
+public class TileBuilder extends BlockEntity {
 
-	public static List<BlockPos> DrawPoses = new ArrayList<>();
+   protected final Stack<Integer> positions = new Stack<>();
+   protected final Stack<Integer> positionsSecond = new Stack<>();
+   protected SchematicWrapper schematic = null;
+   protected boolean show = false;
+   protected int ticks = 20;
+   public Availability availability = new Availability();
+   public int rotation = 0;
+   public int yOffset = 0;
+   public boolean enabled = false;
+   public boolean started = false;
+   public boolean finished = false;
 
-	public static boolean has(BlockPos pos) {
-		if (pos == null) {
-			return false;
-		}
-		for (BlockPos p : TileBuilder.DrawPoses) {
-			if (p != null && p.equals(pos)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	public static void SetDrawPos(BlockPos pos) {
-		if (!TileBuilder.has(pos)) {
-			TileBuilder.DrawPoses.add(pos);
-		}
-	}
-	public Availability availability;
-	public boolean enabled;
-	public boolean finished;
-	private Stack<Integer> positions;
-	private Stack<Integer> positionsSecond;
-	public int rotation;
-	private SchematicWrapper schematic;
-	public boolean started;
+   public TileBuilder(BlockPos pos, BlockState state) {
+      super(CustomBlocks.tile_builder, pos, state);
+   }
 
-	private int ticks;
+   @Override
+   public void load(@Nonnull CompoundTag compound) {
+      super.load(compound);
+      positions.clear();
+      positions.addAll(NBTTags.getIntegerList(compound.getList("Positions", 10)));
+      positionsSecond.clear();
+      positionsSecond.addAll(NBTTags.getIntegerList(compound.getList("PositionsSecond", 10)));
+      loadPartNBT(compound);
+   }
 
-	public int yOffset;
+   public void loadPartNBT(CompoundTag compound) {
+      if (compound.contains("SchematicName")) {
+         schematic = SchematicController.Instance.load(compound.getString("SchematicName"));
+      }
+      rotation = compound.getInt("Rotation");
+      yOffset = compound.getInt("YOffset");
+      enabled = compound.getBoolean("Enabled");
+      started = compound.getBoolean("Started");
+      finished = compound.getBoolean("Finished");
+      show = compound.getBoolean("IsShow");
+      availability.load(compound.getCompound("Availability"));
+      if (show && schematic != null) { ClientEventHandler.addShowThis(this); }
+   }
 
-	public TileBuilder() {
-		this.schematic = null;
-		this.rotation = 0;
-		this.yOffset = 0;
-		this.enabled = false;
-		this.started = false;
-		this.finished = false;
-		this.availability = new Availability();
-		this.positions = new Stack<>();
-		this.positionsSecond = new Stack<>();
-		this.ticks = 20;
-	}
+   @Override
+   public void saveAdditional(@Nonnull CompoundTag compound) {
+      super.saveAdditional(compound);
+      compound.put("Positions", NBTTags.nbtIntegerCollection(new ArrayList<>(positions)));
+      compound.put("PositionsSecond", NBTTags.nbtIntegerCollection(new ArrayList<>(positionsSecond)));
+      savePartNBT(compound);
+   }
 
-	public Stack<BlockData> getBlock() {
-		if (!this.enabled || this.finished || !this.hasSchematic()) {
-			return null;
-		}
-		boolean bo = this.positions.isEmpty();
-		Stack<BlockData> list = new Stack<>();
-		int size = this.schematic.schema.getWidth() * this.schematic.schema.getLength() / 4;
-		if (size > 30) {
-			size = 30;
-		}
-		for (int i = 0; i < size; ++i) {
-			if ((this.positions.isEmpty() && !bo) || (this.positionsSecond.isEmpty() && bo)) {
-				return list;
-			}
-			int pos = bo ? this.positionsSecond.pop() : (this.positions.pop());
-			if (pos < this.schematic.size) {
-				int x = pos % this.schematic.schema.getWidth();
-				int z = (pos - x) / this.schematic.schema.getWidth() % this.schematic.schema.getLength();
-				int y = ((pos - x) / this.schematic.schema.getWidth() - z) / this.schematic.schema.getLength();
-				IBlockState state = this.schematic.schema.getBlockState(x, y, z);
-				if (!state.isFullBlock() && !bo && state.getBlock() != Blocks.AIR) {
-					this.positionsSecond.add(0, pos);
-				} else {
-					BlockPos blockPos = this.getPos().add(1, this.yOffset, 1).add(this.schematic.rotatePos(x, y, z, this.rotation));
-					IBlockState original = this.world.getBlockState(blockPos);
-					if (Block.getStateId(state) != Block.getStateId(original)) {
-						state = SchematicWrapper.rotationState(state, this.rotation);
-						NBTTagCompound tile = null;
-						if (state.getBlock() instanceof ITileEntityProvider) {
-							tile = this.schematic.getTileEntity(x, y, z, blockPos);
-						}
-						list.add(0, new BlockData(blockPos, state, tile));
-					}
-				}
-			}
-		}
-		return list;
-	}
+   public CompoundTag savePartNBT(CompoundTag compound) {
+      if (schematic != null) { compound.putString("SchematicName", schematic.schema.getName()); }
+      compound.putInt("Rotation", rotation);
+      compound.putInt("YOffset", yOffset);
+      compound.putBoolean("Enabled", enabled);
+      compound.putBoolean("Started", started);
+      compound.putBoolean("Finished", finished);
+      compound.putBoolean("IsShow", show);
+      compound.put("Availability", availability.save(new CompoundTag()));
+      return compound;
+   }
 
-	public SchematicWrapper getSchematic() {
-		return this.schematic;
-	}
+   @Override
+   public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) { handleUpdateTag(Objects.requireNonNull(pkt.getTag())); }
 
-	public boolean hasSchematic() {
-		return this.schematic != null;
-	}
+   @Override
+   public void handleUpdateTag(CompoundTag compound) { loadPartNBT(compound); }
 
-	public void readPartNBT(NBTTagCompound compound) {
-		this.rotation = compound.getInteger("Rotation");
-		this.yOffset = compound.getInteger("YOffset");
-		this.enabled = compound.getBoolean("Enabled");
-		this.started = compound.getBoolean("Started");
-		this.finished = compound.getBoolean("Finished");
-		this.availability.load(compound.getCompoundTag("Availability"));
-	}
+   @Override
+   public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
 
-	@SideOnly(Side.CLIENT)
-	public void setDrawSchematic(SchematicWrapper schematics) {
-		this.schematic = schematics;
-	}
+   public @Nonnull CompoundTag getUpdateTag() { return savePartNBT(new CompoundTag()); }
 
-	public void setSchematic(SchematicWrapper schematics) {
-		this.schematic = schematics;
-		if (schematics == null) {
-			this.positions.clear();
-			this.positionsSecond.clear();
-			return;
-		}
-		Stack<Integer> positions = new Stack<>();
-		for (int y = 0; y < schematics.schema.getHeight(); ++y) {
-			for (int z = 0; z < schematics.schema.getLength() / 2; ++z) {
-				for (int x = 0; x < schematics.schema.getWidth() / 2; ++x) {
-					positions.add(0, this.xyzToIndex(x, y, z));
-				}
-			}
-			for (int z = 0; z < schematics.schema.getLength() / 2; ++z) {
-				for (int x = schematics.schema.getWidth() / 2; x < schematics.schema.getWidth(); ++x) {
-					positions.add(0, this.xyzToIndex(x, y, z));
-				}
-			}
-			for (int z = schematics.schema.getLength() / 2; z < schematics.schema.getLength(); ++z) {
-				for (int x = 0; x < schematics.schema.getWidth() / 2; ++x) {
-					positions.add(0, this.xyzToIndex(x, y, z));
-				}
-			}
-			for (int z = schematics.schema.getLength() / 2; z < schematics.schema.getLength(); ++z) {
-				for (int x = schematics.schema.getWidth() / 2; x < schematics.schema.getWidth(); ++x) {
-					positions.add(0, this.xyzToIndex(x, y, z));
-				}
-			}
-		}
-		this.positions = positions;
-		this.positionsSecond.clear();
-	}
+   @OnlyIn(Dist.CLIENT)
+   public void setDrawSchematic(SchematicWrapper schematics, boolean showIn) {
+      schematic = schematics;
+      show = showIn;
+      if (show && schematic != null) { ClientEventHandler.addShowThis(this); }
+   }
 
-	public void update() {
-		if (this.world.isRemote || !this.hasSchematic() || this.finished) {
-			return;
-		}
-		--this.ticks;
-		if (this.ticks > 0) {
-			return;
-		}
-		this.ticks = 200;
-		if (this.positions.isEmpty() && this.positionsSecond.isEmpty()) {
-			this.finished = true;
-			return;
-		}
-		if (!this.started) {
-			for (EntityPlayer player : Util.instance.getEntitiesWithinDist(EntityPlayer.class, world, pos, 10.0d)) {
-				if (this.availability.isAvailable(player)) {
-					this.started = true;
-					break;
-				}
-			}
-			if (!this.started) {
-				return;
-			}
-		}
-		for (EntityNPCInterface npc : Util.instance.getEntitiesWithinDist(EntityNPCInterface.class, world, getPos(), 32.0d)) {
-			if (npc.advanced.jobInterface instanceof JobBuilder) {
-				JobBuilder job = (JobBuilder) npc.advanced.jobInterface;
-				if (job.build != null) {
-					continue;
-				}
-				job.build = this;
-			}
-		}
-	}
+   public void setSchematic(SchematicWrapper schematics) {
+      schematic = schematics;
+      if (schematics == null) {
+         positions.clear();
+         positionsSecond.clear();
+      }
+      else {
+         positions.clear();
+         for(int y = 0; y < schematics.schema.getHeight(); ++y) {
+            int z;
+            int x;
+            for(z = 0; z < schematics.schema.getLength() / 2; ++z) {
+               for(x = 0; x < schematics.schema.getWidth() / 2; ++x) { positions.add(0, xyzToIndex(x, y, z)); }
+            }
+            for(z = 0; z < schematics.schema.getLength() / 2; ++z) {
+               for(x = schematics.schema.getWidth() / 2; x < schematics.schema.getWidth(); ++x) { positions.add(0, xyzToIndex(x, y, z)); }
+            }
+            for(z = schematics.schema.getLength() / 2; z < schematics.schema.getLength(); ++z) {
+               for(x = 0; x < schematics.schema.getWidth() / 2; ++x) { positions.add(0, xyzToIndex(x, y, z)); }
+            }
+            for(z = schematics.schema.getLength() / 2; z < schematics.schema.getLength(); ++z) {
+               for(x = schematics.schema.getWidth() / 2; x < schematics.schema.getWidth(); ++x) { positions.add(0, xyzToIndex(x, y, z)); }
+            }
+         }
+         positionsSecond.clear();
+      }
+   }
 
-	public NBTTagCompound writePartNBT(NBTTagCompound compound) {
-		compound.setInteger("Rotation", this.rotation);
-		compound.setInteger("YOffset", this.yOffset);
-		compound.setBoolean("Enabled", this.enabled);
-		compound.setBoolean("Started", this.started);
-		compound.setBoolean("Finished", this.finished);
-		compound.setTag("Availability", this.availability.save(new NBTTagCompound()));
-		return compound;
-	}
+   public int xyzToIndex(int x, int y, int z) {
+      return (y * schematic.schema.getLength() + z) * schematic.schema.getWidth() + x;
+   }
 
-	public void readFromNBT(@Nonnull NBTTagCompound compound) {
-		super.readFromNBT(compound);
-		if (compound.hasKey("SchematicName")) {
-			this.schematic = SchematicController.Instance.load(compound.getString("SchematicName"));
-		}
-		Stack<Integer> positions = new Stack<>();
-		positions.addAll(NBTTags.getIntegerList(compound.getTagList("Positions", 10)));
-		this.positions = positions;
-		positions = new Stack<>();
-		positions.addAll(NBTTags.getIntegerList(compound.getTagList("PositionsSecond", 10)));
-		this.positionsSecond = positions;
-		this.readPartNBT(compound);
-	}
+   public SchematicWrapper getSchematic() { return schematic; }
 
-	public @Nonnull NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-		super.writeToNBT(compound);
-		if (this.schematic != null) {
-			compound.setString("SchematicName", this.schematic.schema.getName());
-		}
-		compound.setTag("Positions", NBTTags.nbtIntegerCollection(new ArrayList<>(this.positions)));
-		compound.setTag("PositionsSecond", NBTTags.nbtIntegerCollection(new ArrayList<>(this.positionsSecond)));
-		this.writePartNBT(compound);
-		return compound;
-	}
+   public boolean hasSchematic() { return schematic != null; }
 
-	public int xyzToIndex(int x, int y, int z) {
-		return (y * this.schematic.schema.getLength() + z) * this.schematic.schema.getWidth() + x;
-	}
+   public static void tick(Level level, BlockPos pos, BlockState ignoredState, TileBuilder tile) {
+      if (!level.isClientSide && tile.hasSchematic() && !tile.finished) {
+         --tile.ticks;
+         if (tile.ticks <= 0) {
+            tile.ticks = 200;
+            if (tile.positions.isEmpty() && tile.positionsSecond.isEmpty()) { tile.finished = true; }
+            else {
+               if (!tile.started) {
+                  for (Player player : tile.getPlayerList()) {
+                     if (tile.availability.isAvailable(player)) {
+                        tile.started = true;
+                        break;
+                     }
+                  }
+                  if (!tile.started) { return; }
+               }
+               List<EntityNPCInterface> list = level.getEntitiesOfClass(EntityNPCInterface.class, (new AABB(pos, pos)).inflate(32.0D, 32.0D, 32.0D));
+               for (EntityNPCInterface npc : list) {
+                  if (npc.job.getType() == 10) {
+                     JobBuilder job = (JobBuilder) npc.job;
+                     if (job.build == null) { job.build = tile; }
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   private List<Player> getPlayerList() {
+      if (level == null) { return Collections.emptyList(); }
+      return level.getEntitiesOfClass(Player.class, (new AABB(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), worldPosition.getX() + 1, worldPosition.getY() + 1, worldPosition.getZ() + 1)).inflate(10.0D, 10.0D, 10.0D));
+   }
+
+   public Stack<BlockData> getBlock() {
+      if (enabled && !finished && hasSchematic()) {
+         boolean bo = positions.isEmpty();
+         Stack<BlockData> list = new Stack<>();
+         int size = schematic.schema.getWidth() * schematic.schema.getLength() / 4;
+         if (size > 30) { size = 30; }
+         for(int i = 0; i < size; ++i) {
+            if (positions.isEmpty() && !bo || positionsSecond.isEmpty() && bo) { return list; }
+            int pos = bo ? positionsSecond.pop() : positions.pop();
+            if (pos < schematic.size) {
+               int x = pos % schematic.schema.getWidth();
+               int z = (pos - x) / schematic.schema.getWidth() % schematic.schema.getLength();
+               int y = ((pos - x) / schematic.schema.getWidth() - z) / schematic.schema.getLength();
+               BlockState state = schematic.schema.getBlockState(x, y, z);
+               if (!state.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) && !bo && state.getBlock() != Blocks.AIR) {
+                  positionsSecond.add(0, pos);
+               }
+               else {
+                  BlockPos blockPos = getBlockPos().offset(1, yOffset, 1).offset(schematic.rotatePos(x, y, z, rotation));
+                  if (level != null) {
+                     BlockState original = level.getBlockState(blockPos);
+                     if (Block.getId(state) != Block.getId(original)) {
+                        state = SchematicWrapper.rotationState(state, rotation);
+                        CompoundTag tile = null;
+                        if (state.getBlock() instanceof EntityBlock) { tile = schematic.getBlockEntity(x, y, z, blockPos); }
+                        list.add(0, new BlockData(blockPos, state, tile));
+                     }
+                  }
+               }
+            }
+         }
+         return list;
+      }
+      return null;
+   }
+
+   @Override
+   public @Nonnull AABB getRenderBoundingBox() {
+      return schematic == null ? super.getRenderBoundingBox() : new AABB(worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), worldPosition.getX() + schematic.schema.getWidth() + 1, worldPosition.getY() + schematic.schema.getHeight() + 1, worldPosition.getZ() + schematic.schema.getLength() + 1);
+   }
+
+   public boolean getShow() { return show; }
 
 }

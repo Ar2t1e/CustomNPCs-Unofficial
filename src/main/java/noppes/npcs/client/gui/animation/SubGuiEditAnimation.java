@@ -1,2949 +1,2798 @@
 package noppes.npcs.client.gui.animation;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.constants.AnimationKind;
+import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.client.ClientEventHandler;
+import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.SubGuiEditText;
+import noppes.npcs.client.gui.select.SubGuiColorSelector;
+import noppes.npcs.client.gui.select.SubGuiSelectItemStack;
+import noppes.npcs.client.gui.select.SubGuiSoundSelection;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
+import noppes.npcs.client.model.ModelNpcAlt;
+import noppes.npcs.client.model.animation.*;
+import noppes.npcs.controllers.AnimationController;
+import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketAnimationChange;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.components.custom.CustomGuiEntityDisplay;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ISliderListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.Util;
+import noppes.npcs.util.ValueUtil;
+import org.joml.Matrix4f;
+
+import javax.annotation.Nonnull;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import net.minecraft.client.renderer.*;
-import net.minecraft.util.math.Vec3d;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.client.model.animation.*;
-import noppes.npcs.constants.EnumAnimationStages;
-import noppes.npcs.util.ValueUtil;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
+public class SubGuiEditAnimation extends GuiNPCInterface
+        implements ISliderListener, ICustomScrollListener, ITextfieldListener {
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockAir;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.util.ITooltipFlag.TooltipFlags;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.constants.AnimationKind;
-import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.gui.select.SubGuiColorSelector;
-import noppes.npcs.client.gui.SubGuiEditText;
-import noppes.npcs.client.gui.SubGuiSelectItemStack;
-import noppes.npcs.client.gui.select.SubGuiSoundSelection;
-import noppes.npcs.client.model.ModelNpcAlt;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.controllers.AnimationController;
-import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.Util;
+    // data
+    public static int meshType = 1;
+    public static boolean showHitBox = true;
+    public AnimationConfig anim;
+    public AnimationFrameConfig frame;
+    public PartConfig part;
+    public AddedPartConfig addedPartConfig;
+    public AnimationDamageHitbox hitbox;
+    protected GuiCustomScrollNop scrollParts;
+    protected GuiCustomScrollNop scrollHitboxes;
+    protected int blockType;
+    protected int blockSize;
+    protected int toolType;
+    protected int waitKey;
+    protected int waitKeyID;
+    protected boolean onlyCurrentPart;
+    protected boolean hovered;
+    protected boolean hasExtend;
+    protected boolean hoverRight;
+    protected boolean hoverLeft;
+    protected boolean isHitbox = false;
+    protected boolean isMotion = false;
+    protected boolean isChanged = true;
+    protected final EntityNPCInterface npcAnim;
+    protected final EntityNPCInterface npcPart;
+    protected final Vec3 basePos;
+    protected final Object[] blockNames;
+    protected final Object[] blockSizes;
+    // display
+    protected int workU;
+    protected int workV;
+    protected int workS;
+    protected int winU;
+    protected int winV;
+    protected int winW;
+    protected int winH;
+    protected int mousePressId = -1;
+    protected double mousePressX = 0.0d;
+    protected double mousePressY = 0.0d;
+    protected final float[] dispRot = new float[] { 45.0f, 345.0f, 345.0f };
+    protected final float[] dispPos = new float[] { 0.0f, 0.0f, 0.0f };
+    protected float dispScale = 1.0f;
+    protected float winScale;
+    protected float offsetY;
+    protected final Map<Component, PartConfig> dataParts = new LinkedHashMap<>();
+    protected final Map<Component, AnimationDamageHitbox> dataHitboxes = new LinkedHashMap<>();
+    protected final List<Entity> environmentEntitys= new ArrayList<>();
+    protected final Map<BlockPos, BlockState> environmentStates = new HashMap<>();
 
-import javax.annotation.Nonnull;
+    protected GuiCustomWindowNop partNames;
+    protected GuiCustomWindowNop tools;
+    protected GuiCustomWindowNop hitboxes;
+    protected double w = -1.0d;
+    protected double h = -1.0d;
+    protected float baseRotation = 0.0f;
+    protected final int id;
 
-public class SubGuiEditAnimation extends SubGuiInterface
-		implements ISliderListener, ICustomScrollListener, ITextfieldListener, GuiYesNoCallback {
+    public SubGuiEditAnimation(EntityNPCInterface npc, AnimationConfig animation, int animId) {
+        super(npc);
+        id = animId;
+        imageWidth = 240;
+        imageHeight = 427;
 
-	// data
-	public static int meshType = 1;
-	public static boolean showHitBox = true;
-	public AnimationConfig anim;
-	public AnimationFrameConfig frame;
-	public PartConfig part;
-	public AddedPartConfig addedPartConfig;
-	public AnimationDamageHitbox hitbox;
-	protected GuiCustomScroll scrollParts;
-	protected GuiCustomScroll scrollHitboxes;
-	protected int blockType;
-	protected int blockSize;
-	protected int toolType;
-	protected int waitKey;
-	protected int waitKeyID;
-	protected boolean onlyCurrentPart;
-	protected boolean hovered;
-	protected boolean hasExtend;
-	protected boolean hoverRight;
-	protected boolean hoverLeft;
-	protected boolean isHitbox = false;
-	protected boolean isMotion = false;
-	protected boolean isChanged = true;
-	protected final EntityNPCInterface npcAnim;
-	protected final EntityNPCInterface npcPart;
-	protected final double[] basePos;
-	protected final String[] blockNames, blockSizes;
-	// display
-	protected int workU;
-	protected int workV;
-	protected int workS;
-	protected int winU;
-	protected int winV;
-	protected int winW;
-	protected int winH;
-	protected int mousePressId = -1;
-	protected int mousePressX = 0;
-	protected int mousePressY = 0;
-	protected final float[] dispRot = new float[] { 45.0f, 345.0f, 345.0f };
-	protected final float[] dispPos = new float[] { 0.0f, 0.0f, 0.0f };
-	protected float dispScale = 1.0f;
-	protected float winScale;
-	protected float offsetY;
-	protected final Map<String, PartConfig> dataParts = new LinkedHashMap<>();
-	protected final Map<String, AnimationDamageHitbox> dataHitboxes = new LinkedHashMap<>();
-	protected final List<Entity> environmentEntitys= new ArrayList<>();
-	protected final Map<BlockPos, IBlockState> environmentStates = new HashMap<>();
-	protected final Map<BlockPos, TileEntity> environmentTiles = new HashMap<>();
+        anim = animation;
+        frame = anim.frames.get(0);
+        setPart(frame.parts.get(3));
+        setHitbox(frame.damageHitboxes.get(0));
+        waitKey = 0;
 
-	protected GuiNpcMiniWindow partNames;
-	protected GuiNpcMiniWindow tools;
-	protected GuiNpcMiniWindow hitboxes;
-	protected double w = -1.0d;
-	protected double h = -1.0d;
-	protected float baseRotation = 0.0f;
+        // Display
+        toolType = 0; // 0 - rotation, 1 - offset, 2 - scale
+        blockType = 0; // 0 - environment, 1 - non, 2 - stone, 3 - stairs, 4 - stone_slab, 5 - carpet
+        blockSize = 2; // 0 - x1, 1 - x3, 2 - x5, 3 - x7, 4 - x9
+        winScale = 1.0f;
+        setEnvironment();
+        onlyCurrentPart = false;
 
-	public SubGuiEditAnimation(EntityNPCInterface npc, AnimationConfig animation, int animId, GuiNpcAnimation parentGUI) {
-		super(animId, npc);
-		ySize = 240;
-		xSize = 427;
-		parent = parentGUI;
+        baseRotation = npc.getYRot();
+        basePos = new Vec3 (npc.getX(), npc.getY(), npc.getZ());
+        npcAnim = Util.instance.copyToGUI(npc, player.level(), true);
+        npcAnim.display.setName(npc.getName()+"_animation");
 
-		anim = animation;
-		frame = anim.frames.get(0);
-		setPart(frame.parts.get(3));
-		setHitbox(frame.damageHitboxes.get(0));
-		waitKey = 0;
+        npcPart = Util.instance.copyToGUI(npc, player.level(), true);
+        npcPart.display.setName(npc.getName()+"_anim_part");
+        GuiButtonNop b = new GuiButtonNop(this, 47, "", 0, 0, null);
+        buttonEvent(b);
+        buttonEvent(b);
 
-		// Display
-		toolType = 0; // 0 - rotation, 1 - offset, 2 - scale
-		blockType = 0; // 0 - environment, 1 - non, 2 - stone, 3 - stairs, 4 - stone_slab, 5 - carpet
-		blockSize = 2; // 0 - x1, 1 - x3, 2 - x5, 3 - x7, 4 - x9
-		winScale = 1.0f;
-		setEnvironment();
-		onlyCurrentPart = false;
+        blockNames = new Component[6];
+        blockNames[0] = Component.translatable("gui.environment");
+        blockNames[1] = Component.translatable("gui.none");
+        for (int i = 0; i < 4; i++) {
+            Block block = switch (i) {
+                case 1 -> Blocks.STONE_STAIRS;
+                case 2 -> Blocks.STONE_SLAB;
+                case 3 -> Blocks.WHITE_CARPET;
+                default -> Blocks.STONE;
+            };
+            blockNames[i + 2] = new ItemStack(block).getDisplayName();
+        }
+        blockSizes = new Component[] { Component.literal("x1"),
+                Component.literal("x3"),
+                Component.literal("x5"),
+                Component.literal("x7"),
+                Component.literal("x9") };
 
-		baseRotation = npc.rotationYaw;
-		basePos = new double[] {npc.posX, npc.posY, npc.posZ};
-		npcAnim = Util.instance.copyToGUI(npc, mc.world, true);
-		npcAnim.display.setName(npc.getName()+"_animation");
+        ModelNpcAlt.editAnimDataSelect.red = (float) (CustomNpcs.colorAnimHoverPart >> 16 & 255) / 255.0F;
+        ModelNpcAlt.editAnimDataSelect.green = (float) (CustomNpcs.colorAnimHoverPart >> 8 & 255) / 255.0F;
+        ModelNpcAlt.editAnimDataSelect.blue = (float) (CustomNpcs.colorAnimHoverPart & 255) / 255.0F;
+    }
 
-		npcPart = Util.instance.copyToGUI(npc, mc.world, true);
-		npcPart.display.setName(npc.getName()+"_anim_part");
-		GuiNpcButton b = new GuiNpcButton(47, 0,0, "");
-		buttonEvent(b, 1);
-		buttonEvent(b, 1);
+    @Override
+    public void buttonEvent(@Nonnull GuiButtonNop button) {
+        switch (button.id) {
+            case 0: {
+                blockType = button.getValue();
+                if (getButton(16) != null) { getButton(16).setIsEnabled(blockType != 1); }
+                break;
+            } // block place
+            case 1: blockSize = button.getValue(); break; // block size
+            case 2: {
+                GuiNpcAnimation.backColor = (GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000);
+                getLabel(50).setColor(GuiNpcAnimation.backColor);
+                button.setColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080);
+                break;
+            } // back color
+            case 3: {
+                if (anim == null || part == null || !anim.frames.containsKey(button.getValue()) || anim.frames.get(button.getValue()).id == -1) { return; }
+                frame = anim.frames.get(button.getValue());
+                setPart(frame.parts.get(part.id));
+                setHitbox(frame.damageHitboxes.get(0));
+                anim.editTick = 0;
+                anim.editFrame = frame.id;
+                init();
+                break;
+            } // select frame
+            case 4: {
+                if (anim == null) { return; }
+                if (Screen.hasShiftDown()) { // Shift pressed
+                    SubGuiEditText subgui = new SubGuiEditText(0, "" + anim.frames.size());
+                    subgui.numbersOnly = new int[] { 0, anim.frames.size(), anim.frames.size() };
+                    setSubGui(subgui);
+                } else {
+                    frame = (AnimationFrameConfig) anim.addFrame(-1, frame);
+                    setPart(frame.parts.get(part.id));
+                    init();
+                }
+                break;
+            } // add new (copy) frame
+            case 5: {
+                if (frame == null) { return; }
+                ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+                    if (agree) {
+                        if (anim == null || frame == null || anim.frames.size() <= 1) { return; }
+                        int f = frame.id - 1;
+                        if (f < 0) { f = 0; }
+                        anim.removeFrame(frame);
+                        frame = anim.frames.get(f);
+                        setPart(frame.parts.get(part.id));
+                        setHitbox(frame.damageHitboxes.get(0));
+                        init();
+                    }
+                    NoppesUtil.openGUI(player, this);
+                },
+                        Component.translatable("animation.clear.frame", "" + (frame.id + 1)),
+                        Component.translatable("message.delete"));
+                setScreen(guiYesNo);
+                break;
+            } // remove frame
+            case 6: {
+                if (frame!= null) {
+                    ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+                        if (agree) {
+                            if (Screen.hasShiftDown()) {
+                                if (anim != null) {
+                                    for (AnimationFrameConfig f : anim.frames.values()) {
+                                        for (PartConfig p : f.parts.values()) { p.clear(); }
+                                    }
+                                    init();
+                                }
+                            } // clear all frames
+                            else {
+                                if (frame != null) {
+                                    for (PartConfig p : frame.parts.values()) { p.clear(); }
+                                    init();
+                                }
+                            } // clear frame
+                        }
+                        NoppesUtil.openGUI(player, this);
+                    },
+                            Component.translatable("animation.clear.frame", "" + (frame.id + 1)),
+                            Component.translatable("gui.clearMessage"));
+                    setScreen(guiYesNo);
+                }
+                break;
+            } // clear frame
+            case 7: {
+                if (isHitbox) {
+                    if (hitbox == null) { return; }
+                    hitbox = new AnimationDamageHitbox(frame.damageHitboxes.size());
+                    hitbox.clear();
+                    frame.damageHitboxes.put(hitbox.id, hitbox);
+                    init();
+                }
+                else {
+                    if (isMotion || anim == null || part == null || part.id == 6 || part.id == 7) { return; }
+                    SubGuiEditAddPart sGui = new SubGuiEditAddPart(this, npc, npcPart, null, null);
+                    sGui.addPart.parentPart = part.id;
+                    setSubGui(sGui);
+                }
+                break;
+            } // add new part / damage hitbox
+            case 8: {
+                if (isHitbox) {
+                    if (hitbox == null) { return; }
+                    if (frame.damageHitboxes.size() == 1) { hitbox.clear(); }
+                    else {
+                        int id = hitbox.id;
+                        frame.damageHitboxes.remove(id);
+                        hitbox = frame.damageHitboxes.get(id - 1);
+                    }
+                    init();
+                }
+                else {
+                    if (isMotion || anim == null || addedPartConfig == null || part == null) { return; }
+                    ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+                        if (agree) {
+                            if (anim == null || addedPartConfig == null || part == null) { return; }
+                            int f = addedPartConfig.id - 1;
+                            if (f < 0) { f = 0; }
+                            anim.removeAddedPart(addedPartConfig);
+                            frame = anim.frames.get(frame.id);
+                            setPart(frame.parts.get(f));
+                            init();
+                        }
+                        NoppesUtil.openGUI(player, this);
+                    },
+                            Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()),
+                            Component.translatable("message.delete"));
+                    setScreen(guiYesNo);
+                }
+                break;
+            } // del part
+            case 9: {
+                if (part != null) {
+                    ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+                        if (agree) {
+                            if (Screen.hasShiftDown()) {
+                                if (anim != null && part != null) {
+                                    for (AnimationFrameConfig f : anim.frames.values()) { f.parts.get(part.id).clear(); }
+                                    init();
+                                }
+                            } // clear all part
+                            else {
+                                if (part != null) {
+                                    part.clear();
+                                    init();
+                                }
+                            } // clear part
+                        }
+                        NoppesUtil.openGUI(player, this);
+                    },
+                            Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()),
+                            Component.translatable("gui.clearMessage"));
+                    setScreen(guiYesNo);
+                }
+                break;
+            } // clear part
+            case 10: {
+                if (anim == null || part == null) { return; }
+                part.setDisable(((GuiCheckBoxNop) button).selected());
+                if (Screen.hasShiftDown()) {
+                    for (AnimationFrameConfig f : anim.frames.values()) { f.parts.get(part.id).setDisable(part.isDisable()); }
+                }
+                button.setHoverTexts(Component.translatable("animation.hover.part.disabled." + !part.isDisable())
+                        .append(Component.translatable("animation.hover.shift.1")));
+                resetAnimation();
+                break;
+            } // disabled part
+            case 11: {
+                if (anim == null || frame == null) { return; }
+                frame.setSmooth(((GuiCheckBoxNop) button).selected());
+                if (Screen.hasShiftDown()) { // Shift pressed
+                    for (AnimationFrameConfig f : anim.frames.values()) { f.setSmooth(frame.isSmooth()); }
+                }
+                button.setHoverTexts("animation.hover.smooth." + frame.isSmooth());
+                resetAnimation();
+                break;
+            } // smooth
+            case 12: setSubGui(new SubGuiColorSelector(CustomNpcs.colorAnimHoverPart)); break; // color hover
+            case 13: {
+                if (meshType == 0) {
+                    meshType = -1;
+                    button.setColor(0xFF360C1C);
+                } else {
+                    meshType = 0;
+                    button.setColor(0xFFD93070);
+                }
+                if (getButton(14) != null) { getButton(14).setColor(0xFF1A0C36); }
+                if (getButton(15) != null) { getButton(15).setColor(0xFF0C3620); }
+                if (getButton(16) != null) { getButton(16).setColor(0xFF35360C); }
+                break;
+            } // reset mesh
+            case 14: {
+                if (meshType == 1) {
+                    meshType = -1;
+                    button.setColor(0xFF1A0C36);
+                } else {
+                    meshType = 1;
+                    button.setColor(0xFF6830D9);
+                }
+                if (getButton(13) != null) { getButton(13).setColor(0xFF360C1C); }
+                if (getButton(15) != null) { getButton(15).setColor(0xFF0C3620); }
+                if (getButton(16) != null) { getButton(16).setColor(0xFF35360C); }
+                break;
+            } // xz mesh
+            case 15: {
+                if (meshType == 2) {
+                    meshType = -1;
+                    button.setColor(0xFF0C3620);
+                } else {
+                    meshType = 2;
+                    button.setColor(0xFF30D980);
+                }
+                if (getButton(13) != null) { getButton(13).setColor(0xFF360C1C); }
+                if (getButton(14) != null) { getButton(14).setColor(0xFF1A0C36); }
+                if (getButton(16) != null) { getButton(16).setColor(0xFF35360C); }
+                break;
+            } // xy mesh
+            case 16: {
+                if (meshType == 3) {
+                    meshType = -1;
+                    button.setColor(0xFF35360C);
+                } else {
+                    meshType = 3;
+                    button.setColor(0xFFD7D930);
+                }
+                if (getButton(13) != null) { getButton(13).setColor(0xFF360C1C); }
+                if (getButton(14) != null) { getButton(14).setColor(0xFF1A0C36); }
+                if (getButton(15) != null) { getButton(15).setColor(0xFF0C3620); }
+                break;
+            } // xy mesh
+            case 17: {
+                showHitBox = !showHitBox;
+                button.setColor(showHitBox ? 0 : 0xFF808080);
+                break;
+            } // show NPC hitbox
+            case 18: dispScale = 1.0f; break; // display reset scale
+            case 19: for (int i = 0; i < 3; i++) { dispPos[i] = 0.0f; } break; // display reset pos
+            case 20: {
+                dispRot[0] = 45.0f;
+                dispRot[1] = 345.0f;
+                dispRot[2] = 345.0f;
+                break;
+            } // display reset rot
+            case 21: {
+                if (isHitbox || isMotion) { return; }
+                onlyCurrentPart = !onlyCurrentPart;
+                button.setUV(onlyCurrentPart ? 144 : 188, button.txrY, button.txrW, button.txrH);
+                resetAnimation();
+                break;
+            } // show only current part or animation
+            case 22: {
+                if (anim == null || part == null) { return; }
+                part.setShow(((GuiCheckBoxNop) button).selected());
+                if (Screen.hasShiftDown()) { // Shift pressed
+                    for (AnimationFrameConfig f : anim.frames.values()) { f.parts.get(part.id).setShow(part.isShow()); }
+                }
+                button.setHoverTexts(Component.translatable("animation.hover.part.show." + part.isShow())
+                        .append(Component.translatable("animation.hover.shift.1")));
+                resetAnimation();
+                break;
+            } // show part in frame
+            case 23: {
+                if (toolType == 1) { return; }
+                GuiTextFieldNop.unfocus();
+                toolType = 1;
+                init();
+                break;
+            } // select tool pos
+            case 24: {
+                if (toolType == 0) { return; }
+                GuiTextFieldNop.unfocus();
+                toolType = 0;
+                init();
+                break;
+            } // select tool rot
+            case 25: {
+                if (toolType == 2) { return; }
+                GuiTextFieldNop.unfocus();
+                toolType = 2;
+                init();
+                break;
+            } // select tool scale
+            case 26: {
+                ModelNpcAlt.editAnimDataSelect.showArmor = !ModelNpcAlt.editAnimDataSelect.showArmor;
+                button.setColor(ModelNpcAlt.editAnimDataSelect.showArmor ? 0xFFFF7200 : 0xFF6F3200);
+                break;
+            } // show armor
+            case 27: {
+                if (frame == null) { return; }
+                setSubGui(new SubGuiSoundSelection(this, 0, npc, frame.getStartSound()));
+                break;
+            } // select sound
+            case 28: {
+                if (frame == null) { return; }
+                frame.setStartSound("");
+                break;
+            } // remove sound
+            case 29: {
+                if (partNames == null) { showPartNames(); }
+                GuiCustomWindowNop window = get(partNames.id, GuiCustomWindowNop.class);
+                if (window != null) {
+                    window.visible = true;
+                    button.setIsEnabled(false);
+                }
+                break;
+            } // show parts
+            case 30: {
+                if (isHitbox) {
+                    if (hitbox != null) {
+                        if (toolType == 1) { hitbox.offset[0] = 0.0f; }
+                        else { hitbox.scale[0] = 1.0f; }
+                        init();
+                    }
+                } else if (isMotion) {
+                    frame.motions[0] = 0.0f;
+                    init();
+                } else if (part != null) {
+                    switch (toolType) {
+                        case 0: part.rotation[0] = 0.0f; break;
+                        case 1: part.offset[0] = 0.0f; break;
+                        case 2: part.scale[0] = 1.0f; break;
+                    }
+                    init();
+                }
+                break;
+            } // reset part set X
+            case 31: {
+                if (isHitbox) {
+                    if (hitbox != null) {
+                        if (toolType == 1) { hitbox.offset[1] = 0.0f; }
+                        else { hitbox.scale[1] = 1.0f; }
+                        init();
+                    }
+                } else if (isMotion) {
+                    frame.motions[1] = 0.0f;
+                    init();
+                } else if (part != null) {
+                    switch (toolType) {
+                        case 0: part.rotation[1] = 0.0f; break;
+                        case 1: part.offset[1] = 0.0f; break;
+                        case 2: part.scale[1] = 1.0f; break;
+                    }
+                    init();
+                }
+                break;
+            } // reset part set Y
+            case 32: {
+                if (isHitbox) {
+                    if (hitbox != null) {
+                        if (toolType == 1) { hitbox.offset[2] = 0.0f; }
+                        else { hitbox.scale[2] = 1.0f; }
+                        init();
+                    }
+                } else if (isMotion) {
+                    frame.motions[2] = 0.0f;
+                    init();
+                } else if (part != null) {
+                    switch (toolType) {
+                        case 0: part.rotation[2] = 0.0f; break;
+                        case 1: part.offset[2] = 0.0f; break;
+                        case 2: part.scale[2] = 1.0f; break;
+                    }
+                    init();
+                }
+                break;
+            } // reset part set Z
+            case 33: {
+                part.rotation[3] = 0.0f;
+                init();
+                break;
+            } // reset part set X1 rot
+            case 34: {
+                part.rotation[4] = 0.0f;
+                init();
+                break;
+            } // reset part set Y1 rot
+            case 35: {
+                if (tools == null) { showTools(); }
+                GuiCustomWindowNop window = get(tools.id, GuiCustomWindowNop.class);
+                if (window != null) {
+                    window.visible = true;
+                    button.setIsEnabled(false);
+                }
+                break;
+            } // show window tools
+            case 36: {
+                if (frame == null) { return; }
+                frame.isNowDamage = ((GuiCheckBoxNop) button).selected();
+                break;
+            } // is now damage
+            case 37: {
+                if (frame == null) { return; }
+                frame.setHoldRightStackType(button.getValue());
+                int type = frame.getHoldRightStackType();
+                if (type == 2) { type = 3; }
+                else if (type == 3) { type = 4; }
+                button.setHoverTexts("animation.hover.stack.type."+type);
+                resetAnimation();
+                break;
+            } // right stack type
+            case 38: {
+                if (frame == null) { return; }
+                frame.setHoldLeftStackType(button.getValue());
+                int type = frame.getHoldLeftStackType();
+                if (type == 3) { type = 4; }
+                button.setHoverTexts("animation.hover.stack.type."+type);
+                resetAnimation();
+                break;
+            } // left stack type
+            case 39: {
+                if (frame == null) { return; }
+                frame.showMainHand = !frame.showMainHand;
+                init();
+                break;
+            } // show main hand
+            case 40: {
+                if (frame == null) { return; }
+                frame.showOffHand = !frame.showOffHand;
+                init();
+                break;
+            } // show offhand
+            case 41: {
+                if (frame == null) { return; }
+                frame.showHelmet = !frame.showHelmet;
+                init();
+                break;
+            } // show helmet
+            case 42: {
+                if (frame == null) { return; }
+                frame.showBody = !frame.showBody;
+                init();
+                break;
+            } // show body
+            case 43: {
+                if (frame == null) { return; }
+                frame.showLegs = !frame.showLegs;
+                init();
+                break;
+            } // show legs
+            case 44: {
+                if (frame == null) { return; }
+                frame.showFeets = !frame.showFeets;
+                init();
+                break;
+            } // show feet's
+            case 45: {
+                showHitBoxes();
+                GuiCustomWindowNop window = get(hitboxes.id, GuiCustomWindowNop.class);
+                if (window != null) {
+                    window.visible = true;
+                    button.setIsEnabled(false);
+                }
+                break;
+            } // show window hitbox
+            case 46: {
+                if (ModelNpcAlt.editAnimDataSelect.alpha >= 1.0f) {
+                    ModelNpcAlt.editAnimDataSelect.alpha = 0.25f;
+                    button.setColor(0xFF787758);
+                } else {
+                    ModelNpcAlt.editAnimDataSelect.alpha = 1.0f;
+                    button.setColor(0xFFFFFEBF);
+                }
+                break;
+            } // show alpha // show armor
+            case 47: {
+                if (baseRotation == 0.0f) { return; }
+                if (npcAnim.getYRot() != baseRotation) {
+                    npcAnim.setYRot(baseRotation);
+                    npcAnim.setYHeadRot(npc.getYHeadRot());
+                    npcPart.setYRot(baseRotation);
+                    npcPart.setYHeadRot(npc.getYHeadRot());
+                    button.setColor(0xFF96FFC0);
+                } else {
+                    npcAnim.setYRot(0.0f);
+                    npcAnim.setYHeadRot(0.0f);
+                    npcPart.setYRot(0.0f);
+                    npcPart.setYHeadRot(0.0f);
+                    button.setColor(0xFF426C53);
+                }
+                break;
+            } // reset NPC rotation
+            case 48: {
+                isMotion = true;
+                button.setIsEnabled(false);
+                if (toolType != 1) { toolType = 1; }
 
-		blockNames = new String[6];
-		blockNames[0] = "gui.environment";
-		blockNames[1] = "gui.none";
-		for (int i = 0; i < 4; i++) {
-			Block block;
-			switch (i) {
-				case 1: block = Blocks.STONE_STAIRS; break;
-				case 2: block = Blocks.STONE_SLAB; break;
-				case 3: block = Blocks.CARPET; break;
-				default: block = Blocks.STONE; break;
-			}
-			blockNames[i + 2] = new ItemStack(block).getDisplayName();
-		}
-		blockSizes = new String[] { "x1", "x3", "x5", "x7", "x9" };
+                scrollHitboxes.clearSelection();
+                setHitbox(null);
 
-		ModelNpcAlt.editAnimDataSelect.red = (float) (CustomNpcs.colorAnimHoverPart >> 16 & 255) / 255.0F;
-		ModelNpcAlt.editAnimDataSelect.green = (float) (CustomNpcs.colorAnimHoverPart >> 8 & 255) / 255.0F;
-		ModelNpcAlt.editAnimDataSelect.blue = (float) (CustomNpcs.colorAnimHoverPart & 255) / 255.0F;
-	}
+                scrollParts.clearSelection();
+                setPart(null);
+                setHitbox(null);
 
-	private void setPart(PartConfig partConfig) {
-		GuiNpcTextField.unfocus();
-		if (partConfig != null) { part = frame.parts.get(partConfig.id); }
-		ModelNpcAlt.editAnimDataSelect.part = part == null || isHitbox || isMotion ? -1 : part.id;
-		if (part != null && part.id > 7) { addedPartConfig = anim.getAddedPart(part.id); }
-		else { addedPartConfig = null; }
-		if (tools != null && tools.visible) { showTools(); }
-	}
+                onlyCurrentPart = true;
+                if (getButton(21) != null) {
+                    GuiButtonNop b = getButton(21);
+                    b.setUV(144, b.txrY, b.txrW, b.txrH);
+                }
+                resetAnimation();
 
-	private void setHitbox(AnimationDamageHitbox hitboxConfig) {
-		GuiNpcTextField.unfocus();
-		if (hitboxConfig != null) {
-			hitbox = frame.damageHitboxes.get(hitboxConfig.id);
-			if (scrollHitboxes != null && scrollHitboxes.hasSelected()) {
-				isHitbox = true;
-				ModelNpcAlt.editAnimDataSelect.part = -1;
-				onlyCurrentPart = true;
-				if (getButton(21) != null) {
-					getButton(21).setTextureXY(144, getButton(21).getTextureXY()[1]);
-				}
+                init();
+                break;
+            } // show motion type
+            case 49: {
+                dispRot[0] = 0.0f;
+                dispRot[1] = 0.0f;
+                dispRot[2] = 0.0f;
+                break;
+            } // align xy
+            case 50: {
+                dispRot[0] = 90.0f;
+                dispRot[1] = 0.0f;
+                dispRot[2] = 0.0f;
+                break;
+            } // align zy
+            case 51: {
+                dispRot[0] = 0.0f;
+                dispRot[1] = 270.0f;
+                dispRot[2] = 0.0f;
+                break;
+            } // align xz
+            case 52: {
+                displayRotate(180, 0);
+                break;
+            } // align revers
+            case 53: {
+                anim.editTick = button.getValue();
+                resetAnimation();
+                break;
+            } // set animation part tick
+            case 66: onClose(); break; // exit
+        }
+    }
 
-			}
-		} else {
-			isHitbox = false;
-			if (scrollHitboxes != null) { scrollHitboxes.setSelected(null); }
-		}
-		if (tools != null && tools.visible) { showTools(); }
-	}
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        /*
+        if (hasSubGui()) {
+            getSubGui().render(graphics, mouseX, mouseY, partialTicks);
+            return;
+        }
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        if (w < 0 || h < 0) {
+            w = minecraft.getWindow().getGuiScaledWidth();
+            h = minecraft.getWindow().getGuiScaledHeight();
+        }
+        if (waitKey != 0) { waitKey--; }
+        for (int i = 0; i < 2; i++) {
+            EntityNPCInterface dNpc = (i == 0 ? npcAnim : npcPart);
+            if (dNpc == null) { continue; }
+            dNpc.animation.updateTime();
+            dNpc.chasingPosZ = npc.chasingPosZ;
+            dNpc.chasingPosY = npc.chasingPosY;
+            dNpc.chasingPosX = npc.chasingPosX;
+            dNpc.prevChasingPosZ = npc.prevChasingPosZ;
+            dNpc.prevChasingPosY = npc.prevChasingPosY;
+            dNpc.prevChasingPosX = npc.prevChasingPosX;
+            dNpc.tickCount = npc.tickCount;
+        }
+        for (Entity e : environmentEntitys) { e.tickCount = npc.tickCount; }
+        if (getDisplayNpc() == null) { onClose(); }
+        EntityNPCInterface showNPC = getDisplayNpc();
+        // Frame id
+        if (getLabel(50) != null) {
+            GuiLabel label = getLabel(50);
+            int cId = showNPC.animation.getAnimationCurrentFrameID();
+            int nId = showNPC.animation.getAnimationNextFrameID();
+            MutableComponent frame = Component.translatable("animation.frame", " ID: ")
+                    .append(Component.literal("" + cId).withStyle(ChatFormatting.GOLD));
+            if (cId != nId) {
+                frame.append(Component.literal(" -> ").withStyle(ChatFormatting.RESET))
+                        .append(Component.literal("" + nId).withStyle(ChatFormatting.GOLD));
+            }
+            label.setMessage(frame);
+        }
+        if (getLabel(51) != null) {
+            GuiLabel label = getLabel(51);
+            EnumAnimationStages stage = showNPC.animation.getAnimationStage();
+            int t = showNPC.animation.getAnimationTicks();
+            int s = showNPC.animation.getAnimationSpeedTicks();
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				blockType = button.getValue();
-				if (getButton(16) != null) { getButton(16).setIsEnable(blockType != 1); }
-				break;
-			} // block place
-			case 1: blockSize = button.getValue(); break; // block size
-			case 2: {
-				GuiNpcAnimation.backColor = (GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000);
-				getLabel(50).setColor(GuiNpcAnimation.backColor);
-				button.setLayerColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080);
-				break;
-			} // back color
-			case 3: {
-				if (anim == null || part == null || !anim.frames.containsKey(button.getValue()) || anim.frames.get(button.getValue()).id == -1) { return; }
-				frame = anim.frames.get(button.getValue());
-				setPart(frame.parts.get(part.id));
-				setHitbox(frame.damageHitboxes.get(0));
-				anim.editTick = 0;
-				anim.editFrame = frame.id;
-				initGui();
-				break;
-			} // select frame
-			case 4: {
-				if (anim == null) { return; }
-				if (GuiScreen.isShiftKeyDown()) { // Shift pressed
-					SubGuiEditText subgui = new SubGuiEditText(0, "" + anim.frames.size());
-					subgui.numbersOnly = new int[] { 0, anim.frames.size(), anim.frames.size() };
-					setSubGui(subgui);
-				} else {
-					frame = (AnimationFrameConfig) anim.addFrame(-1, frame);
-					setPart(frame.parts.get(part.id));
-					initGui();
-				}
-				break;
-			} // add new (copy) frame
-			case 5: {
-				if (frame == null) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						new TextComponentTranslation("animation.clear.frame", "" + (frame.id + 1)).getFormattedText(),
-						new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 0);
-				displayGuiScreen(guiyesno);
-				break;
-			} // remove frame
-			case 6: {
-				if (frame == null) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						new TextComponentTranslation("animation.clear.frame", "" + (frame.id + 1)).getFormattedText(),
-						new TextComponentTranslation("gui.clearMessage").getFormattedText(),
-						GuiScreen.isShiftKeyDown() ? 4 : 1);
-				displayGuiScreen(guiyesno);
-				break;
-			} // clear frame
-			case 7: {
-				if (isHitbox) {
-					if (hitbox == null) { return; }
-					hitbox = new AnimationDamageHitbox(frame.damageHitboxes.size());
-					hitbox.clear();
-					frame.damageHitboxes.put(hitbox.id, hitbox);
-					initGui();
-				} else {
-					if (isMotion || anim == null || part == null || part.id == 6 || part.id == 7) { return; }
-					SubGuiEditAddPart sGui = new SubGuiEditAddPart(this, npc, npcPart, null, null);
-					sGui.addPart.parentPart = part.id;
-					setSubGui(sGui);
-				}
-				break;
-			} // add new part / damage hitbox
-			case 8: {
-				if (isHitbox) {
-					if (hitbox == null) { return; }
-					if (frame.damageHitboxes.size() == 1) { hitbox.clear(); }
-					else {
-						int id = hitbox.id;
-						frame.damageHitboxes.remove(id);
-						hitbox = frame.damageHitboxes.get(id - 1);
-					}
-					initGui();
-				} else {
-					if (isMotion || anim == null || addedPartConfig == null || part == null) { return; }
-					GuiYesNo guiyesno = new GuiYesNo(this,
-							new TextComponentTranslation("animation.clear.part", "" + (part.id + 1),
-									scrollParts.getSelected()).getFormattedText(),
-							new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 2);
-					displayGuiScreen(guiyesno);
-				}
-				break;
-			} // del part
-			case 9: {
-				if (part == null) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						new TextComponentTranslation("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()).getFormattedText(),
-						new TextComponentTranslation("gui.clearMessage").getFormattedText(),
-						GuiScreen.isShiftKeyDown() ? 5 : 3);
-				displayGuiScreen(guiyesno);
-				break;
-			} // clear part
-			case 10: {
-				if (anim == null || part == null) { return; }
-				part.setDisable(((GuiNpcCheckBox) button).isSelected());
-				if (GuiScreen.isShiftKeyDown()) { // Shift pressed
-					for (AnimationFrameConfig f : anim.frames.values()) { f.parts.get(part.id).setDisable(part.isDisable()); }
-				}
-				button.setHoverText(new TextComponentTranslation("animation.hover.part.disabled." + !part.isDisable()).appendSibling(new TextComponentTranslation("animation.hover.shift.1")).getFormattedText());
-				resetAnimation();
-				break;
-			} // disabled part
-			case 11: {
-				if (anim == null || frame == null) { return; }
-				frame.setSmooth(((GuiNpcCheckBox) button).isSelected());
-				if (GuiScreen.isShiftKeyDown()) { // Shift pressed
-					for (AnimationFrameConfig f : anim.frames.values()) { f.setSmooth(frame.isSmooth()); }
-				}
-				button.setHoverText("animation.hover.smooth." + frame.isSmooth());
-				resetAnimation();
-				break;
-			} // smooth
-			case 12: setSubGui(new SubGuiColorSelector(CustomNpcs.colorAnimHoverPart)); break; // color hover
-			case 13: {
-				if (meshType == 0) {
-					meshType = -1;
-					button.setLayerColor(0xFF360C1C);
-				} else {
-					meshType = 0;
-					button.setLayerColor(0xFFD93070);
-				}
-				if (getButton(14) != null) { getButton(14).setLayerColor(0xFF1A0C36); }
-				if (getButton(15) != null) { getButton(15).setLayerColor(0xFF0C3620); }
-				if (getButton(16) != null) { getButton(16).setLayerColor(0xFF35360C); }
-				break;
-			} // reset mesh
-			case 14: {
-				if (meshType == 1) {
-					meshType = -1;
-					button.setLayerColor(0xFF1A0C36);
-				} else {
-					meshType = 1;
-					button.setLayerColor(0xFF6830D9);
-				}
-				if (getButton(13) != null) { getButton(13).setLayerColor(0xFF360C1C); }
-				if (getButton(15) != null) { getButton(15).setLayerColor(0xFF0C3620); }
-				if (getButton(16) != null) { getButton(16).setLayerColor(0xFF35360C); }
-				break;
-			} // xz mesh
-			case 15: {
-				if (meshType == 2) {
-					meshType = -1;
-					button.setLayerColor(0xFF0C3620);
-				} else {
-					meshType = 2;
-					button.setLayerColor(0xFF30D980);
-				}
-				if (getButton(13) != null) { getButton(13).setLayerColor(0xFF360C1C); }
-				if (getButton(14) != null) { getButton(14).setLayerColor(0xFF1A0C36); }
-				if (getButton(16) != null) { getButton(16).setLayerColor(0xFF35360C); }
-				break;
-			} // xy mesh
-			case 16: {
-				if (meshType == 3) {
-					meshType = -1;
-					button.setLayerColor(0xFF35360C);
-				} else {
-					meshType = 3;
-					button.setLayerColor(0xFFD7D930);
-				}
-				if (getButton(13) != null) { getButton(13).setLayerColor(0xFF360C1C); }
-				if (getButton(14) != null) { getButton(14).setLayerColor(0xFF1A0C36); }
-				if (getButton(15) != null) { getButton(15).setLayerColor(0xFF0C3620); }
-				break;
-			} // xy mesh
-			case 17: {
-				showHitBox = !showHitBox;
-				button.setLayerColor(showHitBox ? 0 : 0xFF808080);
-				break;
-			} // show NPC hitbox
-			case 18: dispScale = 1.0f; break; // display reset scale
-			case 19: for (int i = 0; i < 3; i++) { dispPos[i] = 0.0f; } break; // display reset pos
-			case 20: {
-				dispRot[0] = 45.0f;
-				dispRot[1] = 345.0f;
-				dispRot[2] = 345.0f;
-				break;
-			} // display reset rot
-			case 21: {
-				if (isHitbox || isMotion) { return; }
-				onlyCurrentPart = !onlyCurrentPart;
-				button.setTextureXY(onlyCurrentPart ? 144 : 188, button.getTextureXY()[1]);
-				resetAnimation();
-				break;
-			} // show only current part or animation
-			case 22: {
-				if (anim == null || part == null) { return; }
-				part.setShow(((GuiNpcCheckBox) button).isSelected());
-				if (GuiScreen.isShiftKeyDown()) { // Shift pressed
-					for (AnimationFrameConfig f : anim.frames.values()) { f.parts.get(part.id).setShow(part.isShow()); }
-				}
-				button.setHoverText(new TextComponentTranslation("animation.hover.part.show." + part.isShow()).appendSibling(new TextComponentTranslation("animation.hover.shift.1")).getFormattedText());
-				resetAnimation();
-				break;
-			} // show part in frame
-			case 23: {
-				if (toolType == 1) { return; }
-				GuiNpcTextField.unfocus();
-				toolType = 1;
-				initGui();
-				break;
-			} // select tool pos
-			case 24: {
-				if (toolType == 0) { return; }
-				GuiNpcTextField.unfocus();
-				toolType = 0;
-				initGui();
-				break;
-			} // select tool rot
-			case 25: {
-				if (toolType == 2) { return; }
-				GuiNpcTextField.unfocus();
-				toolType = 2;
-				initGui();
-				break;
-			} // select tool scale
-			case 26: {
-				ModelNpcAlt.editAnimDataSelect.showArmor = !ModelNpcAlt.editAnimDataSelect.showArmor;
-				button.setLayerColor(ModelNpcAlt.editAnimDataSelect.showArmor ? 0xFFFF7200 : 0xFF6F3200);
-				break;
-			} // show armor
-			case 27: {
-				if (frame == null) { return; }
-				setSubGui(new SubGuiSoundSelection(frame.getStartSound()));
-				break;
-			} // select sound
-			case 28: {
-				if (frame == null) { return; }
-				frame.setStartSound("");
-				break;
-			} // remove sound
-			case 29: {
-				if (partNames == null) { showPartNames(); }
-				if (miniWindows.containsKey(partNames.id)) { return; }
-				partNames.isMoving = false;
-				partNames.visible = true;
-				miniWindows.put(partNames.id, partNames);
-				button.setIsEnable(false);
-				break;
-			} // show parts
-			case 30: {
-				if (isHitbox) {
-					if (hitbox != null) {
-						if (toolType == 1) { hitbox.offset[0] = 0.0f; }
-						else { hitbox.scale[0] = 1.0f; }
-						initGui();
-					}
-				} else if (isMotion) {
-					frame.motions[0] = 0.0f;
-					initGui();
-				} else if (part != null) {
-					switch (toolType) {
-						case 0: part.rotation[0] = 0.0f; break;
-						case 1: part.offset[0] = 0.0f; break;
-						case 2: part.scale[0] = 1.0f; break;
-					}
-					initGui();
-				}
-				break;
-			} // reset part set X
-			case 31: {
-				if (isHitbox) {
-					if (hitbox != null) {
-						if (toolType == 1) { hitbox.offset[1] = 0.0f; }
-						else { hitbox.scale[1] = 1.0f; }
-						initGui();
-					}
-				} else if (isMotion) {
-					frame.motions[1] = 0.0f;
-					initGui();
-				} else if (part != null) {
-					switch (toolType) {
-						case 0: part.rotation[1] = 0.0f; break;
-						case 1: part.offset[1] = 0.0f; break;
-						case 2: part.scale[1] = 1.0f; break;
-					}
-					initGui();
-				}
-				break;
-			} // reset part set Y
-			case 32: {
-				if (isHitbox) {
-					if (hitbox != null) {
-						if (toolType == 1) { hitbox.offset[2] = 0.0f; }
-						else { hitbox.scale[2] = 1.0f; }
-						initGui();
-					}
-				} else if (isMotion) {
-					frame.motions[2] = 0.0f;
-					initGui();
-				} else if (part != null) {
-					switch (toolType) {
-						case 0: part.rotation[2] = 0.0f; break;
-						case 1: part.offset[2] = 0.0f; break;
-						case 2: part.scale[2] = 1.0f; break;
-					}
-					initGui();
-				}
-				break;
-			} // reset part set Z
-			case 33: {
-				part.rotation[3] = 0.0f;
-				initGui();
-				break;
-			} // reset part set X1 rot
-			case 34: {
-				part.rotation[4] = 0.0f;
-				initGui();
-				break;
-			} // reset part set Y1 rot
-			case 35: {
-				if (tools == null) { showTools(); }
-				if (tools == null) { return; }
-				tools.isMoving = false;
-				tools.visible = true;
-				miniWindows.put(tools.id, tools);
-				button.setIsEnable(false);
-				break;
-			} // show window tools
-			case 36: {
-				if (frame == null) { return; }
-				frame.isNowDamage = ((GuiNpcCheckBox) button).isSelected();
-				break;
-			} // is now damage
-			case 37: {
-				if (frame == null) { return; }
-				frame.setHoldRightStackType(button.getValue());
-				int type = frame.getHoldRightStackType();
-				if (type == 2) { type = 3; }
-				else if (type == 3) { type = 4; }
-				button.setHoverText("animation.hover.stack.type."+type);
-				resetAnimation();
-				break;
-			} // right stack type
-			case 38: {
-				if (frame == null) { return; }
-				frame.setHoldLeftStackType(button.getValue());
-				int type = frame.getHoldLeftStackType();
-				if (type == 3) { type = 4; }
-				button.setHoverText("animation.hover.stack.type."+type);
-				resetAnimation();
-				break;
-			} // left stack type
-			case 39: {
-				if (frame == null) { return; }
-				frame.showMainHand = !frame.showMainHand;
-				initGui();
-				break;
-			} // show main hand
-			case 40: {
-				if (frame == null) { return; }
-				frame.showOffHand = !frame.showOffHand;
-				initGui();
-				break;
-			} // show offhand
-			case 41: {
-				if (frame == null) { return; }
-				frame.showHelmet = !frame.showHelmet;
-				initGui();
-				break;
-			} // show helmet
-			case 42: {
-				if (frame == null) { return; }
-				frame.showBody = !frame.showBody;
-				initGui();
-				break;
-			} // show body
-			case 43: {
-				if (frame == null) { return; }
-				frame.showLegs = !frame.showLegs;
-				initGui();
-				break;
-			} // show legs
-			case 44: {
-				if (frame == null) { return; }
-				frame.showFeets = !frame.showFeets;
-				initGui();
-				break;
-			} // show feet's
-			case 45: {
-				showHitBoxes();
-				hitboxes.isMoving = false;
-				hitboxes.visible = true;
-				miniWindows.put(hitboxes.id, hitboxes);
-				button.setIsEnable(false);
-				break;
-			} // show window hitbox
-			case 46: {
-				if (ModelNpcAlt.editAnimDataSelect.alpha >= 1.0f) {
-					ModelNpcAlt.editAnimDataSelect.alpha = 0.25f;
-					button.setLayerColor(0xFF787758);
-				} else {
-					ModelNpcAlt.editAnimDataSelect.alpha = 1.0f;
-					button.setLayerColor(0xFFFFFEBF);
-				}
-				break;
-			} // show alpha // show armor
-			case 47: {
-				if (baseRotation == 0.0f) { return; }
-				if (npcAnim.rotationYaw != baseRotation) {
-					npcAnim.rotationYaw = baseRotation;
-					npcAnim.prevRotationYaw = baseRotation;
-					npcAnim.rotationYawHead = npc.rotationYawHead;
-					npcAnim.prevRotationYawHead = npc.prevRotationYawHead;
-					npcPart.rotationYaw = baseRotation;
-					npcPart.prevRotationYaw = baseRotation;
-					npcPart.rotationYawHead = npc.rotationYawHead;
-					npcPart.prevRotationYawHead = npc.prevRotationYawHead;
-					button.setLayerColor(0xFF96FFC0);
-				} else {
-					npcAnim.rotationYaw = 0.0f;
-					npcAnim.prevRotationYaw = 0.0f;
-					npcAnim.rotationYawHead = 0.0f;
-					npcAnim.prevRotationYawHead = 0.0f;
-					npcPart.rotationYaw = 0.0f;
-					npcPart.prevRotationYaw = 0.0f;
-					npcPart.rotationYawHead = 0.0f;
-					npcPart.prevRotationYawHead = 0.0f;
-					button.setLayerColor(0xFF426C53);
-				}
-				break;
-			} // reset NPC rotation
-			case 48: {
-				isMotion = true;
-				button.setIsEnable(false);
-				if (toolType != 1) { toolType = 1; }
+            MutableComponent data = Component.empty()
+                    .append(Component.literal("" + t).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal("/").withStyle(ChatFormatting.RESET))
+                    .append(Component.literal("" + s).withStyle(ChatFormatting.GOLD))
+                    .append(" ");
+            switch (stage) {
+                case Started: data.append(Component.literal("Started").withStyle(ChatFormatting.GREEN)); break;
+                case Looping: data.append(Component.literal("Looping").withStyle(ChatFormatting.AQUA)); break;
+                case Run: data.append(Component.literal("Run").withStyle(ChatFormatting.YELLOW)); break;
+                case Ending: data.append(Component.literal("Ending").withStyle(ChatFormatting.LIGHT_PURPLE)); break;
+                case Waiting: data.append(Component.literal("Waiting").withStyle(ChatFormatting.RED)); break;
+            }
+            label.setMessage(data);
+            label.setX(workU + workS / 2 - 13 - label.getWidth());
+        }
+        // display data
+        if ((mousePressId == 0 && minecraft.mouseHandler.isLeftPressed()) ||
+                (mousePressId == 1 && minecraft.mouseHandler.isRightPressed())) {
+            float x = mouseX - (float) mousePressX;
+            float y = mouseY - (float) mousePressY;
+            if (x != 0 || y != 0) {
+                if (mousePressId == 0) { displayOffset(x, y); } // LMB
+                else if (mousePressId == 1) { displayRotate(x, -y); } // RMB
+                mousePressX = mouseX;
+                mousePressY = mouseY;
+            }
+        }
+        else { mousePressId = -1; }
+        hovered = isMouseHover(mouseX, mouseY, workU + 1, workV + 1, workS - 2, workS - 2);
+        // back place
+        PoseStack matrixStack = graphics.pose();
+        matrixStack.pushPose();
+        matrixStack.translate(0.0f, 0.0f, -300.0f);
+        int color = new Color(0xFFC6C6C6).getRGB();
+        graphics.fillGradient(winU + 1, winV + 1, winU + winW - 1, winV + winH - 1, color, color);
+        color = new Color(0xFF000000).getRGB();
+        graphics.hLine(winU + 1, winU + winW - 2, winV, color);
+        graphics.vLine(winU, winV, winV + winH - 1, color);
+        graphics.vLine(winU + winW - 1, winV, winV + winH - 1, color);
+        graphics.hLine(winU + 1, winU + winW - 2, winV + winH - 1, color);
+        // work place
+        color = GuiNpcAnimation.backColor == 0xFF000000 ?
+                new Color(0xFFF080F0).getRGB() :
+                new Color(0xFFF020F0).getRGB();
+        graphics.fillGradient(workU, workV, workU + workS, workV + workS, color, color);
+        // Slots
+        int y = 86 + (hasExtend ? 14 : 0);
+        matrixStack.pushPose();
+        matrixStack.translate(winU + 3, winV + y, 0.0f);
+        graphics.blit(RESOURCE_SLOT, 0, 0, 0, 0, 18, 18); // right
+        IItemStack stack = switch (frame.getHoldRightStackType()) {
+            case 1 -> npc.inventory.getProjectile();
+            case 2 -> npc.inventory.getLeftHand();
+            case 3 -> frame.getHoldRightStack();
+            case 4 -> npc.inventory.getArmor(0);
+            case 5 -> npc.inventory.getArmor(1);
+            case 6 -> npc.inventory.getArmor(2);
+            case 7 -> npc.inventory.getArmor(3);
+            default -> npc.inventory.getRightHand();
+        };
+        hoverRight = isMouseHover(mouseX, mouseY, winU + 3, winV + y + 1, 16, 16);
+        if (hoverRight) {
+            graphics.fill(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
+            if (stack != null && !stack.isEmpty()) {
+                List<Component> list = stack.getMCItemStack().getTooltipLines(player, minecraft.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL);
+                if (!list.isEmpty()) { setHoverText(list); }
+            }
+        }
+        if (stack != null && !stack.isEmpty()) {
+            matrixStack.pushPose();
+            matrixStack.translate(1.0f, 1.0f, 0.0f);
+            graphics.renderItem(stack.getMCItemStack(), 0, 0);
+            matrixStack.popPose();
+        }
+        y += 20;
+        matrixStack.translate(0.0f, 20.0f, 0.0f);
+        graphics.blit(RESOURCE_SLOT, 0, 0, 0, 0, 18, 18); // left
+        switch(frame.getHoldLeftStackType()) {
+            case 1: stack = npc.inventory.getProjectile(); break;
+            case 2: stack = npc.inventory.getRightHand(); break;
+            case 3: stack = frame.getHoldLeftStack(); break;
+            case 4: stack = npc.inventory.getArmor(0); break;
+            case 5: stack = npc.inventory.getArmor(1); break;
+            case 6: stack = npc.inventory.getArmor(2); break;
+            case 7: stack = npc.inventory.getArmor(3); break;
+            default: stack = npc.inventory.getLeftHand(); break;
+        }
+        hoverLeft = isMouseHover(mouseX, mouseY, winU + 3, winV + y + 1, 16, 16);
+        if (hoverLeft) {
+            graphics.fill(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
+            if (stack != null && !stack.isEmpty()) {
+                List<Component> list = stack.getMCItemStack().getTooltipLines(player, minecraft.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL);
+                if (!list.isEmpty()) { setHoverText(list); }
+            }
+        }
+        if (stack != null && !stack.isEmpty()) {
+            matrixStack.pushPose();
+            matrixStack.translate(1.0f, 1.0f, 0.0f);
+            graphics.renderItem(stack.getMCItemStack(), 0, 0);
+            matrixStack.popPose();
+        }
+        matrixStack.popPose();
+        // Lines
+        y -= 80 + (hasExtend ? 14 : 0);
+        color = new Color(0xFF000000).getRGB();
+        for (int i = 0; i < 17; i++) { // name -> work
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        y += 23;
+        for (int i = 0; i < 17; i++) { // work -> frame
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        y += 76 + (hasExtend ? 14 : 0);
+        for (int i = 0; i < 17; i++) { // frame -> part
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        y += 38;
+        for (int i = 0; i < 17; i++) { // part -> chance
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        y += 17;
+        for (int i = 0; i < 17; i++) { // chance -> sound
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        y += 26;
+        for (int i = 0; i < 17; i++) { // sound -> emotion
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        y += 26;
+        for (int i = 0; i < 17; i++) { // emotion -> equipment
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        y += 25;
+        for (int i = 0; i < 17; i++) { // equipment -> end
+            graphics.hLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
+        }
+        matrixStack.popPose();
 
-				scrollHitboxes.setSelected(null);
-				setHitbox(null);
+        if (!hasSubGui()) {
+            matrixStack.pushPose();
+            graphics.enableScissor(workU + 1, workV + 1, workU + workS - 2, workV + workS - 2);
+            graphics.enableScissor(guiLeft + imageWidth + 2, guiTop + 30, guiLeft + imageWidth + 78, guiTop + 106);
+            drawWork(graphics, partialTicks);
+            graphics.disableScissor();
+            matrixStack.popPose();
 
-				scrollParts.setSelected(null);
-				setPart(null);
-				setHitbox(null);
+            matrixStack.pushPose();
+            matrixStack.translate(0.0f, 0.0f, 950.0f);
+            // axis xyz vector
+            matrixStack.pushPose();
+            matrixStack.translate(workU + 12.5f, workV + 12.0f, dispScale > 1.0f ? -240.0f : 0.0f);
+            if (dispRot[0] != 0.0f) {
+                matrixStack.mulPose(Axis.YP.rotationDegrees(dispRot[0]));
+            }
+            if (dispRot[1] != 0.0f) {
+                matrixStack.mulPose(Axis.ZP.rotationDegrees(dispRot[1]));
+            }
+            if (dispRot[2] != 0.0f) {
+                matrixStack.mulPose(Axis.XP.rotationDegrees(dispRot[2]));
+            }
+            matrixStack.pushPose();
+            matrixStack.mulPose(Axis.YP.rotationDegrees(90.0f));
+            matrixStack.translate(0.0f, 0.0f, 0.5f);
+            drawCRect(graphics, -10, 0, 0, 1, new Color(0xFF0000FF).getRGB());
+            matrixStack.popPose();
+            matrixStack.pushPose();
+            drawCRect(graphics, -10, 0, 0, 1, new Color(0xFFFF0000).getRGB());
+            drawCRect(graphics, 0, -10, 1, 0, new Color(0xFF00D000).getRGB());
+            color = GuiNpcAnimation.backColor == 0xFF000000 ?
+                    new Color(0xFFFFFFFF).getRGB() :
+                    new Color(0xFF000000).getRGB();
+            drawCRect(graphics, 0, 0, 1, 1, color);
+            matrixStack.popPose();
+            matrixStack.popPose();
+            // display info
+            matrixStack.pushPose();
+            matrixStack.translate(workU, workV, 0.0f);
+            String ts = "x" + dispScale;
+            graphics.drawString(font, ts, workS - 11 - font.width(ts), 1, color, false);
+            ts = (int) dispRot[0] + "" + ((char) 176) + "/" + (int) dispRot[1] + ((char) 176) + "/" + (int) dispRot[2] + ((char) 176);
+            graphics.drawString(font, ts, workS - 11 - font.width(ts), workS - 10, color, false);
+            ts = (int) dispPos[0] + "/" + (int) dispPos[1];
+            graphics.drawString(font, ts, 11, workS - 10, color, false);
+            matrixStack.popPose();
+            matrixStack.popPose();
+        }
+        else {
+            matrixStack.pushPose();
+            matrixStack.translate(0.0f, 0.0f, 1.0f);
+            graphics.fill(workU + 1, workV + 1, workU + workS - 1, workV + workS - 1, GuiNpcAnimation.backColor);
+            matrixStack.popPose();
+        }
+        matrixStack.pushPose();
+        matrixStack.translate(0.0f, 0.0f, 975.0f);
+        /**/
+        super.render(graphics, mouseX, mouseY, partialTicks);
+        /*
+        matrixStack.popPose();
+        getButton(7).setIsEnabled(!isMotion && ((isHitbox && hitbox != null) || (anim != null && part != null && part.id != 6 && part.id != 7)));
+        getButton(8).setIsEnabled(!isMotion && ((isHitbox && hitbox != null) || (anim != null && addedPartConfig != null && part != null && part.id > 7)));
+        if (hasSubGui() || !CustomNpcs.ShowDescriptions) { return; }
+        drawHoverText(null);
+        /**/
+    }
 
-				onlyCurrentPart = true;
-				if (getButton(21) != null) { getButton(21).setTextureXY(144, getButton(21).getTextureXY()[1]); }
-				resetAnimation();
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
+        if (hovered && (tools == null || !tools.isHovered()) && (partNames == null || !partNames.isHovered())) {
+            if (scrolled != 0) {
+                dispScale += dispScale * (scrolled < 0 ? 0.1f : -0.1f);
+                if (dispScale < 0.5f) { dispScale = 0.5f; }
+                else if (dispScale > 10.0f) { dispScale = 10.0f; }
+                dispScale = (float) (Math.round(dispScale * 20.0d) / 20.0d);
+                if (dispScale == 0.95f || dispScale == 1.05f) { dispScale = 1.0f; }
+                return true;
+            }
+        }
+        return wrapper.mouseScrolled(mouseX, mouseY, scrolled) || super.mouseScrolled(mouseX, mouseY, scrolled);
+    }
 
-				initGui();
-				break;
-			} // show motion type
-			case 49: {
-				dispRot[0] = 0.0f;
-				dispRot[1] = 0.0f;
-				dispRot[2] = 0.0f;
-				break;
-			} // align xy
-			case 50: {
-				dispRot[0] = 90.0f;
-				dispRot[1] = 0.0f;
-				dispRot[2] = 0.0f;
-				break;
-			} // align zy
-			case 51: {
-				dispRot[0] = 0.0f;
-				dispRot[1] = 270.0f;
-				dispRot[2] = 0.0f;
-				break;
-			} // align xz
-			case 52: {
-				displayRotate(180, 0);
-				break;
-			} // align revers
-			case 53: {
-				anim.editTick = button.getValue();
-				resetAnimation();
-				break;
-			} // set animation part tick
-			case 66: onClosed(); break; // exit
-		}
-	}
+    @Override
+    public void init() {
+        super.init();
+        if (frame.id < 0) {
+            frame = anim.frames.get(0);
+            if (frame.id < 0) { frame.id = 0; }
+        }
+        if (hitbox.id < 0) {
+            hitbox = frame.damageHitboxes.get(0);
+            if (hitbox.id < 0) { hitbox.id = 0; }
+        }
+        if (scrollParts == null) {
+            scrollParts = addScroll(0).setSize(67, 112).setHoverTexts("animation.hover.part.sel");
+        }
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        if (w > 0.0d && h > 0.0d) {
+            if (partNames != null) {
+                double left = 1.0d / w * partNames.getX();
+                double top = 1.0d / h * partNames.getY();
+                partNames.transferTo((int) ((double) minecraft.getWindow().getGuiScaledWidth() * left),
+                        (int) ((double) minecraft.getWindow().getGuiScaledHeight() * top));
+                scrollParts.setPos(partNames.getX() + 4, partNames.getY() + 12);
+            }
+            if (tools != null) {
+                double left = 1.0d / w * tools.getX();
+                double top = 1.0d / h * tools.getY();
+                tools.transferTo((int) ((double) minecraft.getWindow().getGuiScaledWidth() * left),
+                        (int) ((double) minecraft.getWindow().getGuiScaledHeight() * top));
+            }
+        }
+        w = minecraft.getWindow().getGuiScaledWidth();
+        h = minecraft.getWindow().getGuiScaledHeight();
+        if ((minecraft.getWindow().getGuiScaledWidth() - 144) < minecraft.getWindow().getGuiScaledHeight() - 8) {
+            workS = minecraft.getWindow().getGuiScaledWidth() - 144;
+            winU = 0;
+            winW = minecraft.getWindow().getGuiScaledWidth();
+            winV = (minecraft.getWindow().getGuiScaledHeight() - workS - 8) / 2;
+            winH = workS + 8;
+        }
+        else {
+            workS = minecraft.getWindow().getGuiScaledHeight() - 8;
+            winU = (minecraft.getWindow().getGuiScaledWidth() - workS - 144) / 2;
+            winW = workS + 144;
+            winV = 0;
+            winH = minecraft.getWindow().getGuiScaledHeight();
+        }
+        workU = winU + 140;
+        workV = winV + 4;
+        winScale = (float) workS / 100.0f;
+        int x = winU + 3;
+        int y = winV + 12;
+        int lId = 0;
+        // common to settings
+        addLabel(lId++, workU - 6, workV, Component.literal("?").withStyle(ChatFormatting.UNDERLINE, ChatFormatting.BOLD))
+                .setColor(0xFF000000)
+                .setHoverTexts("animation.hover.help");
+        // name
+        addLabel(lId++, x, y - 10, Component.translatable("gui.name").append(":"));
+        addTextField(11, x, y, 125, 12, anim.name);
 
-	@Override
-	public void confirmClicked(boolean result, int id) {
-		displayGuiScreen(parent);
-		if (!result) { return; }
-		switch (id) {
-			case 0: {
-				if (anim == null || frame == null || anim.frames.size() <= 1) {
-					return;
-				}
-				int f = frame.id - 1;
-				if (f < 0) {
-					f = 0;
-				}
-				anim.removeFrame(frame);
-				frame = anim.frames.get(f);
-				setPart(frame.parts.get(part.id));
-				setHitbox(frame.damageHitboxes.get(0));
-				initGui();
-				break;
-			} // remove frame
-			case 1: {
-				if (frame == null) {
-					return;
-				}
-				for (PartConfig p : frame.parts.values()) {
-					p.clear();
-				}
-				initGui();
-				break;
-			} // clear frame
-			case 2: {
-				if (anim == null || addedPartConfig == null || part == null) { return; }
-				int f = addedPartConfig.id - 1;
-				if (f < 0) { f = 0; }
-				anim.removeAddedPart(addedPartConfig);
-				frame = anim.frames.get(frame.id);
-				setPart(frame.parts.get(f));
-				initGui();
-				break;
-			} // remove added part
-			case 3: {
-				if (part == null) {
-					return;
-				}
-				part.clear();
-				initGui();
-				break;
-			} // clear part
-			case 4: {
-				if (anim == null) {
-					return;
-				}
-				for (AnimationFrameConfig f : anim.frames.values()) {
-					for (PartConfig p : f.parts.values()) {
-						p.clear();
-					}
-				}
-				initGui();
-				break;
-			} // clear all frames
-			case 5: {
-				if (anim == null || part == null) { return; }
-				for (AnimationFrameConfig f : anim.frames.values()) {
-					f.parts.get(part.id).clear();
-				}
-				initGui();
-				break;
-			} // clear all part
-		}
-	}
+        // work place
+        // animation frame init
+        GuiLabel label = addLabel(lId++, workU + workS / 2, workV + 3, anim.getSettingName())
+                .setColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000);
+        label.setCenter(label.getWidth() / 2);
 
-	private void displayOffset(int x, int y) {
-		for (int i = 0; i < 2; i++) {
-			dispPos[i] += (i == 0 ? x : y);
-			if (dispPos[i] > workS * dispScale) {
-				dispPos[i] = workS * dispScale;
-			} else if (dispPos[i] < -workS * dispScale) {
-				dispPos[i] = -workS * dispScale;
-			}
-		}
-	}
+        // type
+        addLabel(lId++, x, (y += 26) - 10, "animation.place");
+        addButton(0, x, y, true, blockType, blockNames)
+                .setSize(105, 10)
+                .setHoverTexts("animation.hover.block.type");
+        // size
+        addButton(1, x + 107, y, false, blockSize, blockSizes)
+                .setSize(17, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.block.size");
+        // back color
+        addButton(2, workU + 2, workV + 23, "")
+                .setSize(8, 8)
+                .setColor(GuiNpcAnimation.backColor == 0xFF000000 ? new Color(0xFF00FFFF).getRGB() : new Color(0xFF008080).getRGB())
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.color");
+        addButton(26, workU + 2, workV + 31, "")
+                .setSize(8, 8)
+                .setColor(ModelNpcAlt.editAnimDataSelect.showArmor ? new Color(0xFFFF7200).getRGB() : new Color(0xFF6F3200).getRGB())
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.show.armor");
+        addButton(46, workU + 2, workV + 39, "")
+                .setSize(8, 8)
+                .setColor(ModelNpcAlt.editAnimDataSelect.alpha >= 1.0f ? new Color(0xFFFFFEBF).getRGB() : new Color(0xFF787758).getRGB())
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.show.alpha");
+        addButton(47, workU + 2, workV + 47, "")
+                .setSize(8, 8)
+                .setColor(baseRotation == 0.0f || baseRotation == npcAnim.getYRot() ? new Color(0xFF96FFC0).getRGB() : new Color(0xFF426C53).getRGB())
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.base.rot");
+        // frame
+        addLabel(lId++, x, (y += 23) - 10, "animation.frames");
+        Object[] lFrames = new Object[anim.frames.size()];
+        for (int i = 0; i < anim.frames.size(); i++) { lFrames[i] = i + "/" + (anim.frames.size() - 1); }
+        addButton(3, x, y, true, frame.id, lFrames)
+                .setSize(60, 10)
+                .setHoverTexts("animation.hover.frame", "" + (frame.id + 1));
+        // add frame
+        addButton(4, x + 106, y - 10, "")
+                .setSize(10, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 24, 24)
+                .setHoverTexts("animation.hover.frame.add");
+        // del frame
+        addButton(5, x + 116, y - 10, "")
+                .setSize(10, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(72, 0, 24, 24)
+                .setIsEnabled(anim.frames.size() > 1)
+                .setHoverTexts("animation.hover.frame.del");
+        // frame smooth animated
+        addCheckBox(11, x + 62, y - 2, "gui.smooth", "gui.linearly", frame.isSmooth())
+                .setSize(74, 12)
+                .setHoverTexts("animation.hover.smooth." + frame.isSmooth());
+        // clear frame
+        addButton(6, x + 126, y - 10, "")
+                .setSize(10, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(120, 0, 24, 24)
+                .setHoverTexts(Component.translatable("animation.hover.reset.frame")
+                        .append(Component.translatable("animation.hover.shift.0")));
+        // frame times
+        addLabel(lId++, x, (y += 12) + 2, Component.translatable("gui.time").append(":"));
+        addTextField(1, x + 35, y, 48, 12, "" + frame.getSpeed())
+                .setMinMaxDefault(0, 3600, frame.getSpeed())
+                .setHoverTexts("animation.hover.part.ticks");
+        addTextField(2, x + 87, y, 48, 12, "" + frame.getEndDelay())
+                .setMinMaxDefault(0, 3600, frame.getEndDelay())
+                .setHoverTexts("animation.hover.part.delay");
+        // frame repeat
+        hasExtend = false;
+        if (anim.type == AnimationKind.DIES || anim.type == AnimationKind.JUMP) {
+            hasExtend = true;
+            addLabel(lId++, x, (y += 14) + 2, Component.translatable("gui.repeat").append(":"));
+            if (anim.repeatLast < 0) { anim.repeatLast *= -1; }
+            if (anim.repeatLast > anim.frames.size()) { anim.repeatLast = anim.frames.size(); }
+            addTextField(0, x + 87, y, 48, 12, "" + anim.repeatLast)
+                    .setMinMaxDefault(0, anim.frames.size(), anim.repeatLast)
+                    .setHoverTexts("animation.hover.anim.repeat");
+        }
+        // has damage hitbox
+        if (anim.type == AnimationKind.ATTACKING) {
+            hasExtend = true;
+            addCheckBox(36, x, y += 14, "animation.now.attack", "animation.notyet.attack", frame.isNowDamage())
+                    .setSize(136, 12)
+                    .setHoverTexts("animation.hover.now.attack");
+        }
+        // show stack in right hand
+        addLabel(lId++, x + 20, y += 13, "animation.hold.right");
+        int type = frame.getHoldRightStackType();
+        if (type == 2) { type = 3; }
+        else if (type == 3) { type = 4; }
+        addButton(37, x + 20, y += 9, true, frame.getHoldRightStackType(),
+                "animation.stack.type.0", "animation.stack.type.1", "animation.stack.type.3", "animation.stack.type.4",
+                "animation.stack.type.5", "animation.stack.type.6", "animation.stack.type.7", "animation.stack.type.8")
+                .setSize(116, 10)
+                .setHoverTexts("animation.hover.stack.type."+type);
+        // show stack in left hand
+        addLabel(lId++, x + 20, y += 10, "animation.hold.left");
+        type = frame.getHoldLeftStackType();
+        if (type == 3) { type = 4; }
+        addButton(38, x + 20, y += 9, true, frame.getHoldLeftStackType(),
+                "animation.stack.type.0", "animation.stack.type.1", "animation.stack.type.3", "animation.stack.type.4",
+                "animation.stack.type.5", "animation.stack.type.6", "animation.stack.type.7", "animation.stack.type.8")
+                .setSize(116, 10)
+                .setHoverTexts("animation.hover.stack.type."+type);
+        // Part
+        addLabel(lId++, x, y += 13, isMotion ? "animation.motion" :  isHitbox ? "animation.hitbox" : "animation.parts");
+        // show part names
+        addButton(29, workU + 2, y, "")
+                .setSize(8, 8)
+                .setColor(CustomNpcs.colorAnimHoverPart + 0xFF000000)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(232, 0, 24, 24)
+                .setIsEnabled(partNames == null || !partNames.visible)
+                .setHoverTexts("animation.hover.show.parts");
+        // show hitbox names
+        if (anim.type == AnimationKind.ATTACKING) {
+            addButton(45, workU + 2, y + 12, "")
+                    .setSize(8, 8)
+                    .setColor(0xFFFAF700)
+                    .setTexture(ANIMATION_BUTTONS)
+                    .setDefBack(false)
+                    .setIsAnim(true)
+                    .setUV(232, 0, 24, 24)
+                    .setIsEnabled(hitboxes == null || !hitboxes.visible)
+                    .setHoverTexts("animation.hover.show.hitboxes");
+        }
+        // scrolls data set
+        dataParts.clear();
+        List<Component> lParts = new ArrayList<>();
+        for (int id : frame.parts.keySet()) {
+            PartConfig ps = frame.parts.get(id);
+            Component key = Component.translatable(ps.name);
+            dataParts.put(key, ps);
+            lParts.add(key);
+        }
+        scrollParts.setUnsortedList(lParts);
+        dataHitboxes.clear();
+        if (scrollHitboxes == null) { scrollHitboxes = addScroll(1).setSize(112, 112); }
+        List<Component> lHitboxes = new ArrayList<>();
+        int i = 0;
+        LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+        for (int id : frame.damageHitboxes.keySet()) {
+            AnimationDamageHitbox aDH = frame.damageHitboxes.get(id);
+            Component key = aDH.getKey();
+            dataHitboxes.put(key, aDH);
+            lHitboxes.add(key);
+            hts.put(i, aDH.getHoverKey());
+            i++;
+        }
+        scrollHitboxes.setUnsortedList(lHitboxes)
+                .setHoverTexts(hts);
+        if (isHitbox && toolType == 0) { toolType = 1; }
+        // add part / hitbox
+        addButton(7, x + 106, y, "")
+                .setSize(10, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(96, 0, 24, 24)
+                .setHoverTexts(isHitbox ? "animation.hover.hitbox.add" : isMotion ? "animation.hover.not.in.motion" : "animation.hover.part.add");
+        // del part / hitbox
+        addButton(8, x + 116, y, "")
+                .setSize(10, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(72, 0, 24, 24)
+                .setHoverTexts(isHitbox ? "animation.hover.hitbox.add" : isMotion ? "animation.hover.not.in.motion" : "animation.hover.part.del");
+        // clear part
+        addButton(9, x + 126, y, "")
+                .setSize(10, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(120, 0, 24, 24)
+                .setIsEnabled(!isMotion && !isHitbox)
+                .setHoverTexts(Component.translatable("animation.hover.reset.part")
+                        .append(Component.translatable("animation.hover.shift.0")));
+        // used part in frame
+        addCheckBox(10, x, y += 10, "gui.disabled", "gui.enabled", part.isDisable())
+                .setSize(67, 14)
+                .setIsEnabled(!isMotion && !isHitbox)
+                .setHoverTexts(Component.translatable("animation.hover.part.disabled." + !part.isDisable())
+                        .append(Component.translatable("animation.hover.shift.1")));
+        // show part in frame
+        addCheckBox(22, x + 69, y, "gui.show", "gui.noshow", part.isShow())
+                .setSize(67, 14)
+                .setIsEnabled(!isMotion && !isHitbox)
+                .setHoverTexts(Component.translatable("animation.hover.part.show." + part.isShow())
+                        .append(Component.translatable("animation.hover.shift.1")));
+        // display color hover
+        StringBuilder color = new StringBuilder(Integer.toHexString(CustomNpcs.colorAnimHoverPart));
+        while (color.length() < 6) { color.insert(0, "0"); }
+        addButton(12, x, y += 15, color.toString())
+                .setSize(67, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setIsEnabled(!isMotion && !isHitbox)
+                .setColor(CustomNpcs.colorAnimHoverPart)
+                .setHoverTexts("animation.hover.part.color")
+                .setShowShadow(false);
+        // Chance
+        float ch = Math.round(anim.chance * 100000.0f) / 1000.0f;
+        addLabel(lId++, x, (y += 14) + 1, Component.translatable("drop.chance").append(":"));
+        addTextField(10, x + 28, y, 40, 12, String.valueOf(ch))
+                .setMinMaxDefault(0.0f, 100.0f, ch)
+                .setHoverTexts("animation.hover.chance");
+        addLabel(lId++, x + 72, y + 1, "%");
+        // Sound Settings
+        addLabel(lId++, x, y += 16, Component.translatable("advanced.sounds").append(":"));
+        addTextField(3, x, y + 10, 135, 12, frame.getStartSound())
+                .setHoverTexts("animation.hover.sound");
+        addButton(27, x + 135 - 17, y, "S")
+                .setSize(8, 8)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.select.sound")
+                .setShowShadow(false);
+        addButton(28, x + 135 - 8, y, "X")
+                .setSize(8, 8)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.del.sound")
+                .setShowShadow(false);
+        // Emotion data
+        addLabel(lId++, x, y += 26, Component.translatable("advanced.emotion").append(":"));
+        addTextField(4, x, y + 10, 48, 12, "" + frame.getStartEmotion())
+                .setMinMaxDefault(0, AnimationController.getInstance().getUnusedEmtnId() - 1, frame.getStartEmotion())
+                .setHoverTexts("animation.hover.emotion.id");
 
-	private void displayRotate(int x, int y) {
-		dispRot[0] += x;
-		dispRot[1] += (float) (Math.cos(dispRot[0] * Math.PI / 180.0f) * (float) y);
-		dispRot[2] += (float) (Math.sin(dispRot[0] * Math.PI / 180.0f) * (float) y);
-		for (int i = 0; i < 3; i++) {
-			if (dispRot[i] > 360.0f) {
-				dispRot[i] -= 360.0f;
-			} else if (dispRot[i] < 0.0f) {
-				dispRot[i] += 360.0f;
-			}
-		}
-	}
+        // show equipment mainhand
+        addLabel(lId, x, y += 26, "animation.show.stacks");
+        addButton(39, x + 2, y += 10, "")
+                .setSize(12, 12)
+                .setTexture(ANIMATION_BUTTONS_SLOTS)
+                .setDefBack(false)
+                .setUV(0, frame.showMainHand ? 0 : 96, 24, 24)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.0")
+                .setShowShadow(false);
+        // show equipment offhand
+        addButton(40, x + 16, y, "")
+                .setSize(12, 12)
+                .setTexture(ANIMATION_BUTTONS_SLOTS)
+                .setDefBack(false)
+                .setUV(24, frame.showOffHand ? 0 : 96, 24, 24)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.1")
+                .setShowShadow(false);
+        // show equipment helmet
+        addButton(41, x + 30, y, "")
+                .setSize(12, 12)
+                .setTexture(ANIMATION_BUTTONS_SLOTS)
+                .setDefBack(false)
+                .setUV(48, frame.showHelmet ? 0 : 96, 24, 24)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.2")
+                .setShowShadow(false);
+        // show equipment body
+        addButton(42, x + 44, y, "")
+                .setSize(12, 12)
+                .setTexture(ANIMATION_BUTTONS_SLOTS)
+                .setDefBack(false)
+                .setUV(72, frame.showBody ? 0 : 96, 24, 24)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.3")
+                .setShowShadow(false);
+        // show equipment legs
+        addButton(43, x + 58, y, "")
+                .setSize(12, 12)
+                .setTexture(ANIMATION_BUTTONS_SLOTS)
+                .setDefBack(false)
+                .setUV(96, frame.showLegs ? 0 : 96, 24, 24)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.4")
+                .setShowShadow(false);
+        // show equipment feet's
+        addButton(44, x + 72, y, "")
+                .setSize(12, 12)
+                .setTexture(ANIMATION_BUTTONS_SLOTS)
+                .setDefBack(false)
+                .setUV(120, frame.showFeets ? 0 : 96, 24, 24)
+                .setColor(0xFFDC0000)
+                .setHoverTexts("animation.hover.5")
+                .setShowShadow(false);
+        // exit
+        addButton(66, x, winV + winH - 12, "gui.back")
+                .setSize(50, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("hover.back");
+        // work place
+        Component hAgain= Component.translatable("animation.hover.again");
+        // simple mesh
+        addButton(13, workU + 25, workV + 2, "")
+                .setSize(8, 8)
+                .setColor(meshType == 0 ? 0xFFD93070 : 0xFF360C1C)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts(Component.translatable("animation.hover.mesh.0").append(hAgain));
+        // xz mesh
+        addButton(14, workU + 34, workV + 2, "")
+                .setSize(8, 8)
+                .setColor(meshType == 1 ? 0xFF6830D9 : 0xFF1A0C36)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts(Component.translatable("animation.hover.mesh.1").append(hAgain));
+        // xy mesh
+        addButton(15, workU + 43, workV + 2, "")
+                .setSize(8, 8)
+                .setColor(meshType == 2 ? 0xFF30D980 : 0xFF0C3620)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts(Component.translatable("animation.hover.mesh.2").append(hAgain));
+        // zy mesh
+        addButton(16, workU + 52, workV + 2, "")
+                .setSize(8, 8)
+                .setColor(meshType == 3 ? 0xFFD7D930 : 0xFF35360C)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts(Component.translatable("animation.hover.mesh.3").append(hAgain));
+        // show hit box
+        addButton(17, workU + 61, workV + 2, "")
+                .setSize(8, 8)
+                .setColor(showHitBox ? 0 : 0xFF808080)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts(Component.translatable("animation.hover.hitbox").append(hAgain));
+        // align xy
+        addButton(49, workU + 79, workV + 2, "x")
+                .setSize(8, 8)
+                .setColor(0xFF8555BA)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.align.xy");
+        // align zy
+        addButton(50, workU + 79, workV + 11, "z")
+                .setSize(8, 8)
+                .setColor(0xFF8555BA)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.align.zy");
+        // align xz
+        addButton(51, workU + 88, workV + 2, "y")
+                .setSize(8, 8)
+                .setColor(0xFF8555BA)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.align.xz");
+        // align revers
+        addButton(52, workU + 97, workV + 11, "r")
+                .setSize(8, 8)
+                .setColor(0xFF557DBA)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.align.revers");
+        // reset scale
+        addButton(18, workU + workS - 10, workV + 2, "")
+                .setSize(8, 8)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.reset.scale");
+        // reset pos
+        addButton(19, workU + 2, workV + workS - 10, "")
+                .setSize(8, 8)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.reset.pos");
+        // reset rot
+        addButton(20, workU + workS - 10, workV + workS - 10, "")
+                .setSize(8, 8)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 96, 0, 0)
+                .setHoverTexts("animation.hover.reset.rot");
+        // part or anim
+        addButton(21, workU + workS / 2 - 11, workV + workS - 12, "")
+                .setSize(18, 10)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(onlyCurrentPart ? 144 : 188, 0, 44, 24)
+                .setHoverTexts(Component.translatable("animation.hover.work." + onlyCurrentPart,
+                        ((char) 167) + "6" + (frame != null ? frame.id + 1 : -1)));
+        y = workV + workS - 74;
+        // animation init data
+        addLabel(50, workU + workS / 2 + 10, workV + workS - 12, "0")
+                .setColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000);
+        addLabel(51, workU + workS / 2 - 13, workV + workS - 12, "0")
+                .setColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000);
+        // set animation part tick
+        addButton(53, workU + workS / 2 - 56, workV + workS - 24, true, 0, "")
+                .setSize(108, 10)
+                .setHoverTexts("animation.hover.part.all.ticks")
+                .setIsVisible(onlyCurrentPart);
+        // show tools
+        addButton(35, workU + 5, y, "")
+                .setSize(8, 8)
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setIsEnabled(tools == null || !tools.visible)
+                .setUV(232, 0, 24, 24)
+                .setHoverTexts("animation.hover.show.tools");
+        // tool pos
+        addButton(23, workU + 2, y += 10, "")
+                .setSize(14, 14)
+                .setColor(toolType == 1 ? new Color(0xFFFF4040).getRGB() : new Color(0xFFFFFFFF).getRGB())
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setIsEnabled(tools == null || !tools.visible)
+                .setUV(0, 0, 24, 24)
+                .setHoverTexts("animation.hover.tool.0");
+        // tool rot
+        addButton(24, workU + 2, y += 16, "")
+                .setSize(14, 14)
+                .setColor(toolType == 0 ? new Color(0xFF40FF40).getRGB() : new Color(0xFFFFFFFF).getRGB())
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setIsEnabled(!isHitbox && !isMotion)
+                .setUV(24, 0, 24, 24)
+                .setHoverTexts("animation.hover.tool.1");
+        // tool scale
+        addButton(25, workU + 2, y + 16, "")
+                .setSize(14, 14)
+                .setColor(toolType == 2 ? new Color(0xFF4040FF).getRGB() : new Color(0xFFFFFFFF).getRGB())
+                .setTexture(ANIMATION_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setIsEnabled(!isMotion)
+                .setUV(48, 0, 24, 24)
+                .setHoverTexts("animation.hover.tool.2");
+        resetAnimation();
+        // Parts window
+        boolean vPN = partNames == null || partNames.visible;
+        showPartNames();
+        partNames.visible = vPN;
+        partNames.objs = new Object[] { part, toolType };
+        // Tool window
+        boolean vT = tools == null || tools.visible;
+        showTools();
+        tools.visible = vT;
+        if (anim.type == AnimationKind.ATTACKING) {
+            boolean vH = hitboxes == null || hitboxes.visible;
+            showHitBoxes();
+            hitboxes.visible = vH;
+        }
+        if (ModelNpcAlt.editAnimDataSelect.part != (part == null ? -1 : part.id)) { setPart(part); }
+    }
 
-	private void drawCRect(double left, double top, double right, double bottom, int color) {
-		float f3 = (float) (color >> 24 & 255) / 255.0F;
-		float f = (float) (color >> 16 & 255) / 255.0F;
-		float f1 = (float) (color >> 8 & 255) / 255.0F;
-		float f2 = (float) (color & 255) / 255.0F;
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferbuilder = tessellator.getBuffer();
-		GlStateManager.enableBlend();
-		GlStateManager.disableTexture2D();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE,
-				GlStateManager.DestFactor.ZERO);
-		GlStateManager.color(f, f1, f2, f3);
-		bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
-		// front
-		bufferbuilder.pos(left, bottom, 0.0D).endVertex();
-		bufferbuilder.pos(right, bottom, 0.0D).endVertex();
-		bufferbuilder.pos(right, top, 0.0D).endVertex();
-		bufferbuilder.pos(left, top, 0.0D).endVertex();
-		// left
-		bufferbuilder.pos(left, bottom, -1.0D).endVertex();
-		bufferbuilder.pos(left, bottom, 0.0D).endVertex();
-		bufferbuilder.pos(left, top, 0.0D).endVertex();
-		bufferbuilder.pos(left, top, -1.0D).endVertex();
-		// back
-		bufferbuilder.pos(right, bottom, -1.0D).endVertex();
-		bufferbuilder.pos(left, bottom, -1.0D).endVertex();
-		bufferbuilder.pos(left, top, -1.0D).endVertex();
-		bufferbuilder.pos(right, top, -1.0D).endVertex();
-		// right
-		bufferbuilder.pos(right, bottom, 0.0D).endVertex();
-		bufferbuilder.pos(right, bottom, -1.0D).endVertex();
-		bufferbuilder.pos(right, top, -1.0D).endVertex();
-		bufferbuilder.pos(right, top, 0.0D).endVertex();
-		// top
-		bufferbuilder.pos(left, top, 0.0D).endVertex();
-		bufferbuilder.pos(right, top, 0.0D).endVertex();
-		bufferbuilder.pos(right, top, -1.0D).endVertex();
-		bufferbuilder.pos(left, top, -1.0D).endVertex();
-		// bottom
-		bufferbuilder.pos(left, bottom, -1.0D).endVertex();
-		bufferbuilder.pos(right, bottom, -1.0D).endVertex();
-		bufferbuilder.pos(right, bottom, 0.0D).endVertex();
-		bufferbuilder.pos(left, bottom, 0.0D).endVertex();
-		tessellator.draw();
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
-	}
+    private void showHitBoxes() {
+        if (hitboxes == null) {
+            hitboxes = new GuiCustomWindowNop(this, 2, workU + 18, workV + 12, 120, 118,
+                    Component.translatable("gui.hitboxes", ":"))
+                    .addClose((window) -> getButton(45).setIsEnabled(get(2, GuiCustomWindowNop.class) != null));
+            hitboxes.widthTexture = 256;
+            hitboxes.heightTexture = 256;
+            hitboxes.setColorLine(0xFAF700);
+            hitboxes.add(scrollHitboxes);
+        }
+        hitboxes.setPoint(getButton(45));
+        scrollHitboxes.setPos(hitboxes.getX() + 4, hitboxes.getY() + 12);
+        add(hitboxes);
+    }
 
-	/**
-	 * @param type 0:X; 1:Y; 2:Z
-	 */
-	private void drawLine(double x, double y, double z, double dist, int type, float red, float green, float blue) {
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		GlStateManager.pushMatrix();
-		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE,
-				GlStateManager.DestFactor.ZERO);
-		GlStateManager.glLineWidth(2.0f);
-		GlStateManager.disableTexture2D();
-		GlStateManager.depthMask(false);
-		buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-		if (type == 0 || type < 0) {
-			buffer.pos(x - dist, y, z).color(red, green, blue, 1.0f).endVertex();
-			buffer.pos(x + dist, y, z).color(red, green, blue, 1.0f).endVertex();
-		}
-		if (type == 1 || type < 0) {
-			buffer.pos(x, y - dist, z).color(red, green, blue, 1.0f).endVertex();
-			buffer.pos(x, y + dist, z).color(red, green, blue, 1.0f).endVertex();
-		}
-		if (type == 2 || type < 0) {
-			buffer.pos(x, y, z - dist).color(red, green, blue, 1.0f).endVertex();
-			buffer.pos(x, y, z + dist).color(red, green, blue, 1.0f).endVertex();
-		}
-		tessellator.draw();
-		GlStateManager.depthMask(true);
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
-		GlStateManager.popMatrix();
-	}
+    private void showTools() {
+        int f = 11, h = 0;
+        int x = workU + 18;
+        int y = workV + workS - 65;
+        boolean notNormal = toolType == 0 && part != null && ((addedPartConfig != null && !addedPartConfig.isNormal) || (part.id >= 1 && part.id <= 5));
+        if (isHitbox) { notNormal = false; }
+        y += notNormal ? -11 : 0;
+        if (tools != null) {
+            x = tools.getX();
+            y = tools.getY();
+            h = tools.imageHeight;
+        }
+        tools = new GuiCustomWindowNop(this, 1, x, y, 146, notNormal ? 60 : 38, Component.translatable("gui.tools").append(":"))
+                .addClose((window) -> getButton(35).setIsEnabled(get(1, GuiCustomWindowNop.class) != null));
+        tools.widthTexture = 256;
+        tools.heightTexture = 256;
+        x += 4;
+        y += 13;
+        for (int i = 0; i < 3; i++) {
+            tools.addLabel(i, x, y + i * f,
+                    i == 0 ? (toolType == 1 && isHitbox || isMotion ? "D:" : "X:") :
+                            i == 1 ? (toolType == 1 && isHitbox || isMotion ? "H:" : "Y:") :
+                                    (toolType == 1 && isHitbox || isMotion ? "W:" : "Z:"));
+            float[] values;
+            if (isHitbox && hitbox != null) { values = toolType == 1 ? hitbox.offset : hitbox.scale; }
+            else if (isMotion && frame != null) {
+                toolType = 1;
+                values = frame.motions;
+            }
+            else { values = toolType == 0 ? part.rotation : toolType == 1 ? part.offset : part.scale; }
+            float[] textToFields = new float[values.length];
+            float[] sliderValues = new float[values.length];
+            switch (toolType) {
+                case 1: { // o
+                    if (i == 2 && (isHitbox || isMotion)) {
+                        textToFields[i] = Math.round(values[i] * 180000.0f / Math.PI) / 1000.0f;
+                        sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.159155f + 0.5f, 0.0f, 1.0f);
+                    }
+                    else {
+                        textToFields[i] = Math.round(values[i] * 1000.0f) / 1000.0f;
+                        if (isMotion) {
+                            if (i == 0) { sliderValues[i] = ValueUtil.correctFloat(values[i] * 2.0f / 3.0f, 0.0f, 1.0f); }
+                            else { sliderValues[i] = ValueUtil.correctFloat(values[i] / 3.0f + 0.5f, 0.0f, 1.0f); }
+                        } else if (isHitbox) {
+                            if (i == 0) { sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.1f, 0.0f, 1.0f); }
+                            else { sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.05f + 0.5f, 0.0f, 1.0f); }
+                        }
+                        else { sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.1f + 0.5f, 0.0f, 1.0f); }
+                    }
+                    break;
+                }
+                case 2: { // s
+                    textToFields[i] = Math.round(values[i] * 1000.0f) / 1000.0f;
+                    sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.2f, 0.0f, 1.0f);
+                    break;
+                }
+                default: { // r
+                    textToFields[i] = Math.round(values[i] * 180000.0f / Math.PI) / 1000.0f;
+                    sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.159155f + 0.5f, 0.0f, 1.0f);
+                    break;
+                }
+            }
+            tools.addSlider(i, x + 9, y + i * f, sliderValues[i])
+                    .setSize(75, 8)
+                    .setHoverTexts("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"),
+                            i == 0 ? "X" : i == 1 ? "Y" : "Z");
+            double m = -180.0d, n = 180.0d;
+            if (toolType == 1) {
+                if (isMotion) { // D H W
+                    if (i == 0) {
+                        m = 0.0d;
+                        n = 1.5d;
+                    } if (i == 1) {
+                        m = -1.5d;
+                        n = 1.5d;
+                    }
+                }
+                else if (isHitbox) { // D H W
+                    if (i == 0) {
+                        m = 0.0d;
+                        n = 10.0d;
+                    } if (i == 1) {
+                        m = -10.0d;
+                        n = 10.0d;
+                    }
+                }
+                else {
+                    m = -5.0d;
+                    n = 5.0d;
+                }
+            }
+            else if (toolType == 2) {
+                m = 0.0d;
+                n = 5.0d;
+            }
+            tools.addTextField(i + 5, x + 86, y + i * f, 42, 8, "" + textToFields[i])
+                    .setMinMaxDefault(m, n, textToFields[i])
+                    .setHoverTexts("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"),
+                            i == 0 ? "X" : i == 1 ? "Y" : "Z");
+            tools.addButton(30 + i, x + 130, y + i * f, "X")
+                    .setSize(8, 8)
+                    .setTexture(ANIMATION_BUTTONS)
+                    .setDefBack(false)
+                    .setIsAnim(true)
+                    .setUV(0, 96, 0, 0)
+                    .setColor(0xFFDC0000)
+                    .setHoverTexts("animation.hover.reset." + toolType, i == 0 ? "X" : i == 1 ? "Y" : "Z")
+                    .setShowShadow(false);
+        }
+        if (!isHitbox && notNormal) {
+            y += 33;
+            tools.addLabel(3, x, y, "X1:");
+            float sliderValue = part.rotation[3] * 0.159155f + 0.5f;
+            float textToFields = Math.round(part.rotation[3] * 180000.0f / Math.PI) / 1000.0f;
+            tools.addSlider(3, x + 9, y, sliderValue)
+                    .setSize(75, 8)
+                    .setHoverTexts("animation.hover.rotation", "X 1");
+            tools.addTextField(8, x + 86, y, 42, 8, "" + textToFields)
+                    .setMinMaxDefault(-180.0d, 180.0d, textToFields)
+                    .setHoverTexts("animation.hover.rotation", "X 1");
+            tools.addButton(33, x + 130, y, "X")
+                    .setSize(8, 8)
+                    .setTexture(ANIMATION_BUTTONS)
+                    .setDefBack(false)
+                    .setIsAnim(true)
+                    .setUV(0, 96, 0, 0)
+                    .setShowShadow(false)
+                    .setColor(0xFFDC0000)
+                    .setHoverTexts("animation.hover.reset.0", "X 1");
+            y += 11;
+            tools.addLabel(4, x, y, "Y1:");
+            sliderValue = part.rotation[4] * 0.318310f + 0.5f;
+            textToFields = Math.round(part.rotation[4] * 180000.0f / Math.PI) / 1000.0f;
+            tools.addSlider(4, x + 9, y, sliderValue)
+                    .setSize(75, 8)
+                    .setHoverTexts("animation.hover.rotation", "Y 1");
+            tools.addTextField(9, x + 86, y, 42, 8, "" + textToFields)
+                    .setMinMaxDefault(-90.0d, 90.0d, textToFields)
+                    .setHoverTexts("animation.hover.rotation", "Y 1");
+            tools.addButton(34, x + 130, y, "X")
+                    .setSize(8, 8)
+                    .setTexture(ANIMATION_BUTTONS)
+                    .setDefBack(false)
+                    .setIsAnim(true)
+                    .setUV(0, 96, 0, 0)
+                    .setShowShadow(false)
+                    .setColor(0xFFDC0000)
+                    .setHoverTexts("animation.hover.reset.0", "Y 1");
+            if (h != 72) { tools.moveTo(0, -11); }
+        }
+        else if (h != 50) { tools.moveTo(0, 11); }
+        switch(toolType) {
+            case 1: {
+                tools.setPoint(getButton(23));
+                tools.setColorLine(0xFF8080);
+                break;
+            }
+            case 2: {
+                tools.setPoint(getButton(25));
+                tools.setColorLine(0x8080FF);
+                break;
+            }
+            default: {
+                tools.setPoint(getButton(24));
+                tools.setColorLine(0x80FF80);
+                break;
+            }
+        }
+        if (getButton(35) != null) { getButton(35).setColor(tools.getColorLine() + 0xFF000000); }
+        add(tools);
+    }
 
-	private void drawLine(double x0, double z0, double x1, double y1, double z1, float size, float red, float green, float blue) {
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		GlStateManager.pushMatrix();
-		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE,
-				GlStateManager.DestFactor.ZERO);
-		GlStateManager.glLineWidth(size);
-		GlStateManager.disableTexture2D();
-		GlStateManager.depthMask(false);
-		buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-		buffer.pos(x0, 0.0, z0).color(red, green, blue, 1.0f).endVertex();
-		buffer.pos(x1, y1, z1).color(red, green, blue, 1.0f).endVertex();
-		tessellator.draw();
-		GlStateManager.depthMask(true);
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
-		GlStateManager.popMatrix();
-	}
+    private void showPartNames() {
+        if (partNames == null) {
+            partNames = new GuiCustomWindowNop(this, 0, workU + workS - 78, workV + 12, 75, 129, Component.translatable("gui.parts").append(":"))
+                    .addClose((window) -> getButton(29).setIsEnabled(get(0, GuiCustomWindowNop.class) != null));
+            partNames.widthTexture = 256;
+            partNames.heightTexture = 256;
+            partNames.setColorLine(CustomNpcs.colorAnimHoverPart);
+            partNames.add(scrollParts.setSelect(part.id));
+            partNames.addButton(48, partNames.getX() + 4, partNames.getY() + 125, "ai.movement")
+                    .setSize(67, 12);
+        }
+        partNames.setPoint(getButton(29));
+        if (scrollParts != null) { scrollParts.setPos(partNames.getX() + 4,partNames.getY() + 12); }
+        if (partNames.getButton(48) != null) {
+            GuiButtonNop b = partNames.getButton(48);
+            b.setX(partNames.getX() + 4);
+            b.setY(partNames.getY() + 125);
+        }
+        add(partNames);
+    }
 
-	private void drawCircle(double radius, float size, float red, float green, float blue) {
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		GlStateManager.pushMatrix();
-		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE,
-				GlStateManager.DestFactor.ZERO);
-		GlStateManager.glLineWidth(size);
-		GlStateManager.disableTexture2D();
-		GlStateManager.depthMask(false);
+    private boolean isPressAndKey(int type, int id) {
+        if (waitKey > 0 && waitKeyID == id) { return false; }
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        boolean isPress = type == 0 ? hasAltDown() : type == 1 ? hasControlDown() : hasShiftDown() && InputConstants.isKeyDown(minecraft.getWindow().getWindow(), id);
+        if (isPress) {
+            waitKey = 30;
+            waitKeyID = id;
+        }
+        return isPress;
+    }
 
-		buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (!hasSubGui()) {
+            if (keyCode == InputConstants.KEY_ESCAPE) {
+                onClose();
+                return true;
+            }
+            // tool pos - Alt + Q
+            if (isPressAndKey(0, InputConstants.KEY_Q) && toolType != 1) {
+                toolType = 1;
+                playButtonClick();
+                init();
+                return true;
+            }
+            // tool rot - Alt + W
+            if (isPressAndKey(0, InputConstants.KEY_W) && toolType != 0) {
+                toolType = 0;
+                playButtonClick();
+                init();
+                return true;
+            }
+            // tool rot - Alt + E
+            if (isPressAndKey(0, InputConstants.KEY_E) && toolType != 2) {
+                toolType = 2;
+                playButtonClick();
+                init();
+                return true;
+            }
+            // play stop - Alt + P
+            if (isPressAndKey(0, InputConstants.KEY_P)) {
+                onlyCurrentPart = !onlyCurrentPart;
+                if (getButton(21) != null) {
+                    GuiButtonNop b = getButton(21);
+                    b.setUV(onlyCurrentPart ? 144 : 188, b.txrY, b.txrW, b.txrH);
+                }
+                playButtonClick();
+                isChanged = true;
+                init();
+                return true;
+            }
+            // reset scale - Alt + S
+            if (isPressAndKey(0, InputConstants.KEY_S)) {
+                dispScale = 1.0f;
+                playButtonClick();
+                return true;
+            }
+            // reset rot - Alt + R
+            if (isPressAndKey(0, InputConstants.KEY_R)) {
+                dispRot[0] = 45.0f;
+                dispRot[1] = 345.0f;
+                dispRot[2] = 345.0f;
+                playButtonClick();
+                return true;
+            }
+            // reset pos - Alt + O
+            if (isPressAndKey(0, InputConstants.KEY_O)) {
+                for (int j = 0; j < 3; j++) { dispPos[j] = 0.0f; }
+                playButtonClick();
+                return true;
+            }
+            // align xy Shift + X
+            if (isPressAndKey(2, InputConstants.KEY_X)) {
+                dispRot[0] = 0.0f;
+                dispRot[1] = 0.0f;
+                dispRot[2] = 0.0f;
+                playButtonClick();
+                return true;
+            }
+            // align xz Shift + Y
+            if (isPressAndKey(2, InputConstants.KEY_Y)) {
+                dispRot[0] = 0.0f;
+                dispRot[1] = 270.0f;
+                dispRot[2] = 0.0f;
+                playButtonClick();
+                return true;
+            }
+            // align zy Shift + Z
+            if (isPressAndKey(2, InputConstants.KEY_Z)) {
+                dispRot[0] = 90.0f;
+                dispRot[1] = 0.0f;
+                dispRot[2] = 0.0f;
+                playButtonClick();
+                return true;
+            }
+            // align revers Shift + R
+            if (isPressAndKey(2, InputConstants.KEY_R)) {
+                displayRotate(180, 0);
+                playButtonClick();
+                return true;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
 
-		for (int i = 0; i <= 64; ++i) {
-			double angle = ((double) i / 64) * Math.PI * 2;
-            buffer.pos(0.0 + Math.cos(angle) * radius, 0.0, 0.0 + Math.sin(angle) * radius).color(red, green, blue, 1.0F).endVertex();
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        boolean bo = super.mouseClicked(mouseX, mouseY, mouseButton);
+        if (!hasSubGui()) {
+            if (hoverRight && frame.getHoldRightStackType() == 3) {
+                IItemStack stack;
+                switch(frame.getHoldRightStackType()) {
+                    case 1: stack = npc.inventory.getProjectile(); break;
+                    case 2: stack = npc.inventory.getLeftHand(); break;
+                    case 3: stack = frame.getHoldRightStack(); break;
+                    default: stack = npc.inventory.getRightHand(); break;
+                }
+                setSubGui(new SubGuiSelectItemStack(0, stack==null || stack.isEmpty() ? ItemStack.EMPTY : stack.getMCItemStack()));
+            }
+            else if (hoverLeft && frame.getHoldLeftStackType() == 3) {
+                IItemStack stack;
+                switch(frame.getHoldLeftStackType()) {
+                    case 1: stack = npc.inventory.getProjectile(); break;
+                    case 2: stack = npc.inventory.getRightHand(); break;
+                    case 3: stack = frame.getHoldLeftStack(); break;
+                    default: stack = npc.inventory.getLeftHand(); break;
+                }
+                setSubGui(new SubGuiSelectItemStack(1, stack==null || stack.isEmpty() ? ItemStack.EMPTY : stack.getMCItemStack()));
+            }
+            else if (!bo && (mouseButton == 0 || mouseButton == 1) && hovered) {
+                mousePressId = mouseButton;
+                mousePressX = mouseX;
+                mousePressY = mouseY;
+            }
+        }
+        return bo;
+    }
+
+    @Override
+    public void mouseDragged(GuiSliderNop slider) {
+        isChanged = true;
+        float value = 0.0f;
+        float pi = (float) Math.PI;
+        if (isHitbox) {
+            if (hitbox == null || toolType == 0) { return; }
+            if (toolType == 1) {
+                if (slider.id == 0) {
+                    hitbox.offset[0] = 10.0f * slider.sliderValue;
+                    value = Math.round(hitbox.offset[0] * 1000.0f) / 1000.0f;
+                }
+                else if (slider.id == 1) {
+                    hitbox.offset[1] = 20.0f * slider.sliderValue - 10.0f;
+                    value = Math.round(hitbox.offset[1] * 1000.0f) / 1000.0f;
+                }
+                else if (slider.id == 2) {
+                    hitbox.offset[2] = 2.0f * pi * slider.sliderValue - pi;
+                    value = Math.round(360.0f * slider.sliderValue - 180.0f);
+                }
+            }
+            else {
+                value = Math.round(5000.0f * slider.sliderValue) / 1000.0f;
+                hitbox.scale[slider.id] = value;
+            }
+            if (tools.getTextField(5 + slider.id) != null) { tools.getTextField(5 + slider.id).setValue("" + value); }
+            return;
+        }
+        if (isMotion) {
+            if (toolType != 1) { return; }
+            if (slider.id == 0) {
+                value = Math.round(slider.sliderValue * 1500.0f) / 1000.0f;
+                frame.motions[0] = value;
+            } else if (slider.id == 1) {
+                value = Math.round((slider.sliderValue * 3.0f - 1.5f) * 1000.0f) / 1000.0f;
+                frame.motions[1] = value;
+            } else if (slider.id == 2) {
+                value = Math.round(360.0f * slider.sliderValue - 180.0f);
+                frame.motions[2] = 2.0f * pi * slider.sliderValue - pi;
+            }
+            if (tools.getTextField(5 + slider.id) != null) { tools.getTextField(5 + slider.id).setValue("" + value); }
+            return;
+        }
+        if (part == null) { return; }
+        if (slider.id == 3 || slider.id == 4) {
+            if (toolType != 0) { return; }
+            part.rotation[slider.id] = (2.0f * pi * slider.sliderValue - pi) / (slider.id == 4 ? 2.0f : 1.0f);
+            value = Math.round(360.0f * slider.sliderValue - 180.0f) / (slider.id == 4 ? 2.0f : 1.0f);
+        } else {
+            switch (toolType) {
+                case 0: { // r
+                    part.rotation[slider.id] = 2.0f * pi * slider.sliderValue - pi;
+                    value = Math.round(360.0f * slider.sliderValue - 180.0f);
+                    break;
+                }
+                case 1: { // o
+                    part.offset[slider.id] = slider.sliderValue * 10.0f - 5.0f;
+                    value = Math.round(part.offset[slider.id] * 1000.0f) / 1000.0f;
+                    break;
+                }
+                case 2: { // s
+                    part.scale[slider.id] = slider.sliderValue * 5.0f;
+                    value = Math.round(part.scale[slider.id] * 1000.0f) / 1000.0f;
+                    break;
+                }
+            }
+        }
+        if (tools.getTextField(5 + slider.id) != null) { tools.getTextField(5 + slider.id).setValue("" + value); }
+        resetAnimation();
+    }
+
+    @Override
+    public void mousePressed(GuiSliderNop slider) { }
+
+    @Override
+    public void mouseReleased(GuiSliderNop slider) { }
+
+    @Override
+    public void scrollClicked(GuiCustomScrollNop scroll) {
+        GuiTextFieldNop.unfocus();
+        if (isMotion) {
+            isMotion = false;
+            partNames.getButton(48).setIsEnabled(true);
+        }
+        if (scroll.id == 0) {
+            if (anim.type == AnimationKind.ATTACKING) { setHitbox(null); }
+            if (part.id == dataParts.get(scroll.getNormalSelected()).id) { return; }
+            setPart(dataParts.get(scroll.getNormalSelected()));
+            init();
+        }
+        else if (scroll.id == 1 && anim.type == AnimationKind.ATTACKING) {
+            setHitbox(dataHitboxes.get(scroll.getNormalSelected()));
+            if (scrollParts != null) { scrollParts.setSelect(-1); }
+            init();
+        }
+        init();
+    }
+
+    @Override
+    public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
+
+    private void setEnvironment() {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        environmentEntitys.clear();
+        environmentStates.clear();
+        if (npc == null) { return; }
+        offsetY = 0.0f;
+        if (npc.getY() != Math.floor(npc.getY())) { offsetY = (float) ((npc.getY() - Math.round(npc.getY())) * 16.0f); }
+        for (int y = -4; y <= 4; y++) {
+            for (int x = -4; x <= 4; x++) {
+                for (int z = -4; z <= 4; z++) {
+                    double yP = npc.getY() + y - 1;
+                    if (npc.getY() != Math.floor(npc.getY())) { yP = Math.ceil(npc.getY()) + y - 1; }
+                    BlockPos posWorld = new BlockPos((int) Math.floor(npc.getX() + x), (int) Math.floor(yP), (int) Math.floor(npc.getZ() + z));
+                    BlockState state = npc.level().getBlockState(posWorld);
+                    BlockEntity tile = npc.level().getBlockEntity(posWorld);
+                    if (tile != null && minecraft.getBlockEntityRenderDispatcher().getRenderer(tile) == null) { tile = null; }
+                    BlockPos pos = new BlockPos(x, y, z);
+                    environmentStates.put(pos, state);
+                }
+            }
+        }
+        List<Entity> entities = new ArrayList<>();
+        try { entities = npc.level().getEntitiesOfClass(Entity.class, new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
+                .move(npc.position())
+                .inflate(4.55d, 4.55d, 4.55d)); }
+        catch (Exception ignored) { }
+        for (Entity e : entities) {
+            if (e.equals(npc)) { continue; }
+            CompoundTag nbt = new CompoundTag();
+            Entity le = null;
+            if (e instanceof EntityNPCInterface) { le = Util.instance.copyToGUI((EntityNPCInterface) e, player.level(), true); }
+            else {
+                e.save(nbt);
+                Optional<Entity> entityO = EntityType.create(nbt, npc.level());
+                if (entityO.isPresent()) { le = entityO.get(); }
+            }
+            if (le != null) {
+                le.setPos(le.getX() - npc.getX(), le.getY() - npc.getX(), le.getY() - npc.getZ());
+                le.setYRot(e.getYRot());
+                le.setYHeadRot(e.getYHeadRot());
+                environmentEntitys.add(le);
+            }
+        }
+    }
+
+    @Override
+    public void subGuiClosed(Screen subgui) {
+        if (subgui instanceof SubGuiColorSelector) {
+            CustomNpcs.colorAnimHoverPart = ((SubGuiColorSelector) subgui).color;
+            ModelNpcAlt.editAnimDataSelect.red = (float) (CustomNpcs.colorAnimHoverPart >> 16 & 255) / 255.0F;
+            ModelNpcAlt.editAnimDataSelect.green = (float) (CustomNpcs.colorAnimHoverPart >> 8 & 255) / 255.0F;
+            ModelNpcAlt.editAnimDataSelect.blue = (float) (CustomNpcs.colorAnimHoverPart & 255) / 255.0F;
+            partNames.setColorLine(CustomNpcs.colorAnimHoverPart);
+            init();
+        }
+        if (subgui instanceof SubGuiEditAddPart gui) {
+            if (gui.isNew) {
+                // remove old
+                for (int parentID : gui.animation.addParts.keySet()) {
+                    for (AddedPartConfig apc : gui.animation.addParts.get(parentID)) {
+                        if (apc.id == -1) {
+                            gui.animation.addParts.get(parentID).remove(apc);
+                            if (gui.animation.addParts.get(parentID).isEmpty()) { gui.animation.addParts.remove(parentID); }
+                            break;
+                        }
+                    }
+                }
+                for (AnimationFrameConfig frame : gui.animation.frames.values()) { frame.parts.remove(-1); }
+                // create
+                if (gui.isSave) {
+                    int id = 8;
+                    for (int parentID : anim.addParts.keySet()) {
+                        for (AddedPartConfig apc : anim.addParts.get(parentID)) {
+                            if (id < apc.id) { id = apc.id + 1; }
+                        }
+                    }
+                    gui.addPart.id = id;
+                    gui.part.id = id;
+                    if (!anim.addParts.containsKey(gui.addPart.parentPart)) { anim.addParts.put(gui.addPart.parentPart, new ArrayList<>()); }
+                    anim.addParts.get(gui.addPart.parentPart).add(gui.addPart);
+                    for (AnimationFrameConfig frame : anim.frames.values()) { frame.parts.put(id, gui.part.copy()); }
+                    ModelNpcAlt.loadAnimationModel(anim);
+                    init();
+                }
+            }
+        }
+        if (subgui instanceof SubGuiSoundSelection) {
+            if (frame != null) {
+                frame.setStartSound(((SubGuiSoundSelection) subgui).resource);
+                init();
+            }
+        }
+        if (subgui instanceof SubGuiEditText gui) {
+            if (gui.id == 0) {
+                try {
+                    int pos = Integer.parseInt(gui.text[0]) - 1;
+                    if (pos < 0) { pos = 0; } else if (pos > anim.frames.size()) { pos = anim.frames.size(); }
+                    frame = (AnimationFrameConfig) anim.addFrame(pos, frame);
+                    setPart(frame.parts.get(part.id));
+                    init();
+                } catch (Exception e) { LogWriter.error(e); }
+            }
+        }
+        if (subgui instanceof SubGuiSelectItemStack gui) {
+            if (gui.id == 0) { frame.setHoldRightStack(gui.stack); }
+            else { frame.setHoldLeftStack(gui.stack); }
+            isChanged = true;
+        }
+    }
+
+    @Override
+    public void unFocused(GuiTextFieldNop textField) {
+        if (hasSubGui() || anim == null) { return; }
+        switch (textField.id) {
+            case 0: {
+                if (anim.repeatLast != textField.getInteger()) {
+                    anim.setRepeatLast(textField.getInteger());
+                    isChanged = true;
+                    resetAnimation();
+                }
+                break;
+            } // repeatLast
+            case 1: {
+                if (frame != null && frame.speed != textField.getInteger()) {
+                    frame.setSpeed(textField.getInteger());
+                    isChanged = true;
+                    resetAnimation();
+                }
+                break;
+            } // speed
+            case 2: {
+                if (frame != null && frame.getEndDelay() != textField.getInteger()) {
+                    frame.setEndDelay(textField.getInteger());
+                    isChanged = true;
+                    resetAnimation();
+                }
+                break;
+            } // delay
+            case 5: {
+                isChanged = true;
+                float sliderValue = 0.5f;
+                if (isHitbox) {
+                    if (hitbox == null || toolType == 0) { return; }
+                    if (toolType == 1) {
+                        hitbox.offset[0] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.1f; // 0 -> 10
+                    } else {
+                        hitbox.scale[0] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.2f; // 0 -> 5
+                    }
+                    textField.setValue("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
+                    if (tools.getSlider(0) != null) { tools.getSlider(0).setSliderValue(sliderValue); }
+                    init();
+                    return;
+                }
+                if (isMotion) {
+                    if (frame == null || toolType != 1) { return; }
+                    frame.motions[0] = (float) textField.getDouble();
+                    sliderValue = (float) textField.getDouble() * 2.0f / 3.0f; // 0 -> 1.5
+                    textField.setValue("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
+                    if (tools.getSlider(0) != null) { tools.getSlider(0).setSliderValue(sliderValue); }
+                    init();
+                    return;
+                }
+                PartConfig p = (PartConfig) partNames.objs[0];
+                int tType = (int) partNames.objs[1];
+                if (part == null || !part.equals(p) || tType != toolType) { return; }
+                switch (toolType) {
+                    case 0: { // r
+                        p.rotation[0] = (float) Math.toRadians(textField.getDouble());
+                        sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
+                        break;
+                    }
+                    case 1: { // o
+                        p.offset[0] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.1f + 0.5f;
+                        break;
+                    }
+                    case 2: { // s
+                        p.scale[0] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.2f;
+                        break;
+                    }
+                }
+                textField.setValue("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
+                if (tools.getSlider(0) != null) { tools.getSlider(0).setSliderValue(sliderValue); }
+                resetAnimation();
+                break;
+            } // X
+            case 6: {
+                isChanged = true;
+                float sliderValue = 0.0f;
+                if (isHitbox) {
+                    if (hitbox == null || toolType == 0) { return; }
+                    if (toolType == 1) {
+                        hitbox.offset[1] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.05f + 0.5f; // -10.0 -> 10.0
+                    } else {
+                        hitbox.scale[1] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.2f; // 0.0 -> 5.0
+                    }
+                    textField.setValue("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
+                    if (tools.getSlider(1) != null) { tools.getSlider(1).setSliderValue(sliderValue); }
+                    return;
+                }
+                if (isMotion) {
+                    if (frame == null || toolType != 1) { return; }
+                    frame.motions[1] = (float) textField.getDouble();
+                    sliderValue = (float) textField.getDouble() / 3.0f + 0.5f; // -1.5 -> 1.5
+                    textField.setValue("" + (float) Math.round(frame.motions[1] * 1000.0d) / 1000.0f);
+                    if (tools.getSlider(1) != null) { tools.getSlider(1).setSliderValue(sliderValue); }
+                    init();
+                    return;
+                }
+                PartConfig p = (PartConfig) partNames.objs[0];
+                int tType = (int) partNames.objs[1];
+                if (part == null || !part.equals(p) || tType != toolType) { return; }
+                switch (toolType) {
+                    case 0: {
+                        p.rotation[1] = (float) Math.toRadians(textField.getDouble());
+                        sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
+                        break;
+                    }
+                    case 1: {
+                        p.offset[1] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.1f + 0.5f;
+                        break;
+                    }
+                    case 2: {
+                        p.scale[1] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.2f;
+                        break;
+                    }
+                }
+                textField.setValue("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
+                if (tools.getSlider(1) != null) { tools.getSlider(1).setSliderValue(sliderValue); }
+                resetAnimation();
+                break;
+            } // Y
+            case 7: {
+                isChanged = true;
+                if (isHitbox) {
+                    if (hitbox == null || toolType == 0) { return; }
+                    float sliderValue;
+                    if (toolType == 1) {
+                        hitbox.offset[2] = (float) Math.toRadians(textField.getDouble());
+                        sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
+                    }
+                    else {
+                        hitbox.scale[2] = (float) textField.getDouble();
+                        sliderValue = (float) textField.getDouble() * 0.2f;
+                    }
+                    textField.setValue("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
+                    if (tools.getSlider(2) != null) { tools.getSlider(2).setSliderValue(sliderValue); }
+                    return;
+                }
+                if (isMotion) {
+                    if (frame == null || toolType != 1) { return; }
+                    frame.motions[2] = (float) Math.toRadians(textField.getDouble());
+                    float sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
+                    textField.setValue("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
+                    if (tools.getSlider(2) != null) { tools.getSlider(2).setSliderValue(sliderValue); }
+                    init();
+                    return;
+                }
+                PartConfig p = (PartConfig) partNames.objs[0];
+                int tType = (int) partNames.objs[1];
+                if (part == null || !part.equals(p) || tType != toolType) { return; }
+                float value = 0.0f;
+                switch (toolType) {
+                    case 0: {
+                        p.rotation[2] = (float) Math.toRadians(textField.getDouble());
+                        value = (float) textField.getDouble() * 0.002778f + 0.5f;
+                        break;
+                    }
+                    case 1: {
+                        p.offset[2] = (float) textField.getDouble();
+                        value = (float) textField.getDouble() * 0.1f + 0.5f;
+                        break;
+                    }
+                    case 2: {
+                        p.scale[2] = (float) textField.getDouble();
+                        value = (float) textField.getDouble() * 0.2f;
+                        break;
+                    }
+                }
+                textField.setValue("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
+                if (tools.getSlider(2) != null) { tools.getSlider(2).setSliderValue(value); }
+                resetAnimation();
+                break;
+            } // Z
+            case 8: {
+                if (isHitbox || isMotion ) { init(); return; }
+                isChanged = true;
+                PartConfig p = (PartConfig) partNames.objs[0];
+                int tType = (int) partNames.objs[1];
+                if (part == null || !part.equals(p) || tType != toolType) { return; }
+                p.rotation[3] = (float) Math.toRadians(textField.getDouble());
+                float value = (float) textField.getDouble() * 0.002778f + 0.5f;
+                textField.setValue("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
+                if (tools.getSlider(3) != null) { tools.getSlider(3).setSliderValue(value); }
+                resetAnimation();
+                break;
+            } // X1
+            case 9: {
+                if (isHitbox || isMotion ) { init(); return; }
+                isChanged = true;
+                PartConfig p = (PartConfig) partNames.objs[0];
+                int tType = (int) partNames.objs[1];
+                if (part == null || !part.equals(p) || tType != toolType) { return; }
+                p.rotation[4] = (float) Math.toRadians(textField.getDouble());
+                float value = (float) textField.getDouble() * 0.005556f + 0.5f;
+                textField.setValue("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
+                if (tools.getSlider(4) != null) { tools.getSlider(4).setSliderValue(value); }
+                resetAnimation();
+                break;
+            } // Y1
+            case 10: {
+                anim.chance = (float) Math.round(textField.getDouble() * 1000.0d) / 100000.0f;
+                textField.setValue("" + (anim.chance * 100.0f));
+                isChanged = true;
+                resetAnimation();
+                break;
+            } // chance
+            case 11: {
+                anim.name = textField.getValue();
+                break;
+            } // name
+        }
+    }
+
+    @Override
+    public void save() {
+        if (anim != null) { Packets.sendAll(new SPacketAnimationChange(2, anim.save())); }
+        Packets.sendAll(new SPacketAnimationChange(3, new CompoundTag()));
+    }
+
+    private void setPart(PartConfig partConfig) {
+        GuiTextFieldNop.unfocus();
+        if (partConfig != null) { part = frame.parts.get(partConfig.id); }
+        ModelNpcAlt.editAnimDataSelect.part = part == null || isHitbox || isMotion ? -1 : part.id;
+        if (part != null && part.id > 7) { addedPartConfig = anim.getAddedPart(part.id); }
+        else { addedPartConfig = null; }
+        if (tools != null && tools.visible) { showTools(); }
+    }
+
+    private void setHitbox(AnimationDamageHitbox hitboxConfig) {
+        GuiTextFieldNop.unfocus();
+        if (hitboxConfig != null) {
+            hitbox = frame.damageHitboxes.get(hitboxConfig.id);
+            if (scrollHitboxes != null && scrollHitboxes.hasSelected()) {
+                isHitbox = true;
+                ModelNpcAlt.editAnimDataSelect.part = -1;
+                onlyCurrentPart = true;
+                if (getButton(21) != null) {
+                    GuiButtonNop button = getButton(21);
+                    button.setUV(144, button.txrY, button.txrW, button.txrH);
+                }
+
+            }
+        } else {
+            isHitbox = false;
+            if (scrollHitboxes != null) { scrollHitboxes.clearSelection(); }
+        }
+        if (tools != null && tools.visible) { showTools(); }
+    }
+
+    private void displayOffset(float x, float y) {
+        for (int i = 0; i < 2; i++) {
+            dispPos[i] += (i == 0 ? x : y);
+            if (dispPos[i] > workS * dispScale) {
+                dispPos[i] = workS * dispScale;
+            } else if (dispPos[i] < -workS * dispScale) {
+                dispPos[i] = -workS * dispScale;
+            }
+        }
+    }
+
+    private void displayRotate(float x, float y) {
+        dispRot[0] += x;
+        dispRot[1] += (float) (Math.cos(dispRot[0] * Math.PI / 180.0f) * y);
+        dispRot[2] += (float) (Math.sin(dispRot[0] * Math.PI / 180.0f) * y);
+        for (int i = 0; i < 3; i++) {
+            if (dispRot[i] > 360.0f) {
+                dispRot[i] -= 360.0f;
+            } else if (dispRot[i] < 0.0f) {
+                dispRot[i] += 360.0f;
+            }
+        }
+    }
+
+    private void drawCRect(GuiGraphics graphics, int left, int top, int right, int bottom, int color) {
+        RenderSystem.enableBlend();
+        graphics.fill(left, top, right, bottom, color);
+    }
+
+    /**
+     * @param type 0:X; 1:Y; 2:Z
+     */
+    private void drawLine(GuiGraphics graphics, float x, float y, float z, double dist, int type, float red, float green, float blue) {
+        VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.LINES);
+
+        Vec3 begin = new Vec3(x, y, z);
+        Vec3 end = switch (type) {
+            case 0 -> begin.add(dist, 0, 0); // X
+            case 1 -> begin.add(0, dist, 0); // Y
+            case 2 -> begin.add(0, 0, dist); // Z
+            default -> begin.add(dist, dist, dist);
+        };
+        Matrix4f matrix =  graphics.pose().last().pose();
+
+        consumer.vertex(matrix, (float)begin.x(), (float)begin.y(), (float)begin.z())
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, (float)end.x(), (float)end.y(), (float)end.z())
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+    }
+
+    private void drawSizeLine(GuiGraphics graphics, float x0, float z0, float x1, float y1, float z1, float red, float green, float blue) {
+        VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.LINES);
+
+        Matrix4f matrix =  graphics.pose().last().pose();
+        consumer.vertex(matrix, x0, 0.f, z0)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, x1, y1, z1)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+    }
+
+    private void drawCircle(GuiGraphics graphics, double radius, float red, float green, float blue) {
+        VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.LINES);
+        Matrix4f matrix =  graphics.pose().last().pose();
+        for (int i = 0; i <= 32; ++i) {
+            double angle = (double) i / 32.0d * Math.PI * 2;
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            consumer.vertex(matrix, (float)x, 0.0f, (float)z)
+                    .color(red, green, blue, 1.0f)
+                    .normal(0, 1, 0)
+                    .endVertex();
+        }
+        consumer.vertex(matrix, (float)(radius), 0.0f, 0.0f)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+    }
+
+    private void drawArrow(GuiGraphics graphics, float radius, float red, float green, float blue) {
+        VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.LINES);
+        Matrix4f matrix =  graphics.pose().last().pose();
+
+        consumer.vertex(matrix, 0.0f, 0.0f, 0.0f)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0.0f, 0.0f, radius)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+
+        consumer.vertex(matrix, 0.0f, 0.0f, radius)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, radius * 0.05f, 0.0f, radius * 0.75f)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+
+        consumer.vertex(matrix, 0.0f, 0.0f, radius)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, radius * -0.05f, 0.0f, radius * 0.75f)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+
+        consumer.vertex(matrix, 0.0f, 0.0f, radius)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0.0f, radius * 0.05f, radius * 0.75f)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+
+        consumer.vertex(matrix, 0.0f, 0.0f, radius)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+        consumer.vertex(matrix, 0.0f, radius * -0.05f, radius * 0.75f)
+                .color(red, green, blue, 1.0f)
+                .normal(0, 1, 0)
+                .endVertex();
+    }
+
+    private void drawWork(GuiGraphics graphics, float partialTicks) {
+        PoseStack matrixStack = graphics.pose();
+        // work place
+        matrixStack.pushPose();
+        matrixStack.translate(0.0f, 0.0f, -300.0f);
+        graphics.fill(workU + 1, workV + 1, workU + workS - 1, workV + workS - 1, GuiNpcAnimation.backColor);
+        matrixStack.popPose();
+
+        // blocks
+        matrixStack.pushPose();
+        postRender(matrixStack);
+        BlockState state = switch (blockType) {
+            case 1 -> Blocks.AIR.defaultBlockState();
+            case 3 -> Blocks.STONE_STAIRS.defaultBlockState();
+            case 4 -> Blocks.STONE_SLAB.defaultBlockState();
+            case 5 -> Blocks.WHITE_CARPET.defaultBlockState();
+            default -> Blocks.STONE.defaultBlockState();
+        };
+        float ytr = offsetY;
+        matrixStack.translate(-8.0f * winScale, ytr * winScale, 8.0f * winScale);
+        matrixStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        matrixStack.scale(-16.0f, -16.0f, -16.0f);
+        matrixStack.scale(winScale, winScale, winScale);
+        int yH = blockType == 0 ? blockSize : 0;
+        for (int y = -yH; y <= yH; y++) {
+            for (int x = -blockSize; x <= blockSize; x++) {
+                for (int z = -blockSize; z <= blockSize; z++) {
+                    BlockPos pos = new BlockPos(x, y + (blockSize == 0 ? 0 : 1), z);
+                    if (blockType == 0) {
+                        BlockState s = environmentStates.get(pos);
+                        if (s != null) { state = s; }
+                    }
+                    if (!state.isAir()) {
+                        matrixStack.pushPose();
+                        matrixStack.translate(x, y - (blockSize == 0 || blockType > 1 ? 1 : 0), z);
+                        if (blockType == 4) {
+                            matrixStack.translate(0.0f, 0.5f, 0.0f);
+                        } else if (blockType == 5) {
+                            matrixStack.translate(0.0f, 0.9375f, 0.0f);
+                        }
+                        ClientEventHandler.renderBlock(state, matrixStack, pos, partialTicks);
+                        matrixStack.popPose();
+                    }
+                }
+            }
         }
 
-		tessellator.draw();
-
-		GlStateManager.depthMask(true);
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
-		GlStateManager.popMatrix();
-	}
-
-	private void drawArrow(double radius, float size, float red, float green, float blue) {
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder buffer = tessellator.getBuffer();
-		GlStateManager.pushMatrix();
-		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE,
-				GlStateManager.DestFactor.ZERO);
-		GlStateManager.glLineWidth(size);
-		GlStateManager.disableTexture2D();
-		GlStateManager.depthMask(false);
-		buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-
-		buffer.pos(0.0d, 0.0d, 0.0d).color(red, green, blue, 1.0f).endVertex();
-		buffer.pos(0.0d, 0.0d, radius).color(red, green, blue, 1.0f).endVertex();
-
-		buffer.pos(0.0d, 0.0d, radius).color(red, green, blue, 1.0f).endVertex();
-		buffer.pos(radius * 0.05d, 0.0d, radius * 0.75d).color(red, green, blue, 1.0f).endVertex();
-
-		buffer.pos(0.0d, 0.0d, radius).color(red, green, blue, 1.0f).endVertex();
-		buffer.pos(radius * -0.05d, 0.0d, radius * 0.75d).color(red, green, blue, 1.0f).endVertex();
-
-		buffer.pos(0.0d, 0.0d, radius).color(red, green, blue, 1.0f).endVertex();
-		buffer.pos(0.0d, radius * 0.05d, radius * 0.75d).color(red, green, blue, 1.0f).endVertex();
-
-		buffer.pos(0.0d, 0.0d, radius).color(red, green, blue, 1.0f).endVertex();
-		buffer.pos(0.0d, radius * -0.05d, radius * 0.75d).color(red, green, blue, 1.0f).endVertex();
-
-		tessellator.draw();
-		GlStateManager.depthMask(true);
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
-		GlStateManager.popMatrix();
-	}
-
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (subgui != null) {
-			((GuiScreen) subgui).drawScreen(mouseX, mouseY, partialTicks);
-			return;
-		}
-		if (w < 0 || h < 0) {
-			ScaledResolution sw = new ScaledResolution(mc);
-			w = sw.getScaledWidth();
-			h = sw.getScaledHeight();
-		}
-		if (waitKey != 0) { waitKey--; }
-		for (int i = 0; i < 2; i++) {
-			EntityNPCInterface dNpc = (i == 0 ? npcAnim : npcPart);
-			if (dNpc == null) { continue; }
-			dNpc.animation.updateTime();
-			dNpc.field_20061_w = npc.field_20061_w;
-			dNpc.field_20062_v = npc.field_20062_v;
-			dNpc.field_20063_u = npc.field_20063_u;
-			dNpc.field_20064_t = npc.field_20064_t;
-			dNpc.field_20065_s = npc.field_20065_s;
-			dNpc.field_20066_r = npc.field_20066_r;
-			dNpc.ticksExisted = npc.ticksExisted;
-		}
-		for (Entity e : environmentEntitys) {
-			e.ticksExisted = npc.ticksExisted;
-		}
-		if (getDisplayNpc() == null) { onClosed(); }
-		EntityNPCInterface showNPC = getDisplayNpc();
-		// Frame id
-		if (getLabel(50) != null) {
-			GuiNpcLabel label = getLabel(50);
-			int cId = showNPC.animation.getAnimationCurrentFrameID();
-			int nId = showNPC.animation.getAnimationNextFrameID();
-			String frame = new TextComponentTranslation("animation.frame", " ID: ").getFormattedText();
-			if (cId == nId) { label.setLabel(frame + ((char) 167) + "6" + cId); }
-			else { label.setLabel(frame + ((char) 167) + "6" + cId + ((char) 167) + "r -> " + ((char) 167) + "6" +  nId); }
-		}
-		if (getLabel(51) != null) {
-			GuiNpcLabel label = getLabel(51);
-			EnumAnimationStages stage = showNPC.animation.getAnimationStage();
-			int t = showNPC.animation.getAnimationTicks();
-			int s = showNPC.animation.getAnimationSpeedTicks();
-			String data = ((char) 167) + "6" + t + ((char) 167) + "r/" + ((char) 167) + "6" + s;
-			switch (stage) {
-				case Started: data += " " + ((char) 167) + "aStarted"; break;
-				case Looping: data += " " + ((char) 167) + "bLooping"; break;
-				case Run: data += " " + ((char) 167) + "eRun"; break;
-				case Ending: data += " " + ((char) 167) + "dEnding"; break;
-				case Waiting: data += " " + ((char) 167) + "cWaiting"; break;
-			}
-			label.setLabel(data);
-			label.x = workU + workS / 2 - 13 - label.width;
-		}
-		// display data
-		if (Mouse.isButtonDown(mousePressId)) {
-			int x = mouseX - mousePressX;
-			int y = mouseY - mousePressY;
-			if (x != 0 || y != 0) {
-				if (mousePressId == 0) { displayOffset(x, y); } // LMB
-				else if (mousePressId == 1) { displayRotate(x, -y); } // RMB
-				mousePressX = mouseX;
-				mousePressY = mouseY;
-			}
-		}
-		else {
-			mousePressId = -1;
-		}
-		hovered = isMouseHover(mouseX, mouseY, workU + 1, workV + 1, workS - 2, workS - 2);
-		if (hovered && (tools == null || !tools.hovered) && (partNames == null || !partNames.hovered)) {
-			int dWheel = Mouse.getDWheel();
-			if (dWheel != 0) {
-				dispScale += dispScale * (dWheel < 0 ? 0.1f : -0.1f);
-				if (dispScale < 0.5f) { dispScale = 0.5f; }
-				else if (dispScale > 10.0f) { dispScale = 10.0f; }
-				dispScale = (float) (Math.round(dispScale * 20.0d) / 20.0d);
-				if (dispScale == 0.95f || dispScale == 1.05f) { dispScale = 1.0f; }
-			}
-		}
-		// back place
-		GlStateManager.pushMatrix();
-		GlStateManager.translate(0.0f, 0.0f, -300.0f);
-		int color = new Color(0xFFC6C6C6).getRGB();
-		drawGradientRect(winU + 1, winV + 1, winU + winW - 1, winV + winH - 1, color, color);
-		color = new Color(0xFF000000).getRGB();
-		drawHorizontalLine(winU + 1, winU + winW - 2, winV, color);
-		drawVerticalLine(winU, winV, winV + winH - 1, color);
-		drawVerticalLine(winU + winW - 1, winV, winV + winH - 1, color);
-		drawHorizontalLine(winU + 1, winU + winW - 2, winV + winH - 1, color);
-		// work place
-		color = GuiNpcAnimation.backColor == 0xFF000000 ?
-				new Color(0xFFF080F0).getRGB() :
-				new Color(0xFFF020F0).getRGB();
-		drawGradientRect(workU, workV, workU + workS, workV + workS, color, color);
-		// Slots
-		int y = 86 + (hasExtend ? 14 : 0);
-		GlStateManager.pushMatrix();
-		mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-		GlStateManager.translate(winU + 3, winV + y, 0.0f);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		drawTexturedModalRect(0, 0, 0, 0, 18, 18); // right
-		IItemStack stack;
-		switch(frame.getHoldRightStackType()) {
-			case 1: stack = npc.inventory.getProjectile(); break;
-			case 2: stack = npc.inventory.getLeftHand(); break;
-			case 3: stack = frame.getHoldRightStack(); break;
-			case 4: stack = npc.inventory.getArmor(0); break;
-			case 5: stack = npc.inventory.getArmor(1); break;
-			case 6: stack = npc.inventory.getArmor(2); break;
-			case 7: stack = npc.inventory.getArmor(3); break;
-			default: stack = npc.inventory.getRightHand(); break;
-		}
-		hoverRight = isMouseHover(mouseX, mouseY, winU + 3, winV + y + 1, 16, 16);
-		if (hoverRight) {
-			Gui.drawRect(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
-			if (stack != null && !stack.isEmpty()) {
-				List<String> list = stack.getMCItemStack().getTooltip(player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL);
-				if (!list.isEmpty()) { putHoverText(list); }
-			}
-		}
-		if (stack != null && !stack.isEmpty()) {
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(1.0f, 1.0f, 0.0f);
-			RenderHelper.enableStandardItemLighting();
-			mc.getRenderItem().renderItemAndEffectIntoGUI(stack.getMCItemStack(), 0, 0);
-			RenderHelper.disableStandardItemLighting();
-			GlStateManager.popMatrix();
-		}
-		y += 20;
-		mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-		GlStateManager.translate(0.0f, 20.0f, 0.0f);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		drawTexturedModalRect(0, 0, 0, 0, 18, 18); // left
-		switch(frame.getHoldLeftStackType()) {
-			case 1: stack = npc.inventory.getProjectile(); break;
-			case 2: stack = npc.inventory.getRightHand(); break;
-			case 3: stack = frame.getHoldLeftStack(); break;
-			case 4: stack = npc.inventory.getArmor(0); break;
-			case 5: stack = npc.inventory.getArmor(1); break;
-			case 6: stack = npc.inventory.getArmor(2); break;
-			case 7: stack = npc.inventory.getArmor(3); break;
-			default: stack = npc.inventory.getLeftHand(); break;
-		}
-		hoverLeft = isMouseHover(mouseX, mouseY, winU + 3, winV + y + 1, 16, 16);
-		if (hoverLeft) {
-			Gui.drawRect(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
-			if (stack != null && !stack.isEmpty()) {
-				List<String> list = stack.getMCItemStack().getTooltip(player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL);
-				if (!list.isEmpty()) { putHoverText(list); }
-			}
-		}
-		if (stack != null && !stack.isEmpty()) {
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(1.0f, 1.0f, 0.0f);
-			RenderHelper.enableStandardItemLighting();
-			mc.getRenderItem().renderItemAndEffectIntoGUI(stack.getMCItemStack(), 0, 0);
-			RenderHelper.disableStandardItemLighting();
-			GlStateManager.popMatrix();
-		}
-		GlStateManager.popMatrix();
-		// Lines
-		y -= 80 + (hasExtend ? 14 : 0);
-		color = new Color(0xFF000000).getRGB();
-		for (int i = 0; i < 17; i++) { // name -> work
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		y += 23;
-		for (int i = 0; i < 17; i++) { // work -> frame
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		y += 76 + (hasExtend ? 14 : 0);
-		for (int i = 0; i < 17; i++) { // frame -> part
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		y += 38;
-		for (int i = 0; i < 17; i++) { // part -> chance
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		y += 17;
-		for (int i = 0; i < 17; i++) { // chance -> sound
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		y += 26;
-		for (int i = 0; i < 17; i++) { // sound -> emotion
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		y += 26;
-		for (int i = 0; i < 17; i++) { // emotion -> equipment
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		y += 25;
-		for (int i = 0; i < 17; i++) { // equipment -> end
-			drawHorizontalLine(winU + 4 + i * 8, winU + 8 + i * 8, winV + y, color);
-		}
-		GlStateManager.popMatrix();
-
-		if (subgui == null) {
-			GlStateManager.pushMatrix();
-			GL11.glEnable(GL11.GL_SCISSOR_TEST);
-			int c = w < mc.displayWidth ? (int) Math.round((double) mc.displayWidth / w) : 1;
-			GL11.glScissor((workU + 1) * c, mc.displayHeight - (workV + workS - 1) * c, (workS - 2) * c, (workS - 2) * c);
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-			drawWork(partialTicks);
-			GL11.glDisable(GL11.GL_SCISSOR_TEST);
-			GlStateManager.popMatrix();
-
-			GlStateManager.pushMatrix();
-				GlStateManager.translate(0.0f, 0.0f, 950.0f);
-				// axis xyz vector
-				GlStateManager.pushMatrix();
-					GlStateManager.translate(workU + 12.5f, workV + 12.0f, dispScale > 1.0f ? -240.0f : 0.0f);
-					if (dispRot[0] != 0.0f) {
-						GlStateManager.rotate(dispRot[0], 0.0f, 1.0f, 0.0f);
-					}
-					if (dispRot[1] != 0.0f) {
-						GlStateManager.rotate(dispRot[1], 0.0f, 0.0f, 1.0f);
-					}
-					if (dispRot[2] != 0.0f) {
-						GlStateManager.rotate(dispRot[2], 1.0f, 0.0f, 0.0f);
-					}
-					GlStateManager.pushMatrix();
-						GlStateManager.rotate(90.0f, 0.0f, 1.0f, 0.0f);
-						GlStateManager.translate(0.0f, 0.0f, 0.5f);
-						drawCRect(-10.5, -0.5d, -0.5d, 0.5d, new Color(0xFF0000FF).getRGB());
-					GlStateManager.popMatrix();
-					GlStateManager.pushMatrix();
-						drawCRect(-10.5, -0.5d, -0.5d, 0.5d, new Color(0xFFFF0000).getRGB());
-						drawCRect(-0.5d, -10.5, 0.5d, -0.5d, new Color(0xFF00D000).getRGB());
-						color = GuiNpcAnimation.backColor == 0xFF000000 ?
-								new Color(0xFFFFFFFF).getRGB() :
-								new Color(0xFF000000).getRGB();
-						drawCRect(-0.5d, -0.5d, 0.5d, 0.5d, color);
-					GlStateManager.popMatrix();
-				GlStateManager.popMatrix();
-				// display info
-				GlStateManager.pushMatrix();
-					GlStateManager.translate(workU, workV, 0.0f);
-					String ts = "x" + dispScale;
-					fontRenderer.drawString(ts, workS - 11 - fontRenderer.getStringWidth(ts), 1, color, false);
-					ts = (int) dispRot[0] + "" + ((char) 176) + "/" + (int) dispRot[1] + ((char) 176) + "/" + (int) dispRot[2] + ((char) 176);
-					fontRenderer.drawString(ts, workS - 11 - fontRenderer.getStringWidth(ts), workS - 10, color, false);
-					ts = (int) dispPos[0] + "/" + (int) dispPos[1];
-					fontRenderer.drawString(ts, 11, workS - 10, color, false);
-				GlStateManager.popMatrix();
-			GlStateManager.popMatrix();
-		}
-		else {
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(0.0f, 0.0f, 1.0f);
-			Gui.drawRect(workU + 1, workV + 1, workU + workS - 1, workV + workS - 1, GuiNpcAnimation.backColor);
-			GlStateManager.popMatrix();
-		}
-		GlStateManager.pushMatrix();
-			translateZ = 975.0f;
-			super.drawScreen(mouseX, mouseY, partialTicks);
-		GlStateManager.popMatrix();
-		getButton(7).setIsEnable(!isMotion && ((isHitbox && hitbox != null) || (anim != null && part != null && part.id != 6 && part.id != 7)));
-		getButton(8).setIsEnable(!isMotion && ((isHitbox && hitbox != null) || (anim != null && addedPartConfig != null && part != null && part.id > 7)));
-		if (hasSubGui() || !CustomNpcs.ShowDescriptions) { return; }
-		drawHoverText(null);
-	}
-
-	/*public void setMiniHoverText(int id, IComponentGui c) {
-		if (id < 0) { return; }
-		if (c instanceof GuiNpcSlider) {
-			switch(((GuiNpcSlider) c).id) {
-				case 0: {
-					if (isHitbox || isMotion) { putHoverText(new TextComponentTranslation("animation.hover." + (toolType == 1 ? "offset.d" : "scale.hb"), "X").getFormattedText()); }
-					else { putHoverText(new TextComponentTranslation("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), "X").getFormattedText()); }
-					break;
-				}
-				case 1: {
-					if (isHitbox || isMotion) { putHoverText(new TextComponentTranslation("animation.hover." + (toolType == 1 ? "offset.h" : "scale.hb"), "Y").getFormattedText()); }
-					else { putHoverText(new TextComponentTranslation("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), "Y").getFormattedText()); }
-					break;
-				}
-				case 2: {
-					if (isHitbox || isMotion) { putHoverText(new TextComponentTranslation("animation.hover." + (toolType == 1 ? "offset.w" : "scale.hb"), "Z").getFormattedText()); }
-					else { putHoverText(new TextComponentTranslation("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), "Z").getFormattedText()); }
-					break; }
-				case 3: { putHoverText(new TextComponentTranslation("animation.hover.rotation", "X1").getFormattedText()); break; }
-				case 4: { putHoverText(new TextComponentTranslation("animation.hover.rotation", "Y1").getFormattedText()); break; }
-			}
-		}
-		else if (c instanceof GuiNpcTextField) {
-			ITextComponent text = null;
-			switch(((GuiNpcTextField) c).getId()) {
-				case 5: {
-					if (isHitbox || isMotion) { text = new TextComponentTranslation("animation.hover." + (toolType == 1 ? "offset.d" : "scale.hb"), "X"); }
-					else { text = new TextComponentTranslation("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), "X"); }
-					break;
-				}
-				case 6: {
-					if (isHitbox || isMotion) { text = new TextComponentTranslation("animation.hover." + (toolType == 1 ? "offset.h" : "scale.hb"), "Y"); }
-					else { text = new TextComponentTranslation("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), "Y"); }
-					break;
-				}
-				case 7: {
-					if (isHitbox || isMotion) { text = new TextComponentTranslation("animation.hover." + (toolType == 1 ? "offset.w" : "scale.hb"), "Z"); }
-					else { text = new TextComponentTranslation("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), "Z"); }
-					break; }
-				case 8: { text = new TextComponentTranslation("animation.hover.rotation", "X1"); break; }
-				case 9: { text = new TextComponentTranslation("animation.hover.rotation", "Y1"); break; }
-			}
-			if (text != null) {
-				text.appendSibling(new TextComponentTranslation("animation.hover.tab"));
-				putHoverText(text.getFormattedText());
-			}
-		}
-		else if (c instanceof GuiNpcButton) {
-			if (((GuiNpcButton) c).id == 48) { putHoverText(new TextComponentTranslation("animation.hover.show.motion").getFormattedText()); }
-			else { putHoverText(new TextComponentTranslation("hover.default.set").getFormattedText()); }
-		}
-		else if (c instanceof GuiCustomScroll) {
-			Map<Integer, List<String>> hts = ((GuiCustomScroll) c).getHoversTexts();
-			if (hts.containsKey(((GuiCustomScroll) c).getSelect()) && !hts.get(((GuiCustomScroll) c).getSelect()).isEmpty()) { putHoverText(hts.get(((GuiCustomScroll) c).getSelect())); }
-			else if (!c.getHoversText().isEmpty()) { putHoverText(c.getHoversText()); }
-		}
-	}*/
-
-	@SuppressWarnings("unchecked")
-	private void drawWork(float partialTicks) {
-		// work place
-		GlStateManager.pushMatrix();
-			GlStateManager.translate(0.0f, 0.0f, -300.0f);
-			Gui.drawRect(workU + 1, workV + 1, workU + workS - 1, workV + workS - 1, GuiNpcAnimation.backColor);
-		GlStateManager.popMatrix();
-
-		// blocks
-		GlStateManager.pushMatrix();
-			postRender();
-			IBlockState state;
-			switch (blockType) {
-				case 1: state = Blocks.AIR.getDefaultState(); break;
-				case 3: state = Blocks.STONE_STAIRS.getDefaultState(); break;
-				case 4: state = Blocks.STONE_SLAB.getDefaultState(); break;
-				case 5: state = Blocks.CARPET.getDefaultState(); break;
-				default: state = Blocks.STONE.getDefaultState(); break;
-			}
-			mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-			mc.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
-			GlStateManager.enableRescaleNormal();
-			GlStateManager.enableAlpha();
-			GlStateManager.alphaFunc(516, 0.1F);
-			GlStateManager.enableBlend();
-			GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-			float ytr = offsetY;
-			GlStateManager.translate(-8.0f * winScale, ytr * winScale, 8.0f * winScale);
-			GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-			GlStateManager.scale(-16.0f, -16.0f, -16.0f);
-			GlStateManager.scale(winScale, winScale, winScale);
-			int yH = blockType == 0 ? blockSize : 0;
-			Map<BlockPos, TileEntity> tiles = new HashMap<>();
-			for (int y = -yH; y <= yH; y++) {
-				for (int x = -blockSize; x <= blockSize; x++) {
-					for (int z = -blockSize; z <= blockSize; z++) {
-						BlockPos pos = new BlockPos(x, y + (blockSize == 0 ? 0 : 1), z);
-						TileEntity tile = null;
-						if (blockType == 0) {
-							IBlockState s = environmentStates.get(pos);
-							if (s != null) {
-								state = s;
-							}
-							TileEntity t = environmentTiles.get(pos);
-							if (t != null) {
-								tile = t;
-							}
-						}
-						if (tile != null) {
-							TileEntitySpecialRenderer<TileEntity> render = (TileEntitySpecialRenderer<TileEntity>) TileEntityRendererDispatcher.instance.renderers
-									.get(tile.getClass());
-							if (render != null) {
-								tiles.put(pos, tile);
-								continue;
-							}
-						}
-						if (state.getBlock() instanceof BlockAir) {
-							continue;
-						}
-						GlStateManager.pushMatrix();
-						GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-						GlStateManager.translate(x, y - (blockSize == 0 || blockType > 1 ? 1 : 0), z);
-						if (blockType == 4) {
-							GlStateManager.translate(0.0f, 0.5f, 0.0f);
-						} else if (blockType == 5) {
-							GlStateManager.translate(0.0f, 0.9375f, 0.0f);
-						}
-						mc.getBlockRendererDispatcher().renderBlockBrightness(state, 1.0f);
-						GlStateManager.popMatrix();
-					}
-				}
-			}
-			for (BlockPos p : tiles.keySet()) {
-				try {
-					TileEntity tile = tiles.get(p);
-					TileEntitySpecialRenderer<TileEntity> render = (TileEntitySpecialRenderer<TileEntity>) TileEntityRendererDispatcher.instance.renderers.get(tile.getClass());
-					if (render != null) {
-						GlStateManager.pushMatrix();
-						render.render(tile, p.getX(), p.getY() - 1.0D, p.getZ() - 1, partialTicks, 0, 1.0f);
-						GlStateManager.popMatrix();
-					}
-				}
-				catch (Exception ignored) { }
+        matrixStack.pushPose();
+        matrixStack.translate(0.0f, 0.0f, -1.0f);
+        if (meshType == 0) {
+            drawLine(graphics, 0.0f, 0.0f, 0.0f, 10.0d, 0, 1.0f, 0.0f, 0.0f);
+            drawLine(graphics, 0.0f, 0.0f, 0.0f, 10.0d, 1, 0.0f, 1.0f, 0.0f);
+            drawLine(graphics, 0.0f, 0.0f, 0.0f, 10.0d, 2, 0.0f, 0.0f, 1.0f);
+        }
+        else if (meshType == 1) {
+            drawLine(graphics, 0.0f, 0.0f, -11.0f, 11.0d, 0, 1.0f, 1.0f, 1.0f);
+            drawLine(graphics, -11.0f, 0.0f, 0.0f, 11.0d, 2, 1.0f, 1.0f, 1.0f);
+            for (int i = -10; i <= 11; i++) {
+                drawLine(graphics, 0.0f, 0.0f, i, 11.0d, 0, 1.0f, 1.0f, 1.0f);
+                drawLine(graphics, i, 0.0f, 0.0f, 11.0d, 2, 1.0f, 1.0f, 1.0f);
             }
+        }
+        else if (meshType == 2) {
+            drawLine(graphics, 0.0f, -11.0f, 0.0f, 11.0f, 0, 1.0f, 1.0f, 1.0f);
+            drawLine(graphics, -11.0f, 0.0f, 0.0f, 11.0f, 1, 1.0f, 1.0f, 1.0f);
+            for (int i = -10; i <= 11; i++) {
+                drawLine(graphics, 0.0f, i, 0.0f, 11.0d, 0, 1.0f, 1.0f, 1.0f);
+                drawLine(graphics, i, 0.0f, 0.0f, 11.0d, 1, 1.0f, 1.0f, 1.0f);
+            }
+        }
+        else if (meshType == 3) {
+            drawLine(graphics, 0.0f, 0.0f, -11.0f, 11.0d, 1, 1.0f, 1.0f, 1.0f);
+            drawLine(graphics, 0.0f, -11.0f, 0.0f, 11.0d, 2, 1.0f, 1.0f, 1.0f);
+            for (int i = -10; i <= 11; i++) {
+                drawLine(graphics, 0.0f, 0.0f, i, 11.0d, 1, 1.0f, 1.0f, 1.0f);
+                drawLine(graphics, 0.0f, i, 0.0f, 11.0d, 2, 1.0f, 1.0f, 1.0f);
+            }
+        }
+        RenderSystem.disableBlend();
+        matrixStack.popPose();
 
-			GlStateManager.pushMatrix();
-				GlStateManager.translate(0.0f, 0.0f, -1.0f);
-				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-				if (meshType == 0) {
-					drawLine(0.0d, 0.0d, 0.0d, 10.0d, 0, 1.0f, 0.0f, 0.0f);
-					drawLine(0.0d, 0.0d, 0.0d, 10.0d, 1, 0.0f, 1.0f, 0.0f);
-					drawLine(0.0d, 0.0d, 0.0d, 10.0d, 2, 0.0f, 0.0f, 1.0f);
-				}
-				else if (meshType == 1) {
-					drawLine(0.0d, 0.0d, -11.0d, 11.0d, 0, 1.0f, 1.0f, 1.0f);
-					drawLine(-11.0d, 0.0d, 0.0d, 11.0d, 2, 1.0f, 1.0f, 1.0f);
-					for (int i = -10; i <= 11; i++) {
-						drawLine(0.0d, 0.0d, i, 11.0d, 0, 1.0f, 1.0f, 1.0f);
-						drawLine(i, 0.0d, 0.0d, 11.0d, 2, 1.0f, 1.0f, 1.0f);
-					}
-				}
-				else if (meshType == 2) {
-					drawLine(0.0d, -11.0d, 0.0d, 11.0d, 0, 1.0f, 1.0f, 1.0f);
-					drawLine(-11.0d, 0.0d, 0.0d, 11.0d, 1, 1.0f, 1.0f, 1.0f);
-					for (int i = -10; i <= 11; i++) {
-						drawLine(0.0d, i, 0.0d, 11.0d, 0, 1.0f, 1.0f, 1.0f);
-						drawLine(i, 0.0d, 0.0d, 11.0d, 1, 1.0f, 1.0f, 1.0f);
-					}
-				}
-				else if (meshType == 3) {
-					drawLine(0.0d, 0.0d, -11.0d, 11.0d, 1, 1.0f, 1.0f, 1.0f);
-					drawLine(0.0d, -11.0d, 0.0d, 11.0d, 2, 1.0f, 1.0f, 1.0f);
-					for (int i = -10; i <= 11; i++) {
-						drawLine(0.0d, 0.0d, i, 11.0d, 1, 1.0f, 1.0f, 1.0f);
-						drawLine(0.0d, i, 0.0d, 11.0d, 2, 1.0f, 1.0f, 1.0f);
-					}
-				}
-				GlStateManager.disableBlend();
-			GlStateManager.popMatrix();
+        // npc
+        RenderSystem.enableBlend();
+        matrixStack.translate(0.5f, 0.0f, -0.5f);
+        EntityNPCInterface showNPC = getDisplayNpc();
+        if (npc.ais.bodyOffsetX != 5.0f) {
+            float f = (npc.ais.bodyOffsetX - 5.0f) / 10.0f;
+            if (f == 0.5f) { f -= 1.0f; }
+            matrixStack.translate(f, 0.0f, 0.0f); }
+        if (npc.ais.bodyOffsetZ != 5.0f) {
+            float f = (npc.ais.bodyOffsetZ - 5.0f) / 10.0f;
+            if (f == 0.5f) { f -= 1.0f; }
+            matrixStack.translate(0.0f, 0.0f, f);
+        }
+        if (showHitBox) {
+            float w = npc.getBbWidth() / 2;
+            AABB col= npc.getBoundingBox();
+            if (col == null) { col = new AABB(-w, 0.0, -w, w, npc.getBbHeight(), w); }
+            LevelRenderer.renderLineBox(matrixStack, graphics.bufferSource().getBuffer(RenderType.lines()),
+                    col, 1.0f, 1.0f, 1.0f, 1.0f);
+        }
 
-			// npc
-			GlStateManager.enableAlpha();
-			GlStateManager.disableRescaleNormal();
-			GlStateManager.disableLighting();
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+        // Damage hitboxes
+        if (anim.type == AnimationKind.ATTACKING && frame.isNowDamage() && !frame.damageHitboxes.isEmpty()) {
+            float s = 2.0f;;
+            int i = 0;
+            for (AABB aabb : anim.getDamageHitboxes(showNPC, frame.id)) {
+                float r = 0.75f;
+                float g = 0.5f;
+                float b = 0.5f;
+                if (scrollHitboxes.getSelectedIndex() == i) {
+                    r = 1.0f;
+                    g = 0.0f;
+                    b = 0.25f;
+                }
+                if (scrollHitboxes.getSelectedIndex() == i) {
+                    r = 0.875f;
+                    g = 0.0f;
+                    b = 0.875f;
+                }
+                aabb = aabb.move(-showNPC.getX(), -showNPC.getY(), -showNPC.getZ());
+                LevelRenderer.renderLineBox(matrixStack, graphics.bufferSource().getBuffer(RenderType.lines()),
+                        aabb, r, g, b, 1.0f);
 
-			GlStateManager.enableBlend();
-			GlStateManager.enableColorMaterial();
-			GlStateManager.translate(0.5f, 0.0f, -0.5f);
-			mc.getRenderManager().playerViewY = 180.0f;
-			EntityNPCInterface showNPC = getDisplayNpc();
-			if (npc.ais.bodyOffsetX != 5.0f) {
-				float f = (npc.ais.bodyOffsetX - 5.0f) / 10.0f;
-				if (f == 0.5f) { f -= 1.0f; }
-				GlStateManager.translate(f, 0.0f, 0.0f); }
-			if (npc.ais.bodyOffsetZ != 5.0f) {
-				float f = (npc.ais.bodyOffsetZ - 5.0f) / 10.0f;
-				if (f == 0.5f) { f -= 1.0f; }
-				GlStateManager.translate(0.0f, 0.0f, f);
-			}
-			if (showHitBox) {
-				float w = npc.width / 2;
-				AxisAlignedBB col= npc.getCollisionBoundingBox();
-				if (col == null) { col = new AxisAlignedBB(-w, 0.0, -w, w, npc.height, w); }
-				GlStateManager.glLineWidth(1.0F);
-				GlStateManager.disableTexture2D();
-				RenderGlobal.drawSelectionBoundingBox(col, 1.0f, 1.0f, 1.0f, 1.0f);
-				GlStateManager.enableTexture2D();
-			}
+                Vec3 center = aabb.getCenter();
+                for (int j = 0; j < 3; j++) {
+                    AnimationDamageHitbox adh = frame.damageHitboxes.get(i);
+                    s = 0.1f;
+                    if (adh != null) {s *= adh.scale[j]; }
+                    drawLine(graphics, (float) center.x, (float) center.y, (float) center.z, ValueUtil.correctDouble(s, 0.025d, 0.25d), j, b, r, g);
+                }
 
-			// Damage hitboxes
-			if (anim.type == AnimationKind.ATTACKING && frame.isNowDamage() && !frame.damageHitboxes.isEmpty()) {
-				GlStateManager.glLineWidth(2.0F);
-				GlStateManager.disableTexture2D();
-				int i = 0;
-				for (AxisAlignedBB aabb : anim.getDamageHitboxes(showNPC, frame.id)) {
-					float r = 0.75f;
-					float g = 0.5f;
-					float b = 0.5f;
-					float s = 1.0f;
-					if (scrollHitboxes.getSelect() == i) {
-						r = 1.0f;
-						g = 0.0f;
-						b = 0.25f;
-						s = 2.0f;
-					}
-					if (scrollHitboxes.getSelect() == i) {
-						r = 0.875f;
-						g = 0.0f;
-						b = 0.875f;
-						s = 3.0f;
-					}
-					aabb = aabb.offset(-showNPC.posX, -showNPC.posY, -showNPC.posZ);
-					GlStateManager.glLineWidth(s);
-					RenderGlobal.drawSelectionBoundingBox(aabb, r, g, b, 1.0f);
+                if (scrollHitboxes.getSelectedIndex() == i) {
+                    r = 0.5f;
+                    g = 0.5f;
+                    b = 0.5f;
+                    if (tools.getSlider(0).isHovered() || tools.getTextField(5).isHovered() || tools.getTextField(5).isFocused() || tools.getButton(30).isHoveredOrFocused()) {
+                        r = 0.825f;
+                        g = 0.625f;
+                        b = 0.195f;
+                    }
+                    // distance
+                    drawSizeLine(graphics, 0.0f, 0.0f, (float) center.x, 0.0f, (float) center.z, r, g, b);
 
-					Vec3d center = aabb.getCenter();
-					for (int j = 0; j < 3; j++) {
-						AnimationDamageHitbox adh = frame.damageHitboxes.get(i);
-						s = 0.1f;
-						if (adh != null) {s *= adh.scale[j]; }
-						drawLine(center.x, center.y, center.z, ValueUtil.correctDouble(s, 0.025d, 0.25d), j, b, r, g);
-					}
+                    r = 0.5f;
+                    g = 0.5f;
+                    b = 0.5f;
+                    if (tools.getSlider(1).isHovered() || tools.getTextField(6).isHovered() || tools.getTextField(6).isFocused() || tools.getButton(31).isHoveredOrFocused()) {
+                        r = 0.825f;
+                        g = 0.625f;
+                        b = 0.195f;
+                    }
+                    // height
+                    drawSizeLine(graphics, (float) center.x, (float) center.z, (float) center.x, (float) center.y, (float) center.z, r, g, b);
 
-					if (scrollHitboxes.getSelect() == i) {
-						r = 0.5f;
-						g = 0.5f;
-						b = 0.5f;
-						s = 1.0f;
-						if (tools.getSlider(0).isHovered() || tools.getTextField(5).isHovered() || tools.getTextField(5).isFocused() || tools.getButton(30).isHovered()) {
-							r = 0.825f;
-							g = 0.625f;
-							b = 0.195f;
-							s = 3.0f;
-						}
-						// distance
-						drawLine(0.0f, 0.0f, center.x, 0.0f, center.z, s, r, g, b);
+                    // round radius
+                    r = 0.5f;
+                    g = 0.5f;
+                    b = 0.5f;
+                    if (tools.getSlider(2).isHovered() || tools.getTextField(7).isHovered() || tools.getTextField(7).isFocused() || tools.getButton(32).isHoveredOrFocused()) {
+                        r = 0.825f;
+                        g = 0.625f;
+                        b = 0.195f;
+                    }
+                    drawCircle(graphics, Math.sqrt(Math.pow(center.x, 2.0d) + Math.pow(center.z, 2.0d)), r, g, b);
+                }
+                i++;
+            }
+        }
 
-						r = 0.5f;
-						g = 0.5f;
-						b = 0.5f;
-						s = 1.0f;
-						if (tools.getSlider(1).isHovered() || tools.getTextField(6).isHovered() || tools.getTextField(6).isFocused() || tools.getButton(31).isHovered()) {
-							r = 0.825f;
-							g = 0.625f;
-							b = 0.195f;
-							s = 3.0f;
-						}
-						// height
-						drawLine(center.x, center.z, center.x, center.y, center.z, s, r, g, b);
+        // Motion
+        if (frame.motions[0] != 0.0f || frame.motions[1] != 0.0f || frame.motions[2] != 0.0f) {
 
-						// round radius
-						r = 0.5f;
-						g = 0.5f;
-						b = 0.5f;
-						s = 1.0f;
-						if (tools.getSlider(2).isHovered() || tools.getTextField(7).isHovered() || tools.getTextField(7).isFocused() || tools.getButton(32).isHovered()) {
-							r = 0.825f;
-							g = 0.625f;
-							b = 0.195f;
-							s = 3.0f;
-						}
-						drawCircle(Math.sqrt(Math.pow(center.x, 2.0d) + Math.pow(center.z, 2.0d)), s, r, g, b);
-					}
-					i++;
-				}
-				GlStateManager.enableTexture2D();
-			}
+            double radYaw = Math.toRadians(showNPC.getYRot()) + frame.motions[2];
 
-			// Motion
-			if (frame.motions[0] != 0.0f || frame.motions[1] != 0.0f || frame.motions[2] != 0.0f) {
+            double x = Math.sin(radYaw) * -frame.motions[0];
+            double y = frame.motions[1];
+            double z = Math.cos(radYaw) * frame.motions[0];
 
-				double radYaw = Math.toRadians(showNPC.rotationYaw) + frame.motions[2];
+            float r = 0.5f;
+            float g = 0.5f;
+            float b = 0.75f;
+            if (isMotion) {
+                b = 0.5f;
+                if (tools.getSlider(0).isHovered() || tools.getTextField(5).isHovered() || tools.getTextField(5).isFocused() || tools.getButton(30).isHoveredOrFocused()) {
+                    r = 0.825f;
+                    g = 0.625f;
+                    b = 0.195f;
+                }
+                // distance
+                drawSizeLine(graphics, 0.0f, 0.0f, (float) x, 0.0f, (float) z, r, g, b);
 
-				double x = Math.sin(radYaw) * -frame.motions[0];
-				double y = frame.motions[1];
-				double z = Math.cos(radYaw) * frame.motions[0];
+                r = 0.5f;
+                g = 0.5f;
+                b = 0.5f;
+                if (tools.getSlider(1).isHovered() || tools.getTextField(6).isHovered() || tools.getTextField(6).isFocused() || tools.getButton(31).isHoveredOrFocused()) {
+                    r = 0.825f;
+                    g = 0.625f;
+                    b = 0.195f;
+                }
+                // height
+                drawSizeLine(graphics, (float) x, (float) z, (float) x, (float) y, (float) z, r, g, b);
 
-				float r = 0.5f;
-				float g = 0.5f;
-				float b = 0.75f;
-				float s = 2.0f;
-				if (isMotion) {
-					b = 0.5f;
-					if (tools.getSlider(0).isHovered() || tools.getTextField(5).isHovered() || tools.getTextField(5).isFocused() || tools.getButton(30).isHovered()) {
-						r = 0.825f;
-						g = 0.625f;
-						b = 0.195f;
-						s = 3.0f;
-					}
-					// distance
-					drawLine(0.0f, 0.0f, x, 0.0f, z, s, r, g, b);
+                // round radius
+                r = 0.5f;
+                g = 0.5f;
+                b = 0.5f;
+                if (tools.getSlider(2).isHovered() || tools.getTextField(7).isHovered() || tools.getTextField(7).isFocused() || tools.getButton(32).isHoveredOrFocused()) {
+                    r = 0.825f;
+                    g = 0.625f;
+                    b = 0.195f;
+                }
+                drawCircle(graphics, Math.sqrt(Math.pow(x, 2.0d) + Math.pow(z, 2.0d)), r, g, b);
 
-					r = 0.5f;
-					g = 0.5f;
-					b = 0.5f;
-					s = 1.0f;
-					if (tools.getSlider(1).isHovered() || tools.getTextField(6).isHovered() || tools.getTextField(6).isFocused() || tools.getButton(31).isHovered()) {
-						r = 0.825f;
-						g = 0.625f;
-						b = 0.195f;
-						s = 3.0f;
-					}
-					// height
-					drawLine(x, z, x, y, z, s, r, g, b);
+                r = 0.25f;
+                g = 0.25f;
+                b = 0.875f;
+            }
+            float radius = (float) Math.sqrt(Math.pow(x, 2.0d) + Math.pow(y, 2.0d) + Math.pow(z, 2.0d));
 
-					// round radius
-					r = 0.5f;
-					g = 0.5f;
-					b = 0.5f;
-					s = 1.0f;
-					if (tools.getSlider(2).isHovered() || tools.getTextField(7).isHovered() || tools.getTextField(7).isFocused() || tools.getButton(32).isHovered()) {
-						r = 0.825f;
-						g = 0.625f;
-						b = 0.195f;
-						s = 3.0f;
-					}
-					drawCircle(Math.sqrt(Math.pow(x, 2.0d) + Math.pow(z, 2.0d)), s, r, g, b);
+            matrixStack.pushPose();
+            matrixStack.mulPose(Axis.YP.rotationDegrees((float) Math.toDegrees(-radYaw)));
+            matrixStack.mulPose(Axis.XP.rotationDegrees((float) Math.toDegrees(-Math.atan2(frame.motions[1], frame.motions[0]))));
+            drawArrow(graphics, radius, r, g, b);
 
-					r = 0.25f;
-					g = 0.25f;
-					b = 0.875f;
-					s = 3.0f;
-				}
-				double radius = Math.sqrt(Math.pow(x, 2.0d) + Math.pow(y, 2.0d) + Math.pow(z, 2.0d));
+            matrixStack.popPose();
+        }
 
-				GlStateManager.pushMatrix();
-				GlStateManager.rotate((float) Math.toDegrees(-radYaw), 0.0f, 1.0f, 0.0f);
-				GlStateManager.rotate((float) Math.toDegrees(-Math.atan2(frame.motions[1], frame.motions[0])), 1.0f, 0.0f, 0.0f);
-				drawArrow(radius, s, r, g, b);
+        // model mesh rotation axes:
 
-				GlStateManager.popMatrix();
-			}
+        ModelNpcAlt.editAnimDataSelect.displayNpc = showNPC;
+        float r = showNPC.getYRot() < 0.0f ? showNPC.getYRot() + 360.0f : showNPC.getYRot();
+        float oy = 0.0f;
+        showNPC.currentAnimation = npc.currentAnimation;
+        CustomGuiEntityDisplay.renderEntity(graphics, showNPC, 0.0, oy, 0.0, 0.0f, r / -45.0f + 8.0f, false);
 
-			// model mesh rotation axes:
+        if (blockType == 0) {
+            for (Entity e : environmentEntitys) {
+                int x = Math.abs((int) Math.round(e.getX()));
+                int y = Math.abs((int) Math.round(e.getY()));
+                int z = Math.abs((int) Math.round(e.getZ()));
+                int d = x;
+                if (d < y) { d = y; }
+                if (d < z) { d = z; }
+                if (d > blockSize) { continue; }
+                matrixStack.pushPose();
+                CustomGuiEntityDisplay.renderEntity(graphics, e, e.getX(), e.getY(), e.getZ(), 0.0f, 0.0f, false);
+                matrixStack.popPose();
+            }
+        }
+        matrixStack.popPose();
+    }
 
-			ModelNpcAlt.editAnimDataSelect.displayNpc = showNPC;
-			float r = showNPC.rotationYaw < 0.0f ? showNPC.rotationYaw + 360.0f : showNPC.rotationYaw;
-			float oy = 0.0f;
-			showNPC.currentAnimation = npc.currentAnimation;
-			mc.getRenderManager().renderEntity(showNPC, 0.0, oy, 0.0, 0.0f, r / -45.0f + 8.0f, false);
+    public EntityNPCInterface getDisplayNpc() { return onlyCurrentPart ? npcPart : npcAnim; }
 
-			if (blockType == 0) {
-				for (Entity e : environmentEntitys) {
-					int x = Math.abs((int) Math.round(e.posX));
-					int y = Math.abs((int) Math.round(e.posY));
-					int z = Math.abs((int) Math.round(e.posZ));
-					int d = x;
-					if (d < y) { d = y; }
-					if (d < z) { d = z; }
-					if (d > blockSize) { continue; }
-					GlStateManager.pushMatrix();
-					mc.getRenderManager().renderEntity(e, e.posX, e.posY, e.posZ, 0.0f, 0.0f, false);
-					GlStateManager.popMatrix();
-				}
-			}
+    private void playButtonClick() {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+    }
 
-			GlStateManager.disableRescaleNormal();
-			GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-			GlStateManager.disableTexture2D();
-			GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-			GlStateManager.disableLighting();
-		GlStateManager.popMatrix();
+    private void postRender(PoseStack matrixStack) {
+        matrixStack.translate(workU + workS / 2.0f, workV + workS / 2.0f, 100.0f * dispScale); // center
+        matrixStack.translate(dispPos[0], dispPos[1], 0.0f);
+        matrixStack.mulPose(Axis.YP.rotationDegrees(dispRot[0]));
+        matrixStack.mulPose(Axis.XP.rotationDegrees(dispRot[1]));
+        matrixStack.mulPose(Axis.ZP.rotationDegrees(dispRot[2]));
+        matrixStack.scale(dispScale, dispScale, dispScale);
+        matrixStack.translate(0.0f, 25.0f, 0.0f);
+    }
 
-	}
+    private void resetAnimation() {
+        if (!isChanged || anim == null || frame == null || npcAnim == null) { return; }
+        npcAnim.setPos(basePos);
+        npcPart.setPos(basePos);
 
-	public EntityNPCInterface getDisplayNpc() {
-		return onlyCurrentPart ? npcPart : npcAnim;
-	}
+        npcAnim.animation.reset();
+        npcAnim.animation.tryRunAnimation(anim, AnimationKind.EDITING_All);
+        npcAnim.setHealth(npcAnim.getMaxHealth());
+        npcAnim.deathTime = 0;
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (frame.id < 0) {
-			frame = anim.frames.get(0);
-			if (frame.id < 0) { frame.id = 0; }
-		}
-		if (hitbox.id < 0) {
-			hitbox = frame.damageHitboxes.get(0);
-			if (hitbox.id < 0) { hitbox.id = 0; }
-		}
-		if (scrollParts == null) {
-			scrollParts = new GuiCustomScroll(this, 0)
-					.setSize(67, 112)
-					.setHoverText("animation.hover.part.sel");
-		}
-		ScaledResolution sw = new ScaledResolution(mc);
-		if (w > 0.0d && h > 0.0d) {
-			if (partNames != null) {
-				double left = 1.0d / w * partNames.guiLeft;
-				double top = 1.0d / h * partNames.guiTop;
-				partNames.guiLeft = (int) ((double) sw.getScaledWidth() * left);
-				partNames.guiTop = (int) ((double) sw.getScaledHeight() * top);
-				scrollParts.guiLeft = partNames.guiLeft + 4;
-				scrollParts.guiTop = partNames.guiTop + 12;
-			}
-			if (tools != null) {
-				double left = 1.0d / w * tools.guiLeft;
-				double top = 1.0d / h * tools.guiTop;
-				tools.guiLeft = (int) ((double) sw.getScaledWidth() * left);
-				tools.guiTop = (int) ((double) sw.getScaledHeight() * top);
-			}
-		}
-		w = sw.getScaledWidth();
-		h = sw.getScaledHeight();
-		if ((sw.getScaledWidth() - 144) < sw.getScaledHeight() - 8) {
-			workS = sw.getScaledWidth() - 144;
-			winU = 0;
-			winW = sw.getScaledWidth();
-			winV = (sw.getScaledHeight() - workS - 8) / 2;
-			winH = workS + 8;
-		}
-		else {
-			workS = sw.getScaledHeight() - 8;
-			winU = (sw.getScaledWidth() - workS - 144) / 2;
-			winW = workS + 144;
-			winV = 0;
-			winH = sw.getScaledHeight();
-		}
-		workU = winU + 140;
-		workV = winV + 4;
-		winScale = (float) workS / 100.0f;
-		int x = winU + 3;
-		int y = winV + 12;
-		int lId = 0;
-		// common to settings
-		addLabel(new GuiNpcLabel(lId++, ((char) 167) + "n" + ((char) 167) + "l?", workU - 6, workV, 0xFF000000)
-				.setHoverText("animation.hover.help"));
-		// name
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.name").getFormattedText() + ":", x, y - 10));
-		addTextField(new GuiNpcTextField(11, this, x, y, 125, 12, anim.name));
-
-		// work place
-		// animation frame init
-		addLabel(new GuiNpcLabel(lId++, anim.getSettingName(), workU + workS / 2, workV + 3, GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000));
-		getLabel(lId - 1).setCenter(getLabel(lId - 1).width / 2);
-
-		// type
-		addLabel(new GuiNpcLabel(lId++, "animation.place", x, (y += 26) - 10));
-		addButton(new GuiButtonBiDirectional(0, x, y, 105, 10, blockNames, blockType)
-				.setHoverText("animation.hover.block.type"));
-		// size
-		addButton(new GuiNpcButton(1, x + 107, y, 17, 10, blockSizes, blockSize)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.block.size"));
-		// back color
-		addButton(new GuiNpcButton(2, workU + 2, workV + 23, 8, 8, "")
-				.setLayerColor(GuiNpcAnimation.backColor == 0xFF000000 ? new Color(0xFF00FFFF).getRGB() : new Color(0xFF008080).getRGB())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.color"));
-		addButton(new GuiNpcButton(26, workU + 2, workV + 31, 8, 8, "")
-				.setLayerColor(ModelNpcAlt.editAnimDataSelect.showArmor ? new Color(0xFFFF7200).getRGB() : new Color(0xFF6F3200).getRGB())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.show.armor"));
-		addButton(new GuiNpcButton(46, workU + 2, workV + 39, 8, 8, "")
-				.setLayerColor(ModelNpcAlt.editAnimDataSelect.alpha >= 1.0f ? new Color(0xFFFFFEBF).getRGB() : new Color(0xFF787758).getRGB())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.show.alpha"));
-		addButton(new GuiNpcButton(47, workU + 2, workV + 47, 8, 8, "")
-				.setLayerColor(baseRotation == 0.0f || baseRotation == npcAnim.rotationYaw ? new Color(0xFF96FFC0).getRGB() : new Color(0xFF426C53).getRGB())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.base.rot"));
-		// frame
-		addLabel(new GuiNpcLabel(lId++, "animation.frames", x, (y += 23) - 10));
-		List<String> lFrames = new ArrayList<>();
-		for (int i = 0; i < anim.frames.size(); i++) { lFrames.add(i + "/" + (anim.frames.size() - 1)); }
-		addButton(new GuiButtonBiDirectional(3, x, y, 60, 10, lFrames.toArray(new String[0]), frame.id)
-				.setHoverText("animation.hover.frame", "" + (frame.id + 1)));
-		// add frame
-		addButton(new GuiNpcButton(4, x + 106, y - 10, 10, 10, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 24, 24)
-				.setHoverText("animation.hover.frame.add"));
-		// del frame
-		addButton(new GuiNpcButton(5, x + 116, y - 10, 10, 10, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(72, 0, 24, 24)
-				.setIsEnable(anim.frames.size() > 1)
-				.setHoverText("animation.hover.frame.del"));
-		// frame smooth animated
-		addButton(new GuiNpcCheckBox(11, x + 62, y - 2, 74, 12, "gui.smooth", "gui.linearly", frame.isSmooth())
-				.setHoverText("animation.hover.smooth." + frame.isSmooth()));
-		// clear frame
-		addButton(new GuiNpcButton(6, x + 126, y - 10, 10, 10, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(120, 0, 24, 24)
-				.setHoverText(new TextComponentTranslation("animation.hover.reset.frame").appendSibling(new TextComponentTranslation("animation.hover.shift.0")).getFormattedText()));
-		// frame times
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.time").getFormattedText() + ":", x, (y += 12) + 2));
-		addTextField(new GuiNpcTextField(1, this, x + 35, y, 48, 12, "" + frame.getSpeed())
-				.setMinMaxDefault(0, 3600, frame.getSpeed())
-				.setHoverText("animation.hover.part.ticks"));
-		addTextField(new GuiNpcTextField(2, this, x + 87, y, 48, 12, "" + frame.getEndDelay())
-				.setMinMaxDefault(0, 3600, frame.getEndDelay())
-				.setHoverText("animation.hover.part.delay"));
-		// frame repeat
-		hasExtend = false;
-		if (anim.type == AnimationKind.DIES || anim.type == AnimationKind.JUMP) {
-			hasExtend = true;
-			addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.repeat").getFormattedText() + ":", x, (y += 14) + 2));
-			if (anim.repeatLast < 0) { anim.repeatLast *= -1; }
-			if (anim.repeatLast > anim.frames.size()) { anim.repeatLast = anim.frames.size(); }
-			addTextField(new GuiNpcTextField(0, this, x + 87, y, 48, 12, "" + anim.repeatLast)
-					.setMinMaxDefault(0, anim.frames.size(), anim.repeatLast)
-					.setHoverText("animation.hover.anim.repeat"));
-		}
-		// has damage hitbox
-		if (anim.type == AnimationKind.ATTACKING) {
-			hasExtend = true;
-			addButton(new GuiNpcCheckBox(36, x, y += 14, 136, 12, "animation.now.attack", "animation.notyet.attack", frame.isNowDamage())
-					.setHoverText("animation.hover.now.attack"));
-		}
-		// show stack in right hand
-		addLabel(new GuiNpcLabel(lId++, "animation.hold.right", x + 20, y += 13));
-		int type = frame.getHoldRightStackType();
-		if (type == 2) { type = 3; }
-		else if (type == 3) { type = 4; }
-		addButton(new GuiButtonBiDirectional(37, x + 20, y += 9, 116, 10, new String[] { "animation.stack.type.0", "animation.stack.type.1", "animation.stack.type.3", "animation.stack.type.4", "animation.stack.type.5", "animation.stack.type.6", "animation.stack.type.7", "animation.stack.type.8" }, frame.getHoldRightStackType())
-				.setHoverText("animation.hover.stack.type."+type));
-		// show stack in left hand
-		addLabel(new GuiNpcLabel(lId++, "animation.hold.left", x + 20, y += 10));
-		type = frame.getHoldLeftStackType();
-		if (type == 3) { type = 4; }
-		addButton(new GuiButtonBiDirectional(38, x + 20, y += 9, 116, 10, new String[] { "animation.stack.type.0", "animation.stack.type.1", "animation.stack.type.2", "animation.stack.type.4", "animation.stack.type.5", "animation.stack.type.6", "animation.stack.type.7", "animation.stack.type.8" }, frame.getHoldLeftStackType())
-				.setHoverText("animation.hover.stack.type."+type));
-		// Part
-		addLabel(new GuiNpcLabel(lId++, isMotion ? "animation.motion" :  isHitbox ? "animation.hitbox" : "animation.parts", x, y += 13));
-		// show part names
-		addButton(new GuiNpcButton(29, workU + 2, y, 8, 8, "")
-				.setLayerColor(CustomNpcs.colorAnimHoverPart + 0xFF000000)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(232, 0, 24, 24)
-				.setIsEnable(partNames == null || !partNames.visible)
-				.setHoverText("animation.hover.show.parts"));
-		// show hitbox names
-		if (anim.type == AnimationKind.ATTACKING) {
-			addButton(new GuiNpcButton(45, workU + 2, y + 12, 8, 8, "")
-					.setLayerColor(0xFFFAF700)
-					.setTexture(ANIMATION_BUTTONS)
-					.setHasDefaultBack(false)
-					.setIsAnim(true)
-					.setUV(232, 0, 24, 24)
-					.setIsEnable(hitboxes == null || !hitboxes.visible)
-					.setHoverText("animation.hover.show.hitboxes"));
-		}
-		// scrolls data set
-		dataParts.clear();
-		List<String> lParts = new ArrayList<>();
-		for (int id : frame.parts.keySet()) {
-			PartConfig ps = frame.parts.get(id);
-			String key = new TextComponentTranslation(ps.name).getFormattedText();
-			dataParts.put(key, ps);
-			lParts.add(key);
-		}
-		scrollParts.setUnsortedList(lParts);
-		dataHitboxes.clear();
-		if (scrollHitboxes == null) { scrollHitboxes = new GuiCustomScroll(this, 1).setSize(112, 112); }
-		List<String> lHitboxes = new ArrayList<>();
-		int i = 0;
-		char c = (char) 167;
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		for (int id : frame.damageHitboxes.keySet()) {
-			AnimationDamageHitbox aDH = frame.damageHitboxes.get(id);
-            String key = aDH.getKey();
-			dataHitboxes.put(key, aDH);
-			lHitboxes.add(key);
-			List<String> list = new ArrayList<>();
-			list.add(c + "7ID: " + c + "6" + (id + 1));
-			list.add(c + "7D:" + c + "a" + aDH.offset[0]);
-			list.add(c + "7H:" + c + "a" + aDH.offset[1]);
-			list.add(c + "7W:" + c + "a" + aDH.offset[2]);
-			list.add(c + "7Scale X:" + c + "b" + aDH.scale[0]);
-			list.add(c + "7Scale Y:" + c + "b" + aDH.scale[1]);
-			list.add(c + "7Scale Z:" + c + "b" + aDH.scale[2]);
-			hts.put(i, list);
-			i++;
-		}
-		scrollHitboxes.setUnsortedList(lHitboxes)
-				.setHoverTexts(hts);
-		if (isHitbox && toolType == 0) { toolType = 1; }
-		// add part / hitbox
-		addButton(new GuiNpcButton(7, x + 106, y, 10, 10, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(96, 0, 24, 24)
-				.setHoverText(isHitbox ? "animation.hover.hitbox.add" : isMotion ? "animation.hover.not.in.motion" : "animation.hover.part.add"));
-		// del part / hitbox
-		addButton(new GuiNpcButton(8, x + 116, y, 10, 10, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(72, 0, 24, 24)
-				.setHoverText(isHitbox ? "animation.hover.hitbox.add" : isMotion ? "animation.hover.not.in.motion" : "animation.hover.part.del"));
-		// clear part
-		addButton(new GuiNpcButton(9, x + 126, y, 10, 10, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(120, 0, 24, 24)
-				.setIsEnable(!isMotion && !isHitbox)
-				.setHoverText(new TextComponentTranslation("animation.hover.reset.part")
-						.appendSibling(new TextComponentTranslation("animation.hover.shift.0")).getFormattedText()));
-		// used part in frame
-		addButton(new GuiNpcCheckBox(10, x, y += 10, 67, 14, "gui.disabled", "gui.enabled", part.isDisable())
-				.setIsEnable(!isMotion && !isHitbox)
-				.setHoverText(new TextComponentTranslation("animation.hover.part.disabled." + !part.isDisable())
-						.appendSibling(new TextComponentTranslation("animation.hover.shift.1")).getFormattedText()));
-		// show part in frame
-		addButton(new GuiNpcCheckBox(22, x + 69, y, 67, 14, "gui.show", "gui.noshow", part.isShow())
-				.setIsEnable(!isMotion && !isHitbox)
-				.setHoverText(new TextComponentTranslation("animation.hover.part.show." + part.isShow())
-						.appendSibling(new TextComponentTranslation("animation.hover.shift.1")).getFormattedText()));
-		// display color hover
-		StringBuilder color = new StringBuilder(Integer.toHexString(CustomNpcs.colorAnimHoverPart));
-		while (color.length() < 6) { color.insert(0, "0"); }
-		addButton(new GuiNpcButton(12, x, y += 15, 67, 10, color.toString())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setIsEnable(!isMotion && !isHitbox)
-				.setTextColor(CustomNpcs.colorAnimHoverPart)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.part.color"));
-		// Chance
-		float ch = Math.round(anim.chance * 100000.0f) / 1000.0f;
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("drop.chance").getFormattedText()+":", x, (y += 14) + 1));
-		addTextField(new GuiNpcTextField(10, this, x + 28, y, 40, 12, String.valueOf(ch))
-				.setMinMaxDoubleDefault(0.0f, 100.0f, ch)
-				.setHoverText("animation.hover.chance"));
-		addLabel(new GuiNpcLabel(lId++, "%", x + 72, y + 1));
-		// Sound Settings
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("advanced.sounds").getFormattedText()+":", x, y += 16));
-		addTextField(new GuiNpcTextField(3, this, x, y + 10, 135, 12, frame.getStartSound())
-				.setHoverText("animation.hover.sound"));
-		addButton(new GuiNpcButton(27, x + 135 - 17, y, 8, 8, "S")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.select.sound"));
-		addButton(new GuiNpcButton(28, x + 135 - 8, y, 8, 8, "X")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.del.sound"));
-		// Emotion data
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("advanced.emotion").getFormattedText()+":", x, y += 26));
-		addTextField(new GuiNpcTextField(4, this, x, y + 10, 48, 12, "" + frame.getStartEmotion())
-				.setMinMaxDefault(0, AnimationController.getInstance().getUnusedEmtnId() - 1, frame.getStartEmotion())
-				.setHoverText("animation.hover.emotion.id"));
-
-		// show equipment mainhand
-		addLabel(new GuiNpcLabel(lId, "animation.show.stacks", x, y += 26));
-		addButton(new GuiNpcButton(39, x + 2, y += 10, 12, 12, "")
-				.setTexture(ANIMATION_BUTTONS_SLOTS)
-				.setHasDefaultBack(false)
-				.setUV(0, frame.showMainHand ? 0 : 96, 24, 24)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.0"));
-		// show equipment offhand
-		addButton(new GuiNpcButton(40, x + 16, y, 12, 12, "")
-				.setTexture(ANIMATION_BUTTONS_SLOTS)
-				.setHasDefaultBack(false)
-				.setUV(24, frame.showOffHand ? 0 : 96, 24, 24)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.1"));
-		// show equipment helmet
-		addButton(new GuiNpcButton(41, x + 30, y, 12, 12, "")
-				.setTexture(ANIMATION_BUTTONS_SLOTS)
-				.setHasDefaultBack(false)
-				.setUV(48, frame.showHelmet ? 0 : 96, 24, 24)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.2"));
-		// show equipment body
-		addButton(new GuiNpcButton(42, x + 44, y, 12, 12, "")
-				.setTexture(ANIMATION_BUTTONS_SLOTS)
-				.setHasDefaultBack(false)
-				.setUV(72, frame.showBody ? 0 : 96, 24, 24)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.3"));
-		// show equipment legs
-		addButton(new GuiNpcButton(43, x + 58, y, 12, 12, "")
-				.setTexture(ANIMATION_BUTTONS_SLOTS)
-				.setHasDefaultBack(false)
-				.setUV(96, frame.showLegs ? 0 : 96, 24, 24)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.4"));
-		// show equipment feet's
-		addButton(new GuiNpcButton(44, x + 72, y, 12, 12, "")
-				.setTexture(ANIMATION_BUTTONS_SLOTS)
-				.setHasDefaultBack(false)
-				.setUV(120, frame.showFeets ? 0 : 96, 24, 24)
-				.setTextColor(0xFFDC0000)
-				.setDropShadow(false)
-				.setHoverText("animation.hover.5"));
-		// exit
-		addButton(new GuiNpcButton(66, x, winV + winH - 12, 50, 10, "gui.back")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("hover.back"));
-		// work place
-		ITextComponent hAgain= new TextComponentTranslation("animation.hover.again");
-		// simple mesh
-		addButton(new GuiNpcButton(13, workU + 25, workV + 2, 8, 8, "")
-				.setLayerColor(meshType == 0 ? 0xFFD93070 : 0xFF360C1C)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText(new TextComponentTranslation("animation.hover.mesh.0").appendSibling(hAgain).getFormattedText()));
-		// xz mesh
-		addButton(new GuiNpcButton(14, workU + 34, workV + 2, 8, 8, "")
-				.setLayerColor(meshType == 1 ? 0xFF6830D9 : 0xFF1A0C36)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText(new TextComponentTranslation("animation.hover.mesh.1").appendSibling(hAgain).getFormattedText()));
-		// xy mesh
-		addButton(new GuiNpcButton(15, workU + 43, workV + 2, 8, 8, "")
-				.setLayerColor(meshType == 2 ? 0xFF30D980 : 0xFF0C3620)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText(new TextComponentTranslation("animation.hover.mesh.2").appendSibling(hAgain).getFormattedText()));
-		// zy mesh
-		addButton(new GuiNpcButton(16, workU + 52, workV + 2, 8, 8, "")
-				.setLayerColor(meshType == 3 ? 0xFFD7D930 : 0xFF35360C)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText(new TextComponentTranslation("animation.hover.mesh.3").appendSibling(hAgain).getFormattedText()));
-		// show hit box
-		addButton(new GuiNpcButton(17, workU + 61, workV + 2, 8, 8, "")
-				.setLayerColor(showHitBox ? 0 : 0xFF808080)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText(new TextComponentTranslation("animation.hover.hitbox").appendSibling(hAgain).getFormattedText()));
-		// align xy
-		addButton(new GuiNpcButton(49, workU + 79, workV + 2, 8, 8, "x")
-				.setLayerColor(0xFF8555BA)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.align.xy"));
-		// align zy
-		addButton(new GuiNpcButton(50, workU + 79, workV + 11, 8, 8, "z")
-				.setLayerColor(0xFF8555BA)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.align.zy"));
-		// align xz
-		addButton(new GuiNpcButton(51, workU + 88, workV + 2, 8, 8, "y")
-				.setLayerColor(0xFF8555BA)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.align.xz"));
-		// align revers
-		addButton(new GuiNpcButton(52, workU + 97, workV + 11, 8, 8, "r")
-				.setLayerColor(0xFF557DBA)
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.align.revers"));
-		// reset scale
-		addButton(new GuiNpcButton(18, workU + workS - 10, workV + 2, 8, 8, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.reset.scale"));
-		// reset pos
-		addButton(new GuiNpcButton(19, workU + 2, workV + workS - 10, 8, 8, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.reset.pos"));
-		// reset rot
-		addButton(new GuiNpcButton(20, workU + workS - 10, workV + workS - 10, 8, 8, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(0, 96, 0, 0)
-				.setHoverText("animation.hover.reset.rot"));
-		// part or anim
-		addButton(new GuiNpcButton(21, workU + workS / 2 - 11, workV + workS - 12, 18, 10, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setUV(onlyCurrentPart ? 144 : 188, 0, 44, 24)
-				.setHoverText(new TextComponentTranslation("animation.hover.work." + onlyCurrentPart, ((char) 167) + "6" + (frame != null ? frame.id + 1 : -1)).getFormattedText()));
-		y = workV + workS - 74;
-		// animation init data
-		addLabel(new GuiNpcLabel(50, "0", workU + workS / 2 + 10, workV + workS - 12, GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000));
-		addLabel(new GuiNpcLabel(51, "0", workU + workS / 2 - 13, workV + workS - 12, GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000));
-		// set animation part tick
-		addButton(new GuiButtonBiDirectional(53, workU + workS / 2 - 56, workV + workS - 24, 108, 10, new String[] { "" }, 0)
-				.setHoverText("animation.hover.part.all.ticks")
-				.setIsVisible(onlyCurrentPart));
-		// show tools
-		addButton(new GuiNpcButton(35, workU + 5, y, 8, 8, "")
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setIsEnable(tools == null || !tools.visible)
-				.setUV(232, 0, 24, 24)
-				.setHoverText("animation.hover.show.tools"));
-		// tool pos
-		addButton(new GuiNpcButton(23, workU + 2, y += 10, 14, 14, "")
-				.setLayerColor(toolType == 1 ? new Color(0xFFFF4040).getRGB() : new Color(0xFFFFFFFF).getRGB())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setIsEnable(tools == null || !tools.visible)
-				.setUV(0, 0, 24, 24)
-				.setHoverText("animation.hover.tool.0"));
-		// tool rot
-		addButton(new GuiNpcButton(24, workU + 2, y += 16, 14, 14, "")
-				.setLayerColor(toolType == 0 ? new Color(0xFF40FF40).getRGB() : new Color(0xFFFFFFFF).getRGB())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setIsEnable(!isHitbox && !isMotion)
-				.setUV(24, 0, 24, 24)
-				.setHoverText("animation.hover.tool.1"));
-		// tool scale
-		addButton(new GuiNpcButton(25, workU + 2, y + 16, 14, 14, "")
-				.setLayerColor(toolType == 2 ? new Color(0xFF4040FF).getRGB() : new Color(0xFFFFFFFF).getRGB())
-				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
-				.setIsAnim(true)
-				.setIsEnable(!isMotion)
-				.setUV(48, 0, 24, 24)
-				.setHoverText("animation.hover.tool.2"));
-		resetAnimation();
-		// Parts window
-		boolean vPN = partNames == null || partNames.visible;
-		showPartNames();
-		partNames.visible = vPN;
-		partNames.objs = new Object[] { part, toolType };
-		// Tool window
-		boolean vT = tools == null || tools.visible;
-		showTools();
-		tools.visible = vT;
-		if (anim.type == AnimationKind.ATTACKING) {
-			boolean vH = hitboxes == null || hitboxes.visible;
-			showHitBoxes();
-			hitboxes.visible = vH;
-		}
-		if (ModelNpcAlt.editAnimDataSelect.part != (part == null ? -1 : part.id)) { setPart(part); }
-	}
-
-	private void showHitBoxes() {
-		if (hitboxes == null) {
-			hitboxes = new GuiNpcMiniWindow(this, 2, workU + 18, workV + 12, 120, 118, new TextComponentTranslation("gui.hitboxes", ":").getFormattedText());
-			hitboxes.widthTexture = 256;
-			hitboxes.heightTexture = 256;
-			hitboxes.setColorLine(0xFAF700);
-			hitboxes.addScroll(scrollHitboxes);
-		}
-		hitboxes.setPoint(getButton(45));
-		scrollHitboxes.guiLeft = hitboxes.guiLeft + 4;
-		scrollHitboxes.guiTop = hitboxes.guiTop + 12;
-		addMiniWindow(hitboxes);
-	}
-
-	private void showTools() {
-		int f = 11, h = 0;
-		int x = workU + 18;
-		int y = workV + workS - 65;
-		boolean notNormal = toolType == 0 && part != null && ((addedPartConfig != null && !addedPartConfig.isNormal) || (part.id >= 1 && part.id <= 5));
-		if (isHitbox) { notNormal = false; }
-		y += notNormal ? -11 : 0;
-		if (tools != null) {
-			x = tools.guiLeft;
-			y = tools.guiTop;
-			h = tools.ySize;
-		}
-		tools = new GuiNpcMiniWindow(this, 1, x, y, 146, notNormal ? 60 : 38, new TextComponentTranslation("gui.tools").getFormattedText() + ":");
-		tools.widthTexture = 256;
-		tools.heightTexture = 256;
-		x += 4;
-		y += 13;
-		for (int i = 0; i < 3; i++) {
-			tools.addLabel(new GuiNpcLabel(i, i == 0 ? (toolType == 1 && isHitbox || isMotion ? "D:" : "X:") : i == 1 ? (toolType == 1 && isHitbox || isMotion ? "H:" : "Y:") : (toolType == 1 && isHitbox || isMotion ? "W:" : "Z:"), x, y + i * f));
-			float[] values;
-			if (isHitbox && hitbox != null) { values = toolType == 1 ? hitbox.offset : hitbox.scale; }
-			else if (isMotion && frame != null) {
-				toolType = 1;
-				values = frame.motions;
-			}
-			else { values = toolType == 0 ? part.rotation : toolType == 1 ? part.offset : part.scale; }
-			float[] textToFields = new float[values.length];
-			float[] sliderValues = new float[values.length];
-			switch (toolType) {
-				case 1: { // o
-					if (i == 2 && (isHitbox || isMotion)) {
-						textToFields[i] = Math.round(values[i] * 180000.0f / Math.PI) / 1000.0f;
-						sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.159155f + 0.5f, 0.0f, 1.0f);
-					}
-					else {
-						textToFields[i] = Math.round(values[i] * 1000.0f) / 1000.0f;
-						if (isMotion) {
-							if (i == 0) { sliderValues[i] = ValueUtil.correctFloat(values[i] * 2.0f / 3.0f, 0.0f, 1.0f); }
-							else { sliderValues[i] = ValueUtil.correctFloat(values[i] / 3.0f + 0.5f, 0.0f, 1.0f); }
-						} else if (isHitbox) {
-							if (i == 0) { sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.1f, 0.0f, 1.0f); }
-							else { sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.05f + 0.5f, 0.0f, 1.0f); }
-						}
-						else { sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.1f + 0.5f, 0.0f, 1.0f); }
-					}
-					break;
-				}
-				case 2: { // s
-					textToFields[i] = Math.round(values[i] * 1000.0f) / 1000.0f;
-					sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.2f, 0.0f, 1.0f);
-					break;
-				}
-				default: { // r
-					textToFields[i] = Math.round(values[i] * 180000.0f / Math.PI) / 1000.0f;
-					sliderValues[i] = ValueUtil.correctFloat(values[i] * 0.159155f + 0.5f, 0.0f, 1.0f);
-					break;
-				}
-			}
-			GuiNpcSlider slider = new GuiNpcSlider(tools, i, x + 9, y + i * f, 75, 8, sliderValues[i]);
-			slider.setHoverText("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), i == 0 ? "X" : i == 1 ? "Y" : "Z");
-			tools.addSlider(slider);
-			double m = -180.0d, n = 180.0d;
-			if (toolType == 1) {
-				if (isMotion) { // D H W
-					if (i == 0) {
-						m = 0.0d;
-						n = 1.5d;
-					} if (i == 1) {
-						m = -1.5d;
-						n = 1.5d;
-					}
-				}
-				else if (isHitbox) { // D H W
-					if (i == 0) {
-						m = 0.0d;
-						n = 10.0d;
-					} if (i == 1) {
-						m = -10.0d;
-						n = 10.0d;
-					}
-				}
-				else {
-					m = -5.0d;
-					n = 5.0d;
-				}
-			}
-			else if (toolType == 2) {
-				m = 0.0d;
-				n = 5.0d;
-			}
-			tools.addTextField(new GuiNpcTextField(i + 5, tools, x + 86, y + i * f, 42, 8, "" + textToFields[i])
-					.setMinMaxDoubleDefault(m, n, textToFields[i])
-					.setHoverText("animation.hover." + (toolType == 0 ? "rotation" : toolType == 1 ? "offset" : "scale"), i == 0 ? "X" : i == 1 ? "Y" : "Z"));
-			tools.addButton(new GuiNpcButton(30 + i, x + 130, y + i * f, 8, 8, "X")
-					.setTexture(ANIMATION_BUTTONS)
-					.setHasDefaultBack(false)
-					.setIsAnim(true)
-					.setUV(0, 96, 0, 0)
-					.setDropShadow(false)
-					.setTextColor(0xFFDC0000)
-					.setHoverText("animation.hover.reset." + toolType, i == 0 ? "X" : i == 1 ? "Y" : "Z"));
-		}
-		if (!isHitbox && notNormal) {
-			y += 33;
-			tools.addLabel(new GuiNpcLabel(3, "X1:", x, y));
-			float sliderValue = part.rotation[3] * 0.159155f + 0.5f;
-			float textToFields = Math.round(part.rotation[3] * 180000.0f / Math.PI) / 1000.0f;
-			GuiNpcSlider slider = new GuiNpcSlider(tools, 3, x + 9, y , 75, 8, sliderValue);
-			slider.setHoverText("animation.hover.rotation", "X 1");
-			tools.addSlider(slider);
-			tools.addTextField(new GuiNpcTextField(8, tools, x + 86, y, 42, 8, "" + textToFields)
-					.setMinMaxDoubleDefault(-180.0d, 180.0d, textToFields)
-					.setHoverText("animation.hover.rotation", "X 1"));
-			tools.addButton(new GuiNpcButton(33, x + 130, y, 8, 8, "X")
-					.setTexture(ANIMATION_BUTTONS)
-					.setHasDefaultBack(false)
-					.setIsAnim(true)
-					.setUV(0, 96, 0, 0)
-					.setDropShadow(false)
-					.setTextColor(0xFFDC0000)
-					.setHoverText("animation.hover.reset.0", "X 1"));
-			y += 11;
-			tools.addLabel(new GuiNpcLabel(4, "Y1:", x, y));
-			sliderValue = part.rotation[4] * 0.318310f + 0.5f;
-			textToFields = Math.round(part.rotation[4] * 180000.0f / Math.PI) / 1000.0f;
-			slider = new GuiNpcSlider(tools, 4, x + 9, y , 75, 8, sliderValue);
-			slider.setHoverText("animation.hover.rotation", "Y 1");
-			tools.addSlider(slider);
-			tools.addTextField(new GuiNpcTextField(9, tools, x + 86, y, 42, 8, "" + textToFields)
-					.setMinMaxDoubleDefault(-90.0d, 90.0d, textToFields)
-					.setHoverText("animation.hover.rotation", "Y 1"));
-			tools.addButton(new GuiNpcButton(34, x + 130, y, 8, 8, "X")
-					.setTexture(ANIMATION_BUTTONS)
-					.setHasDefaultBack(false)
-					.setIsAnim(true)
-					.setUV(0, 96, 0, 0)
-					.setDropShadow(false)
-					.setTextColor(0xFFDC0000)
-					.setHoverText("animation.hover.reset.0", "Y 1"));
-			if (h != 72) { tools.moveOffset(0, -11); }
-		}
-		else if (h != 50) { tools.moveOffset(0, 11); }
-		switch(toolType) {
-			case 1: {
-				tools.setPoint(getButton(23));
-				tools.setColorLine(0xFF8080);
-				break;
-			}
-			case 2: {
-				tools.setPoint(getButton(25));
-				tools.setColorLine(0x8080FF);
-				break;
-			}
-			default: {
-				tools.setPoint(getButton(24));
-				tools.setColorLine(0x80FF80);
-				break;
-			}
-		}
-		if (getButton(35) != null) { getButton(35).setLayerColor(tools.getColorLine() + 0xFF000000); }
-		addMiniWindow(tools);
-	}
-
-	private void showPartNames() {
-		if (partNames == null) {
-			partNames = new GuiNpcMiniWindow(this, 0, workU + workS - 78, workV + 12, 75, 129, new TextComponentTranslation("gui.parts").getFormattedText() + ":");
-			partNames.widthTexture = 256;
-			partNames.heightTexture = 256;
-			partNames.setColorLine(CustomNpcs.colorAnimHoverPart);
-			scrollParts.setSelect(part.id);
-			partNames.addScroll(scrollParts);
-			partNames.addButton(new GuiNpcButton(48, partNames.guiLeft + 4, partNames.guiTop + 125, 67, 12, "ai.movement"));
-		}
-		partNames.setPoint(getButton(29));
-		if (scrollParts != null) {
-			scrollParts.guiLeft = partNames.guiLeft + 4;
-			scrollParts.guiTop = partNames.guiTop + 12;
-		}
-		if (partNames.getButton(48) != null) {
-			partNames.getButton(48).x = partNames.guiLeft + 4;
-			partNames.getButton(48).y = partNames.guiTop + 125;
-		}
-		addMiniWindow(partNames);
-	}
-
-	private boolean isPressAndKey(int type, int id) {
-		if (waitKey > 0 && waitKeyID == id) { return false; }
-		boolean isPress = type == 0 ? isAltKeyDown() : type == 1 ? isCtrlKeyDown() : isShiftKeyDown() && Keyboard.isKeyDown(id);
-		if (isPress) {
-			waitKey = 30;
-			waitKeyID = id;
-		}
-		return isPress;
-	}
-
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui == null) {
-			if (keyCode == Keyboard.KEY_ESCAPE) {
-				onClosed();
-				return true;
-			}
-			// tool pos - Alt + Q
-			if (isPressAndKey(0, Keyboard.KEY_Q) && toolType != 1) {
-				toolType = 1;
-				playButtonClick();
-				initGui();
-				return true;
-			}
-			// tool rot - Alt + W
-			if (isPressAndKey(0, Keyboard.KEY_W) && toolType != 0) {
-				toolType = 0;
-				playButtonClick();
-				initGui();
-				return true;
-			}
-			// tool rot - Alt + E
-			if (isPressAndKey(0, Keyboard.KEY_E) && toolType != 2) {
-				toolType = 2;
-				playButtonClick();
-				initGui();
-				return true;
-			}
-			// play stop - Alt + P
-			if (isPressAndKey(0, Keyboard.KEY_P)) {
-				onlyCurrentPart = !onlyCurrentPart;
-				if (getButton(21) != null) { getButton(21).setTextureXY(onlyCurrentPart ? 144 : 188, getButton(21).getTextureXY()[1]); }
-				playButtonClick();
-				isChanged = true;
-				initGui();
-				return true;
-			}
-			// reset scale - Alt + S
-			if (isPressAndKey(0, Keyboard.KEY_S)) {
-				dispScale = 1.0f;
-				playButtonClick();
-				return true;
-			}
-			// reset rot - Alt + R
-			if (isPressAndKey(0, Keyboard.KEY_R)) {
-				dispRot[0] = 45.0f;
-				dispRot[1] = 345.0f;
-				dispRot[2] = 345.0f;
-				playButtonClick();
-				return true;
-			}
-			// reset pos - Alt + O
-			if (isPressAndKey(0, Keyboard.KEY_O)) {
-				for (int j = 0; j < 3; j++) { dispPos[j] = 0.0f; }
-				playButtonClick();
-				return true;
-			}
-			// align xy Shift + X
-			if (isPressAndKey(2, Keyboard.KEY_X)) {
-				dispRot[0] = 0.0f;
-				dispRot[1] = 0.0f;
-				dispRot[2] = 0.0f;
-				playButtonClick();
-				return true;
-			}
-			// align xz Shift + Y
-			if (isPressAndKey(2, Keyboard.KEY_Y)) {
-				dispRot[0] = 0.0f;
-				dispRot[1] = 270.0f;
-				dispRot[2] = 0.0f;
-				playButtonClick();
-				return true;
-			}
-			// align zy Shift + Z
-			if (isPressAndKey(2, Keyboard.KEY_Z)) {
-				dispRot[0] = 90.0f;
-				dispRot[1] = 0.0f;
-				dispRot[2] = 0.0f;
-				playButtonClick();
-				return true;
-			}
-			// align revers Shift + R
-			if (isPressAndKey(2, Keyboard.KEY_R)) {
-				displayRotate(180, 0);
-				playButtonClick();
-				return true;
-			}
-		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
-	}
-
-	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (subgui != null) { return subgui.mouseCnpcsPressed(mouseX, mouseY, mouseButton); }
-		boolean bo = super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
-		if (hoverRight && frame.getHoldRightStackType() == 3) {
-			IItemStack stack;
-			switch(frame.getHoldRightStackType()) {
-				case 1: stack = npc.inventory.getProjectile(); break;
-				case 2: stack = npc.inventory.getLeftHand(); break;
-				case 3: stack = frame.getHoldRightStack(); break;
-				default: stack = npc.inventory.getRightHand(); break;
-			}
-			setSubGui(new SubGuiSelectItemStack(0, stack==null || stack.isEmpty() ? ItemStack.EMPTY : stack.getMCItemStack()));
-		}
-		else if (hoverLeft && frame.getHoldLeftStackType() == 3) {
-			IItemStack stack;
-			switch(frame.getHoldLeftStackType()) {
-				case 1: stack = npc.inventory.getProjectile(); break;
-				case 2: stack = npc.inventory.getRightHand(); break;
-				case 3: stack = frame.getHoldLeftStack(); break;
-				default: stack = npc.inventory.getLeftHand(); break;
-			}
-			setSubGui(new SubGuiSelectItemStack(1, stack==null || stack.isEmpty() ? ItemStack.EMPTY : stack.getMCItemStack()));
-		}
-		else if (!bo && (mouseButton == 0 || mouseButton == 1) && hovered) {
-			mousePressId = mouseButton;
-			mousePressX = mouseX;
-			mousePressY = mouseY;
-		}
-		return bo;
-	}
-
-	@Override
-	public void mouseDragged(GuiNpcSlider slider) {
-		isChanged = true;
-		float value = 0.0f;
-		float pi = (float) Math.PI;
-		if (isHitbox) {
-			if (hitbox == null || toolType == 0) { return; }
-			if (toolType == 1) {
-				if (slider.getID() == 0) {
-					hitbox.offset[0] = 10.0f * slider.sliderValue;
-					value = Math.round(hitbox.offset[0] * 1000.0f) / 1000.0f;
-				}
-				else if (slider.getID() == 1) {
-					hitbox.offset[1] = 20.0f * slider.sliderValue - 10.0f;
-					value = Math.round(hitbox.offset[1] * 1000.0f) / 1000.0f;
-				}
-				else if (slider.getID() == 2) {
-					hitbox.offset[2] = 2.0f * pi * slider.sliderValue - pi;
-					value = Math.round(360.0f * slider.sliderValue - 180.0f);
-				}
-			}
-			else {
-				value = Math.round(5000.0f * slider.sliderValue) / 1000.0f;
-				hitbox.scale[slider.getID()] = value;
-			}
-			if (tools.getTextField(5 + slider.getID()) != null) { tools.getTextField(5 + slider.getID()).setText("" + value); }
-			return;
-		}
-		if (isMotion) {
-			if (toolType != 1) { return; }
-			if (slider.getID() == 0) {
-				value = Math.round(slider.sliderValue * 1500.0f) / 1000.0f;
-				frame.motions[0] = value;
-			} else if (slider.getID() == 1) {
-				value = Math.round((slider.sliderValue * 3.0f - 1.5f) * 1000.0f) / 1000.0f;
-				frame.motions[1] = value;
-			} else if (slider.getID() == 2) {
-				value = Math.round(360.0f * slider.sliderValue - 180.0f);
-				frame.motions[2] = 2.0f * pi * slider.sliderValue - pi;
-			}
-			if (tools.getTextField(5 + slider.getID()) != null) { tools.getTextField(5 + slider.getID()).setText("" + value); }
-			return;
-		}
-		if (part == null) { return; }
-		if (slider.getID() == 3 || slider.getID() == 4) {
-			if (toolType != 0) { return; }
-			part.rotation[slider.getID()] = (2.0f * pi * slider.sliderValue - pi) / (slider.getID() == 4 ? 2.0f : 1.0f);
-			value = Math.round(360.0f * slider.sliderValue - 180.0f) / (slider.getID() == 4 ? 2.0f : 1.0f);
-		} else {
-			switch (toolType) {
-				case 0: { // r
-					part.rotation[slider.getID()] = 2.0f * pi * slider.sliderValue - pi;
-					value = Math.round(360.0f * slider.sliderValue - 180.0f);
-					break;
-				}
-				case 1: { // o
-					part.offset[slider.getID()] = slider.sliderValue * 10.0f - 5.0f;
-					value = Math.round(part.offset[slider.getID()] * 1000.0f) / 1000.0f;
-					break;
-				}
-				case 2: { // s
-					part.scale[slider.getID()] = slider.sliderValue * 5.0f;
-					value = Math.round(part.scale[slider.getID()] * 1000.0f) / 1000.0f;
-					break;
-				}
-			}
-		}
-		if (tools.getTextField(5 + slider.getID()) != null) { tools.getTextField(5 + slider.getID()).setText("" + value); }
-		resetAnimation();
-	}
-
-	@Override
-	public void mousePressed(GuiNpcSlider slider) { }
-
-	@Override
-	public void mouseReleased(GuiNpcSlider slider) { }
-
-	private void playButtonClick() {
-		mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-	}
-
-	private void postRender() {
-		GlStateManager.translate(workU + workS / 2.0f, workV + workS / 2.0f, 100.0f * dispScale); // center
-		GlStateManager.translate(dispPos[0], dispPos[1], 0.0f);
-		GlStateManager.rotate(dispRot[0], 0.0f, 1.0f, 0.0f);
-		GlStateManager.rotate(dispRot[1], 1.0f, 0.0f, 0.0f);
-		GlStateManager.rotate(dispRot[2], 0.0f, 0.0f, 1.0f);
-		GlStateManager.scale(dispScale, dispScale, dispScale);
-		GlStateManager.translate(0.0f, 25.0f, 0.0f);
-	}
-
-	private void resetAnimation() {
-		if (!isChanged || anim == null || frame == null || npcAnim == null) { return; }
-		npcAnim.posX = basePos[0];
-		npcAnim.posY = basePos[1];
-		npcAnim.posZ = basePos[2];
-		npcPart.posX = basePos[0];
-		npcPart.posY = basePos[1];
-		npcPart.posZ = basePos[2];
-
-		npcAnim.animation.reset();
-		npcAnim.animation.tryRunAnimation(anim, AnimationKind.EDITING_All);
-		npcAnim.setHealth(npcAnim.getMaxHealth());
-		npcAnim.deathTime = 0;
-
-		npcPart.animation.reset();
-		npcPart.animation.tryRunAnimation(anim, AnimationKind.EDITING_PART);
-		npcPart.setHealth(npcPart.getMaxHealth());
-		npcPart.deathTime = 0;
-		if (getButton(53) != null) {
-			getButton(53).setIsVisible(onlyCurrentPart);
-			if (onlyCurrentPart) {
-				List<String> ticks = new ArrayList<>();
-				int s = npcPart.animation.getAnimationSpeedTicks();
-				for (int i = 0; i <= s; i++) { ticks.add(i + "/" + s); }
-				getButton(53).resetDisplay(ticks);
-			}
-		}
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		GuiNpcTextField.unfocus();
-		 if (isMotion) {
-			 isMotion = false;
-			 partNames.getButton(48).setIsEnable(true);
-		 }
-		 if (scroll.getID() == 0) {
-			 if (anim.type == AnimationKind.ATTACKING) { setHitbox(null); }
-			 if (part.id == dataParts.get(scroll.getSelected()).id) { return; }
-			 setPart(dataParts.get(scroll.getSelected()));
-			 initGui();
-		 }
-		 else if (scroll.getID() == 1 && anim.type == AnimationKind.ATTACKING) {
-			 setHitbox(dataHitboxes.get(scroll.getSelected()));
-			 if (scrollParts != null) { scrollParts.setSelect(-1); }
-			 initGui();
-		 }
-		initGui();
-	}
-
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
-
-	private void setEnvironment() {
-		environmentEntitys.clear();
-		environmentStates.clear();
-		environmentTiles.clear();
-		if (npc == null || npc.world == null) { return; }
-		offsetY = 0.0f;
-		if (npc.posY != Math.floor(npc.posY)) { offsetY = (float) ((npc.posY - Math.round(npc.posY)) * 16.0f); }
-		for (int y = -4; y <= 4; y++) {
-			for (int x = -4; x <= 4; x++) {
-				for (int z = -4; z <= 4; z++) {
-					double yP = npc.posY + y - 1;
-					if (npc.posY != Math.floor(npc.posY)) { yP = Math.ceil(npc.posY) + y - 1; }
-					BlockPos posWorld = new BlockPos(npc.posX + x, yP, npc.posZ + z);
-					IBlockState state = npc.world.getBlockState(posWorld);
-					TileEntity tile = npc.world.getTileEntity(posWorld);
-					if (tile != null && TileEntityRendererDispatcher.instance.renderers.get(tile.getClass()) == null) { tile = null; }
-					BlockPos pos = new BlockPos(x, y, z);
-					environmentStates.put(pos, state);
-					environmentTiles.put(pos, tile);
-				}
-			}
-		}
-		List<Entity> entities = new ArrayList<>();
-		try { entities = npc.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
-						.offset(npc.getPosition())
-						.grow(4.55d, 4.55d, 4.55d)); }
-		catch (Exception ignored) { }
-		for (Entity e : entities) {
-			if (e.equals(npc)) { continue; }
-			NBTTagCompound nbt = new NBTTagCompound();
-			Entity le;
-			if (e instanceof EntityNPCInterface) { le = Util.instance.copyToGUI((EntityNPCInterface) e, mc.world, true); }
-			else {
-				e.writeToNBTAtomically(nbt);
-				le = EntityList.createEntityFromNBT(nbt, npc.world);
-			}
-			if (le != null) {
-				le.posX -= npc.posX;
-				le.posY -= npc.posY;
-				le.posZ -= npc.posZ;
-				le.rotationYaw = e.rotationYaw;
-				le.prevRotationYaw = e.rotationYaw;
-				le.rotationPitch = e.rotationPitch;
-				le.prevRotationPitch = e.rotationPitch;
-				environmentEntitys.add(le);
-			}
-		}
-	}
-
-	@Override
-	public void subGuiClosed(GuiScreen subgui) {
-		if (subgui instanceof SubGuiColorSelector && ((SubGuiColorSelector) subgui).getId() == 0) {
-			CustomNpcs.colorAnimHoverPart = ((SubGuiColorSelector) subgui).color;
-			ModelNpcAlt.editAnimDataSelect.red = (float) (CustomNpcs.colorAnimHoverPart >> 16 & 255) / 255.0F;
-			ModelNpcAlt.editAnimDataSelect.green = (float) (CustomNpcs.colorAnimHoverPart >> 8 & 255) / 255.0F;
-			ModelNpcAlt.editAnimDataSelect.blue = (float) (CustomNpcs.colorAnimHoverPart & 255) / 255.0F;
-			partNames.setColorLine(CustomNpcs.colorAnimHoverPart);
-			initGui();
-		}
-		if (subgui instanceof SubGuiEditAddPart) {
-			SubGuiEditAddPart gui = (SubGuiEditAddPart) subgui;
-			if (gui.isNew) {
-				// remove old
-				for (int parentID : gui.animation.addParts.keySet()) {
-					for (AddedPartConfig apc : gui.animation.addParts.get(parentID)) {
-						if (apc.id == -1) {
-							gui.animation.addParts.get(parentID).remove(apc);
-							if (gui.animation.addParts.get(parentID).isEmpty()) { gui.animation.addParts.remove(parentID); }
-							break;
-						}
-					}
-				}
-				for (AnimationFrameConfig frame : gui.animation.frames.values()) { frame.parts.remove(-1); }
-				// create
-				if (gui.isSave) {
-					int id = 8;
-					for (int parentID : anim.addParts.keySet()) {
-						for (AddedPartConfig apc : anim.addParts.get(parentID)) {
-							if (id < apc.id) { id = apc.id + 1; }
-						}
-					}
-					gui.addPart.id = id;
-					gui.part.id = id;
-					if (!anim.addParts.containsKey(gui.addPart.parentPart)) { anim.addParts.put(gui.addPart.parentPart, new ArrayList<>()); }
-					anim.addParts.get(gui.addPart.parentPart).add(gui.addPart);
-					for (AnimationFrameConfig frame : anim.frames.values()) { frame.parts.put(id, gui.part.copy()); }
-					ModelNpcAlt.loadAnimationModel(anim);
-					initGui();
-				}
-			}
-		}
-		if (subgui instanceof SubGuiSoundSelection) {
-			if (frame != null) {
-				frame.setStartSound(((SubGuiSoundSelection) subgui).selectedResource);
-				initGui();
-			}
-		}
-		if (subgui instanceof SubGuiEditText) {
-			SubGuiEditText guiText = (SubGuiEditText) subgui;
-			if (guiText.id == 0) {
-				try {
-					int pos = Integer.parseInt(guiText.text[0]) - 1;
-					if (pos < 0) { pos = 0; } else if (pos > anim.frames.size()) { pos = anim.frames.size(); }
-					frame = (AnimationFrameConfig) anim.addFrame(pos, frame);
-					setPart(frame.parts.get(part.id));
-					initGui();
-				} catch (Exception e) { LogWriter.error(e); }
-			}
-		}
-		if (subgui instanceof SubGuiSelectItemStack) {
-			SubGuiSelectItemStack guiStack = (SubGuiSelectItemStack) subgui;
-			if (guiStack.id == 0) { frame.setHoldRightStack(guiStack.stack); }
-			else { frame.setHoldLeftStack(guiStack.stack); }
-			isChanged = true;
-		}
-	}
-
-	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		if (hasSubGui() || anim == null) { return; }
-		switch (textField.getID()) {
-			case 0: {
-				if (anim == null || anim.repeatLast == textField.getInteger()) { return; }
-				anim.setRepeatLast(textField.getInteger());
-				isChanged = true;
-				resetAnimation();
-				break;
-			} // repeatLast
-			case 1: {
-				if (frame == null || frame.speed == textField.getInteger()) { return; }
-				frame.setSpeed(textField.getInteger());
-				isChanged = true;
-				resetAnimation();
-				break;
-			} // speed
-			case 2: {
-				if (frame == null || frame.getEndDelay() == textField.getInteger()) { return; }
-				frame.setEndDelay(textField.getInteger());
-				isChanged = true;
-				resetAnimation();
-				break;
-			} // delay
-			case 5: {
-				isChanged = true;
-				float sliderValue = 0.5f;
-				if (isHitbox) {
-					if (hitbox == null || toolType == 0) { return; }
-					if (toolType == 1) {
-						hitbox.offset[0] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.1f; // 0 -> 10
-					} else {
-						hitbox.scale[0] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.2f; // 0 -> 5
-					}
-					textField.setText("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
-					if (tools.getSlider(0) != null) { tools.getSlider(0).setSliderValue(sliderValue); }
-					initGui();
-					return;
-				}
-				if (isMotion) {
-					if (frame == null || toolType != 1) { return; }
-					frame.motions[0] = (float) textField.getDouble();
-					sliderValue = (float) textField.getDouble() * 2.0f / 3.0f; // 0 -> 1.5
-					textField.setText("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
-					if (tools.getSlider(0) != null) { tools.getSlider(0).setSliderValue(sliderValue); }
-					initGui();
-					return;
-				}
-				PartConfig p = (PartConfig) partNames.objs[0];
-				int tType = (int) partNames.objs[1];
-				if (part == null || !part.equals(p) || tType != toolType) { return; }
-				switch (toolType) {
-					case 0: { // r
-						p.rotation[0] = (float) Math.toRadians(textField.getDouble());
-						sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
-						break;
-					}
-					case 1: { // o
-						p.offset[0] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.1f + 0.5f;
-						break;
-					}
-					case 2: { // s
-						p.scale[0] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.2f;
-						break;
-					}
-				}
-				textField.setText("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
-				if (tools.getSlider(0) != null) { tools.getSlider(0).setSliderValue(sliderValue); }
-				resetAnimation();
-				break;
-			} // X
-			case 6: {
-				isChanged = true;
-				float sliderValue = 0.0f;
-				if (isHitbox) {
-					if (hitbox == null || toolType == 0) { return; }
-					if (toolType == 1) {
-						hitbox.offset[1] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.05f + 0.5f; // -10.0 -> 10.0
-					} else {
-						hitbox.scale[1] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.2f; // 0.0 -> 5.0
-					}
-					textField.setText("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
-					if (tools.getSlider(1) != null) { tools.getSlider(1).setSliderValue(sliderValue); }
-					return;
-				}
-				if (isMotion) {
-					if (frame == null || toolType != 1) { return; }
-					frame.motions[1] = (float) textField.getDouble();
-					sliderValue = (float) textField.getDouble() / 3.0f + 0.5f; // -1.5 -> 1.5
-					textField.setText("" + (float) Math.round(frame.motions[1] * 1000.0d) / 1000.0f);
-					if (tools.getSlider(1) != null) { tools.getSlider(1).setSliderValue(sliderValue); }
-					initGui();
-					return;
-				}
-				PartConfig p = (PartConfig) partNames.objs[0];
-				int tType = (int) partNames.objs[1];
-				if (part == null || !part.equals(p) || tType != toolType) { return; }
-				switch (toolType) {
-					case 0: {
-						p.rotation[1] = (float) Math.toRadians(textField.getDouble());
-						sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
-						break;
-					}
-					case 1: {
-						p.offset[1] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.1f + 0.5f;
-						break;
-					}
-					case 2: {
-						p.scale[1] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.2f;
-						break;
-					}
-				}
-				textField.setText("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
-				if (tools.getSlider(1) != null) { tools.getSlider(1).setSliderValue(sliderValue); }
-				resetAnimation();
-				break;
-			} // Y
-			case 7: {
-				isChanged = true;
-				if (isHitbox) {
-					if (hitbox == null || toolType == 0) { return; }
-					float sliderValue;
-					if (toolType == 1) {
-						hitbox.offset[2] = (float) Math.toRadians(textField.getDouble());
-						sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
-					}
-					else {
-						hitbox.scale[2] = (float) textField.getDouble();
-						sliderValue = (float) textField.getDouble() * 0.2f;
-					}
-					textField.setText("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
-					if (tools.getSlider(2) != null) { tools.getSlider(2).setSliderValue(sliderValue); }
-					return;
-				}
-				if (isMotion) {
-					if (frame == null || toolType != 1) { return; }
-					frame.motions[2] = (float) Math.toRadians(textField.getDouble());
-					float sliderValue = (float) textField.getDouble() * 0.002778f + 0.5f;
-					textField.setText("" + (float) Math.round(textField.getDouble() * 1000.0d) / 1000.0f);
-					if (tools.getSlider(2) != null) { tools.getSlider(2).setSliderValue(sliderValue); }
-					initGui();
-					return;
-				}
-				PartConfig p = (PartConfig) partNames.objs[0];
-				int tType = (int) partNames.objs[1];
-				if (part == null || !part.equals(p) || tType != toolType) { return; }
-				float value = 0.0f;
-				switch (toolType) {
-					case 0: {
-						p.rotation[2] = (float) Math.toRadians(textField.getDouble());
-						value = (float) textField.getDouble() * 0.002778f + 0.5f;
-						break;
-					}
-					case 1: {
-						p.offset[2] = (float) textField.getDouble();
-						value = (float) textField.getDouble() * 0.1f + 0.5f;
-						break;
-					}
-					case 2: {
-						p.scale[2] = (float) textField.getDouble();
-						value = (float) textField.getDouble() * 0.2f;
-						break;
-					}
-				}
-				textField.setText("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
-				if (tools.getSlider(2) != null) { tools.getSlider(2).setSliderValue(value); }
-				resetAnimation();
-				break;
-			} // Z
-			case 8: {
-				if (isHitbox || isMotion ) { initGui(); return; }
-				isChanged = true;
-				PartConfig p = (PartConfig) partNames.objs[0];
-				int tType = (int) partNames.objs[1];
-				if (part == null || !part.equals(p) || tType != toolType) { return; }
-				p.rotation[3] = (float) Math.toRadians(textField.getDouble());
-				float value = (float) textField.getDouble() * 0.002778f + 0.5f;
-				textField.setText("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
-				if (tools.getSlider(3) != null) { tools.getSlider(3).setSliderValue(value); }
-				resetAnimation();
-				break;
-			} // X1
-			case 9: {
-				if (isHitbox || isMotion ) { initGui(); return; }
-				isChanged = true;
-				PartConfig p = (PartConfig) partNames.objs[0];
-				int tType = (int) partNames.objs[1];
-				if (part == null || !part.equals(p) || tType != toolType) { return; }
-				p.rotation[4] = (float) Math.toRadians(textField.getDouble());
-				float value = (float) textField.getDouble() * 0.005556f + 0.5f;
-				textField.setText("" + (float) (Math.round(textField.getDouble() * 1000.0d) / 1000.0d));
-				if (tools.getSlider(4) != null) { tools.getSlider(4).setSliderValue(value); }
-				resetAnimation();
-				break;
-			} // Y1
-			case 10: {
-				if (anim == null) { return; }
-				anim.chance = (float) Math.round(textField.getDouble() * 1000.0d) / 100000.0f;
-				textField.setText("" + (anim.chance * 100.0f));
-				isChanged = true;
-				resetAnimation();
-				break;
-			} // chance
-			case 11: {
-				if (anim == null) { return; }
-				anim.name = textField.getText();
-				break;
-			} // name
-		}
-	}
-
-	@Override
-	public void save() {
-		if (anim != null) { Client.sendData(EnumPacketServer.AnimationChange, anim.save()); }
-		NBTTagCompound nbt = new NBTTagCompound();
-		nbt.setBoolean("save", true);
-		Client.sendData(EnumPacketServer.EmotionChange, nbt);
-	}
-
-	@Override
-	public void closeMiniWindow(GuiNpcMiniWindow miniWindow) {
-		miniWindows.remove(miniWindow.getID());
-		if (miniWindow.getID() == 0 && getButton(29) != null) { getButton(29).setIsEnable(!miniWindows.containsKey(0)); }
-		else if (miniWindow.getID() == 1 && getButton(35) != null) { getButton(35).setIsEnable(!miniWindows.containsKey(1)); }
-		else if (miniWindow.getID() == 2 && getButton(45) != null) { getButton(45).setIsEnable(!miniWindows.containsKey(2)); }
-	}
+        npcPart.animation.reset();
+        npcPart.animation.tryRunAnimation(anim, AnimationKind.EDITING_PART);
+        npcPart.setHealth(npcPart.getMaxHealth());
+        npcPart.deathTime = 0;
+        if (getButton(53) != null) {
+            getButton(53).setIsVisible(onlyCurrentPart);
+            if (onlyCurrentPart) {
+                int s = npcPart.animation.getAnimationSpeedTicks();
+                Component[] ticks = new Component[s];
+                for (int i = 0; i <= s; i++) { ticks[i] = Component.literal(i + "/" + s); }
+                getButton(53).setVariants(ticks);
+            }
+        }
+    }
 
 }

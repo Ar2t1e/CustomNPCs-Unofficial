@@ -1,69 +1,70 @@
 package noppes.npcs.api.handler.data;
 
 import noppes.npcs.api.IWorld;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface ICustomParticle {
 
-	boolean canCollide();
+    boolean canCollide();
 
-	int getAge();
+    int getAge();
 
-	int getColorMask();
+    int getColorMask();
 
-	float getHeight();
+    float getHeight();
 
-	String getObj();
+    String getObj();
 
-	double[] getPrevPoses();
+    double[] getPrevPoses();
 
-	float getRotationX();
+    float getAlphaF();
 
-	float getRotationY();
+    float getRotationX();
 
-	float getRotationZ();
+    float getRotationY();
 
-	float getScale();
+    float getRotationZ();
 
-	String getTexture();
+    float getScale();
 
-	int getTotalAge();
+    String getTexture();
 
-	float getWidth();
+    int getTotalAge();
 
-	IWorld getWorld();
+    float getWidth();
 
-	boolean isAlive();
+    IWorld getWorld();
 
-	void move(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+    boolean isAlive();
 
-	boolean onGround();
+    void move(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	double posX();
+    boolean onGround();
 
-	double posY();
+    double posX();
 
-	double posZ();
+    double posY();
 
-	void setAge(@ParamName("ticks") int ticks);
+    double posZ();
 
-	void setCanCollide(@ParamName("collide") boolean collide);
+    void setAge(@ParamName("ticks") int ticks);
 
-	void setColorMask(@ParamName("color") int color);
+    void setCanCollide(@ParamName("collide") boolean collide);
 
-	void setCustomSize(@ParamName("width") float width, @ParamName("height") float height);
+    void setColorMask(@ParamName("color") int color);
 
-	void setObj(@ParamName("objPath") String objPath);
+    void setCustomSize(@ParamName("width") float width, @ParamName("height") float height);
 
-	void setPos(@ParamName("y") double x, @ParamName("y") double y, @ParamName("y") double z);
+    void setObj(@ParamName("objPath") String objPath);
 
-	void setRotation(@ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
+    void setPos(@ParamName("y") double x, @ParamName("y") double y, @ParamName("y") double z);
 
-	void setScale(@ParamName("scale") float scale);
+    void setRotation(@ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
 
-	void setTexture(@ParamName("texture") String texture);
+    void setScale(@ParamName("scale") float scale);
 
-	void setTotalAge(@ParamName("ticks") int ticks);
+    void setTexture(@ParamName("texture") String texture);
+
+    void setTotalAge(@ParamName("ticks") int ticks);
 
 }

@@ -1,14 +1,14 @@
 package noppes.npcs.api.handler.data;
 
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IWorldInfo {
 
-	int getId();
+    int getId();
 
-	INbt getNbt();
+    INbt getNbt();
 
-	void setNbt(@ParamName("nbt") INbt nbt);
+    void setNbt(@ParamName("nbt") INbt nbt);
 
 }

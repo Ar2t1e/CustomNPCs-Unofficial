@@ -2,35 +2,39 @@ package noppes.npcs.controllers;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraftforge.eventbus.api.Event;
 
 public interface IScriptHandler {
 
-	void clearConsole();
+   void runScript(String type, Event event);
 
-	void clearConsoleText(Long key);
+   boolean isClient();
 
-	TreeMap<Long, String> getConsoleText();
+   boolean getEnabled();
 
-	boolean getEnabled();
+   void setEnabled(boolean bo);
 
-	String getLanguage();
+   String getLanguage();
 
-	List<ScriptContainer> getScripts();
+   void setLanguage(String language);
 
-	boolean isClient();
+   List<ScriptContainer> getScripts();
 
-	ITextComponent noticeString(String type, Object event);
+   MutableComponent noticeString(String type, Object event);
 
-	void runScript(String type, Event event);
+   Map<Long, String> getConsoleText();
 
-	void setEnabled(boolean bo);
+   void clearConsole();
 
-	void setLanguage(String language);
+   boolean isEnabled();
 
-	void setLastInited(long timeMC);
+   // New from Unofficial (BetaZavr)
+   void clearConsoleText(Long key);
+
+   void setLastInited(long timeMC);
+
+   void init();
 
 }

@@ -1,6 +1,4 @@
-# Blender v3.6.4 OBJ File: ''
-# www.blender.org
-mtllib question.mtl
+mtllib marks.mtl
 o body
 v 0.037500 0.247588 0.000000
 v 0.064952 0.275040 0.000000

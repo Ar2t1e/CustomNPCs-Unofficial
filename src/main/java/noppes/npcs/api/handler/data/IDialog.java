@@ -1,35 +1,37 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+
+import java.util.List;
 
 public interface IDialog {
 
-	IAvailability getAvailability();
+   int getId();
 
-	IDialogCategory getCategory();
+   String getName();
 
-	String getCommand();
+   void setName(@ParamName("name") String name);
 
-	int getId();
+   String getText();
 
-	String getName();
+   void setText(@ParamName("text") String text);
 
-	IDialogOption getOption(@ParamName("slot") int slot);
+   IQuest getQuest();
 
-	IDialogOption[] getOptions();
+   void setQuest(@ParamName("quest") IQuest quest);
 
-	IQuest getQuest();
+   String getCommand();
 
-	String getText();
+   void setCommand(@ParamName("command") String command);
 
-	void save();
+   List<IDialogOption> getOptions();
 
-	void setCommand(@ParamName("command") String command);
+   IDialogOption getOption(@ParamName("slot") int slot);
 
-	void setName(@ParamName("name") String name);
+   IAvailability getAvailability();
 
-	void setQuest(@ParamName("quest") IQuest quest);
+   IDialogCategory getCategory();
 
-	void setText(@ParamName("text") String text);
+   void save();
 
 }

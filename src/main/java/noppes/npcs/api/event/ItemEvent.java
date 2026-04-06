@@ -1,7 +1,9 @@
 package noppes.npcs.api.event;
 
-import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import noppes.npcs.api.EventName;
+import net.minecraftforge.eventbus.api.Cancelable;
+import noppes.npcs.api.interfaces.EventName;
+import noppes.npcs.api.IDamageSource;
+import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityItem;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.item.IItemScripted;
@@ -9,91 +11,103 @@ import noppes.npcs.constants.EnumScriptType;
 
 public class ItemEvent extends CustomNPCsEvent {
 
-	@Cancelable
-	@EventName(EnumScriptType.ATTACK)
-	public static class AttackEvent extends ItemEvent {
-		public IPlayer<?> player;
-		public Object target;
-		public int type;
+   public IItemScripted item;
 
-		public AttackEvent(IItemScripted item, IPlayer<?> player, int type, Object target) {
-			super(item);
-			this.type = type;
-			this.target = target;
-			this.player = player;
-		}
-	}
+   public ItemEvent(IItemScripted item) {
+      this.item = item;
+   }
 
-	@EventName(EnumScriptType.INIT)
-	public static class InitEvent extends ItemEvent {
-		public InitEvent(IItemScripted item) {
-			super(item);
-		}
-	}
+   @Cancelable
+   @EventName(EnumScriptType.ATTACK)
+   public static class AttackEvent extends ItemEvent {
+      public final int type;
+      public final Object target;
+      public IPlayer<?> player;
+      public final IDamageSource damageSource;
 
-	@Cancelable
-	@EventName(EnumScriptType.INTERACT)
-	public static class InteractEvent extends ItemEvent {
-		public IPlayer<?> player;
-		public Object target;
-		public int type;
+      public AttackEvent(IItemScripted item, IPlayer<?> player, int type, Object target) {
+         super(item);
+         this.type = type;
+         this.target = target;
+         this.player = player;
+         this.damageSource = null;
+      }
 
-		public InteractEvent(IItemScripted item, IPlayer<?> player, int type, Object target) {
-			super(item);
-			this.type = type;
-			this.target = target;
-			this.player = player;
-		}
-	}
+      public AttackEvent(IItemScripted item, IPlayer<?> player, IEntity<?> target, IDamageSource damageSource) {
+         super(item);
+         this.type = 1;
+         this.target = target;
+         this.player = player;
+         this.damageSource = damageSource;
+      }
+   }
 
-	@EventName(EnumScriptType.PICKEDUP)
-	public static class PickedUpEvent extends ItemEvent {
-		public IEntityItem<?> entity;
-		public IPlayer<?> player;
+   @Cancelable
+   @EventName(EnumScriptType.INTERACT)
+   public static class InteractEvent extends ItemEvent {
+      public final int type;
+      public final Object target;
+      public IPlayer<?> player;
 
-		public PickedUpEvent(IItemScripted item, IPlayer<?> player, IEntityItem<?> entity) {
-			super(item);
-			this.entity = entity;
-			this.player = player;
-		}
-	}
+      public InteractEvent(IItemScripted item, IPlayer<?> player, int type, Object target) {
+         super(item);
+         this.type = type;
+         this.target = target;
+         this.player = player;
+      }
+   }
 
-	@Cancelable
-	@EventName(EnumScriptType.SPAWN)
-	public static class SpawnEvent extends ItemEvent {
-		public IEntityItem<?> entity;
+   @EventName(EnumScriptType.PICKEDUP)
+   public static class PickedUpEvent extends ItemEvent {
+      public IEntityItem<?> entity;
+      public IPlayer<?> player;
 
-		public SpawnEvent(IItemScripted item, IEntityItem<?> entity) {
-			super(item);
-			this.entity = entity;
-		}
-	}
+      public PickedUpEvent(IItemScripted item, IPlayer<?> player, IEntityItem<?> entity) {
+         super(item);
+         this.entity = entity;
+         this.player = player;
+      }
+   }
 
-	@Cancelable
-	@EventName(EnumScriptType.TOSSED)
-	public static class TossedEvent extends ItemEvent {
-		public IEntityItem<?> entity;
-		public IPlayer<?> player;
+   @Cancelable
+   @EventName(EnumScriptType.TOSSED)
+   public static class TossedEvent extends ItemEvent {
+      public IEntityItem<?> entity;
+      public IPlayer<?> player;
 
-		public TossedEvent(IItemScripted item, IPlayer<?> player, IEntityItem<?> entity) {
-			super(item);
-			this.entity = entity;
-			this.player = player;
-		}
-	}
+      public TossedEvent(IItemScripted item, IPlayer<?> player, IEntityItem<?> entity) {
+         super(item);
+         this.entity = entity;
+         this.player = player;
+      }
+   }
 
-	@EventName(EnumScriptType.TICK)
-	public static class UpdateEvent extends ItemEvent {
-		public IPlayer<?> player;
+   @Cancelable
+   @EventName(EnumScriptType.SPAWN)
+   public static class SpawnEvent extends ItemEvent {
+      public IEntityItem<?> entity;
 
-		public UpdateEvent(IItemScripted item, IPlayer<?> player) {
-			super(item);
-			this.player = player;
-		}
-	}
+      public SpawnEvent(IItemScripted item, IEntityItem<?> entity) {
+         super(item);
+         this.entity = entity;
+      }
+   }
 
-	public IItemScripted item;
+   @EventName(EnumScriptType.TICK)
+   public static class UpdateEvent extends ItemEvent {
+      public IPlayer<?> player;
 
-	public ItemEvent(IItemScripted itemIn) { item = itemIn; }
+      public UpdateEvent(IItemScripted item, IPlayer<?> player) {
+         super(item);
+         this.player = player;
+      }
+   }
+
+   @EventName(EnumScriptType.INIT)
+   public static class InitEvent extends ItemEvent {
+      public InitEvent(IItemScripted item) {
+         super(item);
+      }
+   }
 
 }

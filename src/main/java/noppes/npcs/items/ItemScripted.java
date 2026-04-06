@@ -1,81 +1,79 @@
 package noppes.npcs.items;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
+import javax.annotation.Nullable;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.api.wrapper.ItemScriptedWrapper;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.util.Objects;
 
-public class ItemScripted extends Item implements IPermission {
+public class ItemScripted extends Item implements INPCToolItem {
 
-	public static Map<Integer, String> Resources = new HashMap<>();
+   public ItemScripted(Properties props) {
+      super(props);
+   }
 
-	public static ItemScriptedWrapper GetWrapper(ItemStack stack) {
-		return (ItemScriptedWrapper) Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
-	}
+   public static ItemScriptedWrapper GetWrapper(ItemStack stack) {
+      return (ItemScriptedWrapper) Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+   }
 
-	public ItemScripted() {
-		this.setRegistryName(CustomNpcs.MODID, "scripted_item");
-		this.setUnlocalizedName("scripted_item");
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
-		this.setHasSubtypes(true);
-	}
+   public boolean isBarVisible(@NotNull ItemStack stack) {
+      IItemStack iStack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+      return iStack instanceof ItemScriptedWrapper ? ((ItemScriptedWrapper)iStack).durabilityShow : super.isBarVisible(stack);
+   }
 
-	public double getDurabilityForDisplay(@Nonnull ItemStack stack) {
-		IItemStack istack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
-		if (istack instanceof ItemScriptedWrapper) {
-			return 1.0 - ((ItemScriptedWrapper) istack).durabilityValue;
-		}
-		return super.getDurabilityForDisplay(stack);
-	}
+   public int getBarWidth(@NotNull ItemStack stack) {
+      IItemStack iStack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+      return iStack instanceof ItemScriptedWrapper ? Math.round(13.0F - ((ItemScriptedWrapper)iStack).durabilityValue * 13.0F) : super.getBarWidth(stack);
+   }
 
-	public int getItemStackLimit(@Nonnull ItemStack stack) {
-		IItemStack istack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
-		if (istack instanceof ItemScriptedWrapper) {
-			return istack.getMaxStackSize();
-		}
-		return super.getItemStackLimit(stack);
-	}
+   public int getBarColor(@NotNull ItemStack stack) {
+      IItemStack iStack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+      if (!(iStack instanceof ItemScriptedWrapper)) {
+         return super.getBarColor(stack);
+      } else {
+         int color = ((ItemScriptedWrapper) iStack).durabilityColor;
+         return color >= 0 ? color : Mth.hsvToRgb(Math.max(0.0F, 1.0F - (float)this.getBarWidth(stack)) / 3.0F, 1.0F, 1.0F);
+      }
+   }
 
-	public int getRGBDurabilityForDisplay(@Nonnull ItemStack stack) {
-		IItemStack istack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
-		if (!(istack instanceof ItemScriptedWrapper)) {
-			return super.getRGBDurabilityForDisplay(stack);
-		}
-		int color = ((ItemScriptedWrapper) istack).durabilityColor;
-		if (color >= 0) {
-			return color;
-		}
-		return MathHelper.hsvToRGB((float) (Math.max(0.0f, (1.0 - this.getDurabilityForDisplay(stack))) / 3.0f), 1.0f,  1.0f);
-	}
+   public int getMaxStackSize(ItemStack stack) {
+      IItemStack iStack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+      return iStack instanceof ItemScriptedWrapper ? iStack.getMaxStackSize() : super.getMaxStackSize(stack);
+   }
 
-	public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull EntityLivingBase target, @Nonnull EntityLivingBase attacker) {
-		return true;
-	}
+   public boolean hurtEnemy(@NotNull ItemStack stack, @NotNull LivingEntity target, @NotNull LivingEntity attacker) {
+      return true;
+   }
 
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.ScriptItemDataGet || e == EnumPacketServer.ScriptItemDataSave;
-	}
+   public boolean shouldOverrideMultiplayerNbt() {
+      return true;
+   }
 
-	public boolean showDurabilityBar(@Nonnull ItemStack stack) {
-		IItemStack istack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
-		if (istack instanceof ItemScriptedWrapper) {
-			return ((ItemScriptedWrapper) istack).durabilityShow;
-		}
-		return super.showDurabilityBar(stack);
-	}
+   public CompoundTag getShareTag(ItemStack stack) {
+      IItemStack iStack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+      CompoundTag generalTag = super.getShareTag(stack);
+      if (iStack instanceof ItemScriptedWrapper) {
+         return generalTag != null ? generalTag.merge(((ItemScriptedWrapper)iStack).getMCNbt()) : ((ItemScriptedWrapper)iStack).getMCNbt();
+      }
+      return generalTag;
+   }
+
+   public void readShareTag(ItemStack stack, @Nullable CompoundTag nbt) {
+      if (nbt != null) {
+         super.readShareTag(stack, nbt);
+         IItemStack iStack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+         if (iStack instanceof ItemScriptedWrapper) {
+            ((ItemScriptedWrapper)iStack).setMCNbt(nbt);
+         }
+      }
+   }
 
 }

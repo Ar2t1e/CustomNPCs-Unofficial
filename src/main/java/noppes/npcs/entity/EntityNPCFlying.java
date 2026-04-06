@@ -1,91 +1,74 @@
 package noppes.npcs.entity;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.MoverType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-
-import javax.annotation.Nonnull;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class EntityNPCFlying extends EntityNPCInterface {
 
-	public EntityNPCFlying(World world) {
-		super(world);
-	}
+   public EntityNPCFlying(EntityType<? extends PathfinderMob> type, Level world) {
+      super(type, world);
+   }
 
-	@Override
-	public boolean canFly() {
-		return this.ais.movementType > 0;
-	}
+   public boolean canFly() {
+      return ais.movementType == 1;
+   }
 
-	@Override
-	public void fall(float distance, float damageMultiplier) {
-		if (!this.canFly()) {
-			super.fall(distance, damageMultiplier);
-		}
-	}
+   public boolean causeFallDamage(float distance, float damageMultiplier, @NotNull DamageSource source) {
+      return !canFly() && super.causeFallDamage(distance, damageMultiplier, source);
+   }
 
-	public boolean isOnLadder() {
-		return false;
-	}
+   protected void checkFallDamage(double y, boolean onGroundIn, @NotNull BlockState state, @NotNull BlockPos pos) {
+      if (!canFly()) {
+         super.checkFallDamage(y, onGroundIn, state, pos);
+      }
+   }
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public void travel(float par1, float par2, float par3) {
-		if (!this.canFly()) {
-			super.travel(par1, par2, par3);
-			return;
-		}
-		if (!this.isInWater() && this.ais.movementType == 2) {
-			this.motionY = -0.15;
-		}
-		if (this.isInWater() && this.ais.movementType == 1) {
-			this.moveRelative(par1, par2, par3, 0.02f);
-			this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-			this.motionX *= 0.800000011920929;
-			this.motionY *= 0.800000011920929;
-			this.motionZ *= 0.800000011920929;
-		} else if (this.isInLava()) {
-			this.moveRelative(par1, par2, par3, 0.02f);
-			this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-			this.motionX *= 0.5;
-			this.motionY *= 0.5;
-			this.motionZ *= 0.5;
-		} else {
-			float f2 = 0.91f;
-			if (this.onGround) {
-				f2 = this.world
-						.getBlockState(new BlockPos(this.posX, this.getEntityBoundingBox().minY - 1.0, this.posZ))
-						.getBlock().slipperiness * 0.91f;
-			}
-			float f3 = 0.16277136f / (f2 * f2 * f2);
-			this.moveRelative(par1, par2, par3, this.onGround ? (0.1f * f3) : 0.02f);
-			f2 = 0.91f;
-			if (this.onGround) {
-				f2 = this.world
-						.getBlockState(new BlockPos(this.posX, this.getEntityBoundingBox().minY - 1.0, this.posZ))
-						.getBlock().slipperiness * 0.91f;
-			}
-			this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-			this.motionX *= f2;
-			this.motionY *= f2;
-			this.motionZ *= f2;
-		}
-		this.prevLimbSwingAmount = this.limbSwingAmount;
-		double d1 = this.posX - this.prevPosX;
-		double d2 = this.posZ - this.prevPosZ;
-		float f4 = MathHelper.sqrt(d1 * d1 + d2 * d2) * 4.0f;
-		if (f4 > 1.0f) {
-			f4 = 1.0f;
-		}
-		this.limbSwingAmount += (f4 - this.limbSwingAmount) * 0.4f;
-		this.limbSwing += this.limbSwingAmount;
-	}
+   public void travel(@NotNull Vec3 v) {
+      if (canFly() && (!isAlive() || !isVehicle() || !ais.mountControl || getControllingPassenger() == null)) {
+         Vec3 m = getDeltaMovement();
+         if (!isInWater() && ais.movementType == 2) {
+            m = new Vec3(0.0D, -0.15D, 0.0D);
+            move(MoverType.SELF, m);
+         }
+         else if (isInWater() && ais.movementType == 1) {
+            moveRelative(0.02F, v);
+            move(MoverType.SELF, m);
+            m = getDeltaMovement().scale(0.8D);
+         }
+         else if (isInLava()) {
+            moveRelative(0.02F, v);
+            move(MoverType.SELF, m);
+            m = getDeltaMovement().scale(0.5D);
+         }
+         else {
+            BlockPos ground = new BlockPos((int)getX(), (int)(getY() - 1.0D), (int)getZ());
+            float f = 0.91F;
+            if (onGround()) {
+               f = level().getBlockState(ground).getFriction(level(), ground, this) * 0.91F;
+            }
+            float f1 = 0.16277137F / (f * f * f);
+            f = 0.91F;
+            if (onGround()) {
+               f = level().getBlockState(ground).getFriction(level(), ground, this) * 0.91F;
+            }
+            moveRelative(onGround() ? 0.1F * f1 : 0.02F, v);
+            move(MoverType.SELF, getDeltaMovement());
+            m = getDeltaMovement().scale(f);
+         }
+         setDeltaMovement(m);
+         calculateEntityAnimation(false);
+      }
+      else { super.travel(v); }
+   }
 
-	protected void updateFallState(double y, boolean onGroundIn, @Nonnull IBlockState state, @Nonnull BlockPos pos) {
-		if (!this.canFly()) {
-			super.updateFallState(y, onGroundIn, state, pos);
-		}
-	}
+   public boolean onClimbable() {
+      return false;
+   }
 }

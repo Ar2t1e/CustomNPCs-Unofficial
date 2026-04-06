@@ -2,131 +2,157 @@ package noppes.npcs.client.gui.roles;
 
 import java.util.*;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.gui.util.*;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.TransportController;
 import noppes.npcs.controllers.data.TransportCategory;
 import noppes.npcs.controllers.data.TransportLocation;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketNpcTransportGet;
+import noppes.npcs.packets.server.SPacketTransportCategoriesGet;
+import noppes.npcs.packets.server.SPacketTransportSave;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 
-public class GuiNpcTransporter extends GuiNPCInterface2 implements ICustomScrollListener, IScrollData, IGuiData {
+public class GuiNpcTransporter extends GuiNPCInterface2
+        implements IGuiData, ICustomScrollListener, ITextfieldListener {
 
-	protected final HashMap<String, Integer> data = new HashMap<>();
-	protected GuiCustomScroll scroll;
-	public TransportLocation location = new TransportLocation();
+   protected final Map<Component, TransportCategory> dataCat = new HashMap<>();
+   protected @Nonnull TransportLocation location = new TransportLocation();
+   protected GuiCustomScrollNop scroll;
 
-	public GuiNpcTransporter(EntityNPCInterface npc) {
-		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
-	}
+   public GuiNpcTransporter(EntityNPCInterface npc) {
+      super(npc);
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton == 1 && button.getID() == 0) { location.type = button.getValue();}
-	}
+      backGui = EnumGuiType.MainMenuAdvanced;
+      Packets.sendServer(new SPacketTransportCategoriesGet());
+      Packets.sendServer(new SPacketNpcTransportGet());
+   }
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (scroll != null) {
-			if (getTextField(0) != null) { getTextField(0).setIsVisible(scroll.hasSelected()); }
-			if (getButton(0) != null) { getButton(0).setIsVisible(scroll.hasSelected()); }
-		}
-		super.drawScreen(mouseX, mouseY, partialTicks);
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0).setSize(143, 196); }
+      int x = guiLeft + 6;
+      int y = guiTop + 16;
+      List<Component> list = new ArrayList<>();
+      LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+      int i = 0;
+      Component select = Component.empty();
+      for (Component line : dataCat.keySet()) {
+         list.add(line);
+         if (dataCat.get(line).locations.containsKey(location.id)) { select = line; }
+         List<Component> hover = new ArrayList<>();
+         TransportCategory cat = dataCat.get(line);
+         if (cat != null && !cat.locations.isEmpty()) {
+            hover.add(Component.translatable("gui.location", ":").withStyle(ChatFormatting.GRAY));
+            Component p = Component.translatable("gui.position").append(": ").withStyle(ChatFormatting.GRAY);
+            int j = 0;
+            for (int id : cat.locations.keySet()) {
+               if (j >= 5) {
+                  hover.add(Component.literal("...").withStyle(ChatFormatting.GRAY));
+                  break;
+               }
+               else {
+                  TransportLocation loc = cat.locations.get(id);
+                  hover.add(Component.empty()
+                          .append(Component.literal(" ID: ").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + id).withStyle(ChatFormatting.YELLOW))
+                          .append(Component.literal(" \"").withStyle(ChatFormatting.GRAY))
+                          .append(Component.translatable(loc.name).withStyle(ChatFormatting.RESET))
+                          .append(Component.literal("\"; ").withStyle(ChatFormatting.GRAY))
+                          .append(p)
+                          .append(Component.literal("X: ").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + loc.pos.getX()).withStyle(ChatFormatting.GOLD))
+                          .append(Component.literal("; Y: ").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + loc.pos.getY()).withStyle(ChatFormatting.GOLD))
+                          .append(Component.literal("; Z: ").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal("" + loc.pos.getZ()).withStyle(ChatFormatting.GOLD))
+                          .append(Component.literal("; Dimension: ").withStyle(ChatFormatting.GRAY))
+                          .append(Component.literal(loc.dimension.location().toString()).withStyle(ChatFormatting.BLUE)));
+                  j++;
+               }
+            }
+         }
+         hts.put(i++, hover);
+      }
+      add(scroll.setPos(x, y)
+              .setUnsortedList(list)
+              .setHoverTexts(hts)
+              .setSelected(select));
+      addLabel(0, x + 2, y - 11, Component.translatable("gui.categories").append(":"));
+      x += 147;
+      addLabel(1, x, y - 11, Component.translatable("gui.name").append(":"))
+              .setSize(200, 20)
+              .setIsVisible(scroll.hasSelected());
+      int w = font.width("ID:") + 5;
+      addLabel(2, x + 200 - w, y - 11, "ID:" + location.id)
+              .setSize(w + 2, 20)
+              .setIsVisible(scroll.hasSelected());
+      addTextField(0, x, y, 200, 20, location.name)
+              .setIsVisible(scroll.hasSelected())
+              .setHoverTexts("manager.hover.transport.loc.name");
+      addButton(0, x, y + 24, false, location.type, "transporter.discovered", "transporter.start", "transporter.interaction")
+              .setSize(200, 20)
+              .setIsVisible(scroll.hasSelected())
+              .setHoverTexts(Component.translatable("manager.hover.transport.type")
+                      .append(Component.translatable("manager.hover.transport.addinfo")));
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-        if (scroll == null) { (scroll = new GuiCustomScroll(this, 0)).setSize(143, 196); }
-		int x = guiLeft + 6, y = guiTop + 16;
-		scroll.guiLeft = x;
-		scroll.guiTop = y;
-		addScroll(scroll);
-		addLabel(new GuiNpcLabel(0, "gui.categories", x + 2, y - 11));
-		x += 147;
-		addLabel(new GuiNpcLabel(1, "gui.name", x, y - 11));
-		addTextField(new GuiNpcTextField(0, this, x, y, 140, 20, location.name)
-				.setHoverText("manager.hover.transport.loc.name"));
-		addButton(new GuiNpcButton(0, x, y + 24, new String[] { "transporter.discovered", "transporter.start", "transporter.interaction" }, location.type)
-				.setHoverText(new TextComponentTranslation("manager.hover.transport.type")
-						.appendSibling(new TextComponentTranslation("manager.hover.transport.addinfo")).getFormattedText()));
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      if (button.id == 0) { location.type = button.getValue(); }
+   }
 
-	@Override
-	public void initPacket() {
-		Client.sendData(EnumPacketServer.TransportCategoriesGet, -1);
-		Client.sendData(EnumPacketServer.TransportGetLocation);
-	}
+   @Override
+   public void save() {
+      if (dataCat.containsKey(scroll.getNormalSelected())) {
+         location.pos = player.blockPosition();
+         location.dimension = player.getCommandSenderWorld().dimension();
+         Packets.sendServer(new SPacketTransportSave(dataCat.get(scroll.getNormalSelected()).id, location.save()));
+      }
+   }
 
-	@Override
-	public void save() {
-		if (!scroll.hasSelected()) { return; }
-		String name = getTextField(0).getText();
-		if (!name.isEmpty()) { location.name = name; }
-		location.pos = new BlockPos(player);
-		location.dimension = player.dimension;
-		try { location.npc = npc.getUniqueID(); }
-		catch (Exception e) { LogWriter.error(e); }
-		int cat = data.get(scroll.getSelected());
-		Client.sendData(EnumPacketServer.TransportSave, cat, location.writeNBT());
-	}
+   @Override
+   public void setGuiData(CompoundTag compound) {
+      if (compound.isEmpty()) {
+         dataCat.clear();
+         for (TransportCategory category : TransportController.getInstance().getCategories()) {
+            Component catKey = Component.empty()
+                    .append(Component.literal("ID: " + category.id + " \"").withStyle(ChatFormatting.GRAY))
+                    .append(Component.translatable(category.title).withStyle(ChatFormatting.RESET))
+                    .append(Component.literal("\"").withStyle(ChatFormatting.GRAY));
+            dataCat.put(catKey, category);
+         }
+      }
+      else {
+         location = new TransportLocation();
+         location.load(compound);
+      }
+      init();
+   }
 
-	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		data.clear();
-		data.putAll(dataMap);
-		Collections.sort(dataList);
-		scroll.setUnsortedList(dataList);
-		ITextComponent l = new TextComponentTranslation("gui.localization");
-		ITextComponent p = new TextComponentTranslation("gui.points");
-		l.getStyle().setColor(TextFormatting.GRAY);
-		p.getStyle().setColor(TextFormatting.GRAY);
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		int i = 0;
-		for (String str : dataList) {
-			StringBuilder hover = new StringBuilder();
-			TransportCategory cat = TransportController.getInstance().categories.get(data.get(str));
-			if (cat != null && !cat.locations.isEmpty()) {
-				for (int id : cat.locations.keySet()) {
-					if (hover.length() > 0) {
-						hover.append(";<br>");
-					}
-					hover.append(((char) 167) + "7ID: " + ((char) 167) + "r").append(id).append((char) 167).append("7 \"").append((char) 167).append("r").append(new TextComponentTranslation(cat.locations.get(id).name).getFormattedText()).append((char) 167).append("7\"");
-				}
-				hover.insert(0, p.getFormattedText() + "<br>");
-			}
-			hts.put(i++, Arrays.asList(hover.toString().split("<br>")));
-		}
-		scroll.setHoverTexts(hts);
-	}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) { init(); }
 
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		if (compound.getKeySet().isEmpty()) { return; }
-		TransportLocation loc = new TransportLocation();
-		loc.readNBT(compound);
-		location = loc;
-		initGui();
-	}
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
-	@Override
-	public void setSelected(String selected) { scroll.setSelected(selected); }
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { }
-
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      String name = textField.getValue();
+      if (!name.isEmpty()) { location.name = name; }
+   }
 
 }

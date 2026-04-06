@@ -1,17 +1,17 @@
 [
-  {
-    "modid": "customnpcs",
-    "name": "Custom NPCs",
-    "version": "4.428",
-    "mcversion": "1.12.2",
-    "description": "forge.mod.customnpcs.description",
-    "credits": "A lot of people, see the list at the forum",
-    "logoFile": "/logo_unofficial.png",
-    "url": "http://www.kodevelopment.nl/minecraft/customnpcs/",
-    "updateUrl": "",
-    "authorList": ["Noppes", "Goodbird", "BetaZavr"],
-    "parent":"",
-    "screenshots": [],
-    "dependencies": []
-  }
+{
+  "modid": "customnpcs",
+  "name": "CustomNPCs",
+  "version": "1.20.1",
+  "mcversion": "1.20.1",
+  "description": "The Custom Npcs mod lets you create your own npcs and lets you customize them how you want",
+  "credits": "A lot of people, see the list at the forum",
+  "logoFile": "customnpcs:textures/gui/logo.png",
+  "url": "http://tinyurl.com/customnpcs",
+  "updateUrl": "",
+  "authorList": ["Noppes"],
+  "parent":"",
+  "screenshots": [],
+  "dependencies": []
+}
 ]

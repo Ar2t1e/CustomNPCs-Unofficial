@@ -1,60 +1,84 @@
 package noppes.npcs.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.MoverType;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
-import javax.annotation.Nonnull;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 
 public class EntityChairMount extends Entity {
 
-	public EntityChairMount(World world) {
-		super(world);
-		this.setSize(0.0f, 0.0f);
-	}
+   public EntityChairMount(EntityType type, Level world) {
+      super(type, world);
+   }
 
-    protected void entityInit() {
-	}
+   public double getPassengersRidingOffset() {
+      return 0.5D;
+   }
 
-	public void fall(float distance, float damageMultiplier) {
-	}
+   protected void defineSynchedData() {
+   }
 
-	public double getMountedYOffset() {
-		return 0.5;
-	}
+   public void baseTick() {
+      super.baseTick();
+      this.level();
+      if (!this.level().isClientSide && this.getPassengers().isEmpty()) {
+         this.discard();
+      }
+   }
 
-	public boolean isEntityInvulnerable(@Nonnull DamageSource source) {
-		return true;
-	}
+   public boolean isInvulnerableTo(@NotNull DamageSource source) {
+      return true;
+   }
 
-	public boolean isInvisible() {
-		return true;
-	}
+   public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
+      return new ClientboundAddEntityPacket(this);
+   }
 
-	public void move(@Nonnull MoverType type, double x, double y, double z) {
-	}
+   public boolean isInvisible() {
+      return true;
+   }
 
-	public void onEntityUpdate() {
-		super.onEntityUpdate();
-		if (this.world != null && !this.world.isRemote && this.getPassengers().isEmpty()) {
-			this.isDead = true;
-		}
-	}
+   public void move(@NotNull MoverType type, @NotNull Vec3 vec) {
+   }
 
-	protected void readEntityFromNBT(@Nonnull NBTTagCompound tagCompound) {
-	}
+   public void load(@NotNull CompoundTag tagCompound) {
+   }
 
-	@SideOnly(Side.CLIENT)
-	public void setPositionAndRotationDirect(double x, double y, double z, float yaw, float pitch,
-			int posRotationIncrements, boolean bo) {
-		this.setPosition(x, y, z);
-		this.setRotation(yaw, pitch);
-	}
+   protected void readAdditionalSaveData(@NotNull CompoundTag compound) {
+   }
 
-	protected void writeEntityToNBT(@Nonnull NBTTagCompound tagCompound) {
-	}
+   protected void addAdditionalSaveData(@NotNull CompoundTag compound) {
+   }
+
+   public @NotNull CompoundTag saveWithoutId(@NotNull CompoundTag compound) {
+      return compound;
+   }
+
+   public boolean canBeCollidedWith() {
+      return false;
+   }
+
+   public boolean isPushable() {
+      return false;
+   }
+
+   public boolean causeFallDamage(float distance, float damageMultiplier, @NotNull DamageSource source) {
+      return false;
+   }
+
+   @OnlyIn(Dist.CLIENT)
+   public void lerpTo(double x, double y, double z, float yaw, float pitch, int type, boolean bo) {
+      this.setPos(x, y, z);
+      this.setRot(yaw, pitch);
+   }
+
 }

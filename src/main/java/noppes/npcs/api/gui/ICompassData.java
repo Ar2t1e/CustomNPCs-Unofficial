@@ -1,43 +1,54 @@
 package noppes.npcs.api.gui;
 
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface ICompassData {
 
-	int getDimensionID();
+    String getDimensionID();
 
-	String getName();
+    String getName();
 
-	String getNPCName();
+    String getNPCName();
 
-	IPos getPos();
+    IPos getPos();
 
-	int getRange();
+    int getRange();
 
-	String getTitle();
+    String getTitle();
 
-	int getType();
+    int getTaskType();
 
-	boolean isShow();
+    boolean isCustomPoint();
 
-	void setDimensionID(@ParamName("dimensionId") int dimensionId);
+    boolean getShowOfPlayer();
 
-	void setName(@ParamName("name") String name);
+    boolean isShowDial();
 
-	void setNPCName(@ParamName("npcName") String npcName);
+    boolean isFlat();
 
-	void setPos(@ParamName("X") int x, @ParamName("y") int y, @ParamName("Z") int z);
+    void setDimensionID(@ParamName("dimensionId") String dimensionId);
 
-	void setPos(@ParamName("pos") IPos pos);
+    void setName(@ParamName("name") String name);
 
-	void setRange(@ParamName("range") int range);
+    void setNPCName(@ParamName("npcName") String npcName);
 
-	void setShow(@ParamName("show") boolean show);
+    void setPos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void setTitle(@ParamName("title") String title);
+    void setPos(@ParamName("pos") IPos pos);
 
-	void setType(@ParamName("type") int type);
+    void setRange(@ParamName("range") int range);
+
+    void setIsCustomPoint(@ParamName("show") boolean show);
+
+    void setShowOfPlayer(@ParamName("show") boolean type);
+
+    void setShowDial(@ParamName("show") boolean show);
+
+    void setIsFlat(@ParamName("flat") boolean flat);
+
+    void setTitle(@ParamName("title") String title);
+
+    void setTaskType(@ParamName("taskType") int taskType);
 
 }

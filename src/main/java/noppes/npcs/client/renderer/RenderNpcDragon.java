@@ -1,19 +1,20 @@
 package noppes.npcs.client.renderer;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.GlStateManager;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.model.EntityModel;
 import noppes.npcs.entity.EntityNPCInterface;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class RenderNpcDragon<T extends EntityNPCInterface, M extends EntityModel<T>> extends RenderNPCInterface<T, M>{
 
-public class RenderNpcDragon<T extends EntityNPCInterface> extends RenderNPCInterface<T> {
-	public RenderNpcDragon(ModelBase model, float f) {
-		super(model, f);
+	public RenderNpcDragon(EntityRendererProvider.Context manager, M model, float f) {
+		super(manager, model, f);
 	}
 
 	@Override
-	protected void preRenderCallback(@Nonnull T npc, float f) {
-		GlStateManager.translate(0.0f, 0.0f, 0.120000005f * npc.display.getSize());
-		super.preRenderCallback(npc, f);
-	}
+    protected void scale(@NotNull T npc, PoseStack matrixScale, float f){
+		matrixScale.translate(0, 0, 0.6f / 5 * npc.display.getSize());
+    	super.scale(npc, matrixScale, f);
+    }
 }

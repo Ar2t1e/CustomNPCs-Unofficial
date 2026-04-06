@@ -1,183 +1,263 @@
 package noppes.npcs.client.gui.util;
 
-import org.lwjgl.input.Keyboard;
-
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.animation.GuiNpcAnimation;
-import noppes.npcs.client.gui.animation.GuiNpcEmotion;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketMenuClose;
+import noppes.npcs.packets.server.SPacketNpcDelete;
+import noppes.npcs.packets.server.SPacketPermissionMenuGet;
+import noppes.npcs.shared.client.gui.components.GuiMenuTopButton;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 
-public class GuiNpcMenu implements GuiYesNoCallback {
+import java.util.Arrays;
 
-	public int activeMenu;
-	private final EntityNPCInterface npc;
-	private final IEditNPC parent;
-	private GuiMenuTopButton[] topButtons = new GuiMenuTopButton[0];
+public class GuiNpcMenu {
 
-	public GuiNpcMenu(IEditNPC gui, int menu, EntityNPCInterface npc) {
-		parent = gui;
-		activeMenu = menu;
-		this.npc = npc;
-	}
+   protected final IGuiInterface parent;
+   protected final EntityNPCInterface npc;
+   protected final Minecraft mc;
+   protected GuiMenuTopButton[] topButtons = new GuiMenuTopButton[0];
+   protected int activeMenu;
 
-	public void confirmClicked(boolean flag, int id) {
-		Minecraft mc = Minecraft.getMinecraft();
-		if (flag) {
-			Client.sendData(EnumPacketServer.Delete);
-			mc.displayGuiScreen(null);
-			mc.setIngameFocus();
-		}
-		else { NoppesUtil.openGUI(mc.player, parent); }
-	}
+   // New from Unofficial (BetaZavr)
+   public boolean[] permissions = new boolean[5];
 
-	public void drawElements(IEditNPC gui, int mouseX, int mouseY, float partialTicks) {
-		for (GuiMenuTopButton button : getTopButtons()) { button.render(gui, mouseX, mouseY, partialTicks); }
-	}
+   public GuiNpcMenu(IGuiInterface parentIn, int activeMenuIn, EntityNPCInterface npcIn) {
+      parent = parentIn;
+      npc = npcIn;
+      activeMenu = activeMenuIn;
+      mc = Minecraft.getInstance();
+      Arrays.fill(permissions, true);
+      Packets.sendServer(new SPacketPermissionMenuGet());
+   }
 
-	public GuiMenuTopButton[] getTopButtons() { return topButtons; }
+   public void init(int guiLeft, int guiTop, int width) {
+      if (npc != null) {
+         GuiMenuTopButton display = new GuiMenuTopButton(parent, 1, "menu.display", guiLeft + 4, guiTop - 17) {
+            public void onClick(double x, double y) {
+               save();
+               activeMenu = 1;
+               NoppesUtilServer.setEditingNpc(Minecraft.getInstance().player, npc);
+               CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuDisplay, null);
+            }
+         };
+         display.setHoverTexts(Component.empty()
+                         .append(Component.translatable("gui.name").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(npc.display.getName()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("gui.title").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": <").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(npc.display.getTitle()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(">;").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("display.model").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(" ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable("display.size").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal("" + npc.display.getSize()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)));
+         GuiMenuTopButton stats = new GuiMenuTopButton(parent, 2, "menu.stats", display.getX() + display.getWidth(), guiTop - 17) {
+            public void onClick(double x, double y) {
+               save();
+               activeMenu = 2;
+               NoppesUtilServer.setEditingNpc(Minecraft.getInstance().player, npc);
+               CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuStats, null);
+            }
+         };
+         String str0 = switch (npc.stats.spawnCycle) {
+            case 0 -> "gui.yes";
+            case 1 -> "gui.day";
+            case 2 -> "gui.night";
+            case 4 -> "stats.naturally";
+            default -> "gui.no";
+         };
+         stats.setHoverTexts(Component.empty()
+                         .append(Component.translatable("stats.health").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal("" + npc.stats.maxHealth).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("stats.aggro").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal("" + npc.stats.aggroRange).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("stats.respawn").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable(str0).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("stats.meleeproperties").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(" ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable("stats.meleestrength").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable("" + npc.stats.melee.getStrength()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("stats.rangedproperties").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(" ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable("enchantment.minecraft.power").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable("" + npc.stats.ranged.getStrength()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)));
+         GuiMenuTopButton ai = new GuiMenuTopButton(parent, 3, "menu.ai", stats.getX() + stats.getWidth(), guiTop - 17) {
+            public void onClick(double x, double y) {
+               save();
+               activeMenu = 3;
+               NoppesUtilServer.setEditingNpc(Minecraft.getInstance().player, npc);
+               CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuAI, null);
+            }
+         };
+         str0 = switch (npc.ais.onAttack) {
+            case 0 -> "gui.retaliate";
+            case 1 -> "gui.panic";
+            case 2 -> "gui.retreat";
+            default -> "gui.nothing";
+         };
+         String str1 = switch (npc.ais.getMovingType()) {
+            case 0 -> "ai.standing";
+            case 1 -> "ai.wandering";
+            default -> "ai.movingpath";
+         };
+         ai.setHoverTexts(Component.empty()
+                         .append(Component.translatable("ai.enemyresponse").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable(str0).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("movement.type").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable(str1).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("stats.movespeed").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal("" + npc.ais.getWalkingSpeed()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)));
+         GuiMenuTopButton inv = new GuiMenuTopButton(parent, 4, "menu.inventory", ai.getX() + ai.getWidth(), guiTop - 17) {
+            public void onClick(double x, double y) {
+               save();
+               activeMenu = 4;
+               NoppesUtil.requestOpenGUI(EnumGuiType.MainMenuInv);
+            }
+         };
+         inv.setHoverTexts(Component.empty()
+                         .append(Component.translatable("quest.exp").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal("" + npc.inventory.getExpMin()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal("/").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal("" + npc.inventory.getExpMax()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("questlog.all.reward").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal("" + npc.inventory.drops.size()).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)));
+         GuiMenuTopButton advanced = new GuiMenuTopButton(parent, 5, "menu.advanced", inv.getX() + inv.getWidth(), guiTop - 17) {
+            public void onClick(double x, double y) {
+               save();
+               activeMenu = 5;
+               NoppesUtilServer.setEditingNpc(Minecraft.getInstance().player, npc);
+               CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuAdvanced, null);
+            }
+         };
+         advanced.setHoverTexts(Component.empty()
+                         .append(Component.translatable("role.name").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(npc.role.getEnumType().name.copy().withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("job.name").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(npc.job.getEnumType().name.copy().withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)),
+                 Component.empty()
+                         .append(Component.translatable("menu.factions").withStyle(ChatFormatting.GRAY))
+                         .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                         .append(Component.translatable(npc.getFaction().name).withStyle(ChatFormatting.RESET))
+                         .append(Component.literal(";").withStyle(ChatFormatting.GRAY)));
+         GuiMenuTopButton global = new GuiMenuTopButton(parent, 6, "menu.global", advanced.getX() + advanced.getWidth(), guiTop - 17) {
+            public void onClick(double x, double y) {
+               save();
+               activeMenu = 6;
+               NoppesUtilServer.setEditingNpc(Minecraft.getInstance().player, npc);
+               CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuGlobal, null);
+            }
+         };
+         GuiMenuTopButton close = new GuiMenuTopButton(parent, 0, "X", guiLeft + width - 22, guiTop - 17) {
+            public void onClick(double x, double y) { close(); }
+         };
+         GuiMenuTopButton delete = new GuiMenuTopButton(parent, 66, Component.translatable("selectServer.delete"), guiLeft + width - 72, guiTop - 17) {
+            public void onClick(double x, double y) {
+               ConfirmScreen guiYesNo = new ConfirmScreen(GuiNpcMenu.this::accept, Component.empty(), Component.translatable("message.delete", npc.getDisplayName().getString()));
+               mc.setScreen(guiYesNo);
+            }
+         };
+         delete.setX(close.getX() - delete.getWidth());
+         topButtons = new GuiMenuTopButton[] { display, stats, ai, inv, advanced, global, close, delete };
+         for (GuiMenuTopButton button : topButtons) { button.active = button.id == activeMenu; }
+      }
+      else {
+         GuiMenuTopButton close = new GuiMenuTopButton(parent, 0, "X", guiLeft + width - 22, guiTop - 17) {
+            public void onClick(double x, double y) { close(); }
+         };
+         topButtons = new GuiMenuTopButton[] { close };
+      }
+   }
 
-	public void initGui(int guiLeft, int guiTop, int width) {
-		Keyboard.enableRepeatEvents(true);
-		GuiMenuTopButton display = new GuiMenuTopButton(1, guiLeft + 4, guiTop - 17, "menu.display");
-		String text = new TextComponentTranslation("display.hover." + display.label).getFormattedText();
-		String str_0, str_1;
-		display.setHoverText(text + "<br>" + ((char) 167) + "7" + new TextComponentTranslation("gui.name").getFormattedText() + ((char) 167)
-				+ "7: " + ((char) 167) + "r" + npc.display.getName() + ((char) 167) + "7;"
-				+ "<br>" + ((char) 167) + "7" + new TextComponentTranslation("gui.title").getFormattedText() + ((char) 167)
-				+ "7: <" + ((char) 167) + "r" + npc.display.getTitle() + ((char) 167) + "7>;"
-				+ "<br>" + ((char) 167) + "7" + new TextComponentTranslation("display.model").getFormattedText()
-				+ ((char) 167) + "7 " + new TextComponentTranslation("display.size").getFormattedText() + ((char) 167)
-				+ "7: " + ((char) 167) + "r" + npc.display.getSize() + ((char) 167) + "7;");
-		GuiMenuTopButton stats = new GuiMenuTopButton(2, display.x + display.width, guiTop - 17, "menu.stats");
-		switch (npc.stats.spawnCycle) {
-			case 0: str_0 = "gui.yes"; break;
-			case 1: str_0 = "gui.day"; break;
-			case 2: str_0 = "gui.night"; break;
-			case 4: str_0 = "stats.naturally"; break;
-			default: str_0 = "gui.no";
-		}
-		stats.setHoverText(text + "<br>" + ((char) 167) + "7" + new TextComponentTranslation("stats.health").getFormattedText()
-				+ ((char) 167) + "7: " + ((char) 167) + "r" + npc.stats.maxHealth + ((char) 167) + "7;"
-				+ "<br>" + ((char) 167) + "7" + new TextComponentTranslation("stats.aggro").getFormattedText()
-				+ ((char) 167) + "7: " + ((char) 167) + "r" + npc.stats.aggroRange + ((char) 167) + "7;"
-				+ "<br>" + ((char) 167) + "7" + new TextComponentTranslation("stats.respawn").getFormattedText()
-				+ ((char) 167) + "7: " + ((char) 167) + "r" + new TextComponentTranslation(str_0).getFormattedText() + ((char) 167)
-				+ "7;" + "<br>" + ((char) 167) + "7"
-				+ new TextComponentTranslation("stats.meleeproperties").getFormattedText() + ((char) 167) + "7 "
-				+ new TextComponentTranslation("stats.meleestrength").getFormattedText() + ((char) 167) + "7: "
-				+ ((char) 167) + "r" + npc.stats.melee.getStrength() + ((char) 167) + "7;"
-				+ "<br>" + ((char) 167) + "7"
-				+ new TextComponentTranslation("stats.rangedproperties").getFormattedText() + ((char) 167) + "7 "
-				+ new TextComponentTranslation("enchantment.arrowDamage").getFormattedText() + ((char) 167)
-				+ "7: " + ((char) 167) + "r" + npc.stats.ranged.getStrength() + ((char) 167) + "7;");
-		GuiMenuTopButton ai = new GuiMenuTopButton(6, stats.x + stats.width, guiTop - 17, "menu.ai");
-		switch (npc.ais.onAttack) {
-			case 0: str_0 = "gui.retaliate"; break;
-			case 1: str_0 = "gui.panic"; break;
-			case 2: str_0 = "gui.retreat"; break;
-			default: str_0 = "gui.nothing";
-		}
-		switch (npc.ais.getMovingType()) {
-			case 0: str_1 = "ai.standing"; break;
-			case 1: str_1 = "ai.wandering"; break;
-			default: str_1 = "ai.movingpath";
-		}
-		ai.setHoverText(text + "<br>" + ((char) 167) + "7" + new TextComponentTranslation("ai.enemyresponse").getFormattedText()
-				+ ((char) 167) + "7: " + ((char) 167) + "r" + new TextComponentTranslation(str_0).getFormattedText() + ((char) 167)
-				+ "7;" + "<br>" + ((char) 167) + "7" + new TextComponentTranslation("movement.type").getFormattedText()
-				+ ((char) 167) + "7: " + ((char) 167) + "r" + new TextComponentTranslation(str_1).getFormattedText() + ((char) 167)
-				+ "7;"
-				+ "<br>" + ((char) 167) + "7" + new TextComponentTranslation("stats.movespeed").getFormattedText()
-				+ ((char) 167) + "7: " + ((char) 167) + "r" + npc.ais.getWalkingSpeed() + ((char) 167) + "7;");
-		GuiMenuTopButton inv = new GuiMenuTopButton(3, ai.x + ai.width, guiTop - 17, "menu.inventory");
-		inv.setHoverText(text + "<br>" + ((char) 167) + "7" + new TextComponentTranslation("quest.exp").getFormattedText() + ((char) 167)
-				+ "7: " + ((char) 167) + "r" + npc.inventory.getExpMin() + ((char) 167) + "7/" + ((char) 167) + "r"
-				+ npc.inventory.getExpMax() + ((char) 167) + "7;"
-				+ "<br>" + ((char) 167) + "7"
-				+ new TextComponentTranslation("questlog.all.reward").getFormattedText() + ((char) 167) + "r"
-				+ npc.inventory.drops.size() + ((char) 167) + "7;");
-		GuiMenuTopButton advanced = new GuiMenuTopButton(4, inv.x + inv.width, guiTop - 17, "menu.advanced");
-		advanced.setHoverText(text + "<br>" + ((char) 167) + "7" + new TextComponentTranslation("role.name").getFormattedText() + ((char) 167)
-				+ "7: " + ((char) 167) + "r"
-				+ new TextComponentTranslation(npc.advanced.roleInterface.getEnumType().name).getFormattedText()
-				+ ((char) 167) + "7;"
-				+ "<br>" + ((char) 167) + "7" + new TextComponentTranslation("job.name").getFormattedText() + ((char) 167)
-				+ "7: " + ((char) 167) + "r"
-				+ new TextComponentTranslation(npc.advanced.jobInterface.getEnumType().name).getFormattedText()
-				+ ((char) 167) + "7;"
-				+ "<br>" + ((char) 167) + "7" + new TextComponentTranslation("menu.factions").getFormattedText()
-				+ ((char) 167) + "7: " + ((char) 167) + "r"
-				+ new TextComponentTranslation(npc.getFaction().name).getFormattedText() + ((char) 167)
-				+ "7;");
-		GuiMenuTopButton global = new GuiMenuTopButton(5, advanced.x + advanced.width, guiTop - 17, "menu.global");
-		GuiMenuTopButton close = new GuiMenuTopButton(0, guiLeft + width - 22, guiTop - 17, "X");
-		GuiMenuTopButton delete = new GuiMenuTopButton(66, guiLeft + width - 72, guiTop - 17, "selectWorld.deleteButton");
-		delete.x = close.x - delete.width;
-		topButtons = new GuiMenuTopButton[] { display, stats, ai, inv, advanced, global, close, delete };
-		for (GuiMenuTopButton button : getTopButtons()) {
-			button.active = (button.id == activeMenu);
-		}
-	}
+   public void save() {
+      GuiTextFieldNop.unfocus();
+      parent.save();
+   }
 
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (mouseButton == 0) {
-			Minecraft mc = Minecraft.getMinecraft();
-			for (GuiMenuTopButton button : getTopButtons()) {
-				boolean bo = button.visible && button.isMouseOver();
-				if (button.mouseCnpcsPressed(mouseX, mouseY, mouseButton) || (bo && button.id == 4 && (mc.currentScreen instanceof GuiNpcEmotion || mc.currentScreen instanceof GuiNpcAnimation))) {
-					return topButtonPressed(button);
-				}
-			}
-		}
-		return false;
-	}
+   private void close() {
+      if (parent instanceof GuiContainerNPCInterface2<?> gui) { gui.backGui = null; }
+      else if (parent instanceof GuiNPCInterface2 gui) { gui.backGui = null; }
+      ((Screen) parent).onClose();
+      if (npc != null) {
+         npc.reset();
+         Packets.sendServer(new SPacketMenuClose());
+      }
+      else { CustomNpcs.proxy.openGui(mc.player, EnumGuiType.NpcRemote); }
+   }
 
-	public void save() {
-		GuiNpcTextField.unfocus();
-		parent.save();
-	}
+   public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+      if (mouseButton == 0 && npc != null) {
+         for (GuiMenuTopButton button : topButtons) {
+            if (button.mouseClicked(mouseX, mouseY, mouseButton)) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
 
-	public boolean topButtonPressed(GuiMenuTopButton button) {
-		if (button.displayString.equals("" + activeMenu)) { return false; }
-		Minecraft mc = Minecraft.getMinecraft();
-		NoppesUtil.clickSound();
-		int id = button.id;
-		save();
-		if (id == 0) {
-			((GuiScreen) parent).onGuiClosed();
-			if (npc != null) {
-				npc.reset();
-				Client.sendData(EnumPacketServer.NpcMenuClose);
-			}
-			mc.displayGuiScreen(null);
-			mc.setIngameFocus();
-			return true;
-		}
-		if (id == 66) {
-			GuiYesNo guiyesno = new GuiYesNo(this, "", new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 0);
-			mc.displayGuiScreen(guiyesno);
-			return true;
-		}
-		CustomNpcs.proxy.getPlayerData(mc.player).editingNpc = npc;
-		switch (id) {
-			case 1: CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuDisplay); break;
-			case 2: CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuStats); break;
-			case 3: NoppesUtil.requestOpenGUI(EnumGuiType.MainMenuInv); break;
-			case 4: CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuAdvanced); break;
-			case 5: CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuGlobal); break;
-			case 6: CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuAI); break;
-		}
-		activeMenu = id;
-		return true;
-	}
+   public void drawElements(GuiGraphics graphics, int x, int y, float partialTicks) {
+      for (GuiMenuTopButton button : topButtons) {
+         button.render(graphics, x, y, partialTicks);
+      }
+   }
+
+   public void accept(boolean flag) {
+      Minecraft mc = Minecraft.getInstance();
+      if (flag) {
+         Packets.sendServer(new SPacketNpcDelete());
+         mc.setScreen(null);
+         mc.mouseHandler.grabMouse();
+      }
+      else { NoppesUtil.openGUI(mc.player, parent); }
+   }
 
 }

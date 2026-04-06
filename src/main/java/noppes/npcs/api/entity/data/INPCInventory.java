@@ -1,55 +1,47 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.item.IItemStack;
 
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("all")
 public interface INPCInventory {
 
-	ICustomDrop addDropItem(@ParamName("item") IItemStack item, @ParamName("chance") double chance);
+   IItemStack getRightHand();
 
-	IItemStack getArmor(@ParamName("slot") int slot);
+   void setRightHand(@ParamName("item") IItemStack item);
 
-	ICustomDrop getDrop(@ParamName("slot") int slot);
+   IItemStack getLeftHand();
 
-	IItemStack getDropItem(@ParamName("slot") int slot);
+   void setLeftHand(@ParamName("item") IItemStack item);
 
-	ICustomDrop[] getDrops();
+   IItemStack getProjectile();
 
-	int getExpMax();
+   void setProjectile(@ParamName("item") IItemStack item);
 
-	int getExpMin();
+   IItemStack getArmor(@ParamName("slot") int slot);
 
-	int getExpRNG();
+   void setArmor(@ParamName("slot") int slot, @ParamName("item") IItemStack item);
 
-	Map<IEntity<?>, List<IItemStack>> createDrops(@ParamName("lootType") int lootType, @ParamName("baseChance") double baseChance);
+   IItemStack getDropItem(@ParamName("slot") int slot);
 
-	IItemStack getLeftHand();
+   boolean removeDrop(@ParamName("slot") int slot);
 
-	IItemStack getProjectile();
+   int getExpMin();
 
-	IItemStack getRightHand();
+   int getExpMax();
 
-	boolean getXPLootMode();
+   int getExpRNG();
 
-	boolean removeDrop(@ParamName("drop") ICustomDrop drop);
+   void setExp(@ParamName("min") int min, @ParamName("max") int max);
 
-	boolean removeDrop(@ParamName("slot") int slot);
+   // New from Unofficial (BetaZavr)
+   ICustomDrop addDropItem(@ParamName("item") IItemStack item, @ParamName("chance") double chance);
 
-	void setArmor(@ParamName("slot") int slot, @ParamName("item") IItemStack item);
+   Map<IEntity<?>, List<IItemStack>> createDrops(@ParamName("lootType") int lootType, @ParamName("baseChance") double baseChance);
 
-	void setExp(@ParamName("min") int min, @ParamName("max") int max);
-
-	void setLeftHand(@ParamName("item") IItemStack item);
-
-	void setProjectile(@ParamName("item") IItemStack item);
-
-	void setRightHand(@ParamName("item") IItemStack item);
-
-	void setXPLootMode(@ParamName("mode") boolean mode);
+   ICustomDrop[] getDrops();
 
 }

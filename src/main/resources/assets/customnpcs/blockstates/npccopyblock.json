@@ -1,5 +1,5 @@
 {
     "variants": {
-        "normal": { "model": "customnpcs:npccopyblock", "y": 180 }
+        "": { "model": "customnpcs:block/npccopyblock", "y": 180 }
     }
 }

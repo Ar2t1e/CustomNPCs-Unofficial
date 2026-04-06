@@ -1,192 +1,210 @@
 package noppes.npcs.controllers.data;
 
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
-
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import noppes.npcs.NBTTags;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.roles.JobInterface;
+import noppes.npcs.roles.RoleInterface;
 
 public class DataTransform {
 
-	public boolean isDay;
+   private final EntityNPCInterface npc;
+   public boolean isActive;
+   public CompoundTag display;
+   public CompoundTag ai;
+   public CompoundTag advanced;
+   public CompoundTag inv;
+   public CompoundTag stats;
+   public CompoundTag role;
+   public CompoundTag job;
+   public boolean hasDisplay;
+   public boolean hasAi;
+   public boolean hasAdvanced;
+   public boolean hasInv;
+   public boolean hasStats;
+   public boolean hasRole;
+   public boolean hasJob;
+   public boolean editingModus = false;
 
-	public NBTTagCompound advanced;
-	public NBTTagCompound ai;
-	public NBTTagCompound display;
-	public NBTTagCompound inv;
-	public NBTTagCompound job;
-	public NBTTagCompound role;
-	public NBTTagCompound stats;
-	public NBTTagCompound animation;
+   // New from Unofficial (BetaZavr)
+   public CompoundTag animation;
+   public boolean isDay;
+   public boolean hasAnimations;
 
-	public boolean editingModus;
-	public boolean hasAdvanced;
-	public boolean hasAi;
-	public boolean hasDisplay;
-	public boolean hasInv;
-	public boolean hasJob;
-	public boolean hasRole;
-	public boolean hasStats;
-	public boolean hasAnimations;
+   public DataTransform(EntityNPCInterface npcIn) { npc = npcIn; }
 
-	private final EntityNPCInterface npc;
+   public CompoundTag save(CompoundTag compound) {
+      compound.putBoolean("TransformIsActive", isActive);
+      saveOptions(compound);
+      if (hasDisplay) { compound.put("TransformDisplay", display); }
+      if (hasAi) { compound.put("TransformAI", ai); }
+      if (hasAdvanced) { compound.put("TransformAdvanced", advanced); }
+      if (hasInv) { compound.put("TransformInv", inv); }
+      if (hasStats) { compound.put("TransformStats", stats); }
+      if (hasRole) { compound.put("TransformRole", role); }
+      if (hasJob) { compound.put("TransformJob", job); }
+      if (hasAnimations) { compound.put("TransformAnimations", animation); }
+      return compound;
+   }
 
-	public DataTransform(EntityNPCInterface npcIn) {
-		editingModus = false;
-		npc = npcIn;
-	}
+   public CompoundTag saveOptions(CompoundTag compound) {
+      compound.putBoolean("TransformHasDisplay", hasDisplay);
+      compound.putBoolean("TransformHasAI", hasAi);
+      compound.putBoolean("TransformHasAdvanced", hasAdvanced);
+      compound.putBoolean("TransformHasInv", hasInv);
+      compound.putBoolean("TransformHasStats", hasStats);
+      compound.putBoolean("TransformHasRole", hasRole);
+      compound.putBoolean("TransformHasJob", hasJob);
+      compound.putBoolean("TransformEditingModus", editingModus);
+      compound.putBoolean("TransformHasAnimations", hasAnimations);
+      return compound;
+   }
 
-	public NBTTagCompound getDisplay() {
-		NBTTagCompound compound = npc.display.writeToNBT(new NBTTagCompound());
-		if (npc instanceof EntityCustomNpc) {
-			compound.setTag("ModelData", ((EntityCustomNpc) npc).modelData.save());
-		}
-		return compound;
-	}
+   public void load(CompoundTag compound) {
+      isActive = compound.getBoolean("TransformIsActive");
+      loadOptions(compound);
+      display = hasDisplay ? compound.getCompound("TransformDisplay") : getDisplay();
+      ai = hasAi ? compound.getCompound("TransformAI") : npc.ais.save(new CompoundTag());
+      advanced = hasAdvanced ? compound.getCompound("TransformAdvanced") : getAdvanced();
+      inv = hasInv ? compound.getCompound("TransformInv") : npc.inventory.save(new CompoundTag());
+      stats = hasStats ? compound.getCompound("TransformStats") : npc.stats.save(new CompoundTag());
+      job = hasJob ? compound.getCompound("TransformJob") : getJob();
+      role = hasRole ? compound.getCompound("TransformRole") : getRole();
+      animation = (hasAnimations ? compound.getCompound("TransformAnimations") : npc.animation.save(new CompoundTag()));
+   }
 
-	public boolean isValid() {
-		return hasAdvanced || hasAi || hasDisplay || hasInv || hasStats || hasJob || hasRole || hasAnimations;
-	}
+   public void loadOptions(CompoundTag compound) {
+      boolean oldHasDisplay = hasDisplay;
+      boolean oldHasAi = hasAi;
+      boolean oldHasAdvanced = hasAdvanced;
+      boolean oldHasInv = hasInv;
+      boolean oldHasStats = hasStats;
+      boolean oldHasRole = hasRole;
+      boolean oldHasJob = hasJob;
+      boolean oldHasAnimations = hasAnimations;
+      hasDisplay = compound.getBoolean("TransformHasDisplay");
+      hasAi = compound.getBoolean("TransformHasAI");
+      hasAdvanced = compound.getBoolean("TransformHasAdvanced");
+      hasInv = compound.getBoolean("TransformHasInv");
+      hasStats = compound.getBoolean("TransformHasStats");
+      hasRole = compound.getBoolean("TransformHasRole");
+      hasJob = compound.getBoolean("TransformHasJob");
+      editingModus = compound.getBoolean("TransformEditingModus");
+      if (hasDisplay && !oldHasDisplay) { display = getDisplay(); }
+      if (hasAi && !oldHasAi) { ai = npc.ais.save(new CompoundTag()); }
+      if (hasStats && !oldHasStats) { stats = npc.stats.save(new CompoundTag()); }
+      if (hasInv && !oldHasInv) { inv = npc.inventory.save(new CompoundTag()); }
+      if (hasAdvanced && !oldHasAdvanced) { advanced = getAdvanced(); }
+      if (hasJob && !oldHasJob) { job = getJob(); }
+      if (hasRole && !oldHasRole) { role = getRole(); }
+      if (hasAnimations && !oldHasAnimations) { animation = npc.animation.save(new CompoundTag()); }
+   }
 
-	public NBTTagCompound processAdvanced(NBTTagCompound compoundAdv, NBTTagCompound compoundRole, NBTTagCompound compoundJob) {
-		if (hasAdvanced) {
-			compoundAdv = advanced;
-		}
-		if (hasRole) {
-			compoundRole = role;
-		}
-		if (hasJob) {
-			compoundJob = job;
-		}
-		Set<String> names = compoundRole.getKeySet();
-		for (String name : names) {
-			compoundAdv.setTag(name, compoundRole.getTag(name));
-		}
-		names = compoundJob.getKeySet();
-		for (String name : names) {
-			compoundAdv.setTag(name, compoundJob.getTag(name));
-		}
-		return compoundAdv;
-	}
+   public CompoundTag getJob() {
+      CompoundTag compound = new CompoundTag();
+      compound.putInt("NpcJob", npc.job.getType());
+      npc.job.save(compound);
+      return compound;
+   }
 
-	public void readOptions(NBTTagCompound compound) {
-		boolean hadDisplay = hasDisplay;
-		boolean hadAI = hasAi;
-		boolean hadAdvanced = hasAdvanced;
-		boolean hadInv = hasInv;
-		boolean hadStats = hasStats;
-		boolean hadRole = hasRole;
-		boolean hadJob = hasJob;
-		boolean hadAnimations = hasAnimations;
+   public CompoundTag getRole() {
+      CompoundTag compound = new CompoundTag();
+      compound.putInt("Role", npc.role.getType());
+      npc.role.save(compound);
+      return compound;
+   }
 
-		hasDisplay = compound.getBoolean("TransformHasDisplay");
-		hasAi = compound.getBoolean("TransformHasAI");
-		hasAdvanced = compound.getBoolean("TransformHasAdvanced");
-		hasInv = compound.getBoolean("TransformHasInv");
-		hasStats = compound.getBoolean("TransformHasStats");
-		hasRole = compound.getBoolean("TransformHasRole");
-		hasJob = compound.getBoolean("TransformHasJob");
-		editingModus = compound.getBoolean("TransformEditingModus");
-		hasAnimations = compound.getBoolean("TransformHasAnimations");
+   public CompoundTag getDisplay() {
+      CompoundTag compound = npc.display.save(new CompoundTag());
+      if (npc instanceof EntityCustomNpc cNpc) { compound.put("ModelData", cNpc.modelData.save()); }
+      return compound;
+   }
 
-		if (hasDisplay && !hadDisplay) { display = getDisplay(); }
-		if (hasAi && !hadAI) { ai = npc.ais.writeToNBT(new NBTTagCompound()); }
-		if (hasStats && !hadStats) { stats = npc.stats.writeToNBT(new NBTTagCompound()); }
-		if (hasInv && !hadInv) { inv = npc.inventory.writeEntityToNBT(new NBTTagCompound()); }
-		if (hasAdvanced && !hadAdvanced) { advanced = npc.advanced.save(new NBTTagCompound()); }
-		if (hasJob && !hadJob) { job = npc.advanced.jobInterface.save(new NBTTagCompound()); }
-		if (hasRole && !hadRole) { role = npc.advanced.roleInterface.save(new NBTTagCompound()); }
-		if (hasAnimations && !hadAnimations) { animation = npc.animation.save(new NBTTagCompound()); }
-	}
+   public CompoundTag getAdvanced() {
+      JobInterface jopType = npc.job;
+      RoleInterface roleType = npc.role;
+      npc.job = JobInterface.NONE;
+      npc.role = RoleInterface.NONE;
+      CompoundTag compound = npc.advanced.save(new CompoundTag());
+      npc.job = jopType;
+      npc.role = roleType;
+      return compound;
+   }
 
-	public void load(NBTTagCompound compound) {
-		isDay = compound.getBoolean("TransformIsActive");
-		readOptions(compound);
-		display = (hasDisplay ? compound.getCompoundTag("TransformDisplay") : getDisplay());
-		ai = (hasAi ? compound.getCompoundTag("TransformAI") : npc.ais.writeToNBT(new NBTTagCompound()));
-		advanced = (hasAdvanced ? compound.getCompoundTag("TransformAdvanced") : npc.advanced.save(new NBTTagCompound()));
-		inv = (hasInv ? compound.getCompoundTag("TransformInv") : npc.inventory.writeEntityToNBT(new NBTTagCompound()));
-		stats = (hasStats ? compound.getCompoundTag("TransformStats") : npc.stats.writeToNBT(new NBTTagCompound()));
-		job = (hasJob ? compound.getCompoundTag("TransformJob") : npc.advanced.jobInterface.save(new NBTTagCompound()));
-		role = (hasRole ? compound.getCompoundTag("TransformRole") : npc.advanced.roleInterface.save(new NBTTagCompound()));
-		animation = (hasAnimations ? compound.getCompoundTag("TransformAnimations") : npc.animation.save(new NBTTagCompound()));
-	}
+   public boolean isValid() {
+      return hasAdvanced || hasAi || hasDisplay || hasInv || hasStats || hasJob || hasRole || hasAnimations;
+   }
 
-	public void transform(boolean isDayIn) {
-		if (isDay == isDayIn) { return; }
+   public CompoundTag processAdvanced(CompoundTag compoundAdv, CompoundTag compoundRole, CompoundTag compoundJob) {
+      if (hasAdvanced) { compoundAdv = advanced; }
+      if (hasRole) { compoundRole = role; }
+      if (hasJob) { compoundJob = job; }
+      Set<String> names = compoundRole.getAllKeys();
+      for (String name : names) {
+         Tag tag = compoundRole.get(name);
+         if (tag != null) { compoundAdv.put(name, tag); }
+      }
+      names = compoundJob.getAllKeys();
+      for (String name : names) {
+         Tag tag = compoundJob.get(name);
+         if (tag != null) { compoundAdv.put(name, tag); }
+      }
+      return compoundAdv;
+   }
 
-		if (hasDisplay) {
-			NBTTagCompound compound = getDisplay();
-			npc.display.readToNBT(NBTTags.NBTMerge(compound, display));
-			if (npc instanceof EntityCustomNpc) {
-				((EntityCustomNpc) npc).modelData.load(NBTTags.NBTMerge(compound.getCompoundTag("ModelData"), display.getCompoundTag("ModelData")));
-			}
-			display = compound;
-		}
-		if (hasStats) {
-			NBTTagCompound compound = npc.stats.writeToNBT(new NBTTagCompound());
-			npc.stats.readToNBT(NBTTags.NBTMerge(compound, stats));
-			stats = compound;
-		}
-		if (hasAdvanced || hasJob || hasRole) {
-			NBTTagCompound compoundAdv = npc.advanced.save(new NBTTagCompound());
-			NBTTagCompound compoundRole = npc.advanced.roleInterface.save(new NBTTagCompound());
-			NBTTagCompound compoundJob = npc.advanced.jobInterface.save(new NBTTagCompound());
-			NBTTagCompound compound2 = processAdvanced(compoundAdv, compoundRole, compoundJob);
-			npc.advanced.load(compound2);
-			npc.advanced.roleInterface.load(NBTTags.NBTMerge(compoundRole, compound2));
-			npc.advanced.jobInterface.load(NBTTags.NBTMerge(compoundJob, compound2));
-			if (hasAdvanced) { advanced = compoundAdv; }
-			if (hasRole) { role = compoundRole; }
-			if (hasJob) { job = compoundJob; }
-		}
-		if (hasAi) {
-			NBTTagCompound compound = npc.ais.writeToNBT(new NBTTagCompound());
-			npc.ais.readToNBT(NBTTags.NBTMerge(compound, ai));
-			ai = compound;
-			npc.setCurrentAnimation(npc.ais.animationType);
-		}
-		if (hasInv) {
-			NBTTagCompound compound = npc.inventory.writeEntityToNBT(new NBTTagCompound());
-			npc.inventory.readEntityFromNBT(NBTTags.NBTMerge(compound, inv));
-			inv = compound;
-		}
-		if (hasAnimations) {
-			NBTTagCompound compound = npc.animation.save(new NBTTagCompound());
-			npc.animation.load(NBTTags.NBTMerge(compound, animation));
-			animation = compound;
-		}
-		npc.updateAI = true;
-		isDay = isDayIn;
-		npc.updateClient = true;
-	}
-
-	public NBTTagCompound writeOptions(NBTTagCompound compound) {
-		compound.setBoolean("TransformHasDisplay", hasDisplay);
-		compound.setBoolean("TransformHasAI", hasAi);
-		compound.setBoolean("TransformHasAdvanced", hasAdvanced);
-		compound.setBoolean("TransformHasInv", hasInv);
-		compound.setBoolean("TransformHasStats", hasStats);
-		compound.setBoolean("TransformHasRole", hasRole);
-		compound.setBoolean("TransformHasJob", hasJob);
-		compound.setBoolean("TransformEditingModus", editingModus);
-		compound.setBoolean("TransformHasAnimations", hasAnimations);
-		return compound;
-	}
-
-	public NBTTagCompound save(NBTTagCompound compound) {
-		compound.setBoolean("TransformIsActive", isDay);
-		writeOptions(compound);
-		if (hasDisplay) { compound.setTag("TransformDisplay", display); }
-		if (hasAi) { compound.setTag("TransformAI", ai); }
-		if (hasAdvanced) { compound.setTag("TransformAdvanced", advanced); }
-		if (hasInv) { compound.setTag("TransformInv", inv); }
-		if (hasStats) { compound.setTag("TransformStats", stats); }
-		if (hasRole) { compound.setTag("TransformRole", role); }
-		if (hasJob) { compound.setTag("TransformJob", job); }
-		if (hasAnimations) { compound.setTag("TransformAnimations", animation); }
-		return compound;
-	}
+   public void transform(boolean isActiveIn) {
+      if (isActive != isActiveIn) {
+         CompoundTag compoundAdv;
+         if (hasDisplay) {
+            compoundAdv = getDisplay();
+            npc.display.load(NBTTags.nbtMerge(compoundAdv, display));
+            if (npc instanceof EntityCustomNpc cNpc) {
+               cNpc.modelData.load(NBTTags.nbtMerge(compoundAdv.getCompound("ModelData"), display.getCompound("ModelData")));
+            }
+            display = compoundAdv;
+         }
+         if (hasStats) {
+            compoundAdv = npc.stats.save(new CompoundTag());
+            npc.stats.load(NBTTags.nbtMerge(compoundAdv, stats));
+            stats = compoundAdv;
+         }
+         if (hasAdvanced || hasJob || hasRole) {
+            compoundAdv = getAdvanced();
+            CompoundTag compoundJob = getJob();
+            CompoundTag compoundRole = getRole();
+            CompoundTag compound = processAdvanced(compoundAdv, compoundRole, compoundJob);
+            npc.advanced.load(compound);
+            if (npc.role.getType() != 0) { npc.role.load(NBTTags.nbtMerge(compoundRole, compound)); }
+            if (npc.job.getType() != 0) { npc.job.load(NBTTags.nbtMerge(compoundJob, compound)); }
+            if (hasAdvanced) { advanced = compoundAdv; }
+            if (hasRole) { role = compoundRole; }
+            if (hasJob) {job = compoundJob; }
+         }
+         if (hasAi) {
+            compoundAdv = npc.ais.save(new CompoundTag());
+            npc.ais.load(NBTTags.nbtMerge(compoundAdv, ai));
+            ai = compoundAdv;
+            npc.setCurrentAnimation(0);
+         }
+         if (hasInv) {
+            compoundAdv = npc.inventory.save(new CompoundTag());
+            npc.inventory.load(NBTTags.nbtMerge(compoundAdv, inv));
+            inv = compoundAdv;
+         }
+         if (hasAnimations) {
+            compoundAdv = npc.animation.save(new CompoundTag());
+            npc.animation.load(NBTTags.nbtMerge(compoundAdv, animation));
+            animation = compoundAdv;
+         }
+         npc.updateAI = true;
+         isActive = isActiveIn;
+         npc.updateClient = true;
+      }
+   }
 
 }

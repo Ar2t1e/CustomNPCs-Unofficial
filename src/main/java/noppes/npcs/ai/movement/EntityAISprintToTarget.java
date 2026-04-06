@@ -1,67 +1,48 @@
 package noppes.npcs.ai.movement;
 
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.EntityDataManager;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.ai.attack.EntityAIHitAndRun;
-import noppes.npcs.constants.AiMutex;
-import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.api.mixin.entity.IEntityMixin;
-
+import java.util.EnumSet;
 import java.util.Objects;
 
-public class EntityAISprintToTarget extends EntityAIBase {
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.entity.EntityNPCInterface;
 
-	private final EntityNPCInterface npc;
+public class EntityAISprintToTarget extends Goal {
 
-    public EntityAISprintToTarget(EntityNPCInterface npc) {
-		this.npc = npc;
-		this.setMutexBits(AiMutex.PASSIVE);
-	}
+   private final EntityNPCInterface npc;
 
-	public void resetTask() {
-		this.npc.setSprinting(false);
-	}
+   public EntityAISprintToTarget(EntityNPCInterface npcIn) {
+      npc = npcIn;
+      setFlags(EnumSet.of(Flag.MOVE));
+   }
 
-	public boolean shouldContinueExecuting() {
-		return this.npc.isEntityAlive() && this.npc.ais.canSprint;
-	}
+   @Override
+   public boolean canUse() {
+      CustomNpcs.debugData.start(npc);
+      LivingEntity runTarget = npc.getTarget();
+      if (runTarget != null && !npc.getNavigation().isDone()) {
+         CustomNpcs.debugData.end(npc);
+         return switch (npc.ais.onAttack) {
+            case 0 -> !npc.isInRange(runTarget, npc.stats.aggroRange / 3.0d) && npc.onGround(); // Attack
+            case 2 -> npc.isInRange(runTarget, npc.stats.aggroRange) && npc.onGround(); // Avoid
+            default -> true; // Panic
+         };
+      }
+      CustomNpcs.debugData.end(npc);
+      return false;
+   }
 
-	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
-        EntityLivingBase target = this.npc.getAttackTarget();
-		if (target != null && target.isEntityAlive() && this.npc.hurtTime <= 0 && !this.npc.getNavigator().noPath()) {
-			this.startExecuting();
-		} else {
-			EntityDataManager dataManager = ((IEntityMixin) this.npc).npcs$getDataManager();
-			DataParameter<Byte> FLAGS = ((IEntityMixin) this.npc).npcs$getFLAGS();
-			if (dataManager != null && FLAGS != null && (dataManager.get(FLAGS) & 1 << 3) != 0) {
-				this.npc.setSprinting(false);
-			}
-		}
-		CustomNpcs.debugData.end(npc);
-		return false;
-	}
+   @Override
+   public boolean canContinueToUse() {
+      Vec3 mo = npc.getDeltaMovement();
+      return npc.isAlive() && npc.ais.canSprint && npc.onGround() && npc.hurtTime <= 0 && mo.x != 0.0D && mo.z != 0.0D;
+   }
 
-	public void startExecuting() {
-		boolean isSprint = this.npc.aiAttackTarget instanceof EntityAIHitAndRun;
-		if (!isSprint) {
-			switch (this.npc.ais.onAttack) {
-				case 0:
-					isSprint = !this.npc.isInRange(Objects.requireNonNull(this.npc.getAttackTarget()), (double) this.npc.stats.aggroRange / 3.0d);
-					break; // Attack
-				case 1:
-					isSprint = true;
-					break; // Panic
-				case 2:
-					isSprint = this.npc.isInRange(Objects.requireNonNull(this.npc.getAttackTarget()), this.npc.stats.aggroRange);
-					break; // Avoid
-				default:
-					break;
-			}
-		}
-		this.npc.setSprinting(isSprint);
-	}
+   @Override
+   public void start() { npc.setSprinting(true); }
+
+   @Override
+   public void stop() { npc.setSprinting(false); }
 }

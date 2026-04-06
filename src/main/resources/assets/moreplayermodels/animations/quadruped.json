@@ -1,0 +1,167 @@
+{
+  "walk" : {
+    "animation_length" : 3,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "loop" : true,
+    "bones" : {
+      "animal_body" : {
+        "rotation": [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+      },
+      "right_front_leg" : {
+        "rotation": [[-75, 0, 0], [0, 0, 0], [75, 0, 0]]
+      },
+      "left_front_leg" : {
+        "rotation": [[75, 0, 0], [0, 0, 0], [-75, 0, 0]]
+      },
+      "right_hind_leg" : {
+        "rotation": [[75, 0, 0], [0, 0, 0], [-75, 0, 0]]
+      },
+      "left_hind_leg" : {
+        "rotation": [[-75, 0, 0], [0, 0, 0], [75, 0, 0]]
+      },
+      "tail" : {
+        "rotation": [[15, -20, 0], [15, 0, 0], [15, 20, 0]]
+      }
+    }
+  },
+  "fly" : {
+    "animation_length" : 3,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "loop" : true,
+    "bones" : {
+      "right_front_leg" : {
+        "rotation": [[-75, 0, 0], [0, 0, 0], [75, 0, 0]]
+      },
+      "left_front_leg" : {
+        "rotation": [[75, 0, 0], [0, 0, 0], [-75, 0, 0]]
+      },
+      "right_hind_leg" : {
+        "rotation": [[75, 0, 0], [0, 0, 0], [-75, 0, 0]]
+      },
+      "left_hind_leg" : {
+        "rotation": [[-75, 0, 0], [0, 0, 0], [75, 0, 0]]
+      },
+      "tail" : {
+        "rotation": [[15, -20, 0], [15, 0, 0], [15, 20, 0]]
+      }
+    }
+  },
+  "sit" : {
+    "animation_length" : 1,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "right_front_leg" : {
+        "rotation": [[-80, 0, 0]]
+      },
+      "left_front_leg" : {
+        "rotation": [[-80, 0, 0]]
+      },
+      "right_hind_leg" : {
+        "rotation": [[-80, 0, 0]]
+      },
+      "left_hind_leg" : {
+        "rotation": [[-80, 0, 0]]
+      }
+    }
+  },
+  "idle" : {
+    "animation_length" : 4,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "animal_body" : {
+      },
+      "right_front_leg" : {
+      },
+      "left_front_leg" : {
+      },
+      "right_hind_leg" : {
+      },
+      "left_hind_leg" : {
+      },
+      "tail" : {
+        "rotation": [[0, -1, 0], [4, 0, 0], [0, 0, 0],[0, 1, 0]]
+      }
+    }
+  },
+  "swim" : {
+    "animation_length" : 3,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "animal_body" : {
+        "rotation": [[-90, 0, 0], [-90, 0, 0], [-90, 0, 0]]
+      },
+      "right_front_leg" : {
+        "rotation": [[-75, 0, 0], [0, 0, 0], [75, 0, 0]]
+      },
+      "left_front_leg" : {
+        "rotation": [[75, 0, 0], [0, 0, 0], [-75, 0, 0]]
+      },
+      "right_hind_leg" : {
+        "rotation": [[75, 0, 0], [0, 0, 0], [-75, 0, 0]]
+      },
+      "left_hind_leg" : {
+        "rotation": [[-75, 0, 0], [0, 0, 0], [75, 0, 0]]
+      },
+      "tail" : {
+        "rotation": [[15, -20, 0], [15, 0, 0], [15, 20, 0]]
+      }
+    }
+  },
+  "crawl" : {
+    "animation_length" : 3,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "animal_body" : {
+        "translate": [[0, -2, 4], [0, -2, 4], [0, -2, 4]],
+        "rotation": [[-90, 0, 0], [-90, 0, 0], [-90, 0, 0]]
+      },
+      "right_front_leg" : {
+        "translate": [[-2, -1, -4], [-2, -1, -2], [-2, -1, 0]],
+        "rotation": [[90, 0, 0], [90, 0, 0], [90, 0, 0]]
+      },
+      "left_front_leg" : {
+        "translate": [[2, -1, 0], [2, -1, -2], [2, -1, -4]],
+        "rotation": [[90, 0, 0], [90, 0, 0], [90, 0, 0]]
+      },
+      "right_hind_leg" : {
+        "translate": [[-2, -1, -4], [-2, -1, -2], [-2, -1, 0]],
+        "rotation": [[90, 0, 0], [90, 0, 0], [90, 0, 0]]
+      },
+      "left_hind_leg" : {
+        "translate": [[2, -1, 0], [2, -1, -2], [2, -1, -4]],
+        "rotation": [[90, 0, 0], [90, 0, 0], [90, 0, 0]]
+      }
+    }
+  },
+  "crouch" : {
+    "animation_length" : 3,
+    "animation_speed" : 1.0,
+    "additional" : true,
+    "bones" : {
+      "animal_body" : {
+        "translate": [[0, -1, 0], [0, -1, 0], [0, -1, 0]],
+        "rotation": [[-20, 0, 0], [-20, 0, 0], [-20, 0, 0]]
+      },
+      "right_front_leg" : {
+        "translate": [[0, -3, 0], [0, -3, 0], [0, -3, 0]],
+        "rotation": [[-90, 0, 0], [-15, 0, 0], [60, 0, 0]]
+      },
+      "left_front_leg" : {
+        "translate": [[0, -3, 0], [0, -3, 0], [0, -3, 0]],
+        "rotation": [[60, 0, 0], [-15, 0, 0], [-90, 0, 0]]
+      },
+      "right_hind_leg" : {
+        "rotation": [[-80, 0, 0], [-5, 0, 0], [70, 0, 0]]
+      },
+      "left_hind_leg" : {
+        "rotation": [[70, 0, 0], [-5, 0, 0], [-80, 0, 0]]
+      }
+    }
+  }
+}

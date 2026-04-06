@@ -1,6 +1,6 @@
 package noppes.npcs.api.util;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.wrapper.data.DataBlock;

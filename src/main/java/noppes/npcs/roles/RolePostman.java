@@ -2,80 +2,62 @@ package noppes.npcs.roles;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.NpcMiscInventory;
-import noppes.npcs.Server;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.api.constants.RoleType;
-import noppes.npcs.api.entity.data.role.IRolePostman;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class RolePostman extends RoleInterface implements IRolePostman {
+public class RolePostman extends RoleInterface {
 
-	public NpcMiscInventory inventory;
-	private final List<EntityPlayer> recentlyChecked;
+    public NpcMiscInventory inventory = new NpcMiscInventory(1);
+    private final List<Player> recentlyChecked = new ArrayList<>();
 
     public RolePostman(EntityNPCInterface npc) {
-		super(npc);
-		this.inventory = new NpcMiscInventory(1);
-		this.recentlyChecked = new ArrayList<>();
-		this.type = RoleType.POSTMAN;
-	}
+        super(npc);
+        type = RoleType.MAILMAN;
+    }
 
     @Override
-	public boolean aiShouldExecute() {
-		if (this.npc.ticksExisted % 20 != 0) {
-			return false;
-		}
-        List<EntityPlayer> toCheck;
-		List<EntityPlayer> list = new ArrayList<>();
-		try {
-			list = npc.world.getEntitiesWithinAABB(EntityPlayer.class, npc.getEntityBoundingBox().grow(10.0, 10.0, 10.0));
-		}
-		catch (Exception ignored) { }
-        (toCheck = list).removeAll(this.recentlyChecked);
+    public boolean aiShouldExecute() {
+        if (npc.tickCount % 20 == 0) {
+            List<Player> toCheck = npc.level().getEntitiesOfClass(Player.class, npc.getBoundingBox().inflate(10.0D, 10.0D, 10.0D));
+            toCheck.removeAll(recentlyChecked);
+            List<Player> listMax = npc.level().getEntitiesOfClass(Player.class, npc.getBoundingBox().inflate(20.0D, 20.0D, 20.0D));
+            recentlyChecked.retainAll(listMax);
+            recentlyChecked.addAll(toCheck);
+            for (Player player : toCheck) {
+                if (PlayerData.get(player).mailData.hasMail()) { npc.say(player, new Line("mail.player.has.letter")); }
+            }
+        }
+        return false;
+    }
 
-		List<EntityPlayer> listMax = new ArrayList<>();
-		try {
-			listMax = this.npc.world.getEntitiesWithinAABB(EntityPlayer.class,
-					this.npc.getEntityBoundingBox().grow(20.0, 20.0, 20.0));
-		}
-		catch (Exception ignored) { }
-		this.recentlyChecked.retainAll(listMax);
-		this.recentlyChecked.addAll(toCheck);
-		for (EntityPlayer player : toCheck) {
-			if (PlayerData.get(player).mailData.hasMail()) {
-				this.npc.say(player,
-						new Line(new TextComponentTranslation("mail.player.has.letter").getFormattedText()));
-			}
-		}
-		return false;
-	}
+    @Override
+    public CompoundTag save(CompoundTag compound) {
+        super.save(compound);
+        compound.put("PostInv", inventory.save());
+        return compound;
+    }
 
-	@Override
-	public void interact(EntityPlayer player) {
-		Server.sendData((EntityPlayerMP) player, EnumPacketClient.GUI, EnumGuiType.PlayerMailbox, 1, 1, 0);
-	}
+    @Override
+    public void load(CompoundTag compound) {
+        super.load(compound);
+        type = RoleType.MAILMAN;
+        inventory.load(compound.getCompound("PostInv"));
+    }
 
-	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = RoleType.POSTMAN;
-		inventory.load(compound.getCompoundTag("PostInv"));
-	}
-
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setTag("PostInv", this.inventory.save());
-		return compound;
-	}
+    @Override
+    public void interact(Player player) {
+        NoppesUtilServer.openContainerGui((ServerPlayer) player, EnumGuiType.PlayerMailOpen, (buf) -> {
+            buf.writeBoolean(true);
+            buf.writeBoolean(true);
+        });
+    }
 
 }

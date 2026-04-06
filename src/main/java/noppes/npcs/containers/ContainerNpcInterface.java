@@ -1,42 +1,40 @@
 package noppes.npcs.containers;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.api.IContainer;
-import noppes.npcs.api.wrapper.ContainerCustomChestWrapper;
 import noppes.npcs.api.wrapper.ContainerWrapper;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class ContainerNpcInterface extends AbstractContainerMenu {
 
-public class ContainerNpcInterface extends Container {
+   protected final int posX;
+   protected final int posZ;
+   protected final IContainer scriptContainer;
+   public final Player player;
 
-	public static IContainer getOrCreateIContainer(ContainerNpcInterface container) {
-		if (container.scriptContainer != null) {
-			return container.scriptContainer;
-		}
-		if (container instanceof ContainerCustomChest) {
-			return container.scriptContainer = new ContainerCustomChestWrapper(container);
-		}
-		return container.scriptContainer = new ContainerWrapper(container);
-	}
+   public ContainerNpcInterface(MenuType type, int containerId, Inventory playerInventory) {
+      super(type, containerId);
+      player = playerInventory.player;
+      posX = Mth.floor(player.getX());
+      posZ = Mth.floor(player.getZ());
+      scriptContainer = new ContainerWrapper(this);
+      player.setDeltaMovement(Vec3.ZERO);
+   }
 
-	public EntityPlayer player;
-	private final int posX;
-	private final int posZ;
+   @Override
+   public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int index) { return ItemStack.EMPTY; }
 
-	public IContainer scriptContainer;
+   @Override
+   public boolean stillValid(Player playerIn) {
+      return !playerIn.isRemoved() && posX == Mth.floor(playerIn.getX()) && posZ == Mth.floor(player.getZ());
+   }
 
-	public ContainerNpcInterface(EntityPlayer player) {
-		this.player = player;
-		this.posX = MathHelper.floor(player.posX);
-		this.posZ = MathHelper.floor(player.posZ);
-		player.motionX = 0.0;
-		player.motionZ = 0.0;
-	}
-
-	public boolean canInteractWith(@Nonnull EntityPlayer player) {
-		return !player.isDead && this.posX == MathHelper.floor(player.posX) && this.posZ == MathHelper.floor(player.posZ);
-	}
+   public static IContainer getOrCreateIContainer(ContainerNpcInterface container) { return container.scriptContainer; }
 
 }

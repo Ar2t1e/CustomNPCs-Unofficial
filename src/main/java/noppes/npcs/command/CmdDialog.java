@@ -1,106 +1,96 @@
 package noppes.npcs.command;
 
-import java.util.List;
-
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import java.util.Collection;
+import net.minecraft.commands.CommandRuntimeException;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.client.EntityUtil;
 import noppes.npcs.controllers.DialogController;
-import noppes.npcs.controllers.PlayerDataController;
-import noppes.npcs.controllers.SyncController;
 import noppes.npcs.controllers.data.Dialog;
+import noppes.npcs.controllers.data.DialogCategory;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityDialogNpc;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSync;
 
-import javax.annotation.Nonnull;
+public class CmdDialog {
 
-public class CmdDialog extends CommandNoppesBase {
+   public static LiteralArgumentBuilder<CommandSourceStack> register() {
+      LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("dialog");
+      command.then(Commands.literal("reload").requires((source) -> source.hasPermission(4))).executes((context) -> {
+         (new DialogController()).load();
+          for (DialogCategory category : DialogController.instance.categories.values()) {
+              Packets.sendAll(new PacketSync(5, category.save(new CompoundTag()), false));
+          }
+          Packets.sendAll(new PacketSync(5, new CompoundTag(), true));
+         return 1;
+      });
+      command.then(Commands.literal("read").requires((source) -> source.hasPermission(2)))
+              .then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("dialog", IntegerArgumentType.integer(0)).executes((context) -> {
+                 Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                 if (!players.isEmpty()) {
+                    Dialog dialog = DialogController.instance.dialogs.get(IntegerArgumentType.getInteger(context, "dialog"));
+                    if (dialog == null) {
+                       throw new CommandRuntimeException(Component.literal("Unknown DialogID"));
+                    }
+                    for (ServerPlayer player : players) {
+                       PlayerData data = PlayerData.get(player);
+                       if (!data.dialogData.has(dialog.id)) {
+                          data.dialogData.read(dialog.id);
+                          data.save(true);
+                       }
+                    }
+                 }
+                 return 1;
+              })));
+      command.then(Commands.literal("unread").requires((source) -> source.hasPermission(2))
+              .then(Commands.argument("players", EntityArgument.players())
+                      .then(Commands.argument("dialog", IntegerArgumentType.integer(0)).executes((context) -> {
+                         Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                         if (!players.isEmpty()) {
+                            Dialog dialog = DialogController.instance.dialogs.get(IntegerArgumentType.getInteger(context, "dialog"));
+                            if (dialog == null) {
+                               throw new CommandRuntimeException(Component.literal("Unknown DialogID"));
+                            }
+                            for (ServerPlayer player : players) {
+                               PlayerData data = PlayerData.get(player);
+                               if (data.dialogData.has(dialog.id)) {
+                                  data.dialogData.dialogsRead.remove(dialog.id);
+                                  data.save(true);
+                               }
+                            }
+                         }
+                         return 1;
+                      }))));
+      command.then(Commands.literal("show").requires((source) -> source.hasPermission(2))
+              .then(Commands.argument("players", EntityArgument.players())
+                      .then(Commands.argument("dialog", IntegerArgumentType.integer(0))
+                              .then(Commands.argument("name", StringArgumentType.string()).executes((context) -> {
+                                 Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                 if (!players.isEmpty()) {
+                                     Dialog dialog = DialogController.instance.dialogs.get(IntegerArgumentType.getInteger(context, "dialog"));
+                                     if (dialog == null) {
+                                         throw new CommandRuntimeException(Component.literal("Unknown DialogID"));
+                                     }
+                                     EntityDialogNpc npc = new EntityDialogNpc(context.getSource().getLevel());
+                                     npc.dialogs = new int[] { dialog.id };
+                                     npc.display.setName(StringArgumentType.getString(context, "name"));
+                                     for (ServerPlayer player : players) {
+                                         EntityUtil.Copy(player, npc);
+                                         NoppesUtilServer.openDialog(player, npc, dialog);
+                                     }
+                                 }
+                                 return 1;
+                              })))));
+      return command;
+   }
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
-
-	@Override
-	public String getDescription() {
-		return "Dialog operations";
-	}
-
-	@Nonnull
-	public String getName() {
-		return "dialog";
-	}
-
-	@SuppressWarnings("all")
-	@SubCommand(desc = "force read", usage = "<player> <dialog>", permission = 2)
-	public void read(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String playername = args[0];
-		int dialogId;
-		try {
-			dialogId = Integer.parseInt(args[1]);
-		} catch (NumberFormatException ex) {
-			throw new CommandException("DialogID must be an integer");
-		}
-		List<PlayerData> data = PlayerDataController.instance.getPlayersData(sender, playername);
-		if (data.isEmpty()) {
-			throw new CommandException("Unknown player '%s'", playername);
-		}
-		for (PlayerData playerdata : data) {
-			playerdata.dialogData.read(dialogId);
-			playerdata.save(true);
-		}
-	}
-
-	@SubCommand(desc = "reload dialogs from disk", permission = 2)
-	public void reload(MinecraftServer server, ICommandSender sender, String[] args) {
-		new DialogController().load();
-		SyncController.syncAllDialogs(server);
-	}
-
-	@SubCommand(desc = "show dialog", usage = "<player> <dialog> <name>", permission = 2)
-	public void show(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		List<EntityPlayerMP> players = CommandBase.getPlayers(server, sender, args[0]);
-        int dialogId;
-		try {
-			dialogId = Integer.parseInt(args[1]);
-		} catch (NumberFormatException ex) {
-			throw new CommandException("DialogID must be an integer: " + args[1]);
-		}
-		Dialog dialog = DialogController.instance.dialogs.get(dialogId);
-		if (dialog == null) {
-			throw new CommandException("Unknown dialog id: " + args[1]);
-		}
-		EntityDialogNpc npc = new EntityDialogNpc(sender.getEntityWorld());
-		npc.dialogs = new int[] { dialogId };
-		npc.display.setName(args[2]);
-		for (EntityPlayer player : players) {
-			EntityUtil.Copy(player, npc);
-			NoppesUtilServer.openDialog(player, npc, dialog);
-		}
-	}
-
-	@SuppressWarnings("all")
-	@SubCommand(desc = "force unread dialog", usage = "<player> <dialog>", permission = 2)
-	public void unread(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String playername = args[0];
-		int dialogId;
-		try {
-			dialogId = Integer.parseInt(args[1]);
-		} catch (NumberFormatException ex) {
-			throw new CommandException("DialogID must be an integer");
-		}
-		List<PlayerData> data = PlayerDataController.instance.getPlayersData(sender, playername);
-		if (data.isEmpty()) {
-			throw new CommandException("Unknown player '%s'", playername);
-		}
-		for (PlayerData playerdata : data) {
-			playerdata.dialogData.dialogsRead.remove(dialogId);
-			playerdata.save(true);
-		}
-	}
 }

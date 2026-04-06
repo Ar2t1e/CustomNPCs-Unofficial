@@ -2,131 +2,130 @@ package noppes.npcs.api.handler.data;
 
 import java.awt.Point;
 
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IEntity;
 
-@SuppressWarnings("all")
 public interface IBorder {
 
-	Point addPoint(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+    Point addPoint(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	Point addPoint(@ParamName("pos") IPos pos);
+    Point addPoint(@ParamName("pos") IPos pos);
 
-	Point addPoint(@ParamName("point") Point point, @ParamName("y") int y);
+    Point addPoint(@ParamName("point") Point point, @ParamName("y") int y);
 
-	void centerOffsetTo(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z, @ParamName("type") boolean type);
+    void centerOffsetTo(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z, @ParamName("type") boolean type);
 
-	void centerOffsetTo(@ParamName("pos") IPos pos, @ParamName("type") boolean type);
+    void centerOffsetTo(@ParamName("pos") IPos pos, @ParamName("type") boolean type);
 
-	void centerOffsetTo(@ParamName("point") Point point, @ParamName("type") boolean type);
+    void centerOffsetTo(@ParamName("point") Point point, @ParamName("type") boolean type);
 
-	void clear();
+    void clear();
 
-	boolean contains(@ParamName("entity") IEntity<?> entity);
+    boolean contains(@ParamName("entity") IEntity<?> entity);
 
-	boolean contains(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z, @ParamName("height") double height);
+    boolean contains(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z, @ParamName("height") double height);
 
-	boolean contains(@ParamName("x") int x, @ParamName("z") int z);
+    boolean contains(@ParamName("x") int x, @ParamName("z") int z);
 
-	double distanceTo(@ParamName("x") double x, @ParamName("z") double z);
+    double distanceTo(@ParamName("x") double x, @ParamName("z") double z);
 
-	double distanceTo(@ParamName("entity") IEntity<?> entity);
+    double distanceTo(@ParamName("entity") IEntity<?> entity);
 
-	IAvailability getAvailability();
+    IAvailability getAvailability();
 
-	IPos getCenter();
+    IPos getCenter();
 
-	int getClosestPoint(@ParamName("point") Point point, @ParamName("pos") IPos pos);
+    int getClosestPoint(@ParamName("point") Point point, @ParamName("pos") IPos pos);
 
-	Point[] getClosestPoints(@ParamName("point") Point point, @ParamName("pos") IPos pos);
+    Point[] getClosestPoints(@ParamName("point") Point point, @ParamName("pos") IPos pos);
 
-	int getColor();
+    int getColor();
 
-	int getDimensionId();
+    String getDimension();
 
-	IPos getHomePos();
+    IPos getHomePos();
 
-	int getId();
+    int getId();
 
-	int getMaxX();
+    int getMaxX();
 
-	int getMaxY();
+    int getMaxY();
 
-	int getMaxZ();
+    int getMaxZ();
 
-	String getMessage();
+    String getMessage();
 
     int getQuestID();
 
-	void setQuestID(@ParamName("id") int id);
+    void setQuestID(@ParamName("id") int id);
 
-	boolean isQuestWhenEnter();
+    boolean isQuestWhenEnter();
 
-	void setIsQuestWhenEnter(@ParamName("bo") boolean bo);
+    void setIsQuestWhenEnter(@ParamName("bo") boolean bo);
 
-	int getMinX();
+    int getMinX();
 
-	int getMinY();
+    int getMinY();
 
-	int getMinZ();
+    int getMinZ();
 
-	String getName();
+    String getName();
 
-	INbt getNbt();
+    INbt getNbt();
 
-	Point[] getPoints();
+    Point[] getPoints();
 
-	boolean insertPoint(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z, @ParamName("pos") IPos pos);
+    boolean insertPoint(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z, @ParamName("pos") IPos pos);
 
-	boolean insertPoint(@ParamName("pos0") IPos pos0, @ParamName("pos1") IPos pos1);
+    boolean insertPoint(@ParamName("pos0") IPos pos0, @ParamName("pos1") IPos pos1);
 
-	boolean insertPoint(@ParamName("point") Point point, @ParamName("y") int y, @ParamName("pos") IPos pos);
+    boolean insertPoint(@ParamName("point") Point point, @ParamName("y") int y, @ParamName("pos") IPos pos);
 
-	boolean isShowToPlayers();
+    boolean isShowToPlayers();
 
-	void offset(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+    void offset(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void offset(@ParamName("pos") IPos pos);
+    void offset(@ParamName("pos") IPos pos);
 
-	void offset(@ParamName("point") Point point);
+    void offset(@ParamName("point") Point point);
 
-	boolean removePoint(@ParamName("x") int x, @ParamName("z") int z);
+    boolean removePoint(@ParamName("x") int x, @ParamName("z") int z);
 
-	boolean removePoint(@ParamName("point") Point point);
+    boolean removePoint(@ParamName("point") Point point);
 
-	void scaling(@ParamName("radius") double radius, @ParamName("type") boolean type);
+    void scaling(@ParamName("radius") double radius, @ParamName("type") boolean type);
 
-	void scaling(@ParamName("scale") float scale, @ParamName("type") boolean type);
+    void scaling(@ParamName("scale") float scale, @ParamName("type") boolean type);
 
-	void setColor(@ParamName("color") int color);
+    void setColor(@ParamName("color") int color);
 
-	void setDimensionId(@ParamName("dimensionId") int dimensionId);
+    void setDimensionId(@ParamName("dimensionId") String dimensionId);
 
-	void setHomePos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+    void setHomePos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void setMessage(@ParamName("message") String message);
+    void setMessage(@ParamName("message") String message);
 
-	void setName(@ParamName("name") String name);
+    void setName(@ParamName("name") String name);
 
-	void setNbt(@ParamName("nbt") INbt nbt);
+    void setNbt(@ParamName("nbt") INbt nbt);
 
-	Point setPoint(@ParamName("index") int index, @ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+    Point setPoint(@ParamName("index") int index, @ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	Point setPoint(@ParamName("index") int index, @ParamName("pos") IPos pos);
+    Point setPoint(@ParamName("index") int index, @ParamName("pos") IPos pos);
 
-	Point setPoint(@ParamName("index") int index, @ParamName("point") Point point);
+    Point setPoint(@ParamName("index") int index, @ParamName("point") Point point);
 
-	Point setPoint(@ParamName("index") int index, @ParamName("point") Point point, @ParamName("y") int y);
+    Point setPoint(@ParamName("index") int index, @ParamName("point") Point point, @ParamName("y") int y);
 
-	void setShowToPlayers(@ParamName("show") boolean show);
+    void setShowToPlayers(@ParamName("show") boolean show);
 
-	int size();
+    int size();
 
-	void update();
+    void update();
 
-	Vec3d intersectsWithLine(@ParamName("startPos") Vec3d startPos, @ParamName("endPos") Vec3d endPos);
+    Vec3 intersectsWithLine(@ParamName("startPos") Vec3 startPos, @ParamName("endPos") Vec3 endPos);
 
 }

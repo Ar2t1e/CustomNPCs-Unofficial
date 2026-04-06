@@ -1,25 +1,28 @@
 package noppes.npcs.ai;
 
-import net.minecraft.entity.ai.EntityAIBase;
-import noppes.npcs.constants.AiMutex;
+import java.util.EnumSet;
+import net.minecraft.world.entity.ai.goal.Goal;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class EntityAITransform extends EntityAIBase {
+public class EntityAITransform extends Goal {
 
-	private final EntityNPCInterface npc;
+   private final EntityNPCInterface npc;
 
-	public EntityAITransform(EntityNPCInterface npc) {
-		this.npc = npc;
-		this.setMutexBits(AiMutex.PASSIVE);
-	}
+   public EntityAITransform(EntityNPCInterface npc) {
+      this.npc = npc;
+      this.setFlags(EnumSet.of(Flag.MOVE));
+   }
 
-	public boolean shouldExecute() {
-		boolean isDay = npc.world.getWorldTime() % 24000L < 12000L;
-		return !npc.isKilled() && !npc.isAttacking() && npc.transform.editingModus && isDay == npc.transform.isDay;
-	}
+   public boolean canUse() {
+      if (!this.npc.isKilled() && !this.npc.isAttacking() && !this.npc.transform.editingModus) {
+         return this.npc.level().isDay() == this.npc.transform.isActive;
+      } else {
+         return false;
+      }
+   }
 
-	public void startExecuting() {
-		npc.transform.transform(!npc.transform.isDay);
-	}
+   public void start() {
+      this.npc.transform.transform(!this.npc.transform.isActive);
+   }
 
 }

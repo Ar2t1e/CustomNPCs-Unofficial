@@ -1,18 +1,15 @@
 package noppes.npcs.roles;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.EventHooks;
-import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.RoleType;
@@ -22,178 +19,158 @@ import noppes.npcs.api.event.RoleEvent;
 import noppes.npcs.api.handler.data.IQuestObjective;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.TransportController;
-import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.controllers.data.PlayerTransportData;
-import noppes.npcs.controllers.data.QuestData;
-import noppes.npcs.controllers.data.TransportLocation;
+import noppes.npcs.controllers.data.*;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketChatBubble;
+import noppes.npcs.packets.server.SPacketDimensionTeleport;
+import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 
-	public String name = "";
-	private int ticks;
-	public int transportId;
+   protected int ticks = 10;
+   public int transportId = -1;
+   public String name;
 
-	public RoleTransporter(EntityNPCInterface npc) {
-		super(npc);
-		this.transportId = -1;
-		this.ticks = 10;
-		this.type = RoleType.TRANSPORTER;
-	}
+   public RoleTransporter(EntityNPCInterface npc) {
+      super(npc);
+      type = RoleType.TRANSPORTER;
+   }
 
-	@Override
-	public boolean aiShouldExecute() {
-		--this.ticks;
-		if (this.ticks > 0) {
-			return false;
-		}
-		this.ticks = 10;
-		if (!this.hasTransport()) {
-			return false;
-		}
-		TransportLocation loc = this.getLocation();
-		if (loc.type != 0) {
-			return false;
-		}
-		List<EntityPlayer> inRange = new ArrayList<>();
-		try {
-			inRange = this.npc.world.getEntitiesWithinAABB(EntityPlayer.class,
-					this.npc.getEntityBoundingBox().grow(6.0, 6.0, 6.0));
-		}
-		catch (Exception ignored) { }
-		for (EntityPlayer player : inRange) {
-			if (!this.npc.canSee(player)) {
-				continue;
-			}
-			this.unlock(player, loc);
-		}
-		return false;
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      super.save(compound);
+      compound.putInt("TransporterId", transportId);
+      return compound;
+   }
 
-	@Override
-	public TransportLocation getLocation() {
-		if (!this.npc.isServerWorld()) {
-			return null;
-		}
-		return TransportController.getInstance().getTransport(this.transportId);
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      super.load(compound);
+      type = RoleType.TRANSPORTER;
+      transportId = compound.getInt("TransporterId");
+      TransportLocation loc = getLocation();
+      if (loc != null) { name = loc.name; } else { name = ""; }
+   }
 
-	public boolean hasTransport() {
-		TransportLocation loc = this.getLocation();
-		return loc != null && loc.id == this.transportId;
-	}
+   @Override
+   public boolean aiShouldExecute() {
+      --ticks;
+       if (ticks <= 0) {
+           ticks = 10;
+           if (hasTransport()) {
+              TransportLocation loc = getLocation();
+              if (loc != null && loc.type == 0) {
+                 List<Player> inRange = npc.level().getEntitiesOfClass(Player.class, npc.getBoundingBox().inflate(6.0D, 6.0D, 6.0D));
+                 for (Player player : inRange) {
+                    if (npc.canSee(player)) { unlock(player, loc); }
+                 }
+              }
+           }
+       }
+       return false;
+   }
 
-	@Override
-	public void interact(EntityPlayer player) {
-		if (this.hasTransport()) {
-			TransportLocation loc = this.getLocation();
-			if (loc.type == 2) {
-				this.unlock(player, loc);
-			}
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.PlayerTransporter, this.npc);
-		}
-	}
+   @Override
+   public void interact(Player player) {
+      if (player instanceof ServerPlayer sPlayer) {
+         TransportLocation loc = getLocation();
+         if (loc != null) {
+            if (loc.type != 1) { unlock(player, loc); }
+            NoppesUtilServer.sendOpenGui(sPlayer, EnumGuiType.PlayerTransporter, npc);
+         }
+      }
+   }
 
-	private boolean isItemEqual(ItemStack stack, ItemStack other) {
-		return !other.isEmpty() && stack.getItem() == other.getItem()
-				&& (stack.getItemDamage() < 0 || stack.getItemDamage() == other.getItemDamage());
-	}
+   public void transport(ServerPlayer player, int location) {
+      TransportLocation loc = TransportController.getInstance().getTransport(location);
+      PlayerData playerdata = PlayerData.get(player);
+      if (loc.id > -1 && (loc.isDefault() || playerdata.transportData.transports.contains(loc.id))) {
+         RoleEvent.TransporterUseEvent event = new RoleEvent.TransporterUseEvent(player, npc.wrappedNPC, loc);
+         if (!EventHooks.onNPCRole(npc, event) && event.location != null) {
+            loc = (TransportLocation) event.location;
+            if (!player.isCreative()) {
+               if (loc.money > 0) {
+                  if (loc.money > playerdata.game.getMoney()) {
+                     player.sendSystemMessage(Component.translatable("transporter.hover.not.money"));
+                     return;
+                  }
+                  playerdata.game.addMoney(-1L * loc.money);
+               }
+               if (!loc.inventory.isEmpty()) {
+                  Map<ItemStack, Boolean> barterItems = Util.instance.getInventoryItemCount(player, loc.inventory);
+                  for (ItemStack stack : barterItems.keySet()) {
+                     if (!barterItems.get(stack)) {
+                        player.sendSystemMessage(Component.translatable("transporter.hover.not.money"));
+                        return;
+                     }
+                  }
+                  for (ItemStack stack : barterItems.keySet()) {
+                     int amount = stack.getCount();
+                     for (int i = 0; i < player.getInventory().getContainerSize(); ++i) {
+                        ItemStack is = player.getInventory().getItem(i);
+                        if (isItemEqual(stack, is)) {
+                           if (amount < is.getCount()) {
+                              is.split(amount);
+                              break;
+                           }
+                           player.getInventory().setItem(i, ItemStack.EMPTY);
+                           amount -= is.getCount();
+                        }
+                     }
+                  }
+                  player.containerMenu.broadcastChanges();
+                  CustomNPCsScheduler.runTack(() -> {
+                     for (QuestData data : playerdata.questData.activeQuests.values()) {
+                        for (IQuestObjective obj : data.quest
+                                .getObjectives((IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player))) {
+                           if (obj.getType() == 0) { playerdata.questData.checkQuestCompletion(player, data); }
+                        }
+                     }
+                  });
+               }
+            }
+            npc.say(player, new Line(Component.translatable("transporter.go.way").getString()));
+            SPacketDimensionTeleport.teleportPlayer(player, loc.dimension, loc.pos.getX(), loc.pos.getY(), loc.pos.getZ(), loc.yaw, loc.pitch);
+         }
+      }
+   }
 
-	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = RoleType.TRANSPORTER;
-		transportId = compound.getInteger("TransporterId");
-		TransportLocation loc = this.getLocation();
-		name = "";
-		if (loc != null) { name = loc.name; }
-	}
+   private void unlock(Player player, @Nonnull TransportLocation loc) {
+      PlayerTransportData data = PlayerData.get(player).transportData;
+      if (!data.transports.contains(transportId) && player instanceof ServerPlayer sPlayer) {
+         RoleEvent.TransporterUnlockedEvent event = new RoleEvent.TransporterUnlockedEvent(sPlayer, npc.wrappedNPC);
+         if (!EventHooks.onNPCRole(npc, event)) {
+            data.transports.add(transportId);
+            Packets.send(sPlayer, new PacketChatBubble(npc.getId(), Component.translatable("transporter.unlock",
+                    Component.translatable(loc.name).getString(),
+                    Component.translatable(loc.category.title).getString()), true));
+         }
+      }
+   }
 
-	public void setTransport(TransportLocation location) {
-		this.transportId = location.id;
-		this.name = location.name;
-		location.npc = this.npc.getUniqueID();
-	}
+   @Override
+   public @Nullable TransportLocation getLocation() {
+      return TransportController.getInstance().getTransport(transportId);
+   }
 
-	public void transport(EntityPlayerMP player, int id) {
-		TransportLocation loc = TransportController.getInstance().getTransport(id);
-		PlayerData playerdata = CustomNpcs.proxy.getPlayerData(player);
-		if (loc == null || (!loc.isDefault() && !playerdata.transportData.transports.contains(loc.id))) {
-			return;
-		}
-		RoleEvent.TransporterUseEvent event = new RoleEvent.TransporterUseEvent(player,
-				this.npc.wrappedNPC, loc.copy());
-		if (EventHooks.onNPCRole(this.npc, event) || event.location == null) {
-			return;
-		}
-		TransportLocation locEvent = (TransportLocation) event.location;
-		if (!player.capabilities.isCreativeMode) {
-			if (locEvent.money > 0) {
-				if (locEvent.money > playerdata.game.getMoney()) {
-					player.sendMessage(new TextComponentTranslation("transporter.hover.not.money"));
-					return;
-				}
-				playerdata.game.addMoney(-1L * locEvent.money);
-			}
-			if (!locEvent.inventory.isEmpty()) {
-				Map<ItemStack, Boolean> barterItems = Util.instance.getInventoryItemCount(player,
-						locEvent.inventory);
-				for (ItemStack stack : barterItems.keySet()) {
-					if (!barterItems.get(stack)) {
-						player.sendMessage(new TextComponentTranslation("transporter.hover.not.money"));
-						return;
-					}
-				}
-				for (ItemStack stack : barterItems.keySet()) {
-					int amount = stack.getCount();
-					for (int i = 0; i < player.inventory.getSizeInventory(); ++i) {
-						ItemStack is = player.inventory.getStackInSlot(i);
-						if (this.isItemEqual(stack, is)) {
-							if (amount < is.getCount()) {
-								is.splitStack(amount);
-								break;
-							}
-							player.inventory.setInventorySlotContents(i, ItemStack.EMPTY);
-							amount -= is.getCount();
-						}
-					}
-				}
-				player.inventoryContainer.detectAndSendChanges();
-				for (QuestData data : playerdata.questData.activeQuests.values()) {
-					for (IQuestObjective obj : data.quest
-							.getObjectives((IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player))) {
-						if (obj.getType() != 0) {
-							continue;
-						}
-						playerdata.questData.checkQuestCompletion(player, data);
-					}
-				}
-			}
-		}
-		NoppesUtilPlayer.teleportPlayer(player, locEvent.pos.getX(), locEvent.pos.getY(), locEvent.pos.getZ(),
-				locEvent.dimension, locEvent.yaw, locEvent.pitch);
-	}
+   public boolean hasTransport() {
+      TransportLocation loc = getLocation();
+      return loc != null && loc.id == transportId;
+   }
 
-	private void unlock(EntityPlayer player, TransportLocation loc) {
-		PlayerTransportData data = CustomNpcs.proxy.getPlayerData(player).transportData;
-		if (data.transports.contains(this.transportId)) {
-			return;
-		}
-		RoleEvent.TransporterUnlockedEvent event = new RoleEvent.TransporterUnlockedEvent(player, this.npc.wrappedNPC);
-		if (EventHooks.onNPCRole(this.npc, event)) {
-			return;
-		}
-		data.transports.add(this.transportId);
-		player.sendMessage(new TextComponentTranslation("transporter.unlock",
-				new TextComponentTranslation(loc.name).getFormattedText(),
-				new TextComponentTranslation(loc.category.title).getFormattedText()));
-	}
+   public void setTransport(TransportLocation location) {
+      transportId = location.id;
+      name = location.name;
+   }
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setInteger("TransporterId", this.transportId);
-		return compound;
-	}
+   // New from Unofficial (BetaZavr)
+   private boolean isItemEqual(ItemStack stack, ItemStack other) {
+      return !other.isEmpty() && stack.getItem() == other.getItem();
+   }
+
 }

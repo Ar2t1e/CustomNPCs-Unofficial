@@ -1,6 +1,6 @@
 {
     "parent": "item/handheld",
     "textures": {
-        "layer0": "customnpcs:items/builder"
+        "layer0": "customnpcs:item/builder"
     }
 }

@@ -1,192 +1,216 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.entity.player.Player;
 import noppes.npcs.api.*;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.data.IPlayerMail;
-import noppes.npcs.api.entity.data.IPlayerMiniMap;
 import noppes.npcs.api.gui.ICustomGui;
-import noppes.npcs.api.gui.IOverlayHUD;
 import noppes.npcs.api.handler.data.IQuest;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.overlay.IOverlay;
 
 @SuppressWarnings("all")
-public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
+public interface IPlayer<T extends Player> extends IEntityLiving<T> {
 
-	void addDialog(@ParamName("id") int id);
+   String getDisplayName();
 
-	void addFactionPoints(@ParamName("faction") int faction, @ParamName("points") int points);
+   boolean hasFinishedQuest(@ParamName("id") int id);
 
-	void addMoney(@ParamName("value") long value);
+   boolean hasActiveQuest(@ParamName("id") int id);
 
-	void cameraShakingPlay(@ParamName("time") int time, @ParamName("amplitude") int amplitude,
-						   @ParamName("type") int type, @ParamName("isFading") boolean isFading);
+   void startQuest(@ParamName("id") int id);
 
-	void cameraShakingStop();
+   int factionStatus(@ParamName("id") int id);
 
-	boolean canQuestBeAccepted(@ParamName("id") int id);
+   void finishQuest(@ParamName("id") int id);
 
-	void clearData();
+   void stopQuest(@ParamName("id") int id);
 
-	void closeGui();
+   void removeQuest(@ParamName("id") int id);
 
-	void completeQuest(@ParamName("id") int id);
+   boolean hasReadDialog(@ParamName("id") int id);
 
-	int factionStatus(@ParamName("id") int id);
+   void showDialog(@ParamName("id") int id, @ParamName("name") String name);
 
-	boolean finishQuest(@ParamName("id") int id);
+   void showSoundSelectionGUI();
 
-	IQuest[] getActiveQuests();
+   void removeDialog(@ParamName("id") int id);
 
-	IContainer getBubblesInventory();
+   void addDialog(@ParamName("id") int id);
 
-	ICustomGui getCustomGui();
+   void addFactionPoints(@ParamName("id") int id, @ParamName("points") int points);
 
-	String getDisplayName();
+   int getFactionPoints(@ParamName("id") int id);
 
-	int getExpLevel();
+   void message(@ParamName("message") String message);
 
-	int getFactionPoints(@ParamName("id") int id);
+   int getGamemode();
 
-	IQuest[] getFinishedQuests();
+   void setGamemode(@ParamName("mode") int mode);
 
-	int getGamemode();
+   /** @deprecated */
+   @Deprecated
+   int inventoryItemCount(@ParamName("stack") IItemStack stack);
 
-	int getHunger();
+   /** @deprecated */
+   @Deprecated
+   int inventoryItemCount(@ParamName("name") String name);
 
-	IContainer getInventory();
+   IContainer getInventory();
 
-	IItemStack getInventoryHeldItem();
+   IItemStack getInventoryHeldItem();
 
-	int[] getKeyPressed();
+   boolean removeItem(@ParamName("stack") IItemStack stack, @ParamName("count") int count);
 
-	String getLanguage();
+   boolean removeItem(@ParamName("name") String name, @ParamName("count") int count);
 
-	T getMCEntity();
+   void removeAllItems(@ParamName("stack") IItemStack stack);
 
-	IPlayerMiniMap getMiniMapData();
+   boolean giveItem(@ParamName("stack") IItemStack stack);
 
-	long getMoney();
+   boolean giveItem(@ParamName("id") String id, @ParamName("amount") int amount);
 
-	int[] getMousePressed();
+   void setSpawnpoint(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	IContainer getOpenContainer();
+   void resetSpawnpoint();
 
-	IOverlayHUD getOverlayHUD();
+   boolean hasAdvancement(@ParamName("name") String name);
 
-	Object getPixelmonData();
+   int getExpLevel();
 
-	String getSkinType(@ParamName("type") int type);
+   void setExpLevel(@ParamName("level") int level);
 
-	IBlock getSpawnPoint();
+   boolean hasPermission(@ParamName("permissionName") String permissionName);
 
-	ITimers getTimers();
+   Object getPixelmonData();
 
-	double[] getWindowSize();
+   ITimers getTimers();
 
-	boolean giveItem(@ParamName("item") IItemStack item);
+   void closeGui();
 
-	boolean giveItem(@ParamName("id") String id, @ParamName("damage") int damage, @ParamName("amount") int amount);
+   T getMCEntity();
 
-	boolean hasAchievement(@ParamName("achievement") String achievement);
+   IBlock getSpawnPoint();
 
-	boolean hasActiveQuest(@ParamName("id") int id);
+   void setSpawnPoint(@ParamName("block") IBlock block);
 
-	boolean hasFinishedQuest(@ParamName("id") int id);
+   int getHunger();
 
-	boolean hasMousePress(@ParamName("key") int key);
+   void setHunger(@ParamName("level") int level);
 
-	boolean hasOrKeyPressed(@ParamName("key") int[] key);
+   void kick(@ParamName("message") String message);
 
-	boolean hasPermission(@ParamName("permission") String permission);
+   void sendNotification(@ParamName("title") String title, @ParamName("message") String message, @ParamName("type") int type);
 
-	boolean hasReadDialog(@ParamName("id") int id);
+   void sendMail(@ParamName("mail") IPlayerMail mail);
 
-	@Deprecated
-	int inventoryItemCount(@ParamName("item") IItemStack item);
+   void clearData();
 
-	int inventoryItemCount(@ParamName("id") IItemStack stack, @ParamName("ignoreDamage") boolean ignoreDamage, @ParamName("ignoreNBT") boolean ignoreNBT);
+   IQuest[] getActiveQuests();
 
-	@Deprecated
-	int inventoryItemCount(@ParamName("id") String id, @ParamName("amount") int amount);
+   IQuest[] getFinishedQuests();
 
-	boolean isCompleteQuest(@ParamName("id") int id);
+   void updatePlayerInventory();
 
-	boolean isMoved();
+   void playSound(@ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
 
-	void kick(@ParamName("message") String message);
+   void playMusic(@ParamName("sound") String sound, @ParamName("background") boolean background, @ParamName("loops") boolean loops);
 
-	void message(@ParamName("message") String message);
+   IContainer getOpenContainer();
 
-	void playSound(@ParamName("categoryType") int categoryType, @ParamName("pos") IPos pos,
-				   @ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
+   boolean canQuestBeAccepted(@ParamName("id") int id);
 
-	void playSound(@ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
+   void showCustomGui(@ParamName("gui") ICustomGui gui);
 
-	void removeAllItems(@ParamName("item") IItemStack item);
+   ICustomGui getCustomGui();
 
-	void removeDialog(@ParamName("id") int id);
+   void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
 
-	boolean removeItem(@ParamName("item") IItemStack item, @ParamName("amount") int amount);
+   // New from Unofficial (Goodbird)
+   void showOverlay(@ParamName("overlay") IOverlay overlay);
 
-	boolean removeItem(@ParamName("id") String id, @ParamName("damage") int damage, @ParamName("amount") int amount);
+   void hideOverlay(@ParamName("overlayType") int overlayType);
 
-	void removeQuest(@ParamName("id") int id);
+   void hideAllOverlays();
 
-	void resetSpawnpoint();
+   IPlayerSkin getSkin();
 
-	void sendMail(@ParamName("mail") IPlayerMail mail);
+   IPlayerSkin getSkin(@ParamName("type") int type);
 
-	void sendNotification(@ParamName("title") String title, @ParamName("message") String message, @ParamName("type") int type);
+   // New from Unofficial (BetaZavr)
+   void addMoney(@ParamName("value") long value);
 
-	void sendTo(@ParamName("nbt") INbt nbt);
+   void cameraShakingPlay(@ParamName("time") int time, @ParamName("amplitude") int amplitude,
+                          @ParamName("type") int type, @ParamName("isFading") boolean isFading);
 
-	void setExpLevel(@ParamName("level") int level);
+   void cameraShakingStop();
 
-	void setGamemode(@ParamName("mode") int mode);
+   void completeQuest(@ParamName("id") int id);
 
-	void setHunger(@ParamName("level") int level);
+   IContainer getBubblesInventory();
 
-	void setMoney(@ParamName("value") long value);
+   int[] getKeyPressed();
 
-	void setSkin(@ParamName("isSmallArms") boolean isSmallArms,
-				 @ParamName("body") int body, @ParamName("bodyColor") int bodyColor,
-				 @ParamName("hair") int hair, @ParamName("hairColor") int hairColor,
-				 @ParamName("face") int face, @ParamName("eyesColor") int eyesColor,
-				 @ParamName("leg") int leg, @ParamName("jacket") int jacket,
-				 @ParamName("shoes") int shoes, @ParamName("peculiarities") int... peculiarities);
+   String getLanguage();
 
-	void setSkinType(@ParamName("location") String location, @ParamName("type") int type);
+   //IPlayerMiniMap getMiniMapData();
 
-	void setSpawnpoint(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   long getMoney();
 
-	void setSpawnPoint(@ParamName("block") IBlock block);
+   int[] getMousePressed();
 
-	@Deprecated
-	IContainer showChestGui(@ParamName("rows") int rows);
+   //IOverlayHUD getOverlayHUD();
 
-	void showCustomGui(@ParamName("gui") ICustomGui gui);
+   String getSkinType(@ParamName("type") int type);
 
-	void showDialog(@ParamName("id") int id, @ParamName("name") String name);
+   IScreenSize getWindowSize();
 
-	void startQuest(@ParamName("id") int id);
+   boolean hasMousePress(@ParamName("key") int key);
 
-	void stopQuest(@ParamName("id") int id);
+   boolean hasOrKeyPressed(@ParamName("key") int[] key);
 
-	void stopSound(@ParamName("categoryType") int categoryType, @ParamName("sound") String sound);
+   @Deprecated
 
-	void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
+   int inventoryItemCount(@ParamName("stack") IItemStack stack, @ParamName("ignoreDamage") boolean ignoreDamage, @ParamName("ignoreNBT") boolean ignoreNBT);
 
-	void updatePlayerInventory();
+   @Deprecated
+   int inventoryItemCount(@ParamName("id") String id, @ParamName("amount") int amount);
 
-	IEntity<?> getRidingEntity();
-	
-	IEntity<?> getLookingEntity();
-	
-	IBlock getLookingBlock();
-	
-	double getBlockReachDistance();
+   boolean isCompleteQuest(@ParamName("id") int id);
 
-	void showMarket(@ParamName("marcetId") int marcetId);
+   boolean isMoved();
+
+   void playSound(@ParamName("category") int category, @ParamName("pos") IPos pos,
+                  @ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
+
+   void sendTo(@ParamName("nbt") INbt nbt);
+
+   void setMoney(@ParamName("value") long value);
+
+   void setSkin(@ParamName("type") int type, @ParamName("gender") int gender,
+                @ParamName("body") int body, @ParamName("bodyColor") int bodyColor,
+                @ParamName("hair") int hair, @ParamName("hairColor") int hairColor,
+                @ParamName("face") int face, @ParamName("eyesColor") int eyesColor,
+                @ParamName("leg") int leg, @ParamName("jacket") int jacket,
+                @ParamName("shoes") int shoes, @ParamName("peculiarities") int... peculiarities);
+
+   void setSkinType(@ParamName("type") int type, @ParamName("location") String location);
+
+   void stopSound(@ParamName("category") int category, @ParamName("sound") String sound);
+
+   IEntity<?> getRidingEntity();
+
+   IEntity<?> getLookingEntity();
+
+   IBlock getLookingBlock();
+
+   double getBlockReachDistance();
+
+   void showMarket(@ParamName("marcetID") int marcetID);
+
+   IScreenSize getScreenSize();
+
+   void showBank(@ParamName("bankId") int bankId);
 
 }

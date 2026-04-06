@@ -1,0 +1,27 @@
+{
+	"name": "part.breasts",
+	"parent": "moreplayermodels:parts/body/breasts.json",
+	"render_type": "simple",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{
+				"texture_position": [20, 22],
+				"part_size": [8, 4],
+				"scale": [0.225, 0.20, 2.0],
+				"translate": [-3.6, 5, -3.1],
+				"rotate": [-18.0, 0.0, 0.0],
+				"rotate_offset": [0.0, 0.0, 0.0]
+			}
+		]
+	},
+	"body_part": "body",
+	"menu": "part.body",
+	"preview_rotation": -45,
+	"translate": [0, 0.0, 0.0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0, 0],
+	"rotate": [0.0, 0, 0.0],
+	"default_use_player_skins" : true,
+	"author": "Noppes"
+}

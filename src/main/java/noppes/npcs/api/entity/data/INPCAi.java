@@ -1,103 +1,116 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.constants.EnumSeeTarget;
 
-@SuppressWarnings("all")
 public interface INPCAi {
 
-	int getAnimation();
+   int getAnimation();
 
-	boolean getAttackInvisible();
+   void setAnimation(@ParamName("type") int type);
 
-	boolean getAttackLOS();
+   int getCurrentAnimation();
 
-	boolean getAvoidsWater();
+   void setReturnsHome(@ParamName("bo") boolean bo);
 
-	boolean getCanSwim();
+   boolean getReturnsHome();
 
-	int getCurrentAnimation();
+   int getRetaliateType();
 
-	int getDoorInteract();
+   void setRetaliateType(@ParamName("type") int type);
 
-	boolean getInteractWithNPCs();
+   int getMovingType();
 
-	boolean getLeapAtTarget();
+   void setMovingType(@ParamName("type") int type);
 
-	boolean getMovingPathPauses();
+   int getNavigationType();
 
-	int getMovingPathType();
+   void setNavigationType(@ParamName("type") int type);
 
-	int getMovingType();
+   int getStandingType();
 
-	int getNavigationType();
+   void setStandingType(@ParamName("type") int type);
 
-	int getRetaliateType();
+   boolean getAttackInvisible();
 
-	boolean getReturnsHome();
+   void setAttackInvisible(@ParamName("attack") boolean attack);
 
-	int getSheltersFrom();
+   int getWanderingRange();
 
-	int getStandingType();
+   void setWanderingRange(@ParamName("range") int range);
 
-	boolean getStopOnInteract();
+   boolean getInteractWithNPCs();
 
-	int getTacticalRange();
+   void setInteractWithNPCs(@ParamName("interact") boolean interact);
 
-	int getTacticalType();
+   boolean getStopOnInteract();
 
-	int getWalkingSpeed();
+   void setStopOnInteract(@ParamName("stopOnInteract") boolean stopOnInteract);
 
-	int getWanderingRange();
+   int getWalkingSpeed();
+
+   void setWalkingSpeed(@ParamName("speed") int speed);
+
+   int getMovingPathType();
+
+   boolean getMovingPathPauses();
+
+   void setMovingPathType(@ParamName("type") int type, @ParamName("pauses") boolean pauses);
+
+   int getDoorInteract();
+
+   void setDoorInteract(@ParamName("type") int type);
+
+   boolean getCanSwim();
+
+   void setCanSwim(@ParamName("canSwim") boolean canSwim);
+
+   int getSheltersFrom();
+
+   void setSheltersFrom(@ParamName("type") int type);
+
+   boolean getAvoidsWater();
+
+   void setAvoidsWater(@ParamName("enabled") boolean enabled);
+
+   boolean getLeapAtTarget();
+
+   void setLeapAtTarget(@ParamName("leap") boolean leap);
+
+   void setMountControl(@ParamName("enabled") boolean enabled);
+
+   // New methods from Unofficial (BetaZavr)
+   boolean isAIDisabled();
+
+   void setIsAIDisabled(@ParamName("bo") boolean bo);
+
+   float getOffsetX();
+
+   float getOffsetY();
+
+   float getOffsetZ();
+
+   void setOffset(@ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
 
     int getMaxHurtResistantTime();
 
-    void setAnimation(@ParamName("type") int type);
+   void setMaxHurtResistantTime(@ParamName("ticks") int ticks);
 
-	void setAttackInvisible(@ParamName("attack") boolean attack);
+    // in 1.12.2
+    int getTacticalRange();
 
-	void setAttackLOS(@ParamName("enabled") boolean enabled);
+   void setTacticalRange(int range);
 
-	void setAvoidsWater(@ParamName("enabled") boolean enabled);
+   int getTacticalType();
 
-	void setCanSwim(@ParamName("canSwim") boolean canSwim);
+   void setTacticalType(int type);
 
-	void setDoorInteract(@ParamName("type") int type);
+   // New from Unofficial (BetaZavr)
+   EnumSeeTarget getAttackLOS();
 
-	void setInteractWithNPCs(@ParamName("interact") boolean interact);
+   void setAttackLOS(@ParamName("type") int type);
 
-	void setLeapAtTarget(@ParamName("leap") boolean leap);
+   boolean canBeCollide();
 
-	void setMovingPathType(@ParamName("type") int type, @ParamName("pauses") boolean pauses);
-
-	void setMovingType(@ParamName("type") int type);
-
-	void setNavigationType(@ParamName("type") int type);
-
-	void setRetaliateType(@ParamName("type") int type);
-
-	void setReturnsHome(@ParamName("bo") boolean bo);
-
-	void setSheltersFrom(@ParamName("type") int type);
-
-	void setStandingType(@ParamName("type") int type);
-
-	void setStopOnInteract(@ParamName("stopOnInteract") boolean stopOnInteract);
-
-	void setTacticalRange(@ParamName("range") int range);
-
-	void setTacticalType(@ParamName("type") int type);
-
-	void setWalkingSpeed(@ParamName("speed") int speed);
-
-	void setWanderingRange(@ParamName("range") int range);
-
-	void setMaxHurtResistantTime(@ParamName("ticks") int ticks);
-
-	boolean isAIDisabled();
-	
-	void setIsAIDisabled(@ParamName("aiDisabled") boolean aiDisabled);
-
-    boolean canBeCollide();
-
-	void setCanBeCollide(@ParamName("bo") boolean bo);
+   void setCanBeCollide(boolean bo);
 }

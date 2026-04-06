@@ -1,333 +1,356 @@
-# CustomNPCs Unofficial by BetaZavr
+# CustomNPCs Unofficial от BetaZavr
 [![CurseForge](http://cf.way2muchnoise.eu/full_1086839_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/customnpcs-unofficial-from-betazavr/files/all?page=1&pageSize=20)
 [![CurseForge](http://cf.way2muchnoise.eu/versions/For%20MC_1086839_all.svg)](https://www.curseforge.com/minecraft/mc-mods/customnpcs-unofficial-from-betazavr)
-[![License: CC BY-NC 3.0](https://img.shields.io/badge/License-CC%20BY--NC%203.0-lightgrey.svg)](http://creativecommons.org/licenses/by-nc/3.0/) 
+[![License: CC BY-NC 3.0](https://img.shields.io/badge/License-CC%20BY--NC%203.0-lightgrey.svg)](http://creativecommons.org/licenses/by-nc/3.0/)
 
 [![Download mod: GitHub](https://img.shields.io/badge/Download%20mod-from%20GitHub-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/tag/first)
 
-[![Discord Server for Discussion](https://discordapp.com/api/guilds/558230575278981120/widget.png?style=banner3)](https://discord.gg/RGb4JqE6Qz)
+[![Discord Server for Discussion](https://discordapp.com/api/guilds/177204059109982208/widget.png?style=banner3)](https://discord.gg/RGb4JqE6Qz)
 
 ## Welcome to CustomNPCs Unofficial
-CustomNPCs - modification For Minecraft games designed For creation own kart V RPG genre . A huge set of tools for creating your own NPCs and their abilities, custom blocks and items, quests and other game elements.
+CustomNPCs — модификация для игры Minecraft, предназначенная для создания собственных карт в жанре RPG. Огромный набор инструментов для создания собственных NPC и их возможностей, собственных блоков и предметов, квестов и других игровых элементов.
 
-This is an unofficial repository of the Custom mod code . NPCs .
+Это неофициальный репозиторий кода мода Custom NPCs.
 
-The code for version 1.20.1 is not available for the same reason.
+Данный код опубликован с разрешения автора на условиях **[Creative Commons Attribution-Non Commercial 3.0 Unported license](http://creativecommons.org/licenses/by-nc/3.0/)** для CustomNPC.
 
-Official **[website](https://www.kodevelopment.nl/minecraft/customnpcs)**.
+Код для версии 1.20.1 недоступен по этой же причине.
 
-<span style="color: #ff0000;">**Attention - this is important!**</span>
-The modification provides extensive capabilities for writing scripts not only for the server-side but also for the client-side. Therefore:
+Официальный **[сайт](https://www.kodevelopment.nl/minecraft/customnpcs)**.
 
-For mod users:
-* This could be exploited by malicious actors. Download maps or connect to servers you know you trust!
+<span style="color: #ff0000;">**Внимание — это важно!**</span>
 
-For server owners:
-* The coder is given the ability to process packets, reflect, work with files, etc. Choose your programmers carefully.
+Для пользователей мода:
 
-## Differences from the original CustomNPCs mod by Noppes (or Goodbird):
-Currently, everything written below applies to version **1.12.2**. Game version **1.20.1** currently only has a subset of these mechanics!
+В отличие от оригинального мода, я специально добавил пользовательское соглашение, которое вы получите при попытке подключиться к новому игровому серверу или первый вход на карту (с моим модом).
+Это связано с тем, что модификация позволяет писать скрипты, чем могут воспользоваться недоброжелатели. Скачивайте карты или подключайтесь к серверам, которым вы точно доверяете!
+Без принятия этого соглашения в не сможете начать игру, деже с уже созданными ранее картами.
 
-### Additional mods required:
-A library of mixins for the corresponding game version. Compatible with both versions of the mod [MixinBootstrap-1.1.0](https://www.curseforge.com/minecraft/mc-mods/mixinbootstrap/download/3437402)
+Для владельцев серверов и карто-строителей:
+
+Внимательно подходите к выбору ваших программистов скриптового кода. Модификация предоставляет возможность писать скрипты на многих языках, а API мода даёт возможность обработки событий, пакетов, игровых данных игроков, в том числе и для клиентской стороны.
+Некоторые из этих языков скриптования предоставляют возможность работать с файлами сервера. А сильно грамматные программисты могут получить доступ к любым данным.
+
+Прошу учитывать, я не могу нести ответственность за действия пользователей мода!
+
+## Отличия от оригинального мода CustomNPCs от Noppes (или Goodbird):
+В данный момент всё написанное ниже относится к версии **1.12.2**. Версия игры **1.20.1** пока имеет лишь часть этих механик!
+
+### Требуются дополнительные моды:
+Библиотека миксинов на соответствующую версию игры. Подходит на обе версии мода [MixinBootstrap-1.1.0](https://www.curseforge.com/minecraft/mc-mods/mixinbootstrap/download/3437402)
 
 ### API's:
-To write your own scripts quickly and easily, use this mod:
-1. Download **[Visual Studio Code](https://code.visualstudio.com/Download)**;
-2. Download latest version of the **TypeScript Configuration**:
-- [![English API: 1.12.2](https://img.shields.io/badge/English%20API-1.12.2-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.12.2.TypeScript.Configuration.EN.Package_API.v4.432_no.comments.rar)
-   [![Russian API: 1.12.2](https://img.shields.io/badge/Russian%20API-1.12.2-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.12.2.TypeScript.Configuration.RU.Package_API.v4.432_no.comments.rar)
-- [![English API: 1.20.1](https://img.shields.io/badge/English%20API-1.20.1-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.20.1.TypeScript.Configuration.EN.Package_API.v1.1010_no.comments.rar)
-   [![Russian API: 1.20.1](https://img.shields.io/badge/Russian%20API-1.20.1-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.20.1.TypeScript.Configuration.RU.Package_API.v1.1010_no.comments.rar)
-3. Unzip the archive to a convenient location;
-4. In **Visual Studio Code**, **Open Folder...** where you unzipped the **TypeScript Configuration**;
-5. Write your code however you like. There's an example in "example.js" file.
+Чтобы писать свои скрипты быстро, удобно на эту модификацию:
+1. Скачайте **[Visual Studio Code](https://code.visualstudio.com/Download)**;
+2. Скачайте последнюю версию **TypeScript Configuration**:
+- [![English API: 1.12.2](https://img.shields.io/badge/English%20API-1.12.2-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.12.2.TypeScript.Configuration.EN.Package.API.v4.432.no.comments.rar)
+  [![Russian API: 1.12.2](https://img.shields.io/badge/Russian%20API-1.12.2-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.12.2.TypeScript.Configuration.RU.Package.API.v4.432.no.comments.rar)
+- [![English API: 1.20.1](https://img.shields.io/badge/English%20API-1.20.1-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.20.1.TypeScript.Configuration.EN.Package.API.v1.010.no.comments.rar.rar)
+  [![Russian API: 1.20.1](https://img.shields.io/badge/Russian%20API-1.20.1-lightgrey.svg)](https://github.com/BetaZavr/CustomNPCs_1.12.2-Unofficial/releases/download/first/1.20.1.TypeScript.Configuration.RU.Package.API.v1.010.no.comments.rar)
+3. Распакуйте архив в удобное место;
+4. В **Visual Studio Code** **Open Folder...**, в которую вы распаковали **TypeScript Configuration**;
+5. Пишите код как душа пожелает. Имеется пример в файле "example.js"
 
 ### Mod Code:
-1. The mod configuration controls most of the new and old mechanics;
-2. Some mechanics are marked as **WIP** (work in progress) - such mechanics are either disabled or may not work correctly;
-3. Added a GUI for player consent to play with this mod when trying to connect to servers or enter a map.
-4. <span style="background-color: #80808040;">Availabi<i style="color: red;">t</i>i<i style="color: red;">l</i>y</span> everywhere corrected on <span style="background-color: #80808040;">Availabi<i style="color: green;">l</i>i<i style="color: green;">t</i>y</span>;
-5. Fixed names of some localization keys;
-6. Availability Class **Availability** - conditions corrected:
-* added a setting for checking the player's name;
-* added a setting for checking player health;
-* added a setting for checking custom regions;
-* added a setting for checking the player's script data **StoredData**;
-* added a setting for checking virtual currency;
-* added a setting to check for the presence of items in the player's inventory;
-* Improved time of day checking settings, now you can specify a specific time;
-7. Improved **TranslateUtil** (class for text translation):
-* The method of text translation has been changed. You can specify language codes;
-* finally added a method to play sound for the player;
-8. NPC **EntityEnderFX** particles have been pre-restored to the model;
-9. Renderer **BlockMailboxRenderer** (block for letters) the rotation of the model has been restored meta date;
-10. The way mod configuration is loaded has been changed. More data types and structured;
-11. Added a debugging system **DataDebug** for mod methods to track micro freezes (heavily loads the system);
-12. All methods of handling script events **EventHooks** have been changed. More custom call;
-13. All mixins are set to mixing priority ID:499 (base 1000);
-14. Most of the mixins those responsible for **Get**/**Set** were rewritten to use reflection to eliminate possible conflicts between mods;
-15. **CustomNpcsPermissions** permissions have been improved:
-* now they are all prohibited by default;
-* can be configured through the **permissions.json** file by adding the names of players to each permission (the file is created in the map section/folder);
-16. New permissions:
-* EDIT_PERMISSION - allows changing players permissions;
-* EDIT_CLIENT_SCRIPT - allows editing of client scripts;
-* GLOBAL_MARKETS - allows editing stores;
-* GLOBAL_AUCTIONS - allows editing auctions (WIP);
-* GLOBAL_MAIL - allows editing mail settings;
-* MONEY_MANAGER - allows viewing and changing players virtual currency;
-* DONAT_MANAGER - allows viewing and changing players donations;
-17. Method **NBTJsonUtil.Convert(CompoundTag compound)** now sorts key names alphabetically;
-18. The logs mod logging **LogWriter** has been reworked to not create separate files;
-19. Drop system added:
-* loot/inventory changes see below;
-* each item can be customized:
-* specify the minimum and maximum quantity;
-* specify options for enchantments , attributes, tags;
-* automatic creation of settings for a specified subject (for the lazy or those who don’t understand it);
-* the ability to create templates from several drop items;
-20. Region system added:
-* polygon shape;
-* there are events of entry and exit to the region;
-* a special item has been created to make editing regions easier;
+1. Конфигурация мода управляет большей частью новых и старых механик;
+2. Некоторые механики помечены как **WIP** (работы в процессе) - такие механики либо отключены, либо могут работать не корректно;
+3. Добавлен ГУИ согласия игрока на игру с этим модом при попытке подключиться к серверам или вход на карту.
+4. <span style="background-color: #80808040;">Availabi<i style="color: red;">t</i>i<i style="color: red;">l</i>y</span> везде исправлено на <span style="background-color: #80808040;">Availabi<i style="color: green;">l</i>i<i style="color: green;">t</i>y</span>;
+5. Исправлены имена некоторых локализационных ключей;
+6. Класс Доступности **Availability** - исправлены условия:
+* добавлена настройка проверки имени игрока;
+* добавлена настройка проверки здоровья игрока;
+* добавлена настройка проверки кастомных регионов;
+* добавлена настройка проверки скриптовых данных **StoredData** игрока;
+* добавлена настройка проверки виртуальной валюты;
+* добавлена настройка проверки наличия предметов в инвентаре игрока;
+* улучшена настройка проверки времени суток, можно указать конкретное время;
+7. Улучшен **TranslateUtil** (класс для перевода текста):
+* изменён способ перевода текста. Можно указать коды языков;
+* наконец-то добавлен метод воспроизведения звука для игрока;
+8. Предварительно восстановлены частицы NPC **EntityEnderFX** на модель;
+9. Рендер **BlockMailboxRenderer** (блок для писем) восстановлено вращение модели по мета дате;
+10. Изменен способ загрузки конфигурации мода. Больше типов данных и структурировано;
+11. Добавлена система отладки **DataDebug** методов мода для отслеживания микро фризов (сильно нагружает систему);
+12. Изменены все способы обработки скриптовых событий **EventHooks**. Более кастомный вызов;
+13. Всем миксинам установлен приоритет миксования ID:499 (базовый 1000);
+14. Большая часть миксинов отвечающих за **Get**/**Set** была переписана на рефлексию, чтобы исключить возможные конфликты между модами;
+15. Доработаны разрешения **CustomNpcsPermissions**:
+* теперь по-умолчанию они все запрещены;
+* настроить можно через файл **permissions.json** добавляя имена игроков в каждое разрешение (файл создаётся в разделе/папке карты);
+16. Новые разрешения:
+* EDIT_PERMISSION - разрешает изменять разрешения у игроков;
+* EDIT_CLIENT_SCRIPT - разрешает редактирование скриптов клиента;
+* GLOBAL_MARKETS - разрешает редактировать магазины;
+* GLOBAL_AUCTIONS - разрешает редактировать аукционы (WIP);
+* GLOBAL_MAIL - разрешает редактировать настройки почты;
+* MONEY_MANAGER - разрешает просматривать и изменять виртуальную валюту игроков;
+* DONAT_MANAGER - разрешает просматривать и изменять донат игроков;
+17. Метод **NBTJsonUtil.Convert(CompoundTag compound)** теперь сортирует имена ключей по алфавиту;
+18. Журнал логов мода **LogWriter** переделан, чтобы не создавать отдельные файлы;
+19. Добавлена система дропа:
+* изменения лута/инвентаря NPC смотри ниже;
+* каждый предмет можно кастомизировать:
+* указать минимальное и максимальное количество;
+* указать варианты зачарований, атрибутов, тегов;
+* авто создание настроек по указанному предмету (для ленивых или не разбирающихся);
+* возможность создавать шаблоны из нескольких дроп-предметов;
+20. Добавлена система регионов:
+* форма многоугольника;
+* имеются события входа и выхода в регион;
+* создан специальный предмет для удобства редактирования регионов;
+21. Пузыри чата:
+* теперь доступны и для игроков;
+* можно настроить цвета через конфигурацию мода;
+22. Добавление/регистрация кастомных элементов игры через файлы:
+* собственные блоки: простые, полу-блоки, жидкости, двери, контейнеры, порталы;
+* собственные предметы: простые, оружие ближнего боля, луки, инструменты, щиты, броня (в том числе с OBJ моделью), еда, удочка;
+* собственные жидкости;
+* собственные зелья (управление через скрипты);
+* собственные частицы (управление через скрипты);
+* собственные измерения;
 
-### Command block commands added or changed:
-1. scripts **CmdScript**:
-* **/noppes script reload** - more reloads;
-* **/noppes script logs** - (new) displays all detected errors and script elements with logs in the chat;
-* **/noppes script apilist** - (new) displays all mod APIs for your scripts in the chat;
-* **/noppes script clientlist** - (new) displays the names of all Forge events for the client in the chat;
-* **/noppes script forgelist** - (new) displays the names of all Forge events for the server in the chat;
-* **/noppes script list <type>** - (new) displays in the chat all detected errors and script elements with logs for the specified types of script elements;
-2. configuration **CmdConfig**:
-* **/noppes config report** - (new) displays names, running time, and number of mod method runs in the chat and console (helps find freezes);
-* **/noppes config clear** - (new) clear the freeze catch lists;
-3. (new) virtual currency **CmdMoney**:
-* **/moneynpc ** - information about the team;
-* **/moneynpc get money/donat <player>** - information about the player's balance;
-* **/moneynpc set money/donat <player> <value>** - set the player's balance;
-* **/moneynpc add money/donat <player> <value>** - add balance to the player (negative value is possible);
-* **/moneynpc pay <player> <value>** - transfer coins to another player. A fee is charged (see the mod configuration);
-* you can't pay yourself;
-4. (new) permissions **CmdPermissions**:
-* **/noppes permissions** - open the permissions editing window;
+### Добавлены или изменены команды командного блока:
+1. скрипты **CmdScript**:
+* **/noppes script reload** - больше перезагрузок;
+* **/noppes script logs** - (новая) выводит в чат все обнаруженные ошибки и скриптовые элементы с логами;
+* **/noppes script apilist** - (новая) выводит в чат все API мода для ваших скриптов;
+* **/noppes script clientlist** - (новая) выводит в чат имена всех событий Forge для клиента;
+* **/noppes script forgelist** - (новая) выводит в чат имена всех событий Forge для сервера;
+* **/noppes script list <type>** - (новая) выводит в чат все обнаруженные ошибки и скриптовые элементы с логами для указанных типов скриптовых элементов;
+2. конфигурация **CmdConfig**:
+* **/noppes config report** - (новая) выводит в чат и в консоль имена, время работы и количество запусков методов мода (помогает найти фризы);
+* **/noppes config clear** - (новая) очистить списки отлова фризов;
+3. (новая) виртуальная валюта **CmdMoney**:
+* **/moneynpc** - информация о команде;
+* **/moneynpc get money/donat <player>** - информация о балансе игрока;
+* **/moneynpc set money/donat <player> <value>** - установить баланс игроку;
+* **/moneynpc add money/donat <player> <value>** - добавить баланс игроку (можно отрицательное значение);
+* **/moneynpc pay <player> <value>** - передать монеты другому игроку. Взымается комиссия (см. конфигурацию мода);
+* заплатить себе нельзя;
+4. (новая) разрешения **CmdPermissions**:
+* **/noppes permissions** - открыть окно редактирования разрешений;
+
+### Блоки:
+1. Блок-граница:
+* может игнорировать игроков в креативном режиме;
+* улучшена обработка брошенного жемчуга края;
 
 ### Player
-1. Changes in player data **PlayerData**:
-* added common interface **IPlayerData**;
-* added quest compass data **PlayerCompassData** (settings, current quests , etc.);
-2. Added game data **PlayerGameData**. Contains:
-* virtual currency/donation;
-* currently pressed mouse and keyboard keys;
-* which HUD elements to display;
-* experience/development in stores;
-* rendering distance in blocks;
-* is a server operator or not;
+1. Изменения в данных игрока **PlayerData**:
+* добавлен общий интерфейс **IPlayerData**;
+* добавлены данные квестового компаса **PlayerCompassData** (настройка, текущие квесты и т.д.);
+2. Добавлены игровые данные **PlayerGameData**. Содержит:
+* виртуальная валюта / донат;
+* нажатые клавиши мыши и клавиатуры в текущий момент;
+* какие элементы HUD отображать;
+* опыт/развитие по магазинам;
+* дистанция рендера в блоках;
+* является оператором сервера или нет;
 
 ### NPC
-1. Improved **CombatHandler**:
-* AI counts everyone who participated in the battle and how much damage they caused;
-* the following is taken into account: distance to the attacker , objects in hands, etc.;
-2. AI combat tactics have been reworked. Read the description in-game;
-3. Stats:
-* NPC level and rarity have been added. Changing the settings recalculates health, damage, model size, and experience drops (all can be disabled in the configuration);
-* Improved NPC damage resistance settings. Now you can specify any damage type that exists in the game;
-4. **ContainerNPCInv** inventory:
-* NPC equipment has been corrected;
-* added quick equip mechanic Shift + click on the item;
-5. AI:
-* new methods for **INPCAi**;
-* You can disable most of the AI to reduce the load on performance. (This includes: combat tactics, roles, work, scripts, etc.)
-* added a setting for damage delay;
-6. The inventory has been redesigned for the drop system (see the Mod for features) Code above:
-* you can specify up to 32 items or a template;
+1. Улучшен **CombatHandler**:
+* AI считает всех, кто участвовал в бою и сколько нанёс урона;
+* учитывается: дальность до атакующего, предметы в руках и т.д.;
+2. AI тактик боя были переделаны. Читайте описание в игре;
+3. Статы:
+* добавлен уровень и редкость NPC. При изменении в настройках производит перерасчёт здоровья, урона, размеров модели, выпадаемый опыт (всё можно отключить через конфигурацию);
+* улучшена настройка сопротивления урону у NPC. Теперь можно указать любой тип урона, который может быть в игре;
+4. Исправлен инвентарь **ContainerNPCInv**:
+* экипировка NPC поправлена;
+* добавлена механика быстрой экипировки Shift + клик по предмету;
+5. ИИ:
+* новые методы для **INPCAi**;
+* можно отключить большую часть AI, чтобы снизить нагрузку на производительность. (отключает: тактику боя, роль, работу, скрипты и т.д.);
+* добавлена настройка задержки на нанесение урона;
+6. Инвентарь переделан под систему дропа (особенности смотри из Mod Code выше):
+* можно указать до 32 предметов или шаблон;
 
-### NPC Jobs and Roles:
-1. **Mercenary**:
-* AI slightly improved;
-* hiring for virtual currency;
-* added an inventory for the player's items (automatically issued to the player upon completion of the recruitment);
-2. **Banker** (completely remade):
-* To save your system memory, player bank data is now stored in separate files;
-* The bank can be publicly accessible. A player can be designated as the owner. The owner can restrict access to the bank or appoint another owner;
-* there is no limit on the number of bank cells;
-* in the cell you can specify the exact number of available slots, including for purchasing new slots;
-* new slots are purchased by bartering items + electronic currency;
-3. **Transporter**:
-* player movement can now be paid (barter for items, + electronic currency);
-* added full customization of location for movement (dimension, position);
-4. **Mailman**:
-* It is now possible to configure player mail management in the **Global** tab;
-* automatic deletion of letters over time;
-* inability to send to oneself;
-* paid letter (the cost depends on the number of characters in the letter and the number of items to be sent);
-* the appearance of a new letter is displayed on the screen;
-5. **Bard**:
-* more precise adjustment of the working area;
-* increased the shutdown range to 256 blocks;
-* Fixed issues with the sound triggering mechanics from the original mod;
-* the bug with constant sound playback in 1.12.2 and below is based on the game 's sound system itself and I couldn't fix it completely;
-6. **Guard**:
+### Работы и Роли NPC:
+1. **Наёмник**:
+* немного улучшен AI;
+* найм за виртуальную валюту;
+* добавлен инвентарь для вещей игрока (автоматически выдаются игроку при окончании найма);
+2. **Банкир** (переделано полностью):
+* для экономии памяти вашей системы, данные банков игроков теперь хранятся в отдельных файлах;
+* банк может быть общедоступным. Можно указать игрока - владельца. Владелец может ограничить доступ к банку или назначить другого владельца;
+* нет ограничения на количество ячеек банка;
+* в ячейке можно указать точное число доступных слотов, в том числе и для покупки новых слотов;
+* покупка новых слотов осуществляется за бартер на предметы, + электронная валюта;
+3. **Транспортёр**:
+* перемещение игрока теперь может быть платным (бартер на предметы, + электронная валюта);
+* добавлена полная настройка локации для перемещения (измерение, позиция);
+4. **Почтальон**:
+* теперь есть возможность настроить управление почтой игроков во вкладке **Глобальное**;
+* автоматическое удаление писем со временем;
+* невозможность отправлять самому себе;
+* платное письмо (стоимость зависит от количества символов в письме и количество предметов на отправку);
+* появление нового письма отображается на экране;
+5. **Бард**:
+* более точная настройка рабочей зоны;
+* увеличена дальность на отключение до 256 блоков;
+* исправлены проблемы из оригинального мода по механике запуска звуков;
+* баг на постоянный запуск звука в 1.12.2 и ниже основан на самой системе звуков в игре и я его не смог исправить окончательно;
+6. **Стражник**:
 * slightly improved AI;
-7. **Spawner** (completely redesigned):
-* remove summoned creatures if there is no target to attack;
-* control over the number of summoned creatures so as not to clutter the map (and the load on the system);
-* separated spawn when alive and when killed;
-* the number of summoned creatures has been increased;
-8. **Chunk loader**:
-* now loads all 3x3 chunks near itself (2x2 in the original mod);
-9. **Puppet**:
-* In 1.12.2, it was replaced with a custom animation system . Animations are available for any NPC with a standard model. The GUI for setting up this animation is very complex due to the variability of the animations;
-10. **Trader** (completely reworked):
-* stores have sections, are related to the player, the GUI settings and the store for NPCs have been redesigned;
-* More store and deal settings. New elements can be enabled or disabled;
-* you can set up only purchase and/or only sale for a transaction;
-* cases have been added and are only for sale;
-* any number of stores, sections in the store and transactions in each section;
-* deal setup: product is the specified item or case with items;
-* deal settings: currency - this is either a barter of up to 9 items, + electronic currency, + donation;
-* availability settings for each transaction.
-* items in the case are edited through the drop system;
-* you can change the OBJ model and texture of the case chest;
-* indicate the number of items to be issued from the case;
+7. **Спавнер** (переделано полностью):
+* удаление призванных существ, если нет цели для атаки;
+* контроль количества призванных существ, чтобы не засорять карту (и нагрузку на систему);
+* разделен спавн когда жив, и когда убит;
+* увеличено количество призываемых существ;
+8. **Загрузчик чанков**:
+* теперь загружает все 3x3 чанка возле себя (2x2 в оригинальном моде);
+9. **Марионетка**:
+* в 1.12.2 заменена на собственную кастомную систему анимаций. Анимации доступны для любого NPC со стандартной моделью. ГУИ настройки этой анимации очень сложен из за вариативности анимации;
+10. **Торговец** (переделано полностью):
+* магазины имеют разделы, отношение к игроку, переделаны ГУИ настройки и магазина у NPC;
+* больше настроек магазина и сделок. Можно включать или отключать новые элементы;
+* можно настроить только покупку, и / или только продажу по сделке;
+* добавлены кейсы и они только продаются;
+* любое количество магазинов, разделов в магазине и сделок в каждый раздел;
+* настройка сделки: товар - это указанный предмет или кейс с предметами;
+* настройка сделки: валюта - это или бартер до 9 предметов, + электронная валюта, + донат;
+* настройка доступности на каждую сделку.
+* предметы в кейсе редактируются через систему дропа;
+* можно изменить OBJ модель и текстуру сундука кейса;
+* указать количество выдаваемых предметов из кейса;
 
 ### GUI:
-1. A custom variable background has been installed in the game menu (controlled via configuration);
-2. Script GUI can store scripts and logs of almost any length without data loss;
-3. Tooltip display has been applied to almost all buttons, labels and lists in the mod's GUI;
-4. Quest Journal have been added to the player's inventory in creative mode;
-5. NBT Tag Book **GuiNbtBook** (item):
-* opens more readable text of object tags;
-* can work with objects in the left hand;
-* added a list of all fields, methods and subclasses of the edited object;
-6. List of NPCs around **GuiNpcRemoteEditor** (NPC Customizer):
-* the list of entities contains more information (distance to the player, entity ID, class name);
-* added entity display;
-* added a choice to display a list of all entities loaded on the server side, or only NPCs;
-7. Completely redesigned quest log **GuiLog**:
-* now in the form of a magazine, not a window;
-* Faction Relations tab has been added to this GUI. The default **GuiFaction** has been removed;
-* a quest compass settings tab (controlled through mod configurations);
-* the journal has animations (I might add a configuration to disable this animation);
-* more information is shown;
-8. Script editing GUI **GuiScriptInterface**:
-* The GUI window size has been changed to fit the current game window size;
-9. Recreated the GUI for setting up the NPC model of body parts layers **GuiCreationParts**;
-* added settings for displaying model layers;
-* (1.12.2) The eye layer has been completely reworked. It will be used to create emotions;
-10. Fixed the GuiBlockBuilder settings for the Building Block:
-* added display of the selected scheme;
-* the number of displayed schemes is not limited;
-11. NPC work GUIs have been reworked to suit the new settings:
-* both the settings GUI and the game GUI;
-* more new elements and descriptions;
-12. NPC settings GUI has been reworked:
-* more new elements and descriptions;
-13. Added GUI for convenient editing of mod configuration (available from the menu of the list of all mods);
-14. Dialog box changed:
-* scroll bars added;
-* in the **Global** tab you can customize this window;
-15. Sub-GUI texture selection:
-* the method of viewing and selecting textures has been redesigned;
-* fixed search for all images in the game (not only registered ones, but also available images from resources/ mods);
-* texture is displayed in this sub -GUI;
-16. Sub-GUI sound selection:
-* the method of viewing and selecting sounds has been redesigned;
-* Fixed sound search in the game;
-* the play button also stops the currently playing sound;
-17. (for modders) The main GUI classes, as well as all GUI elements, have been reworked to a more convenient format for creating GUI mods:
-18. Optimized the GUI element - text field **GuiTextArea** (fewer freezes when changing the text);
-19. The GUI element has been redesigned - the **GuiCustomScrollNop** list:
-* scroll bar textured (now it is wider);
-* the scroll bar continues to move even when the cursor is not on the list;
-* prefixes in the form of an object, picture, OBJ model have been added to the beginning of the text of each position/line;
-* added text suffixes to the end of the text of each position/line;
+1. Установлен свой вариативный фон в меню игры (управляется через конфигурации);
+2. ГУИ скриптов может хранить скрипты и логи почти любой длины без потери данных;
+3. Отображение подсказки применено почти ко всем кнопкам, меткам и спискам в ГУИ мода;
+4. В инвентарь игрока в режиме креатива добавлены вкладки для открытия Квестового журнала мода;
+5. Книга тегов NBT **GuiNbtBook** (предмет):
+* открывает более удобный для чтения текст тегов объекта;
+* может работать с предметов в левой руке;
+* добавлен список всех полей, методов и суб-классов редактируемого объекта;
+6. Список NPC вокруг **GuiNpcRemoteEditor** (Настройщик NPC):
+* список сущностей содержит больше информации (дистанция до игрока, ID сущности, имя класса);
+* добавлено отображение сущности;
+* добавлен выбор отображения списка всех загруженных на стороне сервера сущностей, либо только NPC;
+7. Полностью переделан Квестовый журнал **GuiLog**:
+* теперь в виде журнала, а не окна;
+* вкладка отношений фракций добавлена в этот ГУИ. Стандартный **GuiFaction** был удалён;
+* добавлена вкладка настройки квестового компаса (управляется через конфигурации мода);
+* журнал имеет анимации (возможно добавлю конфигурацию для отключения этой анимации);
+* показывается больше информации;
+8. ГУИ редактирования скриптов **GuiScriptInterface**:
+* изменены размеры окна ГУИ. Подгоняются под текущие размеры окна игры;
+9. Пересоздан ГУИ настройки модели NPC слоёв частей тела **GuiCreationParts**;
+* добавлены настройки для отображения слоёв модели;
+* (1.12.2) полностью переделан слой глаз. Будет использоваться для создания эмоций;
+10. Поправлен ГУИ настройки Строительного блока **GuiBlockBuilder**:
+* добавлено отображение выбранной схемы;
+* количество отображаемых схем не ограничено;
+11. Переделаны ГУИ работ NPC под новые настройки:
+* как ГУИ настройки, так и игровые ГУИ;
+* больше новых элементов и описаний;
+12. Переделаны ГУИ настроек NPC:
+* больше новых элементов и описаний;
+13. Добавлен ГУИ для удобного редактирования конфигурации мода (доступно из меню списка всех модов);
+14. Диалоговое окно изменено:
+* добавлены полосы прокрутки;
+* во вкладке **Глобальное** можно кастомизировать это окно;
+15. Суб-ГУИ выбора текстур:
+* переделан способ просмотра и выбора текстур;
+* поправлен поиск всех картинок в игре (не только зарегистрированные, но и доступные картинки из ресурсов/модов);
+* текстура отображается в этом суб-ГУИ;
+16. Суб-ГУИ выбора звуков:
+* переделан способ просмотра и выбора звуков;
+* поправлен поиск звуков в игре;
+* кнопка воспроизведения так же останавливает текущий проигрываемый звук;
+17. (моддоделам) Переделаны основные классы ГУИ, а так же все элементы ГУИ на более удобный формат для создания ГУИ мода:
+18. Оптимизирован элемент ГУИ - текстовое поле **GuiTextArea** (при изменении текста меньше фризов);
+19. Переделан элемент ГУИ - список **GuiCustomScrollNop**:
+* текстурирована полоса прокрутки (теперь она шире);
+* полоса прокрутки продолжает двигаться, даже когда курсор не на списке;
+* добавлены префиксы в виде предмета, картинки, OBJ модельки в начало текста каждой позиции / линии;
+* добавлены суффиксы в виде текста в конец текста каждой позиции / линии;
 
-### Quests:
-1. Quest system has been completely redesigned (structure, data storage, behavior mechanics, etc.);
-2. Quests now have an icon;
-3. You can add an image to the quest description;
-4. A separate button for managing scripts has been added to the quest log;
-5. Virtual currency has been added to the rewards;
-6. Added the function of self-selection of one item from all rewards;
-7. You can select any NPC from the list of loaded ones as an NPC to complete the quest (displayed in the quest journal);
-8. Quest objectives have been changed:
-* quests no longer have a type (find kill etc.), the type is now applied to each target separately;
-* the number of quest objectives has been increased from 3 to 9;
-* added target type for completing the quest (all, in turn , at least one);
-* new type of goal - item crafting;
-9. The quest can now be cancelled. A setting has been added for forgetting dialogues and quests;
+### Квесты:
+1. Полностью переделана система квестов (структура, хранение данных, механика поведения и т.д);
+2. Квесты теперь имею иконку;
+3. В описание квеста можно добавить изображение;
+4. В журнал квестов добавлена отдельная кнопка для управления скриптами;
+5. В награды добавлена виртуальная валюта;
+6. Добавлена функция самостоятельного выбора одного предмета из всех наград;
+7. Можно выбрать любого NPC из списка загруженных в качестве NPC для завершения квеста (отображается в квестовом журнале);
+8. Изменены цели квеста:
+* квесты больше не имеют тип (найти убить и т.д.), тип теперь применяется к каждой цели отдельно;
+* увеличено количество целей квеста с 3 до 9;
+* добавлен тип целей для выполнения квеста (все, по-очереди, хотя бы одна);
+* новый тип цели - крафт предмета;
+9. Квест теперь можно отменять. Для этого добавлена настройка для забывания диалогов и квестов;
 
-### Dialogues:
-1. Dialogue response system has been completely redesigned:
-* you can add an icon;
-* you can set options for the next dialog through accessibility conditions;
-2. Dialog  can be shown more than once (display as when typing text);
-3. You can add an image to the end of the dialog;
-4. GUI for player communication with NPCs has been changed (see above in GUI);
-5. More dialog settings;
+### Диалоги:
+1. Полностью переделана система ответов на диалоги:
+* можно добавить иконку;
+* модно установить варианты на следующий диалог, через условия доступности;
+2. Диалог может быть показа не разом (отображение как при печатании текста);
+3. Можно добавить изображение в конец диалога;
+4. Изменён ГУИ общения игрока с NPC (смотри выше в GUI);
+5. Больше настроек диалога;
 
-### Factions:
-1. Added flag selection. Flags can be installed on banners and the vanilla shield;
-2. Added a setting for selecting friendly factions. Used for defense during attacks;
+### Фракции:
+1. Добавлен выбор флага. Флаг можно установить на банеры и ванильный щит;
+2. Добавлена настройка выбора дружелюбных фракций. Используется для защиты при нападении;
 
-### Natural spawns:
-1. Spawn mechanics have been finalized;
-2. More settings for determining natural spawn;
+### Естественные спавны:
+1. Доделана механика работы спавна;
+2. Больше настроек для определения естественного спавна;
 
 ### Scripts:
-1. New interfaces:
-* **IMinecraft** - API for client scripts;
-* **IRenderSystem** - API for client scripts;
-* **IClientMouse** - API for client scripts;
-* **IMethods** - API of additional methods;
-2. Improved interfaces:
-* **IWorld** - work with the client;
-* **IPos** - fixed a bug with displacement in direction; changed to exact numbers with a dot;
-* **INbt** - all types for leaf tag, exceptions have been improved;
-* **IVillager** - recipe settings;
-* **IPlayer** - more methods;
-3. Added scripts for the client **ClientScriptData**;
-* Such scripts cannot be encrypted. These scripts are also stored on each client for possible analysis;
-4. Added script handler for custom potions **PotionScriptData**;
-5. Added handler for common scripts for all NPCs **NpcScriptData**;
-6. Added constants file **constant_scripts.json** for all map scripts;
-7. The **dump(Object)** method has been improved. Now it returns full information about the object: names of all constructors, subclasses, fields and methods of the object/class (including private ones);
-8. Changed the **IData** data system:
-* Player data is no longer stored separately from other entities. Mixins are now integrated into the **Entity** class;
-* **Tempdata** can get data in the form of **INbt** tags. Only what can be converted .;
-* **Storeddata** can now store any data that can be converted for storage in **INbt** tags;
-* "can be converted": all numbers; strings; objects that can be written to JSON; Lists; Maps; and arrays of them.
-9. Added processing of language search for scripts (**Rhino , Groovy , GraalJS etc.**);
-10. Mouse-held item has been added to the slot click event in your GUI **CustomGuiEvent.SlotEvent**;
-11. A table for deobfuscation of field and method names has been added to the mod;
-12. It is possible to encrypt server-side map scripts (theft protection);
+1. Новые интерфейсы:
+* **IMinecraft** - API для скриптов клиента;
+* **IRenderSystem** - API для скриптов клиента;
+* **IClientMouse** - API для скриптов клиента;
+* **IMethods** - API дополнительных методов;
+2. Улучшены интерфейсы:
+* **IWorld** - работа с клиентом;
+* **IPos** - исправлен баг смещения в направлении; переделан на точные числа с точкой;
+* **INbt** - все типы для листового тега, доработаны исключения;
+* **IVillager** - настройка рецептов;
+* **IPlayer** - больше методов;
+3. Добавлены скрипты для клиента **ClientScriptData**;
+* Зашифровать такие скрипты нельзя. Так же такие скрипты сохраняются на каждом клиенте для возможного анализа;
+4. Добавлен обработчик скриптов для кастомных зелий **PotionScriptData**;
+5. Добавлен обработчик общих скриптов для всех NPC **NpcScriptData**;
+6. Добавлен файл констант **constant_scripts.json** для всех скриптов карты;
+7. Улучшен метод **dump(Object)**. Теперь возвращает полную информацию об объекте: имена всех конструкторов, суб-классов, полей и методов объекта/класса (в том числе и приватные);
+8. Изменена система данных **IData**:
+* данные игрока больше не хранятся отдельно от прочих сущностей. Вшито миксинов в класс **Entity**;
+* **Tempdata** можно получить данные в виде тегов **INbt**. Только то, что можно конвертировать.;
+* **Storeddata** теперь может хранить любые данные, которые можно конвертировать для хранения в тегах **INbt**;
+* "можно конвертировать": все числа; строки; объекты, которые можно записать в JSON; Lists; Maps; и массивы из них.
+9. Добавлена обработка поиска языков для скриптов (**Rhino, Groovy, GraalJS и т.д.**);
+10. В событие клика на слот в своём ГУИ **CustomGuiEvent.SlotEvent** добавлен удерживаемый мышью предмет;
+11. В мод добавлена таблица для деобфускации имён полей и методов;
+12. Есть возможность зашифровать скрипты карты стороны сервера. (защита от кражи);
 
-## Project uses:
+## Проект использует:
 ### 1.12.2:
-* SDK 			- Java 8 (1.8.0_401)
-* Gradle 		- 6.8.3
-* ForgeGradle 	- (plugin) 4.1.16
-* MixinGradle 	- (plugin) 0.8.5
-* Forge 			- 1.12.2 (14.23.5.2860)
-* Mixin 			- (plugin) 0.7.38
+* SDK			- Java 8 (1.8.0_401)
+* Gradle		- 6.8.3
+* ForgeGradle	- (plugin) 4.1.16
+* MixinGradle	- (plugin) 0.8.5
+* Forge			- 1.12.2 (14.23.5.2860)
+* Mixin			- (plugin) 0.7.38
 ### 1.20.1:
-* SDK 			- Java 17.0.13
-* Gradle 		- 8.8
-* ForgeGradle 	- (plugin) 6.0.35
-* MixinGradle 	- (plugin) 0.8.5
-* Forge 			- 1.20.1 (47.3.12)
-* Mixin 			- (plugin) 0.7.38
+* SDK			- Java 17.0.13
+* Gradle		- 8.8
+* ForgeGradle	- (plugin) 6.0.35
+* MixinGradle	- (plugin) 0.8.5
+* Forge			- 1.20.1 (47.3.12)
+* Mixin			- (plugin) 0.7.38
 
-**Original Mod** Discord Server for discussions:
+**Оригинальный мод** Discord-сервер для обсуждений:
 
 [![Discord Server for Scripting](https://discordapp.com/api/guilds/151785576557707264/widget.png?style=banner3)](https://discord.gg/AJ7qPy4)
 
-**Original Mod** Discord Server for scripting:
+**Оригинальный мод** Discord-сервер для скриптинга:
 
 [![Discord Server for Scripting](https://discordapp.com/api/guilds/177204059109982208/widget.png?style=banner3)](https://discord.gg/AJ7qPy4)
 
-**Recommended Russian** Discord Server for scripting:
+**Рекомендуемый русский** Discord-сервер для написания скриптов:
 
-[![Discord Server for RU Scripting](https://discordapp.com/api/guilds/1146323402978762772/widget.png?style=banner3)](https://discord.gg/aDuNPDGr6t)
+[![Discord Server for Scripting](https://discordapp.com/api/guilds/151785576557707264/widget.png?style=banner3)](https://discord.gg/AJ7qPy4)

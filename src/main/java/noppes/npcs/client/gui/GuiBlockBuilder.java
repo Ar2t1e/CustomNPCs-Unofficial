@@ -1,242 +1,202 @@
 package noppes.npcs.client.gui;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
+import java.util.*;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.blocks.tiles.TileBuilder;
-import noppes.npcs.client.Client;
+import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.availability.SubGuiNpcAvailability;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.schematics.ISchematic;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
+import noppes.npcs.controllers.SchematicController;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketSchematicsTileBuild;
+import noppes.npcs.packets.server.SPacketSchematicsTileGet;
+import noppes.npcs.packets.server.SPacketSchematicsTileSave;
+import noppes.npcs.packets.server.SPacketSchematicsTileSet;
 import noppes.npcs.schematics.SchematicWrapper;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
 
 public class GuiBlockBuilder extends GuiNPCInterface
-		implements IGuiData, ICustomScrollListener, IScrollData, GuiYesNoCallback {
+        implements IGuiData, ICustomScrollListener, IScrollData {
 
-	protected GuiCustomScroll scroll;
-	protected ISchematic selected;
-	protected final TileBuilder tile;
-	protected final int x;
-	protected final int y;
-	protected final int z;
+   protected final BlockPos pos;
+   protected final TileBuilder tile;
+   protected GuiCustomScrollNop scroll;
+   protected SchematicWrapper wrapper = null;
 
-	public GuiBlockBuilder(int xPos, int yPos, int zPos) {
-		super();
-		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 216;
-		closeOnEsc = true;
+   public GuiBlockBuilder(BlockPos posIn) {
+      super();
+      setBackground("menubg.png");
+      imageWidth = 256;
+      imageHeight = 216;
 
-		selected = null;
-		x = xPos;
-		y = yPos;
-		z = zPos;
-		tile = (TileBuilder) player.world.getTileEntity(new BlockPos(x, y, z));
-	}
+      pos = posIn;
+      tile = (TileBuilder) player.level().getBlockEntity(pos);
+      Packets.sendServer(new SPacketSchematicsTileGet(pos));
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 3: {
-				if (((GuiNpcButtonYesNo) button).getBoolean()) {
-					TileBuilder.SetDrawPos(new BlockPos(x, y, z));
-					tile.setDrawSchematic(new SchematicWrapper(selected));
-				} else {
-					TileBuilder.SetDrawPos(null);
-					tile.setDrawSchematic(null);
-				}
-				break;
-			}
-			case 4: tile.enabled = ((GuiNpcButtonYesNo) button).getBoolean(); break;
-			case 5: tile.rotation = button.getValue(); break;
-			case 6: setSubGui(new SubGuiNpcAvailability(tile.availability, this)); break;
-			case 7: {
-				tile.finished = ((GuiNpcButtonYesNo) button).getBoolean();
-				Client.sendData(EnumPacketServer.SchematicsSet, x, y, z, scroll.getSelected());
-				break;
-			}
-			case 8: tile.started = ((GuiNpcButtonYesNo) button).getBoolean(); break;
-			case 10: {
-				save();
-				GuiYesNo guiyesno = new GuiYesNo(this, "", new TextComponentTranslation("schematic.instantBuildText").getFormattedText(), 0);
-				displayGuiScreen(guiyesno);
-				break;
-			}
-		}
-	}
+   @Override
+   public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+      super.render(graphics, mouseX, mouseY, partialTicks);
+      if (wrapper == null || minecraft.level == null) { return; }
+      PoseStack matrixStack = graphics.pose();
+      matrixStack.pushPose();
+      matrixStack.translate(guiLeft + imageWidth, guiTop + 26.0f, 0.0f);
+      // background
+      graphics.blit(background, 0, 0, 172, 0, 84, 80);
+      graphics.blit(background, 0, 80, 172, 213, 84, 4);
+      // schem
+      int w = wrapper.schema.getWidth();
+      int l = wrapper.schema.getLength();
+      int h = wrapper.schema.getHeight();
+      float sW = (float) (w + l) * (float) Math.cos(Math.toRadians(30));
+      float sH = (float) (w + l) * (float) Math.sin(Math.toRadians(30)) + (float) h;
+      float scale;
+      if (sW > sH) { scale = 84.0f / sW; } else { scale = 84.0f / sH; }
 
-	@Override
-	public void confirmClicked(boolean result, int id) {
-		if (result) {
-			Client.sendData(EnumPacketServer.SchematicsBuild, x, y, z);
-			onClosed();
-			selected = null;
-		}
-		else { NoppesUtil.openGUI(player, this); }
-	}
+      graphics.enableScissor(guiLeft + imageWidth + 2, guiTop + 30, guiLeft + imageWidth + 78, guiTop + 106);
+      matrixStack.translate(42.0f - (w / 2.0f) * scale, 41.0f + (h / 2.0f) * scale, 150.0f);
+      matrixStack.scale(scale, -scale, -scale);
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (scroll == null) { (scroll = new GuiCustomScroll(this, 0)).setSize(125, 208); }
-		scroll.guiLeft = guiLeft + 4;
-		scroll.guiTop = guiTop + 4;
-		addScroll(scroll);
-		if (selected != null) {
-			int xL = guiLeft + 130;
-			int xB = guiLeft + 200;
-			int y = guiTop + 4;
-			addLabel(new GuiNpcLabel(3, "schematic.preview", xL, y + 5));
-			addButton(new GuiNpcButtonYesNo(3, xB, y, TileBuilder.has(tile.getPos())));
-			y += 21;
-			addLabel(new GuiNpcLabel(0, new TextComponentTranslation("schematic.width").getFormattedText() + ": " + selected.getWidth(), xL, y));
-			y += 11;
-			addLabel(new GuiNpcLabel(1, new TextComponentTranslation("schematic.length").getFormattedText() + ": " + selected.getLength(), xL, y));
-			y += 11;
-			addLabel(new GuiNpcLabel(2, new TextComponentTranslation("schematic.height").getFormattedText() + ": " + selected.getHeight(), xL, y));
-			y += 14;
-			addButton(new GuiNpcButtonYesNo(4, xB, y, tile.enabled));
-			addLabel(new GuiNpcLabel(4, new TextComponentTranslation("gui.enabled").getFormattedText(), xL, y + 5));
-			y += 22;
-			addButton(new GuiNpcButtonYesNo(7, xB, y, tile.finished));
-			addLabel(new GuiNpcLabel(7, new TextComponentTranslation("gui.finished").getFormattedText(), xL, y + 5));
-			y += 22;
-			addButton(new GuiNpcButtonYesNo(8, xB, y, tile.started));
-			addLabel(new GuiNpcLabel(8, new TextComponentTranslation("gui.started").getFormattedText(), xL, y + 5));
-			y += 22;
-			addLabel(new GuiNpcLabel(9, new TextComponentTranslation("gui.yoffset").getFormattedText(), xL, y + 5));
-			addTextField(new GuiNpcTextField(9, this, xB, y, 50, 20, tile.yOffset + "")
-					.setMinMaxDefault(-10, 10, 0));
-			y += 22;
-			addLabel(new GuiNpcLabel(5, new TextComponentTranslation("movement.rotation").getFormattedText(), xL, y + 5));
-			addButton(new GuiNpcButton(5, xB, y, 50, 20, new String[] { "0", "90", "180", "270" }, tile.rotation));
-			y += 22;
-			addButton(new GuiNpcButton(6, xL, y, 120, 20, "availability.options"));
-			y += 22;
-			addButton(new GuiNpcButton(10, xL, y, 120, 20, "schematic.instantBuild"));
-		}
-	}
+      matrixStack.pushPose();
+      matrixStack.translate(w / 2.0f, h / 2.0f, l / 2.0f);
+      float f0 = (minecraft.level.getGameTime() % 360.0f) * 2.0f;
+      matrixStack.mulPose(Axis.XP.rotationDegrees(30));
+      matrixStack.mulPose(Axis.YP.rotationDegrees(f0));
+      matrixStack.translate(-w / 2.0f, -h / 2.0f, -l / 2.0f);
 
-	@Override
-	public void initPacket() { Client.sendData(EnumPacketServer.SchematicsTile, x, y, z); }
+      ClientEventHandler.renderSchem(matrixStack, graphics.bufferSource(), partialTicks, wrapper, 0, 0, 0, 0);
+      matrixStack.popPose();
 
-	@Override
-	public void save() {
-		if (getTextField(9) != null) { tile.yOffset = getTextField(9).getInteger(); }
-		Client.sendData(EnumPacketServer.SchematicsTileSave, x, y, z, tile.writePartNBT(new NBTTagCompound()));
-	}
+      graphics.disableScissor();
+      matrixStack.popPose();
+   }
 
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (!scroll.hasSelected()) { return; }
-		if (selected != null) { getButton(3).setDisplay(0); }
-		TileBuilder.SetDrawPos(null);
-		tile.setDrawSchematic(null);
-		Client.sendData(EnumPacketServer.SchematicsSet, x, y, z, scroll.getSelected());
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0).setSize(125, 208); }
+      add(scroll.setPos(guiLeft + 4, guiTop + 4));
+      if (wrapper != null) {
+         int x0 = guiLeft + 132;
+         int x1 = x0 + 69;
+         int y = guiTop + 4;
+         addYesNo(3, x1, y, tile.getSchematic() != null && tile.getShow());
+         addLabel(3, x0, y + 5, "schematic.preview").setSize(66, 12);
 
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
+         addLabel(0, x0, y += 21, Component.translatable("schematic.width").append(": ").append("" + wrapper.schema.getWidth())).setSize(120, 12);
+         addLabel(1, x0, y += 11, Component.translatable("schematic.length").append(": ").append("" + wrapper.schema.getLength())).setSize(120, 12);
+         addLabel(2, x0, y += 11, Component.translatable("schematic.height").append(": ").append("" + wrapper.schema.getHeight())).setSize(120, 12);
 
-	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		scroll.setList(dataList);
-		if (selected != null) { scroll.setSelected(selected.getName()); }
-		initGui();
-	}
+         addYesNo(4, x1, y += 14, tile.enabled);
+         addLabel(4, x0, y + 5, "gui.enabled").setSize(66, 12);
 
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		if (compound.hasKey("Width")) {
-			List<IBlockState> states = new ArrayList<>();
-			NBTTagList list = compound.getTagList("Data", 10);
-			for (int i = 0; i < list.tagCount(); ++i) { states.add(NBTUtil.readBlockState(list.getCompoundTagAt(i))); }
-			selected = new ISchematic() {
-				@Override
-				public IBlockState getBlockState(int i) {
-					return states.get(i);
-				}
+         addYesNo(7, x1, y += 22, tile.finished);
+         addLabel(7, x0, y + 5, "gui.finished").setSize(66, 12);
 
-				@Override
-				public IBlockState getBlockState(int x, int y, int z) { return getBlockState((y * getLength() + z) * getWidth() + x); }
+         addYesNo(8, x1, y += 22, tile.started);
+         addLabel(8, x0, y + 5, "gui.started").setSize(66, 12);
 
-				@Override
-				public NBTTagList getEntitys() {
-					return new NBTTagList();
-				}
+         addTextField(9, x1, y += 22, 50, 20, "" + tile.yOffset);
+         addLabel(9, x0, y + 5, "gui.yoffset").setSize(66, 12);
+         getTextField(9).setMinMaxDefault(-10, 10, 0);
 
-				@Override
-				public short getHeight() {
-					return compound.getShort("Height");
-				}
+         addButton(5, x1, y += 22, false, tile.rotation, 0, 90, 180, 270)
+                 .setSize(50, 20);
+         addLabel(5, x0, y + 5, "movement.rotation").setSize(66, 12);
 
-				@Override
-				public short getLength() {
-					return compound.getShort("Length");
-				}
+         addButton(6, x0 - 1, y += 22, "availability.options")
+                 .setSize(120, 20)
+                 .setHoverTexts("builder.hover.availability");
+         addButton(10, x0 - 1, y + 22, "schematic.instantBuild")
+                 .setSize(120, 20);
+      }
+   }
 
-				@Override
-				public String getName() {
-					return compound.getString("SchematicName");
-				}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 3: tile.setDrawSchematic(wrapper, ((GuiButtonYesNo) button).getBoolean()); break;
+         case 4: tile.enabled = ((GuiButtonYesNo) button).getBoolean(); break;
+         case 5: tile.rotation = button.getValue();break;
+         case 6: setSubGui(new SubGuiNpcAvailability(tile.availability, this)); break;
+         case 7: {
+            tile.finished = ((GuiButtonYesNo) button).getBoolean();
+            Packets.sendServer(new SPacketSchematicsTileSet(pos, scroll.getSelected()));
+            break;
+         }
+         case 8: tile.started = ((GuiButtonYesNo) button).getBoolean(); break;
+         case 10: {
+            save();
+            ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+               if (agree) {
+                  Packets.sendServer(new SPacketSchematicsTileBuild(pos, 0, new CompoundTag()));
+                  onClose();
+                  wrapper = null;
+                  tile.setDrawSchematic(null, false);
+               }
+               else { NoppesUtil.openGUI(player, this); }
+            },
+                    Component.empty(),
+                    Component.translatable("schematic.instantBuildText"));
+            setScreen(guiYesNo);
+            break;
+         }
+      }
+   }
 
-				@Override
-				public NBTTagCompound getNBT() {
-					return null;
-				}
+   @Override
+   public void save() {
+      if (tile != null) {
+         if (getTextField(9) != null) { tile.yOffset = getTextField(9).getInteger(); }
+         Packets.sendServer(new SPacketSchematicsTileSave(pos, tile.savePartNBT(new CompoundTag())));
+      }
+   }
 
-				@Override
-				public BlockPos getOffset() {
-					return BlockPos.ORIGIN;
-				}
+   @Override
+   public void setGuiData(final CompoundTag compound) {
+      if (compound.contains("Width")) {
+         wrapper = SchematicController.Instance.load(compound.getString("SchematicName"));
+         wrapper.rotation = tile.rotation;
+         scroll.setSelected(wrapper.schema.getName());
+         if (getButton(3) != null) { tile.setDrawSchematic(wrapper, ((GuiButtonYesNo) getButton(3)).getBoolean()); }
+         else { tile.setDrawSchematic(wrapper, tile.getShow()); }
+      }
+      else { tile.loadPartNBT(compound);}
+      init();
+   }
 
-				@Override
-				public NBTTagCompound getTileEntity(int i) {
-					return null;
-				}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      if (scroll.hasSelected()) { Packets.sendServer(new SPacketSchematicsTileSet(pos, scroll.getSelected())); }
+   }
 
-				@Override
-				public int getTileEntitySize() {
-					return 0;
-				}
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
-				@Override
-				public short getWidth() {
-					return compound.getShort("Width");
-				}
+   @Override
+   public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
+      scroll.setList(dataList);
+      if (wrapper != null) { scroll.setSelected(wrapper.schema.getName()); }
+      init();
+   }
 
-				@Override
-				public boolean hasEntitys() { return false; }
-
-			};
-			if (TileBuilder.has(tile.getPos())) {
-				SchematicWrapper wrapper = new SchematicWrapper(selected);
-				wrapper.rotation = tile.rotation;
-				tile.setDrawSchematic(wrapper);
-			}
-			scroll.setSelected(selected.getName());
-			scroll.scrollTo(selected.getName());
-		}
-		else { tile.readPartNBT(compound); }
-		initGui();
-	}
-
-	@Override
-	public void setSelected(String selected) { }
+   @Override
+   public void setSelected(String selected) { }
 
 }

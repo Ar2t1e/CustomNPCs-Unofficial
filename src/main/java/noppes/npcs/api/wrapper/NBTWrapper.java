@@ -1,268 +1,322 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagFloat;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagIntArray;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
+import java.util.Objects;
+
+import net.minecraft.nbt.*;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.util.NBTJsonUtil;
 
-import java.util.Objects;
-
 public class NBTWrapper implements INbt {
 
-	private final NBTTagCompound compound;
+   private final CompoundTag compound;
 
-	public NBTWrapper(NBTTagCompound compound) {
-		this.compound = compound;
-	}
+   public NBTWrapper(CompoundTag compoundIn) {
+      compound = compoundIn;
+   }
 
-	@Override
-	public void clear() {
-		for (String name : this.compound.getKeySet()) {
-			this.compound.removeTag(name);
-		}
-	}
+   public void remove(String key) {
+      compound.remove(key);
+   }
 
-	@Override
-	public boolean getBoolean(String key) {
-		return this.compound.getBoolean(key);
-	}
+   public boolean has(String key) {
+      return compound.contains(key);
+   }
 
-	@Override
-	public byte getByte(String key) {
-		return this.compound.getByte(key);
-	}
+   public boolean has(String key, int type) {
+      return compound.contains(key, type);
+   }
 
-	@Override
-	public byte[] getByteArray(String key) {
-		return this.compound.getByteArray(key);
-	}
+   public boolean getBoolean(String key) {
+      return compound.getBoolean(key);
+   }
 
-	@Override
-	public INbt getCompound(String key) {
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(this.compound.getCompoundTag(key));
-	}
+   public void setBoolean(String key, boolean value) {
+      compound.putBoolean(key, value);
+   }
 
-	@Override
-	public double getDouble(String key) {
-		return this.compound.getDouble(key);
-	}
+   public short getShort(String key) {
+      return compound.getShort(key);
+   }
 
-	@Override
-	public float getFloat(String key) {
-		return this.compound.getFloat(key);
-	}
+   public void setShort(String key, short value) {
+      compound.putShort(key, value);
+   }
 
-	@Override
-	public int getInteger(String key) {
-		return this.compound.getInteger(key);
-	}
+   public int getInteger(String key) {
+      return compound.getInt(key);
+   }
 
-	@Override
-	public int[] getIntegerArray(String key) {
-		return this.compound.getIntArray(key);
-	}
+   public void setInteger(String key, int value) {
+      compound.putInt(key, value);
+   }
 
-	@Override
-	public String[] getKeys() {
-		return this.compound.getKeySet().toArray(new String[0]);
-	}
+   public byte getByte(String key) {
+      return compound.getByte(key);
+   }
 
-	@Override
-	public Object[] getList(String key, int type) {
-		NBTTagList list = this.compound.getTagList(key, type);
-		Object[] nbts = new Object[list.tagCount()];
-		for (int i = 0; i < list.tagCount(); ++i) {
-			if (list.getTagType() == 10) {
-				nbts[i] = Objects.requireNonNull(NpcAPI.Instance()).getINbt(list.getCompoundTagAt(i));
-			} else if (list.getTagType() == 8) {
-				nbts[i] = list.getStringTagAt(i);
-			} else if (list.getTagType() == 6) {
-				nbts[i] = list.getDoubleAt(i);
-			} else if (list.getTagType() == 5) {
-				nbts[i] = list.getFloatAt(i);
-			} else if (list.getTagType() == 3) {
-				nbts[i] = list.getIntAt(i);
-			} else if (list.getTagType() == 11) {
-				nbts[i] = list.getIntArrayAt(i);
-			}
-		}
-		return nbts;
-	}
+   public void setByte(String key, byte value) {
+      compound.putByte(key, value);
+   }
 
-	@Override
-	public int getListType(String key) {
-		NBTBase b = this.compound.getTag(key);
-        if (b.getId() != 9) {
-			throw new CustomNPCsException("NBT tag " + key + " isn't a list");
-		}
-		return ((NBTTagList) b).getTagType();
-	}
+   public long getLong(String key) {
+      return compound.getLong(key);
+   }
 
-	@Override
-	public long getLong(String key) {
-		return this.compound.getLong(key);
-	}
+   public void setLong(String key, long value) {
+      compound.putLong(key, value);
+   }
 
-	@Override
-	public NBTTagCompound getMCNBT() {
-		return this.compound;
-	}
+   public double getDouble(String key) {
+      return compound.getDouble(key);
+   }
 
-	@Override
-	public short getShort(String key) {
-		return this.compound.getShort(key);
-	}
+   public void setDouble(String key, double value) {
+      compound.putDouble(key, value);
+   }
 
-	@Override
-	public String getString(String key) {
-		return this.compound.getString(key);
-	}
+   public float getFloat(String key) {
+      return compound.getFloat(key);
+   }
 
-	@Override
-	public int getType(String key) {
-		return this.compound.getTagId(key);
-	}
+   public void setFloat(String key, float value) {
+      compound.putFloat(key, value);
+   }
 
-	@Override
-	public boolean has(String key) {
-		return this.compound.hasKey(key);
-	}
+   public String getString(String key) {
+      return compound.getString(key);
+   }
 
-	@Override
-	public boolean isEqual(INbt nbt) {
-		return nbt != null && this.compound.equals(nbt.getMCNBT());
-	}
+   public void setString(String key, String value) {
+      compound.putString(key, value);
+   }
 
-	@Override
-	public void merge(INbt nbt) {
-		this.compound.merge(nbt.getMCNBT());
-	}
+   public byte[] getByteArray(String key) {
+      return compound.getByteArray(key);
+   }
 
-	@Override
-	public void remove(String key) {
-		this.compound.removeTag(key);
-	}
+   public void setByteArray(String key, byte[] value) {
+      compound.putByteArray(key, value);
+   }
 
-	@Override
-	public void setBoolean(String key, boolean value) {
-		this.compound.setBoolean(key, value);
-	}
+   public int[] getIntegerArray(String key) {
+      return compound.getIntArray(key);
+   }
 
-	@Override
-	public void setByte(String key, byte value) {
-		this.compound.setByte(key, value);
-	}
+   public void setIntegerArray(String key, int[] value) {
+      compound.putIntArray(key, value);
+   }
 
-	@Override
-	public void setByteArray(String key, byte[] value) {
-		this.compound.setByteArray(key, value);
-	}
+   public Object[] getList(String key, int type) {
+      ListTag list = compound.getList(key, type);
+      Object[] nbts = new Object[list.size()];
+      for(int i = 0; i < list.size(); ++i) {
+         switch (list.getElementType()) {
+            case 0: {
+               nbts[i] = 0;
+               break;
+            }
+            case 1: {
+               nbts[i] = ((ByteTag) list.get(i)).getAsByte();
+               break;
+            }
+            case 2: {
+               nbts[i] = ((ShortTag) list.get(i)).getAsShort();
+               break;
+            }
+            case 3: {
+               nbts[i] = list.getInt(i);
+               break;
+            }
+            case 4: {
+               nbts[i] = ((LongTag) list.get(i)).getAsShort();
+               break;
+            }
+            case 5: {
+               nbts[i] = list.getFloat(i);
+               break;
+            }
+            case 6: {
+               nbts[i] = list.getDouble(i);
+               break;
+            }
+            case 7: {
+               nbts[i] = ((ByteArrayTag) list.get(i)).getAsByteArray();
+               break;
+            }
+            case 8: {
+               nbts[i] = list.getString(i);
+               break;
+            }
+            case 10: {
+               nbts[i] = Objects.requireNonNull(NpcAPI.Instance()).getINbt(list.getCompound(i));
+               break;
+            }
+            case 11: {
+               nbts[i] = list.getIntArray(i);
+               break;
+            }
+            case 12: {
+               nbts[i] = ((LongArrayTag) list.get(i)).getAsLongArray();
+               break;
+            }
+            case 99: {
+               nbts[i] = ((NumericTag) list.get(i)).getAsNumber();
+               break;
+            }
+            default: { break; }
+         }
+      }
+      return nbts;
+   }
 
-	@Override
-	public void setCompound(String key, INbt value) {
-		if (value == null) {
-			throw new CustomNPCsException("Value cant be null");
-		}
-		this.compound.setTag(key, value.getMCNBT());
-	}
+   public int getListType(String key) {
+      Tag b = compound.get(key);
+      if (b == null) {
+         return 0;
+      } else if (b.getId() != 9) {
+         throw new CustomNPCsException("NBT tag " + key + " isn't a list");
+      } else {
+         return ((ListTag)b).getElementType();
+      }
+   }
 
-	@Override
-	public void setDouble(String key, double value) {
-		this.compound.setDouble(key, value);
-	}
+   public void setList(String key, Object[] values) {
+      ListTag list = new ListTag();
+      int type = -1;
+      for (int i = 0; i < values.length; i++) {
+         Tag tag = getListTag(values[i], type);
+         if (tag == null) {
+            throw new CustomNPCsException("Value[" + i + "] \"" + values[i] + "\" - cannot be converted to a tag or does not match the storage type of the ListTag!");
+         }
+         if (type < 0) { type = tag.getId(); }
+         list.add(tag);
+      }
+      compound.put(key, list);
+   }
 
-	@Override
-	public void setFloat(String key, float value) {
-		this.compound.setFloat(key, value);
-	}
+   private Tag getListTag(Object value, int type) {
+      if (value instanceof Tag) {
+         if (type < 0 || ((Tag) value).getId() == type) { return (Tag) value; }
+      } else if (value instanceof Boolean) {
+         if (type < 0 || type == 1) { return ByteTag.valueOf((Boolean) value); }
+      } else if (value instanceof Byte) {
+         if (type < 0 || type == 2) { return ByteTag.valueOf((Byte) value); }
+      } else if (value instanceof Integer) {
+         if (type < 0 || type == 3) { return IntTag.valueOf((Integer) value); }
+      } else if (value instanceof Short) {
+         if (type < 0 || type == 4) { return ShortTag.valueOf((Short) value); }
+      } else if (value instanceof Float) {
+         if (type < 0 || type == 5) { return FloatTag.valueOf((Float) value); }
+      } else if (value instanceof Double) {
+         if (type < 0 || type == 6) { return DoubleTag.valueOf((Double) value); }
+      } else if (value instanceof Byte[]) {
+         if (type < 0 || type == 7) {
+            byte[] data;
+            if (value instanceof Byte[]) {
+               data = new byte[((Byte[]) value).length];
+               for (int i = 0; i < data.length; i++) { data[i] = ((Byte[]) value)[i]; }
+            } else { data = (byte[]) value; }
+            return new ByteArrayTag(data);
+         }
+      } else if (value instanceof String) {
+         if (type < 0 || type == 8) { return StringTag.valueOf((String) value); }
+      } else if (value instanceof INbt) {
+         if (type < 0 || type == 10) { return ((INbt) value).getMCNBT(); }
+      } else if (value instanceof int[] || value instanceof Integer[]) {
+         if (type < 0 || type == 11) {
+            int[] data;
+            if (value instanceof Integer[]) {
+               data = new int[((Integer[]) value).length];
+               for (int i = 0; i < data.length; i++) { data[i] = ((Integer[]) value)[i]; }
+            } else { data = (int[]) value; }
+            return new IntArrayTag(data);
+         }
+      }
+      else if (value instanceof long[] || value instanceof Long[]) {
+         if (type < 0 || type == 12) {
+            long[] data;
+            if (value instanceof Long[]) {
+               data = new long[((Long[]) value).length];
+               for (int i = 0; i < data.length; i++) { data[i] = ((Long[]) value)[i]; }
+            } else { data = (long[]) value; }
+            return new LongArrayTag(data);
+         }
+      }
+      return null;
+   }
 
-	@Override
-	public void setInteger(String key, int value) {
-		this.compound.setInteger(key, value);
-	}
+   @Override
+   public void addToList(String keyList, Object value) {
+      Tag list = compound.get(keyList);
+      if (list == null) { compound.put(keyList, (list = new ListTag())); }
+      else if (!(list instanceof ListTag)) { throw new CustomNPCsException("\"" + keyList + "\" - already exists and is not a \"" + keyList + "\" ListTag!"); }
+      if (((ListTag) list).isEmpty()) {
+         Tag tag = getListTag(value, -1);
+         if (tag != null) { ((ListTag) list).add(tag); }
+         return;
+      }
+      Tag tag = getListTag(value, -1);
+      if (tag == null) {
+         throw new CustomNPCsException("Value \"" + value + "\" - cannot be converted to tag from \"" + keyList + "\" ListTag!");
+      }
+      if (tag.getId() != ((ListTag) list).getElementType()) {
+         throw new CustomNPCsException("Value \"" + value + "\" - does not match storage type in \"" + keyList + "\"ListTag!");
+      }
+      ((ListTag) list).add(tag);
+   }
 
-	@Override
-	public void setIntegerArray(String key, int[] value) {
-		this.compound.setIntArray(key, value);
-	}
+   public INbt getCompound(String key) {
+      return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound.getCompound(key));
+   }
 
-	@Override
-	public void setList(String key, Object[] value) {
-		NBTTagList list = new NBTTagList();
-		int type = -1;
-		for (Object nbt : value) {
-			if (nbt instanceof INbt) {
-				if (type == -1) {
-					type = 10;
-				} else if (type != 10) {
-					continue;
-				}
-				list.appendTag(((INbt) nbt).getMCNBT());
-			} else if (nbt instanceof String) {
-				if (type == -1) {
-					type = 8;
-				} else if (type != 8) {
-					continue;
-				}
-				list.appendTag(new NBTTagString((String) nbt));
-			} else if (nbt instanceof Double) {
-				if (type == -1) {
-					type = 6;
-				} else if (type != 6) {
-					continue;
-				}
-				list.appendTag(new NBTTagDouble((double) nbt));
-			} else if (nbt instanceof Float) {
-				if (type == -1) {
-					type = 5;
-				} else if (type != 5) {
-					continue;
-				}
-				list.appendTag(new NBTTagFloat((float) nbt));
-			} else if (nbt instanceof Integer) {
-				if (type == -1) {
-					type = 3;
-				} else if (type != 3) {
-					continue;
-				}
-				list.appendTag(new NBTTagInt((int) nbt));
-			} else if (nbt instanceof int[]) {
-				if (type == -1) {
-					type = 11;
-				} else if (type != 11) {
-					continue;
-				}
-				list.appendTag(new NBTTagIntArray((int[]) nbt));
-			}
-		}
-		this.compound.setTag(key, list);
-	}
+   public void setCompound(String key, INbt value) {
+      if (value == null) {
+         throw new CustomNPCsException("Value cant be null");
+      } else {
+         compound.put(key, value.getMCNBT());
+      }
+   }
 
-	@Override
-	public void setLong(String key, long value) {
-		this.compound.setLong(key, value);
-	}
+   public String[] getKeys() {
+      return compound.getAllKeys().toArray(new String[0]);
+   }
 
-	@Override
-	public void setShort(String key, short value) {
-		this.compound.setShort(key, value);
-	}
+   public int getType(String key) {
+      if (!compound.contains(key)) { return -1; }
+      return Objects.requireNonNull(compound.get(key)).getId();
+   }
 
-	@Override
-	public void setString(String key, String value) {
-		this.compound.setString(key, value);
-	}
+   public CompoundTag getMCNBT() {
+      return compound;
+   }
 
-	@Override
-	public String toJsonString() {
-		return NBTJsonUtil.Convert(this.compound);
-	}
+   public String toJsonString() {
+      return NBTJsonUtil.Convert(compound);
+   }
+
+   public boolean isEqual(INbt nbt) {
+      return nbt != null && compound.equals(nbt.getMCNBT());
+   }
+
+   public void clear() {
+      for (String name : compound.getAllKeys()) { compound.remove(name); }
+   }
+
+   public boolean isEmpty() {
+      return compound.isEmpty();
+   }
+
+   public void merge(INbt nbt) {
+      compound.merge(nbt.getMCNBT());
+   }
+
+   public void mcSetTag(String key, Tag tag) {
+      compound.put(key, tag);
+   }
+
+   public Tag mcGetTag(String key) {
+      return compound.get(key);
+   }
 }

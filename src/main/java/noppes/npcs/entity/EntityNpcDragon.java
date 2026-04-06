@@ -1,96 +1,98 @@
 package noppes.npcs.entity;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistries;
+import noppes.npcs.CustomEntities;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.model.part.ModelData;
+import org.jetbrains.annotations.NotNull;
 
 public class EntityNpcDragon extends EntityNPCInterface {
-	private boolean exploded;
-	public double[][] field_40162_d;
-	public int field_40164_e;
-	public float field_40172_ax;
-	public float field_40173_aw;
-	public int field_40178_aA;
-	public boolean isFlying;
 
-	public EntityNpcDragon(World world) {
-		super(world);
-		this.isFlying = false;
-		this.exploded = false;
-		this.field_40162_d = new double[64][3];
-		this.field_40164_e = -1;
-		this.field_40173_aw = 0.0f;
-		this.field_40172_ax = 0.0f;
-		this.field_40178_aA = 0;
-		this.scaleX = 0.4f;
-		this.scaleY = 0.4f;
-		this.scaleZ = 0.4f;
-		this.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/dragon/BlackDragon.png");
-		this.width = 1.8f;
-		this.height = 1.4f;
-	}
+   private final EntityDimensions size = new EntityDimensions(1.8F, 1.4F, false);
+   public double[][] field_40162_d = new double[64][3];
+   public int field_40164_e = -1;
+   public float prevAnimTime = 0.0F;
+   public float animTime = 0.0F;
+   private boolean exploded = false;
 
-	public double[] func_40160_a(int i, float f) {
-		f = 1.0f - f;
-		int j = this.field_40164_e - i & 0x3F;
-		int k = this.field_40164_e - i - 1 & 0x3F;
-		double[] ad = new double[3];
-		double d = this.field_40162_d[j][0];
-		double d2 = this.field_40162_d[k][0] - d;
-		while (d2 < -180.0) { d2 += 360.0; }
-		while (d2 >= 180.0) { d2 -= 360.0; }
-		ad[0] = d + d2 * f;
-		d = this.field_40162_d[j][1];
-		d2 = this.field_40162_d[k][1] - d;
-		ad[1] = d + d2 * f;
-		ad[2] = this.field_40162_d[j][2] + (this.field_40162_d[k][2] - this.field_40162_d[j][2]) * f;
-		return ad;
-	}
+   public EntityNpcDragon(EntityType<? extends EntityNPCInterface> type, Level world) {
+      super(type, world);
+      scaleX = 0.4F;
+      scaleY = 0.4F;
+      scaleZ = 0.4F;
+      display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/dragon/blackdragon.png");
+   }
 
-	public double getMountedYOffset() {
-		return 1.1;
-	}
+   public double getPassengersRidingOffset() {
+      return 1.1D;
+   }
 
-	@Override
-	public void onLivingUpdate() {
-		this.field_40173_aw = this.field_40172_ax;
-		if (this.world.isRemote && this.getHealth() <= 0.0f) {
-			if (!this.exploded) {
-				this.exploded = true;
-				float f = (this.rand.nextFloat() - 0.5f) * 8.0f;
-				float f2 = (this.rand.nextFloat() - 0.5f) * 4.0f;
-				float f3 = (this.rand.nextFloat() - 0.5f) * 8.0f;
-				this.world.spawnParticle(EnumParticleTypes.EXPLOSION_LARGE, this.posX + f, this.posY + 2.0 + f2,
-						this.posZ + f3, 0.0, 0.0, 0.0);
-			}
-		} else {
-			this.exploded = false;
-			float f4 = 0.045f * (float) Math.pow(2.0, this.motionY);
-			this.field_40172_ax += f4 * 0.5f;
-		}
-		super.onLivingUpdate();
-	}
+   public double[] getMovementOffsets(int i, float f) {
+      f = 1.0F - f;
+      int j = field_40164_e - i & 63;
+      int k = field_40164_e - i - 1 & 63;
+      double[] ad = new double[3];
+      double d = field_40162_d[j][0];
 
-	@Override
-	public void onUpdate() {
-		this.setNoAI(this.isDead = true);
-		if (!this.world.isRemote) {
-			NBTTagCompound compound = new NBTTagCompound();
-			this.writeToNBT(compound);
-			EntityCustomNpc npc = new EntityCustomNpc(this.world);
-			npc.readFromNBT(compound);
-			ModelData data = npc.modelData;
-			data.setEntityClass(EntityNpcDragon.class);
-			this.world.spawnEntity(npc);
-		}
-		super.onUpdate();
-	}
+      double d1 = field_40162_d[k][0] - d;
+      while (d1 < -180.0D) { d1 += 360.0D; }
+      while(d1 >= 180.0D) { d1 -= 360.0D; }
 
-	@Override
-	public void updateHitbox() {
-		this.width = 1.8f;
-		this.height = 1.4f;
-	}
+      ad[0] = d + d1 * (double)f;
+      d = field_40162_d[j][1];
+      d1 = field_40162_d[k][1] - d;
+      ad[1] = d + d1 * (double)f;
+      ad[2] = field_40162_d[j][2] + (field_40162_d[k][2] - field_40162_d[j][2]) * (double)f;
+      return ad;
+   }
+
+   public void tick() {
+      discard();
+      setNoAi(true);
+      if (!level().isClientSide) {
+         CompoundTag compound = new CompoundTag();
+         addAdditionalSaveData(compound);
+         EntityCustomNpc npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, level());
+         npc.readAdditionalSaveData(compound);
+         npc.modelData.setEntity(ForgeRegistries.ENTITY_TYPES.getKey(CustomEntities.entityNpcDragon));
+         level().addFreshEntity(npc);
+      }
+      prevAnimTime = animTime;
+      exploded = false;
+      float f1 = 0.045F;
+      f1 *= (float)Math.pow(2.0D, getDeltaMovement().y);
+      animTime += f1 * 0.5F;
+      super.tick();
+   }
+
+   public void aiStep() {
+      prevAnimTime = animTime;
+      float f;
+      if (level().isClientSide && getHealth() <= 0.0F) {
+         if (!exploded) {
+            exploded = true;
+            f = (random.nextFloat() - 0.5F) * 8.0F;
+            float f2 = (random.nextFloat() - 0.5F) * 4.0F;
+            float f4 = (random.nextFloat() - 0.5F) * 8.0F;
+            level().addParticle(ParticleTypes.EXPLOSION, getX() + (double)f, getY() + 2.0D + (double)f2, getZ() + (double)f4, 0.0D, 0.0D, 0.0D);
+         }
+      } else {
+         exploded = false;
+         f = 0.045F;
+         f *= (float)Math.pow(2.0D, getDeltaMovement().y);
+         animTime += f * 0.5F;
+      }
+
+      super.aiStep();
+   }
+
+   public @NotNull EntityDimensions getDimensions(@NotNull Pose pos) {
+      return size;
+   }
+
 }

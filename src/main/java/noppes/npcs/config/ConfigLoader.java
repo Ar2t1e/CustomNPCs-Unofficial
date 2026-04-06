@@ -1,756 +1,344 @@
 package noppes.npcs.config;
 
-import java.awt.Color;
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.common.config.ConfigCategory;
-import net.minecraftforge.common.config.ConfigElement;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.common.config.Property.Type;
-import net.minecraftforge.fml.client.config.IConfigElement;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerPlayer;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
-import noppes.npcs.controllers.ScriptController;
-import noppes.npcs.util.Util;
+import noppes.npcs.ForgeEventHandler;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSync;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class ConfigLoader {
 
-	private static final List<Field> data = new ArrayList<>();
-	public Configuration config;
+   private static final LinkedList<Field> configFields = new LinkedList<>();
+   private final Object parent;
+   private boolean updateFile = false;
+   private File configFile;
 
-	public ConfigLoader(File directory) {
-		if (!directory.exists() && !directory.mkdir()) { return; }
-		File file = new File(directory, CustomNpcs.MODNAME + " Unofficial.cfg");
-		List<String> lines = new ArrayList<>();
-		boolean isOldVersion = false;
-		boolean needSave = !file.exists();
-		if (!needSave) {
-			String text = Util.instance.loadFile(file);
-			isOldVersion = text.indexOf("# Configuration file") != 0;
-			if (isOldVersion) {
-				for (String line : text.split("" + ((char) 10))) {
-					if (!line.contains("=") || line.indexOf("#") == 0) { continue; }
-					lines.add(line);
-				}
-				Util.instance.saveFile(file, "");
-			}
-		}
-		config = new Configuration(file);
-		for (Field field : CustomNpcs.class.getDeclaredFields()) {
-			if (!field.isAnnotationPresent(ConfigProp.class)) { continue; }
-			ConfigProp prop = field.getAnnotation(ConfigProp.class);
-			String name = field.getName();
-			ConfigCategory cat = config.getCategory(prop.type());
-			Property property = null;
-			String classType = field.getType().getTypeName().toLowerCase().replace("integer", "int").replace("[]", "");
-			if (classType.lastIndexOf(".") != -1) { classType = classType.substring(classType.lastIndexOf(".") + 1); }
+   public ConfigLoader(Object parentIn, String fileName, File directory) {
+      parent = parentIn;
+      if (!directory.exists() && !directory.mkdir()) { return; }
+      configFile = new File(directory, fileName + ".cfg");
+      for(Field field : parentIn.getClass().getDeclaredFields()) {
+         if (field.isAnnotationPresent(ConfigProp.class)) { configFields.add(field); }
+      }
+      loadConfig();
+   }
 
-			if (cat.containsKey(name)) {
-				property = cat.get(name);
-				if (property.getType() == Type.COLOR) {
-					if (!property.getString().isEmpty() && property.getString().length() != 6) {
-						if (property.getString().length() > 6) {
-							Color color = new Color((int) Long.parseLong(property.getString(), 16));
-							property.set(Integer.toHexString(color.getRGB()).toUpperCase());
-						} else {
-							StringBuilder str = new StringBuilder(property.getString());
-							while (str.length() < 6 ) { str.insert(0, "0"); }
-							property.set(str.toString().toUpperCase());
-						}
-						needSave = true;
-					} else if (property.getStringList().length > 0) {
-						List<String> list = new ArrayList<>();
-						boolean change = false;
-						for (String c : property.getStringList()) {
-							if (c.length() > 6) {
-								change = true;
-								Color color = new Color((int) Long.parseLong(c, 16));
-								color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 0);
-								StringBuilder str = new StringBuilder(Integer.toHexString(color.getRGB()).toUpperCase());
-								while (str.length() < 6 ) { str.insert(0, "0"); }
-								list.add(str.toString().toUpperCase());
-							} else if (c.length() < 6) {
-								change = true;
-								StringBuilder str = new StringBuilder(c);
-								while (str.length() < 6 ) { str.insert(0, "0"); }
-								list.add(str.toString().toUpperCase());
-							}
-						}
-						if (change) {
-							property.set(list.toArray(new String[0]));
-							needSave = true;
-						}
-					}
-				}
-				if (!prop.info().isEmpty()) {
-					property.setComment(prop.info());
-				}
-				if (!prop.def().isEmpty()) {
-					if (field.getType().isArray()) {
-						property.setValidValues(prop.def().split(","));
-					} else {
-						property.setDefaultValue(prop.def());
-					}
-				}
-				boolean isContinue = true;
-				if (!field.getType().isArray()) {
-					if (!prop.min().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMinValue(Integer.parseInt(prop.min()));
-						} else if (classType.equals("double")) {
-							property.setMinValue(Double.parseDouble(prop.min()));
-						}
-					}
-					if (!prop.max().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMaxValue(Integer.parseInt(prop.max()));
-						} else if (classType.equals("double")) {
-							property.setMaxValue(Double.parseDouble(prop.max()));
-						}
-					}
-				} else {
-					try {
-						Object objArray = field.get(null);
-						int size = 0;
-						if (objArray instanceof int[]) { size = ((int[]) objArray).length; }
-						else if (objArray instanceof Object[]) { size = ((Object[]) objArray).length; }
-						else if (objArray instanceof double[]) { size = ((double[]) objArray).length; }
-						isContinue = property.getStringList().length == size;
-					}
-					catch (Exception e) { LogWriter.error("Error Load: \""+field.getName()+"\"", e); }
-				}
-				if (isContinue) {
-					continue;
-				}
-			}
-			needSave = true;
+    public static void sendTo(ServerPlayer player) {
+       CompoundTag compound = new CompoundTag();
+       for (Field field : configFields) {
+          String key = field.getName();
+          try {
+             Object value = field.get(CustomNpcs.instance);
+             if (value instanceof int[]) { compound.putIntArray(key, (int[]) value); }
+             else if (value instanceof Color[]) {
+                int[] colors = new int[((Color[]) value).length];
+                for (int i = 0; i < colors.length; i++) { colors[i] = ((Color[]) value)[i].getRGB(); }
+                compound.putIntArray(key, colors);
+             }
+             else if (value instanceof Boolean) { compound.putBoolean(key, (boolean) value); }
+             else if (value instanceof Integer) { compound.putInt(key, (int) value); }
+             else if (value instanceof Color) { compound.putInt(key, ((Color) value).getRGB()); }
+             else if (value instanceof String) { compound.putString(key, (String) value); }
+             else { LogWriter.warn("Custom object "+key+" = "+value.getClass()); }
+          }
+          catch (Exception ignored) { }
+       }
+       if (compound.isEmpty()) { return; }
+       ListTag list = new ListTag();
+       for (Class<?> cls : ForgeEventHandler.eventNames.keySet()) {
+          CompoundTag nbt = new CompoundTag();
+          nbt.putString("Name", ForgeEventHandler.eventNames.get(cls));
+          nbt.putString("Class", cls.getName());
+          list.add(nbt);
+       }
+       compound.put("ForgeEventNames", list);
+       Packets.send(player, new PacketSync(13, compound, false));
+    }
 
-			Object object = null;
-			try {
-				object = field.get(null);
-			} catch (Exception e) { LogWriter.error(e); }
+   public static void load(CompoundTag compound) {
+      ForgeEventHandler.eventNames.clear();
+      for (int i = 0; i < compound.getList("ForgeEventNames", 10).size(); i++) {
+         CompoundTag nbt = compound.getList("ForgeEventNames", 10).getCompound(i);
+         String name = nbt.getString("Name");
+         Class<?> cls = null;
+         try { cls = Class.forName(nbt.getString("Class")); }
+         catch (Exception e) { LogWriter.error(e); }
+         ForgeEventHandler.eventNames.put(cls, name);
+      }
+      compound.remove("ForgeEventNames");
+      for (String key : compound.getAllKeys()) {
+         Field field = null;
+         for (Field f : configFields) {
+            if (f.getName().equals(key)) {
+               field = f;
+               break;
+            }
+         }
+         if (field == null) { continue; }
+         Tag tag = compound.get(key);
+         if (tag == null) { continue; }
+         int id = tag.getId();
+         try {
+            if (id == 1) { field.set(null, compound.getBoolean(key)); }
+            else if (id == 3) {
+               if (field.getType() == Color.class) { field.set(null, new Color(compound.getInt(key))); }
+               else { field.set(null, compound.getInt(key)); }
+            }
+            else if (id == 8) { field.set(null, compound.getString(key)); }
+            else if (id == 11) {
+               if (field.getType() == Color[].class) {
+                  int[] arr = compound.getIntArray(key);
+                  Color[] colors = new Color[arr.length];
+                  for (int i = 0; i < arr.length; i++) { colors[i] = new Color(arr[i]); }
+                  field.set(null, colors);
+               }
+               else { field.set(null, compound.getIntArray(key)); }
+            }
+         }
+         catch (Exception e) { LogWriter.error(e); }
+      }
+   }
 
-			Type type = Type.STRING;
-			if (field.getType().isArray()) {
-				String[] values = null;
-				String[] validValues = prop.def().split(",");
-                switch (classType) {
-                    case "string":
-                        values = (String[]) object;
-                        break;
-                    case "int":
-                        type = Type.INTEGER;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            int[] vs = (int[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                values[i] = "" + vs[i];
-                            }
-                        }
-                        break;
-                    case "boolean":
-                        type = Type.BOOLEAN;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            boolean[] vs = (boolean[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                values[i] = "" + vs[i];
-                            }
-                        }
-                        break;
-                    case "double":
-                        type = Type.DOUBLE;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            double[] vs = (double[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                values[i] = "" + vs[i];
-                            }
-                        }
-                        break;
-                    case "color":
-                        type = Type.COLOR;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            Color[] vs = (Color[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                Color color = new Color(vs[i].getRGB());
-                                color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 0);
-								StringBuilder str = new StringBuilder(Integer.toHexString(color.getRGB()).toUpperCase());
-								while (str.length() < 6 ) { str.insert(0, "0"); }
-								values[i] = str.toString();
-								if (values[i].length() > 6) { values[i] = values[i].substring(values[i].length() - 6); }
-                            }
-                        }
-                        break;
-                }
-				if (values != null) {
-					property = new Property(name, values, type, "config." + name + ".key");
-					property.setValidValues(validValues);
-				}
-			} else {
-                if (object != null) {
-					String value = object.toString();
-                    switch (classType) {
-                        case "int":
-                            type = Type.INTEGER;
-                            value = object.toString();
-                            break;
-                        case "boolean":
-                            type = Type.BOOLEAN;
-                            value = object.toString();
-                            break;
-                        case "double":
-                            type = Type.DOUBLE;
-                            value = object.toString();
-                            break;
-                        case "color":
-                            type = Type.COLOR;
-							StringBuilder str = new StringBuilder(Integer.toHexString(((Color) object).getRGB()).toUpperCase());
-							while (str.length() < 6 ) { str.insert(0, "0"); }
-							value = str.toString();
-							if (value.length() > 6) { value = value.substring(value.length() - 6); }
-                            break;
-                    }
-					property = new Property(name, value, type, "config." + name + ".key");
-					property.setDefaultValue(prop.def());
-					if (!prop.min().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMinValue(Integer.parseInt(prop.min()));
-						} else if (classType.equals("double")) {
-							property.setMinValue(Double.parseDouble(prop.min()));
-						}
-					}
-					if (!prop.max().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMaxValue(Integer.parseInt(prop.max()));
-						} else if (classType.equals("double")) {
-							property.setMaxValue(Double.parseDouble(prop.max()));
-						}
-					}
-				}
-			}
-			if (property != null) {
-				if (!prop.info().isEmpty()) {
-					property.setComment(prop.info());
-				}
-				cat.put(name, property);
-			}
-		}
-		if (isOldVersion) {
-			for (String line : lines) {
-				String name = line.substring(0, line.indexOf("="));
-				String value = line.substring(line.indexOf("=") + 1);
-				Property property = null;
-				if (config.getCategory(Configuration.CATEGORY_GENERAL).containsKey(name)) {
-					for (String key : config.getCategory(Configuration.CATEGORY_GENERAL).keySet()) {
-						if (key.equalsIgnoreCase(name)) {
-							property = config.getCategory(Configuration.CATEGORY_GENERAL).get(key);
-							break;
-						}
-					}
-				} else if (config.getCategory(Configuration.CATEGORY_CLIENT).containsKey(name)) {
-					for (String key : config.getCategory(Configuration.CATEGORY_CLIENT).keySet()) {
-						if (key.equalsIgnoreCase(name)) {
-							property = config.getCategory(Configuration.CATEGORY_CLIENT).get(key);
-							break;
-						}
-					}
-				}
-				if (property == null) {
-					continue;
-				}
-				if (value.indexOf("[") == 0) {
-					value = value.replace("[", "").replace("]", "");
-					property.setValidValues(value.split(", "));
-				} else if (value.indexOf("{") == 0) {
-					value = value.replace("{", "").replace("}", "");
-					property.setValidValues(value.split(", "));
-				} else {
-					property.setValue(value);
-				}
-			}
-			needSave = true;
-		}
-		if (needSave) {
-			config.save();
-		}
-		resetData();
-	}
-
-	public static void sendTo(EntityPlayerMP player) {
-		NBTTagCompound compound = new NBTTagCompound();
-		for (Field field : data) {
-			String key = field.getName();
-			try {
-				Object value = field.get(CustomNpcs.instance);
-				if (value instanceof int[]) { compound.setIntArray(key, (int[]) value); }
-				else if (value instanceof Color[]) {
-					int[] colors = new int[((Color[]) value).length];
-					for (int i = 0; i < colors.length; i++) { colors[i] = ((Color[]) value)[i].getRGB(); }
-					compound.setIntArray(key, colors);
-				}
-				else if (value instanceof Boolean) { compound.setBoolean(key, (boolean) value); }
-				else if (value instanceof Integer) { compound.setInteger(key, (int) value); }
-				else if (value instanceof Color) { compound.setInteger(key, ((Color) value).getRGB()); }
-				else if (value instanceof String) { compound.setString(key, (String) value); }
-				else { LogWriter.warn("Custom object "+key+" = "+value.getClass()); }
-			}
-			catch (Exception ignored) { }
-		}
-		if (compound.getKeySet().isEmpty()) { return; }
-		NBTTagList list = new NBTTagList();
-		for (Class<?> cls : ScriptController.forgeEventNames.keySet()) {
-			NBTTagCompound nbt = new NBTTagCompound();
-			nbt.setString("Name", ScriptController.forgeEventNames.get(cls));
-			nbt.setString("Class", cls.getName());
-			list.appendTag(nbt);
-		}
-		compound.setTag("ForgeEventNames", list);
-		Server.sendData(player, EnumPacketClient.SYNC_END, EnumSync.ModData, compound);
-	}
-
-	public static void load(NBTTagCompound compound) {
-		ScriptController.forgeEventNames.clear();
-		for (int i = 0; i < compound.getTagList("ForgeEventNames", 10).tagCount(); i++) {
-			NBTTagCompound nbt = compound.getTagList("ForgeEventNames", 10).getCompoundTagAt(i);
-			String name = nbt.getString("Name");
-			Class<?> cls = null;
-			try { cls = Class.forName(nbt.getString("Class")); }
-			catch (Exception e) { LogWriter.error(e); }
-			ScriptController.forgeEventNames.put(cls, name);
-		}
-		compound.removeTag("ForgeEventNames");
-		for (String key : compound.getKeySet()) {
-			Field field = null;
-			for (Field f : data) {
-				if (f.getName().equals(key)) {
-					field = f;
-					break;
-				}
-			}
-			if (field == null) { continue; }
-			int id = compound.getTag(key).getId();
-			try {
-				if (id == 1) { field.set(null, compound.getBoolean(key)); }
-				else if (id == 3) {
-					if (field.getType() == Color.class) { field.set(null, new Color(compound.getInteger(key))); }
-					else { field.set(null, compound.getInteger(key)); }
-				}
-				else if (id == 8) { field.set(null, compound.getString(key)); }
-				else if (id == 11) {
-					if (field.getType() == Color[].class) {
-						int[] arr = compound.getIntArray(key);
-						Color[] colors = new Color[arr.length];
-						for (int i = 0; i < arr.length; i++) { colors[i] = new Color(arr[i]); }
-						field.set(null, colors);
-					}
-					else { field.set(null, compound.getIntArray(key)); }
-				}
-			}
-			catch (Exception e) { LogWriter.error(e); }
-		}
-	}
-
-	public List<IConfigElement> getChildElements() {
-		Iterator<Property> pI = config.getCategory(Configuration.CATEGORY_GENERAL).getOrderedValues().iterator();
-		Map<String, ConfigElement> map = new TreeMap<>();
-		while (pI.hasNext()) {
-			Property p = pI.next();
-			map.put(p.getName(), new ConfigElement(p));
-		}
-		pI = config.getCategory(Configuration.CATEGORY_CLIENT).getOrderedValues().iterator();
-		while (pI.hasNext()) {
-			Property p = pI.next();
-			map.put(p.getName(), new ConfigElement(p));
-		}
-		return new ArrayList<>(map.values());
-	}
-
-	public void resetConfig() {
-		for (Field field : CustomNpcs.class.getDeclaredFields()) {
-			if (!field.isAnnotationPresent(ConfigProp.class)) {
-				continue;
-			}
-
-			ConfigProp prop = field.getAnnotation(ConfigProp.class);
-			String name = field.getName();
-			ConfigCategory cat = config.getCategory(prop.type());
-			Property property = null;
-			String classType = field.getType().getTypeName().toLowerCase().replace("integer", "int").replace("[]", "");
-			if (classType.lastIndexOf(".") != -1) {
-				classType = classType.substring(classType.lastIndexOf(".") + 1);
-			}
-			Object object = null;
-			try {
-				object = field.get(null);
-			} catch (Exception e) { LogWriter.error(e); }
-			Type type = Type.STRING;
-			if (field.getType().isArray()) {
-				String[] values = null;
-				String[] validValues = prop.def().split(",");
-                switch (classType) {
-                    case "string":
-                        values = (String[]) object;
-                        break;
-                    case "int":
-                        type = Type.INTEGER;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            int[] vs = (int[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                values[i] = "" + vs[i];
-                            }
-                        }
-                        break;
-                    case "boolean":
-                        type = Type.BOOLEAN;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            boolean[] vs = (boolean[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                values[i] = "" + vs[i];
-                            }
-                        }
-                        break;
-                    case "double":
-                        type = Type.DOUBLE;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            double[] vs = (double[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                values[i] = "" + vs[i];
-                            }
-                        }
-                        break;
-                    case "color":
-                        type = Type.COLOR;
-                        if (object == null) {
-                            values = validValues;
-                        } else {
-                            Color[] vs = (Color[]) object;
-                            values = new String[vs.length];
-                            for (int i = 0; i < vs.length; i++) {
-                                values[i] = Integer.toHexString((vs[i]).getRGB()).toUpperCase();
-                                if (vs[i].getAlpha() == 0) {
-                                    values[i] += 0xFF000000;
-                                }
-                            }
-                        }
-                        break;
-                }
-				if (values != null) {
-					property = new Property(name, values, type, "config." + name + ".key");
-					property.setValidValues(validValues);
-					if (!prop.min().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMinValue(Integer.parseInt(prop.min()));
-						} else if (classType.equals("double")) {
-							property.setMinValue(Double.parseDouble(prop.min()));
-						}
-					}
-					if (!prop.max().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMaxValue(Integer.parseInt(prop.max()));
-						} else if (classType.equals("double")) {
-							property.setMaxValue(Double.parseDouble(prop.max()));
-						}
-					}
-				}
-			} else {
-                if (object != null) {
-					String value = object.toString();
-                    switch (classType) {
-                        case "int":
-                            type = Type.INTEGER;
-                            value = object.toString();
-                            break;
-                        case "boolean":
-                            type = Type.BOOLEAN;
-                            value = object.toString();
-                            break;
-                        case "double":
-                            type = Type.DOUBLE;
-                            value = object.toString();
-                            break;
-                        case "color":
-                            type = Type.COLOR;
-                            value = Integer.toHexString(((Color) object).getRGB()).toUpperCase();
-                            break;
-                    }
-					property = new Property(name, value, type, "config." + name + ".key");
-					property.setDefaultValue(prop.def());
-					if (!prop.min().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMinValue(Integer.parseInt(prop.min()));
-						} else if (classType.equals("double")) {
-							property.setMinValue(Double.parseDouble(prop.min()));
-						}
-					}
-					if (!prop.max().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMaxValue(Integer.parseInt(prop.max()));
-						} else if (classType.equals("double")) {
-							property.setMaxValue(Double.parseDouble(prop.max()));
-						}
-					}
-				}
-			}
-			if (property != null) {
-				if (!prop.info().isEmpty()) {
-					property.setComment(prop.info());
-				}
-				cat.put(name, property);
-			}
-		}
-		config.save();
-	}
-
-	public void resetData() {
-		boolean needResetConfig = false;
-		for (Field field : CustomNpcs.class.getDeclaredFields()) {
-			if (!field.isAnnotationPresent(ConfigProp.class)) { continue; }
+    public void loadConfig() {
+      try {
+         HashMap<String, Field> types = new HashMap<>();
+         for (Field field : configFields) {
             ConfigProp prop = field.getAnnotation(ConfigProp.class);
-			if (prop.type().equals(Configuration.CATEGORY_GENERAL)) {data.add(field); }
-			String name = field.getName();
-			ConfigCategory cat = config.getCategory(prop.type());
-			if (!cat.containsKey(name)) {
-				continue;
-			}
-			Property property = cat.get(name);
-			Type type = property.getType();
-			if (field.getType().isArray()) {
-				String[] values = property.getValidValues();
-				try {
-					if (type == Type.STRING) { field.set(null, values); }
-					else if (type == Type.INTEGER) {
-						int[] base = (int[]) field.get(null);
-						int[] def = null;
-						int[] min = null;
-						int[] max = null;
-						if (!prop.def().isEmpty()) {
-							String[] bd = prop.def().split(",");
-							def = new int[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								def[i] = Integer.parseInt(bd[i]);
-							}
-						}
-						if (!prop.min().isEmpty()) {
-							String[] bd = prop.min().split(",");
-							min = new int[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								min[i] = Integer.parseInt(bd[i]);
-							}
-						}
-						if (!prop.max().isEmpty()) {
-							String[] bd = prop.max().split(",");
-							max = new int[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								max[i] = Integer.parseInt(bd[i]);
-							}
-						}
-						if (def != null && base.length != def.length) {
-							int[] newBase = new int[def.length];
-							for (int i = 0; i < def.length; i++) {
-								newBase[i] = i < base.length ? base[i] : def[i];
-							}
-							base = newBase;
-							needResetConfig = true;
-						}
-						int[] vs = new int[base.length];
-						for (int i = 0; i < values.length && i < base.length; i++) {
-							vs[i] = Integer.parseInt(values[i]);
-							if (min != null && i < min.length && vs[i] < min[i]) {
-								vs[i] = min[i];
-								needResetConfig = true;
-							}
-							if (max != null && i < max.length && vs[i] > max[i]) {
-								vs[i] = max[i];
-								needResetConfig = true;
-							}
-						}
-						field.set(null, vs);
-					}
-					else if (type == Type.BOOLEAN) {
-						boolean[] base = (boolean[]) field.get(null);
-						boolean[] def = null;
-						if (!prop.def().isEmpty()) {
-							String[] bd = prop.def().split(",");
-							def = new boolean[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								def[i] = Boolean.parseBoolean(bd[i]);
-							}
-						}
-						if (def != null && base.length != def.length) {
-							boolean[] newBase = new boolean[def.length];
-							for (int i = 0; i < def.length; i++) {
-								newBase[i] = i < base.length ? base[i] : def[i];
-							}
-							base = newBase;
-							needResetConfig = true;
-						}
-						boolean[] vs = new boolean[values.length];
-						for (int i = 0; i < values.length && i < base.length; i++) {
-							vs[i] = Boolean.parseBoolean(values[i]);
-						}
-						field.set(null, vs);
-					}
-					else if (type == Type.DOUBLE) {
-						double[] base = (double[]) field.get(null);
-						double[] def = null;
-						double[] min = null;
-						double[] max = null;
-						if (!prop.def().isEmpty()) {
-							String[] bd = prop.def().split(",");
-							def = new double[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								def[i] = Double.parseDouble(bd[i]);
-							}
-						}
-						if (!prop.min().isEmpty()) {
-							String[] bd = prop.min().split(",");
-							min = new double[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								min[i] = Double.parseDouble(bd[i]);
-							}
-						}
-						if (!prop.max().isEmpty()) {
-							String[] bd = prop.max().split(",");
-							max = new double[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								max[i] = Double.parseDouble(bd[i]);
-							}
-						}
-						if (def != null && base.length != def.length) {
-							double[] newBase = new double[def.length];
-							for (int i = 0; i < def.length; i++) {
-								newBase[i] = i < base.length ? base[i] : def[i];
-							}
-							base = newBase;
-							needResetConfig = true;
-						}
-						double[] vs = new double[values.length];
-						for (int i = 0; i < values.length && i < base.length; i++) {
-							vs[i] = Double.parseDouble(values[i]);
-							if (min != null && i < min.length && vs[i] < min[i]) {
-								vs[i] = min[i];
-								needResetConfig = true;
-							}
-							if (max != null && i < max.length && vs[i] > max[i]) {
-								vs[i] = max[i];
-								needResetConfig = true;
-							}
-						}
-						field.set(null, vs);
-					}
-					else if (type == Type.COLOR) {
-						Color[] base = (Color[]) field.get(null);
-						Color[] def = null;
-						if (!prop.def().isEmpty()) {
-							String[] bd = prop.def().split(",");
-							def = new Color[bd.length];
-							for (int i = 0; i < bd.length; i++) {
-								def[i] = new Color((int) Long.parseLong(bd[i], 16));
-							}
-						}
-						if (def != null && base.length != def.length) {
-							Color[] newBase = new Color[def.length];
-							for (int i = 0; i < def.length; i++) {
-								newBase[i] = i < base.length ? base[i] : def[i];
-							}
-							base = newBase;
-							needResetConfig = true;
-						}
-						Color[] vs = new Color[values.length];
-						for (int i = 0; i < values.length && i < base.length; i++) {
-							try {
-								vs[i] = new Color(Integer.parseInt(values[i]));
-							} catch (Exception e) {
-								vs[i] = new Color((int) Long.parseLong(values[i], 16));
-								vs[i] = new Color(vs[i].getRed(), vs[i].getGreen(), vs[i].getBlue(), 0);
-							}
-						}
-						field.set(null, vs);
-					}
-				} catch (Exception e) {
-					LogWriter.error("Config Error field \"" + name + "\"; type: " + type, e);
-				}
-			} else {
-				try {
-					if (type == Type.STRING) {
-						field.set(null, property.getString());
-					}
-					else if (type == Type.INTEGER) {
-						int v = Integer.parseInt(property.getString());
-						if (!prop.min().isEmpty()) {
-							int m = Integer.parseInt(prop.min());
-							if (v < m) {
-								v = m;
-							}
-						}
-						if (!prop.max().isEmpty()) {
-							int n = Integer.parseInt(prop.max());
-							if (v > n) {
-								v = n;
-							}
-						}
-						field.set(null, v);
-					}
-					else if (type == Type.BOOLEAN) {
-						field.set(null, Boolean.valueOf(property.getString()));
-					}
-					else if (type == Type.DOUBLE) {
-						double v = Double.parseDouble(property.getString());
-						if (!prop.min().isEmpty()) {
-							double m = Double.parseDouble(prop.min());
-							if (v < m) {
-								v = m;
-							}
-						}
-						if (!prop.max().isEmpty()) {
-							double n = Double.parseDouble(prop.max());
-							if (v > n) {
-								v = n;
-							}
-						}
-						field.set(null, v);
-					}
-					else if (type == Type.COLOR) {
-						Color color = new Color((int) Long.parseLong(property.getString(), 16));
-						color = new Color(color.getRed(), color.getGreen(), color.getBlue(), 255);
-						field.set(null, color);
-					}
-				} catch (Exception e) {
-					LogWriter.error("Config Error field \"" + name + "\"; type: " + type, e);
-				}
-			}
-		}
-		if (needResetConfig) {
-			resetConfig();
-		}
-	}
+            types.put(!prop.name().isEmpty() ? prop.name() : field.getName(), field);
+         }
+         if (configFile.exists()) {
+            HashMap<String, Object> properties = parseConfig(configFile, types);
+            for (String type: properties.keySet()) {
+               Field field = types.get(type);
+               Object obj = properties.get(type);
+               if (!obj.equals(field.get(null))) {
+                  field.set(null, obj);
+               }
+            }
+            for (String type: types.keySet()) {
+                if (!properties.containsKey(type)) {
+                    updateFile = true;
+                    break;
+                }
+            }
+         } else {
+            updateFile = true;
+         }
+      } catch (Exception e) {
+         updateFile = true;
+         LogWriter.except(e);
+      }
+      if (updateFile) { updateConfig(); }
+      updateFile = false;
+   }
+
+   private HashMap<String, Object> parseConfig(File file, HashMap<String, Field> types) throws Exception {
+      HashMap<String, Object> config = new HashMap<>();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+      while(true) {
+         String strLine;
+         do {
+            do {
+               if ((strLine = reader.readLine()) == null) {
+                  reader.close();
+                  return config;
+               }
+            } while(strLine.startsWith("#"));
+         } while(strLine.isEmpty());
+         int index = strLine.indexOf("=");
+         if (index > 0) {
+            String name = strLine.substring(0, index);
+            String prop = strLine.substring(index + 1);
+            if (!types.containsKey(name)) {
+               updateFile = true;
+            } else {
+               Object obj = null;
+               try {
+                  Class<?> class2 = types.get(name).getType();
+                  if (class2.isAssignableFrom(String.class)) { obj = prop; }
+                  else if (class2.isAssignableFrom(Integer.TYPE)) { obj = Integer.parseInt(prop); }
+                  else if (class2.isAssignableFrom(Long.TYPE)) { obj = Long.parseLong(prop); }
+                  else if (class2.isAssignableFrom(Short.TYPE)) { obj = Short.parseShort(prop); }
+                  else if (class2.isAssignableFrom(Byte.TYPE)) { obj = Byte.parseByte(prop); }
+                  else if (class2.isAssignableFrom(Boolean.TYPE)) { obj = Boolean.parseBoolean(prop); }
+                  else if (class2.isAssignableFrom(Float.TYPE)) { obj = Float.parseFloat(prop); }
+                  else if (class2.isAssignableFrom(Double.TYPE)) { obj = Double.parseDouble(prop); }
+                  else if (class2.isAssignableFrom(Color.class)) {
+                     obj = new Color((int) Long.parseLong(prop, 16));
+                  }
+                  else if (class2.isArray()) {
+                     String[] values = prop.replace("[", "").replace("]", "").split(",");
+                     if (class2 == Color[].class) {
+                        Color[] colors = new Color[values.length];
+                        for (int i = 0; i < values.length; i++) { colors[i] = new Color((int) Long.parseLong(values[i], 16)); }
+                        obj = colors;
+                     }
+                     else if (class2 == int[].class) {
+                        int[] ints = new int[values.length];
+                        for (int i = 0; i < values.length; i++) { ints[i] = Integer.parseInt(values[i]); }
+                        obj = ints;
+                     }
+                     else if (class2 == long[].class) {
+                        long[] longs = new long[values.length];
+                        for (int i = 0; i < values.length; i++) { longs[i] = Long.parseLong(values[i]); }
+                        obj = longs;
+                     }
+                     else if (class2 == boolean[].class) {
+                        boolean[] ints = new boolean[values.length];
+                        for (int i = 0; i < values.length; i++) { ints[i] = Boolean.parseBoolean(values[i]); }
+                        obj = ints;
+                     }
+                     else if (class2 == short[].class) {
+                        short[] shorts = new short[values.length];
+                        for (int i = 0; i < values.length; i++) { shorts[i] = Short.parseShort(values[i]); }
+                        obj = shorts;
+                     }
+                     else if (class2 == byte[].class) {
+                        byte[] bytes = new byte[values.length];
+                        for (int i = 0; i < values.length; i++) { bytes[i] = Byte.parseByte(values[i]); }
+                        obj = bytes;
+                     }
+                     else if (class2 == float[].class) {
+                        float[] floats = new float[values.length];
+                        for (int i = 0; i < values.length; i++) { floats[i] = Float.parseFloat(values[i]); }
+                        obj = floats;
+                     }
+                     else if (class2 == double[].class) {
+                        double[] doubles = new double[values.length];
+                        for (int i = 0; i < values.length; i++) { doubles[i] = Double.parseDouble(values[i]); }
+                        obj = doubles;
+                     }
+                     else if (class2 == String[].class) { obj = values; }
+                  }
+               }
+               catch (Exception e) { LogWriter.error(e); }
+               if (obj != null) {
+                  config.put(name, obj);
+               }
+            }
+         } else {
+            this.updateFile = true;
+         }
+      }
+   }
+
+   public void updateConfig() {
+      try {
+         LogWriter.debug("Try update config in "+configFile);
+         if (configFile == null || !configFile.exists() && !configFile.createNewFile()) { return; }
+         BufferedWriter out = new BufferedWriter(new FileWriter(configFile));
+         for (Field field : configFields) {
+            ConfigProp prop = field.getAnnotation(ConfigProp.class);
+            if (!prop.info().isEmpty()) { out.write("#" + prop.info() + System.lineSeparator()); }
+            String name = !prop.name().isEmpty() ? prop.name() : field.getName();
+            try {
+               Object object = field.get(parent);
+               StringBuilder value;
+               if (object.getClass().isArray()) {
+                  value = new StringBuilder("[");
+                  if (object instanceof Color[] colors) {
+                     for (int i = 0; i < colors.length; i++) {
+                        value.append(Integer.toHexString(colors[i].getRGB()).toUpperCase());
+                        if (i < colors.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof int[] ints) {
+                     for (int i = 0; i < ints.length; i++) {
+                        value.append(ints[i]);
+                        if (i < ints.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof long[] longs) {
+                     for (int i = 0; i < longs.length; i++) {
+                        value.append(longs[i]);
+                        if (i < longs.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof boolean[] booleans) {
+                     for (int i = 0; i < booleans.length; i++) {
+                        value.append(booleans[i]);
+                        if (i < booleans.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof short[] shorts) {
+                     for (int i = 0; i < shorts.length; i++) {
+                        value.append(shorts[i]);
+                        if (i < shorts.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof byte[] bytes) {
+                     for (int i = 0; i < bytes.length; i++) {
+                        value.append(bytes[i]);
+                        if (i < bytes.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof float[] floats) {
+                     for (int i = 0; i < floats.length; i++) {
+                        value.append(String.valueOf(floats[i]).replace(",", "."));
+                        if (i < floats.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof double[] doubles) {
+                     for (int i = 0; i < doubles.length; i++) {
+                        value.append(String.valueOf(doubles[i]).replace(",", "."));
+                        if (i < doubles.length - 1) { value.append(","); }
+                     }
+                  }
+                  else if (object instanceof String[] strings) {
+                     for (int i = 0; i < strings.length; i++) {
+                        value.append(strings[i]);
+                        if (i < strings.length - 1) { value.append(","); }
+                     }
+                  }
+                  value.append("]");
+               }
+               else {
+                  if (Color.class.isAssignableFrom(field.getType())) {
+                     value = new StringBuilder(Integer.toHexString(((Color) object).getRGB()).toUpperCase());
+                  }
+                  else { value = new StringBuilder(object.toString()); }
+               }
+               out.write(name + "=" + value + System.lineSeparator());
+               out.write(System.lineSeparator());
+            }
+            catch (Exception e) { LogWriter.error(e); }
+         }
+         out.close();
+      } catch (IOException e) {
+         LogWriter.error(e);
+      }
+   }
+
+   public List<ConfigElement> getChildElements() {
+      Map<String, TreeMap<String, ConfigElement>> types = new HashMap<>();
+      for (Field field : configFields) {
+         ConfigProp prop = field.getAnnotation(ConfigProp.class);
+         if (prop == null) { continue; }
+         if (!types.containsKey(prop.type())) { types.put(prop.type(), new TreeMap<>()); }
+         types.get(prop.type()).put(field.getName(), new ConfigElement(parent, field, prop));
+      }
+      List<ConfigElement> list = new ArrayList<>();
+      if (types.containsKey("common")) { list.addAll(types.get("common").values()); }
+      if (types.containsKey("server")) { list.addAll(types.get("server").values()); }
+      if (types.containsKey("client")) { list.addAll(types.get("client").values()); }
+      return list;
+   }
 
 }

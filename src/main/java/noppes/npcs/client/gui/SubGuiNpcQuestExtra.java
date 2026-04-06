@@ -3,17 +3,20 @@ package noppes.npcs.client.gui;
 import java.awt.*;
 import java.util.List;
 
-import net.minecraft.client.gui.GuiScreen;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import noppes.npcs.client.gui.util.*;
-import org.lwjgl.opengl.GL11;
+import noppes.npcs.shared.client.gui.GuiTextAreaScreen;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.player.GuiLog;
 import noppes.npcs.client.gui.select.SubGuiNPCSelection;
 import noppes.npcs.client.gui.select.SubGuiTextureSelection;
 import noppes.npcs.constants.EnumQuestCompletion;
@@ -22,318 +25,291 @@ import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.Util;
 
-import javax.annotation.Nonnull;
+// New from Unofficial (BetaZavr)
+public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldListener {
 
-public class SubGuiNpcQuestExtra extends SubGuiInterface implements ITextfieldListener {
+    protected static final ResourceLocation SHEET = new ResourceLocation(CustomNpcs.MODID, "textures/quest/log/q_log_3.png");
+    protected static final ResourceLocation TABS = new ResourceLocation(CustomNpcs.MODID, "textures/quest/log/q_log_4.png");
 
-	protected static final ResourceLocation sheet = new ResourceLocation(CustomNpcs.MODID, "textures/quest log/q_log_3.png");
-	protected static final ResourceLocation tabs = new ResourceLocation(CustomNpcs.MODID, "textures/quest log/q_log_4.png");
-	protected EntityNPCInterface showNpc;
-	protected ScaledResolution sw;
-	public Quest quest;
+    protected EntityNPCInterface showNpc;
+    public Quest quest;
 
-	public SubGuiNpcQuestExtra(int id, Quest questIn) {
-		super(id);
-		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 217;
-		closeOnEsc = true;
+    public SubGuiNpcQuestExtra(Quest q) {
+        super();
+        setBackground("menubg.png");
+        imageWidth = 256;
+        imageHeight = 217;
 
-		quest = questIn;
-		showNpc = Util.instance.copyToGUI(quest.completer, mc.world, false);
-	}
+        quest = q;
+        showNpc = Util.instance.copyToGUI(quest.completer, player.level(), false);
+    }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: setSubGui(new SubGuiTextureSelection(0, showNpc, quest.icon.toString(), "png", 3)); break;// icon select
-			case 1: {
-				quest.completion = EnumQuestCompletion.values()[button.getValue()];
-				break;
-			} // completion type
-			case 2: {
-				setSubGui(new SubGuiNPCSelection(quest.completer));
-				break;
-			} // select npc
-			case 3: setSubGui(new SubGuiTextureSelection(1, showNpc, quest.texture == null ? "" : quest.texture.toString(), "png", 3)); break; // texture select
-			case 4: {
-				setSubGui(new SubGuiNpcTextArea(0, quest.rewardText));
-				break;
-			} // reward text
-			case 5: {
-				quest.extraButton = button.getValue();
-				initGui();
-				break;
-			} // extra button type
-			case 6: {
-				setSubGui(new SubGuiNpcTextArea(1, quest.extraButtonText));
-				break;
-			} // extra button hover text
-			case 7: {
-				quest.showProgressInChat = ((GuiNpcCheckBox) button).isSelected();
-				break;
-			} // progress in chat
-			case 8: {
-				quest.showProgressInWindow = ((GuiNpcCheckBox) button).isSelected();
-				break;
-			} // progress in window
-			case 66: {
-				onClosed();
-				break;
-			}
-		}
-	}
+    @Override
+    public void buttonEvent(GuiButtonNop button) {
+        switch (button.id) {
+            case 0: setSubGui(new SubGuiTextureSelection(this, 0, showNpc, quest.icon.toString(), ".png", 3)); break; // icon select
+            case 1: quest.completion = EnumQuestCompletion.values()[button.getValue()]; break; // completion type
+            case 2: setSubGui(new SubGuiNPCSelection(quest.completer)); break; // select npc
+            case 3: setSubGui(new SubGuiTextureSelection(this, 1, showNpc, quest.texture == null ? "" : quest.texture.toString(), ".png", 3)); break; // texture select
+            case 4: setSubGui(new GuiTextAreaScreen(0, quest.rewardText)); break; // reward text
+            case 5: {
+                quest.extraButton = button.getValue();
+                init();
+                break;
+            } // extra button type
+            case 6: setSubGui(new GuiTextAreaScreen(1, quest.extraButtonText)); break; // extra button hover text
+            case 7: quest.showProgressInChat = ((GuiCheckBoxNop) button).selected(); break;
+            case 8: quest.showProgressInWindow = ((GuiCheckBoxNop) button).selected(); break;
+            case 66: onClose(); break;
+        }
+    }
 
-	private void drawNpc(EntityNPCInterface npc) {
-		if (npc == null) { return; }
-		GlStateManager.translate((sw.getScaledWidth() + 170.0f) / 2.0f, (sw.getScaledHeight() + 60.0f) / 2.0f, 10.0f);
-		String modelName = "";
-		if (npc.display.getModel() != null) { modelName = npc.display.getModel(); }
-		boolean canUpdate = GuiLog.preDrawEntity(modelName);
-		GlStateManager.enableBlend();
-		GlStateManager.enableColorMaterial();
-		GlStateManager.enableDepth();
-		mc.getRenderManager().playerViewY = 180.0f;
-		GlStateManager.scale(25.0f, 25.0f, 25.0f);
-		npc.ticksExisted = 100;
-		if (canUpdate) { npc.onUpdate(); }
-		mc.getRenderManager().renderEntity(npc, 0.0, 0.0, 0.0, 0.0f, 1.0f, false);
-		GlStateManager.disableRescaleNormal();
-		GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-		GlStateManager.disableTexture2D();
-		GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-	}
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        List<Component> tempHoverText = getHoverText();
+        hoverText.clear();
+        super.render(graphics, mouseX, mouseY, partialTicks);
+        int u = guiLeft + 182;
+        int v = guiTop + 97;
+        if (getButton(2) != null) {
+            u = getButton(2).getX() + getButton(2).getWidth() + 7;
+            v = getButton(2).getY() + 2;
+        }
+        PoseStack matrixStack = graphics.pose();
+        RenderSystem.enableBlend();
+        // Back on NPC
+        int color = new Color(0xFF404040).getRGB();
+        matrixStack.pushPose();
+        matrixStack.translate(u + 5.0f, v + 3.0f, 1.0f);
+        graphics.fill(-6, -6, 61, 61, color);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        graphics.blit(SHEET, -5, -5, 34, 54, 65, 65);
+        matrixStack.popPose();
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		List<String> tempHoverText = getHoverText();
-		putHoverText(null);
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		int u = guiLeft + 182;
-		int v = guiTop + 97;
-		if (getButton(2) != null) {
-			u = getButton(2).x + getButton(2).width + 9;
-			v = getButton(2).y + 2;
-		}
-		// Back
-		GlStateManager.pushMatrix();
-		GlStateManager.translate(u + 5.0f, v + 3.0f, 1.0f);
-		GlStateManager.enableBlend();
-		GlStateManager.color(3.0f, 3.0f, 3.0f, 1.0f);
-		mc.getTextureManager().bindTexture(SubGuiNpcQuestExtra.sheet);
-		drawTexturedModalRect(-5, -5, 34, 54, 65, 65);
-		GlStateManager.popMatrix();
+        if (showNpc != null && !hasSubGui()) {
+            // NPC
+            matrixStack.pushPose();
+            graphics.enableScissor((u + 10), (v + 11), (u + 54), (v + 44));
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            matrixStack.translate(0.0f, 0.0f, 10.0f);
+            //graphics.fill((u + 10), (v + 11), (u + 54), (v + 44), 0xFFFF0000);
+            drawNpc(graphics, showNpc, 218, 149, 1.0f, 30, -5, 1);
+            graphics.disableScissor();
+            matrixStack.popPose();
 
-		if (showNpc != null && subgui == null) {
-			GlStateManager.pushMatrix();
-			GL11.glEnable(GL11.GL_SCISSOR_TEST);
-			int c = sw.getScaledWidth() < mc.displayWidth
-					? (int) Math.round((double) mc.displayWidth / (double) sw.getScaledWidth())
-					: 1;
-			GL11.glScissor((u + 4) * c, (v + 17) * c, (56) * c, (44) * c);
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-			drawNpc(showNpc);
-			GL11.glDisable(GL11.GL_SCISSOR_TEST);
-			GlStateManager.popMatrix();
-			// Fase
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(u + 1.0f, v + 1.0f, 100.0f);
-			GlStateManager.enableBlend();
-			GlStateManager.color(3.0f, 3.0f, 3.0f, 1.0f);
-			mc.getTextureManager().bindTexture(SubGuiNpcQuestExtra.tabs);
-			drawTexturedModalRect(0, 0, 193, 0, 63, 52);
-			String name = ((char) 167) + "l" + (quest.completer != null ? quest.completer.getName() : "Empty");
-			mc.fontRenderer.drawString(name, 32 - (float) mc.fontRenderer.getStringWidth(name) / 2, 50, CustomNpcs.QuestLogColor.getRGB(), false);
-			GlStateManager.disableBlend();
-			GlStateManager.popMatrix();
-		}
-		if (quest.extraButton > 0 && subgui == null) {
-			u = guiLeft + 98;
-			v = guiTop + 134;
-			if (getButton(5) != null) {
-				u = getButton(5).x - 12;
-				v = getButton(5).y + 3;
-			}
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(u, v, 100.0f);
-			GlStateManager.enableBlend();
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-			mc.getTextureManager().bindTexture(SubGuiNpcQuestExtra.sheet);
-			drawTexturedModalRect(-1, -1, 34, 20, 11, 11);
-			mc.getTextureManager().bindTexture(SubGuiNpcQuestExtra.tabs);
-			drawTexturedModalRect(0, 0, 116 + quest.extraButton * 9, 0, 9, 9);
-			GlStateManager.popMatrix();
-		}
+            // Fase
+            RenderSystem.enableBlend();
+            matrixStack.pushPose();
+            RenderSystem.disableDepthTest();
+            matrixStack.translate(u + 1.0f, v + 1.0f, 150.0f);
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            graphics.blit(TABS, 0, 0, 193, 0, 63, 52);
+            matrixStack.popPose();
 
-		// quest icon
-		u = guiLeft + 214;
-		v = guiTop + 4;
-		if (getButton(0) != null) {
-			u = getButton(0).x + getButton(0).width + 5;
-			v = getButton(0).y - 1;
-		}
-		int color = new Color(0xFF404040).getRGB();
-		GlStateManager.pushMatrix();
-		GlStateManager.enableBlend();
-		GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
-		drawGradientRect(-1, -1,  33, 33, color, color);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		mc.getTextureManager().bindTexture(SubGuiNpcQuestExtra.sheet);
-		drawTexturedModalRect(0, 0, 34, 54, 32, 32);
-		GlStateManager.disableBlend();
-		GlStateManager.popMatrix();
-		if (quest.icon != null) {
-			GlStateManager.pushMatrix();
-			GlStateManager.enableBlend();
-			GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
-			GlStateManager.scale(0.125f, 0.125f, 1.0f);
-			mc.getTextureManager().bindTexture(quest.icon);
-			drawTexturedModalRect(0, 0, 0, 0, 256, 256);
-			GlStateManager.disableBlend();
-			GlStateManager.popMatrix();
-		}
+            // Name
+            Component name = Component.empty().append(Component.literal(quest.completer != null ? quest.completer.getName().getString() : "Empty"));
+            u += 1;
+            v += 51;
+            matrixStack.pushPose();
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            matrixStack.translate(0.0f, 0.0f, 200.0f);
+            GuiButtonNop.renderString(graphics, name, u, v, u + 63, v +10,
+                    CustomNpcs.QuestLogColor.getRGB(), false, true, null);
+            matrixStack.popPose();
+        }
+        // script button
+        if (quest.extraButton > 0 && !hasSubGui()) {
+            u = guiLeft + 98;
+            v = guiTop + 134;
+            if (getButton(5) != null) {
+                u = getButton(5).getX() - 12;
+                v = getButton(5).getY() + 3;
+            }
+            matrixStack.pushPose();
+            matrixStack.translate(u, v, 100.0f);
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            graphics.blit(SHEET, -1, -1, 34, 20, 11, 11);
+            graphics.blit(TABS, 0, 0, 116 + quest.extraButton * 9, 0, 9, 9);
+            matrixStack.popPose();
+        }
+        // quest icon
+        u = guiLeft + 214;
+        v = guiTop + 4;
+        if (getButton(0) != null) {
+            u = getButton(0).getX() + getButton(0).getWidth() + 5;
+            v = getButton(0).getY() - 1;
+        }
+        matrixStack.pushPose();
 
-		// quest texture
-		u = guiLeft + 214;
-		v = guiTop + 38;
-		if (getButton(3) != null) {
-			u = getButton(3).x + getButton(3).width + 5;
-			v = getButton(3).x - 1;
-		}
-		GlStateManager.pushMatrix();
-		GlStateManager.enableBlend();
-		GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
-		drawGradientRect(-1, -1, 33, 33, color, color);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		mc.getTextureManager().bindTexture(SubGuiNpcQuestExtra.sheet);
-		drawTexturedModalRect(0, 0, 34, 54, 32, 32);
-		GlStateManager.disableBlend();
-		GlStateManager.popMatrix();
-		if (quest.texture != null) {
-			GlStateManager.pushMatrix();
-			GlStateManager.enableBlend();
-			GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
-			GlStateManager.scale(0.125f, 0.125f, 1.0f);
-			mc.getTextureManager().bindTexture(quest.texture);
-			drawTexturedModalRect(0, 0, 0, 0, 256, 256);
-			GlStateManager.disableBlend();
-			GlStateManager.popMatrix();
-		}
-		if (tempHoverText != null) { putHoverText(tempHoverText); }
-		super.drawScreen(mouseX, mouseY, partialTicks);
-	}
+        matrixStack.translate(u + 1.0f, v + 1.0f, 1.0f);
+        graphics.fill(-1, -1,  33, 33, color);
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        graphics.blit(SHEET, 0, 0, 34, 54, 32, 32);
+        matrixStack.popPose();
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		sw = new ScaledResolution(mc);
-		int x = guiLeft + 5;
-		int y = guiTop + 5;
-		int lId = 0;
-		// icon
-		addLabel(new GuiNpcLabel(lId++, "quest.icon", x + 1, y + 2));
-		addButton(new GuiNpcButton(0, x + 144, y, 60, 14, "availability.select")
-				.setHoverText("quest.hover.edit.quest.icon.sel"));
-		addTextField(new GuiNpcTextField(0, this, x, y += 16, 203, 16, quest.icon.toString())
-				.setHoverText("quest.hover.edit.quest.icon.path"));
-		// texture description
-		addLabel(new GuiNpcLabel(lId++, "quest.texture", x + 1, (y += 18) + 2));
-		addButton(new GuiNpcButton(3, x + 144, y, 60, 14, "availability.select")
-				.setHoverText("quest.hover.edit.quest.texture.sel"));
-		addTextField(new GuiNpcTextField(1, this, x, y += 16, 203, 16, quest.texture == null ? "" : quest.texture.toString())
-				.setHoverText("quest.hover.edit.quest.texture.path"));
-		// completion npc
-		addButton(new GuiNpcButton(1, x, y += 18, 100, 14, new String[] { "quest.npc", "quest.instant" }, quest.completion.ordinal())
-				.setHoverText("quest.hover.edit.quest.completion"));
-		addButton(new GuiNpcButton(2, x + 105, y, 60, 14, "availability.select")
-				.setHoverText("quest.hover.edit.quest.completion.npc"));
-		// reward text
-		addLabel(new GuiNpcLabel(lId++, "quest.questrewardtext", guiLeft + 5, (y += 16) + 2));
-		addButton(new GuiNpcButton(4, x + 105, y, 60, 14, quest.rewardText.isEmpty() ? "selectServer.edit" : "advanced.editing mode")
-				.setHoverText("quest.hover.edit.reward.text"));
-		// extra button
-		addLabel(new GuiNpcLabel(lId++, "quest.extra.button.type", guiLeft + 5, (y += 16) + 2));
-		addButton(new GuiButtonBiDirectional(5, x + 105, y, 60, 14, new String[] { "gui.none", "1", "2", "3", "4", "5" }, quest.extraButton)
-				.setHoverText("quest.hover.extra.button.type", EnumScriptType.QUEST_LOG_BUTTON.function));
-		// extra button text
-		addLabel(new GuiNpcLabel(lId, "quest.extra.button.text", guiLeft + 5, (y += 16) + 2));
-		addButton(new GuiNpcButton(6, x + 105, y, 60, 14, "selectServer.edit")
-				.setIsEnable(quest.extraButton > 0)
-				.setHoverText("quest.hover.extra.button.text"));
-		// progress in chat / window
-		addButton(new GuiNpcCheckBox(7, x, (y += 17), 239, 14, "quest.show.progress.in.chat", "", quest.showProgressInChat)
-				.setHoverText("quest.hover.show.in.chat"));
-		addButton(new GuiNpcCheckBox(8, x, y + 16, 239, 14, "quest.show.progress.in.window", "", quest.showProgressInWindow)
-				.setHoverText("quest.hover.show.in.window"));
-		// exit
-		addButton(new GuiNpcButton(66, x, guiTop + ySize - 19, 60, 14, "gui.done")
-				.setHoverText("hover.back"));
-	}
+        if (quest.icon != null) {
+            matrixStack.pushPose();
+            matrixStack.translate(u + 1.0f, v + 1.0f, 1.0f);
+            matrixStack.scale(0.125f, 0.125f, 1.0f);
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            graphics.blit(quest.icon, 0, 0, 0, 0, 256, 256);
+            matrixStack.popPose();
+        }
 
-	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (subgui == null) {
-			int u = guiLeft + 214, v = guiTop + 5;
-			if (getButton(0) != null) {
-				u = getButton(0).x + getButton(0).width + 6;
-				v = getButton(0).y;
-			}
-			if (isMouseHover(mouseX, mouseY, u, v, 32, 32)) {
-				setSubGui(new SubGuiTextureSelection(0, showNpc, quest.icon.toString(), "png", 3));
-				return true;
-			}
-			v = guiTop + 37;
-			if (getButton(3) != null) {
-				u = getButton(3).x + getButton(3).width + 6;
-				v = getButton(3).y;
-			}
-			if (isMouseHover(mouseX, mouseY, u, v, 32, 32)) {
-				setSubGui(new SubGuiTextureSelection(1, showNpc, quest.texture == null ? "" : quest.texture.toString(), "png", 3));
-				return true;
-			}
-			if (isMouseHover(mouseX, mouseY, guiLeft + 182, guiTop + 95, 65, 65)) { setSubGui(new SubGuiNPCSelection(quest.completer)); }
-		}
-		return super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
-	}
+        // quest texture
+        u = guiLeft + 214;
+        v = guiTop + 38;
+        if (getButton(3) != null) {
+            u = getButton(3).getX() + getButton(3).getWidth() + 5;
+            v = getButton(3).getY() - 1;
+        }
+        matrixStack.pushPose();
+        matrixStack.translate(u + 1.0f, v + 1.0f, 1.0f);
+        graphics.fill(-1, -1, 33, 33, color);
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        graphics.blit(SHEET, 0, 0, 34, 54, 32, 32);
+        matrixStack.popPose();
 
-	@Override
-	public void subGuiClosed(GuiScreen subgui) {
-		if (subgui instanceof SubGuiNpcTextArea) {
-			if (((SubGuiNpcTextArea) subgui).getId() == 0) { quest.rewardText = ((SubGuiNpcTextArea) subgui).text; }
-			else if (((SubGuiNpcTextArea) subgui).getId() == 1) { quest.extraButtonText = ((SubGuiNpcTextArea) subgui).text; }
-			initGui();
-		}
-		else if (subgui instanceof SubGuiTextureSelection) {
-			if (((SubGuiTextureSelection) subgui).getId() == 0) {
-				quest.icon = ((SubGuiTextureSelection) subgui).resource;
-				if (quest.icon == null) { quest.icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest icon/q_0.png"); }
-			}
-			else { quest.texture = ((SubGuiTextureSelection) subgui).resource; }
-			initGui();
-		}
-		else if (subgui instanceof SubGuiNPCSelection) {
-			if (((SubGuiNPCSelection) subgui).selectEntity == null) { return; }
-			Entity entity = mc.world.getEntityByID(((SubGuiNPCSelection) subgui).selectEntity.getEntityId());
-			if (!(entity instanceof EntityNPCInterface)) { return; }
-			quest.completer = Util.instance.copyToGUI((EntityNPCInterface) entity, mc.world, false);
-			showNpc = Util.instance.copyToGUI((EntityNPCInterface) entity, mc.world, false);
-			initGui();
-		}
-	}
+        if (quest.texture != null) {
+            matrixStack.pushPose();
+            matrixStack.translate(u + 1.0f, v + 1.0f, 1.0f);
+            matrixStack.scale(0.125f, 0.125f, 1.0f);
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            graphics.blit(quest.texture, 0, 0, 0, 0, 256, 256);
+            matrixStack.popPose();
+        }
+        if (tempHoverText != null) { setHoverText(tempHoverText); }
+        super.render(graphics, mouseX, mouseY, partialTicks);
+    }
 
-	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		if (textField.getID() == 0) {
-			if (textField.getText().isEmpty()) { quest.icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest icon/q_0.png"); }
-			else { quest.icon = new ResourceLocation(textField.getText()); }
-			textField.setText(quest.icon.toString());
-		}
-		else if (textField.getID() == 1) {
-			if (textField.getText().isEmpty()) { quest.texture = null; }
-			else { quest.texture = new ResourceLocation(textField.getText()); }
-			textField.setText(quest.texture == null ? "" : quest.texture.toString());
-		}
-	}
+    @Override
+    public void init() {
+        super.init();
+        int x0 = guiLeft + 5;
+        int x1 = guiLeft + 115;
+        int x2 = guiLeft + 149;
+        int y = guiTop + 5;
+        int lId = 0;
+        // icon
+        addLabel(lId++, x0, y + 2, "quest.icon");
+        addButton(0, x2, y, "availability.select")
+                .setSize(60, 14)
+                .setHoverTexts("quest.hover.edit.quest.icon.sel");
+        addTextField(0, x0, y += 16, 203, 16, quest.icon.toString())
+                .setHoverTexts("quest.hover.edit.quest.icon.path");
+        // texture description
+        addLabel(lId++, x0, (y += 18) + 2, "quest.texture");
+        addButton(3, x2, y, "availability.select")
+                .setSize(60, 14)
+                .setHoverTexts("quest.hover.edit.quest.texture.sel");
+        addTextField(1, x0, y += 16, 203, 16, quest.texture)
+                .setHoverTexts("quest.hover.edit.quest.texture.path");
+        // completion npc
+        addButton(1, x0, y += 19, false, quest.completion.ordinal(), "quest.npc", "quest.instant")
+                .setSize(100, 14)
+                .setHoverTexts("quest.hover.edit.quest.completion");
+        addButton(2, x1, y, "availability.select")
+                .setSize(60, 14)
+                .setHoverTexts("quest.hover.edit.quest.completion.npc");
+        // reward text
+        addLabel(lId++, guiLeft + 5, (y += 16) + 2, "quest.questrewardtext");
+        addButton(4, x1, y, quest.rewardText.isEmpty() ? "selectServer.edit" : "advanced.editing mode")
+                .setSize(60, 14)
+                .setHoverTexts("quest.hover.edit.reward.text");
+        // extra button
+        addLabel(lId++, guiLeft + 5, (y += 16) + 2, "quest.extra.button.type");
+        addButton(5, x1, y, true, quest.extraButton, "gui.none", "1", "2", "3", "4", "5")
+                .setSize(60, 14)
+                .setHoverTexts("quest.hover.extra.button.type", EnumScriptType.QUEST_LOG_BUTTON.function);
+        // extra button text
+        addLabel(lId, guiLeft + 5, (y += 16) + 2, "quest.extra.button.text");
+        addButton(6, x1, y, "selectServer.edit")
+                .setSize(60, 14)
+                .setIsEnabled(quest.extraButton > 0).setHoverTexts("quest.hover.extra.button.text");
+        // progress in chat / window
+        addCheckBox(7, x0, (y += 17), "quest.show.progress.in.chat", null, quest.showProgressInChat)
+                .setSize(239, 14)
+                .setHoverTexts("quest.hover.show.in.chat");
+        addCheckBox(8, x0, y + 16, "quest.show.progress.in.window", null, quest.showProgressInWindow)
+                .setSize(239, 14)
+                .setHoverTexts("quest.hover.show.in.window");
+        // exit
+        addButton(66, x0, guiTop + imageHeight - 19, "gui.done")
+                .setSize(60, 14)
+                .setHoverTexts("hover.back");
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        boolean bo = super.mouseClicked(mouseX, mouseY, mouseButton);
+        if (!hasSubGui()) {
+            int u = guiLeft + 214, v = guiTop + 5;
+            if (getButton(0) != null) {
+                u = getButton(0).getX() + getButton(0).getWidth() + 6;
+                v = getButton(0).getY();
+            }
+            if (isMouseHover(mouseX, mouseY, u, v, 32, 32)) {
+                setSubGui(new SubGuiTextureSelection(this, 0, showNpc, quest.icon.toString(), ".png", 3));
+                return bo;
+            }
+            v = guiTop + 37;
+            if (getButton(3) != null) {
+                u = getButton(3).getX() + getButton(3).getWidth() + 6;
+                v = getButton(3).getY();
+            }
+            if (isMouseHover(mouseX, mouseY, u, v, 32, 32)) {
+                setSubGui(new SubGuiTextureSelection(this,1, showNpc, quest.texture == null ? "" : quest.texture.toString(), ".png", 3));
+                return bo;
+            }
+            if (isMouseHover(mouseX, mouseY, guiLeft + 182, guiTop + 95, 65, 65)) {
+                setSubGui(new SubGuiNPCSelection(quest.completer));
+            }
+        }
+        return bo;
+    }
+
+    @Override
+    public void subGuiClosed(Screen subgui) {
+        if (subgui instanceof GuiTextAreaScreen gui) {
+            if (gui.id == 0) { quest.rewardText = gui.text; }
+            else if (gui.id == 1) { quest.extraButtonText = gui.text; }
+            init();
+        }
+        else if (subgui instanceof SubGuiTextureSelection gui) {
+            if (gui.id == 0) {
+                quest.icon = gui.resource;
+                if (quest.icon == null) {
+                    quest.icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest icon/q_0.png");
+                }
+            } else {
+                quest.texture = gui.resource;
+            }
+            init();
+        } else if (subgui instanceof SubGuiNPCSelection gui) {
+            if (gui.selectEntity == null) {
+                return;
+            }
+            Entity entity = player.level().getEntity(gui.selectEntity.getId());
+            if (!(entity instanceof EntityNPCInterface)) { return; }
+            quest.completer = Util.instance.copyToGUI((EntityNPCInterface) entity, player.level(), false);
+            showNpc = Util.instance.copyToGUI((EntityNPCInterface) entity, player.level(), false);
+            init();
+        }
+    }
+
+    @Override
+    public void unFocused(GuiTextFieldNop textField) {
+        if (textField.id == 0) {
+            if (textField.getValue().isEmpty()) { quest.icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest icon/q_0.png"); }
+            else { quest.icon = new ResourceLocation(textField.getValue()); }
+            textField.setValue(quest.icon.toString());
+        }
+        else if (textField.id == 1) {
+            if (textField.getValue().isEmpty()) { quest.texture = null; }
+            else { quest.texture = new ResourceLocation(textField.getValue()); }
+            textField.setValue(quest.texture == null ? "" : quest.texture.toString());
+        }
+    }
 
 }

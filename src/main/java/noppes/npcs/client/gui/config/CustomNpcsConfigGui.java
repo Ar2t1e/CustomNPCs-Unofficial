@@ -1,368 +1,181 @@
 package noppes.npcs.client.gui.config;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.config.ConfigElement;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.config.GuiConfigEntries;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
-import org.lwjgl.input.Keyboard;
+public class CustomNpcsConfigGui extends GuiBasic {
 
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraftforge.common.config.ConfigElement;
-import net.minecraftforge.fml.client.config.ConfigGuiType;
-import net.minecraftforge.fml.client.config.GuiButtonExt;
-import net.minecraftforge.fml.client.config.GuiConfig;
-import net.minecraftforge.fml.client.config.GuiConfigEntries;
-import net.minecraftforge.fml.client.config.GuiConfigEntries.ArrayEntry;
-import net.minecraftforge.fml.client.config.GuiConfigEntries.ButtonEntry;
-import net.minecraftforge.fml.client.config.GuiConfigEntries.IConfigEntry;
-import net.minecraftforge.fml.client.config.GuiConfigEntries.StringEntry;
-import net.minecraftforge.fml.client.config.GuiEditArray;
-import net.minecraftforge.fml.client.config.GuiEditArrayEntries;
-import net.minecraftforge.fml.client.config.GuiUtils;
-import net.minecraftforge.fml.client.config.IConfigElement;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.select.SubGuiColorSelector;
-import noppes.npcs.client.gui.util.SubGuiInterface;
-import noppes.npcs.util.Util;
+    protected final Screen lastScreen;
+    public final List<ConfigElement> configElements;
+    public final String modID;
+    public Component titleLine;
+    public Component titleLine2;
+    public GuiConfigEntries entryList;
 
-public class CustomNpcsConfigGui extends GuiConfig {
+    public CustomNpcsConfigGui(Screen parentScreen, List<ConfigElement> childElements, String modname) {
+        super();
+        drawDefaultBackground = false;
+        titleLine = Component.literal(modname);
+        closeOnEsc = false;
 
-	public static class ColorEntry extends ButtonEntry {
+        lastScreen = parentScreen;
+        configElements = childElements;
 
-		protected final String beforeValue;
-		public String currentValue;
+        modID = modname;
+    }
 
-		public ColorEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
-			super(owningScreen, owningEntryList, configElement);
-			String value = configElement.get().toString();
-			if (value.length() > 6) { value = value.substring(0, 6); }
-			beforeValue = value;
-			currentValue = value;
-			btnValue.enabled = enabled();
-			btnValue.width = 120;
-			updateValueButtonText();
-		}
+    @Override
+    public void buttonEvent(GuiButtonNop button) {
+        switch (button.id) {
+            case 2000: {
+                if (entryList != null && entryList.id != -1) {
+                    ConfigElement configElement = configElements.get(entryList.id);
+                    if (configElement != null && configElement.isArray()) {
+                        titleLine2 = null;
+                        configElement.setArrayValue(entryList.listEntries);
+                    }
+                    entryList = null;
+                    init();
+                }
+                else { onClose(); }
+                break;
+            }
+            case 2001: {
+                if (getButton(2003) == null || !((GuiCheckBoxNop) getButton(2003)).selected()) { return; }
+                for (ConfigElement ce : configElements) { ce.setValue(ce.defaultValue); }
+                init();
+                break;
+            } // reset ☄
+            case 2002: {
+                if (getButton(2003) == null || !((GuiCheckBoxNop) getButton(2003)).selected()) { return; }
+                for (ConfigElement ce : configElements) { ce.setValue(ce.firstValue); }
+                init();
+                break;
+            } // undo ↶
+            case 2003: { break; } // apply global
+        }
+    }
 
-		@Override
-		public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY,
-				boolean isSelected, float partial) {
-			btnValue.visible = false;
-			super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partial);
-			btnValue.width = (int) ((float) (owningEntryList.controlWidth - 2) * 0.75f);
-			btnValue.x = owningScreen.entryList.controlX;
-			btnValue.y = y;
-			btnValue.enabled = enabled();
-			btnValue.visible = true;
-			btnValue.drawButton(mc, mouseX, mouseY, partial);
-			int left = btnValue.x + btnValue.width + 2;
-			int right = left + (owningEntryList.controlWidth - btnValue.width) - 2;
-			GuiUtils.drawGradientRect(0, left, y, right, y + 18, 0xFF000000, 0xFF000000);
-			int color = (int) Long.parseLong(currentValue, 16);
-			float alpha = (float) (color >> 24 & 255) / 255.0F;
-			if (alpha == 0.0f) { color += 0xFF000000; }
-			GuiUtils.drawGradientRect(0, left + 1, y + 1, right - 1, y + 17, color, color);
-		}
+    @Override
+    public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        renderBackground(graphics);
+        graphics.drawCenteredString(font, titleLine, width / 2, 8, 0xFFFFFF);
+        if (titleLine2 != null) { graphics.drawCenteredString(font, titleLine2, width / 2, 20, 0xFFFFFF); }
 
-		public GuiButtonExt getButton() {
-			return btnValue;
-		}
+        super.render(graphics, mouseX, mouseY, partialTicks);
+    }
 
-		@Override
-		public Object getCurrentValue() {
-			return currentValue;
-		}
+    @Override
+    public void init() {
+        super.init();
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        if (entryList != null && entryList.id != -1) {
+            ConfigElement configElement = configElements.get(entryList.id);
+            if (configElement != null && configElement.isArray()) {
+                titleLine2 = Component.literal(configElement.name+":");
+                entryList.resetList(configElement.getArrayElements());
+            }
+            else { entryList = null; }
+        }
+        if (entryList == null || entryList.id == -1) {
+            entryList = new GuiConfigEntries(this, -1, 0, titleLine2 != null ? 32 : 20, width, height - 32, 22);
+            entryList.resetList(configElements);
+        }
+        add(entryList);
+        int buttonWidthHalf = 416 / 2;
+        addButton(2000, width / 2 - buttonWidthHalf, height - 29, "gui.done")
+                .setSize(100, 20);
+        addLabel(2001, width / 2 - buttonWidthHalf + 105, height - 25, "☄")
+                .setSize(8, 12)
+                .setColor(0xFFFFFF);
+        addButton(2001, width / 2 - buttonWidthHalf + 115, height - 29, "gui.default")
+                .setSize(90, 20)
+                .setHoverTexts("fml.configgui.tooltip.resetToDefault");
 
-		@Override
-		public Object[] getCurrentValues() {
-			return new Object[] { getCurrentValue() };
-		}
+        addLabel(2002, width / 2 - buttonWidthHalf + 210, height - 25, "↶")
+                .setSize(8, 12)
+                .setColor(0xFFFFFF);
+        addButton(2002, width / 2 - buttonWidthHalf + 220, height - 29, "gui.restore")
+                .setSize(90, 20)
+                .setHoverTexts("fml.configgui.tooltip.undoChanges");
+        addCheckBox(2003, width / 2 - buttonWidthHalf + 315, height - 26, "fml.configgui.applyGlobally", null, true);
+        if (getSubGui() instanceof GuiBasic subgui) {
+            subgui.width = width;
+            subgui.height = height;
+            subgui.init();
+        }
+    }
 
-		@Override
-		public boolean isChanged() {
-			return beforeValue != null ? !beforeValue.equals(currentValue) : currentValue.trim().isEmpty();
-		}
+    @Override
+    public boolean keyPressed(int key_0, int key_1, int key_2) {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        if (hasSubGui()) {
+            getSubGui().keyPressed(key_0, key_1, key_2);
+            return true;
+        }
+        if (entryList.keyPressed(key_0, key_1, key_2)) { return true; }
+        if (key_0 == InputConstants.KEY_ESCAPE) {
+            if (entryList != null && entryList.id != -1) {
+                ConfigElement configElement = configElements.get(entryList.id);
+                if (configElement != null && configElement.isArray()) {
+                    titleLine2 = null;
+                    configElement.setArrayValue(entryList.listEntries);
+                }
+                entryList = null;
+                init();
+            }
+            else { onClose(); }
+            return true;
+        }
+        return super.keyPressed(key_0, key_1, key_2);
+    }
 
-		@Override
-		public boolean isDefault() {
-			return configElement.getDefault() != null ? configElement.getDefault().toString().equals(currentValue) : currentValue.trim().isEmpty();
-		}
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        if (hasSubGui()) {
+            getSubGui().mouseClicked(mouseX, mouseY, mouseButton);
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
 
-		@Override
-		public boolean saveConfigElement() {
-			if (enabled()) {
-				if (isChanged() && isValidValue) {
-					configElement.set(currentValue);
-					return configElement.requiresMcRestart();
-				} else if (isChanged() && !isValidValue) {
-					configElement.setToDefault();
-					return configElement.requiresMcRestart() && beforeValue != null
-							? beforeValue.equals(configElement.getDefault())
-							: configElement.getDefault() == null;
-				}
-			}
-			return false;
-		}
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+        if (hasSubGui()) {
+            getSubGui().mouseReleased(mouseX, mouseY, mouseButton);
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, mouseButton);
+    }
 
-		@Override
-		public void setToDefault() {
-			if (enabled()) {
-				currentValue = configElement.getDefault().toString();
-				keyTyped((char) Keyboard.CHAR_NONE, Keyboard.KEY_HOME);
-				btnValue.displayString = currentValue;
-			}
-		}
+    @Override
+    public boolean mouseDragged(double x, double y, int mouseButton, double dx, double dy) {
+        if (hasSubGui()) {
+            getSubGui().mouseDragged(x, y, mouseButton, dx, dy);
+            return true;
+        }
+        return super.mouseDragged(x, y, mouseButton, dx, dy);
+    }
 
-		@Override
-		public void undoChanges() {
-			if (enabled()) {
-				currentValue = beforeValue;
-				btnValue.displayString = currentValue;
-			}
-		}
-
-		@Override
-		public void updateValueButtonText() {
-			btnValue.displayString = I18n.format(String.valueOf(currentValue));
-		}
-
-		@Override
-		public void valueButtonPressed(int slotIndex) {
-			if (enabled()) {
-				CustomNpcsConfigGui.subGui = new SubGuiColorSelector((int) Long.parseLong(currentValue, 16));
-				CustomNpcsConfigGui.subGui.width = owningEntryList.width;
-				CustomNpcsConfigGui.subGui.height = owningEntryList.height;
-				CustomNpcsConfigGui.subGui.initGui();
-				CustomNpcsConfigGui.subGui.parent = owningScreen;
-				CustomNpcsConfigGui.subGui.object = this;
-				CustomNpcsConfigGui.subGui.background = null;
-			}
-		}
-
-	}
-
-	public static class CustomArrayEntry extends ArrayEntry {
-
-		public CustomArrayEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
-			super(owningScreen, owningEntryList, configElement);
-		}
-
-		@Override
-		public void valueButtonPressed(int slotIndex) {
-			mc.displayGuiScreen(new CustomNpcsConfigGui.CustomGuiEditArray(owningScreen, configElement, slotIndex, currentValues, enabled()));
-		}
-	}
-
-	public static class CustomGuiEditArray extends GuiEditArray {
-
-		public static SubGuiInterface subGui;
-
-		public CustomGuiEditArray(GuiScreen parentScreen, IConfigElement configElement, int slotIndex, Object[] currentValues, boolean enabled) {
-			super(parentScreen, configElement, slotIndex, currentValues, enabled);
-		}
-
-		@Override
-		protected GuiEditArrayEntries createEditArrayEntries() { return new CustomGuiEditArrayEntries(this, mc, configElement, beforeValues, currentValues); }
-
-		@Override
-		public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-			if (subGui != null) {
-				drawDefaultBackground();
-				subGui.drawScreen(mouseX, mouseY, partialTicks);
-				drawCenteredString(fontRenderer, title, width / 2, 8, 16777215);
-				if (titleLine2 != null) { drawCenteredString(fontRenderer, titleLine2, width / 2, 18, 16777215); }
-				if (titleLine3 != null) { drawCenteredString(fontRenderer, titleLine3, width / 2, 28, 16777215); }
-				return;
-			}
-			super.drawScreen(mouseX, mouseY, partialTicks);
-		}
-
-		@Override
-		public void initGui() {
-			super.initGui();
-			if (subGui != null) {
-				subGui.width = width;
-				subGui.height = height;
-				subGui.initGui();
-			}
-		}
-
-		@Override
-		public void keyTyped(char eventChar, int eventKey) {
-			if (subGui != null) {
-				subGui.keyCnpcsPressed(eventChar, eventKey);
-				return;
-			}
-			super.keyTyped(eventChar, eventKey);
-		}
-
-		@Override
-		public void mouseClicked(int x, int y, int mouseEvent) throws IOException {
-			if (subGui != null) {
-				subGui.mouseCnpcsPressed(x, y, mouseEvent);
-				return;
-			}
-			super.mouseClicked(x, y, mouseEvent);
-		}
-
-		@Override
-		public void mouseReleased(int x, int y, int mouseEvent) {
-			if (subGui != null) {
-				subGui.mouseCnpcsReleased(x, y, mouseEvent);
-				return;
-			}
-			super.mouseReleased(x, y, mouseEvent);
-		}
-
-		public void subGuiClosed(SubGuiInterface subgui) {
-			String color = ((SubGuiColorSelector) subgui).getColor().toUpperCase();
-			if (subgui.getObject() instanceof CustomGuiEditArrayEntries.ColorEntry) {
-				ConfigElement element = (ConfigElement) ((CustomGuiEditArrayEntries.ColorEntry) subgui.getObject()).configElement;
-				((CustomGuiEditArrayEntries.ColorEntry) subgui.getObject()).getButton().displayString = color;
-				((CustomGuiEditArrayEntries.ColorEntry) subgui.getObject()).value = color;
-				element.set(color);
-			}
-			subGui = null;
-		}
-	}
-
-	public static SubGuiInterface subGui = null;
-
-	public CustomNpcsConfigGui(GuiScreen parentScreen, List<IConfigElement> elementsList, String modName) {
-		super(parentScreen, elementsList, modName, false, false, modName);
-	}
-
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (subGui != null) {
-			drawDefaultBackground();
-			subGui.drawScreen(mouseX, mouseY, partialTicks);
-			drawCenteredString(fontRenderer, title, width / 2, 8, 0xFFFFFFFF);
-			if (subGui.object instanceof ColorEntry) { drawCenteredString(fontRenderer, ((ColorEntry) subGui.object).getName(), width / 2, 18, 0xFFA0A0A0); }
-			String title2 = titleLine2;
-			if (title2 != null) {
-				int strWidth = mc.fontRenderer.getStringWidth(title2);
-				int ellipsisWidth = mc.fontRenderer.getStringWidth("...");
-				if (strWidth > width - 6 && strWidth > ellipsisWidth) { title2 = mc.fontRenderer.trimStringToWidth(title2, width - 6 - ellipsisWidth).trim() + "..."; }
-				drawCenteredString(fontRenderer, title2, width / 2, 18, 0xFFFFFF);
-			}
-			btnUndoAll.enabled = entryList.areAnyEntriesEnabled(chkApplyGlobally.isChecked()) && entryList.hasChangedEntry(chkApplyGlobally.isChecked());
-			btnDefaultAll.enabled = entryList.areAnyEntriesEnabled(chkApplyGlobally.isChecked())
-					&& !entryList.areAllEntriesDefault(chkApplyGlobally.isChecked());
-
-			if (undoHoverChecker.checkHover(mouseX, mouseY)) {
-				drawToolTip(Arrays.asList(I18n.format("fml.configgui.tooltip.undoAll").split("\n")), mouseX, mouseY);
-			}
-			if (resetHoverChecker.checkHover(mouseX, mouseY)) {
-				drawToolTip(Arrays.asList(I18n.format("fml.configgui.tooltip.resetAll").split("\n")), mouseX, mouseY);
-			}
-			if (checkBoxHoverChecker.checkHover(mouseX, mouseY)) {
-				drawToolTip(Arrays.asList(I18n.format("fml.configgui.tooltip.applyGlobally").split("\n")), mouseX, mouseY);
-			}
-			return;
-		}
-		super.drawScreen(mouseX, mouseY, partialTicks);
-	}
-
-	@Override
-	public void drawToolTip(List<String> stringList, int x, int y) {
-		List<String> newToolTip = new ArrayList<>();
-		String name = "";
-		for (String str : stringList) {
-			if (name != null) {
-				if (name.isEmpty()) { name = Util.instance.deleteColor(str.toLowerCase()); }
-				else {
-					String c = "";
-					if (name.contains("charcurrencies") || name.contains("chardonation")) {
-						for (IConfigEntry configEntry : entryList.listEntries) {
-							if (configEntry.getName().equalsIgnoreCase(name)) {
-								try { c = "" + ((char) Integer.parseInt((String) configEntry.getCurrentValue(), 16)); }
-								catch (Exception e) { c = "" + ((String) configEntry.getCurrentValue()).charAt(0); }
-								break;
-							}
-						}
-					}
-					newToolTip.add(((char) 167) + "e" + new TextComponentTranslation("property." + name + ".hover", c).getFormattedText());
-					name = null;
-					continue;
-				}
-			}
-			newToolTip.add(str);
-		}
-		GuiUtils.drawHoveringText(newToolTip, x, y, width, height, 300, fontRenderer);
-	}
-
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (subGui != null) {
-			subGui.width = width;
-			subGui.height = height;
-			subGui.initGui();
-		}
-		int i = -1;
-		List<IConfigEntry> list = new ArrayList<>(entryList.listEntries);
-		for (IConfigEntry entry : list) {
-			i++;
-			if (entry.getConfigElement().getType() != ConfigGuiType.COLOR) { continue; }
-			if (entry.getClass() == StringEntry.class) {
-				entryList.listEntries.remove(entry);
-				entryList.listEntries.add(i, new CustomNpcsConfigGui.ColorEntry(this, entryList, entry.getConfigElement()));
-			}
-			if (entry.getClass() == ArrayEntry.class) {
-				entryList.listEntries.remove(entry);
-				entryList.listEntries.add(i, new CustomNpcsConfigGui.CustomArrayEntry(this, entryList, entry.getConfigElement()));
-			}
-		}
-	}
-
-	@Override
-	public void keyTyped(char eventChar, int eventKey) {
-		if (subGui != null) {
-			subGui.keyCnpcsPressed(eventChar, eventKey);
-			return;
-		}
-		super.keyTyped(eventChar, eventKey);
-
-	}
-
-	@Override
-	public void mouseClicked(int x, int y, int mouseEvent) throws IOException {
-		if (subGui != null) {
-			subGui.mouseCnpcsPressed(x, y, mouseEvent);
-			return;
-		}
-		super.mouseClicked(x, y, mouseEvent);
-	}
-
-	@Override
-	public void mouseReleased(int x, int y, int mouseEvent) {
-		if (subGui != null) {
-			subGui.mouseCnpcsReleased(x, y, mouseEvent);
-			return;
-		}
-		super.mouseReleased(x, y, mouseEvent);
-	}
-
-	@Override
-	public void onGuiClosed() {
-		CustomNpcs.Config.resetData();
-		CustomNpcs.Config.config.save();
-		CustomNpcs.resetChars(CustomNpcs.CharCurrencies, CustomNpcs.CharDonation);
-		super.onGuiClosed();
-	}
-
-	public void subGuiClosed(SubGuiInterface subgui) {
-		String color = ((SubGuiColorSelector) subgui).getColor().toUpperCase();
-		if (subgui.getObject() instanceof ColorEntry) {
-			ConfigElement element = (ConfigElement) ((ColorEntry) subgui.getObject()).getConfigElement();
-			((ColorEntry) subgui.getObject()).getButton().displayString = color;
-			((ColorEntry) subgui.getObject()).currentValue = color;
-			element.set(color);
-		}
-		subGui = null;
-	}
+    @Override
+    public void onClose() {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        CustomNpcs.Config.updateConfig();
+        CustomNpcs.resetChars(CustomNpcs.CharCurrencies, CustomNpcs.CharDonation);
+        minecraft.setScreen(this.lastScreen);
+    }
 
 }

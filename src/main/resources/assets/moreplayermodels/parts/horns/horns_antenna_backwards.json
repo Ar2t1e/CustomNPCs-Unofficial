@@ -1,0 +1,65 @@
+{
+	"name": "horns.antenna",
+	"parent": "moreplayermodels:parts/horns/horns_antenna_forwards.json",
+	"render_type": "bedrock",
+	"texture": "moreplayermodels:textures/horns/2.png",
+	"body_part": "head",
+	"menu": "gui.headwear",
+	"preview_rotation": -45,
+	"translate": [0, 0, 0],
+	"rotate_offset": [0.0, 0.0, 0.0],
+	"scale": [1, 1, 1],
+	"rotate": [0.0, 0.0, 0.0],
+	"author": "Noppes",
+	"render_data" : {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.unknown",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 1,
+					"visible_bounds_height": 1.5,
+					"visible_bounds_offset": [0, 0.25, 0]
+				},
+					"bones": [
+					{
+						"name": "right_horn",
+						"pivot": [-2, 8, -3],
+						"rotation": [-42.5, -5, -5],
+						"cubes": [
+							{"origin": [-2.8, 8, -2.8], "size": [1, 4, 1], "uv": [60, 27]}
+						]
+					},
+					{
+						"name": "bone",
+						"parent": "right_horn",
+						"pivot": [-2.5, 12, -3],
+						"rotation": [-30, -10, -12.5],
+						"cubes": [
+							{"origin": [-2.8, 12, -2.8], "size": [1, 4, 1], "uv": [56, 27]}
+						]
+					},
+					{
+						"name": "left_horn",
+						"pivot": [2, 8, -3],
+						"rotation": [-42.5, 5, 5],
+						"cubes": [
+							{"origin": [1.8, 8, -2.8], "size": [1, 4, 1], "uv": [60, 27]}
+						]
+					},
+					{
+						"name": "bone2",
+						"parent": "left_horn",
+						"pivot": [2.5, 12, -3],
+						"rotation": [-30, 10, 12.5],
+						"cubes": [
+							{"origin": [1.8, 12, -2.8], "size": [1, 4, 1], "uv": [56, 27]}
+						]
+					}
+				]
+			}
+		]
+	}
+}

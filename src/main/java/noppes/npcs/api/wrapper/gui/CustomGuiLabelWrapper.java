@@ -1,106 +1,113 @@
 package noppes.npcs.api.wrapper.gui;
 
-import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.CustomNPCsException;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.api.constants.GuiComponentType;
+import noppes.npcs.api.gui.IComponent;
 import noppes.npcs.api.gui.ILabel;
+
+import java.awt.*;
 
 public class CustomGuiLabelWrapper extends CustomGuiComponentWrapper implements ILabel {
 
-	protected String label;
-	protected boolean showShadow = false;
-	protected float scale = 1.0f;
-	protected int height;
-	protected int width;
-	protected int color = CustomNpcs.LableColor.getRGB();
+   protected IComponent label = ComponentWrapper.of("");
+   protected int color = new Color(0x404040).getRGB();
+   protected float scale = 1.0F;
+   protected boolean centered = false;
 
-	public CustomGuiLabelWrapper() { }
+   // New from Unofficial (BetaZavr)
+   boolean showShadow = false;
 
-	public CustomGuiLabelWrapper(int id, String label, int x, int y, int width, int height) {
-		setId(id);
-		setText(label);
-		setPos(x, y);
-		setSize(width, height);
-	}
+   public CustomGuiLabelWrapper() { }
 
-	public CustomGuiLabelWrapper(int id, String label, int x, int y, int width, int height, int color) {
-		this(id, label, x, y, width, height);
-		setColor(color);
-	}
+   public CustomGuiLabelWrapper(int id, String label, int x, int y, int width, int height) {
+      setId(id);
+      setText(label);
+      setPos(x, y);
+      setSize(width, height);
+   }
 
-	@Override
-	public CustomGuiComponentWrapper fromNBT(NBTTagCompound nbt) {
-		super.fromNBT(nbt);
-		setText(nbt.getString("label"));
-		setSize(nbt.getIntArray("size")[0], nbt.getIntArray("size")[1]);
-		setColor(nbt.getInteger("color"));
-		setScale(nbt.getFloat("scale"));
-		showShadow = nbt.getBoolean("shadow");
-		return this;
-	}
+   public CustomGuiLabelWrapper(int id, String label, int x, int y, int width, int height, int color) {
+      this(id, label, x, y, width, height);
+      setColor(color);
+   }
 
-	@Override
-	public int getColor() { return color; }
+   @Override
+   public String getText() { return label.getString(); }
 
-	@Override
-	public int getHeight() { return height; }
+   @Override
+   public CustomGuiLabelWrapper setText(String labelIn) {
+      label = ComponentWrapper.of(labelIn);
+      return this;
+   }
 
-	@Override
-	public float getScale() { return scale; }
+   @Override
+   public int getColor() { return color; }
 
-	@Override
-	public String getText() { return label; }
+   @Override
+   public CustomGuiLabelWrapper setColor(int colorIn) {
+      color = colorIn;
+      return this;
+   }
 
-	@Override
-	public int getType() { return GuiComponentType.LABEL.get(); }
+   @Override
+   public float getScale() { return scale; }
 
-	@Override
-	public int getWidth() { return width; }
+   @Override
+   public CustomGuiLabelWrapper setScale(float scaleIn) {
+      scale = scaleIn;
+      return this;
+   }
 
-	@Override
-	public boolean isShadow() { return showShadow; }
+   @Override
+   public boolean getCentered() { return centered; }
 
-	@Override
-	public ILabel setColor(int colorIn) {
-		color = colorIn;
-		return this;
-	}
+   @Override
+   public CustomGuiLabelWrapper setCentered(boolean bo) {
+      centered = bo;
+      return this;
+   }
 
-	@Override
-	public ILabel setScale(float scaleIn) {
-		scale = scaleIn;
-		return this;
-	}
+   @Override
+   public int getType() { return GuiComponentType.LABEL.get(); }
 
-	@Override
-	public void setShadow(boolean showShadowIn) { showShadow = showShadowIn; }
+   @Override
+   public CompoundTag toNBT(CompoundTag compound) {
+      super.toNBT(compound);
+      compound.putString("label", label.toJson());
+      compound.putInt("color", color);
+      compound.putFloat("scale", scale);
+      compound.putBoolean("centered", centered);
+      compound.putBoolean("shadow", showShadow);
+      return compound;
+   }
 
-	@Override
-	public ILabel setSize(int widthIn, int heightIn) {
-		if (widthIn <= 0 || heightIn <= 0) {
-			throw new CustomNPCsException("Invalid component width or height: [" + widthIn + ", " + heightIn + "]");
-		}
-		width = widthIn;
-		height = heightIn;
-		return this;
-	}
+   @Override
+   public CustomGuiComponentWrapper fromNBT(CompoundTag compound) {
+      super.fromNBT(compound);
+      setText(compound.getString("label"));
+      setColor(compound.getInt("color"));
+      setScale(compound.getFloat("scale"));
+      setCentered(compound.getBoolean("centered"));
+      showShadow = compound.getBoolean("shadow");
+      return this;
+   }
 
-	@Override
-	public ILabel setText(String labelIn) {
-		label = labelIn;
-		return this;
-	}
+   // New from Unofficial (BetaZavr)
+   @Override
+   public boolean isShadow() { return showShadow; }
 
-	@Override
-	public NBTTagCompound toNBT(NBTTagCompound nbt) {
-		super.toNBT(nbt);
-		nbt.setString("label", label);
-		nbt.setIntArray("size", new int[] { width, height });
-		nbt.setInteger("color", color);
-		nbt.setFloat("scale", scale);
-		nbt.setBoolean("shadow", showShadow);
-		return nbt;
-	}
+   @Override
+   public void setShadow(boolean showShadowIn) { showShadow = showShadowIn; }
+
+   @Override
+   public IComponent getMCText() { return label; }
+
+   @Override
+   public CustomGuiLabelWrapper setMCText(IComponent component) {
+      if (component == null) { label = ComponentWrapper.of(""); }
+      else { label = component; }
+      return this;
+   }
 
 }

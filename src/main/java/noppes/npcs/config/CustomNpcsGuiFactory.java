@@ -1,33 +1,13 @@
 package noppes.npcs.config;
 
-import java.util.Set;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraftforge.fml.client.IModGuiFactory;
+import net.minecraftforge.client.ConfigScreenHandler;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.gui.config.CustomNpcsConfigGui;
 
-/** Forge uses this class */
-public class CustomNpcsGuiFactory implements IModGuiFactory {
+import java.util.function.Supplier;
 
-    @Override
-    public GuiScreen createConfigGui(GuiScreen parentScreen) {
-        return new CustomNpcsConfigGui(parentScreen, CustomNpcs.Config.getChildElements(), CustomNpcs.MODNAME);
-    }
+public class CustomNpcsGuiFactory {
 
-    @Override
-    public boolean hasConfigGui() {
-        return true;
-    }
-
-    @Override
-    public void initialize(Minecraft minecraftInstance) {
-    }
-
-    @Override
-    public Set<RuntimeOptionCategoryElement> runtimeGuiCategories() {
-        return null;
-    }
+    public static final Supplier<ConfigScreenHandler.ConfigScreenFactory> FACTORY = () -> new ConfigScreenHandler.ConfigScreenFactory((parentScreen) -> new CustomNpcsConfigGui(parentScreen, CustomNpcs.Config.getChildElements(), CustomNpcs.MODNAME));
 
 }

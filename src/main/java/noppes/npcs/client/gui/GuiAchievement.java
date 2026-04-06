@@ -1,57 +1,52 @@
 package noppes.npcs.client.gui;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.toasts.Toast;
+import net.minecraft.client.gui.components.toasts.ToastComponent;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import net.minecraft.client.gui.toasts.GuiToast;
-import net.minecraft.client.gui.toasts.IToast;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
 import java.awt.*;
 
-@SideOnly(Side.CLIENT)
-public class GuiAchievement implements IToast {
+@OnlyIn(Dist.CLIENT)
+public class GuiAchievement implements Toast {
 
-	protected final int type;
-	protected boolean newDisplay;
-	protected long firstDrawTime;
-	protected String subtitle;
-	protected String title;
+   protected final String title;
+   protected final String subtitle;
+   protected final int type;
+   protected long firstDrawTime;
+   protected boolean newDisplay;
 
-	public GuiAchievement(ITextComponent titleComponent, ITextComponent subtitleComponent, int messageType) {
-		super();
-		title = titleComponent.getUnformattedText();
+   public GuiAchievement(Component titleIn, Component subtitleComponent, int typeIn) {
+      super();
+      title = titleIn.getString();
+      subtitle = subtitleComponent == null ? null : subtitleComponent.getString();
+      type = typeIn;
+   }
 
-		subtitle = ((subtitleComponent == null) ? null : subtitleComponent.getUnformattedText());
-		type = messageType;
-	}
-
-	public @Nonnull IToast.Visibility draw(@Nonnull GuiToast toastGui, long delta) {
-		if (newDisplay) {
-			firstDrawTime = delta;
-			newDisplay = false;
-		}
-		toastGui.getMinecraft().getTextureManager().bindTexture(GuiAchievement.TEXTURE_TOASTS);
-		GlStateManager.color(1.0f, 1.0f, 1.0f);
-		toastGui.drawTexturedModalRect(0, 0, 0, 32 * type, 160, 32);
-		int titleColor = new Color(0xFFFFFF00).getRGB();
-		int subtitleColor = new Color(0xFFFFFFFF).getRGB();
-		if (type == 1 || type == 3) {
-			titleColor = new Color(0xFF500050).getRGB();
-			subtitleColor = new Color(0xFF000000).getRGB();
-		}
-		toastGui.getMinecraft().fontRenderer.drawString(title, 18, 7, titleColor);
-		toastGui.getMinecraft().fontRenderer.drawString(subtitle, 18, 18, subtitleColor);
-		return (delta - firstDrawTime < 5000L) ? IToast.Visibility.SHOW : IToast.Visibility.HIDE;
-	}
-
-	public void setDisplayedText(ITextComponent titleComponent, @Nullable ITextComponent subtitleComponent) {
-		title = titleComponent.getUnformattedText();
-		subtitle = ((subtitleComponent == null) ? null : subtitleComponent.getUnformattedText());
-		newDisplay = true;
-	}
+   @Override
+   public @Nonnull Visibility render(@Nonnull GuiGraphics graphics, @Nonnull ToastComponent toastGui, long delta) {
+      if (newDisplay) {
+         firstDrawTime = delta;
+         newDisplay = false;
+      }
+      RenderSystem.setShader(GameRenderer::getPositionTexShader);
+      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+      RenderSystem.setShaderTexture(0, TEXTURE);
+      graphics.blit(TEXTURE, 0, 0, 0, 32 * type, 160, 32);
+      int color1 = new Color(0xFFFFFF00).getRGB();
+      int color2 = new Color(0xFFFFFFFF).getRGB();
+      if (type == 1 || type == 3) {
+         color1 = new Color(0xFF500050).getRGB();
+         color2 = new Color(0xFF000000).getRGB();
+      }
+      graphics.drawString(toastGui.getMinecraft().font, title, 18, 7, color1);
+      graphics.drawString(toastGui.getMinecraft().font, subtitle, 18, 18, color2);
+      return delta - firstDrawTime < 5000L ? Visibility.SHOW : Visibility.HIDE;
+   }
 
 }

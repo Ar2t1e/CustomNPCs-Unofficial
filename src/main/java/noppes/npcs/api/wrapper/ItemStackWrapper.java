@@ -1,567 +1,483 @@
 package noppes.npcs.api.wrapper;
 
+import com.google.common.collect.Multimap;
+import com.google.gson.JsonParseException;
+
 import java.util.*;
 import java.util.Map.Entry;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
-import net.minecraft.block.Block;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.EnumCreatureAttribute;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemArmor;
-import net.minecraft.item.ItemBook;
-import net.minecraft.item.ItemEnchantedBook;
-import net.minecraft.item.ItemFood;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.item.ItemWritableBook;
-import net.minecraft.item.ItemWrittenBook;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Component.Serializer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.MobType;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.WritableBookItem;
+import net.minecraft.world.item.WrittenBookItem;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.constants.ItemType;
 import noppes.npcs.api.entity.IEntity;
-import noppes.npcs.api.entity.IEntityLiving;
+import noppes.npcs.api.entity.IMob;
 import noppes.npcs.api.entity.data.IData;
-import noppes.npcs.api.handler.capability.IItemStackWrapperHandler;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.data.Data;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemScripted;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class ItemStackWrapper implements IItemStack, ICapabilitySerializable<CompoundTag> {
 
-@SuppressWarnings("rawtypes")
-public class ItemStackWrapper
-implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilitySerializable {
+   protected static final EquipmentSlot[] VALID_EQUIPMENT_SLOTS = new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+   protected static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "itemscripteddata");
 
-	protected static final EntityEquipmentSlot[] VALID_EQUIPMENT_SLOTS = new EntityEquipmentSlot[] { EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET };
-	protected static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "itemscripteddata");
+   public static Capability<ItemStackWrapper> ITEMSCRIPTEDDATA_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
+   public static ItemStackWrapper AIR = new ItemStackWrapper(ItemStack.EMPTY);
 
-	@CapabilityInject(IItemStackWrapperHandler.class)
-	public static Capability<IItemStackWrapperHandler> ITEM_SCRIPTED_DATA_CAPABILITY = null;
-	public static ItemStackWrapper AIR = new ItemStackWrapper(ItemStack.EMPTY);
+   protected final LazyOptional<ItemStackWrapper> instance = LazyOptional.of(() -> this);
+   protected final Data tempdata;
+   protected final Data storeddata;
+   protected IEntity<?> owner = null;
 
-	protected final Data tempdata;
-	protected final Data storeddata;
-	protected IEntity<?> owner = null;
-	public ItemStack item;
+   public final ItemStack item;
 
-	public ItemStackWrapper() { this(ItemStack.EMPTY); }
+   protected ItemStackWrapper(ItemStack stack) {
+      if (stack.isEmpty()) {
+         tempdata = null;
+         storeddata = null;
+      } else {
+         tempdata = new Data();
+         storeddata = new Data();
+      }
+      item = stack;
+   }
 
-	private static ItemStackWrapper createNew(ItemStack item) {
-		if (item == null || item.isEmpty()) {
-			return ItemStackWrapper.AIR;
-		}
-		if (item.getItem() instanceof ItemScripted) {
-			return new ItemScriptedWrapper(item);
-		}
-		if (item.getItem() == Items.WRITTEN_BOOK || item.getItem() == Items.WRITABLE_BOOK
-				|| item.getItem() instanceof ItemWritableBook || item.getItem() instanceof ItemWrittenBook) {
-			return new ItemBookWrapper(item);
-		}
-		if (item.getItem() instanceof ItemArmor) {
-			return new ItemArmorWrapper(item);
-		}
-		Block block = Block.getBlockFromItem(item.getItem());
-		if (block != Blocks.AIR) {
-			return new ItemBlockWrapper(item);
-		}
-		return new ItemStackWrapper(item);
-	}
+   public IData getTempdata() {
+      return tempdata;
+   }
 
-	public static ItemStack MCItem(IItemStack item) {
-		if (item == null) {
-			return ItemStack.EMPTY;
-		}
-		return item.getMCItemStack();
-	}
+   public IData getStoreddata() {
+      return storeddata;
+   }
 
-	public static void register(AttachCapabilitiesEvent<ItemStack> event) {
-		ItemStackWrapper wrapper = createNew(event.getObject());
-		event.addCapability(ItemStackWrapper.key, wrapper);
-	}
+   public int getStackSize() {
+      return this.item.getCount();
+   }
 
-	protected ItemStackWrapper(ItemStack stack) {
-		if (stack.isEmpty()) {
-			tempdata = null;
-			storeddata = null;
-		} else {
-			tempdata = new Data();
-			storeddata = new Data();
-		}
-		item = stack;
-	}
+   public void setStackSize(int size) {
+      if (size > this.getMaxStackSize()) {
+         throw new CustomNPCsException("Can't set the stack size bigger than Max Stack size");
+      } else {
+         this.item.setCount(size);
+      }
+   }
 
-	@Override
-	public void addEnchantment(int id, int level) {
-		Enchantment ench = Enchantment.getEnchantmentByID(id);
-		if (ench == null) {
-			throw new CustomNPCsException("Unknown enchant id:" + id);
-		}
-		this.item.addEnchantment(ench, level);
-	}
+   public void setAttribute(String name, double value) {
+      this.setAttribute(name, value, -1);
+   }
 
-	@Override
-	public void addEnchantment(String name, int strenght) {
-		Enchantment ench = Enchantment.getEnchantmentByLocation(name);
-		if (ench == null) {
-			throw new CustomNPCsException("Unknown enchant name:" + name);
-		}
-		this.item.addEnchantment(ench, strenght);
-	}
+   public void setAttribute(String name, double value, int slot) {
+      if (slot >= -1 && slot <= 5) {
+         CompoundTag compound = this.item.getTag();
+         if (compound == null) {
+            this.item.setTag(compound = new CompoundTag());
+         }
 
-	@Override
-	public boolean compare(IItemStack item, boolean ignoreNBT) {
-		if (item == null) {
-			item = ItemStackWrapper.AIR;
-		}
-		return NoppesUtilPlayer.compareItems(this.getMCItemStack(), item.getMCItemStack(), false, ignoreNBT);
-	}
+         ListTag tagList = compound.getList("AttributeModifiers", 10);
+         ListTag newList = new ListTag();
+         UUID uuid = null;
+         for(int i = 0; i < tagList.size(); ++i) {
+            CompoundTag c = tagList.getCompound(i);
+            if (!c.getString("AttributeName").equals(name)) {
+               newList.add(c);
+            } else {
+               uuid = c.getUUID("UUID");
+            }
+         }
+         if (value != 0.0D) {
+            CompoundTag nbt = (new AttributeModifier(name, value, Operation.ADDITION)).save();
+            nbt.putString("AttributeName", name);
+            if (slot >= 0) {
+               nbt.putString("Slot", EquipmentSlot.values()[slot].getName());
+            }
 
-	@Override
-	public IItemStack copy() {
-		return createNew(this.item.copy());
-	}
+            if (uuid != null) {
+               nbt.putUUID("UUID", uuid);
+            }
+            newList.add(nbt);
+         }
 
-	@Override
-	public void damageItem(int damage, IEntityLiving living) {
-		if (living == null) { return; }
-		this.item.damageItem(damage, living.getMCEntity());
-	}
+         compound.put("AttributeModifiers", newList);
+      } else {
+         throw new CustomNPCsException("Slot has to be between -1 and 5, given was: " + slot);
+      }
+   }
 
-	public void deserializeNBT(NBTBase nbt) {
-		this.setMCNbt((NBTTagCompound) nbt);
-	}
+   public double getAttribute(String name) {
+      CompoundTag compound = this.item.getTag();
+      if (compound == null) {
+         return 0.0D;
+      } else {
+         Multimap<Attribute, AttributeModifier> map = this.item.getAttributeModifiers(EquipmentSlot.MAINHAND);
+         Iterator<Entry<Attribute, AttributeModifier>> var4 = map.entries().iterator();
+         Entry<Attribute, AttributeModifier> entry;
+         do {
+            if (!var4.hasNext()) {
+               return 0.0D;
+            }
+            entry = var4.next();
+         } while(!entry.getKey().getDescriptionId().equals(name));
+         AttributeModifier mod = entry.getValue();
+         return mod.getAmount();
+      }
+   }
 
-	@Override
-	public double getAttackDamage() {
-		HashMultimap map = (HashMultimap) this.item.getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
-		Iterator iterator = map.entries().iterator();
-		double damage = 0.0;
-		while (iterator.hasNext()) {
-			Map.Entry entry = (Entry) iterator.next();
-			if (entry.getKey().equals(SharedMonsterAttributes.ATTACK_DAMAGE.getName())) {
-				try {
-					AttributeModifier mod = (AttributeModifier) entry.getValue();
-					damage = mod.getAmount();
-				}
-				catch (Exception e) { LogWriter.error(e); }
-			}
-		}
-		damage += EnchantmentHelper.getModifierForCreature(this.item, EnumCreatureAttribute.UNDEFINED);
-		return damage;
-	}
+   public boolean hasAttribute(String name) {
+      CompoundTag compound = item.getTag();
+      if (compound != null) {
+         ListTag tagList = compound.getList("AttributeModifiers", 10);
+         for (int i = 0; i < tagList.size(); ++i) {
+            CompoundTag c = tagList.getCompound(i);
+            if (c.getString("AttributeName").equals(name)) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
 
-	@Override
-	public double getAttribute(String name) {
-		NBTTagCompound compound = this.item.getTagCompound();
-		if (compound == null) {
-			return 0.0;
-		}
-		Multimap<String, AttributeModifier> map = this.item.getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
-		for (Map.Entry<String, AttributeModifier> entry : map.entries()) {
-			if (entry.getKey().equals(name)) {
-				AttributeModifier mod = entry.getValue();
-				return mod.getAmount();
-			}
-		}
-		return 0.0;
-	}
+   public void addEnchantment(String id, int strenght) {
+      Enchantment ench = ForgeRegistries.ENCHANTMENTS.getValue(ResourceLocation.tryParse(id));
+      if (ench == null) {
+         throw new CustomNPCsException("Unknown enchant id:" + id);
+      } else {
+         this.item.enchant(ench, strenght);
+      }
+   }
 
-	@SuppressWarnings("unchecked")
-	public <T> T getCapability(@Nonnull Capability<T> capability, EnumFacing facing) {
-		if (this.hasCapability(capability, facing)) {
-			return (T) this;
-		}
-		return null;
-	}
+   public boolean isEnchanted() {
+      return this.item.isEnchanted();
+   }
 
-	@Override
-	public String getDisplayName() {
-		return this.item.getDisplayName();
-	}
+   public boolean hasEnchant(String id) {
+      Enchantment ench = ForgeRegistries.ENCHANTMENTS.getValue(ResourceLocation.tryParse(id));
+      if (ench == null) {
+         throw new CustomNPCsException("Unknown enchant id:" + id);
+      } else if (!this.isEnchanted()) {
+         return false;
+      } else {
+         ListTag list = this.item.getEnchantmentTags();
 
-	@Override
-	public int getFoodLevel() {
-		if (this.item.getItem() instanceof ItemFood) {
-			return ((ItemFood) this.item.getItem()).getHealAmount(this.item);
-		}
-		return 0;
-	}
+         for(int i = 0; i < list.size(); ++i) {
+            CompoundTag compound = list.getCompound(i);
+            if (compound.getString("id").equalsIgnoreCase(id)) {
+               return true;
+            }
+         }
 
-	@Override
-	public int getItemDamage() {
-		return this.item.getItemDamage();
-	}
+         return false;
+      }
+   }
 
-	@Override
-	public String getItemName() {
-		return this.item.getItem().getItemStackDisplayName(this.item);
-	}
+   public boolean removeEnchant(String id) {
+      Enchantment ench = ForgeRegistries.ENCHANTMENTS.getValue(ResourceLocation.tryParse(id));
+      if (ench == null) {
+         throw new CustomNPCsException("Unknown enchant id:" + id);
+      } else if (!this.isEnchanted()) {
+         return false;
+      } else {
+         ListTag list = this.item.getEnchantmentTags();
+         ListTag newList = new ListTag();
 
-	@Override
-	public INbt getItemNbt() {
-		NBTTagCompound compound = new NBTTagCompound();
-		this.item.writeToNBT(compound);
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
-	}
+         for(int i = 0; i < list.size(); ++i) {
+            CompoundTag compound = list.getCompound(i);
+            if (!compound.getString("id").equalsIgnoreCase(id)) {
+               newList.add(compound);
+            }
+         }
 
-	@Override
-	public String[] getLore() {
-		NBTTagCompound compound = this.item.getSubCompound("display");
-		if (compound == null || compound.getTagId("Lore") != 9) {
-			return new String[0];
-		}
-		NBTTagList nbttaglist = compound.getTagList("Lore", 8);
-		if (nbttaglist.tagCount() == 0) {
-			return new String[0];
-		}
-		List<String> lore = new ArrayList<>();
-		for (int i = 0; i < nbttaglist.tagCount(); ++i) {
-			lore.add(nbttaglist.getStringTagAt(i));
-		}
-		return lore.toArray(new String[0]);
-	}
+         if (list.size() == newList.size()) {
+            return false;
+         } else {
+            CompoundTag compound = item.getTag();
+            if (compound == null) { item.setTag(compound = new CompoundTag()); }
+            compound.put("ench", newList);
+            return true;
+         }
+      }
+   }
 
-	@Override
-	public int getMaxItemDamage() {
-		return this.item.getMaxDamage();
-	}
+   public boolean isBlock() {
+      return Block.byItem(item.getItem()) != Blocks.AIR;
+   }
 
-	@Override
-	public int getMaxStackSize() {
-		return this.item.getMaxStackSize();
-	}
+   public boolean hasCustomName() {
+      return this.item.hasCustomHoverName();
+   }
 
-	@Override
-	public ItemStack getMCItemStack() {
-		return this.item;
-	}
+   public void setCustomName(String name) {
+      this.item.setHoverName(Component.translatable(name));
+   }
 
-	public NBTTagCompound getMCNbt() {
-		NBTTagCompound compound = new NBTTagCompound();
-		if (storeddata != null) { compound.setTag("StoredData", storeddata.getNbt().getMCNBT()); }
-		return compound;
-	}
+   public String getDisplayName() {
+      return this.item.getHoverName().getString();
+   }
 
-	@Override
-	public String getName() {
-		return Item.REGISTRY.getNameForObject(this.item.getItem()) + "";
-	}
+   public String getItemName() {
+      return this.item.getItem().getName(this.item).getString();
+   }
 
-	@Override
-	public INbt getNbt() {
-		NBTTagCompound compound = this.item.getTagCompound();
-		if (compound == null) {
-			this.item.setTagCompound(compound = new NBTTagCompound());
-		}
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
-	}
+   public String getName() {
+      return Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(this.item.getItem())).toString();
+   }
 
-	@Override
-	public int getStackSize() {
-		return this.item.getCount();
-	}
+   public INbt getNbt() {
+      CompoundTag compound = this.item.getTag();
+      if (compound == null) {
+         this.item.setTag(compound = new CompoundTag());
+      }
+      return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
+   }
 
-	@Override
-	public IData getStoreddata() {
-		return this.storeddata;
-	}
+   public boolean hasNbt() {
+      CompoundTag compound = this.item.getTag();
+      return compound != null && !compound.isEmpty();
+   }
 
-	@Override
-	public IData getTempdata() {
-		return this.tempdata;
-	}
+   public ItemStack getMCItemStack() {
+      return this.item;
+   }
 
-	@Override
-	public int getType() {
-		if (this.item.getItem() instanceof IPlantable) {
-			return ItemType.SEEDS.get();
-		}
-		if (this.item.getItem() instanceof ItemSword) {
-			return ItemType.SWORD.get();
-		}
-		return ItemType.NORMAL.get();
-	}
+   public static ItemStack MCItem(IItemStack item) {
+      return item == null ? ItemStack.EMPTY : item.getMCItemStack();
+   }
 
-	@Override
-	public boolean hasAttribute(String name) {
-		NBTTagCompound compound = this.item.getTagCompound();
-		if (compound == null) {
-			return false;
-		}
-		NBTTagList nbttaglist = compound.getTagList("AttributeModifiers", 10);
-		for (int i = 0; i < nbttaglist.tagCount(); ++i) {
-			NBTTagCompound c = nbttaglist.getCompoundTagAt(i);
-			if (c.getString("AttributeName").equals(name)) {
-				return true;
-			}
-		}
-		return false;
-	}
+   public void damageItem(int damage, IMob<?> living) {
+      if (living != null) {
+         this.item.hurtAndBreak(damage, living.getMCEntity(), (e) -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
+      } else if (this.item.isDamageableItem()) {
+         if (this.item.getDamageValue() <= damage) {
+            this.item.shrink(1);
+            this.item.setDamageValue(0);
+         } else {
+            this.item.setDamageValue(this.item.getDamageValue() - damage);
+         }
+      }
 
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) {
-		return capability == ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY;
-	}
+   }
 
-	@Override
-	public boolean hasCustomName() {
-		return this.item.hasDisplayName();
-	}
+   public boolean isBook() {
+      return false;
+   }
 
-	@Override
-	public boolean hasEnchant(int id) {
-		Enchantment ench = Enchantment.getEnchantmentByID(id);
-		if (ench == null) {
-			throw new CustomNPCsException("Unknown enchant id:" + id);
-		}
-		if (!this.isEnchanted()) {
-			return false;
-		}
-		int enchId = Enchantment.getEnchantmentID(ench);
-		NBTTagList list = this.item.getEnchantmentTagList();
-		for (int i = 0; i < list.tagCount(); ++i) {
-			NBTTagCompound compound = list.getCompoundTagAt(i);
-			if (compound.getShort("id") == enchId) {
-				return true;
-			}
-		}
-		return false;
-	}
+   @SuppressWarnings("all")
+   public int getFoodLevel() {
+      return this.item.getItem().getFoodProperties() != null ? this.item.getItem().getFoodProperties().getNutrition() : 0;
+   }
 
-	@Override
-	public boolean hasEnchant(String name) {
-		Enchantment ench = Enchantment.getEnchantmentByLocation(name);
-		if (ench == null) {
-			throw new CustomNPCsException("Unknown enchant name:" + name);
-		}
-		if (!this.isEnchanted()) {
-			return false;
-		}
-		int enchId = Enchantment.getEnchantmentID(ench);
-		NBTTagList list = this.item.getEnchantmentTagList();
-		for (int i = 0; i < list.tagCount(); ++i) {
-			NBTTagCompound compound = list.getCompoundTagAt(i);
-			if (compound.getShort("id") == enchId) {
-				return true;
-			}
-		}
-		return false;
-	}
+   public IItemStack copy() {
+      return createNew(this.item.copy());
+   }
 
-	@Override
-	public boolean hasNbt() {
-		NBTTagCompound compound = this.item.getTagCompound();
-		return compound != null && !compound.getKeySet().isEmpty();
-	}
+   public int getMaxStackSize() {
+      return this.item.getMaxStackSize();
+   }
 
-	@Override
-	public boolean isBlock() {
-		return Block.getBlockFromItem(this.item.getItem()) != Blocks.AIR;
-	}
+   public boolean isDamageable() {
+      return this.item.isDamageableItem();
+   }
 
-	@Override
-	public boolean isBook() {
-		return this.item.getItem() instanceof ItemBook || this.item.getItem() instanceof ItemEnchantedBook
-				|| this.item.getItem() instanceof ItemWritableBook || this.item.getItem() instanceof ItemWrittenBook;
-	}
+   public int getDamage() {
+      return this.item.getDamageValue();
+   }
 
-	@Override
-	public boolean isEmpty() {
-		return item.isEmpty();
-	}
+   public void setDamage(int value) {
+      this.item.setDamageValue(value);
+   }
 
-	@Override
-	public boolean isEnchanted() {
-		return this.item.isItemEnchanted();
-	}
+   /** @deprecated */
+   @Deprecated
+   public int getItemDamage() {
+      return this.item.getDamageValue();
+   }
 
-	@Override
-	public boolean isWearable() {
-		for (EntityEquipmentSlot slot : ItemStackWrapper.VALID_EQUIPMENT_SLOTS) {
-			if (this.item.getItem().isValidArmor(this.item, slot, EntityNPCInterface.CommandPlayer)) {
-				return true;
-			}
-		}
-		return false;
-	}
+   /** @deprecated */
+   @Deprecated
+   public void setItemDamage(int value) {
+      this.item.setDamageValue(value);
+   }
 
-	@Override
-	public boolean removeEnchant(int id) {
-		Enchantment ench = Enchantment.getEnchantmentByID(id);
-		if (ench == null) {
-			throw new CustomNPCsException("Unknown enchant id:" + id);
-		}
-		if (!this.isEnchanted()) {
-			return false;
-		}
-		int enchId = Enchantment.getEnchantmentID(ench);
-		NBTTagList list = this.item.getEnchantmentTagList();
-		NBTTagList newList = new NBTTagList();
-		for (int i = 0; i < list.tagCount(); ++i) {
-			NBTTagCompound compound = list.getCompoundTagAt(i);
-			if (compound.getShort("id") != enchId) {
-				newList.appendTag(compound);
-			}
-		}
-		if (list.tagCount() == newList.tagCount()) {
-			return false;
-		}
+   public int getMaxDamage() {
+      return this.item.getMaxDamage();
+   }
 
-		NBTTagCompound compound;
-		if (this.item.hasTagCompound()) { compound = this.item.getTagCompound(); }
-		else {
-			compound = new NBTTagCompound();
-			this.item.setTagCompound(compound);
-		}
-		if (compound != null) { compound.setTag("ench", newList); }
-		return true;
-	}
+   public INbt getItemNbt() {
+      CompoundTag compound = new CompoundTag();
+      this.item.save(compound);
+      return new NBTWrapper(compound);
+   }
 
-	@Override
-	public boolean removeEnchant(String name) {
-		Enchantment ench = Enchantment.getEnchantmentByLocation(name);
-		if (ench == null) {
-			throw new CustomNPCsException("Unknown enchant name:" + name);
-		}
-		if (!this.isEnchanted()) {
-			return false;
-		}
-		int enchId = Enchantment.getEnchantmentID(ench);
-		NBTTagList list = this.item.getEnchantmentTagList();
-		NBTTagList newList = new NBTTagList();
-		for (int i = 0; i < list.tagCount(); ++i) {
-			NBTTagCompound compound = list.getCompoundTagAt(i);
-			if (compound.getShort("id") != enchId) {
-				newList.appendTag(compound);
-			}
-		}
-		if (list.tagCount() == newList.tagCount()) {
-			return false;
-		}
-		NBTTagCompound compound;
-		if (this.item.hasTagCompound()) { compound = this.item.getTagCompound(); }
-		else {
-			compound = new NBTTagCompound();
-			this.item.setTagCompound(compound);
-		}
-		if (compound != null) { compound.setTag("ench", newList); }
-		return true;
-	}
+   public double getAttackDamage() {
+      Multimap<Attribute, AttributeModifier> map = this.item.getAttributeModifiers(EquipmentSlot.MAINHAND);
+      double damage = 0.0D;
+      for (Entry<Attribute, AttributeModifier> entry : map.entries()) {
+         if (entry.getKey() == Attributes.ATTACK_DAMAGE) {
+            AttributeModifier mod = entry.getValue();
+            damage = mod.getAmount();
+         }
+      }
+      return damage + (double)EnchantmentHelper.getDamageBonus(this.item, MobType.UNDEFINED);
+   }
 
-	@Override
-	public void removeNbt() {
-		this.item.setTagCompound(null);
-	}
+   public boolean isEmpty() {
+      return this.item.isEmpty();
+   }
 
-	public NBTBase serializeNBT() {
-		return getMCNbt();
-	}
+   public int getType() {
+      if (this.item.getItem() instanceof IPlantable) {
+         return 5;
+      } else {
+         return this.item.getItem() instanceof SwordItem ? 4 : 0;
+      }
+   }
 
-	@Override
-	public void setAttribute(String name, double value) {
-		this.setAttribute(name, value, -1);
-	}
+   public boolean isWearable() {
+      for (EquipmentSlot slot : VALID_EQUIPMENT_SLOTS) {
+         if (this.item.getItem().canEquip(this.item, slot, EntityNPCInterface.CommandPlayer)) {
+            return true;
+         }
+      }
+      return false;
+   }
 
-	@Override
-	public void setAttribute(String name, double value, int slot) {
-		if (slot < -1 || slot > 5) {
-			throw new CustomNPCsException("Slot has to be between -1 and 5, given was: " + slot);
-		}
-		NBTTagCompound compound = this.item.getTagCompound();
-		if (compound == null) {
-			this.item.setTagCompound(compound = new NBTTagCompound());
-		}
-		NBTTagList nbttaglist = compound.getTagList("AttributeModifiers", 10);
-		NBTTagList newList = new NBTTagList();
-		for (int i = 0; i < nbttaglist.tagCount(); ++i) {
-			NBTTagCompound c = nbttaglist.getCompoundTagAt(i);
-			if (!c.getString("AttributeName").equals(name)) {
-				newList.appendTag(c);
-			}
-		}
-		if (value != 0.0) {
-			NBTTagCompound nbttagcompound = SharedMonsterAttributes
-					.writeAttributeModifierToNBT(new AttributeModifier(name, value, 0));
-			nbttagcompound.setString("AttributeName", name);
-			if (slot >= 0) {
-				nbttagcompound.setString("Slot", EntityEquipmentSlot.values()[slot].getName());
-			}
-			newList.appendTag(nbttagcompound);
-		}
-		compound.setTag("AttributeModifiers", newList);
-	}
+   public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> capability, Direction facing) {
+      return capability == ITEMSCRIPTEDDATA_CAPABILITY ? this.instance.cast() : LazyOptional.empty();
+   }
 
-	@Override
-	public void setCustomName(String name) {
-		this.item.setStackDisplayName(name);
-	}
+   public static void register(AttachCapabilitiesEvent<ItemStack> event) {
+      ItemStackWrapper wrapper = createNew(event.getObject());
+      event.addCapability(key, wrapper);
+   }
 
-	@Override
-	public void setItemDamage(int value) {
-		this.item.setItemDamage(value);
-	}
+   private static ItemStackWrapper createNew(ItemStack item) {
+      if (item != null && !item.isEmpty()) {
+         if (item.getItem() instanceof ItemScripted) {
+            return new ItemScriptedWrapper(item);
+         } else if (item.getItem() != Items.WRITTEN_BOOK && item.getItem() != Items.WRITABLE_BOOK && !(item.getItem() instanceof WritableBookItem) && !(item.getItem() instanceof WrittenBookItem)) {
+            if (item.getItem() instanceof ArmorItem) {
+               return new ItemArmorWrapper(item);
+            } else {
+               Block block = Block.byItem(item.getItem());
+               return block != Blocks.AIR ? new ItemBlockWrapper(item) : new ItemStackWrapper(item);
+            }
+         } else {
+            return new ItemBookWrapper(item);
+         }
+      } else {
+         return AIR;
+      }
+   }
 
-	@Override
-	public void setLore(String[] lore) {
-		NBTTagCompound compound = this.item.getOrCreateSubCompound("display");
-		if (lore == null || lore.length == 0) {
-			compound.removeTag("Lore");
-			return;
-		}
-		NBTTagList nbtList = new NBTTagList();
-		for (String s : lore) {
-			nbtList.appendTag(new NBTTagString(s));
-		}
-		compound.setTag("Lore", nbtList);
-	}
+   public String[] getLore() {
+      CompoundTag compound = this.item.getTagElement("display");
+      if (compound != null && compound.getTagType("Lore") == 9) {
+         ListTag tagList = compound.getList("Lore", 8);
+         if (tagList.isEmpty()) {
+            return new String[0];
+         } else {
+            List<String> lore = new ArrayList<>();
+            for(int i = 0; i < tagList.size(); ++i) {
+               lore.add(tagList.getString(i));
+            }
+            return lore.toArray(new String[0]);
+         }
+      } else {
+         return new String[0];
+      }
+   }
 
-	public void setMCNbt(NBTTagCompound compound) {
-		if (storeddata == null) { return; }
-		if (compound == null) {
-			storeddata.clear();
-		} else {
-			storeddata.setNbt(compound.getCompoundTag("StoredData"));
-		}
-	}
+   public void setLore(String[] lore) {
+      CompoundTag compound = this.item.getOrCreateTagElement("display");
+      if (lore != null && lore.length != 0) {
+         ListTag tagList = new ListTag();
+         for (String string : lore) {
+            String s = string;
+            try {
+               Serializer.fromJson(s);
+            } catch (JsonParseException var9) {
+               s = Serializer.toJson(Component.translatable(s));
+            }
+            tagList.add(StringTag.valueOf(s));
+         }
+         compound.put("Lore", tagList);
+      } else {
+         compound.remove("Lore");
+      }
+   }
 
-	@Override
-	public void setStackSize(int size) {
-		if (size > this.getMaxStackSize()) {
-			throw new CustomNPCsException("Can't set the stack size bigger than Max Stack size");
-		}
-		this.item.setCount(size);
-	}
+   public CompoundTag serializeNBT() {
+      return getMCNbt();
+   }
 
-	// New from Unofficial (BetaZavr)
-	@Override
-	public IEntity<?> getOwner() { return owner; }
+   public void deserializeNBT(CompoundTag nbt) {
+      this.setMCNbt(nbt);
+   }
 
-	@Override
-	public void setOwner(IEntity<?> entity) { owner = entity; }
+   public CompoundTag getMCNbt() {
+      CompoundTag compound = new CompoundTag();
+      if (storeddata != null && !storeddata.getNbt().isEmpty()) {
+         compound.put("StoredData", storeddata.getNbt().getMCNBT());
+      }
+      return compound;
+   }
+
+   public void setMCNbt(CompoundTag compound) {
+      if (storeddata == null) { return; }
+      if (compound == null) { storeddata.clear(); }
+      else { storeddata.setNbt(compound.getCompound("StoredData")); }
+   }
+
+   public void removeNbt() {
+      this.item.setTag(null);
+   }
+
+   public boolean compare(IItemStack item, boolean ignoreNBT) {
+      if (item == null) {
+         item = AIR;
+      }
+
+      return NoppesUtilPlayer.compareItems(this.getMCItemStack(), item.getMCItemStack(), false, ignoreNBT);
+   }
+
+   // New from Unofficial (BetaZavr)
+   @Override
+   public IEntity<?> getOwner() { return owner; }
+
+   @Override
+   public void setOwner(IEntity<?> iEntity) { owner = iEntity; }
 
 }

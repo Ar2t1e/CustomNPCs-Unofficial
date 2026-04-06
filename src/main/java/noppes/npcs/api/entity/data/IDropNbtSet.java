@@ -1,34 +1,35 @@
 package noppes.npcs.api.entity.data;
 
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
+@SuppressWarnings("all")
 public interface IDropNbtSet {
 
-	double getChance();
+    double getChance();
 
-	INbt getConstructorTag(@ParamName("nbt") INbt nbt);
+    INbt getConstructorTag(@ParamName("nbt") INbt nbt);
 
-	String getPath();
+    String getPath();
 
-	int getType();
+    int getType();
 
-	int getTypeList();
+    int getTypeList();
 
-	String[] getValues();
+    String[] getValues();
 
-	void remove();
+    void remove();
 
-	void setChance(@ParamName("chance") double chance);
+    void setChance(@ParamName("chance") double chance);
 
-	void setPath(@ParamName("path") String path);
+    void setPath(@ParamName("path") String path);
 
-	void setType(@ParamName("type") int type);
+    void setType(@ParamName("type") int type);
 
-	void setTypeList(@ParamName("type") int type);
+    void setTypeList(@ParamName("type") int type);
 
-	void setValues(@ParamName("values") String values);
+    void setValues(@ParamName("values") String values);
 
-	void setValues(@ParamName("values") String[] values);
+    void setValues(@ParamName("values") String[] values);
 
 }

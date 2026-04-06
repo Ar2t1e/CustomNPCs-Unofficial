@@ -1,115 +1,157 @@
 package noppes.npcs.api.wrapper;
 
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.NpcDamageSource;
+import noppes.npcs.api.IEntityDamageSource;
+import noppes.npcs.api.IPos;
+import noppes.npcs.api.entity.IEntity;
+import noppes.npcs.entity.EntityNPCInterface;
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EntityDamageSource;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.api.IEntityDamageSource;
-import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.entity.IEntity;
+public class NpcEntityDamageSource extends DamageSource implements IEntityDamageSource {
 
-import java.util.Objects;
+    private static final Map<String, Holder<DamageType>> cashDamages = new HashMap<>();
 
-public class NpcEntityDamageSource extends EntityDamageSource implements IEntityDamageSource {
+    private Holder<DamageType> type;
+    @Nullable
+    private Entity causingEntity;
+    @Nullable
+    private Entity directEntity;
+    @Nullable
+    private Vec3 damageSourcePosition;
 
-	public Entity damageSourceEntity;
-	public Entity indirectEntity;
-	public boolean projectile = false;
-	public boolean explosion = false;
-	public String damageType;
-	public String deadMessage;
+    public String deadMessage = "";
+    public final Level level;
 
-	public NpcEntityDamageSource(String damageType, IEntity<?> damageSourceEntityIn) {
-		super(damageType, damageSourceEntityIn.getMCEntity());
-		if (damageType.isEmpty()) {
-			damageType = "npcCustomDamage";
-		}
-		this.damageType = damageType;
-		this.damageSourceEntity = damageSourceEntityIn.getMCEntity();
-		this.deadMessage = "";
-	}
+    public NpcEntityDamageSource(@Nonnull Holder<DamageType> damageTypeHolder, @Nonnull Entity entity) {
+        super(damageTypeHolder, entity);
+        type = damageTypeHolder;
+        causingEntity = entity;
+        directEntity = entity;
+        level = entity.level();
+        damageSourcePosition = null;
+    }
 
-	@Override
-	public String getDeadMessage() {
-		return this.deadMessage;
-	}
+    public static @Nonnull NpcEntityDamageSource create(String name, Entity source) {
+        return new NpcEntityDamageSource(cashDamages.getOrDefault(name,
+                source.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(
+                        ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(CustomNpcs.MODID, name)))), source);
+    }
 
-	@Nonnull
-	public ITextComponent getDeathMessage(@Nonnull EntityLivingBase entity) {
-		ITextComponent entitySourceName = this.indirectEntity == null ? this.damageSourceEntity.getDisplayName()
-				: this.indirectEntity.getDisplayName();
-		ItemStack stack = this.indirectEntity instanceof EntityLivingBase
-				? ((EntityLivingBase) this.indirectEntity).getHeldItemMainhand()
-				: this.damageSourceEntity instanceof EntityLivingBase
-						? ((EntityLivingBase) this.damageSourceEntity).getHeldItemMainhand()
-						: ItemStack.EMPTY;
-		if (!this.deadMessage.isEmpty()) {
-			return new TextComponentTranslation(this.deadMessage,
-                    entity.getDisplayName(), entitySourceName,
-                    new TextComponentTranslation(this.damageType).getFormattedText(),
-                    stack.getTextComponent());
-		}
-		String s = "death.attack." + this.damageType;
-		String s1 = s + ".item";
-		ITextComponent ts1 = new TextComponentTranslation(s1, entity.getDisplayName(), entitySourceName, stack.getTextComponent());
-		return !stack.isEmpty() && stack.hasDisplayName() && ts1.getFormattedText().equals(s1) ? ts1
-				: new TextComponentTranslation(s, entity.getDisplayName(), entitySourceName);
-	}
+    @Nullable
+    public Entity getDirectEntity() { return this.directEntity; }
 
-	@Override
-	public IEntity<?> getIImmediateSource() {
-		return this.indirectEntity == null ? null : Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.indirectEntity);
-	}
+    @Nullable
+    public Entity getEntity() { return this.causingEntity; }
 
-	@Nullable
-	public Entity getImmediateSource() {
-		return this.indirectEntity;
-	}
+    public @NotNull Component getLocalizedDeathMessage(@NotNull LivingEntity entity) {
+        String s = "death.attack." + (!deadMessage.isEmpty() ? deadMessage : type().msgId());
+        if (causingEntity == null && directEntity == null) {
+            LivingEntity livingEntity1 = entity.getKillCredit();
+            String s1 = s + ".player";
+            return livingEntity1 != null ? Component.translatable(s1, entity.getDisplayName(), livingEntity1.getDisplayName()) : Component.translatable(s, entity.getDisplayName());
+        } else {
+            Component component = causingEntity == null ? directEntity.getDisplayName() : causingEntity.getDisplayName();
+            ItemStack itemstack = causingEntity instanceof LivingEntity livingentity ? livingentity.getMainHandItem() : ItemStack.EMPTY;
+            return !itemstack.isEmpty() && itemstack.hasCustomHoverName() ? Component.translatable(s + ".item", entity.getDisplayName(), component, itemstack.getDisplayName()) : Component.translatable(s, entity.getDisplayName(), component);
+        }
+    }
 
-	@Override
-	public IEntity<?> getITrueSource() {
-		return this.damageSourceEntity == null ? null : Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.damageSourceEntity);
-	}
+    public @NotNull String getMsgId() { return type().msgId(); }
 
-	@Override
-	public Entity getTrueSource() {
-		return this.damageSourceEntity;
-	}
+    public boolean scalesWithDifficulty() {
+        return switch (this.type().scaling()) {
+            case NEVER -> false;
+            case WHEN_CAUSED_BY_LIVING_NON_PLAYER ->
+                    this.causingEntity instanceof LivingEntity && !(this.causingEntity instanceof Player);
+            case ALWAYS -> true;
+            default -> throw new IncompatibleClassChangeError();
+        };
+    }
 
-	@Override
-	public String getType() {
-		return this.damageType;
-	}
+    public boolean isCreativePlayer() {
+        return getEntity() instanceof Player player && player.getAbilities().instabuild;
+    }
 
-	@Override
-	public void setDeadMessage(String message) {
-		if (message == null) {
-			message = "";
-		}
-		this.deadMessage = message;
-	}
+    @Nullable
+    public Vec3 getSourcePosition() {
+        if (damageSourcePosition != null) { return damageSourcePosition; }
+        return directEntity != null ? directEntity.position() : null;
+    }
 
-	@Override
-	public void setImmediateSource(IEntity<?> entity) {
-		this.indirectEntity = entity == null ? null : entity.getMCEntity();
-	}
+    @Nullable
+    public Vec3 sourcePositionRaw() { return damageSourcePosition; }
 
-	@Override
-	public void setTrueSource(IEntity<?> entity) {
-		this.damageSourceEntity = entity == null ? null : entity.getMCEntity();
-	}
+    public boolean is(@NotNull TagKey<DamageType> damageTypeKey) { return type.is(damageTypeKey); }
 
-	@Override
-	public void setType(String damageType) {
-		if (damageType.isEmpty()) {
-			damageType = "npcCustomDamage";
-		}
-		this.damageType = damageType;
-	}
+    public boolean is(@NotNull ResourceKey<DamageType> damageTypeHolder) { return type.is(damageTypeHolder); }
+
+    public @NotNull DamageType type() { return type.value(); }
+
+    public @NotNull Holder<DamageType> typeHolder() { return type; }
+
+    public void setSourcePosition(IPos pos) { damageSourcePosition = pos == null ? null : pos.getMCVec3(); }
+
+    @Override
+    public String getDeadMessage() { return deadMessage; }
+
+    @Override
+    public IEntity<?> getIImmediateSource() {
+        if (directEntity instanceof EntityNPCInterface npc) { return npc.wrappedNPC; }
+        return WrapperEntityData.get(directEntity);
+    }
+
+    @Override
+    public IEntity<?> getITrueSource() {
+        if (causingEntity instanceof EntityNPCInterface npc) { return npc.wrappedNPC; }
+        return WrapperEntityData.get(causingEntity);
+    }
+
+    @Override
+    public String getType() { return type().msgId(); }
+
+    @Override
+    public void setDeadMessage(String message) {
+        if (message == null) { message = ""; }
+        deadMessage = message;
+    }
+
+    @Override
+    public void setImmediateSource(IEntity<?> entity) {
+        if (entity == null) { return; }
+        directEntity = entity.getMCEntity();
+    }
+
+    @Override
+    public void setTrueSource(IEntity<?> entity) {
+        if (entity == null) { return; }
+        causingEntity = entity.getMCEntity();
+    }
+
+    @Override
+    public void setType(String damageType) {
+        if (damageType == null || damageType.isEmpty()) { damageType = "npc"; }
+        ResourceKey<DamageType> resourceKey = ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(CustomNpcs.MODID, damageType));
+        type = level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(resourceKey);
+    }
 
 }

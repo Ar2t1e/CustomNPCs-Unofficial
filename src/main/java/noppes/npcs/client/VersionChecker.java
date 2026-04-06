@@ -1,30 +1,30 @@
 package noppes.npcs.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.event.ClickEvent;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.ClickEvent.Action;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
 
 public class VersionChecker extends Thread {
 
-	@Override
-	public void run() {
-		TextComponentTranslation messageVersion = new TextComponentTranslation("cnpcs.version");
-		TextComponentTranslation linkVersion = new TextComponentTranslation("click.here");
-		linkVersion.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "http://www.kodevelopment.nl/minecraft/customnpcs/"));
+   public void run() {
+      MutableComponent messageVersion = Component.translatable("cnpcs.version");
+      MutableComponent linkVersion = Component.translatable("click.here");
+      linkVersion.setStyle(linkVersion.getStyle().withClickEvent(new ClickEvent(Action.OPEN_URL, "http://www.kodevelopment.nl/minecraft/" + CustomNpcs.MODID + "/")));
 
-		TextComponentTranslation messageScripters = new TextComponentTranslation("cnpcs.scripters");
-		TextComponentTranslation linkScripters = new TextComponentTranslation(((char) 167) + "9" + ((char) 167) + "nDiscord");
-		linkScripters.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://discord.gg/rgczwNV"));
+      MutableComponent messageScripters = Component.translatable("cnpcs.scripters");
+      MutableComponent linkScripters = Component.translatable(((char) 167) + "9" + ((char) 167) + "nDiscord");
+      linkScripters.setStyle(linkScripters.getStyle().withClickEvent(new ClickEvent(Action.OPEN_URL, "https://discord.gg/rgczwNV")));
 
-		while(true) {
-			if (Minecraft.getMinecraft().player != null) {
-				Minecraft.getMinecraft().player.sendMessage(messageVersion.appendSibling(linkVersion));
-				Minecraft.getMinecraft().player.sendMessage(messageScripters.appendSibling(linkScripters));
-				break;
-			}
-		}
-	}
+      while(true) {
+         if (Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.sendSystemMessage(messageVersion.append(linkVersion));
+            Minecraft.getInstance().player.sendSystemMessage(messageScripters.append(linkScripters));
+            break;
+         }
+      }
+   }
+
 }

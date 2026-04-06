@@ -1,157 +1,163 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 import noppes.npcs.api.*;
 import noppes.npcs.api.entity.data.IData;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.util.IRayTraceResults;
 
 @SuppressWarnings("all")
 public interface IEntity<T extends Entity> {
 
-	void addRider(@ParamName("entity") IEntity<?> entity);
+   double getX();
 
-	void addTag(@ParamName("tag") String tag);
+   void setX(@ParamName("x") double x);
 
-	void clearRiders();
+   double getY();
 
-	void damage(@ParamName("amount") float amount);
+   void setY(@ParamName("y") double y);
 
-	void damage(@ParamName("amount") float amount, @ParamName("source") IEntityDamageSource source);
+   double getZ();
 
-	void despawn();
+   void setZ(@ParamName("z") double z);
 
-	IEntityItem<?> dropItem(@ParamName("item") IItemStack item);
+   int getBlockX();
 
-	void extinguish();
+   int getBlockY();
 
-	String generateNewUUID();
+   int getBlockZ();
 
-	long getAge();
+   IPos getPos();
 
-	IEntity<?>[] getAllRiders();
+   void setPos(@ParamName("pos") IPos pos);
 
-	int getBlockX();
+   void setPosition(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	int getBlockY();
+   void setRotation(@ParamName("rotation") float rotation);
 
-	int getBlockZ();
+   float getRotation();
 
-	String getEntityName();
+   float getHeight();
 
-	INbt getEntityNbt();
+   float getEyeHeight();
 
-	float getEyeHeight();
+   float getWidth();
 
-	float getHeight();
+   void setPitch(@ParamName("pitch") float pitch);
 
-	T getMCEntity();
+   float getPitch();
 
-	double getMotionX();
+   IEntity<?> getMount();
 
-	double getMotionY();
+   void setMount(@ParamName("entity") IEntity<?> entity);
 
-	double getMotionZ();
+   IEntity<?>[] getRiders();
 
-	IEntity<?> getMount();
+   IEntity<?>[] getAllRiders();
 
-	String getName();
+   void addRider(@ParamName("entity") IEntity<?> entity);
 
-	INbt getNbt();
+   void clearRiders();
 
-	float getPitch();
+   void knockback(@ParamName("power") int power, @ParamName("direction") float direction);
 
-	IPos getPos();
+   boolean isSneaking();
 
-	IEntity<?>[] getRiders();
+   boolean isSprinting();
 
-	float getRotation();
+   IEntityItem<?> dropItem(@ParamName("item") IItemStack item);
 
-	IData getStoreddata();
+   boolean inWater();
 
-	String[] getTags();
+   boolean inFire();
 
-	IData getTempdata();
+   boolean inLava();
 
-	int getType();
+   IData getTempdata();
 
-	String getTypeName();
+   IData getStoreddata();
 
-	String getUUID();
+   INbt getNbt();
 
-	float getWidth();
+   boolean isAlive();
 
-	IWorld getWorld();
+   long getAge();
 
-	double getX();
+   void despawn();
 
-	double getY();
+   void spawn();
 
-	double getZ();
+   void kill();
 
-	boolean hasCustomName();
+   boolean isBurning();
 
-	boolean hasTag(@ParamName("tag") String tag);
+   void setBurning(@ParamName("ticks") int ticks);
 
-	boolean inFire();
+   void extinguish();
 
-	boolean inLava();
+   IWorld getWorld();
 
-	boolean inWater();
+   String getTypeName();
 
-	boolean isAlive();
+   int getType();
 
-	boolean isBurning();
+   boolean typeOf(@ParamName("type") int type);
 
-	boolean isSneaking();
+   T getMCEntity();
 
-	boolean isSprinting();
+   String getUUID();
 
-	void kill();
+   String generateNewUUID();
 
-	void knockback(@ParamName("power") int power, @ParamName("direction") float direction);
+   void storeAsClone(@ParamName("tab") int tab, @ParamName("name") String name);
 
-	void playAnimation(@ParamName("type") int type);
+   INbt getEntityNbt();
 
-	IRayTrace rayTraceBlock(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
-							@ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);
+   void setEntityNbt(@ParamName("nbt") INbt nbt);
 
-	IEntity<?>[] rayTraceEntities(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
-								  @ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);
+   IRayTraceResults rayTrace(@ParamName("distance") double distance);
 
-	void removeTag(@ParamName("tag") String tag);
+   IRayTrace rayTraceBlock(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
+                           @ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);
 
-	void setBurning(@ParamName("seconds") int seconds);
+   IEntity<?>[] rayTraceEntities(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
+                                 @ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);
 
-	void setEntityNbt(@ParamName("nbt") INbt nbt);
+   String[] getTags();
 
-	void setMotionX(@ParamName("motion") double motion);
+   void addTag(@ParamName("tag") String tag);
 
-	void setMotionY(@ParamName("motion") double motion);
+   boolean hasTag(@ParamName("tag") String tag);
 
-	void setMotionZ(@ParamName("motion") double motion);
+   void removeTag(@ParamName("tag") String tag);
 
-	void setMount(@ParamName("entity") IEntity<?> entity);
+   void playAnimation(@ParamName("type") int type);
 
-	void setName(@ParamName("name") String name);
+   void damage(@ParamName("amount") float amount);
 
-	void setPitch(@ParamName("pitch") float pitch);
+   void damage(@ParamName("amount") float amount, @ParamName("source") IEntity<?> source);
 
-	void setPos(@ParamName("pos") IPos pos);
+   void damage(@ParamName("amount") float amount, @ParamName("damageSource") IEntityDamageSource damageSource);
 
-	void setPosition(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+   double getMotionX();
 
-	void setRotation(@ParamName("rotation") float rotation);
+   double getMotionY();
 
-	void setX(@ParamName("x") double x);
+   double getMotionZ();
 
-	void setY(@ParamName("y") double y);
+   void setMotionX(@ParamName("motion") double motion);
 
-	void setZ(@ParamName("z") double z);
+   void setMotionY(@ParamName("motion") double motion);
 
-	void spawn();
+   void setMotionZ(@ParamName("motion") double motion);
 
-	void storeAsClone(@ParamName("tab") int tab, @ParamName("name") String name);
+   String getName();
 
-	boolean typeOf(@ParamName("type") int type);
+   void setName(@ParamName("name") String name);
+
+   boolean hasCustomName();
+
+   String getEntityName();
 
 }

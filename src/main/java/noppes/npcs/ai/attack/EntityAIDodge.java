@@ -1,88 +1,75 @@
 package noppes.npcs.ai.attack;
 
-import net.minecraft.entity.IRangedAttackMob;
-import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.pathfinding.Path;
-import net.minecraft.pathfinding.PathPoint;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.entity.monster.RangedAttackMob;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.util.Util;
-
-import java.util.Objects;
 
 public class EntityAIDodge extends EntityAICustom {
 
-	private int[] dodgePos;
+	protected long delay = 1000L;
+	protected long lastJump = System.currentTimeMillis() + delay;
+	protected final float leapSpeed = 1.3F;
 
-	public EntityAIDodge(IRangedAttackMob npc) {
-		super(npc);
+	public EntityAIDodge(RangedAttackMob npc) { super(npc); }
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (isFriend || npc.tickCount % (newGoalRate * 2) > newGoalRate) { return; }
+		canSeeToAttack = npc.canSee(target);
+		if (!(canSeeToAttack && distance <= range) && !inMove) { tryMoveToTarget(); }
+		tryToCauseDamage();
 	}
 
 	@Override
-	public void updateTask() {
-		super.updateTask();
-		if (this.isFriend || this.npc.ticksExisted % (this.tickRate * 2) > 3) {
-			return;
-		}
-		this.canSeeToAttack = this.npc.canSee(this.target);
+	public void attacked() { tryJump(); }
 
-		if (this.canSeeToAttack && this.distance <= this.range) {
-			if (this.inMove) {
-				if (this.dodgePos == null) {
-					this.npc.getNavigator().clearPath();
-				} else {
-					PathPoint point = Objects.requireNonNull(this.npc.getNavigator().getPath()).getFinalPathPoint();
-					if (point == null || point.x < this.dodgePos[0] - 2 && point.x > this.dodgePos[0] + 2
-							|| point.y < this.dodgePos[1] - 2 && point.y > this.dodgePos[1] + 2
-							|| point.z < this.dodgePos[2] - 2 && point.z > this.dodgePos[2] + 2) {
-						this.dodgePos = null;
-						this.npc.getNavigator().clearPath();
-					}
-				}
-			}
-		} else {
-			if (!this.inMove) {
-				this.dodgePos = null;
-				this.tryMoveToTarget();
-			}
-		}
-		this.tryToCauseDamage();
-		if (hasAttack) {
+	@Override
+	public boolean damaged() {
+		if (tryJump()) { return npc.getRandom().nextFloat() < 0.05f; }
+		return false;
+	}
+
+	protected boolean tryJump() {
+		if (lastJump < System.currentTimeMillis()) {
 			double dist = 0.0d;
-			int error = 0, attempts = 0;
-			this.dodgePos = null;
-			Path path = null;
-			while ((dist < this.tacticalRange || dist < (this.isRanged ? this.range / 2.0d : this.range)
-					|| dist > this.npc.stats.aggroRange) && error < 3 && attempts < 8) {
+			int error = 0;
+			int attempts = 0;
+			Vec3 vec = null;
+			while ((dist < tacticalRange || dist < (isRanged ? range / 2.0d : range)
+					|| dist > npc.stats.aggroRange) && error < 3 && attempts < 8) {
 				attempts++;
-				Vec3d vec = RandomPositionGenerator.findRandomTarget(this.npc, this.tacticalRange, 2);
-				if (vec == null) {
+				Vec3 vec2 = DefaultRandomPos.getPos(npc, tacticalRange, 2);
+				if (vec2 == null) {
 					error++;
 					continue;
 				}
 				error = 0;
-				dist = this.npc.getDistance(vec.x, vec.y, vec.z);
-				if ((int) vec.x == this.npc.getPosition().getX() && (int) vec.y == this.npc.getPosition().getY()
-						&& (int) vec.x == this.npc.getPosition().getZ()) {
-					dist = 0.0d;
-				} else {
-					path = this.npc.getNavigator().getPathToXYZ(vec.x, vec.y, vec.z);
-					if (path == null) {
-						dist = 0.0d;
-					} else {
-						if (this.dodgePos == null) {
-							this.dodgePos = new int[] { (int) vec.x, (int) vec.y, (int) vec.z };
-						} else {
-							this.dodgePos[0] = (int) vec.x;
-							this.dodgePos[1] = (int) vec.y;
-							this.dodgePos[2] = (int) vec.z;
-						}
+				dist = Math.sqrt(npc.distanceToSqr(vec2));
+				if ((int) vec2.x == npc.blockPosition().getX() && (int) vec2.y == npc.blockPosition().getY()
+						&& (int) vec2.x == npc.blockPosition().getZ()) { dist = 0.0d; }
+				else {
+					Path path = npc.getNavigation().createPath(vec2.x, vec2.y, vec2.z, 1);
+					if (path == null) { dist = 0.0d; }
+					else {
+						Node node = path.getEndNode();
+						if (node == null || (npc.blockPosition().getX() == node.x &&
+								npc.blockPosition().getY() == node.y &&
+								npc.blockPosition().getZ() == node.z)) { dist = 0.0d; }
+						else { vec = new Vec3(node.x, node.y, node.z); }
 					}
 				}
 			}
-			if (path != null) {
-				this.npc.getNavigator().setPath(path, 1.0d);
+			if (vec != null) {
+				Util.instance.jumpTowards(leapSpeed, npc, vec);
+				lastJump = System.currentTimeMillis() + delay;
+				return true;
 			}
 		}
+		return false;
 	}
 
 }

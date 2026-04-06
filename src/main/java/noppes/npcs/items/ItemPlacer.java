@@ -1,103 +1,85 @@
 package noppes.npcs.items;
 
-import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import noppes.npcs.api.item.INPCToolItem;
+import noppes.npcs.api.item.ISpecBuilder;
+import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiOpen;
+import noppes.npcs.packets.server.SPacketGetBuildData;
+import noppes.npcs.util.BuilderData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
 
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.api.item.ISpecBuilder;
-import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.constants.EnumPlayerPacket;
-import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.util.BuilderData;
-import noppes.npcs.util.IPermission;
+public class ItemPlacer extends Item implements INPCToolItem, ISpecBuilder {
 
-public class ItemPlacer
-extends Item
-implements IPermission, ISpecBuilder {
+    public ItemPlacer() { super((new Item.Properties()).stacksTo(1)); }
 
-	private final EnumGuiType guiType = EnumGuiType.PlacerSetting;
-
-	public ItemPlacer() {
-		this.setRegistryName(CustomNpcs.MODID, "npcplacer");
-		this.setUnlocalizedName("npcplacer");
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
-	}
-	
-	@SideOnly(Side.CLIENT)
-	@Override
-	public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> list, @Nonnull ITooltipFlag flagIn) {
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void appendHoverText(@Nonnull ItemStack stack, @Nullable Level worldIn, @Nonnull List<Component> list, @Nonnull TooltipFlag flagIn) {
         BuilderData builder = ItemBuilder.getBuilder(stack, null);
-		list.add(new TextComponentTranslation("info.item.builder.main.0").getFormattedText());
-		list.add(new TextComponentTranslation("info.item.builder.main.1").getFormattedText());
-		if (builder != null) {
-			list.add(new TextComponentTranslation("info.item.placer").getFormattedText());
-			for (int i = 4; i <= 5; i++) {
-				list.add(new TextComponentTranslation("info.item.builder.main." + i).getFormattedText());
-			}
-			list.add(new TextComponentTranslation("info.item.builder.range.1", "" + builder.region[0], "" + builder.region[1], "" + builder.region[2]).getFormattedText());
-		} else {
-			list.add(new TextComponentTranslation("info.item.builder.main.2").getFormattedText());
-			if (stack.hasTagCompound() && stack.getTagCompound() != null  && stack.getTagCompound().hasKey("ID", 8) && stack.getTagCompound().hasKey("BuilderType", 3)) {
-				NoppesUtilPlayer.sendDataCheckDelay(EnumPlayerPacket.GetBuildData, stack, 2000, stack.getTagCompound().getString("ID"), stack.getTagCompound().getInteger("BuilderType"));
-			}
-		}
-	}
-	
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.BuilderSetting || e == EnumPacketServer.Gui || e == EnumPacketServer.SchematicsBuild;
-	}
-
-	@Override
-	public void leftClick(ItemStack stack, EntityPlayerMP player, BlockPos pos) {
-		if (pos == null) { return; }
-		PlayerData data = PlayerData.get(player);
-		BuilderData builder = ItemBuilder.getBuilder(stack, player);
-		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
-			return;
-		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed <-
-			builder.undo();
+        list.add(Component.translatable("info.item.builder.main.0"));
+        list.add(Component.translatable("info.item.builder.main.1"));
+        if (builder != null) {
+            list.add(Component.translatable("info.item.placer"));
+            for (int i = 4; i <= 5; i++) {
+                list.add(Component.translatable("info.item.builder.main." + i));
+            }
+            list.add(Component.translatable("info.item.builder.range.1", "" + builder.region[0], "" + builder.region[1], "" + builder.region[2]));
+        } else {
+            list.add(Component.translatable("info.item.builder.main.2"));
+            CompoundTag tags = stack.getTag();
+            if (tags != null && tags.contains("ID", 3) && tags.contains("BuilderType", 3)) {
+                Packets.sendServerDelayed(new SPacketGetBuildData(stack.getTag().getInt("ID"), stack.getTag().getInt("BuilderType")), stack, 2000);
+            }
         }
-	}
+    }
 
-	@Override
-	public void rightClick(ItemStack stack, EntityPlayerMP player, BlockPos pos) {
-		if (pos == null) { return; }
-		PlayerData data = PlayerData.get(player);
-		BuilderData builder = ItemBuilder.getBuilder(stack, player);
-		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
-			return;
-		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed ->
-			builder.redo();
-			return;
-		}
-		builder.work(pos, player);
-	}
+    @Override
+    public void leftClick(ItemStack stack, ServerPlayer player, BlockPos pos) {
+        if (pos == null) { return; }
+        PlayerData data = PlayerData.get(player);
+        BuilderData builder = ItemBuilder.getBuilder(stack, player);
+        if (data == null || !stack.hasTag() || builder == null || builder.getID() == -1) {
+            Packets.send(player, new PacketGuiOpen(getGUIType(), new BlockPos(-1, getType(), 0)));
+            return;
+        }
+        if (data.overlay.isPressedCtrl()) { builder.undo(); }
+    }
 
-	@Override
-	public int getType() { return 3; }
+    @Override
+    public void rightClick(ItemStack stack, ServerPlayer player, BlockPos pos) {
+        if (pos == null) { return; }
+        PlayerData data = PlayerData.get(player);
+        BuilderData builder = ItemBuilder.getBuilder(stack, player);
+        if (data == null || !stack.hasTag() || builder == null || builder.getID() == -1) {
+            Packets.send(player, new PacketGuiOpen(getGUIType(), new BlockPos(-1, getType(), 0)));
+            return;
+        }
+        if (data.overlay.isPressedCtrl()) {
+            builder.redo();
+            return;
+        }
+        builder.work(pos, player);
+    }
 
-	@Override
-	public EnumGuiType getGUIType() { return this.guiType; }
-	
+    @Override
+    public int getType() { return 3; }
+
+    @Override
+    public EnumGuiType getGUIType() { return EnumGuiType.PlacerTool; }
+
 }

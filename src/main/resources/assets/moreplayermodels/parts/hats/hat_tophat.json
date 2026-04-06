@@ -1,0 +1,74 @@
+{
+	"name": "Tophat",
+	"render_type": "bedrock",
+	"texture": "moreplayermodels:textures/entity/white_noise.png",
+	"body_part": "head",
+	"menu": "part.hats",
+	"preview_rotation": -45,
+	"translate": [9.5, -6.2, 7.5],
+	"rotate_offset": [0.0, 0.0, 0.0],
+	"scale": [3.8, 3.8, 3.8],
+	"rotate": [0.0, 90.0, 0.0],
+	"author": "AnxiousChilds",
+	"render_data" : {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.unknown",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 1,
+					"visible_bounds_height": 1.5,
+					"visible_bounds_offset": [0, 0.25, 0]
+				},
+				"bones": [
+					{
+						"name": "hat",
+						"pivot": [-1, 0, 2]
+					},
+					{
+						"name": "bone",
+						"parent": "hat",
+						"pivot": [2, 0.45, -3.61193],
+						"rotation": [-22.5, 0, 0],
+						"cubes": [
+							{"origin": [1.88909, 0.45, -6.68934], "size": [1, 0.25, 0.45], "pivot": [4.88909, 0.45, -3.18934], "rotation": [0, 45, 0], "uv": [6, 7]},
+							{"origin": [2.35355, 0.45, -3.68934], "size": [1, 0.25, 0.45], "pivot": [3.35355, 0.45, -3.18934], "rotation": [0, -45, 0], "uv": [9, 9]},
+							{"origin": [1, 0.45, -4.25], "size": [2, 0.25, 0.9], "uv": [5, 6]}
+						]
+					},
+					{
+						"name": "bone2",
+						"parent": "hat",
+						"pivot": [2, 0.45, -1.28693],
+						"rotation": [157.5, 0, 180],
+						"cubes": [
+							{"origin": [1.88909, 0.45, -4.36434], "size": [1, 0.25, 0.45], "pivot": [4.88909, 0.45, -0.86434], "rotation": [0, 45, 0], "uv": [7, 8]},
+							{"origin": [2.5, 0.45, -1.71789], "size": [1, 0.25, 0.45], "pivot": [3, 0.45, -1.21789], "rotation": [0, -45, 0], "uv": [10, 10]},
+							{"origin": [1, 0.45, -1.925], "size": [2, 0.25, 0.9], "uv": [3, 4]}
+						]
+					},
+					{
+						"name": "bone3",
+						"parent": "hat",
+						"pivot": [2, 0.45, -1.28693],
+						"cubes": [
+							{"origin": [0.29289, 0.37955, -3.45248], "size": [1, 0.275, 2], "uv": [4, 7], "mirror": true},
+							{"origin": [2.69289, 0.37955, -3.45248], "size": [1, 0.275, 2], "uv": [2, 0], "mirror": true}
+						]
+					},
+					{
+						"name": "bone4",
+						"parent": "hat",
+						"pivot": [2, 0.45, -1.31193],
+						"cubes": [
+							{"origin": [0.9, 0.45, -3.53693], "size": [2.2, 0.5, 2.2], "uv": [8, 0]},
+							{"origin": [1, 0.45, -3.43693], "size": [2, 2.7, 2], "uv": [2, 4]}
+						]
+					}
+				]
+			}
+		]
+	}
+}

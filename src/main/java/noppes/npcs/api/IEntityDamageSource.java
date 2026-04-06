@@ -1,24 +1,24 @@
 package noppes.npcs.api;
 
 import noppes.npcs.api.entity.IEntity;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface IEntityDamageSource {
 
-	String getDeadMessage();
+    String getDeadMessage();
 
-	IEntity<?> getIImmediateSource();
+    IEntity<?> getIImmediateSource();
 
-	IEntity<?> getITrueSource();
+    IEntity<?> getITrueSource();
 
-	String getType();
+    String getType();
 
-	void setDeadMessage(@ParamName("message") String message);
+    void setDeadMessage(@ParamName("message") String message);
 
-	void setImmediateSource(@ParamName("entity") IEntity<?> entity);
+    void setImmediateSource(@ParamName("entity") IEntity<?> entity);
 
-	void setTrueSource(@ParamName("entity") IEntity<?> entity);
+    void setTrueSource(@ParamName("entity") IEntity<?> entity);
 
-	void setType(@ParamName("damageType") String damageType);
+    void setType(@ParamName("damageType") String damageType);
 
 }

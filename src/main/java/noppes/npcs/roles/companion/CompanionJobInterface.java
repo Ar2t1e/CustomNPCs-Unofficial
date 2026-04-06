@@ -1,19 +1,23 @@
 package noppes.npcs.roles.companion;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
+import noppes.npcs.constants.EnumCompanionJobs;
 import noppes.npcs.entity.EntityNPCInterface;
 
 public abstract class CompanionJobInterface {
-	public EntityNPCInterface npc;
 
-	public abstract NBTTagCompound getNBT();
+   public EntityNPCInterface npc;
 
-	public boolean isSelfSufficient() {
-		return false;
-	}
+   public abstract CompoundTag getNBT();
 
-	public void onUpdate() {
-	}
+   public abstract void setNBT(CompoundTag compound);
 
-	public abstract void setNBT(NBTTagCompound p0);
+   public abstract EnumCompanionJobs getType();
+
+   public void onUpdate() {}
+
+   public boolean isSelfSufficient() {
+      return false;
+   }
+
 }

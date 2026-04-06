@@ -1,0 +1,228 @@
+{
+	"name": "part.legs",
+	"hidden_parts": ["right_leg", "left_leg"],
+	"render_type": "bedrock",
+	"render_data": {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.steve",
+					"texture_width": 64,
+					"texture_height": 64,
+					"visible_bounds_width": 4,
+					"visible_bounds_height": 2.5,
+					"visible_bounds_offset": [0, 0.75, 0]
+				},
+				"bones": [
+					{
+						"name": "mermaid_body",
+						"pivot": [0, 12, 0],
+						"rotation": [17.5, 0, 0],
+						"cubes": [
+							{"origin": [-4, 3.6, -1.4], "size": [8, 9, 4], "inflate": -0.01, "uv": [0, 16]}
+						]
+					},
+					{
+						"name": "part1",
+						"parent": "mermaid_body",
+						"pivot": [0, 4, -1],
+						"rotation": [42.5, 0, 0],
+						"cubes": [
+							{"origin": [-3.5, -2, -1], "size": [7, 6, 4], "uv": [28, 0]}
+						]
+					},
+					{
+						"name": "part2",
+						"parent": "part1",
+						"pivot": [0, -2, -1],
+						"rotation": [15, 0, 0],
+						"cubes": [
+							{"origin": [-3, -9, -0.5], "size": [6, 7, 3], "uv": [24, 16]}
+						]
+					},
+					{
+						"name": "fins",
+						"parent": "part2",
+						"pivot": [0, -9, 1],
+						"cubes": [
+							{"origin": [-4, -18, 0.5], "size": [5, 9, 1], "pivot": [0, -9, 1], "rotation": [2.5, 0, 37.5], "uv": [0, 0]},
+							{"origin": [-1.5, -18, 0.5], "size": [5, 9, 1], "pivot": [0, -9, 1], "rotation": [2.5, 0, -37.5], "uv": [0, 0], "mirror": true}
+						]
+					}
+				]
+			}
+		]
+	},
+	"texture": "moreplayermodels:textures/legs/4.png",
+	"body_part": "legs",
+	"menu": "part.legs",
+	"animation_data" : {
+		"walk" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"rotation": [[14, 0, 0], [0, 0, 0], [0, 0, 0]]
+				},
+				"part1" : {
+					"rotation": [[30, 0, 0], [0, 0, 0], [0, 0, 0]]
+				},
+				"part2" : {
+					"rotation": [[30, 0, 0], [0, 0, 0], [-4, 0, 0]]
+				},
+				"fins" : {
+					"rotation": [[16, 0, 0], [0, 0, 0], [-6, 0, 0]]
+				}
+			}
+		},
+		"fly" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"rotation": [[14, 0, 0], [0, 0, 0], [0, 0, 0]]
+				},
+				"part1" : {
+					"rotation": [[30, 0, 0], [0, 0, 0], [0, 0, 0]]
+				},
+				"part2" : {
+					"rotation": [[30, 0, 0], [0, 0, 0], [-4, 0, 0]]
+				},
+				"fins" : {
+					"rotation": [[16, 0, 0], [0, 0, 0], [-6, 0, 0]]
+				}
+			}
+		},
+		"idle" : {
+			"animation_length" : 1,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"part1" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"part2" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				},
+				"fins" : {
+					"translate": [[0, 0, 0]],
+					"rotation": [[0, 0, 0]]
+				}
+			}
+		},
+		"crouch" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"rotation": [[14, 0, 0], [-20, 0, 0], [0, 0, 0]]
+				},
+				"part1" : {
+					"rotation": [[8, 0, 0], [0, 0, 0], [0, 0, 0]]
+				},
+				"part2" : {
+					"rotation": [[8, 0, 0], [0, 0, 0], [-4, 0, 0]]
+				},
+				"fins" : {
+					"rotation": [[16, 0, 0], [0, 0, 0], [-6, 0, 0]]
+				}
+			}
+		},
+		"sit" : {
+			"animation_length" : 1,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"rotation": [[24, 0, 0]]
+				},
+				"part1" : {
+					"rotation": [[0, 0, 0]]
+				},
+				"part2" : {
+					"rotation": [[0, 0, 0]]
+				},
+				"fins" : {
+					"rotation": [[0, 0, 0]]
+				}
+			}
+		},
+		"sleep" : {
+			"animation_length" : 1,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"rotation": [[-20, 0, 0]]
+				},
+				"part1" : {
+					"rotation": [[-42.5, 0, 0]]
+				},
+				"part2" : {
+					"rotation": [[-15, 0, 0]]
+				},
+				"fins" : {
+					"rotation": [[-2.5, 0, 0]]
+				}
+			}
+		},
+		"crawl" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.2,
+			"additional" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"rotation": [[-4, 0, 0], [-17.5, 0, 0], [-4.5, 0, 0]]
+				},
+				"part1" : {
+					"rotation": [[-52.5, 0, 0], [-42.5, 0, 0], [-52.5, 0, 0]]
+				},
+				"part2" : {
+					"rotation": [[-25, 0, 0], [-15, 0, 0], [-25, 0, 0]]
+				},
+				"fins" : {
+					"rotation": [[20.5, 0, 0], [-2.5, 0, 0], [20.5, 0, 0]]
+				}
+			}
+		},
+		"swim" : {
+			"animation_length" : 3,
+			"animation_speed" : 1.0,
+			"additional" : true,
+			"loop" : true,
+			"bones" : {
+				"mermaid_body" : {
+					"rotation": [[-3, 0, 0], [-17.5, 0, 0], [-31.5, 0, 0]]
+				},
+				"part1" : {
+					"rotation": [[-12.5, 0, 0], [-42.5, 0, 0], [-72.5, 0, 0]]
+				},
+				"part2" : {
+					"rotation": [[15, 0, 0], [-15, 0, 0], [-45, 0, 0]]
+				},
+				"fins" : {
+					"rotation": [[13,5, 0, 0], [-2.5, 0, 0], [-18.5, 0, 0]]
+				}
+			}
+		}
+	},
+	"preview_rotation": 45,
+	"translate": [0, 11.4, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, -12, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

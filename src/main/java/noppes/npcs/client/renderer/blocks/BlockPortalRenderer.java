@@ -1,177 +1,128 @@
 package noppes.npcs.client.renderer.blocks;
 
-import java.nio.FloatBuffer;
-import java.util.Random;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
+import noppes.npcs.shared.common.util.LogWriter;
+import org.joml.Matrix4f;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.EnumFacing;
-import noppes.npcs.blocks.tiles.CustomTileEntityPortal;
+import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.annotation.Nullable;
+// TheEndPortalRenderer
+@OnlyIn(Dist.CLIENT)
+public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends BlockRendererInterface<T> {
 
-public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends TileEntitySpecialRenderer<T> {
+    protected static final Map<String, RenderType> cash = new HashMap<>();
 
-	private static final Random RANDOM = new Random(31100L);
-	private static final FloatBuffer MODELVIEW = GLAllocation.createDirectFloatBuffer(16);
-	private static final FloatBuffer PROJECTION = GLAllocation.createDirectFloatBuffer(16);
-	private final FloatBuffer buffer = GLAllocation.createDirectFloatBuffer(16);
+    public BlockPortalRenderer(BlockEntityRendererProvider.Context dispatcher) {
+        super(dispatcher);
+    }
 
-	private FloatBuffer getBuffer(float red, float green, float blue) {
-		this.buffer.clear();
-		this.buffer.put(red).put(green).put(blue).put((float) 0.0);
-		this.buffer.flip();
-		return this.buffer;
-	}
+    @Override
+    public void render(@Nonnull T te, float partialTicks, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        Matrix4f matrix = pose.last().pose();
+        VertexConsumer consumer = buffer.getBuffer(getRenderType(te));
+        renderFaces(te, matrix, consumer, Direction.SOUTH, packedLight, packedOverlay);
+        renderFaces(te, matrix, consumer, Direction.NORTH, packedLight, packedOverlay);
+        renderFaces(te, matrix, consumer, Direction.EAST, packedLight, packedOverlay);
+        renderFaces(te, matrix, consumer, Direction.WEST, packedLight, packedOverlay);
+        renderFaces(te, matrix, consumer, Direction.DOWN, packedLight, packedOverlay);
+        renderFaces(te, matrix, consumer, Direction.UP, packedLight, packedOverlay);
+    }
 
-	protected int getPasses(double distance) {
-		int i;
+    protected void renderFaces(T te, Matrix4f matrix, VertexConsumer consumer, Direction face, int light, int overlay) {
+        if (te.shouldRenderFace(face)) {
+            if (face == Direction.SOUTH) {
+                consumer.vertex(matrix, 0.0f, 0.0f, 0.75F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay)
+                        .normal(0, 0, 1).endVertex();
+                consumer.vertex(matrix, 1.0F, 0.0f, 0.75F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, 0, 1).endVertex();
+                consumer.vertex(matrix, 1.0F, 1.0F, 0.75F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, 0, 1).endVertex();
+                consumer.vertex(matrix, 0.0f, 1.0F, 0.75F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, 0, 1).endVertex();
+            }
+            if (face == Direction.NORTH) {
+                consumer.vertex(matrix, 0.0f, 1.0F, 0.375F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, 0, -1).endVertex();
+                consumer.vertex(matrix, 1.0F, 1.0F, 0.375F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, 0, -1).endVertex();
+                consumer.vertex(matrix, 1.0F, 0.0f, 0.375F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, 0, -1).endVertex();
+                consumer.vertex(matrix, 0.0f, 0.0f, 0.375F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(0, 0, -1).endVertex();
+            }
+            if (face == Direction.EAST) {
+                consumer.vertex(matrix, 0.75F, 1.0F, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(1, 0, 0).endVertex();
+                consumer.vertex(matrix, 0.75F, 1.0F, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(1, 0, 0).endVertex();
+                consumer.vertex(matrix, 0.75F, 0.0f, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(1, 0, 0).endVertex();
+                consumer.vertex(matrix, 0.75F, 0.0f, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(1, 0, 0).endVertex();
+            }
+            if (face == Direction.WEST) {
+                consumer.vertex(matrix, 0.375F, 0.0f, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(-1, 0, 0).endVertex();
+                consumer.vertex(matrix, 0.375F, 0.0f, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(-1, 0, 0).endVertex();
+                consumer.vertex(matrix, 0.375F, 1.0F, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(-1, 0, 0).endVertex();
+                consumer.vertex(matrix, 0.375F, 1.0F, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(-1, 0, 0).endVertex();
+            }
+            if (face == Direction.DOWN) {
+                consumer.vertex(matrix, 0.0f, 0.375F, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(0, -1, 0).endVertex();
+                consumer.vertex(matrix, 1.0F, 0.375F, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, -1, 0).endVertex();
+                consumer.vertex(matrix, 1.0F, 0.375F, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, -1, 0).endVertex();
+                consumer.vertex(matrix, 0.0f, 0.375F, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, -1, 0).endVertex();
+            }
+            if (face == Direction.UP) {
+                consumer.vertex(matrix, 0.0f, 0.75F, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, 1, 0).endVertex();
+                consumer.vertex(matrix, 1.0F, 0.75F, 1.0F)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, 1, 0).endVertex();
+                consumer.vertex(matrix, 1.0F, 0.75F, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, 1, 0).endVertex();
+                consumer.vertex(matrix, 0.0f, 0.75F, 0.0f)
+                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(0, 1, 0).endVertex();
+            }
+        }
+    }
 
-		if (distance > 36864.0D) {
-			i = 1;
-		} else if (distance > 25600.0D) {
-			i = 3;
-		} else if (distance > 16384.0D) {
-			i = 5;
-		} else if (distance > 9216.0D) {
-			i = 7;
-		} else if (distance > 4096.0D) {
-			i = 9;
-		} else if (distance > 1024.0D) {
-			i = 11;
-		} else if (distance > 576.0D) {
-			i = 13;
-		} else if (distance > 256.0D) {
-			i = 14;
-		} else {
-			i = 15;
-		}
-		return i;
-	}
-
-	public void render(@Nullable T te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
-		if (te == null) { return; }
-		GlStateManager.disableLighting();
-		RANDOM.setSeed(31100L);
-		GlStateManager.getFloat(2982, MODELVIEW);
-		GlStateManager.getFloat(2983, PROJECTION);
-		int i = this.getPasses(x * x + y * y + z * z); // i == layers
-		boolean isPortalTexture = false;
-
-		for (int j = 0; j < i; ++j) { // j == layer
-			GlStateManager.pushMatrix();
-			float f1 = (1.25f / (float) i * (float) j + 0.5f) / (float) (18 - j);
-			if (j == 0) {
-				this.bindTexture(te.getSkyTexture());
-				f1 = 5.0f;
-				GlStateManager.enableBlend();
-				GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA,
-						GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-			}
-			if (j >= 1) {
-				this.bindTexture(te.getPortalTexture());
-				isPortalTexture = true;
-				Minecraft.getMinecraft().entityRenderer.setupFogColor(true);
-			}
-			if (j == 1) {
-				GlStateManager.enableBlend();
-				GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE);
-			}
-
-			GlStateManager.texGen(GlStateManager.TexGen.S, 9216);
-			GlStateManager.texGen(GlStateManager.TexGen.T, 9216);
-			GlStateManager.texGen(GlStateManager.TexGen.R, 9216);
-			GlStateManager.texGen(GlStateManager.TexGen.S, 9474, this.getBuffer(1.0F, 0.0F, 0.0F));
-			GlStateManager.texGen(GlStateManager.TexGen.T, 9474, this.getBuffer(0.0F, 1.0F, 0.0F));
-			GlStateManager.texGen(GlStateManager.TexGen.R, 9474, this.getBuffer(0.0F, 0.0F, 1.0F));
-			GlStateManager.enableTexGenCoord(GlStateManager.TexGen.S);
-			GlStateManager.enableTexGenCoord(GlStateManager.TexGen.T);
-			GlStateManager.enableTexGenCoord(GlStateManager.TexGen.R);
-			GlStateManager.popMatrix();
-
-			GlStateManager.matrixMode(5890);
-
-			GlStateManager.pushMatrix();
-			GlStateManager.loadIdentity();
-			GlStateManager.translate(0.5F, 0.5F, 0.0F);
-			GlStateManager.scale(0.5F, 0.5F, 1.0F);
-			float f2 = (float) (j + 1);
-			float t0 = te.speed * 1000.0F;
-			GlStateManager.translate(17.0F / f2, (2.0F + f2 / 1.5F) * ((float) Minecraft.getSystemTime() % t0 / t0),
-					0.0F);
-			GlStateManager.rotate((f2 * f2 * 4321.0F + f2 * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);
-			GlStateManager.scale(4.5F - f2 / 4.0F, 4.5F - f2 / 4.0F, 1.0F);
-			GlStateManager.multMatrix(PROJECTION);
-			GlStateManager.multMatrix(MODELVIEW);
-
-			Tessellator tessellator = Tessellator.getInstance();
-			BufferBuilder bufferbuilder = tessellator.getBuffer();
-			bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-			float f3 = (RANDOM.nextFloat() * 0.5F + 0.1F) * f1;
-			float f4 = (RANDOM.nextFloat() * 0.5F + 0.4F) * f1;
-			float f5 = (RANDOM.nextFloat() * 0.5F + 0.5F) * f1;
-			float f6 = te.alpha;
-			if (f6 < 0.15f) {
-				f6 = 0.15f;
-			} else if (f6 > 1.0f) {
-				f6 = 1.0f;
-			}
-
-			if (te.shouldRenderFace(EnumFacing.SOUTH)) {
-				bufferbuilder.pos(x, y, z + 0.75D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y, z + 0.75D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y + 1.0D, z + 0.75D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x, y + 1.0D, z + 0.75D).color(f3, f4, f5, f6).endVertex();
-			}
-			if (te.shouldRenderFace(EnumFacing.NORTH)) {
-				bufferbuilder.pos(x, y + 1.0D, z + 0.25D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y + 1.0D, z + 0.25D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y, z + 0.25D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x, y, z + 0.25D).color(f3, f4, f5, f6).endVertex();
-			}
-			if (te.shouldRenderFace(EnumFacing.EAST)) {
-				bufferbuilder.pos(x + 0.75D, y + 1.0D, z).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 0.75D, y + 1.0D, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 0.75D, y, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 0.75D, y, z).color(f3, f4, f5, f6).endVertex();
-			}
-			if (te.shouldRenderFace(EnumFacing.WEST)) {
-				bufferbuilder.pos(x + 0.25D, y, z).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 0.25D, y, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 0.25D, y + 1.0D, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 0.25D, y + 1.0D, z).color(f3, f4, f5, f6).endVertex();
-			}
-			if (te.shouldRenderFace(EnumFacing.DOWN)) {
-				bufferbuilder.pos(x, y + 0.25d, z).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y + 0.25d, z).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y + 0.25d, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x, y + 0.25d, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-			}
-			if (te.shouldRenderFace(EnumFacing.UP)) {
-				bufferbuilder.pos(x, y + 0.75d, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y + 0.75d, z + 1.0D).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x + 1.0D, y + 0.75d, z).color(f3, f4, f5, f6).endVertex();
-				bufferbuilder.pos(x, y + 0.75d, z).color(f3, f4, f5, f6).endVertex();
-			}
-			tessellator.draw();
-			GlStateManager.popMatrix();
-
-			GlStateManager.matrixMode(5888);
-			this.bindTexture(te.getSkyTexture());
-		}
-		GlStateManager.disableBlend();
-		GlStateManager.disableTexGenCoord(GlStateManager.TexGen.S);
-		GlStateManager.disableTexGenCoord(GlStateManager.TexGen.T);
-		GlStateManager.disableTexGenCoord(GlStateManager.TexGen.R);
-		GlStateManager.enableLighting();
-		if (isPortalTexture) {
-			Minecraft.getMinecraft().entityRenderer.setupFogColor(false);
-		}
-	}
+    protected RenderType getRenderType(T te) {
+        ResourceLocation sky = te.getSkyTexture();
+        ResourceLocation texture = te.getPortalTexture();
+        String key = sky + "_" + texture;
+        if (!cash.containsKey(key)) {
+            cash.put(key, RenderType.create(key,
+                    DefaultVertexFormat.POSITION,
+                    VertexFormat.Mode.QUADS,
+                    256, false, false,
+                    RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEndPortalShader))
+                            .setTextureState(RenderStateShard.MultiTextureStateShard.builder()
+                                    .add(sky, false, false)
+                                    .add(texture, false, false).build())
+                            .createCompositeState(false)));
+        }
+        return cash.getOrDefault(key, RenderType.endPortal());
+    }
 
 }

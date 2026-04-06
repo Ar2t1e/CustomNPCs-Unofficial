@@ -16,16 +16,15 @@ out
 # gradle
 build
 .gradle
-libs.lnk
-npcs.lnk
-libs
-lang
 
 # other
 CreaterAPITypeJS.java
 eclipse
 run
 libs.ink
+
+# git
+.git
 
 # Files from Forge MDK
 forge*changelog.txt

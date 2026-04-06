@@ -1,127 +1,119 @@
 package noppes.npcs.items;
 
-import java.util.List;
-import java.util.Objects;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.ForgeRegistries;
+import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.api.item.INPCToolItem;
+import noppes.npcs.api.item.ISpecBuilder;
+import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSyncUpdate;
+import noppes.npcs.packets.server.SPacketGetBuildData;
+import noppes.npcs.util.BuilderData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.Server;
-import noppes.npcs.api.item.ISpecBuilder;
-import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.constants.EnumPlayerPacket;
-import noppes.npcs.constants.EnumSync;
-import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.util.BuilderData;
-import noppes.npcs.util.IPermission;
+public class ItemReplacer extends Item implements INPCToolItem, ISpecBuilder {
 
-public class ItemReplacer
-extends Item
-implements IPermission, ISpecBuilder {
+    public ItemReplacer() { super((new Item.Properties()).stacksTo(1)); }
 
-	private final EnumGuiType guiType = EnumGuiType.ReplaceSetting;
-
-	public ItemReplacer() {
-		this.setRegistryName(CustomNpcs.MODID, "npcreplacer");
-		this.setUnlocalizedName("npcreplacer");
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
-	}
-
-	@SideOnly(Side.CLIENT)
-	@Override
-	public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> list, @Nonnull ITooltipFlag flagIn) {
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void appendHoverText(@Nonnull ItemStack stack, @Nullable Level worldIn, @Nonnull List<Component> list, @Nonnull TooltipFlag flagIn) {
         BuilderData builder = ItemBuilder.getBuilder(stack, null);
-		list.add(new TextComponentTranslation("info.item.builder.main.0").getFormattedText());
-		list.add(new TextComponentTranslation("info.item.builder.main.1").getFormattedText());
-		if (builder != null) {
-			list.add(new TextComponentTranslation("info.item.replacer").getFormattedText());
-			for (int i = 3; i <= 5; i++) {
-				list.add(new TextComponentTranslation("info.item.builder.main." + i).getFormattedText());
-			}
-			list.add(new TextComponentTranslation("info.item.builder.range.0", "" + builder.region[0], "" + builder.region[1], "" + builder.region[2]).getFormattedText());
-		} else {
-			list.add(new TextComponentTranslation("info.item.builder.main.2").getFormattedText());
-			if (stack.hasTagCompound() && stack.getTagCompound() != null && stack.getTagCompound().hasKey("ID", 8) && stack.getTagCompound().hasKey("BuilderType", 3)) {
-				NoppesUtilPlayer.sendDataCheckDelay(EnumPlayerPacket.GetBuildData, stack, 2000, stack.getTagCompound().getString("ID"), stack.getTagCompound().getInteger("BuilderType"));
+        list.add(Component.translatable("info.item.builder.main.0"));
+        list.add(Component.translatable("info.item.builder.main.1"));
+        if (builder != null) {
+            list.add(Component.translatable("info.item.replacer"));
+            for (int i = 3; i <= 5; i++) {
+                list.add(Component.translatable("info.item.builder.main." + i));
             }
-		}
-	}
-	
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.BuilderSetting || e == EnumPacketServer.Gui;
-	}
+            list.add(Component.translatable("info.item.builder.range.0", "" + builder.region[0], "" + builder.region[1], "" + builder.region[2]));
+        } else {
+            list.add(Component.translatable("info.item.builder.main.2"));
+            CompoundTag tags = stack.getTag();
+            if (tags != null && tags.contains("ID", 3) && tags.contains("BuilderType", 3)) {
+                Packets.sendServerDelayed(new SPacketGetBuildData(stack.getTag().getInt("ID"), stack.getTag().getInt("BuilderType")), stack, 2000);
+            }
+        }
+    }
 
-	@Override
-	public void leftClick(ItemStack stack, EntityPlayerMP player, BlockPos pos) {
-		if (pos == null) { return; }
-		PlayerData data = PlayerData.get(player);
-		BuilderData builder = ItemBuilder.getBuilder(stack, player);
-		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
-			return;
-		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed <-
-			builder.undo();
-			return;
-		}
-		IBlockState state = player.world.getBlockState(pos);
-		ItemStack st = new ItemStack(state.getBlock(), 1, state.getBlock().getMetaFromState(state));
-		if (builder.inv.isFull() || st.isEmpty()) {
-			return;
-		}
-		TileEntity tile = player.world.getTileEntity(pos);
-		if (tile != null) {
-			st.setTagCompound(tile.writeToNBT(new NBTTagCompound()));
-		}
-		String name = Objects.requireNonNull(st.getItem().getRegistryName()) + (st.getItemDamage() != 0 ? " [" + st.getItemDamage() + "]" : "");
-		builder.inv.items.set(0, st);
-		player.sendMessage(new TextComponentTranslation("builder.put.block", name));
-		NBTTagCompound nbtStack = builder.getNbt();
-		stack.setTagCompound(nbtStack);
-		player.openContainer.detectAndSendChanges();
-		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.BuilderData, nbtStack);
-	}
+    @Override
+    public void leftClick(ItemStack stack, ServerPlayer player, BlockPos pos) {
 
-	@Override
-	public void rightClick(ItemStack stack, EntityPlayerMP player, BlockPos pos) {
-		if (pos == null) { return; }
-		PlayerData data = PlayerData.get(player);
-		BuilderData builder = ItemBuilder.getBuilder(stack, player);
-		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
-			return;
-		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed ->
-			builder.redo();
-			return;
-		}
-		builder.work(pos, player);
-	}
+        if (pos == null) { return; }
+        PlayerData data = PlayerData.get(player);
+        BuilderData builder = ItemBuilder.getBuilder(stack, player);
+        if (data == null || !stack.hasTag() || builder == null || builder.getID() == -1) {
+            NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
+                buffer.writeInt(-1);
+                buffer.writeBlockPos(new BlockPos(-1, getType(), 0));
+            });
+            return;
+        }
+        if (data.overlay.isPressedCtrl()) {
+            builder.undo();
+            return;
+        }
+        BlockState state = player.level().getBlockState(pos);
+        ItemStack st = new ItemStack(state.getBlock(), 1);
+        if (builder.inv.getCountEmpty() == 0 || st.isEmpty()) {
+            return;
+        }
+        BlockEntity tile = player.level().getBlockEntity(pos);
+        if (tile != null) {
+            st.setTag(tile.serializeNBT());
+        }
+        String name = "";
+        ResourceLocation regName = ForgeRegistries.ITEMS.getKey(st.getItem());
+        if (regName != null) { name = regName.toString(); }
+        name += st.getDamageValue() != 0 ? " [" + st.getDamageValue() + "]" : "";
+        builder.inv.setItem(0, st);
+        player.sendSystemMessage(Component.translatable("builder.put.block", name));
+        CompoundTag nbtStack = builder.getNbt();
+        stack.setTag(nbtStack);
+        player.containerMenu.broadcastChanges();
+        Packets.send(player, new PacketSyncUpdate(builder.getID(), 7, nbtStack));
+    }
 
-	@Override
-	public int getType() { return 2; }
+    @Override
+    public void rightClick(ItemStack stack, ServerPlayer player, BlockPos pos) {
+        if (pos == null) { return; }
+        PlayerData data = PlayerData.get(player);
+        BuilderData builder = ItemBuilder.getBuilder(stack, player);
+        if (data == null || !stack.hasTag() || builder == null || builder.getID() == -1) {
+            NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
+                buffer.writeInt(-1);
+                buffer.writeBlockPos(new BlockPos(-1, getType(), 0));
+            });
+            return;
+        }
+        if (data.overlay.isPressedCtrl()) {
+            builder.redo();
+            return;
+        }
+        builder.work(pos, player);
+    }
 
-	@Override
-	public EnumGuiType getGUIType() { return this.guiType; }
+    @Override
+    public int getType() { return 2; }
+
+    @Override
+    public EnumGuiType getGUIType() { return EnumGuiType.ReplaceTool; }
 
 }

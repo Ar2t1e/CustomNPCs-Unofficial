@@ -1,34 +1,34 @@
 package noppes.npcs.api.event;
 
-import noppes.npcs.api.EventName;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.entity.IProjectile;
 import noppes.npcs.constants.EnumScriptType;
 
 public class ProjectileEvent extends CustomNPCsEvent {
 
-	@EventName(EnumScriptType.PROJECTILE_IMPACT)
-	public static class ImpactEvent extends ProjectileEvent {
-		public Object target;
-		public int type;
+   public IProjectile<?> projectile;
 
-		public ImpactEvent(IProjectile<?> projectile, int type, Object target) {
-			super(projectile);
-			this.type = type;
-			this.target = target;
-		}
-	}
+   public ProjectileEvent(IProjectile<?> projectile) {
+      this.projectile = projectile;
+   }
 
-	@EventName(EnumScriptType.TICK)
-	public static class UpdateEvent extends ProjectileEvent {
-		public UpdateEvent(IProjectile<?> projectile) {
-			super(projectile);
-		}
-	}
+   @EventName(EnumScriptType.PROJECTILE_IMPACT)
+   public static class ImpactEvent extends ProjectileEvent {
+      public final int type;
+      public final Object target;
 
-	public IProjectile<?> projectile;
+      public ImpactEvent(IProjectile<?> projectile, int type, Object target) {
+         super(projectile);
+         this.type = type;
+         this.target = target;
+      }
+   }
 
-	public ProjectileEvent(IProjectile<?> projectile) {
-		this.projectile = projectile;
-	}
+   @EventName(EnumScriptType.TICK)
+   public static class UpdateEvent extends ProjectileEvent {
+      public UpdateEvent(IProjectile<?> projectile) {
+         super(projectile);
+      }
+   }
 
 }

@@ -6,13 +6,24 @@ import java.util.concurrent.TimeUnit;
 
 public class CustomNPCsScheduler {
 
-	private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+   private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
-	public static void runTack(Runnable task) {
-		CustomNPCsScheduler.executor.schedule(task, 0L, TimeUnit.MILLISECONDS);
-	}
+   public static void runTack(Runnable task, long delay) {
+      executor.schedule(task, delay, TimeUnit.MILLISECONDS);
+   }
 
-	public static void runTack(Runnable task, int delayMilliSeconds) {
-		CustomNPCsScheduler.executor.schedule(task, delayMilliSeconds, TimeUnit.MILLISECONDS);
-	}
+   public static void runTack(Runnable task) {
+      executor.schedule(task, 0L, TimeUnit.MILLISECONDS);
+   }
+
+   public static void shutDown() {
+      if (!executor.isShutdown()) {
+         executor.shutdown();
+         try {
+            if (!executor.awaitTermination(5L, TimeUnit.SECONDS)) { executor.shutdownNow(); }
+         }
+         catch (InterruptedException var1) { executor.shutdownNow(); }
+      }
+   }
+
 }

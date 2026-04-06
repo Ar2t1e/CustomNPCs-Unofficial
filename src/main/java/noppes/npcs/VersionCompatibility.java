@@ -2,11 +2,11 @@ package noppes.npcs;
 
 import java.util.Collection;
 import java.util.List;
-
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import noppes.npcs.api.ICompatibilty;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.data.Line;
@@ -14,149 +14,158 @@ import noppes.npcs.controllers.data.Lines;
 import noppes.npcs.entity.EntityNPCInterface;
 
 public class VersionCompatibility {
-	public static int ModRev = 18;
 
-	public static void CheckAvailabilityCompatibility(ICompatibilty compatibility, NBTTagCompound compound) {
-		if (compatibility.getVersion() == VersionCompatibility.ModRev) {
-			return;
-		}
-		CompatabilityFix(compound, compatibility.save(new NBTTagCompound()));
-		compatibility.setVersion(VersionCompatibility.ModRev);
-	}
+   public static int ModRev = 18;
 
-	public static void CheckNpcCompatibility(EntityNPCInterface npc, NBTTagCompound compound) {
-		if (npc.npcVersion == VersionCompatibility.ModRev) {
-			return;
-		}
-		if (npc.npcVersion < 12) {
-			CompatabilityFix(compound, npc.advanced.save(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.ais.writeToNBT(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.stats.writeToNBT(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.display.writeToNBT(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.inventory.writeEntityToNBT(new NBTTagCompound()));
-		}
-		if (npc.npcVersion < 5) {
-			String texture = compound.getString("Texture");
-			texture = texture.replace("/mob/" + CustomNpcs.MODID + "/", CustomNpcs.MODID + ":textures/entity/");
-			texture = texture.replace("/mob/", CustomNpcs.MODID + ":textures/entity/");
-			compound.setString("Texture", texture);
-		}
-		if (npc.npcVersion < 6 && compound.getTag("NpcInteractLines") instanceof NBTTagList) {
-			List<String> interactLines = NBTTags.getStringList(compound.getTagList("NpcInteractLines", 10));
-			Lines lines = new Lines();
-			for (int i = 0; i < interactLines.size(); ++i) {
-				Line line = new Line();
-				line.setText((String) interactLines.toArray()[i]);
-				lines.lines.put(i, line);
-			}
-			compound.setTag("NpcInteractLines", lines.save());
-			List<String> worldLines = NBTTags.getStringList(compound.getTagList("NpcLines", 10));
-			lines = new Lines();
-			for (int j = 0; j < worldLines.size(); ++j) {
-				Line line2 = new Line();
-				line2.setText((String) worldLines.toArray()[j]);
-				lines.lines.put(j, line2);
-			}
-			compound.setTag("NpcLines", lines.save());
-			List<String> attackLines = NBTTags.getStringList(compound.getTagList("NpcAttackLines", 10));
-			lines = new Lines();
-			for (int k = 0; k < attackLines.size(); ++k) {
-				Line line3 = new Line();
-				line3.setText((String) attackLines.toArray()[k]);
-				lines.lines.put(k, line3);
-			}
-			compound.setTag("NpcAttackLines", lines.save());
-			List<String> killedLines = NBTTags.getStringList(compound.getTagList("NpcKilledLines", 10));
-			lines = new Lines();
-			for (int l = 0; l < killedLines.size(); ++l) {
-				Line line4 = new Line();
-				line4.setText((String) killedLines.toArray()[l]);
-				lines.lines.put(l, line4);
-			}
-			compound.setTag("NpcKilledLines", lines.save());
-		}
-		if (npc.npcVersion == 12) {
-			NBTTagList list = compound.getTagList("StartPos", 3);
-			if (list.tagCount() == 3) {
-				int z = ((NBTTagInt) list.removeTag(2)).getInt();
-				int y = ((NBTTagInt) list.removeTag(1)).getInt();
-				int x = ((NBTTagInt) list.removeTag(0)).getInt();
-				compound.setIntArray("StartPosNew", new int[] { x, y, z });
-			}
-		}
-		if (npc.npcVersion == 13) {
-			boolean bo = compound.getBoolean("HealthRegen");
-			compound.setInteger("HealthRegen", (bo ? 1 : 0));
-			NBTTagCompound comp = compound.getCompoundTag("TransformStats");
-			bo = comp.getBoolean("HealthRegen");
-			comp.setInteger("HealthRegen", (bo ? 1 : 0));
-			compound.setTag("TransformStats", comp);
-		}
-		if (npc.npcVersion == 15) {
-			NBTTagList list = compound.getTagList("ScriptsContainers", 10);
-			if (list.tagCount() > 0) {
-				ScriptContainer script = new ScriptContainer(npc.script, false);
-				StringBuilder sb = new StringBuilder();
-				for (int i = 0; i < list.tagCount(); ++i) {
-					NBTTagCompound scriptOld = list.getCompoundTagAt(i);
-					EnumScriptType type = EnumScriptType.values()[scriptOld.getInteger("Type")];
-					sb.append(script.script).append("\nfunction ")
-							.append(type.function)
-							.append("(event) {\n")
-							.append(scriptOld.getString("Script"))
-							.append("\n}");
-					for (String s : NBTTags.getStringList(compound.getTagList("ScriptList", 10))) {
-						if (!script.scripts.contains(s)) {
-							script.scripts.add(s);
-						}
-					}
-				}
-				script.script = sb.toString();
-			}
-			if (compound.getBoolean("CanDespawn")) {
-				compound.setInteger("SpawnCycle", 4);
-			}
-			if (compound.getInteger("RangeAndMelee") <= 0) {
-				compound.setInteger("DistanceToMelee", 0);
-			}
-		}
-		if (npc.npcVersion == 16) {
-			compound.setString("HitSound", "random.bowhit");
-			compound.setString("GroundSound", "random.break");
-		}
-		if (npc.npcVersion == 17) {
-			if (compound.getString("NpcHurtSound").equals("minecraft:game.player.hurt")) {
-				compound.setString("NpcHurtSound", "minecraft:entity.player.hurt");
-			}
-			if (compound.getString("NpcDeathSound").equals("minecraft:game.player.hurt")) {
-				compound.setString("NpcDeathSound", "minecraft:entity.player.hurt");
-			}
-			if (compound.getString("FiringSound").equals("random.bow")) {
-				compound.setString("FiringSound", "minecraft:entity.arrow.shoot");
-			}
-			if (compound.getString("HitSound").equals("random.bowhit")) {
-				compound.setString("HitSound", "minecraft:entity.arrow.hit");
-			}
-			if (compound.getString("GroundSound").equals("random.break")) {
-				compound.setString("GroundSound", "minecraft:block.stone.break");
-			}
-		}
-		npc.npcVersion = VersionCompatibility.ModRev;
-	}
+   public static void CheckNpcCompatibility(EntityNPCInterface npc, CompoundTag compound) {
+      if (npc.npcVersion != ModRev) {
+         if (npc.npcVersion < 12) {
+            CompatabilityFix(compound, npc.advanced.save(new CompoundTag()));
+            CompatabilityFix(compound, npc.ais.save(new CompoundTag()));
+            CompatabilityFix(compound, npc.stats.save(new CompoundTag()));
+            CompatabilityFix(compound, npc.display.save(new CompoundTag()));
+            CompatabilityFix(compound, npc.inventory.save(new CompoundTag()));
+         }
+         if (npc.npcVersion < 5) {
+            String texture = compound.getString("Texture");
+            texture = texture.replace("/mob/" + CustomNpcs.MODID + "/", CustomNpcs.MODID + ":textures/entity/");
+            texture = texture.replace("/mob/", CustomNpcs.MODID + ":textures/entity/");
+            compound.putString("Texture", texture);
+         }
+         int i;
+         if (npc.npcVersion < 6 && compound.get("NpcInteractLines") instanceof ListTag) {
+            List<String> interactLines = NBTTags.getStringList(compound.getList("NpcInteractLines", 10));
+            Lines lines = new Lines();
+            for(i = 0; i < interactLines.size(); ++i) {
+               Line line = new Line();
+               line.setText((String)interactLines.toArray()[i]);
+               lines.lines.put(i, line);
+            }
+            compound.put("NpcInteractLines", lines.save());
+            List<String> worldLines = NBTTags.getStringList(compound.getList("NpcLines", 10));
+            lines = new Lines();
 
-	private static void CompatabilityFix(NBTTagCompound compound, NBTTagCompound check) {
-		Collection<String> tags = check.getKeySet();
-		for (String name : tags) {
-			NBTBase nbt = check.getTag(name);
-			if (!compound.hasKey(name)) {
-				compound.setTag(name, nbt);
-			} else {
-				if (!(nbt instanceof NBTTagCompound) || !(compound.getTag(name) instanceof NBTTagCompound)) {
-					continue;
-				}
-				CompatabilityFix(compound.getCompoundTag(name), (NBTTagCompound) nbt);
-			}
-		}
-	}
+            for(i = 0; i < worldLines.size(); ++i) {
+               Line line = new Line();
+               line.setText((String)worldLines.toArray()[i]);
+               lines.lines.put(i, line);
+            }
+            compound.put("NpcLines", lines.save());
+            List<String> attackLines = NBTTags.getStringList(compound.getList("NpcAttackLines", 10));
+            lines = new Lines();
+
+            for(i = 0; i < attackLines.size(); ++i) {
+               Line line = new Line();
+               line.setText((String)attackLines.toArray()[i]);
+               lines.lines.put(i, line);
+            }
+            compound.put("NpcAttackLines", lines.save());
+            List<String> killedLines = NBTTags.getStringList(compound.getList("NpcKilledLines", 10));
+            lines = new Lines();
+
+            for(i = 0; i < killedLines.size(); ++i) {
+               Line line = new Line();
+               line.setText((String)killedLines.toArray()[i]);
+               lines.lines.put(i, line);
+            }
+            compound.put("NpcKilledLines", lines.save());
+         }
+
+         ListTag list;
+         if (npc.npcVersion == 12) {
+            list = compound.getList("StartPos", 3);
+            if (list.size() == 3) {
+               int x = ((IntTag)list.remove(1)).getAsInt();
+               int y = ((IntTag)list.remove(0)).getAsInt();
+               int z = ((IntTag)list.remove(2)).getAsInt();
+               compound.putIntArray("StartPosNew", new int[] {x, y, z});
+            }
+         }
+
+         if (npc.npcVersion == 13) {
+            boolean bo = compound.getBoolean("HealthRegen");
+            compound.putInt("HealthRegen", bo ? 1 : 0);
+            CompoundTag comp = compound.getCompound("TransformStats");
+            bo = comp.getBoolean("HealthRegen");
+            comp.putInt("HealthRegen", bo ? 1 : 0);
+            compound.put("TransformStats", comp);
+         }
+
+         if (npc.npcVersion == 15) {
+            list = compound.getList("ScriptsContainers", 10);
+            if (!list.isEmpty()) {
+               ScriptContainer script = new ScriptContainer(npc.script);
+
+               for(i = 0; i < list.size(); ++i) {
+                  CompoundTag scriptOld = list.getCompound(i);
+                  EnumScriptType type = EnumScriptType.values()[scriptOld.getInt("Type")];
+                  String var10001 = script.script;
+                  script.script = var10001 + "\nfunction " + type.function + "(event) {\n" + scriptOld.getString("Script") + "\n}";
+                  for (String s : NBTTags.getStringList(compound.getList("ScriptList", 10))) {
+                     if (!script.scripts.contains(s)) {
+                        script.scripts.add(s);
+                     }
+                  }
+               }
+            }
+
+            if (compound.getBoolean("CanDespawn")) {
+               compound.putInt("SpawnCycle", 4);
+            }
+
+            if (compound.getInt("RangeAndMelee") <= 0) {
+               compound.putInt("DistanceToMelee", 0);
+            }
+         }
+
+         if (npc.npcVersion == 16) {
+            compound.putString("HitSound", "random.bowhit");
+            compound.putString("GroundSound", "random.break");
+         }
+
+         if (npc.npcVersion == 17) {
+            if (compound.getString("NpcHurtSound").equals("minecraft:game.player.hurt")) {
+               compound.putString("NpcHurtSound", "minecraft:entity.player.hurt");
+            }
+
+            if (compound.getString("NpcDeathSound").equals("minecraft:game.player.hurt")) {
+               compound.putString("NpcDeathSound", "minecraft:entity.player.hurt");
+            }
+
+            if (compound.getString("FiringSound").equals("random.bow")) {
+               compound.putString("FiringSound", "minecraft:entity.arrow.shoot");
+            }
+
+            if (compound.getString("HitSound").equals("random.bowhit")) {
+               compound.putString("HitSound", "minecraft:entity.arrow.hit");
+            }
+
+            if (compound.getString("GroundSound").equals("random.break")) {
+               compound.putString("GroundSound", "minecraft:block.stone.break");
+            }
+         }
+
+         npc.npcVersion = ModRev;
+      }
+   }
+
+   public static void CheckAvailabilityCompatibility(ICompatibilty compatibilty, CompoundTag compound) {
+      if (compatibilty.getVersion() != ModRev) {
+         CompatabilityFix(compound, compatibilty.save(new CompoundTag()));
+         compatibilty.setVersion(ModRev);
+      }
+   }
+
+   private static void CompatabilityFix(CompoundTag compound, CompoundTag check) {
+      Collection<String> tags = check.getAllKeys();
+      for (String name : tags) {
+         Tag nbt = check.get(name);
+         if (!compound.contains(name) && nbt != null) {
+            compound.put(name, nbt);
+         } else if (nbt instanceof CompoundTag && compound.get(name) instanceof CompoundTag) {
+            CompatabilityFix(compound.getCompound(name), (CompoundTag) nbt);
+         }
+      }
+   }
 
 }

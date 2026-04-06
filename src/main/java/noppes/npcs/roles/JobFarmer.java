@@ -1,310 +1,285 @@
 package noppes.npcs.roles;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockChest;
-import net.minecraft.block.BlockCrops;
-import net.minecraft.block.BlockStem;
-import net.minecraft.block.NpcBlockHelper;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.init.Blocks;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntityChest;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
+import java.util.*;
+import java.util.stream.Collectors;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.StemBlock;
+import net.minecraft.world.level.block.StemGrownBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.LootParams.Builder;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.data.role.IJobFarmer;
 import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.constants.AiMutex;
+import noppes.npcs.api.wrapper.ItemStackWrapper;
 import noppes.npcs.controllers.MassBlockController;
 import noppes.npcs.controllers.data.BlockData;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.util.ValueUtil;
 
 public class JobFarmer extends JobInterface implements MassBlockController.IMassBlock, IJobFarmer {
 
-	private int blockTicks = 800;
-	private BlockPos chest = null;
-	public int chestMode = 1;
-	private ItemStack holding = ItemStack.EMPTY;
-	private BlockPos ripe = null;
-	private int ticks = 0;
-	private int walkTicks = 0;
-	private int range = 16;
-	private final List<BlockPos> trackedBlocks = new ArrayList<>();
-	private boolean waitingForBlocks = false;
+   public int chestMode = 1;
+   protected final List<BlockPos> trackedBlocks = new ArrayList<>();
+   protected ItemStack holding = ItemStack.EMPTY;
+   protected BlockPos chest = null;
+   protected BlockPos ripe = null;
+   protected boolean waitingForBlocks = false;
+   protected int blockTicks = 800;
+   protected int walkTicks = 0;
+   protected int ticks = 0;
+   protected int range = 16;
 
-	public JobFarmer(EntityNPCInterface npc) {
-		super(npc);
-		overrideMainHand = true;
-		type = JobType.FARMER;
-	}
+   public JobFarmer(EntityNPCInterface npc) {
+      super(npc);
+      overrideMainHand = true;
+      type = JobType.FARMER;
+   }
 
-	@Override
-	public boolean isWorking() {
-		return !trackedBlocks.isEmpty();
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      super.load(compound);
+      type = JobType.FARMER;
+      chestMode = compound.getInt("JobChestMode");
+      holding = ItemStack.of(compound.getCompound("JobHolding"));
+      blockTicks = 1100;
+      // New from Unofficial (BetaZavr)
+      if (compound.contains("Range", 3)) { setRange(compound.getInt("Range")); }
+   }
 
-	@Override
-	public boolean aiContinueExecute() {
-		return false;
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      super.save(compound);
+      compound.putInt("JobChestMode", chestMode);
+      if (!holding.isEmpty()) { compound.put("JobHolding", holding.save(new CompoundTag())); }
+      // New from Unofficial (BetaZavr)
+      compound.putInt("Range", range);
+      return compound;
+   }
 
-	@Override
-	public boolean aiShouldExecute() {
-		if (!holding.isEmpty()) {
-			if (chestMode == 0) {
-				setHolding(ItemStack.EMPTY);
-			} else if (chestMode == 1) {
-				if (chest == null) {
-					dropItem(holding);
-					setHolding(ItemStack.EMPTY);
-				} else {
-					chest();
-				}
-			} else if (chestMode == 2) {
-				dropItem(holding);
-				setHolding(ItemStack.EMPTY);
-			}
-			return false;
-		}
-		if (ripe != null) {
-			pluck();
-			return false;
-		}
-		if (!waitingForBlocks && blockTicks++ > 1200) {
-			blockTicks = 0;
-			waitingForBlocks = true;
-			MassBlockController.Queue(this);
-		}
-		if (ticks++ < 100) {
-			return false;
-		}
-		ticks = 0;
-		return true;
-	}
+   @Override
+   public IItemStack getMainhand() {
+      if (npc != null) {
+         String name = npc.getJobData();
+         ItemStack item = stringToItem(name);
+         return item.isEmpty() ? npc.inventory.weapons.get(0) : Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(item);
+      }
+      return ItemStackWrapper.AIR;
+   }
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public void aiUpdateTask() {
-		Iterator<BlockPos> ite = trackedBlocks.iterator();
-		while (ite.hasNext() && ripe == null) {
-			BlockPos pos = ite.next();
-			IBlockState state = npc.world.getBlockState(pos);
-			Block b = state.getBlock();
-			if (b instanceof BlockCrops) {
-				if (!((BlockCrops) b).isMaxAge(state)) {
-					continue;
-				}
-				ripe = pos;
-			} else if (b instanceof BlockStem) {
-				state = b.getActualState(state, npc.world, pos);
-				EnumFacing facing = state.getValue(BlockStem.FACING);
-				if (facing == EnumFacing.UP) {
-					continue;
-				}
-				ripe = pos;
-			} else {
-				ite.remove();
-			}
-		}
-		npc.ais.returnToStart = (ripe == null);
-		if (ripe != null) {
-			npc.getNavigator().clearPath();
-			npc.getLookHelper().setLookPosition(ripe.getX(), ripe.getY(), ripe.getZ(), 10.0f, npc.getVerticalFaceSpeed());
-		}
-	}
+   @Override
+   public boolean aiShouldExecute() {
+      if (!holding.isEmpty()) {
+         if (chestMode == 0) { setHolding(ItemStack.EMPTY); }
+         else if (chestMode == 1) {
+            if (chest == null) {
+               dropItem(holding);
+               setHolding(ItemStack.EMPTY);
+            }
+            else { chest(); }
+         }
+         else if (chestMode == 2) {
+            dropItem(holding);
+            setHolding(ItemStack.EMPTY);
+         }
+         return false;
+      }
+      if (ripe != null) {
+         pluck();
+         return false;
+      }
+      if (!waitingForBlocks && blockTicks++ > 1200) {
+         blockTicks = 0;
+         waitingForBlocks = true;
+         MassBlockController.Queue(this);
+      }
+      if (ticks++ < 100) { return false; }
+      ticks = 0;
+      return true;
+   }
 
-	private void chest() {
-		BlockPos pos = chest;
-		npc.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0);
-		npc.getLookHelper().setLookPosition(pos.getX(), pos.getY(), pos.getZ(), 10.0f, npc.getVerticalFaceSpeed());
-		if (npc.nearPosition(pos) || walkTicks++ > 400) {
-			if (walkTicks < 400) {
-				npc.swingArm(EnumHand.MAIN_HAND);
-			}
-			npc.getNavigator().clearPath();
-			ticks = 100;
-			walkTicks = 0;
-			IBlockState state = npc.world.getBlockState(pos);
-			if (state.getBlock() instanceof BlockChest) {
-				TileEntityChest tile = (TileEntityChest) npc.world.getTileEntity(pos);
-				for (int i = 0; !holding.isEmpty() && i < Objects.requireNonNull(tile).getSizeInventory(); ++i) {
-					holding = mergeStack(tile, i, holding);
-				}
-				for (int i = 0; !holding.isEmpty() && i < tile.getSizeInventory(); ++i) {
-					ItemStack item = tile.getStackInSlot(i);
-					if (item.isEmpty()) {
-						tile.setInventorySlotContents(i, holding);
-						holding = ItemStack.EMPTY;
-					}
-				}
-				if (!holding.isEmpty()) {
-					dropItem(holding);
-					holding = ItemStack.EMPTY;
-				}
-			} else {
-				chest = null;
-			}
-			setHolding(holding);
-		}
-	}
+   @Override
+   public boolean aiContinueExecute() { return false; }
 
-	private void dropItem(ItemStack item) {
-		EntityItem entityitem = new EntityItem(npc.world, npc.posX, npc.posY, npc.posZ, item);
-		entityitem.setDefaultPickupDelay();
-		npc.world.spawnEntity(entityitem);
-	}
+   @Override
+   public void aiUpdateTask() {
+      if (npc != null) {
+         Iterator<BlockPos> ite = trackedBlocks.iterator();
+         while(ite.hasNext() && ripe == null) {
+            BlockPos pos = ite.next();
+            BlockState state = npc.level().getBlockState(pos);
+            Block b = state.getBlock();
+            if ((b instanceof CropBlock && ((CropBlock)b).isMaxAge(state) || b instanceof StemGrownBlock) &&
+                    b.getLootTable() != BuiltInLootTables.EMPTY) { ripe = pos; }
+            else { ite.remove(); }
+         }
+         npc.ais.returnToStart = ripe == null;
+         if (ripe != null) {
+            npc.getNavigation().stop();
+            npc.getLookControl().setLookAt(ripe.getX(), ripe.getY(), ripe.getZ(), 10.0F, (float)npc.getMaxHeadXRot());
+         }
+      }
+   }
 
-	@Override
-	public IItemStack getMainhand() {
-		String name = npc.getJobData();
-		ItemStack item = stringToItem(name);
-		if (item.isEmpty()) {
-			return npc.inventory.weapons.get(0);
-		}
-		return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(item);
-	}
+   @Override
+   public boolean isPlucking() { return ripe != null || !holding.isEmpty(); }
 
-	@Override
-	public int getMutexBits() {
-		return npc.getNavigator().noPath() ? 0 : AiMutex.LOOK;
-	}
+   @Override
+   public EntityNPCInterface getNpc() { return npc; }
 
-	@Override
-	public EntityNPCInterface getNpc() {
-		return npc;
-	}
+   @Override
+   public void processed(List<BlockData> list) {
+      trackedBlocks.clear();
+      chest = null;
+      for (BlockData data : list) {
+         BlockEntity tile = npc != null ? npc.level().getBlockEntity(data.pos) : null;
+         Block b = data.state.getBlock();
+         if (!(tile instanceof RandomizableContainerBlockEntity)) {
+            if ((b instanceof CropBlock || b instanceof StemBlock) && !trackedBlocks.contains(data.pos)) { trackedBlocks.add(data.pos); }
+            if (b instanceof ChestBlock) {
+               if (chest != null && npc != null && npc.distanceToSqr(chest.getCenter()) > npc.distanceToSqr(data.pos.getCenter())) { chest = data.pos; }
+            }
+         }
+      }
+      waitingForBlocks = false;
+   }
 
-	@Override
-	public int getRange() {
-		return range;
-	}
+   @Override
+   public EnumSet<Flag> getFlags() { return EnumSet.of(Flag.MOVE); }
 
-	@Override
-	public boolean isPlucking() {
-		return ripe != null || !holding.isEmpty();
-	}
+   public void setHolding(ItemStack item) {
+      holding = item;
+      if (npc != null) { npc.setJobData(itemToString(holding)); }
+   }
 
-	private ItemStack mergeStack(IInventory inventory, int slot, ItemStack item) {
-		ItemStack item2 = inventory.getStackInSlot(slot);
-		if (!NoppesUtilPlayer.compareItems(item, item2, false, false)) {
-			return item;
-		}
-		int size = item2.getMaxStackSize() - item2.getCount();
-		if (size >= item.getCount()) {
-			item2.setCount(item2.getCount() + item.getCount());
-			return ItemStack.EMPTY;
-		}
-		item2.setCount(item2.getMaxStackSize());
-		item.setCount(item.getCount() - size);
-		if (item.isEmpty()) {
-			return ItemStack.EMPTY;
-		}
-		return item;
-	}
+   private void dropItem(ItemStack item) {
+      if (npc != null) {
+         ItemEntity entityItem = new ItemEntity(npc.level(), npc.getX(), npc.getY(), npc.getZ(), item);
+         entityItem.setDefaultPickUpDelay();
+         npc.level().addFreshEntity(entityItem);
+      }
+   }
 
-	@SuppressWarnings("deprecation")
-	private void pluck() {
-		BlockPos pos = ripe;
-		npc.getNavigator().tryMoveToXYZ(pos.getX(), pos.getY(), pos.getZ(), 1.0);
-		if (npc.nearPosition(pos) || walkTicks++ > 400) {
-			if (walkTicks > 400) {
-				pos = NoppesUtilServer.GetClosePos(pos, npc.world);
-				npc.setPositionAndUpdate(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
-			}
-			ripe = null;
-			npc.getNavigator().clearPath();
-			ticks = 90;
-			walkTicks = 0;
-			npc.swingArm(EnumHand.MAIN_HAND);
-			IBlockState state = npc.world.getBlockState(pos);
-			Block b = state.getBlock();
-			if (b instanceof BlockCrops && ((BlockCrops) b).isMaxAge(state)) {
-				BlockCrops crop = (BlockCrops) b;
-				npc.world.setBlockState(pos, crop.withAge(0));
-				holding = new ItemStack(NpcBlockHelper.getCrop((BlockCrops) b));
-			}
-			if (b instanceof BlockStem) {
-				state = b.getActualState(state, npc.world, pos);
-				EnumFacing facing = state.getValue(BlockStem.FACING);
-				if (facing == EnumFacing.UP || facing == EnumFacing.DOWN) {
-					return;
-				}
-				pos = pos.add(facing.getDirectionVec());
-				b = npc.world.getBlockState(pos).getBlock();
-				npc.world.setBlockToAir(pos);
-				if (b != Blocks.AIR) {
-					holding = new ItemStack(b);
-				}
-			}
-			setHolding(holding);
-		}
-	}
+   private void chest() {
+      if (npc != null) {
+         BlockPos pos = chest;
+         npc.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 1.0D);
+         npc.getLookControl().setLookAt(pos.getX(), pos.getY(), pos.getZ(), 10.0F, (float)npc.getMaxHeadXRot());
+         if (npc.nearPosition(pos) || walkTicks++ > 400) {
+            if (walkTicks < 400) { npc.swing(InteractionHand.MAIN_HAND); }
+            npc.getNavigation().stop();
+            ticks = 100;
+            walkTicks = 0;
+            BlockState state = npc.level().getBlockState(pos);
+            BlockEntity tile = npc.level().getBlockEntity(pos);
+            Container inventory = tile instanceof Container ? (Container)tile : null;
+            if (state.getBlock() instanceof ChestBlock) {
+               inventory = ChestBlock.getContainer((ChestBlock)state.getBlock(), state, npc.level(), pos, true);
+            }
+            if (inventory == null) { chest = null; }
+            else {
+               int i;
+               for(i = 0; !holding.isEmpty() && i < inventory.getContainerSize(); ++i) { holding = mergeStack(inventory, i, holding); }
+               for(i = 0; !holding.isEmpty() && i < inventory.getContainerSize(); ++i) {
+                  ItemStack item = inventory.getItem(i);
+                  if (item.isEmpty()) {
+                     inventory.setItem(i, holding);
+                     holding = ItemStack.EMPTY;
+                  }
+               }
+               if (!holding.isEmpty()) {
+                  dropItem(holding);
+                  holding = ItemStack.EMPTY;
+               }
+            }
+            setHolding(holding);
+         }
+      }
+   }
 
-	@Override
-	public void processed(List<BlockData> list) {
-		trackedBlocks.clear();
-		chest = null;
-		for (BlockData data : list) {
-			Block b = data.state.getBlock();
-			if (b instanceof BlockChest) {
-				if (chest != null && npc.getDistanceSq(chest) <= npc.getDistanceSq(data.pos)) {
-					continue;
-				}
-				chest = data.pos;
-			} else {
-				if (!(b instanceof BlockCrops) && !(b instanceof BlockStem)) {
-					continue;
-				}
-				if (trackedBlocks.contains(data.pos)) {
-					continue;
-				}
-				trackedBlocks.add(data.pos);
-			}
-		}
-		waitingForBlocks = false;
-	}
+   private ItemStack mergeStack(Container inventory, int slot, ItemStack item) {
+      ItemStack item2 = inventory.getItem(slot);
+      if (!NoppesUtilPlayer.compareItems(item, item2, false, false)) { return item; }
+      int size = item2.getMaxStackSize() - item2.getCount();
+      if (size >= item.getCount()) {
+         item2.setCount(item2.getCount() + item.getCount());
+         return ItemStack.EMPTY;
+      }
+      item2.setCount(item2.getMaxStackSize());
+      item.setCount(item.getCount() - size);
+      return item.isEmpty() ? ItemStack.EMPTY : item;
+   }
 
-	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = JobType.FARMER;
-		chestMode = compound.getInteger("JobChestMode");
-		holding = new ItemStack(compound.getCompoundTag("JobHolding"));
-		blockTicks = 1100;
-		if (compound.hasKey("Range", 3)) { setRange(compound.getInteger("Range")); }
-	}
+   private void pluck() {
+      if (npc != null) {
+         BlockPos pos = ripe;
+         npc.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 1.0D);
+         npc.getLookControl().setLookAt(pos.getX(), pos.getY(), pos.getZ(), 10.0F, (float)npc.getMaxHeadXRot());
+         if (npc.nearPosition(pos) || walkTicks++ > 400) {
+            if (walkTicks > 400) {
+               pos = NoppesUtilServer.getClosePos(pos, npc.level());
+               npc.teleportTo((double)pos.getX() + 0.5D, pos.getY(), (double)pos.getZ() + 0.5D);
+            }
+            ripe = null;
+            npc.getNavigation().stop();
+            ticks = 90;
+            walkTicks = 0;
+            npc.swing(InteractionHand.MAIN_HAND);
+            BlockState state = npc.level().getBlockState(pos);
+            Block b = state.getBlock();
+            if (b instanceof CropBlock crop && crop.isMaxAge(state)) {
+               Item item = crop.getCloneItemStack(npc.level(), pos, state).getItem();
+               Builder builder = (new Builder((ServerLevel)npc.level())).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos)).withParameter(LootContextParams.TOOL, npc.getMainHandItem()).withParameter(LootContextParams.BLOCK_STATE, state).withOptionalParameter(LootContextParams.BLOCK_ENTITY, npc.level().getBlockEntity(pos));
+               LootTable loottable = Objects.requireNonNull(npc.getServer()).getLootData().getLootTable(b.getLootTable());
+               List<ItemStack> l = loottable.getRandomItems(builder.create(LootContextParamSets.BLOCK));
+               npc.level().setBlock(pos, crop.getStateForAge(0), 2);
+               if (l.isEmpty()) { holding = ItemStack.EMPTY; }
+               else if (l.size() == 1) { holding = l.get(0); }
+               else {
+                  List<ItemStack> fl = l.stream().filter((t) -> t.getItem() != item).collect(Collectors.toList());
+                  if ((fl).isEmpty()) { fl = l; }
+                  holding = (ItemStack)((List<?>)fl).get(npc.getRandom().nextInt(fl.size()));
+               }
+               holding.setCount(1);
+            }
+            if (b instanceof StemGrownBlock) {
+               b = npc.level().getBlockState(pos).getBlock();
+               npc.level().removeBlock(pos, false);
+               holding = new ItemStack(b);
+            }
+            setHolding(holding);
+         }
+      }
+   }
 
-	public void setHolding(ItemStack item) {
-		holding = item;
-		npc.setJobData(itemToString(holding));
-	}
+   // New from Unofficial (BetaZavr)
+   @Override
+   public int getRange() { return range; }
 
-	@Override
-	public void setRange(int dist) {
-		if (dist < 2) { dist = 2; }
-		if (dist > 32) { dist = 32; }
-		range = dist;
-	}
+   @Override
+   public void setRange(int dist) { range = ValueUtil.correctInt(dist, 2, 32); }
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setInteger("JobChestMode", chestMode);
-		if (!holding.isEmpty()) { compound.setTag("JobHolding", holding.writeToNBT(new NBTTagCompound())); }
-		compound.setInteger("Range", range);
-		return compound;
-	}
+   @Override
+   public boolean isWorking() { return !trackedBlocks.isEmpty(); }
 
 }

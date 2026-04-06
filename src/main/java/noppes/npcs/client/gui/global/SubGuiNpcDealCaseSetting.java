@@ -1,89 +1,103 @@
 package noppes.npcs.client.gui.global;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import noppes.npcs.api.entity.data.ICustomDrop;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.controllers.data.Deal;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 
-public class SubGuiNpcDealCaseSetting extends SubGuiInterface implements ITextfieldListener {
+public class SubGuiNpcDealCaseSetting extends GuiNPCInterface implements ITextfieldListener {
 
     protected final Deal deal;
 
     public SubGuiNpcDealCaseSetting(Deal dealIn) {
-        super(0);
+        super();
         setBackground("smallbg.png");
-        title = new TextComponentTranslation("gui.case").appendText(":").getFormattedText();
+        title = Component.translatable("gui.case").append(":");
         closeOnEsc = true;
-        xSize = 176;
-        ySize = 222;
+        imageWidth = 176;
+        imageHeight = 222;
 
         deal = dealIn;
     }
 
     @Override
-    public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-        if (mouseButton != 0) { return; }
+    public void buttonEvent(@Nonnull GuiButtonNop button) {
         switch (button.id) {
-            case 0: deal.setShowInCase(((GuiNpcCheckBox) button).isSelected()); break;
-            case 66: onClosed(); break;
+            case 0: deal.setShowInCase(((GuiCheckBoxNop) button).selected()); break;
+            case 66: onClose(); break;
         }
     }
 
     @Override
-    public void initGui() {
-        super.initGui();
+    public void init() {
+        super.init();
         int lId = 0;
         int x = guiLeft + 4;
         int y = guiTop + 19;
         ICustomDrop[] caseItems = deal.getCaseItems();
         // name
-        addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.name").appendText(":"), x, y, 166, 12));
-        addTextField(new GuiNpcTextField(0, this, x, y += 12, 166, 12, deal.getCaseName())
-                .setHoverText("market.hover.case.name", TextFormatting.RESET + new TextComponentTranslation(deal.getCaseName()).getFormattedText()));
-        addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.obj").appendText(":"), x, y += 14, 166, 12));
+        addLabel(lId++, x, y, Component.translatable("gui.name").append(":"))
+                .setSize(166, 12);
+        addTextField(0, x, y += 12, 166, 12, deal.getCaseName())
+                .setHoverTexts(Component.translatable("market.hover.case.name",
+                        Util.instance.getOldFormattedText(Component.translatable(deal.getCaseName()).withStyle(ChatFormatting.RESET))));
+        addLabel(lId++, x, y += 14, Component.translatable("gui.obj").append(":"))
+                .setSize(166, 12);
         // obj model
-        addTextField(new GuiNpcTextField(1, this, x, y += 12, 166, 12, deal.getCaseObjModel())
-                .setHoverText("market.hover.case.obj"));
+        addTextField(1, x, y += 12, 166, 12, deal.getCaseObjModel())
+                .setHoverTexts("market.hover.case.obj");
         // texture
-        addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.texture").appendText(":"), x, y += 14, 166, 12));
+        addLabel(lId++, x, y += 14, Component.translatable("gui.texture").append(":"))
+                .setSize(166, 12);
         ResourceLocation texture = deal.getCaseTexture();
-        addTextField(new GuiNpcTextField(2, this, x, y += 12, 166, 12, texture)
-                .setHoverText("market.hover.case.texture"));
+        addTextField(2, x, y += 12, 166, 12, texture)
+                .setSize(166, 12)
+                .setHoverTexts("market.hover.case.texture");
         // sound
-        addLabel(new GuiNpcLabel(lId++, "market.case.sound", x, y += 14, 166, 12));
-        addTextField(new GuiNpcTextField(3, this, x, y += 12, 166, 12, deal.getCaseSound())
-                .setHoverText("market.hover.case.sound"));
+        addLabel(lId++, x, y += 14, "market.case.sound")
+                .setSize(166, 12);
+        addTextField(3, x, y += 12, 166, 12, deal.getCaseSound())
+                .setHoverTexts("market.hover.case.sound");
         // command
-        addLabel(new GuiNpcLabel(lId++, "advMode.command", x, y += 14, 166, 12));
-        addTextField(new GuiNpcTextField(4, this, x, y += 12, 166, 12, deal.getCaseCommand())
-                .setHoverText("dialog.option.hover.command"));
+        addLabel(lId++, x, y += 14, "advMode.command")
+                .setSize(166, 12);
+        addTextField(4, x, y += 12, 166, 12, deal.getCaseCommand())
+                .setHoverTexts("dialog.option.hover.command");
         // count
-        addLabel(new GuiNpcLabel(lId, "market.case.count", x, y += 14, 166, 12));
-        addTextField(new GuiNpcTextField(5, this, x, y += 12, 83, 12, "" + deal.getCaseCount())
+        addLabel(lId, x, y += 14, "market.case.count")
+                .setSize(166, 12);
+        addTextField(5, x, y += 12, 83, 12, "" + deal.getCaseCount())
                 .setMinMaxDefault(1, caseItems.length - 1, deal.getCaseCount())
-                .setHoverText("market.hover.case.count"));
+                .setHoverTexts("market.hover.case.count");
         // show items in hover
-        addButton(new GuiNpcCheckBox(0, x, y + 16, 166, 12, "market.case.show.true", "market.case.show.false", deal.showInCase()));
+        addCheckBox(0, x, y + 16, "market.case.show.true", "market.case.show.false", deal.showInCase())
+                .setSize(166, 12);
         // exit
-        addButton(new GuiNpcButton(66, x, guiTop + ySize - 20, 80, 16, "gui.back")
-                .setHoverText("hover.back"));
+        addButton(66, x, guiTop + imageHeight - 20, "gui.back")
+                .setSize(80, 16)
+                .setHoverTexts("hover.back");
     }
 
     @Override
-    public void unFocused(GuiNpcTextField textField) {
-        switch (textField.getID()) {
-            case 0: deal.setCaseName(textField.getText()); break;
-            case 1: deal.setCaseObjModel(textField.getText().isEmpty() ? null : new ResourceLocation(textField.getText())); break;
-            case 2: deal.setCaseTexture(textField.getText().isEmpty() ? null : new ResourceLocation(textField.getText())); break;
-            case 3: deal.setCaseSound(textField.getText().isEmpty() ? null : new ResourceLocation(textField.getText())); break;
-            case 4: deal.setCaseCommand(textField.getText()); break;
+    public void unFocused(GuiTextFieldNop textField) {
+        switch (textField.id) {
+            case 0: deal.setCaseName(textField.getValue()); break;
+            case 1: deal.setCaseObjModel(textField.getValue().isEmpty() ? null : new ResourceLocation(textField.getValue())); break;
+            case 2: deal.setCaseTexture(textField.getValue().isEmpty() ? null : new ResourceLocation(textField.getValue())); break;
+            case 3: deal.setCaseSound(textField.getValue().isEmpty() ? null : new ResourceLocation(textField.getValue())); break;
+            case 4: deal.setCaseCommand(textField.getValue()); break;
             case 5: deal.setCaseCount(textField.getInteger()); break;
         }
-        initGui();
+        init();
     }
 
 }

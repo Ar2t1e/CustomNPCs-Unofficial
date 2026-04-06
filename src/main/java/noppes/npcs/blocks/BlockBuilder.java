@@ -1,94 +1,76 @@
 package noppes.npcs.blocks;
 
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyInteger;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.NoppesUtilServer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition.Builder;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomItems;
 import noppes.npcs.blocks.tiles.TileBuilder;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
+import noppes.npcs.packets.server.SPacketGuiOpen;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.util.Objects;
 
-public class BlockBuilder extends BlockInterface implements IPermission {
+public class BlockBuilder extends BlockInterface {
 
-	public static PropertyInteger ROTATION = PropertyInteger.create("rotation", 0, 3);
+   public static final IntegerProperty ROTATION = IntegerProperty.create("rotation", 0, 3);
 
-	public BlockBuilder() {
-		super(Material.ROCK);
-		this.setName("npcbuilderblock");
-		this.setHardness(5.0f);
-		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
-		this.setSoundType(SoundType.STONE);
-	}
+   public BlockBuilder() {
+      super(Properties.copy(Blocks.BARRIER).sound(SoundType.STONE));
+   }
 
-	public void breakBlock(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-		if (TileBuilder.has(pos)) {
-			TileBuilder.DrawPoses.remove(pos);
-		}
-	}
+   protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+      builder.add(ROTATION);
+   }
 
-	protected @Nonnull BlockStateContainer createBlockState() {
-		return new BlockStateContainer(this, BlockBuilder.ROTATION);
-	}
+   public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
+      return RenderShape.MODEL;
+   }
 
-	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
-		return new TileBuilder();
-	}
+    @SuppressWarnings("all")
+    @Deprecated
+    public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult ray) {
+        if (!level.isClientSide) {
+            ItemStack currentItem = player.getInventory().getSelected();
+            if (currentItem.getItem() == CustomItems.wand || currentItem.getItem() == CustomBlocks.builder_item) {
+                SPacketGuiOpen.sendOpenGui((ServerPlayer) player, EnumGuiType.BuilderBlock, null, pos);
+            }
 
-	public int getMetaFromState(@Nonnull IBlockState state) {
-		return state.getValue(BlockBuilder.ROTATION);
-	}
+        }
+        return InteractionResult.SUCCESS;
+    }
 
-	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
-		return EnumBlockRenderType.MODEL;
-	}
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        int var6 = Mth.floor((double)(Objects.requireNonNull(context.getPlayer()).getYRot() / 90.0F) + 0.5D) & 3;
+        if (!context.getLevel().isClientSide) {
+            SPacketGuiOpen.sendOpenGui((ServerPlayer) context.getPlayer(), EnumGuiType.BuilderBlock, null, context.getClickedPos());
+        }
+        return this.defaultBlockState().setValue(ROTATION, var6);
+    }
 
-	public @Nonnull IBlockState getStateFromMeta(int meta) {
-		return this.getDefaultState().withProperty(BlockBuilder.ROTATION, meta);
-	}
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
+        return new TileBuilder(pos, state);
+    }
 
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.SchematicsSet || e == EnumPacketServer.SchematicsTile
-				|| e == EnumPacketServer.SchematicsTileSave || e == EnumPacketServer.SchematicsBuild;
-	}
-
-	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (par1World.isRemote) {
-			return true;
-		}
-		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (currentItem.getItem() == CustomRegisters.wand
-				|| currentItem.getItem() == Item.getItemFromBlock(CustomRegisters.builder)) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.BuilderBlock, null, pos.getX(), pos.getY(), pos.getZ());
-		}
-		return true;
-	}
-
-	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
-		int var6 = MathHelper.floor(entity.rotationYaw / 90.0f + 0.5) & 0x3;
-		world.setBlockState(pos, state.withProperty(BlockBuilder.ROTATION, var6), 2);
-		if (entity instanceof EntityPlayer && !world.isRemote) {
-			NoppesUtilServer.sendOpenGui((EntityPlayer) entity, EnumGuiType.BuilderBlock, null, pos.getX(), pos.getY(),
-					pos.getZ());
-		}
-	}
-
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
+        return createTickerHelper(type, CustomBlocks.tile_builder, TileBuilder::tick);
+    }
 }

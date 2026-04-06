@@ -1,0 +1,16 @@
+{
+	"name": "part.legs",
+	"parent": "moreplayermodels:parts/legs/legs_none.json",
+	"render_type": "none",
+	"hidden_parts": ["left_leg"],
+	"render_data" : {},
+	"body_part": "legs",
+	"menu": "part.legs",
+	"preview_rotation": 45,
+	"translate": [0, 0, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0.0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"disable_custom_textures" : true,
+	"author": "Noppes"
+}

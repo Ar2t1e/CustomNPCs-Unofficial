@@ -1,11 +1,10 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.EntityCreature;
+import net.minecraft.world.entity.Mob;
 import noppes.npcs.api.ITimers;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.INPCAdvanced;
 import noppes.npcs.api.entity.data.INPCAi;
-import noppes.npcs.api.entity.data.INPCAnimation;
 import noppes.npcs.api.entity.data.INPCDisplay;
 import noppes.npcs.api.entity.data.INPCInventory;
 import noppes.npcs.api.entity.data.INPCJob;
@@ -15,71 +14,59 @@ import noppes.npcs.api.handler.data.IDialog;
 import noppes.npcs.api.handler.data.IFaction;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
-public interface ICustomNpc<T extends EntityCreature> extends IEntityLiving<T> {
+public interface ICustomNpc<T extends Mob> extends IMob<T> {
 
-	String executeCommand(@ParamName("command") String command);
+   INPCDisplay getDisplay();
 
-	INPCAdvanced getAdvanced();
+   INPCInventory getInventory();
 
-	INPCAi getAi();
+   INPCStats getStats();
 
-	INPCAnimation getAnimations();
+   INPCAi getAi();
 
-	IDialog getDialog(@ParamName("id") int id);
+   INPCAdvanced getAdvanced();
 
-	INPCDisplay getDisplay();
+   IFaction getFaction();
 
-	IFaction getFaction();
+   void setFaction(@ParamName("id") int id);
 
-	int getHomeX();
+   INPCRole getRole();
 
-	int getHomeY();
+   INPCJob getJob();
 
-	int getHomeZ();
+   ITimers getTimers();
 
-	INPCInventory getInventory();
+   int getHomeX();
 
-	INPCJob getJob();
+   int getHomeY();
 
-	IEntityLivingBase<?> getOwner();
+   int getHomeZ();
 
-	INPCRole getRole();
+   IEntityLiving<?> getOwner();
 
-	INPCStats getStats();
+   void setHome(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	ITimers getTimers();
+   void reset();
 
-	void giveItem(@ParamName("player") IPlayer<?> player, @ParamName("item") IItemStack item);
+   void say(@ParamName("message") String message);
 
-	void reset();
+   void sayTo(@ParamName("player") IPlayer<?> player, @ParamName("message") String message);
 
-	void say(@ParamName("message") String message);
+   IProjectile<?> shootItem(@ParamName("target") IEntityLiving<?> target, @ParamName("item") IItemStack item, @ParamName("accuracy") int accuracy);
 
-	void sayTo(@ParamName("player") IPlayer<?> player, @ParamName("message") String message);
+   IProjectile<?> shootItem(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
+                            @ParamName("item") IItemStack item, @ParamName("accuracy") int accuracy);
 
-	void setDialog(@ParamName("id") int id, @ParamName("dialog") IDialog dialog);
+   void giveItem(@ParamName("player") IPlayer<?> player, @ParamName("item") IItemStack item);
 
-	void setFaction(@ParamName("id") int id);
+   void setDialog(@ParamName("slot") int slot, @ParamName("dialog") IDialog dialog);
 
-	void setHome(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   IDialog getDialog(@ParamName("slot") int slot);
 
-	IProjectile<?> shootItem(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
-							 @ParamName("item") IItemStack item, @ParamName("accuracy") int accuracy);
+   void updateClient();
 
-	IProjectile<?> shootItem(@ParamName("entity") IEntityLivingBase<?> entity,
-							 @ParamName("item") IItemStack item, @ParamName("accuracy") int accuracy);
+   String executeCommand(@ParamName("command") String command);
 
-	void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
-
-	void updateClient();
-
-	int getOffsetX();
-
-	int getOffsetY();
-
-	int getOffsetZ();
-
-	void setOffset(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+   void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
 
 }

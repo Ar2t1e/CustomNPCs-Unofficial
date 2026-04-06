@@ -1,5 +1,5 @@
 {
     "variants": {
-        "normal": { "model": "customnpcs:npcbuilderblock", "y": 180 }
+        "": { "model": "customnpcs:block/npcbuilderblock", "y": 180 }
     }
 }

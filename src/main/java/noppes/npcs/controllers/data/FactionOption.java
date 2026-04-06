@@ -1,42 +1,40 @@
 package noppes.npcs.controllers.data;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 
 public class FactionOption {
 
-	public boolean decreaseFactionPoints = false;
-	public int factionId = -1;
-	public int factionPoints = 100;
+    public boolean decreaseFactionPoints = false;
+    public int factionId = -1;
+    public int factionPoints = 100;
 
-	public FactionOption(int factionId, int factionPoints, boolean take) {
-		this.factionId = factionId;
-		this.factionPoints = factionPoints;
-		this.decreaseFactionPoints = take;
-	}
+    public FactionOption(int factionIdIn, int factionPointsIn, boolean take) {
+        factionId = factionIdIn;
+        factionPoints = factionPointsIn;
+        decreaseFactionPoints = take;
+    }
 
-	public FactionOption(NBTTagCompound compound) {
-		this.readFromNBT(compound);
-	}
+    public FactionOption(CompoundTag compound) { load(compound); }
 
-	public void check() {
-		if (this.factionPoints < 0) {
-			this.factionPoints *= -1;
-            this.decreaseFactionPoints = !this.decreaseFactionPoints;
-		}
-	}
+    public void check() {
+        if (factionPoints < 0) {
+            factionPoints *= -1;
+            decreaseFactionPoints = !decreaseFactionPoints;
+        }
+    }
 
-	public void readFromNBT(NBTTagCompound compound) {
-		this.factionId = compound.getInteger("FactionID");
-		this.decreaseFactionPoints = compound.getBoolean("IsDecrease");
-		this.factionPoints = compound.getInteger("Points");
-	}
+    public void load(CompoundTag compound) {
+        factionId = compound.getInt("FactionID");
+        decreaseFactionPoints = compound.getBoolean("IsDecrease");
+        factionPoints = compound.getInt("Points");
+    }
 
-	public NBTTagCompound writeToNBT() {
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("FactionID", this.factionId);
-		compound.setBoolean("IsDecrease", this.decreaseFactionPoints);
-		compound.setInteger("Points", this.factionPoints);
-		return compound;
-	}
+    public CompoundTag save() {
+        CompoundTag compound = new CompoundTag();
+        compound.putInt("FactionID", factionId);
+        compound.putBoolean("IsDecrease", decreaseFactionPoints);
+        compound.putInt("Points", factionPoints);
+        return compound;
+    }
 
 }

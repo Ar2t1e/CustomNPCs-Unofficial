@@ -1,29 +1,26 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.entity.passive.EntityTameable;
-import noppes.npcs.api.constants.EntityType;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import noppes.npcs.api.entity.IPixelmon;
 import noppes.npcs.controllers.PixelmonHelper;
 
-@SuppressWarnings("rawtypes")
-public class PixelmonWrapper<T extends EntityTameable> extends AnimalWrapper<T> implements IPixelmon {
+public class PixelmonWrapper<T extends TamableAnimal> extends AnimalWrapper<T> implements IPixelmon<T> {
 
-	public PixelmonWrapper(T entity) {
-		super(entity);
-	}
+   public PixelmonWrapper(T entity) {
+      super(entity);
+   }
 
-	@Override
-	public Object getPokemonData() {
-		return PixelmonHelper.getPokemonData(this.entity);
-	}
+   public Object getPokemonData() {
+      return PixelmonHelper.getPokemonData(this.entity);
+   }
 
-	@Override
-	public int getType() {
-		return EntityType.PIXELMON.get();
-	}
+   public int getType() {
+      return 8;
+   }
 
-	@Override
-	public boolean typeOf(int type) {
-		return type == EntityType.PIXELMON.get() || super.typeOf(type);
-	}
+   public boolean typeOf(int type) {
+      return type == 8 || super.typeOf(type);
+   }
+
 }

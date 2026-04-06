@@ -1,404 +1,361 @@
 package noppes.npcs.entity.data;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.api.entity.data.INPCRanged;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.util.ValueUtil;
 
 public class DataRanged implements INPCRanged {
 
-	private static final int version = 1;
+   private final EntityNPCInterface npc;
+   private float rangedRange = 15.0f;
+   private int burstCount = 1;
+   private int pDamage = 4;
+   private int pSpeed = 10;
+   private int pImpact = 0;
+   private int pSize = 5;
+   private int pArea = 0;
+   private int pTrail = 0;
+   private int minDelay = 20;
+   private int maxDelay = 40;
+   private int fireRate = 5;
+   private int shotCount = 1;
+   private int accuracy = 60;
+   private int meleeDistance = 0;
+   private int canFireIndirect = 0;
+   private int pEffect = 0;
+   private int pDur = 5;
+   private int pEffAmp = 0;
+   private boolean pRender3D = true;
+   private boolean pSpin = false;
+   private boolean pStick = false;
+   private boolean pPhysics = true;
+   private boolean pXlr8 = false;
+   private boolean pGlows = false;
+   private boolean aimWhileShooting = false;
+   private String fireSound = "minecraft:entity.arrow.shoot";
+   private String hitSound = "minecraft:entity.arrow.hit";
+   private String groundSound = "minecraft:block.stone.break";
 
-	private boolean aimWhileShooting = false;
-	private boolean pGlows = false;
-	private boolean pPhysics = true;
-	private boolean pRender3D = true;
-	private boolean pSpin = false;
-	private boolean pStick = false;
-	private boolean pXlr8 = false;
-	private int accuracy = 60;
-	private int burstCount = 1;
-	private int canFireIndirect = 0;
-	private int fireRate = 5;
-	private int maxDelay = 40;
-	private int meleeDistance = 0;
-	private int minDelay = 20;
-	private int pImpact = 0; // knockback
-	private int pArea = 0;
-	private int pDamage = 4;
-	private int pDur = 5;
-	private int pEffAmp = 0;
-	private int pEffect = 0;
-	private int pSize = 5;
-	private int pSpeed = 10;
-	private int pTrail = 0;
-	private int shotCount = 1;
-	private double rangedRange = 15.0d;
-	private String fireSound = "minecraft:entity.arrow.shoot";
-	private String groundSound = "minecraft:block.stone.break";
-	private String hitSound = "minecraft:entity.arrow.hit";
-	private final EntityNPCInterface npc;
+   public DataRanged(EntityNPCInterface npc) {
+      this.npc = npc;
+   }
 
-	public DataRanged(EntityNPCInterface npc) {
-		this.npc = npc;
-	}
+   public void load(CompoundTag compound) {
+      this.pDamage = compound.getInt("pDamage");
+      this.pSpeed = compound.getInt("pSpeed");
+      this.burstCount = compound.getInt("BurstCount");
+      this.pImpact = compound.getInt("pImpact");
+      this.pSize = compound.getInt("pSize");
+      this.pArea = compound.getInt("pArea");
+      this.pTrail = compound.getInt("pTrail");
+      this.fireRate = compound.getInt("FireRate");
+      this.minDelay = ValueUtil.correctInt(compound.getInt("minDelay"), 1, 9999);
+      this.maxDelay = ValueUtil.correctInt(compound.getInt("maxDelay"), 1, 9999);
+      this.shotCount = ValueUtil.correctInt(compound.getInt("ShotCount"), 1, 10);
+      this.accuracy = compound.getInt("Accuracy");
+      this.pRender3D = compound.getBoolean("pRender3D");
+      this.pSpin = compound.getBoolean("pSpin");
+      this.pStick = compound.getBoolean("pStick");
+      this.pPhysics = compound.getBoolean("pPhysics");
+      this.pXlr8 = compound.getBoolean("pXlr8");
+      this.pGlows = compound.getBoolean("pGlows");
+      this.aimWhileShooting = compound.getBoolean("AimWhileShooting");
+      this.pEffect = compound.getInt("pEffect");
+      this.pDur = compound.getInt("pDur");
+      this.pEffAmp = compound.getInt("pEffAmp");
+      this.fireSound = compound.getString("FiringSound");
+      this.hitSound = compound.getString("HitSound");
+      this.groundSound = compound.getString("GroundSound");
+      this.canFireIndirect = compound.getInt("FireIndirect");
+      this.meleeDistance = compound.getInt("DistanceToMelee");
+      // New from Unofficial (BetaZavr)
+      if (compound.contains("MaxFiringRange", 3)) { rangedRange = compound.getInt("MaxFiringRange"); }
+      else { rangedRange = compound.getFloat("MaxFiringRange"); }
+   }
 
-	@Override
-	public boolean getAccelerate() {
-		return this.pXlr8;
-	}
+   public CompoundTag save(CompoundTag compound) {
+      compound.putFloat("MaxFiringRange", this.rangedRange);
+      compound.putInt("BurstCount", this.burstCount);
+      compound.putInt("pSpeed", this.pSpeed);
+      compound.putInt("pDamage", this.pDamage);
+      compound.putInt("pImpact", this.pImpact);
+      compound.putInt("pSize", this.pSize);
+      compound.putInt("pArea", this.pArea);
+      compound.putInt("pTrail", this.pTrail);
+      compound.putInt("FireRate", this.fireRate);
+      compound.putInt("minDelay", this.minDelay);
+      compound.putInt("maxDelay", this.maxDelay);
+      compound.putInt("ShotCount", this.shotCount);
+      compound.putInt("Accuracy", this.accuracy);
+      compound.putInt("pEffect", this.pEffect);
+      compound.putInt("pDur", this.pDur);
+      compound.putInt("pEffAmp", this.pEffAmp);
+      compound.putInt("FireIndirect", this.canFireIndirect);
+      compound.putInt("DistanceToMelee", this.meleeDistance);
+      compound.putBoolean("pRender3D", this.pRender3D);
+      compound.putBoolean("pSpin", this.pSpin);
+      compound.putBoolean("pStick", this.pStick);
+      compound.putBoolean("pPhysics", this.pPhysics);
+      compound.putBoolean("pXlr8", this.pXlr8);
+      compound.putBoolean("pGlows", this.pGlows);
+      compound.putBoolean("AimWhileShooting", this.aimWhileShooting);
+      compound.putString("FiringSound", this.fireSound);
+      compound.putString("HitSound", this.hitSound);
+      compound.putString("GroundSound", this.groundSound);
+      return compound;
+   }
 
-	@Override
-	public int getAccuracy() {
-		return this.accuracy;
-	}
+   public int getStrength() {
+      return this.pDamage;
+   }
 
-	@Override
-	public int getBurst() {
-		return this.burstCount;
-	}
+   public void setStrength(int strength) {
+      this.pDamage = strength;
+   }
 
-	@Override
-	public int getBurstDelay() {
-		return this.fireRate;
-	}
+   public int getSpeed() {
+      return this.pSpeed;
+   }
 
-	@Override
-	public int getDelayMax() {
-		return this.maxDelay;
-	}
+   public void setSpeed(int speed) {
+      this.pSpeed = ValueUtil.correctInt(speed, 0, 100);
+   }
 
-	@Override
-	public int getDelayMin() {
-		return this.minDelay;
-	}
+   public int getKnockback() {
+      return this.pImpact;
+   }
 
-	@Override
-	public int getDelayRNG() {
-		int delay = this.minDelay;
-		if (this.maxDelay - this.minDelay > 0) {
-			delay += this.npc.world.rand.nextInt(this.maxDelay - this.minDelay);
-		}
-		return delay;
-	}
+   public void setKnockback(int punch) {
+      this.pImpact = punch;
+   }
 
-	@Override
-	public int getEffectStrength() {
-		return this.pEffAmp;
-	}
+   public int getSize() {
+      return this.pSize;
+   }
 
-	@Override
-	public int getEffectTime() {
-		return this.pDur;
-	}
+   public void setSize(int size) {
+      this.pSize = size;
+   }
 
-	@Override
-	public int getEffectType() {
-		return this.pEffect;
-	}
+   public boolean getRender3D() {
+      return this.pRender3D;
+   }
 
-	@Override
-	public int getExplodeSize() {
-		return this.pArea;
-	}
+   public void setRender3D(boolean render3d) {
+      this.pRender3D = render3d;
+   }
 
-	@Override
-	public int getFireType() {
-		return this.canFireIndirect;
-	}
+   public boolean getSpins() {
+      return this.pSpin;
+   }
 
-	@Override
-	public boolean getGlows() {
-		return this.pGlows;
-	}
+   public void setSpins(boolean spins) {
+      this.pSpin = spins;
+   }
 
-	@Override
-	public boolean getHasAimAnimation() {
-		return this.aimWhileShooting;
-	}
+   public boolean getSticks() {
+      return this.pStick;
+   }
 
-	@Override
-	public boolean getHasGravity() {
-		return this.pPhysics;
-	}
+   public void setSticks(boolean sticks) {
+      this.pStick = sticks;
+   }
 
-	@Override
-	public int getKnockback() {
-		return this.pImpact;
-	}
+   public boolean getHasGravity() {
+      return this.pPhysics;
+   }
 
-	@Override
-	public int getMeleeRange() {
-		return this.meleeDistance;
-	}
+   public void setHasGravity(boolean hasGravity) {
+      this.pPhysics = hasGravity;
+   }
 
-	@Override
-	public int getParticle() {
-		return this.pTrail;
-	}
+   public boolean getAccelerate() {
+      return this.pXlr8;
+   }
 
-	@Override
-	public double getRange() {
-		return this.rangedRange;
-	}
+   public void setAccelerate(boolean accelerate) {
+      this.pXlr8 = accelerate;
+   }
 
-	@Override
-	public boolean getRender3D() {
-		return this.pRender3D;
-	}
+   public int getExplodeSize() {
+      return this.pArea;
+   }
 
-	@Override
-	public int getShotCount() {
-		return this.shotCount;
-	}
+   public void setExplodeSize(int size) {
+      this.pArea = size;
+   }
 
-	@Override
-	public int getSize() {
-		return this.pSize;
-	}
+   public int getEffectType() {
+      return this.pEffect;
+   }
 
-	@Override
-	public String getSound(int type) {
-		switch (type) {
-		case 0:
-			return this.fireSound;
-		case 1:
-			return this.hitSound;
-		case 2:
-			return this.groundSound;
-		}
-		return null;
-	}
+   public int getEffectTime() {
+      return this.pDur;
+   }
 
-	public SoundEvent getSoundEvent(int type) {
-		String sound = this.getSound(type);
-		if (sound == null || sound.isEmpty()) {
-			return null;
-		}
-		return SoundEvent.REGISTRY.getObject(new ResourceLocation(sound));
-	}
+   public int getEffectStrength() {
+      return this.pEffAmp;
+   }
 
-	@Override
-	public int getSpeed() {
-		return this.pSpeed;
-	}
+   public void setEffect(int type, int strength, int time) {
+      this.pEffect = type;
+      this.pDur = time;
+      this.pEffAmp = strength;
+   }
 
-	@Override
-	public boolean getSpins() {
-		return this.pSpin;
-	}
+   public boolean getGlows() {
+      return this.pGlows;
+   }
 
-	@Override
-	public boolean getSticks() {
-		return this.pStick;
-	}
+   public void setGlows(boolean glows) {
+      this.pGlows = glows;
+   }
 
-	@Override
-	public int getStrength() {
-		return this.pDamage;
-	}
+   public int getParticle() {
+      return this.pTrail;
+   }
 
-	public void readFromNBT(NBTTagCompound compound) {
-		this.pDamage = compound.getInteger("pDamage");
-		this.pSpeed = compound.getInteger("pSpeed");
-		this.burstCount = compound.getInteger("BurstCount");
-		this.pImpact = compound.getInteger("pImpact");
-		if (version != compound.getInteger("version")) {
-			int v = compound.getInteger("version");
-			if (v < 1) { pImpact++; }
-		}
-		this.pSize = compound.getInteger("pSize");
-		this.pArea = compound.getInteger("pArea");
-		this.pTrail = compound.getInteger("pTrail");
-		this.fireRate = compound.getInteger("FireRate");
-		this.minDelay = ValueUtil.correctInt(compound.getInteger("minDelay"), 1, 9999);
-		this.maxDelay = ValueUtil.correctInt(compound.getInteger("maxDelay"), 1, 9999);
-		this.shotCount = ValueUtil.correctInt(compound.getInteger("ShotCount"), 1, 10);
-		this.accuracy = compound.getInteger("Accuracy");
-		this.pRender3D = compound.getBoolean("pRender3D");
-		this.pSpin = compound.getBoolean("pSpin");
-		this.pStick = compound.getBoolean("pStick");
-		this.pPhysics = compound.getBoolean("pPhysics");
-		this.pXlr8 = compound.getBoolean("pXlr8");
-		this.pGlows = compound.getBoolean("pGlows");
-		this.aimWhileShooting = compound.getBoolean("AimWhileShooting");
-		this.pEffect = compound.getInteger("pEffect");
-		this.pDur = compound.getInteger("pDur");
-		this.pEffAmp = compound.getInteger("pEffAmp");
-		this.fireSound = compound.getString("FiringSound");
-		this.hitSound = compound.getString("HitSound");
-		this.groundSound = compound.getString("GroundSound");
-		this.canFireIndirect = compound.getInteger("FireIndirect");
-		this.meleeDistance = compound.getInteger("DistanceToMelee");
-		// New from Unofficial (BetaZavr)
-		if (compound.hasKey("MaxFiringRange", 3)) { rangedRange = compound.getInteger("MaxFiringRange"); }
-		else { rangedRange = compound.getDouble("MaxFiringRange"); }
-	}
+   public void setParticle(int type) {
+      this.pTrail = type;
+   }
 
-	@Override
-	public void setAccelerate(boolean accelerate) {
-		this.pXlr8 = accelerate;
-	}
+   public int getAccuracy() {
+      return this.accuracy;
+   }
 
-	@Override
-	public void setAccuracy(int accuracy) {
-		this.accuracy = ValueUtil.correctInt(accuracy, 1, 100);
-	}
+   public void setAccuracy(int accuracy) {
+      this.accuracy = ValueUtil.correctInt(accuracy, 1, 100);
+   }
 
-	@Override
-	public void setBurst(int count) {
-		this.burstCount = count;
-	}
+   public float getRange() {
+      return this.rangedRange;
+   }
 
-	@Override
-	public void setBurstDelay(int delay) {
-		this.fireRate = delay;
-	}
+   public void setRange(float range) { rangedRange = ValueUtil.correctFloat(range, 1.0f, 100.0f); }
 
-	@Override
-	public void setDelay(int min, int max) {
-		min = Math.min(min, max);
-		this.minDelay = min;
-		this.maxDelay = max;
-	}
+   public int getDelayMin() {
+      return this.minDelay;
+   }
 
-	@Override
-	public void setEffect(int type, int strength, int time) {
-		this.pEffect = type;
-		this.pDur = time;
-		this.pEffAmp = strength;
-	}
+   public int getDelayMax() {
+      return this.maxDelay;
+   }
 
-	@Override
-	public void setExplodeSize(int size) {
-		this.pArea = size;
-	}
+   public int getDelayRNG() {
+      int delay = this.minDelay;
+      if (this.maxDelay - this.minDelay > 0) {
+         int var10002 = this.maxDelay - this.minDelay;
+         delay += this.npc.level().random.nextInt(var10002);
+      }
 
-	@Override
-	public void setFireType(int type) {
-		this.canFireIndirect = type;
-	}
+      return delay;
+   }
 
-	@Override
-	public void setGlows(boolean glows) {
-		this.pGlows = glows;
-	}
+   public void setDelay(int min, int max) {
+      min = Math.min(min, max);
+      this.minDelay = min;
+      this.maxDelay = max;
+   }
 
-	@Override
-	public void setHasAimAnimation(boolean aim) {
-		this.aimWhileShooting = aim;
-	}
+   public int getBurst() {
+      return this.burstCount;
+   }
 
-	@Override
-	public void setHasGravity(boolean hasGravity) {
-		this.pPhysics = hasGravity;
-	}
+   public void setBurst(int count) {
+      this.burstCount = count;
+   }
 
-	@Override
-	public void setKnockback(int punch) {
-		this.pImpact = punch;
-	}
+   public int getBurstDelay() {
+      return this.fireRate;
+   }
 
-	@Override
-	public void setMeleeRange(int range) {
-		this.meleeDistance = range;
-		this.npc.updateAI = true;
-	}
+   public void setBurstDelay(int delay) {
+      this.fireRate = delay;
+   }
 
-	@Override
-	public void setParticle(int type) {
-		this.pTrail = type;
-	}
+   public String getSound(int type) {
+      String sound = null;
+      if (type == 0) {
+         sound = this.fireSound;
+      }
 
-	@Override
-	public void setRange(double range) {
-		rangedRange = ValueUtil.correctDouble(range, 1.0d, 64.0d);
-	}
+      if (type == 1) {
+         sound = this.hitSound;
+      }
 
-	@Override
-	public void setRender3D(boolean render3d) {
-		this.pRender3D = render3d;
-	}
+      if (type == 2) {
+         sound = this.groundSound;
+      }
 
-	@Override
-	public void setShotCount(int count) {
-		this.shotCount = count;
-	}
+      return sound != null && !sound.isEmpty() ? NoppesStringUtils.cleanResource(sound) : null;
+   }
 
-	@Override
-	public void setSize(int size) {
-		this.pSize = size;
-	}
+   public SoundEvent getSoundEvent(int type) {
+      String sound = this.getSound(type);
+      if (sound == null) {
+         return null;
+      } else {
+         ResourceLocation res = ResourceLocation.tryParse(sound);
+         SoundEvent ev = ForgeRegistries.SOUND_EVENTS.getValue(res);
+         return ev != null ? ev : SoundEvent.createVariableRangeEvent(res != null ? res : new ResourceLocation("minecraft", sound));
+      }
+   }
 
-	@Override
-	public void setSound(int type, String sound) {
-		if (sound == null) {
-			sound = "";
-		}
-		if (type == 0) {
-			this.fireSound = sound;
-		}
-		if (type == 1) {
-			this.hitSound = sound;
-		}
-		if (type == 2) {
-			this.groundSound = sound;
-		}
-		this.npc.updateClient = true;
-	}
+   public void setSound(int type, String sound) {
+      if (sound == null) {
+         sound = "";
+      }
 
-	@Override
-	public void setSpeed(int speed) {
-		this.pSpeed = ValueUtil.correctInt(speed, 0, 100);
-	}
+      if (type == 0) {
+         this.fireSound = NoppesStringUtils.cleanResource(sound);
+      }
 
-	@Override
-	public void setSpins(boolean spins) {
-		this.pSpin = spins;
-	}
+      if (type == 1) {
+         this.hitSound = NoppesStringUtils.cleanResource(sound);
+      }
 
-	@Override
-	public void setSticks(boolean sticks) {
-		this.pStick = sticks;
-	}
+      if (type == 2) {
+         this.groundSound = NoppesStringUtils.cleanResource(sound);
+      }
 
-	@Override
-	public void setStrength(int strength) {
-		this.pDamage = strength;
-	}
+      this.npc.updateClient = true;
+   }
 
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-		compound.setInteger("BurstCount", this.burstCount);
-		compound.setInteger("pSpeed", this.pSpeed);
-		compound.setInteger("pDamage", this.pDamage);
-		compound.setInteger("pImpact", this.pImpact);
-		compound.setInteger("pSize", this.pSize);
-		compound.setInteger("pArea", this.pArea);
-		compound.setInteger("pTrail", this.pTrail);
-		compound.setDouble("MaxFiringRange", this.rangedRange);
-		compound.setInteger("FireRate", this.fireRate);
-		compound.setInteger("minDelay", this.minDelay);
-		compound.setInteger("maxDelay", this.maxDelay);
-		compound.setInteger("ShotCount", this.shotCount);
-		compound.setInteger("Accuracy", this.accuracy);
-		compound.setBoolean("pRender3D", this.pRender3D);
-		compound.setBoolean("pSpin", this.pSpin);
-		compound.setBoolean("pStick", this.pStick);
-		compound.setBoolean("pPhysics", this.pPhysics);
-		compound.setBoolean("pXlr8", this.pXlr8);
-		compound.setBoolean("pGlows", this.pGlows);
-		compound.setBoolean("AimWhileShooting", this.aimWhileShooting);
-		compound.setInteger("pEffect", this.pEffect);
-		compound.setInteger("pDur", this.pDur);
-		compound.setInteger("pEffAmp", this.pEffAmp);
-		compound.setString("FiringSound", this.fireSound);
-		compound.setString("HitSound", this.hitSound);
-		compound.setString("GroundSound", this.groundSound);
-		compound.setInteger("FireIndirect", this.canFireIndirect);
-		compound.setInteger("DistanceToMelee", this.meleeDistance);
-		compound.setInteger("version", version);
-		return compound;
-	}
+   public int getShotCount() {
+      return this.shotCount;
+   }
+
+   public void setShotCount(int count) {
+      this.shotCount = count;
+   }
+
+   public boolean getHasAimAnimation() {
+      return this.aimWhileShooting;
+   }
+
+   public void setHasAimAnimation(boolean aim) {
+      this.aimWhileShooting = aim;
+   }
+
+   public int getFireType() {
+      return this.canFireIndirect;
+   }
+
+   public void setFireType(int type) {
+      this.canFireIndirect = type;
+   }
+
+   public int getMeleeRange() {
+      return this.meleeDistance;
+   }
+
+   public void setMeleeRange(int range) {
+      this.meleeDistance = range;
+      this.npc.updateAI = true;
+   }
 }

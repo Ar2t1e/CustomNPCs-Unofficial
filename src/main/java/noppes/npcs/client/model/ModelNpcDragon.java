@@ -1,235 +1,277 @@
 package noppes.npcs.client.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.util.Mth;
 import noppes.npcs.entity.EntityNpcDragon;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class ModelNpcDragon<T extends EntityNpcDragon> extends EntityModel<T> {
 
-public class ModelNpcDragon extends ModelBase {
-	private final ModelRenderer body;
-	private float field_40317_s;
-	private final ModelRenderer frontFoot;
-	private final ModelRenderer frontLeg;
-	private final ModelRenderer frontLegTip;
-	private final ModelRenderer head;
-	private final ModelRenderer jaw;
-	private final ModelRenderer neck;
-	private final ModelRenderer rearFoot;
-	private final ModelRenderer rearLeg;
-	private final ModelRenderer rearLegTip;
-	private final ModelRenderer wing;
-	private final ModelRenderer wingTip;
+   private final NopModelPart head;
+   private final NopModelPart neck;
+   private final NopModelPart jaw;
+   private final NopModelPart body;
+   private final NopModelPart leftWing;
+   private final NopModelPart leftWingTip;
+   private final NopModelPart leftFrontLeg;
+   private final NopModelPart leftFrontLegTip;
+   private final NopModelPart leftFrontFoot;
+   private final NopModelPart leftRearLeg;
+   private final NopModelPart leftRearLegTip;
+   private final NopModelPart leftRearFoot;
+   private final NopModelPart rightWing;
+   private final NopModelPart rightWingTip;
+   private final NopModelPart rightFrontLeg;
+   private final NopModelPart rightFrontLegTip;
+   private final NopModelPart rightFrontFoot;
+   private final NopModelPart rightRearLeg;
+   private final NopModelPart rightRearLegTip;
+   private final NopModelPart rightRearFoot;
+   private float field_40317_s;
+   private EntityNpcDragon entityDragon;
+   private float animationPos;
+   private float animationSpeed;
 
-	public ModelNpcDragon() {
-		this.textureWidth = 256;
-		this.textureHeight = 256;
-		this.setTextureOffset("body.body", 0, 0);
-		this.setTextureOffset("wing.skin", -56, 88);
-		this.setTextureOffset("wingtip.skin", -56, 144);
-		this.setTextureOffset("rearleg.main", 0, 0);
-		this.setTextureOffset("rearfoot.main", 112, 0);
-		this.setTextureOffset("rearlegtip.main", 196, 0);
-		this.setTextureOffset("head.upperhead", 112, 30);
-		this.setTextureOffset("wing.bone", 112, 88);
-		this.setTextureOffset("head.upperlip", 176, 44);
-		this.setTextureOffset("jaw.jaw", 176, 65);
-		this.setTextureOffset("frontleg.main", 112, 104);
-		this.setTextureOffset("wingtip.bone", 112, 136);
-		this.setTextureOffset("frontfoot.main", 144, 104);
-		this.setTextureOffset("neck.box", 192, 104);
-		this.setTextureOffset("frontlegtip.main", 226, 138);
-		this.setTextureOffset("body.scale", 220, 53);
-		this.setTextureOffset("head.scale", 0, 0);
-		this.setTextureOffset("neck.scale", 48, 0);
-		this.setTextureOffset("head.nostril", 112, 0);
-		(this.head = new ModelRenderer(this, "head")).addBox("upperlip", -6.0f, -1.0f, -24.0f, 12, 5, 16);
-		this.head.addBox("upperhead", -8.0f, -8.0f, -10.0f, 16, 16, 16);
-		this.head.mirror = true;
-		this.head.addBox("scale", -5.0f, -12.0f, -4.0f, 2, 4, 6);
-		this.head.addBox("nostril", -5.0f, -3.0f, -22.0f, 2, 2, 4);
-		this.head.mirror = false;
-		this.head.addBox("scale", 3.0f, -12.0f, -4.0f, 2, 4, 6);
-		this.head.addBox("nostril", 3.0f, -3.0f, -22.0f, 2, 2, 4);
-		(this.jaw = new ModelRenderer(this, "jaw")).setRotationPoint(0.0f, 4.0f, -8.0f);
-		this.jaw.addBox("jaw", -6.0f, 0.0f, -16.0f, 12, 4, 16);
-		this.head.addChild(this.jaw);
-		(this.neck = new ModelRenderer(this, "neck")).addBox("box", -5.0f, -5.0f, -5.0f, 10, 10, 10);
-		this.neck.addBox("scale", -1.0f, -9.0f, -3.0f, 2, 4, 6);
-		(this.body = new ModelRenderer(this, "body")).setRotationPoint(0.0f, 4.0f, 8.0f);
-		this.body.addBox("body", -12.0f, 0.0f, -16.0f, 24, 24, 64);
-		this.body.addBox("scale", -1.0f, -6.0f, -10.0f, 2, 6, 12);
-		this.body.addBox("scale", -1.0f, -6.0f, 10.0f, 2, 6, 12);
-		this.body.addBox("scale", -1.0f, -6.0f, 30.0f, 2, 6, 12);
-		(this.wing = new ModelRenderer(this, "wing")).setRotationPoint(-12.0f, 5.0f, 2.0f);
-		this.wing.addBox("bone", -56.0f, -4.0f, -4.0f, 56, 8, 8);
-		this.wing.addBox("skin", -56.0f, 0.0f, 2.0f, 56, 0, 56);
-		(this.wingTip = new ModelRenderer(this, "wingtip")).setRotationPoint(-56.0f, 0.0f, 0.0f);
-		this.wingTip.addBox("bone", -56.0f, -2.0f, -2.0f, 56, 4, 4);
-		this.wingTip.addBox("skin", -56.0f, 0.0f, 2.0f, 56, 0, 56);
-		this.wing.addChild(this.wingTip);
-		(this.frontLeg = new ModelRenderer(this, "frontleg")).setRotationPoint(-12.0f, 20.0f, 2.0f);
-		this.frontLeg.addBox("main", -4.0f, -4.0f, -4.0f, 8, 24, 8);
-		(this.frontLegTip = new ModelRenderer(this, "frontlegtip")).setRotationPoint(0.0f, 20.0f, -1.0f);
-		this.frontLegTip.addBox("main", -3.0f, -1.0f, -3.0f, 6, 24, 6);
-		this.frontLeg.addChild(this.frontLegTip);
-		(this.frontFoot = new ModelRenderer(this, "frontfoot")).setRotationPoint(0.0f, 23.0f, 0.0f);
-		this.frontFoot.addBox("main", -4.0f, 0.0f, -12.0f, 8, 4, 16);
-		this.frontLegTip.addChild(this.frontFoot);
-		(this.rearLeg = new ModelRenderer(this, "rearleg")).setRotationPoint(-16.0f, 16.0f, 42.0f);
-		this.rearLeg.addBox("main", -8.0f, -4.0f, -8.0f, 16, 32, 16);
-		(this.rearLegTip = new ModelRenderer(this, "rearlegtip")).setRotationPoint(0.0f, 32.0f, -4.0f);
-		this.rearLegTip.addBox("main", -6.0f, -2.0f, 0.0f, 12, 32, 12);
-		this.rearLeg.addChild(this.rearLegTip);
-		(this.rearFoot = new ModelRenderer(this, "rearfoot")).setRotationPoint(0.0f, 31.0f, 4.0f);
-		this.rearFoot.addBox("main", -9.0f, 0.0f, -20.0f, 18, 6, 24);
-		this.rearLegTip.addChild(this.rearFoot);
-	}
+   public ModelNpcDragon() {
+      float f = -16.0F;
+      this.head = new NopModelPart(256, 256);
+      this.head.addBox("upperlip", -6.0F, -1.0F, -24.0F, 12, 5, 16, 0.0F, 176, 44);
+      this.head.addBox("upperhead", -8.0F, -8.0F, -10.0F, 16, 16, 16, 0.0F, 112, 30);
+      this.head.mirror = true;
+      this.head.addBox("scale", -5.0F, -12.0F, -4.0F, 2, 4, 6, 0.0F, 0, 0);
+      this.head.addBox("nostril", -5.0F, -3.0F, -22.0F, 2, 2, 4, 0.0F, 112, 0);
+      this.head.mirror = false;
+      this.head.addBox("scale", 3.0F, -12.0F, -4.0F, 2, 4, 6, 0.0F, 0, 0);
+      this.head.addBox("nostril", 3.0F, -3.0F, -22.0F, 2, 2, 4, 0.0F, 112, 0);
+      this.jaw = new NopModelPart(256, 256);
+      this.jaw.setPos(0.0F, 4.0F, -8.0F);
+      this.jaw.addBox("jaw", -6.0F, 0.0F, f, 12, 4, 16, 0.0F, 176, 65);
+      this.head.addChild(this.jaw);
+      this.neck = new NopModelPart(256, 256);
+      this.neck.addBox("box", -5.0F, -5.0F, -5.0F, 10, 10, 10, 0.0F, 192, 104);
+      this.neck.addBox("scale", -1.0F, -9.0F, -3.0F, 2, 4, 6, 0.0F, 48, 0);
+      this.body = new NopModelPart(256, 256);
+      this.body.setPos(0.0F, 4.0F, 8.0F);
+      this.body.addBox("body", -12.0F, 0.0F, f, 24, 24, 64, 0.0F, 0, 0);
+      this.body.addBox("scale", -1.0F, -6.0F, -10.0F, 2, 6, 12, 0.0F, 220, 53);
+      this.body.addBox("scale", -1.0F, -6.0F, 10.0F, 2, 6, 12, 0.0F, 220, 53);
+      this.body.addBox("scale", -1.0F, -6.0F, 30.0F, 2, 6, 12, 0.0F, 220, 53);
+      this.leftWing = new NopModelPart(256, 256);
+      this.leftWing.mirror = true;
+      this.leftWing.setPos(12.0F, 5.0F, 2.0F);
+      this.leftWing.addBox("bone", 0.0F, -4.0F, -4.0F, 56, 8, 8, 0.0F, 112, 88);
+      this.leftWing.addBox("skin", 0.0F, 0.0F, 2.0F, 56, 0, 56, 0.0F, -56, 88);
+      this.leftWingTip = new NopModelPart(256, 256);
+      this.leftWingTip.mirror = true;
+      this.leftWingTip.setPos(56.0F, 0.0F, 0.0F);
+      this.leftWingTip.addBox("bone", 0.0F, -2.0F, -2.0F, 56, 4, 4, 0.0F, 112, 136);
+      this.leftWingTip.addBox("skin", 0.0F, 0.0F, 2.0F, 56, 0, 56, 0.0F, -56, 144);
+      this.leftWing.addChild(this.leftWingTip);
+      this.leftFrontLeg = new NopModelPart(256, 256);
+      this.leftFrontLeg.setPos(12.0F, 20.0F, 2.0F);
+      this.leftFrontLeg.addBox("main", -4.0F, -4.0F, -4.0F, 8, 24, 8, 0.0F, 112, 104);
+      this.leftFrontLegTip = new NopModelPart(256, 256);
+      this.leftFrontLegTip.setPos(0.0F, 20.0F, -1.0F);
+      this.leftFrontLegTip.addBox("main", -3.0F, -1.0F, -3.0F, 6, 24, 6, 0.0F, 226, 138);
+      this.leftFrontLeg.addChild(this.leftFrontLegTip);
+      this.leftFrontFoot = new NopModelPart(256, 256);
+      this.leftFrontFoot.setPos(0.0F, 23.0F, 0.0F);
+      this.leftFrontFoot.addBox("main", -4.0F, 0.0F, -12.0F, 8, 4, 16, 0.0F, 144, 104);
+      this.leftFrontLegTip.addChild(this.leftFrontFoot);
+      this.leftRearLeg = new NopModelPart(256, 256);
+      this.leftRearLeg.setPos(-f, -f, 42.0F);
+      this.leftRearLeg.addBox("main", -8.0F, -4.0F, -8.0F, 16, 32, 16, 0.0F, 0, 0);
+      this.leftRearLegTip = new NopModelPart(256, 256);
+      this.leftRearLegTip.setPos(0.0F, 32.0F, -4.0F);
+      this.leftRearLegTip.addBox("main", -6.0F, -2.0F, 0.0F, 12, 32, 12, 0.0F, 196, 0);
+      this.leftRearLeg.addChild(this.leftRearLegTip);
+      this.leftRearFoot = new NopModelPart(256, 256);
+      this.leftRearFoot.setPos(0.0F, 31.0F, 4.0F);
+      this.leftRearFoot.addBox("main", -9.0F, 0.0F, -20.0F, 18, 6, 24, 0.0F, 112, 0);
+      this.leftRearLegTip.addChild(this.leftRearFoot);
+      this.rightWing = new NopModelPart(256, 256);
+      this.rightWing.setPos(-12.0F, 5.0F, 2.0F);
+      this.rightWing.addBox("bone", -56.0F, -4.0F, -4.0F, 56, 8, 8, 0.0F, 112, 88);
+      this.rightWing.addBox("skin", -56.0F, 0.0F, 2.0F, 56, 0, 56, 0.0F, -56, 88);
+      this.rightWingTip = new NopModelPart(256, 256);
+      this.rightWingTip.setPos(-56.0F, 0.0F, 0.0F);
+      this.rightWingTip.addBox("bone", -56.0F, -2.0F, -2.0F, 56, 4, 4, 0.0F, 112, 136);
+      this.rightWingTip.addBox("skin", -56.0F, 0.0F, 2.0F, 56, 0, 56, 0.0F, -56, 144);
+      this.rightWing.addChild(this.rightWingTip);
+      this.rightFrontLeg = new NopModelPart(256, 256);
+      this.rightFrontLeg.setPos(-12.0F, 20.0F, 2.0F);
+      this.rightFrontLeg.addBox("main", -4.0F, -4.0F, -4.0F, 8, 24, 8, 0.0F, 112, 104);
+      this.rightFrontLegTip = new NopModelPart(256, 256);
+      this.rightFrontLegTip.setPos(0.0F, 20.0F, -1.0F);
+      this.rightFrontLegTip.addBox("main", -3.0F, -1.0F, -3.0F, 6, 24, 6, 0.0F, 226, 138);
+      this.rightFrontLeg.addChild(this.rightFrontLegTip);
+      this.rightFrontFoot = new NopModelPart(256, 256);
+      this.rightFrontFoot.setPos(0.0F, 23.0F, 0.0F);
+      this.rightFrontFoot.addBox("main", -4.0F, 0.0F, -12.0F, 8, 4, 16, 0.0F, 144, 104);
+      this.rightFrontLegTip.addChild(this.rightFrontFoot);
+      this.rightRearLeg = new NopModelPart(256, 256);
+      this.rightRearLeg.setPos(f, -f, 42.0F);
+      this.rightRearLeg.addBox("main", -8.0F, -4.0F, -8.0F, 16, 32, 16, 0.0F, 0, 0);
+      this.rightRearLegTip = new NopModelPart(256, 256);
+      this.rightRearLegTip.setPos(0.0F, 32.0F, -4.0F);
+      this.rightRearLegTip.addBox("main", -6.0F, -2.0F, 0.0F, 12, 32, 12, 0.0F, 196, 0);
+      this.rightRearLeg.addChild(this.rightRearLegTip);
+      this.rightRearFoot = new NopModelPart(256, 256);
+      this.rightRearFoot.setPos(0.0F, 31.0F, 4.0F);
+      this.rightRearFoot.addBox("main", -9.0F, 0.0F, -20.0F, 18, 6, 24, 0.0F, 112, 0);
+      this.rightRearLegTip.addChild(this.rightRearFoot);
+   }
 
-	private float correctAngle(double d) {
-		while (d >= 180.0d) {
-			d -= 360.0d;
-		}
-		while (d < -180.0d) {
-			d += 360.0d;
-		}
-		return (float) d;
-	}
+   public void setupAnim(@NotNull T entity, float p_225597_2_, float p_225597_3_, float p_225597_4_, float p_225597_5_, float p_225597_6_) {
+   }
 
-	public void render(@Nonnull Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-		EntityNpcDragon entitydragon = (EntityNpcDragon) entity;
-		GlStateManager.pushMatrix();
-		float f6 = entitydragon.field_40173_aw + (entitydragon.field_40172_ax - entitydragon.field_40173_aw) * this.field_40317_s;
-		this.jaw.rotateAngleX = (float) ((Math.sin(f6 * 3.1415927f * 2.0f) + 1.0) * 0.2f);
-		float f7 = (float) (Math.sin(f6 * 3.1415927f * 2.0f - 1.0f) + 1.0);
-		f7 = (f7 * f7 * 1.0f + f7 * 2.0f) * 0.05f;
-		GlStateManager.translate(0.0f, f7 - 2.0f, -3.0f);
-		GlStateManager.rotate(f7 * 2.0f, 1.0f, 0.0f, 0.0f);
-		float f8;
-		float f9;
-		float f10 = 0.0f;
-		float f11 = 1.5f;
-		double[] ad = entitydragon.func_40160_a(6, this.field_40317_s);
-		float f12 = this.correctAngle(entitydragon.func_40160_a(5, this.field_40317_s)[0]
-				- entitydragon.func_40160_a(10, this.field_40317_s)[0]);
-		float f13 = this.correctAngle(entitydragon.func_40160_a(5, this.field_40317_s)[0] + f12 / 2.0f);
-        float f14;
-		float f15 = f6 * 3.141593f * 2.0f;
-		f8 = 20.0f;
-		f9 = -12.0f;
-		for (int i = 0; i < 5; ++i) {
-			double[] ad2 = entitydragon.func_40160_a(5 - i, this.field_40317_s);
-			f14 = (float) (Math.cos(i * 0.45f + f15) * 0.15f);
-			this.neck.rotateAngleY = this.correctAngle(ad2[0] - ad[0]) * 3.1415927f / 180.0f * f11;
-			this.neck.rotateAngleX = (float) (f14 + (ad2[1] - ad[1]) * 3.1415927f / 180.0f * f11 * 5.0f);
-			this.neck.rotateAngleZ = -this.correctAngle(ad2[0] - f13) * 3.1415927f / 180.0f * f11;
-			this.neck.rotationPointY = f8;
-			this.neck.rotationPointZ = f9;
-			this.neck.rotationPointX = f10;
-			f8 += (float) (Math.sin(this.neck.rotateAngleX) * 10.0);
-			f9 -= (float) (Math.cos(this.neck.rotateAngleY) * Math.cos(this.neck.rotateAngleX) * 10.0);
-			f10 -= (float) (Math.sin(this.neck.rotateAngleY) * Math.cos(this.neck.rotateAngleX) * 10.0);
-			this.neck.render(f5);
-		}
-		this.head.rotationPointY = f8;
-		this.head.rotationPointZ = f9;
-		this.head.rotationPointX = f10;
-		double[] ad3 = entitydragon.func_40160_a(0, this.field_40317_s);
-		this.head.rotateAngleY = this.correctAngle(ad3[0] - ad[0]) * 3.1415927f / 180.0f;
-		this.head.rotateAngleZ = -this.correctAngle(ad3[0] - f13) * 3.1415927f / 180.0f;
-		this.head.render(f5);
-		GlStateManager.pushMatrix();
-		GlStateManager.translate(0.0f, 1.0f, 0.0f);
-		if (entitydragon.onGround) {
-			GlStateManager.rotate(-f12 * f11 * 0.3f, 0.0f, 0.0f, 1.0f);
-		} else {
-			GlStateManager.rotate(-f12 * f11 * 1.0f, 0.0f, 0.0f, 1.0f);
-		}
-		GlStateManager.translate(0.0f, -1.18f, 0.0f);
-		this.body.rotateAngleZ = 0.0f;
-		this.body.render(f5);
-		if (entitydragon.onGround) {
-			for (int j = 0; j < 2; ++j) {
-				GlStateManager.enableCull();
-				this.wing.rotateAngleX = 0.25f;
-				this.wing.rotateAngleY = 0.95f;
-				this.wing.rotateAngleZ = -0.5f;
-				this.wingTip.rotateAngleZ = -0.4f;
-				this.frontLeg.rotateAngleX = MathHelper
-						.cos((float) (f * 0.6662f + ((j == 0) ? 0.0 : 3.141592653589793))) * 0.6f * f1 + 0.45f
-						+ f7 * 0.5f;
-				this.frontLegTip.rotateAngleX = -1.3f - f7 * 1.2f;
-				this.frontFoot.rotateAngleX = 0.85f + f7 * 0.5f;
-				this.frontLeg.render(f5);
-				this.rearLeg.rotateAngleX = MathHelper.cos((float) (f * 0.6662f + ((j == 0) ? 3.141592653589793 : 0.0)))
-						* 0.6f * f1 + 0.75f + f7 * 0.5f;
-				this.rearLegTip.rotateAngleX = -1.6f - f7 * 0.8f;
-				this.rearLegTip.rotationPointY = 20.0f;
-				this.rearLegTip.rotationPointZ = 2.0f;
-				this.rearFoot.rotateAngleX = 0.85f + f7 * 0.2f;
-				this.rearLeg.render(f5);
-				this.wing.render(f5);
-				GlStateManager.scale(-1.0f, 1.0f, 1.0f);
-				if (j == 0) {
-					GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-				}
-			}
-		} else {
-			for (int j = 0; j < 2; ++j) {
-				GlStateManager.enableCull();
-				float f16 = f6 * 3.1415927f * 2.0f;
-				this.wing.rotateAngleX = (float) (0.125f - Math.cos(f16) * 0.2f);
-				this.wing.rotateAngleY = 0.25f;
-				this.wing.rotateAngleZ = (float) ((Math.sin(f16) + 0.125) * 0.8f);
-				this.wingTip.rotateAngleZ = (float) (-(Math.sin(f16 + 2.0f) + 0.5) * 0.75f);
-				this.rearLegTip.rotationPointY = 32.0f;
-				this.rearLegTip.rotationPointZ = -2.0f;
-				this.rearLeg.rotateAngleX = 1.0f + f7 * 0.1f;
-				this.rearLegTip.rotateAngleX = 0.5f + f7 * 0.1f;
-				this.rearFoot.rotateAngleX = 0.75f + f7 * 0.1f;
-				this.frontLeg.rotateAngleX = 1.3f + f7 * 0.1f;
-				this.frontLegTip.rotateAngleX = -0.5f - f7 * 0.1f;
-				this.frontFoot.rotateAngleX = 0.75f + f7 * 0.1f;
-				this.wing.render(f5);
-				this.frontLeg.render(f5);
-				this.rearLeg.render(f5);
-				GlStateManager.scale(-1.0f, 1.0f, 1.0f);
-				if (j == 0) {
-					GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-				}
-			}
-		}
-		GlStateManager.popMatrix();
-		GlStateManager.cullFace(GlStateManager.CullFace.BACK);
-		GlStateManager.disableCull();
-		f14 = (float) (-Math.sin(f6 * 3.141593f * 2.0f) * 0.0f);
-		f15 = f6 * 3.1415927f * 2.0f;
-		f8 = 10.0f;
-		f9 = 60.0f;
-		f10 = 0.0f;
-		ad = entitydragon.func_40160_a(11, this.field_40317_s);
-		for (int k = 0; k < 12; ++k) {
-			double[] ad4 = entitydragon.func_40160_a(12 + k, this.field_40317_s);
-			f14 += (float) (Math.sin(k * 0.45f + f15) * 0.05000000074505806);
-			this.neck.rotateAngleY = (this.correctAngle(ad4[0] - ad[0]) * f11 + 180.0f) * 3.1415927f / 180.0f;
-			this.neck.rotateAngleX = (float) (f14 + (ad4[1] - ad[1]) * 3.1415927f / 180.0f * f11 * 5.0f);
-			this.neck.rotateAngleZ = this.correctAngle(ad4[0] - f13) * 3.1415927f / 180.0f * f11;
-			this.neck.rotationPointY = f8;
-			this.neck.rotationPointZ = f9;
-			this.neck.rotationPointX = f10;
-			f8 += (float) (Math.sin(this.neck.rotateAngleX) * 10.0);
-			f9 -= (float) (Math.cos(this.neck.rotateAngleY) * Math.cos(this.neck.rotateAngleX) * 10.0);
-			f10 -= (float) (Math.sin(this.neck.rotateAngleY) * Math.cos(this.neck.rotateAngleX) * 10.0);
-			this.neck.render(f5);
-		}
-		GlStateManager.popMatrix();
-	}
+   public void prepareMobModel(@NotNull T entity, float animationPos, float animationSpeed, float f2) {
+      this.field_40317_s = f2;
+      this.entityDragon = entity;
+      this.animationPos = animationPos;
+      this.animationSpeed = animationSpeed;
+   }
 
-	public void setLivingAnimations(@Nonnull EntityLivingBase entityliving, float f, float f1, float f2) {
-		this.field_40317_s = f2;
-	}
+   public void renderToBuffer(PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      mStack.pushPose();
+      float f6 = this.entityDragon.prevAnimTime + (this.entityDragon.animTime - this.entityDragon.prevAnimTime) * this.field_40317_s;
+      this.jaw.xRot = (float)(Math.sin(f6 * 3.1415927F * 2.0F) + 1.0D) * 0.2F;
+      float f7 = (float)(Math.sin(f6 * 3.1415927F * 2.0F - 1.0F) + 1.0D);
+      f7 = (f7 * f7 * 1.0F + f7 * 2.0F) * 0.05F;
+      mStack.translate(0.0F, f7 - 2.0F, -3.0F);
+      mStack.mulPose(Axis.XP.rotationDegrees(f7 * 2.0F));
+      float f10 = 0.0F;
+      float f11 = 1.5F;
+      double[] ad = this.entityDragon.getMovementOffsets(6, this.field_40317_s);
+      float f12 = this.correctAngle(this.entityDragon.getMovementOffsets(5, this.field_40317_s)[0] - this.entityDragon.getMovementOffsets(10, this.field_40317_s)[0]);
+      float f13 = this.correctAngle(this.entityDragon.getMovementOffsets(5, this.field_40317_s)[0] + (double)(f12 / 2.0F));
+      float f14 = 0.0F;
+      float f15 = f6 * 3.141593F * 2.0F;
+      float f8 = 20.0F;
+      float f9 = -12.0F;
+
+      for(int i = 0; i < 5; ++i) {
+         double[] ad3 = this.entityDragon.getMovementOffsets(5 - i, this.field_40317_s);
+         f14 = (float)Math.cos((float)i * 0.45F + f15) * 0.15F;
+         this.neck.yRot = this.correctAngle(ad3[0] - ad[0]) * 3.1415927F / 180.0F * f11;
+         this.neck.xRot = f14 + (float)(ad3[1] - ad[1]) * 3.1415927F / 180.0F * f11 * 5.0F;
+         this.neck.zRot = -this.correctAngle(ad3[0] - (double)f13) * 3.1415927F / 180.0F * f11;
+         this.neck.y = f8;
+         this.neck.z = f9;
+         this.neck.x = f10;
+         f8 = (float)((double)f8 + Math.sin(this.neck.xRot) * 10.0D);
+         f9 = (float)((double)f9 - Math.cos(this.neck.yRot) * Math.cos(this.neck.xRot) * 10.0D);
+         f10 = (float)((double)f10 - Math.sin(this.neck.yRot) * Math.cos(this.neck.xRot) * 10.0D);
+         this.neck.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      }
+
+      this.head.y = f8;
+      this.head.z = f9;
+      this.head.x = f10;
+      double[] ad1 = this.entityDragon.getMovementOffsets(0, this.field_40317_s);
+      this.head.yRot = this.correctAngle(ad1[0] - ad[0]) * 3.1415927F / 180.0F;
+      this.head.zRot = -this.correctAngle(ad1[0] - (double) f13) * 3.1415927F / 180.0F;
+      this.head.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      mStack.pushPose();
+      mStack.translate(0.0F, 1.0F, 0.0F);
+      if (this.entityDragon.onGround()) {
+         mStack.mulPose(Axis.ZP.rotationDegrees(-f12 * f11 * 0.3F));
+      } else {
+         mStack.mulPose(Axis.ZP.rotationDegrees(-f12 * f11 * 1.0F));
+      }
+
+      mStack.translate(0.0F, -1.18F, 0.0F);
+      this.body.zRot = 0.0F;
+      this.body.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      if (this.entityDragon.onGround()) {
+         this.leftWing.xRot = 0.25F;
+         this.leftWing.yRot = -0.95F;
+         this.leftWing.zRot = 0.5F;
+         this.rightWing.xRot = this.leftWing.xRot;
+         this.rightWing.yRot = -this.leftWing.yRot;
+         this.rightWing.zRot = -this.leftWing.zRot;
+         this.leftWingTip.zRot = 0.4F;
+         this.rightWingTip.zRot = -0.4F;
+         this.leftFrontLeg.xRot = this.rightFrontLeg.xRot = Mth.cos((float)((double)(this.animationPos * 0.6662F) + 3.141592653589793D)) * 0.6F * this.animationSpeed + 0.45F + f7 * 0.5F;
+         this.leftRearLeg.xRot = this.rightRearLeg.xRot = Mth.cos(this.animationPos * 0.6662F + f14) * 0.6F * this.animationSpeed + 0.75F + f7 * 0.5F;
+         this.leftFrontLegTip.xRot = this.rightFrontLegTip.xRot = -1.3F - f7 * 1.2F;
+         this.leftFrontFoot.xRot = this.rightFrontFoot.xRot = 0.85F + f7 * 0.5F;
+         this.leftRearLegTip.xRot = this.rightRearLegTip.xRot = -1.6F - f7 * 0.8F;
+         this.leftRearLegTip.y = this.rightRearLegTip.y = 20.0F;
+         this.leftRearLegTip.z = this.rightRearLegTip.z = 2.0F;
+         this.leftRearFoot.xRot = this.rightRearFoot.xRot = 0.85F + f7 * 0.2F;
+         this.leftFrontLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.rightFrontLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.leftRearLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.rightRearLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.leftWing.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.rightWing.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      } else {
+         float f16 = f6 * 3.1415927F * 2.0F;
+         this.leftWing.xRot = 0.125F - (float)Math.cos(f16) * 0.2F;
+         this.leftWing.yRot = -0.25F;
+         this.leftWing.zRot = -((float)(Math.sin(f16) + 0.125D)) * 0.8F;
+         this.rightWing.xRot = this.leftWing.xRot;
+         this.rightWing.yRot = -this.leftWing.yRot;
+         this.rightWing.zRot = -this.leftWing.zRot;
+         this.leftWingTip.zRot = (float)(Math.sin(f16 + 2.0F) + 0.5D) * 0.75F;
+         this.rightWingTip.zRot = -this.leftWingTip.zRot;
+         this.leftRearLegTip.y = this.rightRearLegTip.y = 32.0F;
+         this.leftRearLegTip.z = this.rightRearLegTip.z = -2.0F;
+         this.leftRearLeg.xRot = this.rightRearLeg.xRot = 1.0F + f7 * 0.1F;
+         this.leftRearLegTip.xRot = this.rightRearLegTip.xRot = 0.5F + f7 * 0.1F;
+         this.leftRearFoot.xRot = this.rightRearFoot.xRot = 0.75F + f7 * 0.1F;
+         this.leftFrontLeg.xRot = this.rightFrontLeg.xRot = 1.3F + f7 * 0.1F;
+         this.leftFrontLegTip.xRot = this.rightFrontLegTip.xRot = -0.5F - f7 * 0.1F;
+         this.leftFrontFoot.xRot = this.rightFrontFoot.xRot = 0.75F + f7 * 0.1F;
+         this.leftWing.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.rightWing.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.leftFrontLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.rightFrontLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.leftRearLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+         this.rightRearLeg.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      }
+
+      mStack.popPose();
+      f14 = -((float)Math.sin(f6 * 3.141593F * 2.0F)) * 0.0F;
+      f15 = f6 * 3.1415927F * 2.0F;
+      f8 = 10.0F;
+      f9 = 60.0F;
+      f10 = 0.0F;
+      ad = this.entityDragon.getMovementOffsets(11, this.field_40317_s);
+
+      for(int k = 0; k < 12; ++k) {
+         double[] ad2 = this.entityDragon.getMovementOffsets(12 + k, this.field_40317_s);
+         f14 = (float)((double)f14 + Math.sin((float)k * 0.45F + f15) * 0.05000000074505806D);
+         this.neck.yRot = (this.correctAngle(ad2[0] - ad[0]) * f11 + 180.0F) * 3.1415927F / 180.0F;
+         this.neck.xRot = f14 + (float)(ad2[1] - ad[1]) * 3.1415927F / 180.0F * f11 * 5.0F;
+         this.neck.zRot = this.correctAngle(ad2[0] - (double)f13) * 3.1415927F / 180.0F * f11;
+         this.neck.y = f8;
+         this.neck.z = f9;
+         this.neck.x = f10;
+         f8 = (float)((double)f8 + Math.sin(this.neck.xRot) * 10.0D);
+         f9 = (float)((double)f9 - Math.cos(this.neck.yRot) * Math.cos(this.neck.xRot) * 10.0D);
+         f10 = (float)((double)f10 - Math.sin(this.neck.yRot) * Math.cos(this.neck.xRot) * 10.0D);
+         this.neck.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      }
+
+      mStack.popPose();
+   }
+
+   private float correctAngle(double d) {
+      while(d >= 180.0D) {
+         d -= 360.0D;
+      }
+
+      while(d < -180.0D) {
+         d += 360.0D;
+      }
+
+      return (float)d;
+   }
+
 }

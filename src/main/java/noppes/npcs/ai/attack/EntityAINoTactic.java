@@ -1,34 +1,27 @@
 package noppes.npcs.ai.attack;
 
-import net.minecraft.entity.IRangedAttackMob;
-import noppes.npcs.util.Util;
+import net.minecraft.world.entity.monster.RangedAttackMob;
 
 public class EntityAINoTactic extends EntityAICustom {
 
-	public EntityAINoTactic(IRangedAttackMob npc) {
-		super(npc);
-	}
+	public EntityAINoTactic(RangedAttackMob npc) { super(npc); }
 
 	@Override
-	public void updateTask() {
-		super.updateTask();
-		if (this.isFriend || this.npc.ticksExisted % (this.tickRate * 2) > 3) {
-			return;
-		}
-		if (this.isRanged) {
-			this.canSeeToAttack = this.npc.canSee(this.target);
-			if (this.canSeeToAttack && this.distance <= this.range) {
-				if (this.inMove) {
-					this.npc.getNavigator().clearPath();
+	public void tick() {
+		super.tick();
+		if (!isFriend) {
+			if (isRanged) {
+				canSeeToAttack = npc.canSee(target);
+				if (canSeeToAttack && distance <= range) {
+					if (inMove) { npc.getNavigation().stop(); }
 				}
+				else { tryMoveToTarget(); }
 			} else {
-				this.tryMoveToTarget();
+				canSeeToAttack = npc.canSee(target);
+				tryMoveToTarget();
 			}
-		} else {
-			this.canSeeToAttack = this.npc.canSee(this.target);
-			this.tryMoveToTarget();
+			tryToCauseDamage();
 		}
-		this.tryToCauseDamage();
 	}
 
 }

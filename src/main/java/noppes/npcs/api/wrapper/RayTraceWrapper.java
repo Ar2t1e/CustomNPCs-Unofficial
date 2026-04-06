@@ -6,28 +6,19 @@ import noppes.npcs.api.block.IBlock;
 
 public class RayTraceWrapper implements IRayTrace {
 
-	private final IBlock block;
-	public IPos pos;
-	private final int sideHit;
+   private final IBlock block;
+   private final int sideHit;
+   private final IPos pos;
 
-	public RayTraceWrapper(IBlock block, int sideHit) {
-		this.block = block;
-		this.sideHit = sideHit;
-		this.pos = block.getPos();
-	}
+   public RayTraceWrapper(IBlock blockIn, int sideHitIn) {
+      block = blockIn;
+      sideHit = sideHitIn;
+      pos = block.getPos();
+   }
 
-	@Override
-	public IBlock getBlock() {
-		return this.block;
-	}
+   public IPos getPos() { return block.getPos(); }
 
-	@Override
-	public IPos getPos() {
-		return this.block.getPos();
-	}
+   public IBlock getBlock() { return block; }
 
-	@Override
-	public int getSideHit() {
-		return this.sideHit;
-	}
+   public int getSideHit() { return sideHit; }
 }

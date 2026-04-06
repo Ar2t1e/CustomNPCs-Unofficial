@@ -1,0 +1,48 @@
+{
+	"name": "part.tail",
+	"render_type": "bedrock",
+	"render_data" : {
+		"format_version": "1.12.0",
+		"minecraft:geometry": [
+			{
+				"description": {
+					"identifier": "geometry.unknown",
+					"texture_width": 32,
+					"texture_height": 32,
+					"visible_bounds_width": 1,
+					"visible_bounds_height": 1.5,
+					"visible_bounds_offset": [0, 0.25, 0]
+				},
+				"bones": [
+					{
+						"name": "tail",
+						"pivot": [0, 0, 0],
+						"rotation": [0, 0, 0]
+					},
+					{
+						
+						"name": "part",
+						"parent": "tail",
+						"pivot": [0, 0, 0],
+						"rotation": [30, 0, 0],
+						"cubes": [
+							{"origin": [-1, -1, 0], "size": [2, 2, 3], "rotation": [-65, 0, 0], "uv": [0, 26]},
+							{"origin": [-1.5, -2, 3], "size": [3, 4, 7], "rotation": [-65, 0, 0], "uv": [0, 13]},
+							{"origin": [-1.5, -4.5, 3], "size": [3, 4, 7], "pivot": [0, -6, 0], "rotation": [-80, 0, 0], "uv": [0, 0]}
+						]
+					}
+				]
+			}
+		]
+	},
+	"texture": "moreplayermodels:textures/tail/2.png",
+	"body_part": "body",
+	"menu": "part.tail",
+	"animation_inherit": "tails",
+	"preview_rotation": 135,
+	"translate": [0, 10, 1],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0.0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

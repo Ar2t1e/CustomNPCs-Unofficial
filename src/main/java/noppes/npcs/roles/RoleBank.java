@@ -1,54 +1,58 @@
 package noppes.npcs.roles;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.RoleType;
-import noppes.npcs.api.entity.data.role.IRoleBank;
 import noppes.npcs.controllers.BankController;
 import noppes.npcs.controllers.data.Bank;
-import noppes.npcs.controllers.data.BankData;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketBankClearPos;
 
-public class RoleBank extends RoleInterface implements IRoleBank {
+import javax.annotation.Nullable;
 
-	public int bankId;
+public class RoleBank extends RoleInterface {
 
-	public RoleBank(EntityNPCInterface npc) {
-		super(npc);
-		this.bankId = -1;
-		this.type = RoleType.BANK;
-	}
+   public int bankId = -1;
 
-	public Bank getBank() {
-		Bank bank = BankController.getInstance().banks.get(this.bankId);
-		if (bank != null) {
-			return bank;
-		}
-		return BankController.getInstance().banks.values().iterator().next();
-	}
+   public RoleBank(EntityNPCInterface npc) {
+      super(npc);
+      type = RoleType.BANK;
+   }
 
-	@Override
-	public void interact(EntityPlayer player) {
-		BankData data = PlayerData.get(player).bankData.get(bankId);
-		if (data == null) {
-			return;
-		}
-		data.openBankGui(player, this.npc, 0);
-		this.npc.say(player, this.npc.advanced.getInteractLine());
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      super.save(compound);
+      compound.putInt("RoleBankID", bankId);
+      return compound;
+   }
 
-	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = RoleType.BANK;
-		bankId = compound.getInteger("RoleBankID");
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      super.load(compound);
+      type = RoleType.BANK;
+      bankId = compound.getInt("RoleBankID");
+   }
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setInteger("RoleBankID", this.bankId);
-		return compound;
-	}
+   @Override
+   public void interact(Player player) {
+      npc.say(player, npc.advanced.getInteractLine());
+      Bank bank = BankController.getInstance().getBank(bankId);
+      if (bank != null && player instanceof ServerPlayer sPlayer) {
+         NoppesUtilServer.setEditingNpc(sPlayer, npc);
+         Packets.send(sPlayer, new PacketBankClearPos());
+         PlayerData.get(sPlayer).bankData.get(bankId).openToPlayer(sPlayer, 0, 0, 0, 1);
+      }
+   }
+
+   public @Nullable Bank getBank() {
+      Bank bank = BankController.getInstance().getBank(bankId);
+      return bank != null ? bank : BankController.getInstance().getBanks().iterator().next();
+   }
+
+   public int getBankId() { return bankId; }
+
 }

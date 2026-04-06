@@ -1,123 +1,126 @@
 package noppes.npcs.client.gui.player;
 
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.inventory.Slot;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.NoppesUtilPlayer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.CustomNpcResourceListener;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPlayerPacket;
+import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.containers.ContainerDead;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDeadLootsGet;
+import noppes.npcs.packets.server.SPacketDeadLootsOpen;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
 import noppes.npcs.util.Util;
 
-import java.util.HashMap;
+import javax.annotation.Nonnull;
+import java.util.Map;
 import java.util.Vector;
 
-public class GuiNPCDeadInventory extends GuiContainerNPCInterface implements ICustomScrollListener,  IScrollData {
+public class GuiNPCDeadInventory extends GuiContainerNPCInterface<ContainerDead>
+        implements ICustomScrollListener, IScrollData {
 
-    protected final ContainerDead container;
-    protected GuiCustomScroll scroll;
+    protected final ContainerDead menu;
+    protected GuiCustomScrollNop scroll;
     protected boolean wait = false;
 
-    public GuiNPCDeadInventory(EntityNPCInterface npc, ContainerDead cont) {
-        super(npc, cont);
+    public GuiNPCDeadInventory(ContainerDead container, Inventory inv, Component ignoredTitle) {
+        super(NoppesUtilServer.getEditingNpc(Minecraft.getInstance().player), container, inv, Component.empty());
         setBackground("largebg.png");
         drawDefaultBackground = false;
-        closeOnEsc = true;
-        title = "";
-        xSize = 177;
-        ySize = cont.size + 152;
+        imageWidth = 177;
+        imageHeight = container.size + 152;
 
-        container = cont;
+        menu = container;
+        Packets.sendServer(new SPacketDeadLootsGet());
     }
 
     @Override
-    public void drawDefaultBackground() {
-        super.drawDefaultBackground();
-        if (npc.isEntityAlive()) { onClosed(); }
-        int size = container.size - 1;
-        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(guiLeft, guiTop + 20, 0.0f);
-        GlStateManager.scale(bgScale, bgScale, bgScale);
-        // background
-        mc.getTextureManager().bindTexture(background);
-        int w = xSize - 4;
-        // up
-        drawTexturedModalRect(0, 0, 0, 0, w, ySize - 34);
-        int sh = 227;
-        int h = 4;
-        if (size > 0) {
-            sh -= size * 18 - size;
-            h += size * 18 - size;
+    public void renderBackground(@Nonnull GuiGraphics graphics) {
+        super.renderBackground(graphics);
+        if (npc.isAlive()) { onClose(); }
+        else {
+            PoseStack matrixPose = graphics.pose();
+            int size = menu.size - 1;
+            matrixPose.pushPose();
+            matrixPose.translate(guiLeft, guiTop + 20, 0.0f);
+            matrixPose.scale(bgScale, bgScale, bgScale);
+            // background
+            int w = imageWidth - 4;
+            // up
+            graphics.blit(background, 0, 0, 0, 0, w, imageHeight - 34);
+            int sh = 227;
+            int h = 4;
+            if (size > 0) {
+                sh -= size * 18 - size;
+                h += size * 18 - size;
+            }
+            // down
+            graphics.blit(background, 0, imageHeight - 34, 0, sh, w, h);
+            // left
+            if (player.isCreative()) {
+                matrixPose.translate(imageWidth - 5, 0.0f, 0.0f);
+                graphics.blit(background, 0, 0, 84, 0, 108, imageHeight - 34);
+                graphics.blit(background, 0, imageHeight - 34, 84, sh, 108, h);
+                matrixPose.translate(5 - imageWidth, 0.0f, 0.0f);
+            } else {
+                graphics.blit(background, w, 0, 189, 0, 3, imageHeight - 34);
+                graphics.blit(background, w, imageHeight - 34, 189, sh, 3, h);
+            }
+            // inventory slots
+            matrixPose.translate(-1.0f, -21.0f, 0.0f);
+            if (size > 0) { matrixPose.translate(0.0f, size * 9.0f, 0.0f); }
+            for (Slot slot : menu.slots) { graphics.blit(GuiBasic.RESOURCE_SLOT, slot.x, slot.y, 0, 0, 18, 18); }
+            matrixPose.popPose();
+            // title
+            MutableComponent textComponent = Component.translatable("inv.loot.0", npc.getName());
+            if (menu.pos > -1) { textComponent.append(Component.translatable("inv.loot.1", menu.playerParent)); }
+            String customTitle = Util.instance.getOldFormattedText(textComponent);
+            graphics.drawString(font, customTitle, (width - font.width(customTitle)) / 2, guiTop + 24, CustomNpcResourceListener.DefaultTextColor);
         }
-        // down
-        drawTexturedModalRect(0, ySize - 34, 0, sh, w, h);
-        // left
-        if (player.capabilities.isCreativeMode) {
-            GlStateManager.translate(xSize - 5, 0.0f, 0.0f);
-            drawTexturedModalRect(0, 0, 84, 0, 108, ySize - 34);
-            drawTexturedModalRect(0, ySize - 34, 84, sh, 108, h);
-            GlStateManager.translate(5 - xSize, 0.0f, 0.0f);
-        } else {
-            drawTexturedModalRect(w, 0, 189, 0, 3, ySize - 34);
-            drawTexturedModalRect(w, ySize - 34, 189, sh, 3, h);
-        }
-        // inventory slots
-        mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-        GlStateManager.translate(-1.0f, -21.0f, 0.0f);
-        if (size > 0) { GlStateManager.translate(0.0f, size * 9.0f, 0.0f); }
-        for (Slot slot : container.inventorySlots) { drawTexturedModalRect(slot.xPos, slot.yPos, 0, 0, 18, 18); }
-        GlStateManager.popMatrix();
-        // title
-        ITextComponent textComponent= new TextComponentTranslation("inv.loot.0", npc.getName());
-        if (container.pos > -1) { textComponent.appendSibling(new TextComponentTranslation("inv.loot.1", container.playerParent)); }
-        String customTitle = textComponent.getFormattedText();
-        mc.fontRenderer.drawString(customTitle, (width - mc.fontRenderer.getStringWidth(customTitle)) / 2, guiTop + 24, CustomNpcResourceListener.DefaultTextColor);
     }
 
     @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        if (wait) { drawWait(); return; }
-        super.drawScreen(mouseX, mouseY, partialTicks);
+    public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        if (wait) { drawWait(graphics); }
+        else { super.render(graphics, mouseX, mouseY, partialTicks); }
     }
 
     @Override
-    public void initPacket() {
-        NoppesUtilPlayer.sendData(EnumPlayerPacket.DropsData);
-    }
-
-    @Override
-    public void initGui() {
-        super.initGui();
-        int size = container.size - 1;
+    public void init() {
+        super.init();
+        int size = menu.size - 1;
         if (size > 0) { guiTop -= size * 9; }
-        if (player.capabilities.isCreativeMode) {
-            if (scroll == null) { (scroll = new GuiCustomScroll(this, 0)).setSize(100, ySize - 50); }
-            scroll.guiLeft = guiLeft + xSize - 1;
-            scroll.guiTop = guiTop + 35;
-            addScroll(scroll);
-            addLabel(new GuiNpcLabel(0, "inv.loot.players", guiLeft + xSize, guiTop + 25));
+        if (player.isCreative()) {
+            if (scroll == null) { scroll = addScroll(0).setSize(100, imageHeight - 50); }
+            add(scroll.setPos(guiLeft + imageWidth - 1, guiTop + 35));
+            addLabel(0, guiLeft + imageWidth, guiTop + 25, "inv.loot.players");
         }
     }
 
     @Override
-    public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
+    public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
         scroll.setList(dataList);
-        scroll.setSelected(container.playerParent);
+        scroll.setSelected(menu.playerParent);
     }
 
     @Override
-    public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-        if (container.playerParent.equals(scroll.getSelected())) { return; }
+    public void scrollClicked(GuiCustomScrollNop scroll) {
+        if (menu.playerParent.getString().equals(scroll.getSelected())) { return; }
         wait = true;
-        NoppesUtilPlayer.sendData(EnumPlayerPacket.DropData, Util.instance.deleteColor(scroll.getSelected()));
+        Packets.sendServer(new SPacketDeadLootsOpen(scroll.getSelected()));
     }
 
     @Override
-    public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
+    public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
     @Override
     public void setSelected(String select) { }

@@ -1,34 +1,24 @@
 package noppes.npcs.api.handler;
 
-import net.minecraft.item.ItemStack;
-import noppes.npcs.api.ParamName;
-import noppes.npcs.api.handler.data.INpcRecipe;
+import java.util.List;
+
+import net.minecraft.world.item.ItemStack;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.handler.data.IRecipe;
 
 @SuppressWarnings("all")
 public interface IRecipeHandler {
 
-	INpcRecipe addRecipe(@ParamName("group") String group, @ParamName("name") String name,
-						 @ParamName("isGlobal") boolean isGlobal, @ParamName("isShaped") boolean isShaped, @ParamName("isKnown") boolean isKnown,
-						 @ParamName("result") ItemStack result, @ParamName("stacks") ItemStack[][] stacks);
+   List<IRecipe> getGlobalList();
 
-	INpcRecipe addRecipe(@ParamName("group") String group, @ParamName("name") String name,
-						 @ParamName("isGlobal") boolean isGlobal, @ParamName("isShaped") boolean isShaped, @ParamName("isKnown") boolean isKnown,
-						 @ParamName("result") ItemStack result, @ParamName("objects") Object... objects);
+   List<IRecipe> getCarpentryList();
 
-	boolean delete(@ParamName("id") int id);
+   IRecipe addRecipe(@ParamName("name") String name, @ParamName("global") boolean global, @ParamName("result") ItemStack result,
+                     @ParamName("objects") Object... objects);
 
-	boolean delete(@ParamName("isGlobal") boolean isGlobal, @ParamName("group") String group, @ParamName("name") String name);
+   IRecipe addRecipe(@ParamName("name") String name, @ParamName("global") boolean global, @ParamName("result") ItemStack result,
+                     @ParamName("width") int width, @ParamName("height") int height, @ParamName("objects") ItemStack... objects);
 
-	INpcRecipe[] getCarpentryData();
-
-	INpcRecipe[] getCarpentryRecipes(@ParamName("group") String group);
-
-	INpcRecipe[] getGlobalData();
-
-	INpcRecipe[] getGlobalRecipes(@ParamName("group") String group);
-
-	INpcRecipe getRecipe(@ParamName("id") int id);
-
-	INpcRecipe getRecipe(@ParamName("isGlobal") boolean isGlobal, @ParamName("group") String group, @ParamName("name") String name);
+   IRecipe delete(@ParamName("id") String id);
 
 }

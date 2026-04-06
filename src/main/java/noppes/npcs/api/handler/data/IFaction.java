@@ -1,52 +1,51 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IPlayer;
 
-@SuppressWarnings("all")
 public interface IFaction {
 
-	void addHostile(@ParamName("factionId") int factionId);
+   int getId();
 
-	boolean getAttackedByMobs();
+   String getName();
 
-	int getColor();
+   int getDefaultPoints();
 
-	int getDefaultPoints();
+   void setDefaultPoints(@ParamName("points") int points);
 
-	String getDescription();
+   int getColor();
 
-	String getFlag();
+   int playerStatus(@ParamName("player") IPlayer<?> player);
 
-	int[] getHostileList();
+   boolean hostileToNpc(@ParamName("npc") ICustomNpc<?> npc);
 
-	int getId();
+   boolean hostileToFaction(@ParamName("factionId") int factionId);
 
-	boolean getIsHidden();
+   int[] getHostileList();
 
-	String getName();
+   void addHostile(@ParamName("id") int id);
 
-	boolean hasHostile(@ParamName("factionId") int id);
+   void removeHostile(@ParamName("id") int id);
 
-	boolean hostileToFaction(@ParamName("factionId") int factionId);
+   boolean hasHostile(@ParamName("id") int id);
 
-	boolean hostileToNpc(@ParamName("npc") ICustomNpc<?> npc);
+   boolean getIsHidden();
 
-	int playerStatus(@ParamName("player") IPlayer<?> player);
+   void setIsHidden(@ParamName("bo") boolean bo);
 
-	void removeHostile(@ParamName("factionId") int factionId);
+   boolean getAttackedByMobs();
 
-	void save();
+   void setAttackedByMobs(@ParamName("bo") boolean bo);
 
-	void setAttackedByMobs(@ParamName("bo") boolean bo);
+   void save();
 
-	void setDefaultPoints(@ParamName("points") int points);
+    // New from Unofficial (BetaZavr)
+    String getDescription();
 
-	void setDescription(@ParamName("description") String description);
+   String getFlag();
 
-	void setFlag(@ParamName("flagPath") String flagPath);
+   void setDescription(@ParamName("description") String description);
 
-	void setIsHidden(@ParamName("bo") boolean bo);
-
+   void setFlag(@ParamName("flagPath") String flagPath);
 }

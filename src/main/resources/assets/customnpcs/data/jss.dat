@@ -1,1 +1,1 @@
-{	"_comment": "Custom Block Slab created by default",	"variants": {		"half=bottom,type=normal": { "model": "{mod_id}:bottom_{file_name}" },		"half=top,type=normal": { "model": "{mod_id}:upper_{file_name}" },		"inventory": { "model": "{mod_id}:bottom_{file_name}" }	}}
+{  "_comment": "Custom Blockstate Slab created by default",  "variants": {    "type=bottom": { "model": "{mod_id}:block/{file_name}_slab" },    "type=double": { "model": "{mod_id}:block/{file_name}" },    "type=top": { "model": "{mod_id}:block/{file_name}_slab_top" }  }}

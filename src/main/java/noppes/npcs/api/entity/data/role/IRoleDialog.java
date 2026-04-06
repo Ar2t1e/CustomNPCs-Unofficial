@@ -1,20 +1,20 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.entity.data.INPCRole;
 
-@SuppressWarnings("all")
-public interface IRoleDialog {
+public interface IRoleDialog extends INPCRole {
 
-	String getDialog();
+   String getDialog();
 
-	String getOption(@ParamName("option") int option);
+   void setDialog(@ParamName("text") String text);
 
-	String getOptionDialog(@ParamName("option") int option);
+   String getOption(@ParamName("option") int option);
 
-	void setDialog(@ParamName("text") String text);
+   void setOption(@ParamName("option") int option, @ParamName("text") String text);
 
-	void setOption(@ParamName("option") int option, @ParamName("text") String text);
+   String getOptionDialog(@ParamName("option") int option);
 
-	void setOptionDialog(@ParamName("option") int option, @ParamName("text") String text);
+   void setOptionDialog(@ParamName("option") int option, @ParamName("text") String text);
 
 }

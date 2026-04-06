@@ -1,71 +1,67 @@
 package noppes.npcs.ai.movement;
 
-import java.util.Random;
+import java.util.EnumSet;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.constants.AiMutex;
-import noppes.npcs.entity.EntityNPCInterface;
+public class EntityAIMoveIndoors extends Goal {
 
-public class EntityAIMoveIndoors extends EntityAIBase {
+   private final PathfinderMob theCreature;
+   private double shelterX;
+   private double shelterY;
+   private double shelterZ;
+   private final Level level;
 
-	private double shelterX;
-	private double shelterY;
-	private double shelterZ;
-	private final EntityNPCInterface npc;
-	private final World world;
+   public EntityAIMoveIndoors(PathfinderMob entity) {
+      this.theCreature = entity;
+      this.level = entity.level();
+      this.setFlags(EnumSet.of(Flag.MOVE));
+   }
 
-	public EntityAIMoveIndoors(EntityNPCInterface npcIn) {
-		npc = npcIn;
-		world = npc.world;
-		setMutexBits(AiMutex.PASSIVE);
-	}
+   public boolean canUse() {
+      if ((!this.theCreature.level().isDay() || this.theCreature.level().isRaining()) && !this.theCreature.level().dimensionType().hasSkyLight()) {
+         BlockPos pos = new BlockPos((int)this.theCreature.getX(), (int)this.theCreature.getBoundingBox().minY, (int)this.theCreature.getZ());
+         if (!this.level.canSeeSky(pos) && this.level.getLightEmission(pos) > 8) {
+            return false;
+         } else {
+            Vec3 var1 = this.findPossibleShelter();
+            if (var1 == null) {
+               return false;
+            } else {
+               this.shelterX = var1.x;
+               this.shelterY = var1.y;
+               this.shelterZ = var1.z;
+               return true;
+            }
+         }
+      } else {
+         return false;
+      }
+   }
 
-	private Vec3d findPossibleShelter() {
-		Random random = npc.getRNG();
-		BlockPos blockpos = new BlockPos(npc.posX, npc.getEntityBoundingBox().minY, npc.posZ);
-		for (int i = 0; i < 10; ++i) {
-			BlockPos blockpos2 = blockpos.add(random.nextInt(20) - 10, random.nextInt(6) - 3, random.nextInt(20) - 10);
-			if (!world.canSeeSky(blockpos2) && npc.getBlockPathWeight(blockpos2) < 0.0f) {
-				return new Vec3d(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ());
-			}
-		}
-		return null;
-	}
+   public boolean canContinueToUse() {
+      return !this.theCreature.getNavigation().isDone();
+   }
 
-	public boolean shouldContinueExecuting() {
-		return !npc.getNavigator().noPath();
-	}
+   public void start() {
+      this.theCreature.getNavigation().moveTo(this.shelterX, this.shelterY, this.shelterZ, 1.0D);
+   }
 
-	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
-		if ((npc.world.isDaytime() && !npc.world.isRaining()) || npc.world.provider.hasSkyLight()) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		BlockPos pos = new BlockPos(npc.posX, npc.getEntityBoundingBox().minY, npc.posZ);
-		if (!world.canSeeSky(pos) && world.getLight(pos) > 8) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		Vec3d var1 = findPossibleShelter();
-		if (var1 == null) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		shelterX = var1.x;
-		shelterY = var1.y;
-		shelterZ = var1.z;
-		CustomNpcs.debugData.end(npc);
-		return true;
-	}
+   private Vec3 findPossibleShelter() {
+      RandomSource random = this.theCreature.getRandom();
+      BlockPos blockpos = new BlockPos((int)this.theCreature.getX(), (int)this.theCreature.getBoundingBox().minY, (int)this.theCreature.getZ());
 
-	public void startExecuting() {
-		CustomNpcs.debugData.start(npc);
-		npc.getNavigator().tryMoveToXYZ(shelterX, shelterY, shelterZ, 1.0);
-		CustomNpcs.debugData.end(npc);
-	}
+      for(int i = 0; i < 10; ++i) {
+         BlockPos blockpos1 = blockpos.offset(random.nextInt(20) - 10, random.nextInt(6) - 3, random.nextInt(20) - 10);
+         if (!this.level.canSeeSky(blockpos1) && this.theCreature.getWalkTargetValue(blockpos1) < 0.0F) {
+            return new Vec3(blockpos1.getX(), blockpos1.getY(), blockpos1.getZ());
+         }
+      }
+
+      return null;
+   }
 }

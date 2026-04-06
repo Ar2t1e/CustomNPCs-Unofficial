@@ -1,86 +1,77 @@
 package noppes.npcs.schematics;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.ITileEntityProvider;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.util.CustomNPCsScheduler;
 
-import java.util.Objects;
-
+// New from Unofficial (BetaZavr)
 public class SchematicBlockData {
 
-	public BlockPos pos;
-	public IBlockState state;
-	public NBTTagCompound nbtTile;
-	public World world;
-	public int meta = 0, id = 0;
+    public BlockPos pos;
+    public BlockState state;
+    public CompoundTag nbtTile;
+    public Level level;
+    public int id = 0;
 
-	public SchematicBlockData(World world, IBlockState state, BlockPos pos) {
-		this.world = world;
-		this.pos = pos;
-		this.state = state;
-		this.meta = this.state.getBlock().getMetaFromState(state);
-		this.nbtTile = null;
-		if (state.getBlock() instanceof ITileEntityProvider && world != null && world.getTileEntity(pos) != null) {
-			this.nbtTile = new NBTTagCompound();
-			Objects.requireNonNull(world.getTileEntity(pos)).writeToNBT(this.nbtTile);
-		}
-	}
+    public SchematicBlockData(Level levelIn, BlockState stateIn, BlockPos posIn) {
+        level = levelIn;
+        pos = posIn;
+        state = stateIn;
+        nbtTile = null;
+        if (stateIn.getBlock() instanceof EntityBlock && level != null) {
+            BlockEntity tile = level.getBlockEntity(posIn);
+            if (tile != null) { nbtTile = tile.saveWithFullMetadata(); }
+        }
+    }
 
+    public SchematicBlockData(Level levelIn, ItemStack stack) {
+        level = levelIn;
+        pos = null;
+        Block b = Block.byItem(stack.getItem());
+        state = b.defaultBlockState();
+        if (stack.getDamageValue() < b.getStateDefinition().getPossibleStates().size()) {
+            state = b.getStateForPlacement(new BlockPlaceContext(level, null, InteractionHand.MAIN_HAND, stack,
+                    new BlockHitResult(new Vec3(0.0f, 0.0f, 0.0f), Direction.DOWN, BlockPos.ZERO, false)));
+        }
+        nbtTile = null;
+        if (stack.hasTag() && stack.getTag() != null) { nbtTile = stack.getTag().copy(); }
+    }
 
-	public SchematicBlockData(World world, ItemStack stack) {
-		this.world = world;
-		this.pos = null;
-		Block b = Block.getBlockFromItem(stack.getItem());
-		this.state = b.getDefaultState();
-		if (stack.getItemDamage() < b.getBlockState().getValidStates().size()) {
-			this.state = b.getStateFromMeta(stack.getItemDamage());
-		}
-		this.nbtTile = null;
-		if (stack.hasTagCompound()) {
-            assert stack.getTagCompound() != null;
-            this.nbtTile = stack.getTagCompound().copy();
-		}
-	}
+    public void set(BlockPos pos) {
+        if (level == null || pos == null || state == null) { return; }
+        level.setBlock(pos, state, 2);
+        if (nbtTile != null) {
+            nbtTile.putInt("x", pos.getX());
+            nbtTile.putInt("y", pos.getY());
+            nbtTile.putInt("z", pos.getZ());
+            CustomNPCsScheduler.runTack(() -> {
+                BlockEntity tile = level.getBlockEntity(pos);
+                if (tile == null && state.getBlock() instanceof EntityBlock entityBlock) { tile = entityBlock.newBlockEntity(pos, state); }
+                if (tile != null) {
+                    tile.load(nbtTile);
+                    nbtTile.putInt("x", pos.getX());
+                    nbtTile.putInt("y", pos.getY());
+                    nbtTile.putInt("z", pos.getZ());
+                }
+            }, 200);
+        }
+    }
 
-	public void set(BlockPos pos) {
-		if (this.world == null || pos == null || this.state == null) {
-			return;
-		}
-		this.world.setBlockState(pos, this.state);
-		if (this.nbtTile != null) {
-			this.nbtTile.setInteger("x", pos.getX());
-			this.nbtTile.setInteger("y", pos.getY());
-			this.nbtTile.setInteger("z", pos.getZ());
-			CustomNPCsScheduler.runTack(() -> {
-				TileEntity tile = this.world.getTileEntity(this.pos);
-				if (tile == null) {
-					tile = this.state.getBlock().createTileEntity(this.world, this.state);
-				}
-                assert tile != null;
-                tile.readFromNBT(this.nbtTile);
-				this.nbtTile.setInteger("x", this.pos.getX());
-				this.nbtTile.setInteger("y", this.pos.getY());
-				this.nbtTile.setInteger("z", this.pos.getZ());
-			}, 200);
-		}
-	}
-
-	public void setMeta(int meta) {
-		this.meta = meta;
-		if (meta < this.state.getBlock().getBlockState().getValidStates().size()) {
-			this.state = this.state.getBlock().getBlockState().getValidStates().get(meta);
-		}
-	}
-
-	public String toString() {
-        return "SchematicBlockData [ ID:" + this.id + "; state:" + this.state + "," + "; pos:" + this.pos
-				+ "; meta:" + this.meta + "; hasNbt:" + (this.nbtTile != null) + " ]";
-	}
+    @Override
+    public String toString() {
+        return "SchematicBlockData [ ID:" + id + "; state:" + state + "," + "; pos:" + pos
+                + "; hasNbt:" + (nbtTile != null) + " ]";
+    }
 
 }

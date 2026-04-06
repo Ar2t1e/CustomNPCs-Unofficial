@@ -1,43 +1,44 @@
 package noppes.npcs.api.entity.data;
 
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
+import java.util.List;
+
 public interface IMiniMapData {
 
-	int getColor();
+    int getColor();
 
-	int[] getDimensions();
+    List<String> getDimensions();
 
-	String getIcon();
+    String getIcon();
 
-	int getId();
+    int getId();
 
-	String getName();
+    String getName();
 
-	IPos getPos();
+    IPos getPos();
 
-	String[] getSpecificKeys();
+    List<String> getSpecificKeys();
 
-	String getSpecificValue(@ParamName("key") String key);
+    String getSpecificValue(@ParamName("key") String key);
 
-	String getType();
+    String getType();
 
-	boolean isEnable();
+    boolean isEnable();
 
-	void setColor(@ParamName("color") int color);
+    void setColor(@ParamName("color") int color);
 
-	void setDimensions(@ParamName("dims") int[] dims);
+    void setDimensions(@ParamName("dimensions") String ... dimensions);
 
-	void setIcon(@ParamName("icon") String icon);
+    void setIcon(@ParamName("icon") String icon);
 
-	void setName(@ParamName("name") String name);
+    void setName(@ParamName("name") String name);
 
-	void setPos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+    void setPos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void setPos(@ParamName("pos") IPos pos);
+    void setPos(@ParamName("pos") IPos pos);
 
-	void setType(@ParamName("type") String type);
+    void setType(@ParamName("type") String type);
 
 }

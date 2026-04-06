@@ -1,66 +1,59 @@
 package noppes.npcs.ai.movement;
 
+import java.util.EnumSet;
 import java.util.List;
-
-import net.minecraft.entity.ai.EntityAIBase;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.constants.AiMutex;
+import net.minecraft.world.entity.ai.goal.Goal;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class EntityAIMovingPath extends EntityAIBase {
-	
-	private final EntityNPCInterface npc;
-	private int[] pos;
-	private int retries;
+public class EntityAIMovingPath extends Goal {
 
-	public EntityAIMovingPath(EntityNPCInterface iNpc) {
-		this.retries = 0;
-		this.npc = iNpc;
-		this.setMutexBits(AiMutex.PASSIVE);
-	}
+   private final EntityNPCInterface npc;
+   private int[] pos;
+   private int retries = 0;
 
-	public boolean shouldContinueExecuting() {
-		if ((this.npc.isAttacking() && this.npc.ais.onAttack != 3) || this.npc.isInteracting()) {
-			this.npc.ais.decreaseMovingPath();
-			return false;
-		}
-		if (!this.npc.getNavigator().noPath()) {
-			return true;
-		}
-		this.npc.getNavigator().clearPath();
-		if (this.npc.getDistanceSq(this.pos[0], this.pos[1], this.pos[2]) < 3.0) {
-			return false;
-		}
-		if (this.retries++ < 3) {
-			this.startExecuting();
-			return true;
-		}
-		return false;
-	}
+   public EntityAIMovingPath(EntityNPCInterface iNpc) {
+      this.npc = iNpc;
+      this.setFlags(EnumSet.of(Flag.MOVE));
+   }
 
-	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
-		if ((this.npc.isAttacking() && this.npc.ais.onAttack != 3) || this.npc.isInteracting()
-				|| (this.npc.getRNG().nextInt(40) != 0 && this.npc.ais.movingPause)
-				|| !this.npc.getNavigator().noPath()) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		List<int[]> list = this.npc.ais.getMovingPath();
-		if (list.size() < 2) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		this.npc.ais.incrementMovingPath();
-		this.pos = this.npc.ais.getCurrentMovingPath();
-		this.retries = 0;
-		CustomNpcs.debugData.end(npc);
-		return true;
-	}
+   public boolean canUse() {
+      if (!this.npc.isAttacking() && !this.npc.isInteracting() && (this.npc.getRandom().nextInt(40) == 0 || !this.npc.ais.movingPause) && this.npc.getNavigation().isDone()) {
+         List<int[]> list = this.npc.ais.getMovingPath();
+         if (list.size() < 2) {
+            return false;
+         } else {
+            this.npc.ais.incrementMovingPath();
+            this.pos = this.npc.ais.getCurrentMovingPath();
+            this.retries = 0;
+            return true;
+         }
+      } else {
+         return false;
+      }
+   }
 
-	public void startExecuting() {
-		CustomNpcs.debugData.start(npc);
-		npc.getNavigator().tryMoveToXYZ(pos[0] + 0.5, pos[1], pos[2] + 0.5, 1.0d);
-		CustomNpcs.debugData.end(npc);
-	}
+   public boolean canContinueToUse() {
+      if (!this.npc.isAttacking() && !this.npc.isInteracting()) {
+         if (this.npc.getNavigation().isDone()) {
+            this.npc.getNavigation().stop();
+            if (this.npc.distanceToSqr(this.pos[0], this.pos[1], this.pos[2]) < 3.0D) {
+               return false;
+            } else if (this.retries++ < 3) {
+               this.start();
+               return true;
+            } else {
+               return false;
+            }
+         } else {
+            return true;
+         }
+      } else {
+         this.npc.ais.decreaseMovingPath();
+         return false;
+      }
+   }
+
+   public void start() {
+      this.npc.getNavigation().moveTo((double)this.pos[0] + 0.5D, this.pos[1], (double)this.pos[2] + 0.5D, 1.0D);
+   }
 }

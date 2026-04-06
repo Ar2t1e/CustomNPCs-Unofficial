@@ -1,0 +1,41 @@
+{
+	"name": "Mushroom hat",
+	"parent": "moreplayermodels:parts/hats/hat_mushroom.json",
+	"render_type": "bedrock",
+	"hidden_parts": [],
+	"render_data" : {
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.steve",
+				"texture_width": 128,
+				"texture_height": 128,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "hat",
+					"pivot": [0, 30, 0],
+					"rotation": [-5, 0, 0],
+					"cubes": [
+						{"origin": [-9, 30, -9], "size": [18, 3, 18], "uv": [0, 0]},
+						{"origin": [-5, 33, -5], "size": [10, 2, 10], "uv": [0, 21]}
+					]
+				}
+			]
+		}
+	]
+	},
+	"texture": "moreplayermodels:textures/parts/hats/mushroom/mushroom2.png",
+	"menu": "part.hats",
+	"body_part": "head",
+	"preview_rotation": 315,
+	"translate": [0, 12, 0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, -12, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Marvernator"
+}

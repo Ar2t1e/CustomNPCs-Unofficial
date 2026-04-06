@@ -1,107 +1,107 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface INPCRanged {
 
-	boolean getAccelerate();
+   int getStrength();
 
-	int getAccuracy();
+   void setStrength(@ParamName("strength") int strength);
 
-	int getBurst();
+   int getSpeed();
 
-	int getBurstDelay();
+   void setSpeed(@ParamName("speed") int speed);
 
-	int getDelayMax();
+   int getBurst();
 
-	int getDelayMin();
+   void setBurst(@ParamName("count") int count);
 
-	int getDelayRNG();
+   int getBurstDelay();
 
-	int getEffectStrength();
+   void setBurstDelay(@ParamName("delay") int delay);
 
-	int getEffectTime();
+   int getKnockback();
 
-	int getEffectType();
+   void setKnockback(@ParamName("punch") int punch);
 
-	int getExplodeSize();
+   int getSize();
 
-	int getFireType();
+   void setSize(@ParamName("size") int size);
 
-	boolean getGlows();
+   boolean getRender3D();
 
-	boolean getHasAimAnimation();
+   void setRender3D(@ParamName("render3d") boolean render3d);
 
-	boolean getHasGravity();
+   boolean getSpins();
 
-	int getKnockback();
+   void setSpins(@ParamName("spins") boolean spins);
 
-	int getMeleeRange();
+   boolean getSticks();
 
-	int getParticle();
+   void setSticks(@ParamName("sticks") boolean sticks);
 
-	double getRange();
+   boolean getHasGravity();
 
-	boolean getRender3D();
+   void setHasGravity(@ParamName("hasGravity") boolean hasGravity);
 
-	int getShotCount();
+   boolean getAccelerate();
 
-	int getSize();
+   void setAccelerate(@ParamName("accelerate") boolean accelerate);
 
-	String getSound(@ParamName("type") int type);
+   int getExplodeSize();
 
-	int getSpeed();
+   void setExplodeSize(@ParamName("size") int size);
 
-	boolean getSpins();
+   int getEffectType();
 
-	boolean getSticks();
+   int getEffectTime();
 
-	int getStrength();
+   int getEffectStrength();
 
-	void setAccelerate(@ParamName("accelerate") boolean accelerate);
+   void setEffect(@ParamName("type") int type, @ParamName("strength") int strength, @ParamName("time") int time);
 
-	void setAccuracy(@ParamName("accuracy") int accuracy);
+   boolean getGlows();
 
-	void setBurst(@ParamName("count") int count);
+   void setGlows(@ParamName("glows") boolean glows);
 
-	void setBurstDelay(@ParamName("delay") int delay);
+   int getParticle();
 
-	void setDelay(@ParamName("min") int min, @ParamName("max") int max);
+   void setParticle(@ParamName("type") int type);
 
-	void setEffect(@ParamName("type") int type, @ParamName("strength") int strength, @ParamName("time") int time);
+   String getSound(@ParamName("type") int type);
 
-	void setExplodeSize(@ParamName("size") int size);
+   void setSound(@ParamName("type") int type, @ParamName("sound") String sound);
 
-	void setFireType(@ParamName("type") int type);
+   int getShotCount();
 
-	void setGlows(@ParamName("glows") boolean glows);
+   void setShotCount(@ParamName("count") int count);
 
-	void setHasAimAnimation(@ParamName("aim") boolean aim);
+   boolean getHasAimAnimation();
 
-	void setHasGravity(@ParamName("hasGravity") boolean hasGravity);
+   void setHasAimAnimation(@ParamName("aim") boolean aim);
 
-	void setKnockback(@ParamName("punch") int punch);
+   int getAccuracy();
 
-	void setMeleeRange(@ParamName("range") int range);
+   void setAccuracy(@ParamName("accuracy") int accuracy);
 
-	void setParticle(@ParamName("type") int type);
+   float getRange();
 
-	void setRange(@ParamName("range") double range);
+   void setRange(@ParamName("range") float range);
 
-	void setRender3D(@ParamName("render3d") boolean render3d);
+   int getDelayMin();
 
-	void setShotCount(@ParamName("count") int count);
+   int getDelayMax();
 
-	void setSize(@ParamName("size") int size);
+   int getDelayRNG();
 
-	void setSound(@ParamName("type") int type, @ParamName("sound") String sound);
+   void setDelay(@ParamName("min") int min, @ParamName("max") int max);
 
-	void setSpeed(@ParamName("speed") int speed);
+   int getFireType();
 
-	void setSpins(@ParamName("spins") boolean spins);
+   void setFireType(@ParamName("type") int type);
 
-	void setSticks(@ParamName("sticks") boolean sticks);
+   int getMeleeRange();
 
-	void setStrength(@ParamName("strength") int strength);
+   void setMeleeRange(@ParamName("range") int range);
 
 }

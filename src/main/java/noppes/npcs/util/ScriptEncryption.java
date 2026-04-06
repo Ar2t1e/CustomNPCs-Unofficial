@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.attribute.UserPrincipal;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
@@ -13,10 +14,10 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import noppes.npcs.shared.common.util.LogWriter;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
 import noppes.npcs.controllers.IScriptHandler;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
@@ -26,7 +27,7 @@ public class ScriptEncryption {
 
     private final static int SALT_LENGTH = 8; // Salt length (in bytes)
 
-    public static boolean encryptScript(File outputFile, String fileName, String scriptCode, boolean onlyTab, ScriptContainer sContainer, IScriptHandler handler) {
+    public static boolean encryptScript(File outputFile, String fileName, String scriptCode, boolean onlyTab,ScriptContainer sContainer, IScriptHandler handler) {
         if (handler instanceof ClientScriptData) {
             LogWriter.error("Error trying to encrypt script code: Trying to encrypt script for client: " + outputFile.getAbsolutePath());
             return false;
@@ -36,7 +37,8 @@ public class ScriptEncryption {
         try {
             secretKey = generateSecretKey();
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        }  catch (Exception e) {
+        }
+        catch (Exception e) {
             LogWriter.error("Error trying to encrypt script code: Failed to create key-password for file: " + outputFile.getAbsolutePath(), e);
             return false;
         }

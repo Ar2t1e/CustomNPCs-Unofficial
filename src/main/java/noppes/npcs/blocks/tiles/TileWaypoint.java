@@ -1,135 +1,128 @@
 package noppes.npcs.blocks.tiles;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-import net.minecraft.util.ITickable;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.Server;
-import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.entity.IPlayer;
-import noppes.npcs.api.handler.data.IQuestObjective;
-import noppes.npcs.constants.EnumPacketClient;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.QuestData;
-import noppes.npcs.quests.QuestInterface;
-import noppes.npcs.quests.QuestObjective;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketAchievement;
+import noppes.npcs.client.gui.util.quests.QuestInterface;
+import noppes.npcs.client.gui.util.quests.QuestObjective;
+import noppes.npcs.util.CustomNPCsScheduler;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class TileWaypoint extends TileNpcEntity {
 
-public class TileWaypoint
-extends TileNpcEntity
-implements ITickable {
+   public String name = "";
+   private int ticks = 10;
+   private final List<Player> recentlyChecked = new ArrayList<>();
+   private List<Player> toCheck;
+   public int range = 10;
 
-	public String name = "";
-	public int range = 10;
-	private List<EntityPlayer> recentlyChecked = new ArrayList<>();
-	private int ticks = 10;
+   public TileWaypoint(BlockPos pos, BlockState state) {
+      super(CustomBlocks.tile_waypoint, pos, state);
+   }
 
-	private List<EntityPlayer> getPlayerList(int x, int y, int z) {
-		List<EntityPlayer> list = new ArrayList<>();
-		try {
-			list = world.getEntitiesWithinAABB(EntityPlayer.class,
-					new AxisAlignedBB(pos, pos.add(1, 1, 1)).grow(x, y, z));
-		}
-		catch (Exception ignored) { }
-		return list;
-	}
+   public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) { handleUpdateTag(Objects.requireNonNull(pkt.getTag())); }
 
-	public @Nonnull NBTTagCompound getUpdateTag() {
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("x", pos.getX());
-		compound.setInteger("y", pos.getY());
-		compound.setInteger("z", pos.getZ());
-		compound.setInteger("Range", range);
-		return compound;
-	}
+   public void handleUpdateTag(CompoundTag compound) {
+      range = compound.getInt("range");
+   }
 
-	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
-		range = pkt.getNbtCompound().getInteger("Range");
-	}
+   public ClientboundBlockEntityDataPacket getUpdatePacket() {
+      return ClientboundBlockEntityDataPacket.create(this);
+   }
 
-	@Override
-	public void readFromNBT(@Nonnull NBTTagCompound compound) {
-		super.readFromNBT(compound);
-		name = compound.getString("LocationName");
-		range = Math.max(2, compound.getInteger("LocationRange"));
-	}
+   public @NotNull CompoundTag getUpdateTag() {
+      CompoundTag compound = new CompoundTag();
+      compound.putInt("x", worldPosition.getX());
+      compound.putInt("y", worldPosition.getY());
+      compound.putInt("z", worldPosition.getZ());
+      compound.putInt("range", range);
+      return compound;
+   }
 
-	public void update() {
-		if (world.isRemote || name.isEmpty()) { return; }
-		--ticks;
-		if (ticks > 0) { return; }
-		ticks = 10;
-		List<EntityPlayer> around = getPlayerList(range, range, range);
-		if (around.isEmpty()) {
-			recentlyChecked = new ArrayList<>();
-			return;
-		}
-        List<EntityPlayer> toCheck;
-        (toCheck = around).removeAll(recentlyChecked);
-		int rng = range + (Math.min(range, 10));
-		List<EntityPlayer> listMax = getPlayerList(rng, rng, rng);
-		recentlyChecked.retainAll(listMax);
-		toCheck.addAll(recentlyChecked);
-		if (toCheck.isEmpty()) { return; }
-		for (EntityPlayer player : toCheck) {
-			PlayerData pdata = PlayerData.get(player);
-			PlayerQuestData questData = pdata.questData;
-			for (QuestData data : questData.activeQuests.values()) {
-				if (data.quest.step == 2 && data.quest.questInterface.isCompleted(player)) {
-					continue;
-				}
-				boolean bo = data.quest.step == 1;
-				for (IQuestObjective obj : data.quest
-						.getObjectives((IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player))) {
-					if (data.quest.step == 1 && !bo) {
-						break;
-					}
-					bo = obj.isCompleted();
-					if (((QuestObjective) obj).getEnumType() != EnumQuestTask.LOCATION || !obj.getTargetName().equals(name)) {
-						continue;
-					}
+   public static void tick(Level level, BlockPos ignoredPos, BlockState ignoredState, TileWaypoint tile) {
+      if (level.isClientSide || tile.name.isEmpty()) { return; }
+      --tile.ticks;
+      if (tile.ticks > 0) { return; }
+      tile.ticks = 10;
 
-					QuestInterface quest = data.quest.questInterface;
-					if (!quest.setFound(data, name)) {
-						continue;
-					}
-					if (data.quest.showProgressInWindow) {
-						NBTTagCompound compound = new NBTTagCompound();
-						compound.setInteger("QuestID", data.quest.id);
-						compound.setString("Type", "location");
-						compound.setIntArray("Progress", new int[] { 1, 1 });
-						compound.setString("TargetName", obj.getTargetName());
-						compound.setInteger("MessageType", 0);
-						Server.sendData((EntityPlayerMP) player, EnumPacketClient.MESSAGE_DATA, compound);
-					}
-					if (data.quest.showProgressInChat) {
-						player.sendMessage(new TextComponentTranslation("quest.message.location.1",
-								new TextComponentTranslation(obj.getTargetName()).getFormattedText(),
-								data.quest.getTitle()));
-					}
-					questData.checkQuestCompletion(player, data);
-					questData.updateClient = true;
-				}
-			}
-		}
-	}
+      tile.toCheck = tile.getPlayerList(tile.range, tile.range, tile.range);
+      tile.toCheck.removeAll(tile.recentlyChecked);
+      List<Player> listMax = tile.getPlayerList(tile.range + 10, tile.range + 10, tile.range + 10);
+      tile.recentlyChecked.retainAll(listMax);
+      tile.recentlyChecked.addAll(tile.toCheck);
+      if (tile.toCheck.isEmpty()) { return;}
 
-	@Nonnull
-	@Override
-	public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-		if (!name.isEmpty()) { compound.setString("LocationName", name); }
-		compound.setInteger("LocationRange", range);
-		return super.writeToNBT(compound);
-	}
+      for (Player player : tile.toCheck) {
+         PlayerData pdata = PlayerData.get(player);
+         PlayerQuestData questData = pdata.questData;
+         CustomNPCsScheduler.runTack(() -> {
+            for (QuestData data : questData.activeQuests.values()) {
+               if (data.quest.step == 2 && data.quest.questInterface.isCompleted(player)) { continue; }
+               boolean bo = data.quest.step == 1;
+               for (QuestObjective questObjective : data.quest.getObjectives(player)) {
+                  if (data.quest.step == 1 && !bo) { break; }
+                  // dimension
+                  if (!questObjective.dimension.toString().equals("minecraft:any") && !player.level().dimension().location().equals(questObjective.dimension)) { continue; }
+                  bo = questObjective.isCompleted();
+                  if (questObjective.getEnumType() != EnumQuestTask.LOCATION || !questObjective.getTargetName().equals(tile.name)) { continue; }
+
+                  QuestInterface quest = data.quest.questInterface;
+                  if (!quest.setFound(data, tile.name)) { continue; }
+                  if (data.quest.showProgressInWindow) {
+                     CompoundTag compound = new CompoundTag();
+                     compound.putInt("QuestID", data.quest.id);
+                     compound.putString("Type", "location");
+                     compound.putIntArray("Progress", new int[]{1, 1});
+                     compound.putString("TargetName", questObjective.getTargetName());
+                     Packets.send((ServerPlayer) player, new PacketAchievement(Component.empty(), Component.empty(), 0, new CompoundTag()));
+                  }
+                  if (data.quest.showProgressInChat) {
+                     player.sendSystemMessage(Component.translatable("quest.message.location.1",
+                             Component.translatable(questObjective.getTargetName()).getString(),
+                             data.quest.getTitle()));
+                  }
+                  questData.checkQuestCompletion(player, data);
+                  questData.updateClient = true;
+               }
+            }
+         });
+      }
+   }
+
+   private List<Player> getPlayerList(int x, int y, int z) {
+      if (level == null) { return Collections.emptyList(); }
+      return level.getEntitiesOfClass(Player.class, (new AABB(this.worldPosition, this.worldPosition.offset(1, 1, 1))).inflate(x, y, z));
+   }
+
+   public void load(@NotNull CompoundTag compound) {
+      super.load(compound);
+      name = compound.getString("LocationName");
+      range = Math.max(2, compound.getInt("LocationRange"));
+   }
+
+   public void saveAdditional(@NotNull CompoundTag compound) {
+      if (!name.isEmpty()) { compound.putString("LocationName", name); }
+      compound.putInt("LocationRange", range);
+      super.saveAdditional(compound);
+   }
+
 }

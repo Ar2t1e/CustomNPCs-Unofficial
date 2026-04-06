@@ -1,38 +1,36 @@
 package noppes.npcs.entity;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistries;
+import noppes.npcs.CustomEntities;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.model.part.ModelData;
 
 public class EntityNpcPony extends EntityNPCInterface {
-	public ResourceLocation checked;
-	public boolean isFlying;
-	public boolean isPegasus;
-	public boolean isUnicorn;
 
-	public EntityNpcPony(World world) {
-		super(world);
-		this.isPegasus = false;
-		this.isUnicorn = false;
-		this.isFlying = false;
-		this.checked = null;
-		this.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/ponies/MineLP Derpy Hooves.png");
-	}
+   public boolean isPegasus = false;
+   public boolean isUnicorn = false;
+   public ResourceLocation checked = null;
 
-	@Override
-	public void onUpdate() {
-		this.setNoAI(this.isDead = true);
-		if (!this.world.isRemote) {
-			NBTTagCompound compound = new NBTTagCompound();
-			this.writeToNBT(compound);
-			EntityCustomNpc npc = new EntityCustomNpc(this.world);
-			npc.readFromNBT(compound);
-			ModelData data = npc.modelData;
-			data.setEntityClass(EntityNpcPony.class);
-			this.world.spawnEntity(npc);
-		}
-		super.onUpdate();
-	}
+   public EntityNpcPony(EntityType<? extends EntityNPCInterface> type, Level world) {
+      super(type, world);
+      this.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/ponies/minelpderpyhooves.png");
+   }
+
+   public void tick() {
+      this.discard();
+      this.setNoAi(true);
+      if (!this.level().isClientSide) {
+         CompoundTag compound = new CompoundTag();
+         this.addAdditionalSaveData(compound);
+         EntityCustomNpc npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, this.level());
+         npc.readAdditionalSaveData(compound);
+         npc.modelData.setEntity(ForgeRegistries.ENTITY_TYPES.getKey(CustomEntities.entityNpcPony));
+         this.level().addFreshEntity(npc);
+      }
+      super.tick();
+   }
+
 }

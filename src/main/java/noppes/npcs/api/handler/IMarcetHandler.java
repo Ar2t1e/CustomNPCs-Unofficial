@@ -1,28 +1,28 @@
 package noppes.npcs.api.handler;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.IDeal;
 import noppes.npcs.api.handler.data.IMarcet;
 
 @SuppressWarnings("all")
 public interface IMarcetHandler {
 
-	IDeal addDeal();
+    IDeal addDeal();
 
-	IMarcet addMarcet();
+    IMarcet addMarcet();
 
-	IDeal getDeal(@ParamName("dealId") int dealId);
+    IDeal getDeal(@ParamName("dealId") int dealID);
 
-	int[] getDealIDs();
+    int[] getDealIDs();
 
-	IMarcet getMarcet(@ParamName("marcetId") int marcetId);
+    IMarcet getMarcet(@ParamName("marcetId") int marcetId);
 
-	IMarcet getMarcet(@ParamName("name") String name);
+    IMarcet getMarcet(@ParamName("name") String name);
 
-	int[] getMarketIDs();
+    int[] getMarketIDs();
 
-	void removeDeal(@ParamName("dealId") int dealId);
+    void removeDeal(@ParamName("dealId") int dealId);
 
-	void removeMarcet(@ParamName("marcetId") int marcetId);
+    void removeMarcet(@ParamName("marcetId") int marcetId);
 
 }

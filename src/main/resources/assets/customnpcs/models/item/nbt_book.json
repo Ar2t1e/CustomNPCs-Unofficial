@@ -1,6 +1,3 @@
 {
-    "parent": "minecraft:item/handheld",
-    "textures": {
-        "layer0": "minecraft:items/book_written"
-    }
+    "parent": "minecraft:item/written_book"
 }

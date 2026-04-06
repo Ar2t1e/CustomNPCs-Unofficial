@@ -1,75 +1,102 @@
 package noppes.npcs.client.renderer.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.block.state.IBlockState;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.blocks.BlockNpcDoorInterface;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraftforge.client.model.data.ModelData;
+import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomItems;
 import noppes.npcs.blocks.tiles.TileDoor;
 
-import javax.annotation.Nullable;
+import java.util.Random;
 
-public class BlockDoorRenderer<T extends TileEntity> extends TileEntitySpecialRenderer<T> {
+public class BlockDoorRenderer extends BlockRendererInterface<TileDoor> {
+	
+	private static Random random = new Random();
 
-	private boolean overrideModel() {
-		ItemStack held = Minecraft.getMinecraft().player.getHeldItemMainhand();
-		return held.getItem() == CustomRegisters.wand || held.getItem() == CustomRegisters.scripter || held.getItem() == CustomRegisters.scriptedDoorTool;
-	}
-
-	@SuppressWarnings("deprecation")
-	public void render(@Nullable TileEntity te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
-		if (te == null) { return; }
-		TileDoor tile = (TileDoor) te;
-		IBlockState original = CustomRegisters.scriptedDoor.getStateFromMeta(tile.getBlockMetadata());
-		BlockPos lowerPos = tile.getPos();
-		if (original.getValue(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER) {
-			lowerPos = tile.getPos().down();
-		}
-		BlockPos upperPos = lowerPos.up();
-		TileDoor lowerTile = (TileDoor) this.getWorld().getTileEntity(lowerPos);
-		TileDoor upperTile = (TileDoor) this.getWorld().getTileEntity(upperPos);
-		if (lowerTile == null || upperTile == null) {
-			return;
-		}
-		IBlockState lowerState = CustomRegisters.scriptedDoor.getStateFromMeta(lowerTile.getBlockMetadata());
-		IBlockState upperState = CustomRegisters.scriptedDoor.getStateFromMeta(upperTile.getBlockMetadata());
-		int meta = BlockNpcDoorInterface.combineMetadata(this.getWorld(), tile.getPos());
-		Block b = lowerTile.blockModel;
-		if (this.overrideModel()) {
-			b = CustomRegisters.scriptedDoor;
-		}
-		IBlockState state = b.getStateFromMeta(meta);
-		state = state.withProperty(BlockDoor.HALF, original.getValue(BlockDoor.HALF));
-		state = state.withProperty(BlockDoor.FACING, lowerState.getValue(BlockDoor.FACING));
-		state = state.withProperty(BlockDoor.OPEN, lowerState.getValue(BlockDoor.OPEN));
-		state = state.withProperty(BlockDoor.HINGE, upperState.getValue(BlockDoor.HINGE));
-		state = state.withProperty(BlockDoor.POWERED, upperState.getValue(BlockDoor.POWERED));
-		GlStateManager.pushMatrix();
-		RenderHelper.enableStandardItemLighting();
-		GlStateManager.enableAlpha();
-		GlStateManager.disableBlend();
-		GlStateManager.translate(x + 0.5, y, z + 0.5);
-		GlStateManager.rotate(-90.0f, 0.0f, 1.0f, 0.0f);
-		this.renderBlock(state);
-		GlStateManager.disableAlpha();
-		GlStateManager.popMatrix();
-	}
-
-	private void renderBlock(IBlockState state) {
-		this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-		GlStateManager.translate(-0.5f, 0.0f, 0.5f);
-		BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-		IBakedModel ibakedmodel = dispatcher.getBlockModelShapes().getModelForState(state);
-        dispatcher.getBlockModelRenderer().renderModelBrightness(ibakedmodel, state, 1.0f, true);
+    public BlockDoorRenderer(BlockEntityRendererProvider.Context dispatcher) {
+        super(dispatcher);
     }
+
+    @Override
+    public void render(TileDoor tile, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int light, int overlay) {
+        BlockState original = tile.getLevel().getBlockState(tile.getBlockPos());
+        if(original.isAir()){
+            return;
+        }
+
+        BlockPos lowerPos = tile.getBlockPos();
+
+        if(original.getValue(DoorBlock.HALF) == DoubleBlockHalf.UPPER){
+            lowerPos = tile.getBlockPos().below();
+        }
+
+        BlockPos upperPos = lowerPos.above();
+
+        TileDoor lowerTile = (TileDoor) tile.getLevel().getBlockEntity(lowerPos);
+        TileDoor upperTile = (TileDoor) tile.getLevel().getBlockEntity(upperPos);
+
+        if(lowerTile==null || upperTile==null)
+            return;
+
+        BlockState lowerState = lowerTile.getBlockState();
+        BlockState upperState = upperTile.getBlockState();
+
+
+        Block b = lowerTile.blockModel;
+
+        if (overrideModel()) {
+            b = CustomBlocks.scripted_door;
+        }
+        BlockState state = b.defaultBlockState();
+
+        state = state.setValue(DoorBlock.HALF, original.getValue(DoorBlock.HALF));
+        state = state.setValue(DoorBlock.FACING, lowerState.getValue(DoorBlock.FACING));
+        state = state.setValue(DoorBlock.OPEN, lowerState.getValue(DoorBlock.OPEN));
+        state = state.setValue(DoorBlock.HINGE, upperState.getValue(DoorBlock.HINGE));
+        state = state.setValue(DoorBlock.POWERED, upperState.getValue(DoorBlock.POWERED));
+
+        matrixStack.pushPose();
+
+        //RenderHelper.enableStandardItemLighting();
+        //matrixStack.translate(0.5, 0, 0.5);
+
+        //matrixStack.mulPose(Vector3f.YP.rotationDegrees(-90));
+        renderBlock(matrixStack, buffer, tile, lowerState.getBlock(), state, light, overlay);
+
+        matrixStack.popPose();
+    }
+
+	
+	private void renderBlock(PoseStack matrixStack, MultiBufferSource buffer, TileDoor tile, Block b, BlockState state, int light, int overlay){
+        //this.bindForSetup(TextureAtlas.LOCATION_BLOCKS);
+        //RenderSystem.translatef(-0.5F, -0, 0.5F);
+        BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+        BakedModel ibakedmodel = dispatcher.getBlockModel(state);
+        if(ibakedmodel == null){
+            dispatcher.renderSingleBlock(state, matrixStack, buffer, light, overlay);
+        }
+        else{
+            dispatcher.getModelRenderer().renderModel(matrixStack.last(), buffer.getBuffer(ItemBlockRenderTypes.getRenderType(state, false)), state, ibakedmodel, 1, 1, 1, light, overlay, ModelData.EMPTY, ItemBlockRenderTypes.getRenderType(state, false));
+        }
+	}
+	
+	private boolean overrideModel(){
+		ItemStack held = Minecraft.getInstance().player.getMainHandItem();
+		if(held == null)
+			return false;
+		
+		return held.getItem() == CustomItems.wand || held.getItem() == CustomItems.scripter || held.getItem() == CustomBlocks.scripted_door_item;
+	}
 }

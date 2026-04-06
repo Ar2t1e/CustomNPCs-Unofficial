@@ -1,58 +1,49 @@
 package noppes.npcs.client.renderer.blocks;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import noppes.npcs.CustomRegisters;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.blocks.tiles.TileCopy;
 import noppes.npcs.schematics.Schematic;
 
-import javax.annotation.Nullable;
+public class BlockCopyRenderer extends BlockRendererInterface<TileCopy>{
 
-public class BlockCopyRenderer<T extends TileEntity> extends TileEntitySpecialRenderer<T> {
-
-	private static final ItemStack item = new ItemStack(CustomRegisters.copy);
-	public static BlockPos pos = null;
+	private final static ItemStack item = new ItemStack(CustomBlocks.copy);
 	public static Schematic schematic = null;
+	public static BlockPos pos = null;
 
-	public void drawSelectionBox(BlockPos pos) {
-		GlStateManager.disableTexture2D();
-		GlStateManager.disableLighting();
-		GlStateManager.disableCull();
-		GlStateManager.disableBlend();
-		AxisAlignedBB bb = new AxisAlignedBB(BlockPos.ORIGIN, pos);
-		GlStateManager.translate(0.001f, 0.001f, 0.001f);
-		RenderGlobal.drawSelectionBoundingBox(bb, 1.0f, 0.0f, 0.0f, 1.0f);
-		GlStateManager.enableTexture2D();
-		GlStateManager.enableLighting();
-		GlStateManager.enableCull();
-		GlStateManager.disableBlend();
+    public BlockCopyRenderer(BlockEntityRendererProvider.Context dispatcher) { super(dispatcher); }
+
+    @Override
+	public void render(TileCopy tile, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int light, int overlay) {
+        matrixStack.pushPose();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
+
+        //RenderHelper.enableStandardItemLighting();
+        RenderSystem.disableBlend();
+        drawSelectionBox(matrixStack, buffer, new BlockPos(tile.width, tile.height, tile.length));
+        matrixStack.translate(0.5f, 0.5f, 0.5f);
+        matrixStack.mulPose(Axis.YP.rotationDegrees(180));
+		Minecraft.getInstance().getItemRenderer().renderStatic(item, ItemDisplayContext.NONE, light, OverlayTexture.NO_OVERLAY, matrixStack, buffer, null, 0);
+        matrixStack.popPose();
 	}
 
-	public void render(@Nullable TileEntity te, double x, double y, double z, float var8, int blockDamage, float alpha) {
-		if (te == null) { return; }
-		TileCopy tile = (TileCopy) te;
-
-		GlStateManager.pushMatrix();
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		RenderHelper.enableStandardItemLighting();
-		GlStateManager.disableBlend();
-
-		GlStateManager.translate(x, y, z);
-		this.drawSelectionBox(new BlockPos(tile.width, tile.height, tile.length));
-		GlStateManager.translate(0.5f, 0.5f, 0.5f);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-		Minecraft.getMinecraft().getRenderItem().renderItem(BlockCopyRenderer.item,
-				ItemCameraTransforms.TransformType.NONE);
-		GlStateManager.popMatrix();
-	}
-
+	
+    public void drawSelectionBox(PoseStack matrixStack, MultiBufferSource buffer, BlockPos pos){
+        AABB bb = new AABB(BlockPos.ZERO, pos);
+        matrixStack.translate(0.001f, 0.001f, 0.001f);
+        LevelRenderer.renderLineBox(matrixStack, buffer.getBuffer(RenderType.lines()), bb, 1, 0, 0, 1);
+    }
 }

@@ -4,174 +4,194 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.gui.select.SubGuiDialogSelection;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.*;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.GuiSelectionListener;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 
-import javax.annotation.Nonnull;
+public class GuiNPCDialogNpcOptions
+        extends GuiNPCInterface2
+        implements GuiSelectionListener, IGuiData, ICustomScrollListener {
 
-public class GuiNPCDialogNpcOptions extends GuiNPCInterface2
-		implements GuiSelectionListener, IGuiData, ICustomScrollListener {
+   protected int selectedSlot;
 
-	protected final HashMap<Integer, NBTTagCompound> data = new HashMap<>(); // slotID, dialogData
-	protected GuiCustomScroll scroll;
-	protected int selectedSlot = -1;
-	protected int error = 0;
+   // New from Unofficial BetaZavr
+   private final HashMap<Integer, CompoundTag> data = new HashMap<>(); // slotID, dialogData
+   private GuiCustomScrollNop scroll;
+   private int error = 0;
 
-	public GuiNPCDialogNpcOptions(EntityNPCInterface npc) {
-		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
+   public GuiNPCDialogNpcOptions(EntityNPCInterface npc) {
+      super(npc);
+      drawDefaultBackground = true;
 
-		drawDefaultBackground = true;
-		Client.sendData(EnumPacketServer.DialogNpcGet);
-	}
+      backGui = EnumGuiType.MainMenuAdvanced;
+      Packets.sendServer(new SPacketNpcDialogsGet());
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1: {
-				selectedSlot = -1;
-				setSubGui(new SubGuiDialogSelection(-1, 0));
-				break;
-			} // add
-			case 2: {
-				data.clear();
-				Client.sendData(EnumPacketServer.DialogNpcRemove, selectedSlot);
-				selectedSlot = -1;
-				initGui();
-				break;
-			} // del
-			case 3: {
-				if (!data.containsKey(selectedSlot)) { return; }
-				setSubGui(new SubGuiDialogSelection(data.get(selectedSlot).getInteger("Id"), 0));
-				break;
-			} // change
-			case 4: {
-				if (selectedSlot < 1) { return; }
-				Client.sendData(EnumPacketServer.DialogNpcMove, selectedSlot, true);
-				selectedSlot--;
-				initGui();
-				break;
-			} // up
-			case 5: {
-				if (selectedSlot >= data.size()) { return; }
-				Client.sendData(EnumPacketServer.DialogNpcMove, selectedSlot, false);
-				selectedSlot++;
-				initGui();
-				break;
-			} // down
-		}
-	}
+   @Override
+   public void init() {
+      super.init();
+      List<Component> dialogs = new ArrayList<>();
+      for (int slot : data.keySet()) {
+         CompoundTag nbt = data.get(slot);
+         Component key = Component.empty()
+                 .append(Component.literal((slot + 1) + "; "))
+                 .append(Component.literal("ID:" + nbt.getInt("Id") + " - ").withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal(nbt.getString("Category") + "/").withStyle(ChatFormatting.DARK_GRAY))
+                 .append(Component.literal(nbt.getString("Title")).withStyle(ChatFormatting.RESET));
+         dialogs.add(key);
+      }
+      if (scroll == null) { scroll = addScroll(0).setSize(210, 196); }
+      scroll.setUnsortedList(dialogs);
+      if (selectedSlot >= 0 && data.containsKey(selectedSlot)) { scroll.setSelect(selectedSlot); }
+      else {
+         selectedSlot = -1;
+         scroll.setSelect(-1);
+      }
+      add(scroll.setPos(guiLeft + 5, guiTop + 14));
+      // add
+      addButton(1, guiLeft + 220, guiTop + 14, "gui.add")
+              .setSize(64, 20)
+              .setHoverTexts("dialog.hover.add");
+      // del
+      addButton(2, guiLeft + 220, guiTop + 36, "gui.remove")
+              .setSize(64, 20)
+              .setIsEnabled(selectedSlot >= 0)
+              .setHoverTexts("dialog.hover.del");
+      // edit
+      addButton(3, guiLeft + 220, guiTop + 58, "advanced.editingmode")
+              .setSize(64, 20)
+              .setIsEnabled(selectedSlot >= 0)
+              .setHoverTexts("dialog.hover.change");
+      // up pos
+      addButton(4, guiLeft + 220, guiTop + 102, "type.up")
+              .setSize(64, 20)
+              .setIsEnabled(selectedSlot >= 0 && selectedSlot >= 1)
+              .setHoverTexts("dialog.hover.up");
+      // down pos
+      addButton(5, guiLeft + 220, guiTop + 124, "type.down")
+              .setSize(64, 20)
+              .setIsEnabled(selectedSlot >= 0 && selectedSlot < (data.size() - 1))
+              .setHoverTexts("dialog.hover.down");
+      // help
+      addLabel(6, guiLeft + 230, guiTop + 150, "type.help")
+              .setBackColor(0x80808080)
+              .setBorderColor(0x80808080)
+              .setHoverTexts("dialog.hover.info");
+      addLabel(7, guiLeft + 6, guiTop + 4, Component.translatable("dialog.dialogs").append(Component.literal(":")))
+              .setSize(207, 10);
+   }
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (error > 0) {
-			if (scroll != null) {
-				scroll.colorBackS = 0xC0A00000;
-				scroll.colorBackE = 0xC0A00000;
-			}
-			error--;
-			if (error <= 0 && scroll != null) {
-				scroll.colorBackS = 0xC0101010;
-				scroll.colorBackE = 0xC0101010;
-			}
-		}
-		super.drawScreen(mouseX, mouseY, partialTicks);
-	}
+   @Override
+   public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      if (error > 0) {
+         if (scroll != null) {
+            scroll.colorBackS = 0xC0A00000;
+            scroll.colorBackE = 0xC0A00000;
+         }
+         error--;
+         if (error <= 0 && scroll != null) {
+            scroll.colorBackS = 0xC0101010;
+            scroll.colorBackE = 0xC0101010;
+         }
+      }
+      super.render(graphics, mouseX, mouseY, partialTicks);
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		List<String> dialogs = new ArrayList<>();
-		for (int slot : data.keySet()) {
-			NBTTagCompound nbt = data.get(slot);
-			String str = (slot + 1) + "; " + ((char) 167) + "7" + "ID:" + nbt.getInteger("Id") + " - ";
-			str += ((char) 167) + "8" + nbt.getString("Category") + "/";
-			str += ((char) 167) + "r" + nbt.getString("Title");
-			dialogs.add(str);
-		}
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(210, 196); }
-		scroll.setUnsortedList(dialogs);
-		scroll.guiLeft = guiLeft + 5;
-		scroll.guiTop = guiTop + 14;
-		if (selectedSlot >= 0 && data.containsKey(selectedSlot)) { scroll.setSelect(selectedSlot); }
-		else {
-			selectedSlot = -1;
-			scroll.setSelect(-1);
-		}
-		addScroll(scroll);
-		// add
-		addButton(new GuiNpcButton(1, guiLeft + 220, guiTop + 14, 64, 20, "gui.add")
-				.setHoverText("dialog.hover.add"));
-		// del
-		addButton(new GuiNpcButton(2, guiLeft + 220, guiTop + 36, 64, 20, "gui.remove")
-				.setIsEnable(selectedSlot >= 0)
-				.setHoverText("dialog.hover.del"));
-		// edit
-		addButton(new GuiNpcButton(3, guiLeft + 220, guiTop + 58, 64, 20, "advanced.editingmode")
-				.setIsEnable(selectedSlot >= 0)
-				.setHoverText("dialog.hover.change"));
-		// up pos
-		addButton(new GuiNpcButton(4, guiLeft + 220, guiTop + 102, 64, 20, "type.up")
-				.setIsEnable(selectedSlot >= 0 && selectedSlot >= 1)
-				.setHoverText("dialog.hover.up"));
-		// down pos
-		addButton(new GuiNpcButton(5, guiLeft + 220, guiTop + 124, 64, 20, "type.down")
-				.setIsEnable(selectedSlot >= 0 && selectedSlot < (data.size() - 1))
-				.setHoverText("dialog.hover.down"));
-		// help
-		addLabel(new GuiNpcLabel(6, new TextComponentTranslation("type.help").getFormattedText(), guiLeft + 230, guiTop + 150)
-				.setBackColor(0x40FF0000)
-				.setBorderColor(0x80808080)
-				.setColor(0xFF000000)
-				.setHoverText("dialog.hover.info"));
-		addLabel(new GuiNpcLabel(7, new TextComponentTranslation("dialog.dialogs").getFormattedText() + ":", guiLeft + 5, guiTop + 4));
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 1: {
+            selectedSlot = -1;
+            setSubGui(new SubGuiDialogSelection(-1));
+            break;
+         } // add
+         case 2: {
+            data.clear();
+            Packets.sendServer(new SPacketDialogOptionRemove(selectedSlot));
+            selectedSlot = -1;
+            init();
+            break;
+         } // del
+         case 3: {
+            if (data.containsKey(selectedSlot)) {
+               setSubGui(new SubGuiDialogSelection(data.get(selectedSlot).getInt("Id")));
+            }
+            break;
+         } // change
+         case 4: {
+            if (selectedSlot > 0) {
+               Packets.sendServer(new SPacketDialogOptionMove(selectedSlot, true));
+               selectedSlot--;
+               init();
+            }
+            break;
+         } // up
+         case 5: {
+            if (selectedSlot < data.size()) {
+               Packets.sendServer(new SPacketDialogOptionMove(selectedSlot, false));
+               selectedSlot++;
+               init();
+            }
+            break;
+         } // down
+      }
+   }
 
-	// New from Unofficial BetaZavr
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		selectedSlot = scroll.getSelect();
-		initGui();
-	}
+   @Override
+   public void save() {}
 
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) {
-		if (!data.containsKey(selectedSlot)) { return; }
-		setSubGui(new SubGuiDialogSelection(data.get(selectedSlot).getInteger("Id"), 0));
-	}
+   @Override
+   public void setGuiData(CompoundTag compound) {
+      if (compound.contains("Slot", 3)) {
+         data.put(compound.getInt("Slot"), compound);
+      }
+      init();
+   }
 
-	@Override
-	public void selected(int id, String name) {
-		if (selectedSlot < 0) { selectedSlot = data.size(); }
-		for (int slot : data.keySet()) {
-			if (selectedSlot == slot) { continue; }
-			if (data.get(slot).getInteger("Id") == id) {
-				error = 60;
-				ITextComponent end = new TextComponentTranslation("trader.busy");
-				end.getStyle().setColor(TextFormatting.RED);
-				player.sendMessage(CustomNpcs.prefix.appendSibling(new TextComponentTranslation("dialog.dialog")).appendSibling(new TextComponentString(((char) 167) + "7 ID:" + id + ((char) 167) + "r \"" + name + "\"" + ((char) 167) + "c - ")).appendSibling(end));
-				return;
-			}
-		}
-		Client.sendData(EnumPacketServer.DialogNpcSet, selectedSlot, id);
-	}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      selectedSlot = scroll.getSelectedIndex();
+      init();
+   }
 
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		if (compound.hasKey("Slot", 3)) { data.put(compound.getInteger("Slot"), compound); }
-		initGui();
-	}
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+      if (!data.containsKey(selectedSlot)) { return; }
+      setSubGui(new SubGuiDialogSelection(data.get(selectedSlot).getInt("Id")));
+   }
+
+   @Override
+   public void selected(int id, String name) {
+      if (selectedSlot < 0) { selectedSlot = data.size(); }
+      for (int slot : data.keySet()) {
+         if (selectedSlot == slot) { continue; }
+         if (data.get(slot).getInt("Id") == id) {
+            error = 60;
+            player.sendSystemMessage(Component.empty()
+                    .append(CustomNpcs.prefix)
+                    .append(Component.translatable("dialog.dialog").withStyle(ChatFormatting.RESET))
+                    .append(Component.literal(" ID:" + id).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" \"" + name + "\"").withStyle(ChatFormatting.RESET))
+                    .append(Component.literal(" - ").withStyle(ChatFormatting.RED))
+                    .append(Component.translatable("trader.busy").withStyle(ChatFormatting.RED))
+            );
+            return;
+         }
+      }
+      Packets.sendServer(new SPacketNpcDialogSet(selectedSlot, id));
+   }
 
 }

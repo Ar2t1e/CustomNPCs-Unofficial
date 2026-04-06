@@ -1,218 +1,158 @@
 package noppes.npcs.ai.movement;
 
-import net.minecraft.command.CommandException;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import java.util.EnumSet;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.constants.AiMutex;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.Util;
 
-public class EntityAIReturn extends EntityAIBase {
+public class EntityAIReturn extends Goal {
 
-	public static int MaxTotalTicks = 100;
-	private double endPosX;
-	private double endPosY;
-	private double endPosZ;
-	private final EntityNPCInterface npc;
-	private double[] preAttackPos;
-	private int stuckCount;
-	private int stuckTicks;
-	private int totalTicks;
-	private boolean wasAttacked;
+   protected static final int MaxTotalTicks = 600;
+   protected final EntityNPCInterface npc;
+   protected boolean wasAttacked = false;
+   protected int stuckTicks = 0;
+   protected int totalTicks = 0;
+   protected int stuckCount = 0;
+   protected Vec3 endPos;
+   protected Vec3 preAttackPos;
 
-	public EntityAIReturn(EntityNPCInterface npc) {
-		stuckTicks = 0;
-		totalTicks = 0;
-		wasAttacked = false;
-		stuckCount = 0;
-		this.npc = npc;
-		setMutexBits(AiMutex.PASSIVE);
-	}
+   public EntityAIReturn(EntityNPCInterface npcIn) {
+      npc = npcIn;
+      setFlags(EnumSet.of(Flag.MOVE));
+   }
 
-	private boolean isTooFar() {
-		if (npc.homeDimensionId != npc.world.provider.getDimension()) { return true; }
-		int allowedDistance = npc.stats.aggroRange * 2;
-		if (npc.ais.getMovingType() == 1) { allowedDistance += npc.ais.walkingRange; }
-		return Util.instance.distanceTo(npc.posX, npc.posY, npc.posZ, endPosX, endPosY, endPosZ) > allowedDistance;
-	}
+   @Override
+   public boolean canUse() {
+      if (!npc.hasOwner() &&
+              !npc.isPassenger() &&
+              npc.ais.shouldReturnHome() &&
+              !npc.isKilled() &&
+              npc.getNavigation().isDone() &&
+              !npc.isInteracting()) {
+         // AI Attack
+         if (npc.aiOwnerNPC != null && npc.getNavigation().isDone()) {
+            totalTicks = 0;
+            return false;
+         }
+         // AI Panic
+         if (npc.ais.onAttack == 1) {
+            if (npc.isOnFire() || npc.getTarget() != null) {
+               totalTicks = 0;
+               return false;
+            }
+         }
+         BlockPos pos = new BlockPos((int) npc.getStartXPos(), (int) npc.getStartYPos(), (int) npc.getStartZPos());
+         // Shelter at Night
+         if (npc.ais.findShelter == 0 && (!npc.level().isDay() || npc.level().isRaining()) && !npc.level().dimensionType().hasSkyLight()
+                 && (npc.level().canSeeSky(pos) || npc.level().getLightEmission(pos) <= 8)) { return false; }
+         // Shelter at Day
+         else if (npc.ais.findShelter == 1 && npc.level().isDay() && npc.level().canSeeSky(pos)) { return false; }
+         if (npc.isAttacking()) {
+            if (!wasAttacked) {
+               wasAttacked = true;
+               preAttackPos = new Vec3(npc.getX(), npc.getY(), npc.getZ());
+            }
+            return false;
+         }
+         else if (wasAttacked) { return true; }
+         else if (!npc.homeDimensionId.equals(npc.level().dimension())) { return true; }
+         else if (npc.ais.getMovingType() == 2 && npc.ais.distanceToSqrToPathPoint() < (double)(CustomNpcs.NpcNavRange * CustomNpcs.NpcNavRange)) { return false; }
+         else if (npc.ais.getMovingType() == 1) { return !npc.isInRange(npc.getStartXPos(), -6666.0D, npc.getStartZPos(), npc.ais.walkingRange); }
+         else if (npc.ais.getMovingType() == 0) { return !npc.isVeryNearAssignedPlace(); }
+      }
+      return false;
+   }
 
-	private void navigate(boolean towards) {
-		if (!wasAttacked) {
-			endPosX = npc.getStartXPos();
-			endPosY = npc.getStartYPos();
-			endPosZ = npc.getStartZPos();
-		} else {
-			endPosX = preAttackPos[0];
-			endPosY = preAttackPos[1];
-			endPosZ = preAttackPos[2];
-		}
-		double posX = endPosX;
-		double posY = endPosY;
-		double posZ = endPosZ;
-		double range = this.npc.getDistance(posX, posY, posZ);
-		if (range > CustomNpcs.NpcNavRange || towards) {
-			int distance = (int) range;
-			if (distance > CustomNpcs.NpcNavRange) {
-				distance = CustomNpcs.NpcNavRange / 2;
-			} else {
-				distance /= 2;
-			}
-			if (distance > 2) {
-				Vec3d start = new Vec3d(posX, posY, posZ);
-				Vec3d pos = RandomPositionGenerator.findRandomTargetBlockTowards(npc, distance, Math.min(distance / 2, 7), start);
-				if (pos != null) {
-					posX = pos.x;
-					posY = pos.y;
-					posZ = pos.z;
-				}
-			}
-		}
-		tryBackHome(posX, posY, posZ);
-	}
+   @Override
+   public boolean canContinueToUse() {
+      boolean bo = true;
+      if (npc.ais.onAttack == 2) {
+         double dist = Util.instance.distanceTo(npc.getX(), npc.getY(), npc.getZ(), npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
+         bo = dist > npc.stats.aggroRange;
+      }
+      return npc.getHealth() > 0 && !npc.isFollower() && !npc.isKilled() && !npc.isAttacking() &&
+              !npc.isVeryNearAssignedPlace() && !npc.isInteracting() && !npc.isPassenger() &&
+              !(npc.getNavigation().isDone() && wasAttacked && isTooFar()) &&
+              totalTicks <= MaxTotalTicks && bo;
+   }
 
-	private void tryBackHome(double endPosX, double endPosY, double endPosZ) {
-		if (wasAttacked) { npc.setAttackTarget(null); }
-		npc.getNavigator().clearPath();
-		if (npc.homeDimensionId != this.npc.world.provider.getDimension()) {
-			try {
-				Util.instance.teleportEntity(npc.world.getMinecraftServer(), npc, npc.homeDimensionId, npc.getHomePosition());
-			} catch (CommandException e) {
-				LogWriter.error("Error teleport back home: ", e);
-				npc.getNavigator().tryMoveToXYZ(endPosX, endPosY, endPosZ, 1.3);
-			}
-		} else {
-			npc.getNavigator().tryMoveToXYZ(endPosX, endPosY, endPosZ, 1.3);
-		}
-	}
+   @Override
+   public void start() {
+      stuckTicks = 0;
+      totalTicks = 0;
+      stuckCount = 0;
+      navigate(false);
+   }
 
-	@Override
-	public void resetTask() {
-		wasAttacked = false;
-		npc.setAttackTarget(null);
-	}
+   @Override
+   public void stop() {
+      wasAttacked = false;
+      npc.getNavigation().stop();
+   }
 
-	@Override
-	public boolean shouldContinueExecuting() {
-		boolean bo = true;
-		if (npc.ais.onAttack == 2) {
-			double dist = Util.instance.distanceTo(npc.posX, npc.posY, npc.posZ, npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
-			bo = dist > npc.stats.aggroRange;
-		}
-		return npc.getHealth() > 0 && !npc.isFollower() && !npc.isKilled() && !npc.isAttacking() && !npc.advanced.jobInterface.isWorking()
-				&& !npc.isVeryNearAssignedPlace() && !npc.isInteracting() && !npc.isRiding()
-				&& (!npc.getNavigator().noPath() || !wasAttacked || isTooFar())
-				&& totalTicks <= EntityAIReturn.MaxTotalTicks && bo;
-	}
+   @Override
+   public void tick() {
+      ++totalTicks;
+      if (totalTicks > MaxTotalTicks) { tryBackHome(endPos); }
+      else {
+         if (stuckTicks > 0) { --stuckTicks; }
+         else if (npc.getNavigation().isDone()) {
+            ++stuckCount;
+            stuckTicks = 10;
+            if ((totalTicks <= 30 || !wasAttacked || !isTooFar()) && stuckCount <= 5) { navigate(stuckCount % 2 == 1); }
+            else { tryBackHome(endPos); }
+         }
+         else { stuckCount = 0; }
+      }
+   }
 
-	@Override
-	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
-		if (npc.hasOwner() || npc.isRiding() || !npc.ais.shouldReturnHome() || npc.isKilled() || !npc.getNavigator().noPath() || npc.isMoving() || npc.isInteracting()) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		// AI Attack
-		if (npc.aiOwnerNPC != null && !npc.getNavigator().noPath()) {
-			totalTicks = 0;
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		// AI Panic
-		if (npc.ais.onAttack == 1) {
-			if (npc.isBurning() || npc.getAttackTarget() != null) {
-				totalTicks = 0;
-				CustomNpcs.debugData.end(npc);
-				return false;
-			}
-		}
-		// Shelter at Night
-		if (npc.ais.findShelter == 0 && (!npc.world.isDaytime() || npc.world.isRaining()) && npc.world.provider.hasSkyLight()) {
-			if (npc.world.getLight(npc.getPosition()) < 10) {
-				CustomNpcs.debugData.end(npc);
-				return true;
-			}
-		}
-		// Shelter at Day
-		else if (npc.ais.findShelter == 1 && npc.world.isDaytime() && npc.world.canSeeSky(npc.getPosition())) {
-			CustomNpcs.debugData.end(npc);
-			return true;
-		}
-		if (npc.isAttacking()) {
-			if (!wasAttacked) {
-				wasAttacked = true;
-				preAttackPos = new double[] { npc.posX, npc.posY, npc.posZ };
-			}
-			CustomNpcs.debugData.end(npc);
-			return isTooFar();
-		}
-		if (!npc.isAttacking() && wasAttacked) {
-			CustomNpcs.debugData.end(npc);
-			return true;
-		}
-		if (npc.homeDimensionId != npc.world.provider.getDimension()) {
-			CustomNpcs.debugData.end(npc);
-			return true;
-		}
-		switch (npc.ais.getMovingType()) {
-			case 1: {
-				CustomNpcs.debugData.end(npc);
-				return !npc.isInRange(npc.getStartXPos(), -1.0, npc.getStartZPos(),
-						npc.ais.walkingRange);
-			}
-			case 2: {
-				if (npc.ais.getDistanceSqToPathPoint() < CustomNpcs.NpcNavRange * CustomNpcs.NpcNavRange) {
-					CustomNpcs.debugData.end(npc);
-					return false;
-				}
-				break;
-			}
-		}
-		CustomNpcs.debugData.end(npc);
-		return !npc.isVeryNearAssignedPlace();
-	}
+   private boolean isTooFar() {
+      if (!npc.level().dimension().equals(npc.homeDimensionId)) { return true; }
+      int allowedDistance = npc.stats.aggroRange * 2;
+      if (npc.ais.getMovingType() == 1) { allowedDistance += npc.ais.walkingRange; }
+      return Util.instance.distanceTo(npc.getX(), npc.getY(), npc.getZ(), endPos.x, endPos.y, endPos.z) > allowedDistance;
+   }
 
-	@Override
-	public void startExecuting() {
-		stuckTicks = 0;
-		totalTicks = 0;
-		stuckCount = 0;
-		navigate(false);
-	}
+   private void navigate(boolean towards) {
+      if (!wasAttacked) { endPos = new Vec3(npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos()); }
+      else { endPos = preAttackPos; }
+      Vec3 pos = endPos;
+      double range = Math.sqrt(npc.distanceToSqr(pos));
+      if (range > (double) CustomNpcs.NpcNavRange || towards) {
+         int distance = (int)range;
+         if (distance > CustomNpcs.NpcNavRange) { distance = CustomNpcs.NpcNavRange / 2; }
+         else { distance /= 2; }
+         if (distance > 2) {
+            pos = DefaultRandomPos.getPosTowards(npc, distance / 2, Math.min(distance / 2, 7), pos, Math.PI / 2.0d);
+            if (pos == null) { pos = endPos; }
+         }
+      }
+      tryBackHome(pos);
+   }
 
-	@Override
-	public void updateTask() {
-		CustomNpcs.debugData.start(npc);
-		++totalTicks;
-		if (totalTicks > EntityAIReturn.MaxTotalTicks) {
-			tryBackHome(endPosX, endPosY, endPosZ);
-			CustomNpcs.debugData.end(npc);
-			return;
-		}
-		if (stuckTicks > 0) { --stuckTicks; }
-		else if (npc.getNavigator().noPath()) {
-			++stuckCount;
-			stuckTicks = 10;
-			if ((totalTicks > 30 && wasAttacked && isTooFar()) || stuckCount > 5) {
-				tryBackHome(endPosX, endPosY, endPosZ);
-			} else {
-				navigate(this.stuckCount % 2 == 1);
-			}
-		} else {
-			stuckCount = 0;
-		}
-		CustomNpcs.debugData.end(npc);
-	}
-
-	@SuppressWarnings("all")
-	public BlockPos getEndPositions() {
-		if (!wasAttacked) {
-			return new BlockPos(npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
-		}
-		return new BlockPos(preAttackPos[0], preAttackPos[1], preAttackPos[2]);
-	}
+   // New from Unofficial (BetaZavr)
+   protected void tryBackHome(Vec3 pos) {
+      if (wasAttacked) { npc.setTarget(null); }
+      if (pos.equals(endPos) && npc.position().equals(pos)) {
+         endPos = preAttackPos = pos = new Vec3(npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
+      }
+      npc.getNavigation().stop();
+      if (!npc.homeDimensionId.equals(npc.level().dimension())) {
+         Util.instance.teleportEntity(npc.getServer(), npc, npc.homeDimensionId, npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
+      }
+      else {
+         Path path = npc.getNavigation().createPath(pos.x, pos.y, pos.z, 1);
+         npc.getNavigation().moveTo(path, 2.0D);
+         if (path == null || path.getNodeCount() == 1) {
+            npc.setPos(pos);
+            npc.getNavigation().stop();
+         }
+      }
+   }
 
 }

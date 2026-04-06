@@ -1,64 +1,66 @@
 package noppes.npcs.api.block;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import noppes.npcs.api.*;
 import noppes.npcs.api.entity.data.IData;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface IBlock {
 
-	void blockEvent(@ParamName("type") int type, @ParamName("data") int data);
+   int getX();
 
-	IContainer getContainer();
+   int getY();
 
-	String getDisplayName();
+   int getZ();
 
-	Block getMCBlock();
+   IPos getPos();
 
-	IBlockState getMCBlockState();
+   Object getProperty(@ParamName("name") String name);
 
-	TileEntity getMCTileEntity();
+   void setProperty(@ParamName("name") String name, @ParamName("value") Object value);
 
-	int getMetadata();
+   String[] getProperties();
 
-	String getName();
+   String getName();
 
-	IPos getPos();
+   void remove();
 
-	IData getStoreddata();
+   boolean isRemoved();
 
-	IData getTempdata();
+   boolean isAir();
 
-	INbt getTileEntityNBT();
+   IBlock setBlock(@ParamName("name") String name);
 
-	IWorld getWorld();
+   IBlock setBlock(@ParamName("block") IBlock block);
 
-	int getX();
+   boolean hasTileEntity();
 
-	int getY();
+   boolean isContainer();
 
-	int getZ();
+   IContainer getContainer();
 
-	boolean hasTileEntity();
+   IData getTempdata();
 
-	void interact(@ParamName("side") int side);
+   IData getStoreddata();
 
-	boolean isAir();
+   IWorld getWorld();
 
-	boolean isContainer();
+   INbt getBlockEntityNBT();
 
-	boolean isRemoved();
+   void setTileEntityNBT(@ParamName("nbt") INbt nbt);
 
-	void remove();
+   BlockEntity getMCTileEntity();
 
-	IBlock setBlock(@ParamName("block") IBlock block);
+   Block getMCBlock();
 
-	IBlock setBlock(@ParamName("name") String name);
+   void blockEvent(@ParamName("type") int type,@ParamName("data")  int data);
 
-	void setMetadata(@ParamName("meta") int meta);
+   String getDisplayName();
 
-	void setTileEntityNBT(@ParamName("nbt") INbt nbt);
+   BlockState getMCBlockState();
+
+   void interact(@ParamName("side") int side);
 
 }

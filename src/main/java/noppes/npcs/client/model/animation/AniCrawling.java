@@ -1,51 +1,47 @@
 package noppes.npcs.client.model.animation;
 
-import net.minecraft.client.model.ModelBiped;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import noppes.npcs.client.model.ModelRendererAlt;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class AniCrawling {
+public class AniCrawling implements AnimationBase {
 
-	public static void setRotationAngles(float limbSwing, float limbSwingAmount, float ignoredAgeInTicks, float netHeadYaw, float ignoredHeadPitch, float ignoredScale, Entity ignoredEntity, ModelBiped model) {
-		model.bipedHead.rotateAngleZ = netHeadYaw / -57.295776f;
-		if (model.bipedHead.rotateAngleZ < -0.707106f) {
-			model.bipedHead.rotateAngleZ = -0.707106f;
-		} else if (model.bipedHead.rotateAngleZ > 0.707106f) {
-			model.bipedHead.rotateAngleZ = 0.707106f;
-		}
-		model.bipedHead.rotateAngleY = 0.0f;
-		model.bipedHead.rotateAngleX = -0.95993114f - (0.4f * Math.abs(model.bipedHead.rotateAngleZ / 0.707106f));
-		model.bipedHeadwear.rotateAngleX = model.bipedHead.rotateAngleX;
-		model.bipedHeadwear.rotateAngleY = model.bipedHead.rotateAngleY;
-		model.bipedHeadwear.rotateAngleZ = model.bipedHead.rotateAngleZ;
-		if (limbSwingAmount > 0.25) { limbSwingAmount = 0.25f; }
-		float movement = MathHelper.cos(limbSwing * 0.8f + 3.1415927f) * limbSwingAmount;
-		if (model.bipedLeftArm instanceof ModelRendererAlt) { ((ModelRendererAlt) model.bipedLeftArm).setIsNormal(true); }
-		if (model.bipedRightArm instanceof ModelRendererAlt) { ((ModelRendererAlt) model.bipedRightArm).setIsNormal(true); }
-		if (model.bipedLeftLeg instanceof ModelRendererAlt) { ((ModelRendererAlt) model.bipedLeftLeg).setIsNormal(true); }
-		if (model.bipedRightLeg instanceof ModelRendererAlt) { ((ModelRendererAlt) model.bipedRightLeg).setIsNormal(true); }
-		model.bipedLeftArm.rotateAngleX = 3.1415927f - movement * 0.25f;
-		model.bipedLeftArm.rotateAngleY = movement * -0.46f;
-		model.bipedLeftArm.rotateAngleZ = movement * -0.2f;
-		model.bipedLeftArm.rotationPointY = 2.0f - movement * 9.0f;
-		model.bipedRightArm.rotateAngleX = 3.1415927f + movement * 0.25f;
-		model.bipedRightArm.rotateAngleY = movement * -0.4f;
-		model.bipedRightArm.rotateAngleZ = movement * -0.2f;
-		model.bipedRightArm.rotationPointY = 2.0f + movement * 9.0f;
-		model.bipedBody.rotateAngleY = movement * 0.1f;
-		model.bipedBody.rotateAngleX = 0.0f;
-		model.bipedBody.rotateAngleZ = movement * 0.1f;
-		model.bipedLeftLeg.rotateAngleX = movement * 0.1f;
-		model.bipedLeftLeg.rotateAngleY = movement * 0.1f;
-		model.bipedLeftLeg.rotateAngleZ = -0.122173056f - movement * 0.25f;
-		model.bipedLeftLeg.rotationPointY = 10.4f + movement * 9.0f;
-		model.bipedLeftLeg.rotationPointZ = movement * 0.6f;
-		model.bipedRightLeg.rotateAngleX = movement * -0.1f;
-		model.bipedRightLeg.rotateAngleY = movement * 0.1f;
-		model.bipedRightLeg.rotateAngleZ = 0.122173056f - movement * 0.25f;
-		model.bipedRightLeg.rotationPointY = 10.4f - movement * 9.0f;
-		model.bipedRightLeg.rotationPointZ = movement * -0.6f;
-	}
+   public void animatePre(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+   }
+
+   public void animatePost(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+      model.head.zRot = -netHeadYaw / 57.295776F;
+      model.head.yRot = 0.0F;
+      model.head.xRot = -0.95993114F;
+      model.hat.xRot = model.head.xRot;
+      model.hat.yRot = model.head.yRot;
+      model.hat.zRot = model.head.zRot;
+      if ((double)limbSwingAmount > 0.25D) {
+         limbSwingAmount = 0.25F;
+      }
+      float movement = Mth.cos(limbSwing * 0.8F + 3.1415927F) * limbSwingAmount;
+      model.leftArm.xRot = 3.1415927F - movement * 0.25F;
+      model.leftArm.yRot = movement * -0.46F;
+      model.leftArm.zRot = movement * -0.2F;
+      model.leftArm.y = 2.0F - movement * 9.0F;
+      model.rightArm.xRot = 3.1415927F + movement * 0.25F;
+      model.rightArm.yRot = movement * -0.4F;
+      model.rightArm.zRot = movement * -0.2F;
+      model.rightArm.y = 2.0F + movement * 9.0F;
+      model.body.yRot = movement * 0.1F;
+      model.body.xRot = 0.0F;
+      model.body.zRot = movement * 0.1F;
+      model.leftLeg.xRot = movement * 0.1F;
+      model.leftLeg.yRot = movement * 0.1F;
+      model.leftLeg.zRot = -0.122173056F - movement * 0.25F;
+      model.leftLeg.y = 10.4F + movement * 9.0F;
+      model.leftLeg.z = movement * 0.6F;
+      model.rightLeg.xRot = movement * -0.1F;
+      model.rightLeg.yRot = movement * 0.1F;
+      model.rightLeg.zRot = 0.122173056F - movement * 0.25F;
+      model.rightLeg.y = 10.4F - movement * 9.0F;
+      model.rightLeg.z = movement * -0.6F;
+   }
 
 }

@@ -1,34 +1,35 @@
 package noppes.npcs.schematics;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.world.level.block.state.BlockState;
+import noppes.npcs.api.IPos;
 
 public interface ISchematic {
 
-	IBlockState getBlockState(int state);
+   short getWidth();
 
-	IBlockState getBlockState(int x, int y, int z);
+   short getHeight();
 
-	NBTTagList getEntitys();
+   short getLength();
 
-	short getHeight();
+   int getBlockEntityDimensions();
 
-	short getLength();
+   CompoundTag getBlockEntity(int var1);
 
-	String getName();
+   String getName();
 
-	NBTTagCompound getNBT();
+   BlockState getBlockState(int var1, int var2, int var3);
 
-	BlockPos getOffset();
+   BlockState getBlockState(int var1);
 
-	NBTTagCompound getTileEntity(int pos);
+   CompoundTag getNBT();
 
-	int getTileEntitySize();
+   IPos getOffset();
 
-	short getWidth();
+   // New from Unofficial (BetaZavr)
+   boolean hasEntitys();
 
-	boolean hasEntitys();
+   ListTag getEntitys();
 
 }

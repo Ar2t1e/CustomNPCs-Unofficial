@@ -1,25 +1,24 @@
 package noppes.npcs.api.entity.data;
 
-import net.minecraft.command.CommandException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IData {
 
-	void clear();
+   void put(@ParamName("key") String key, @ParamName("value") Object value);
 
-	Object get(@ParamName("key") String key);
+   Object get(@ParamName("key") String key);
 
-	String[] getKeys();
+   void remove(@ParamName("key") String key);
 
-	INbt getNbt();
+    INbt getNbt();
 
-	boolean has(@ParamName("key") String key);
+    boolean has(@ParamName("key") String key);
 
-	void put(@ParamName("key") String key, @ParamName("value") Object value) throws CommandException;
+   String[] getKeys();
 
-	void remove(@ParamName("key") String key);
+   void clear();
 
-	void setNbt(@ParamName("nbt") INbt nbt);
+    void setNbt(@ParamName("nbt") INbt nbt);
 
 }

@@ -1,0 +1,52 @@
+{
+	"name": "part.mohawk",
+	"render_type": "simple",
+	"texture": "moreplayermodels:textures/ears/0.png",
+	"body_part": "head",
+	"menu": "gui.headwear",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{
+				"texture_position": [56, 0],
+				"part_size": [8, 4],
+				"translate": [0.0, 0.0, 0.0],
+				"rotate": [0.0, 0.0, 0.0],
+				"rotate_offset": [-3.44, 0.0, 0.0],
+				"scale": [0.234, 0.234, 1.16]
+			},
+			{
+				"texture_position": [56, 4],
+				"part_size": [8, 4],
+				"translate": [0.0, 0.0, 0.0],
+				"rotate": [0.0, 0.0, 0.0],
+				"rotate_offset": [-3.44, 0.0, 1.14],
+				"scale": [0.234, 0.234, 1.16]
+			},
+			{
+				"texture_position": [56, 0],
+				"part_size": [8, 4],
+				"translate": [0.0, 0.0, 0.0],
+				"rotate": [0.0, 0.0, 0.0],
+				"rotate_offset": [11.84, 0.0, 0],
+				"scale": [0.234, 0.234, 1.16],
+				"mirror": true
+			},
+			{
+				"texture_position": [56, 4],
+				"part_size": [8, 4],
+				"translate": [0.0, 0.0, 0.0],
+				"rotate": [0.0, 0.0, 0.0],
+				"rotate_offset": [11.84, 0.0, 1.14],
+				"scale": [0.234, 0.234, 1.16],
+				"mirror": true
+			}
+		]
+	},
+	"preview_rotation": -45,
+	"translate": [0.0, 0.0, 0.0],
+	"scale": [1, 1, 1],
+	"rotate_offset": [-4.2, -7.3, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

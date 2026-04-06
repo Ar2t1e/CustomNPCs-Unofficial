@@ -1,49 +1,56 @@
 package noppes.npcs.client.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.Entity;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import noppes.npcs.entity.EntityNpcSlime;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+@OnlyIn(Dist.CLIENT)
+public class ModelNpcSlime<T extends EntityNpcSlime> extends EntityModel<T> {
 
-@SideOnly(Side.CLIENT)
-public class ModelNpcSlime extends ModelBase {
-	ModelRenderer innerBody;
-	ModelRenderer outerBody;
-	ModelRenderer slimeLeftEye;
-	ModelRenderer slimeMouth;
-	ModelRenderer slimeRightEye;
+   NopModelPart outerBody;
+   NopModelPart innerBody;
+   NopModelPart slimeRightEye;
+   NopModelPart slimeLeftEye;
+   NopModelPart slimeMouth;
 
-	public ModelNpcSlime(int par1) {
-		this.textureHeight = 64;
-		this.textureWidth = 64;
-		this.outerBody = new ModelRenderer(this, 0, 0);
-		(this.outerBody = new ModelRenderer(this, 0, 0)).addBox(-8.0f, 32.0f, -8.0f, 16, 16, 16);
-		if (par1 > 0) {
-			(this.innerBody = new ModelRenderer(this, 0, 32)).addBox(-3.0f, 17.0f, -3.0f, 6, 6, 6);
-			(this.slimeRightEye = new ModelRenderer(this, 0, 0)).addBox(-3.25f, 18.0f, -3.5f, 2, 2, 2);
-			(this.slimeLeftEye = new ModelRenderer(this, 0, 4)).addBox(1.25f, 18.0f, -3.5f, 2, 2, 2);
-			(this.slimeMouth = new ModelRenderer(this, 0, 8)).addBox(0.0f, 21.0f, -3.5f, 1, 1, 1);
-		}
-	}
+   public ModelNpcSlime(int par1) {
+      this.outerBody = new NopModelPart(64, 64, 0, 0);
+      this.outerBody.addBox(-8.0F, 32.0F, -8.0F, 16.0F, 16.0F, 16.0F);
+      if (par1 > 0) {
+         this.innerBody = new NopModelPart(64, 64, 0, 32);
+         this.innerBody.addBox(-3.0F, 17.0F, -3.0F, 6.0F, 6.0F, 6.0F);
+         this.slimeRightEye = new NopModelPart(64, 64, 0, 0);
+         this.slimeRightEye.addBox(-3.25F, 18.0F, -3.5F, 2.0F, 2.0F, 2.0F);
+         this.slimeLeftEye = new NopModelPart(64, 64, 0, 4);
+         this.slimeLeftEye.addBox(1.25F, 18.0F, -3.5F, 2.0F, 2.0F, 2.0F);
+         this.slimeMouth = new NopModelPart(64, 64, 0, 8);
+         this.slimeMouth.addBox(0.0F, 21.0F, -3.5F, 1.0F, 1.0F, 1.0F);
+      }
+   }
 
-	public void render(@Nonnull Entity entity, float par2, float par3, float par4, float par5, float par6, float par7) {
-		this.setRotationAngles(par2, par3, par4, par5, par6, par7, entity);
-		if (this.innerBody != null) {
-			this.innerBody.render(par7);
-		} else {
-			GlStateManager.pushMatrix();
-			GlStateManager.scale(0.5f, 0.5f, 0.5f);
-			this.outerBody.render(par7);
-			GlStateManager.popMatrix();
-		}
-		if (this.slimeRightEye != null) {
-			this.slimeRightEye.render(par7);
-			this.slimeLeftEye.render(par7);
-			this.slimeMouth.render(par7);
-		}
-	}
+   public void setupAnim(@NotNull T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+   }
+
+   public void renderToBuffer(@NotNull PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      if (this.innerBody != null) {
+         this.innerBody.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      } else {
+         mStack.pushPose();
+         mStack.scale(0.5F, 0.5F, 0.5F);
+         this.outerBody.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+         mStack.popPose();
+      }
+
+      if (this.slimeRightEye != null) {
+         this.slimeRightEye.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+         this.slimeLeftEye.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+         this.slimeMouth.render(mStack, iVertex, lightMapUV, packedOverlayIn, red, green, blue, alpha);
+      }
+
+   }
 }

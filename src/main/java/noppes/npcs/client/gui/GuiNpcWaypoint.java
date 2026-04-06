@@ -1,63 +1,71 @@
 package noppes.npcs.client.gui;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.blocks.tiles.TileWaypoint;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketTileEntityGet;
+import noppes.npcs.packets.server.SPacketTileEntitySave;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
-import java.awt.*;
+public class GuiNpcWaypoint extends GuiNPCInterface implements IGuiData, ITextfieldListener {
 
-public class GuiNpcWaypoint extends GuiNPCInterface implements IGuiData {
+   protected final TileWaypoint tile;
 
-	protected final TileWaypoint tile;
+   public GuiNpcWaypoint(BlockPos pos) {
+      super();
+      imageWidth = 265;
 
-	public GuiNpcWaypoint(int x, int y, int z) {
-		super();
-		xSize = 265;
+      tile = (TileWaypoint) player.level().getBlockEntity(pos);
+      Packets.sendServer(new SPacketTileEntityGet(pos));
+   }
 
-		tile = (TileWaypoint) player.world.getTileEntity(new BlockPos(x, y, z));
-		Client.sendData(EnumPacketServer.GetTileEntity, x, y, z);
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (tile == null) { onClose(); }
+      else {
+         // name
+         addLabel(0, guiLeft + 1, guiTop + 76, "gui.name")
+                 .setColor(CustomNpcs.MainColor.getRGB());
+         addTextField(0, guiLeft + 60, guiTop + 71, 200, 20, tile.name);
+         // range
+         addLabel(1, guiLeft + 1, guiTop + 97, "gui.range")
+                 .setColor(CustomNpcs.MainColor.getRGB());
+         addTextField(1, guiLeft + 60, guiTop + 92, 200, 20, tile.range)
+                 .setMinMaxDefault(2, 60, 10);
+         // exit
+         addButton(0, guiLeft + 40, guiTop + 190,"gui.done")
+                 .setSize(120, 20)
+                 .setHoverTexts("hover.exit");
+      }
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.getID() == 66) { onClosed(); }
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      if (button.id == 0) { onClose(); }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (tile == null) { onClosed(); return; }
-		int color = new Color(0xFFFFFF).getRGB();
-		// name
-		addLabel(new GuiNpcLabel(0, "gui.name", guiLeft + 1, guiTop + 76, color));
-		addTextField(new GuiNpcTextField(0, this, guiLeft + 60, guiTop + 71, 200, 20, tile.name));
-		// range
-		addLabel(new GuiNpcLabel(1, "gui.range", guiLeft + 1, guiTop + 97, color));
-		addTextField(new GuiNpcTextField(1, this, guiLeft + 60, guiTop + 92, 200, 20, tile.range + "")
-				.setMinMaxDefault(2, 60, 10));
-		// exit
-		addButton(new GuiNpcButton(66, guiLeft + 40, guiTop + 190, 120, 20, "gui.done")
-				.setHoverText("hover.exit"));
-	}
+   @Override
+   public void save() { Packets.sendServer(new SPacketTileEntitySave(tile.saveWithFullMetadata())); }
 
-	@Override
-	public void save() {
-		tile.name = getTextField(0).getText();
-		tile.range = getTextField(1).getInteger();
-		NBTTagCompound compound = new NBTTagCompound();
-		tile.writeToNBT(compound);
-		Client.sendData(EnumPacketServer.SaveTileEntity, compound);
-	}
+   @Override
+   public void setGuiData(CompoundTag compound) {
+      tile.load(compound);
+      init();
+   }
 
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		tile.readFromNBT(compound);
-		initGui();
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      switch (textField.id) {
+         case 0: tile.name = textField.getValue(); break;
+         case 1: tile.range = textField.getInteger(); break;
+      }
+   }
 
 }

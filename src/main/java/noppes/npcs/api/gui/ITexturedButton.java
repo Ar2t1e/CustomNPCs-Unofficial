@@ -1,18 +1,17 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface ITexturedButton extends IButton {
 
-	String getTexture();
+   String getTexture();
 
-	int getTextureX();
+   ITexturedButton setTexture(@ParamName("texture") String texture);
 
-	int getTextureY();
+   int getTextureX();
 
-	ITexturedButton setTexture(@ParamName("texture") String texture);
+   int getTextureY();
 
-	ITexturedButton setTextureOffset(@ParamName("textureX") int textureX, @ParamName("textureY") int textureY);
+   ITexturedButton setTextureOffset(@ParamName("textureX") int textureX, @ParamName("textureY") int textureY);
 
 }

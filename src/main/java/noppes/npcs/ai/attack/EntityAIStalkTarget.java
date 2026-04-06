@@ -1,60 +1,44 @@
 package noppes.npcs.ai.attack;
 
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.IRangedAttackMob;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.monster.RangedAttackMob;
 
 public class EntityAIStalkTarget extends EntityAICustom {
 
-	public boolean discovered;
-	private EntityLivingBase oldTarget;
+	private LivingEntity oldTarget;
 
-	public EntityAIStalkTarget(IRangedAttackMob npc) {
-		super(npc);
-		discovered = false;
-	}
-
-	private void setDiscovered(boolean discoveredIn) {
-		discovered = discoveredIn;
-		if (npc.aiIsSneak == discovered) {
-			npc.aiIsSneak = !discovered;
-			npc.setSneaking(!discovered);
-		}
+	public EntityAIStalkTarget(RangedAttackMob npcIn) {
+		super(npcIn);
+		npc.setPose(Pose.STANDING);
 	}
 
 	@Override
-	public boolean shouldExecute() {
-		if (super.shouldExecute()) {
-			return true;
-		}
-		if (discovered) {
+	public boolean canUse() {
+		if (super.canUse()) { return true; }
+		if (npc.hasPose(Pose.CROUCHING)) {
 			oldTarget = null;
-			setDiscovered(false);
+			npc.setPose(Pose.STANDING);
 		}
 		return false;
 	}
 
 	@Override
-	public void updateTask() {
-		super.updateTask();
-		if (isFriend || npc.ticksExisted % (tickRate * 2) > 3) { return; }
+	public void tick() {
+		super.tick();
+		if (isFriend || npc.tickCount % (newGoalRate * 2) > newGoalRate) { return; }
 		canSeeToAttack = npc.canSee(target);
-		if (!discovered && distance < tacticalRange) { setDiscovered(true); }
+		if (!npc.hasPose(Pose.CROUCHING) && distance < tacticalRange) { npc.setPose(Pose.CROUCHING); }
 		if (canSeeToAttack && distance <= range) {
-			if (inMove) { npc.getNavigator().clearPath(); }
+			if (inMove) { npc.getNavigation().stop(); }
 		}
-		else { npc.getNavigator().tryMoveToEntityLiving(target, discovered ? 1.3d : 0.725d); }
+		else { npc.getNavigation().moveTo(target, npc.isCrouching() ? 0.725d : 1.3d); }
 		tryToCauseDamage();
-		if (!discovered && hasAttack || target.canEntityBeSeen(npc)) { setDiscovered(true); }
+		if (!npc.hasPose(Pose.CROUCHING) && hasAttack || npc.getSensing().hasLineOfSight(target)) { npc.setPose(Pose.CROUCHING); }
 		if (!target.equals(oldTarget)) {
 			oldTarget = target;
-			setDiscovered(discovered);
+			if (npc.hasPose(Pose.CROUCHING)) { npc.setPose(Pose.STANDING); } else { npc.setPose(Pose.CROUCHING); }
 		}
-	}
-
-	@Override
-	public void writeToClientNBT(NBTTagCompound compound) {
-		compound.setBoolean("aiIsSneak", !discovered);
 	}
 
 }

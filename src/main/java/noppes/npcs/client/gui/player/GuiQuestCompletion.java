@@ -1,123 +1,74 @@
 package noppes.npcs.client.gui.player;
 
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.api.handler.data.IQuest;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.TextBlockClient;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPlayerPacket;
-import noppes.npcs.constants.EnumRewardType;
-import noppes.npcs.controllers.data.Quest;
-import org.lwjgl.input.Keyboard;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
+import noppes.npcs.controllers.QuestController;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketQuestCompletionCheck;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.listeners.ITopButtonListener;
 
-import javax.annotation.Nonnull;
+public class GuiQuestCompletion extends GuiNPCInterface implements ITopButtonListener {
 
-public class GuiQuestCompletion extends GuiNPCInterface {
+   protected final IQuest quest;
+   protected final ResourceLocation resource = new ResourceLocation(CustomNpcs.MODID, "textures/gui/smallbg.png");
 
-	protected static final ResourceLocation bookGuiTextures = new ResourceLocation("textures/gui/book.png");
-	protected final ResourceLocation resource = new ResourceLocation(CustomNpcs.MODID, "textures/gui/smallbg.png");
-	protected final Quest quest;
-	protected TextBlockClient textBlockClient;
-	protected int maxLine;
-	protected int currentPage = 0;
-	protected int hover;
+   public GuiQuestCompletion(int questId) {
+      super();
+      imageWidth = 176;
+      imageHeight = 222;
+      drawDefaultBackground = false;
+      closeOnEsc = false;
 
-	public GuiQuestCompletion(Quest questIn) {
-		super();
-		drawDefaultBackground = false;
-		title = "";
-		xSize = 176;
-		ySize = 222;
+      quest = QuestController.instance.get(questId);
+   }
 
-		quest = questIn;
-	}
+   @Override
+   public void init() {
+      super.init();
+      int left = (imageWidth - font.width(Component.translatable(quest.getName()))) / 2;
+      addLabel(0, guiLeft + left, guiTop + 4, Component.translatable(quest.getName()));
+      addButton(0, guiLeft + 38, guiTop + imageHeight - 24, "quest.complete")
+              .setSize(100, 20);
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.id == 66) { onClosed(); }
-	}
+   @Override
+   public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      renderBackground(graphics);
+      RenderSystem.setShader(GameRenderer::getPositionTexShader);
+      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+      RenderSystem.setShaderTexture(0, resource);
+      graphics.blit(resource, guiLeft, guiTop, 0, 0, imageWidth, imageHeight);
+      graphics.hLine(guiLeft + 4, guiLeft + 170, guiTop + 13, -16777216 + CustomNpcResourceListener.DefaultTextColor);
+      drawQuestText(graphics);
+      super.render(graphics, mouseX, mouseY, partialTicks);
+   }
 
-	private void drawQuestText() {
-		for (int i = currentPage * maxLine, j = 0; j < maxLine && i < textBlockClient.lines.size(); ++i, ++j) {
-			String text = textBlockClient.lines.get(i).getFormattedText();
-			fontRenderer.drawString(text, guiLeft + 4, guiTop + 16 + j * fontRenderer.FONT_HEIGHT, CustomNpcResourceListener.DefaultTextColor);
-		}
-	}
+   private void drawQuestText(GuiGraphics graphics) {
+      int x = guiLeft + 4;
+      TextBlockClient block = new TextBlockClient(Component.translatable(quest.getCompleteText()).getString(), 172, true, player);
+      for(int i = 0; i < block.lines.size(); ++i) {
+         String text = block.lines.get(i).getString();
+         graphics.drawString(font, text, x, guiTop + 16 + i * 9, CustomNpcResourceListener.DefaultTextColor, false);
+      }
 
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		drawDefaultBackground();
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		mc.getTextureManager().bindTexture(resource);
-		drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
-		drawHorizontalLine(guiLeft + 4, guiLeft + 170, guiTop + 13, 0xFF000000 + CustomNpcResourceListener.DefaultTextColor);
-		drawQuestText();
-		hover = -1;
-		if (textBlockClient.lines.size() * fontRenderer.FONT_HEIGHT > maxLine) {
-			String page = (currentPage + 1) + "/" + ((int) Math.ceil((double) textBlockClient.lines.size() / (double) maxLine));
-			fontRenderer.drawString(page, guiLeft + 150 - fontRenderer.getStringWidth(page), guiTop + ySize - 20, CustomNpcResourceListener.DefaultTextColor);
-			if (currentPage > 0) {
-				GlStateManager.pushMatrix();
-				GlStateManager.translate(guiLeft + 6, guiTop + ySize - 20, 0.0f);
-				if (isMouseHover(mouseX, mouseY, guiLeft + 6, guiTop + ySize - 20, 18, 10)) { hover = 0; }
-				mc.getTextureManager().bindTexture(GuiQuestCompletion.bookGuiTextures);
-				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-				drawTexturedModalRect(0, 0, hover == 0 ? 26 : 3, 207, 18, 10);
-				GlStateManager.popMatrix();
-			}
-			if ((currentPage + 1) * maxLine < textBlockClient.lines.size()) {
-				GlStateManager.pushMatrix();
-				GlStateManager.translate(guiLeft + xSize - 24, guiTop + ySize - 20, 0.0f);
-				if (isMouseHover(mouseX, mouseY, guiLeft + xSize - 24, guiTop + ySize - 20, 18, 10)) { hover = 1; }
-				mc.getTextureManager().bindTexture(GuiQuestCompletion.bookGuiTextures);
-				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-				drawTexturedModalRect(0, 0, hover == 1 ? 26 : 3, 194, 18, 10);
-				GlStateManager.popMatrix();
-			}
-		}
-		super.drawScreen(mouseX, mouseY, partialTicks);
-	}
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		String questTitle = new TextComponentTranslation("questlog.completed").getFormattedText() + new TextComponentTranslation(quest.getName()).getFormattedText();
-		int left = (xSize - fontRenderer.getStringWidth(questTitle)) / 2;
-		addLabel(new GuiNpcLabel(0, questTitle, guiLeft + left, guiTop + 4));
-		textBlockClient = new TextBlockClient(quest.getCompleteText(), 170, true, npc, player);
-		maxLine = 180 / fontRenderer.FONT_HEIGHT;
-		if (textBlockClient.lines.size() > maxLine) { addButton(new GuiNpcButton(0, guiLeft + 28, guiTop + ySize - 24, 80, 20, new TextComponentTranslation("quest.complete").getFormattedText())); }
-		else { addButton(new GuiNpcButton(66, guiLeft + 48, guiTop + ySize - 24, 80, 20, new TextComponentTranslation("quest.complete").getFormattedText())); }
-	}
-
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui != null) { return subgui.keyCnpcsPressed(typedChar, keyCode); }
-		if (keyCode == Keyboard.KEY_ESCAPE || isInventoryKey(keyCode)) {
-			onClosed();
-			return true;
-		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
-	}
-
-	@Override
-	public void save() {
-		if (quest.rewardType == EnumRewardType.ONE_SELECT) { NoppesUtilPlayer.sendData(EnumPlayerPacket.QuestChooseReward, quest.getId()); }
-		else { NoppesUtilPlayer.sendData(EnumPlayerPacket.QuestCompletion, quest.getId()); }
-	}
-
-	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (subgui == null && hover != -1) {
-			if (hover == 1) { currentPage++; }
-			else { currentPage--; }
-			return true;
-		}
-		return super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop guiButton) {
+      if (guiButton.id == 0) {
+         Packets.sendServer(new SPacketQuestCompletionCheck(quest.getId(), ItemStack.EMPTY));
+         onClose();
+      }
+   }
 
 }

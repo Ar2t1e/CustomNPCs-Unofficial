@@ -1,167 +1,235 @@
 package noppes.npcs.client.gui.mainmenu;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.Client;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import noppes.npcs.client.gui.SubGuiNpcMovement;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
+import noppes.npcs.constants.EnumMenuType;
+import noppes.npcs.constants.EnumNpcTactics;
+import noppes.npcs.constants.EnumSeeTarget;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataAI;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketMenuGet;
+import noppes.npcs.packets.server.SPacketMenuSave;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
 import java.awt.*;
 
 public class GuiNpcAI extends GuiNPCInterface2 implements ITextfieldListener, IGuiData {
 
-	protected final DataAI ai;
-	protected final String[] tactics = new String[] { "aitactics.rush", "aitactics.stagger", "aitactics.orbit", "aitactics.hitandrun", "aitactics.commander", "aitactics.stalk", "gui.none" };
+   protected static final Object[] tactics;
+   protected static final Object[] directs;
+   protected final DataAI ai;
 
-	public GuiNpcAI(EntityNPCInterface npc) {
-		super(npc, 6);
-		ai = npc.ais;
-		Client.sendData(EnumPacketServer.MainmenuAIGet);
-	}
+   static {
+      tactics = new Object[EnumNpcTactics.values().length];
+      int i = 0;
+      for (EnumNpcTactics est : EnumNpcTactics.values()) { tactics[i++] = "ai.tactic." + est.name().toLowerCase(); }
+      directs = new Object[EnumSeeTarget.values().length];
+      i = 0;
+      for (EnumSeeTarget est : EnumSeeTarget.values()) { directs[i++] = "ai.direct." + est.name().toLowerCase(); }
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: ai.onAttack = button.getValue(); initGui(); break;
-			case 1: ai.doorInteract = button.getValue(); break;
-			case 2: setSubGui(new SubGuiNpcMovement(ai)); break;
-			case 5: npc.ais.setAvoidsWater(button.getValue() == 1); break;
-			case 6: ai.returnToStart = (button.getValue() == 1); break;
-			case 7: ai.canSwim = (button.getValue() == 1); break;
-			case 9: ai.findShelter = button.getValue(); break;
-			case 10: ai.directLOS = (button.getValue() == 1); break;
-			case 15: ai.canLeap = (button.getValue() == 1); break;
-			case 16: ai.canSprint = (button.getValue() == 1); break;
-			case 17: {
-				ai.tacticalVariant = button.getValue();
-				ai.directLOS = (button.getValue() != 5 && ai.directLOS);
-				initGui();
-				break;
-			}
-			case 18: ai.canBeCollide = (button.getValue() == 1); break;
-			case 23: ai.attackInvisible = ((GuiNpcButtonYesNo) button).getBoolean(); break;
-			case 25: {
-				ai.aiDisabled = (button.getValue() == 1);
-				button.setLayerColor(ai.aiDisabled ?
-						new Color(0xFFF02020).getRGB() :
-						new Color(0xFF20F020).getRGB());
-				initGui();
-				break;
-			}
-			case 66: onClosed(); break;
-		}
-	}
+   public GuiNpcAI(EntityNPCInterface npc) {
+      super(npc, 3);
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		int lId = 0;
-		int x = guiLeft + 7;
-		int y = guiTop + 10;
-		addLabel(new GuiNpcLabel(lId++, "ai.enemyresponse", x, y + 7));
-		ITextComponent mess = new TextComponentTranslation("ai.hover.if.see").appendSibling(new TextComponentTranslation("ai.hover.if.see." + npc.ais.onAttack));
-		if (ai.aiDisabled) { mess.appendSibling(new TextComponentTranslation("hover.ai.disabled")); }
-		addButton(new GuiNpcButton(0, x + 111, y, 60, 20, new String[] { "gui.retaliate", "gui.panic", "gui.retreat", "gui.nothing" }, npc.ais.onAttack)
-				.setIsEnable(!ai.aiDisabled)
-				.setHoverText(mess.getFormattedText()));
-		addLabel(new GuiNpcLabel(lId++, "ai.door", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(1, x + 111, y, 60, 20, new String[] { "gui.break", "gui.open", "gui.disabled" }, npc.ais.doorInteract)
-				.setHoverText("ai.hover.door"));
-		addLabel(new GuiNpcLabel(lId++, "ai.swim", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(7, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (npc.ais.canSwim ? 1 : 0))
-				.setHoverText("ai.hover.water"));
-		addLabel(new GuiNpcLabel(lId++, "ai.shelter", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(9, x + 111, y, 60, 20, new String[] { "gui.darkness", "gui.sunlight", "gui.disabled" }, npc.ais.findShelter)
-				.setHoverText("ai.hover.found.refuge"));
-		addLabel(new GuiNpcLabel(lId++, "ai.clearlos", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(10, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (npc.ais.directLOS ? 1 : 0))
-				.setHoverText("ai.hover.found.target"));
-		addLabel(new GuiNpcLabel(lId++, "stats.attackInvisible", x, (y += 25) + 7));
-		mess = new TextComponentTranslation("ai.hover.stealth");
-		if (ai.aiDisabled) { mess.appendSibling(new TextComponentTranslation("hover.ai.disabled")); }
-		addButton(new GuiNpcButtonYesNo(23, x + 111, y, 60, 20, ai.attackInvisible)
-				.setIsEnable(!ai.aiDisabled)
-				.setHoverText(mess.getFormattedText()));
-		addLabel(new GuiNpcLabel(lId++, "ai.movement", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(2, x + 111, y, 60, 20, "selectServer.edit")
-				.setHoverText("ai.hover.set.walking"));
-		addLabel(new GuiNpcLabel(lId++, "ai.disabled", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(25, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (ai.aiDisabled ? 1 : 0))
-				.setLayerColor(ai.aiDisabled ? new Color(0xFFF02020).getRGB() : new Color(0xFF20F020).getRGB())
-				.setHoverText("ai.hover.disabled"));
-		x = guiLeft + 190;
-		y = guiTop + 10;
-		addLabel(new GuiNpcLabel(lId++, "ai.avoidwater", x, y + 7));
-		addButton(new GuiNpcButton(5, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (ai.avoidsWater ? 1 : 0))
-				.setHoverText("ai.hover.non.water"));
-		addLabel(new GuiNpcLabel(lId++, "ai.return", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(6, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (ai.returnToStart ? 1 : 0))
-				.setHoverText("ai.hover.back.home"));
-		addLabel(new GuiNpcLabel(lId++, "ai.leapattarget", x, (y += 25) + 7));
-		mess = new TextComponentTranslation("ai.hover.jump");
-		if (ai.aiDisabled) { mess.appendSibling(new TextComponentTranslation("hover.ai.disabled")); }
-		addButton(new GuiNpcButton(15, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (ai.canLeap ? 1 : 0))
-				.setIsEnable(!ai.aiDisabled && ai.onAttack == 0)
-				.setHoverText(mess.getFormattedText()));
-		addLabel(new GuiNpcLabel(lId++, "ai.cansprint", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(16, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (ai.canSprint ? 1 : 0))
-				.setHoverText("ai.hover.run", "" + (int) ((double) npc.stats.aggroRange / 3.0d)));
-		addLabel(new GuiNpcLabel(lId++, "ai.hurt.resistant.time", x, (y += 25) + 7));
-		addTextField(new GuiNpcTextField(4, this, x + 112, y + 1, 58, 18, (ai.getMaxHurtResistantTime() / 2) + "")
-				.setMinMaxDefault(0, 100, ai.getMaxHurtResistantTime() / 2)
-				.setHoverText("ai.hover.hurt.resistant.time"));
-		addLabel(new GuiNpcLabel(lId++, "ai.can.be.collide", x, (y += 25) + 7));
-		addButton(new GuiNpcButton(18, x + 111, y, 60, 20, new String[] { "gui.no", "gui.yes" }, (ai.canBeCollide ? 1 : 0))
-				.setHoverText("ai.hover.can.be.collide"));
-		addLabel(new GuiNpcLabel(lId++, "ai.tacticalvariant", x, (y += 25) + 7));
-		mess = new TextComponentTranslation("ai.hover.attack.type", tactics[ai.tacticalVariant]).appendSibling(new TextComponentTranslation("ai.hover.attack.type." + ai.tacticalVariant));
-		if (ai.aiDisabled) { mess.appendSibling(new TextComponentTranslation("hover.ai.disabled")); }
-		addButton(new GuiNpcButton(17, x + 111, y, 60, 20, tactics, ai.tacticalVariant)
-				.setIsEnable(!ai.aiDisabled && ai.onAttack == 0)
-				.setHoverText(mess.getFormattedText()));
-		if (ai.tacticalVariant != 0 && ai.tacticalVariant != 6) {
-			String label;
-			switch (ai.tacticalVariant) {
-				case 1: label = "gui.dodgedistance"; break;
-				case 2: label = "gui.orbitdistance"; break;
-				case 3: label = "gui.fightifthisclose"; break;
-				case 4: label = "gui.searchdistance"; break;
-				case 5: label = "gui.proximity"; break;
-				default: label = "gui.engagedistance"; break;
-			}
-			addLabel(new GuiNpcLabel(lId, label, x, (y += 25) + 7));
-			addTextField(new GuiNpcTextField(3, this, x + 112, y + 1, 58, 18, ai.getTacticalRange() + "")
-					.setMinMaxDefault(1, npc.stats.aggroRange, 5)
-					.setHoverText("ai.hover.attack.range"));
-		}
-	}
+      ai = npc.ais;
+      Packets.sendServer(new SPacketMenuGet(EnumMenuType.AI));
+   }
 
-	@Override
-	public void save() { Client.sendData(EnumPacketServer.MainmenuAISave, ai.writeToNBT(new NBTTagCompound())); }
+   @Override
+   public void init() {
+      super.init();
+      int lId = 0;
+      int w = 130;
+      int x0 = guiLeft + 7;
+      int x1 = x0 + w + 2;
+      int y = guiTop + 10;
+      int hStep = 22;
+      // R1
+      addLabel(lId++, x0, y + 7, "ai.enemyresponse")
+              .setSize(w, 10);
+      MutableComponent mess = Component.translatable("ai.hover.if.see")
+              .append(Component.translatable("ai.hover.if.see." + npc.ais.onAttack));
+      if (ai.aiDisabled) { mess.append(Component.translatable("hover.ai.disabled")); }
+      addButton(0, x1, y, false, npc.ais.onAttack, "gui.retaliate", "gui.panic", "gui.retreat", "gui.nothing")
+              .setSize(60, 20)
+              .setIsEnabled(!ai.aiDisabled)
+              .setHoverTexts(mess);
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.door")
+              .setSize(w, 10);
+      addButton(1, x1, y, false, npc.ais.doorInteract, "gui.break", "gui.open", "gui.disabled")
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.door");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.swim")
+              .setSize(w, 10);
+      addYesNo(7, x1, y, npc.ais.canSwim)
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.water");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.shelter")
+              .setSize(w, 10);
+      addButton(9, x1, y, false, npc.ais.findShelter, "gui.darkness", "gui.sunlight", "gui.disabled")
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.found.refuge");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.clearlos")
+              .setSize(w, 10);
 
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		if (compound.hasKey("MovementType", 3)) {
-			ai.readToNBT(compound);
-			initGui();
-		}
-	}
+      addButton(10, x1, y, false, npc.ais.directLOS.ordinal(), directs)
+              .setSize(60, 20)
+              .setIsEnabled(!ai.aiDisabled)
+              .setHoverTexts(net.minecraft.network.chat.Component.translatable("ai.hover.found.target")
+                      .append("<br>").append(Component.translatable("ai.hover.direct."+npc.ais.directLOS.name().toLowerCase())));
+      addLabel(lId++, x0, (y += hStep) + 7, "stats.attackInvisible")
+              .setSize(w, 10);
+      mess = Component.translatable("ai.hover.stealth");
+      if (ai.aiDisabled) { mess.append(Component.translatable("hover.ai.disabled")); }
+      addYesNo(23, x1, y, ai.attackInvisible)
+              .setSize(60, 20)
+              .setIsEnabled(!ai.aiDisabled)
+              .setHoverTexts(mess);
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.movement")
+              .setSize(w, 10);
+      addButton(2, x1, y, "selectServer.edit")
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.set.walking");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.disabled")
+              .setSize(w, 10);
+      addYesNo(25, x1, y, ai.aiDisabled)
+              .setSize(60, 20)
+              .setColor(ai.aiDisabled ? new Color(0xFFF02020).getRGB() : new Color(0xFF20F020).getRGB())
+              .setHoverTexts("ai.hover.disabled");
+      // R2
+      y = guiTop + 10;
+      x0 += w + 66;
+      x1 = x0 + w + 2;
+      addLabel(lId++, x0, y + 7, "ai.avoidwater")
+              .setSize(w, 10);
+      addYesNo(5, x1, y, ai.avoidsWater)
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.non.water");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.return")
+              .setSize(w, 10);
+      addYesNo(6, x1, y, ai.returnToStart)
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.back.home");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.leapattarget")
+              .setSize(w, 10);
+      mess = Component.translatable("ai.hover.jump");
+      if (ai.aiDisabled) { mess.append(Component.translatable("hover.ai.disabled")); }
+      addYesNo(15, x1, y, ai.canLeap)
+              .setSize(60, 20)
+              .setIsEnabled(!ai.aiDisabled && ai.onAttack == 0)
+              .setHoverTexts(mess);
+      addLabel(lId, x0, (y += hStep) + 5, "ai.mountcontrol");
+      addYesNo(22, x1, y, npc.ais.mountControl)
+              .setSize(60, 20);
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.cansprint")
+              .setSize(w, 10);
+      addYesNo(16, x1, y, ai.canSprint)
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.run", "" + (int) ((double) npc.stats.aggroRange / 3.0d));
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.hurt.resistant.time")
+              .setSize(w, 10);
+      addTextField(4, x1 + 1, y + 1, 58, 18, (ai.getMaxHurtResistantTime() / 2) + "")
+              .setMinMaxDefault(0, 100, ai.getMaxHurtResistantTime() / 2)
+              .setHoverTexts("ai.hover.hurt.resistant.time");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.can.be.collide")
+              .setSize(w, 10);
+      addYesNo(18, x1, y, ai.canBeCollide)
+              .setSize(60, 20)
+              .setHoverTexts("ai.hover.can.be.collide");
+      addLabel(lId++, x0, (y += hStep) + 7, "ai.tacticalvariant")
+              .setSize(w, 10);
+      mess = Component.translatable("ai.hover.attack.type",
+                      Component.translatable("ai.tactic." + ai.tacticalVariant.name().toLowerCase()).getString())
+              .append(Component.translatable("ai.hover.attack.type." + ai.tacticalVariant.name().toLowerCase()));
+      if (ai.aiDisabled) { mess.append(Component.translatable("hover.ai.disabled")); }
+      addButton(17, x1, y, false, ai.tacticalVariant.ordinal(), tactics)
+              .setSize(60, 20)
+              .setIsEnabled(!ai.aiDisabled && ai.onAttack == 0)
+              .setHoverTexts(mess);
+      if (ai.tacticalVariant != EnumNpcTactics.RUSH && ai.tacticalVariant != EnumNpcTactics.NONE) {
+         addLabel(lId, x0, (y += hStep) + 7, switch (ai.tacticalVariant) {
+            case STAGGER -> "gui.dodgedistance";
+            case ORBIT -> "gui.orbitdistance";
+            case HIT_AND_RUN -> "gui.fightifthisclose";
+            case COMMANDER -> "gui.searchdistance";
+            case STALK -> "gui.proximity";
+            default -> "gui.engagedistance";
+         }).setSize(w, 10);
+         addTextField(3, x1 + 1, y + 1, 58, 18, ai.getTacticalRange() + "")
+                 .setMinMaxDefault(1, npc.stats.aggroRange, 5)
+                 .setHoverTexts("ai.hover.attack.range");
+      }
+   }
 
-	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		if (textfield.getID() == 3) { ai.setTacticalRange(textfield.getInteger()); }
-		else if (textfield.getID() == 4) {
-			ai.setMaxHurtResistantTime(textfield.getInteger() * 2);
-			if (textfield.getInteger() * 2 != ai.getMaxHurtResistantTime()) {
-				textfield.setText("" + ai.getMaxHurtResistantTime());
-			}
-		}
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 0: ai.onAttack = button.getValue(); init(); break;
+         case 1: ai.doorInteract = button.getValue(); break;
+         case 2: setSubGui(new SubGuiNpcMovement(ai)); break;
+         case 5: npc.ais.setAvoidsWater(button.getValue() == 1); break;
+         case 6: ai.returnToStart = (button.getValue() == 1); break;
+         case 7: ai.canSwim = (button.getValue() == 1); break;
+         case 9: ai.findShelter = button.getValue(); break;
+         case 10: {
+            ai.setAttackLOS(button.getValue());
+            button.setHoverTexts(Component.translatable("ai.hover.found.target")
+                    .append("<br>").append(Component.translatable("ai.hover.direct."+npc.ais.directLOS.name().toLowerCase())));
+            break;
+         }
+         case 15: ai.canLeap = (button.getValue() == 1); break;
+         case 16: ai.canSprint = (button.getValue() == 1); break;
+         case 17: {
+            ai.setTacticalType(button.getValue());
+            init();
+            break;
+         }
+         case 18: ai.canBeCollide = (button.getValue() == 1); break;
+         case 22: ai.mountControl = ((GuiButtonYesNo) button).getBoolean(); break;
+         case 23: ai.attackInvisible = ((GuiButtonYesNo) button).getBoolean(); break;
+         case 25: {
+            ai.aiDisabled = ((GuiButtonYesNo) button).getBoolean();
+            if (ai.aiDisabled) {
+               ai.onAttack = 0;
+               ai.directLOS = EnumSeeTarget.NORMAL;
+               ai.tacticalVariant = EnumNpcTactics.RUSH;
+            }
+            button.setColor(ai.aiDisabled ?
+                    new Color(0xFFF02020).getRGB() :
+                    new Color(0xFF20F020).getRGB());
+            init();
+            break;
+         }
+         case 66: onClose(); break;
+      }
+   }
+
+   @Override
+   public void save() { Packets.sendServer(new SPacketMenuSave(EnumMenuType.AI, ai.save(new CompoundTag()))); }
+
+   @Override
+   public void setGuiData(CompoundTag compound) {
+      if (compound.contains("MovementType", 3)) {
+         ai.load(compound);
+         init();
+      }
+   }
+
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      if (textField.id == 3) { ai.setTacticalRange(textField.getInteger()); }
+      else if (textField.id == 4) {
+         ai.setMaxHurtResistantTime(textField.getInteger() * 2);
+         if (textField.getInteger() * 2 != ai.getMaxHurtResistantTime()) { textField.setValue("" + ai.getMaxHurtResistantTime()); }
+      }
+   }
 
 }

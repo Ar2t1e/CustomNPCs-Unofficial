@@ -1,20 +1,20 @@
 package noppes.npcs.api;
 
-import net.minecraft.util.DamageSource;
+import net.minecraft.world.damagesource.DamageSource;
 import noppes.npcs.api.entity.IEntity;
 
 public interface IDamageSource {
 
-	IEntity<?> getImmediateSource();
+   String getType();
 
-	DamageSource getMCDamageSource();
+   boolean isUnblockable();
 
-	IEntity<?> getTrueSource();
+   boolean isProjectile();
 
-	String getType();
+   IEntity<?> getTrueSource();
 
-	boolean isProjectile();
+   IEntity<?> getImmediateSource();
 
-	boolean isUnblockable();
+   DamageSource getMCDamageSource();
 
 }

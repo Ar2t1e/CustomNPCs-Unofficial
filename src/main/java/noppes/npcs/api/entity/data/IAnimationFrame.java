@@ -1,49 +1,48 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
 public interface IAnimationFrame {
 
-	int getEndDelay();
+    int getEndDelay();
 
-	IAnimationPart getPart(@ParamName("id") int id);
+    IAnimationPart getPart(@ParamName("id") int id);
 
-	int getSpeed();
+    int getSpeed();
 
-	boolean isSmooth();
+    boolean isSmooth();
 
-	void setEndDelay(@ParamName("ticks") int ticks);
+    void setEndDelay(@ParamName("ticks") int ticks);
 
-	void setSmooth(@ParamName("isSmooth") boolean isSmooth);
+    void setSmooth(@ParamName("isSmooth") boolean isSmooth);
 
-	void setSpeed(@ParamName("ticks") int ticks);
+    void setSpeed(@ParamName("ticks") int ticks);
 
-	String getStartSound();
+    String getStartSound();
 
-	void setStartSound(@ParamName("sound") String sound);
+    void setStartSound(@ParamName("sound") String sound);
 
-	int getStartEmotion();
+    int getStartEmotion();
 
-	void setStartEmotion(@ParamName("id") int id);
+    void setStartEmotion(@ParamName("id") int id);
 
-	boolean isNowDamage();
+    boolean isNowDamage();
 
-	int getHoldRightStackType();
+    int getHoldRightStackType();
 
-	int getHoldLeftStackType();
+    int getHoldLeftStackType();
 
-	IItemStack getHoldRightStack();
+    IItemStack getHoldRightStack();
 
-	IItemStack getHoldLeftStack();
+    IItemStack getHoldLeftStack();
 
-	void setHoldRightStackType(@ParamName("type") int type);
+    void setHoldRightStackType(@ParamName("type") int type);
 
-	void setHoldLeftStackType(@ParamName("type") int type);
+    void setHoldLeftStackType(@ParamName("type") int type);
 
-	void setHoldRightStack(@ParamName("stack") IItemStack stack);
+    void setHoldRightStack(@ParamName("stack") IItemStack stack);
 
-	void setHoldLeftStack(@ParamName("stack") IItemStack stack);
+    void setHoldLeftStack(@ParamName("stack") IItemStack stack);
 
 }

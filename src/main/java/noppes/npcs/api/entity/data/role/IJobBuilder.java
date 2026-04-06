@@ -1,7 +1,9 @@
 package noppes.npcs.api.entity.data.role;
 
-public interface IJobBuilder {
+import noppes.npcs.api.entity.data.INPCJob;
 
-	boolean isBuilding();
+public interface IJobBuilder extends INPCJob {
+
+   boolean isBuilding();
 
 }

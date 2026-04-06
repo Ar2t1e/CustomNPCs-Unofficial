@@ -1,1 +1,1 @@
-{	"_comment": "Custom Fishing Rod Cast Item Model created by default",	"parent": "item/fishing_rod",	"textures": {		"layer0": "{mod_id}:items/{name}_cast"	}}
+{  "_comment": "Custom Fishing Rod Cast Item Model created by default",  "parent": "{mod_id}:item/{file_name}",  "textures": { "layer0": "{mod_id}:item/{name}_cast" }}

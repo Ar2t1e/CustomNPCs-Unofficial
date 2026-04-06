@@ -1,41 +1,32 @@
 package noppes.npcs.api.wrapper;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.collect.Lists;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.fml.common.eventhandler.EventBus;
-import net.minecraftforge.server.permission.DefaultPermissionLevel;
+import net.minecraftforge.eventbus.api.BusBuilder;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.server.permission.PermissionAPI;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.api.CommandNoppesBase;
-import noppes.npcs.api.CustomNPCsException;
-import noppes.npcs.api.IContainer;
-import noppes.npcs.api.IDamageSource;
-import noppes.npcs.api.IEntityDamageSource;
-import noppes.npcs.api.IMethods;
-import noppes.npcs.api.INbt;
-import noppes.npcs.api.IPos;
-import noppes.npcs.api.IWorld;
-import noppes.npcs.api.NpcAPI;
+import net.minecraftforge.server.permission.handler.DefaultPermissionHandler;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.server.permission.nodes.PermissionTypes;
+import nikedemos.markovnames.generators.MarkovGenerator;
+import noppes.npcs.*;
+import noppes.npcs.api.*;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IEntity;
@@ -43,398 +34,342 @@ import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.IData;
 import noppes.npcs.api.entity.data.INpcAttribute;
 import noppes.npcs.api.entity.data.IPlayerMail;
+import noppes.npcs.api.gui.IComponent;
 import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.handler.*;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.overlay.IOverlay;
 import noppes.npcs.api.wrapper.data.AttributeWrapper;
+import noppes.npcs.api.wrapper.gui.ComponentWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiWrapper;
-import noppes.npcs.client.util.ResourceData;
 import noppes.npcs.containers.ContainerNpcInterface;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerMail;
-import noppes.npcs.dimensions.DimensionHandler;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.LRUHashMap;
-import noppes.npcs.util.Util;
+import noppes.npcs.mixin.world.entity.IEntityMixin;
+import noppes.npcs.shared.client.gui.util.ResourceData;
+import noppes.npcs.shared.common.util.LRUHashMap;
+import noppes.npcs.util.CustomPermissionHandler;
 import noppes.npcs.util.NBTJsonUtil;
+import noppes.npcs.util.Util;
 
 public class WrapperNpcAPI extends NpcAPI {
 
-	public static volatile LRUHashMap<Integer, WorldWrapper> worldCache = new LRUHashMap<>(300);
-	private static NpcAPI instance = null;
-	private static final Comparator<World> sorter = (w_0, w_1) -> {
-        String dimName0 = w_0.provider.getDimensionType().getName();
-        String dimName1 = w_1.provider.getDimensionType().getName();
-        if ("overworld".equals(dimName0)) { return -1; }
-        if ("overworld".equals(dimName1)) { return 1; }
-        return Integer.compare(w_0.provider.getDimension(), w_1.provider.getDimension());
-    };
+   private static NpcAPI instance = null;
 
-	public static EventBus EVENT_BUS = new EventBus();
-	private final List<World> worlds = Lists.newArrayList();
+   public static final Map<DimensionType, WorldWrapper> worldCache = new LRUHashMap<>(10);
+   public static final IEventBus EVENT_BUS = BusBuilder.builder().build();
+   private final List<Level> levels = Lists.newArrayList();
 
-	public static void clearCache() {
-		WrapperNpcAPI.worldCache.clear();
-		BlockWrapper.clearCache();
-	}
+   public static void clearCache() {
+      worldCache.clear();
+      BlockWrapper.clearCache();
+   }
 
-	public static NpcAPI Instance() {
-		if (WrapperNpcAPI.instance == null) {
-			WrapperNpcAPI.instance = new WrapperNpcAPI();
-		}
-		return WrapperNpcAPI.instance;
-	}
+   public static void resetScriptControllerData(CompoundTag compound) {
+      WorldWrapper.getStoredData().setNbt(new NBTWrapper(compound));
+   }
 
-	public static void resetScriptControllerData(NBTTagCompound compound) {
-		WorldWrapper.getStoredData().setNbt(new NBTWrapper(compound));
-	}
+   public IEntity<?> getIEntity(Entity entity) {
+      if (entity == null) { return null; }
+      if (entity instanceof EntityNPCInterface) { return ((EntityNPCInterface) entity).wrappedNPC; }
+      return WrapperEntityData.get(entity);
+   }
 
-	private void checkWorld() {
-		if (CustomNpcs.Server != null && CustomNpcs.Server.isServerStopped()) {
-			throw new CustomNPCsException("No world is loaded right now");
-		}
-	}
+   public ICustomNpc<?> createNPC(Level level) {
+      if (level.isClientSide) {
+         return null;
+      }
+      EntityCustomNpc npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, level);
+      return npc.wrappedNPC;
+   }
 
-	@Override
-	public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame) {
-		return new CustomGuiWrapper(id, width, height, pauseGame, null);
-	}
+   public void registerPermissionNode(String permission, int defaultType) {
+      if (defaultType != 0) { throw new CustomNPCsException("There is only one default type available, 0: a boolean value"); }
+      if (hasPermissionNode(permission)) { throw new CustomNPCsException("Permission \"" + permission + "\" already exists"); }
+      //throw new CustomNPCsException("RegisterPermissionNode is no longer supported");
+      CustomNpcsPermissions.register(permission);
+   }
 
-	@Override
-	public IPlayerMail createMail(String sender, String title) {
-		PlayerMail mail = new PlayerMail();
-		mail.sender = sender;
-		mail.title = title;
-		return mail;
-	}
+   public boolean hasPermissionNode(String permission) {
+      for (PermissionNode<?> node : PermissionAPI.getRegisteredNodes()) {
+         if (node.getNodeName().equals(permission)) { return true; }
+      }
+      return CustomNpcsPermissions.hasPermission(permission);
+   }
 
-	@Override
-	public ICustomNpc<?> createNPC(World worldMC) {
-		if (worldMC.isRemote) {
-			return null;
-		}
-		EntityCustomNpc npc = new EntityCustomNpc(worldMC);
-		return npc.wrappedNPC;
-	}
+   public ICustomNpc<?> spawnNPC(Level level, int x, int y, int z) {
+      if (level.isClientSide) {
+         return null;
+      }
+      EntityCustomNpc npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, level);
+      npc.absMoveTo((double)x + 0.5D, y, (double)z + 0.5D, 0.0F, 0.0F);
+      npc.ais.setStartPos(x, y, z);
+      npc.setHealth(npc.getMaxHealth());
+      level.addFreshEntity(npc);
+      return npc.wrappedNPC;
+   }
 
-	@Override
-	public EventBus events() {
-		return WrapperNpcAPI.EVENT_BUS;
-	}
+   public static NpcAPI Instance() {
+      if (instance == null) { instance = new WrapperNpcAPI(); }
+      return instance;
+   }
 
-	@Override
-	public String executeCommand(IWorld world, String command) {
-		FakePlayer player = EntityNPCInterface.CommandPlayer;
-		player.setWorld(world.getMCWorld());
-		player.setPosition(0.0, 0.0, 0.0);
-		return NoppesUtilServer.runCommand(world.getMCWorld(), BlockPos.ORIGIN, "API", command, null, player);
-	}
+   public IEventBus events() {
+      return EVENT_BUS;
+   }
 
-	@Override
-	public IPlayer<?>[] getAllPlayers() {
-		List<IPlayer<?>> list = Lists.newArrayList();
-		if (CustomNpcs.Server != null) {
-			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-				if (player == null) {
-					continue;
-				}
-				list.add((IPlayer<?>) this.getIEntity(player));
-			}
-		}
-		return list.toArray(new IPlayer<?>[0]);
-	}
+   public IBlock getIBlock(Level level, BlockPos pos) {
+      return BlockWrapper.createNew(level, pos, level.getBlockState(pos));
+   }
 
-	@Override
-	public IAnimationHandler getAnimations() {
-		return AnimationController.getInstance();
-	}
+   public IItemStack getIItemStack(ItemStack stackMC) {
+      return stackMC != null && !stackMC.isEmpty() ?
+              stackMC.getCapability(ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY, null).orElse(ItemStackWrapper.AIR) :
+              ItemStackWrapper.AIR;
+   }
 
-	@Override
-	public IBorderHandler getBorders() {
-		return BorderController.getInstance();
-	}
+   public IWorld getIWorld(Level level) {
+      WorldWrapper w = worldCache.get(level.dimensionType());
+      if (w != null) {
+         w.level = level;
+      } else {
+         worldCache.put(level.dimensionType(), w = WorldWrapper.createNew(level));
+      }
+      return w;
+   }
 
-	@Override
-	public ICloneHandler getClones() {
-		return ServerCloneController.Instance;
-	}
+   public IWorld getIWorld(DimensionType dimensionTypeMC) {
+      if (CustomNpcs.Server != null && levels.isEmpty()) {
+         for (Level level : CustomNpcs.Server.getAllLevels()) { levels.add(level); }
+      }
+      for (Level level : levels) {
+         if (level.dimensionType() == dimensionTypeMC) { return getIWorld(level); }
+      }
+      throw new CustomNPCsException((Thread.currentThread().getName().toLowerCase().contains("client") ? "Not found" : "Unknown") + " dimension: \"" + dimensionTypeMC + "\"");
+   }
 
-	@Override
-	public IDimensionHandler getCustomDimension() {
-		return DimensionHandler.getInstance();
-	}
+   public IWorld getIWorld(String dimensionName) {
+      if (CustomNpcs.Server == null) {
+         Player player = CustomNpcs.proxy.getPlayer();
+         if (player != null && !levels.contains(player.level())) { levels.add(player.level()); }
+      }
+      else if (levels.isEmpty()) { for (Level level : CustomNpcs.Server.getAllLevels()) { levels.add(level); } }
+      ResourceLocation loc = ResourceLocation.tryParse(dimensionName);
+      for (Level level : levels) {
+         if (level.dimension().location().equals(loc)) { return getIWorld(level); }
+      }
+      throw new CustomNPCsException((Thread.currentThread().getName().toLowerCase().contains("client") ? "Not found" : "Unknown") + " dimension: \"" + loc + "\"");
+   }
 
-	@Override
-	public IDialogHandler getDialogs() {
-		return DialogController.instance;
-	}
+   public IContainer getIContainer(AbstractContainerMenu container) {
+      return new ContainerWrapper(container);
+   }
 
-	@Override
-	public IFactionHandler getFactions() {
-		this.checkWorld();
-		return FactionController.instance;
-	}
+   public IContainer getIContainer(Container inventory) {
+      return inventory instanceof ContainerNpcInterface container ? ContainerNpcInterface.getOrCreateIContainer(container) : new ContainerWrapper(inventory);
+   }
 
-	@Override
-	public File getGlobalDir() {
-		return CustomNpcs.Dir;
-	}
+   public IFactionHandler getFactions() {
+      checkLevel();
+      return FactionController.instance;
+   }
 
-	@Override
-	public INpcAttribute getIAttribute(IAttributeInstance attributeMC) {
-		return new AttributeWrapper(attributeMC);
-	}
+   private void checkLevel() {
+      if (CustomNpcs.Server != null && CustomNpcs.Server.isStopped()) {
+         throw new CustomNPCsException("No world is loaded right now");
+      }
+   }
 
-	@Override
-	public IBlock getIBlock(World worldMC, BlockPos posMC) {
-		if (worldMC == null) { return null; }
-		return BlockWrapper.createNew(worldMC, posMC, worldMC.getBlockState(posMC));
-	}
+   public IRecipeHandler getRecipes() {
+      checkLevel();
+      return RecipeController.getInstance();
+   }
 
-	@Override
-	public IContainer getIContainer(Container containerMC) {
-		if (containerMC instanceof ContainerNpcInterface) {
-			return ContainerNpcInterface.getOrCreateIContainer((ContainerNpcInterface) containerMC);
-		}
-		return new ContainerWrapper(containerMC);
-	}
+   public IQuestHandler getQuests() {
+      checkLevel();
+      return QuestController.instance;
+   }
 
-	@Override
-	public IContainer getIContainer(IInventory inventoryMC) {
-		return new ContainerWrapper(inventoryMC);
-	}
+   public IWorld[] getIWorlds() {
+      checkLevel();
+      IWorld[] worlds;
+      if (CustomNpcs.Server == null) {
+         worlds = new IWorld[levels.size()];
+      } else {
+         if (levels.isEmpty()) {
+            for (Level level : CustomNpcs.Server.getAllLevels()) { levels.add(level); }
+         }
+         int i = 0;
+         worlds = new IWorld[levels.size()];
+         for (Level level : levels) { worlds[i++] = getIWorld(level); }
+      }
+      return worlds;
+   }
 
-	@Override
-	public IDamageSource getIDamageSource(DamageSource damageMC) {
-		return new DamageSourceWrapper(damageMC);
-	}
+   @Override
+   public IPos getIPos(double x, double y, double z) {
+      return new BlockPosWrapper(null, x, y, z);
+   }
 
-	@Override
-	public IEntityDamageSource getIDamageSource(String name, IEntity<?> entity) {
-		return new NpcEntityDamageSource(name, entity);
-	}
+   @Override
+   public File getGlobalDir() {
+      return CustomNpcs.Dir;
+   }
 
-	@Override
-	public IEntity<?> getIEntity(Entity entityMC) {
-		if (entityMC == null || entityMC.world == null) { return null; }
-		if (entityMC instanceof EntityNPCInterface) { return ((EntityNPCInterface) entityMC).wrappedNPC; }
-		return WrapperEntityData.get(entityMC);
-	}
+   @Override
+   public File getLevelDir() {
+      return CustomNpcs.getLevelSaveDirectory();
+   }
 
-	@Override
-	public IItemStack getIItemStack(ItemStack stackMC) {
-		if (stackMC == null || stackMC.isEmpty()) { return ItemStackWrapper.AIR; }
-		return (IItemStack) stackMC.getCapability(ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY, null);
-	}
+   @Override
+   public INbt getINbt(CompoundTag nbtMC) {
+      return nbtMC == null ? new NBTWrapper(new CompoundTag()) : new NBTWrapper(nbtMC);
+   }
 
-	@Override
-	public IKeyBinding getIKeyBinding() {
-		return KeyController.getInstance();
-	}
+   @Override
+   public INbt stringToNbt(String str) {
+      if (str != null && !str.isEmpty()) {
+         try {
+            return getINbt(NBTJsonUtil.Convert(str));
+         } catch (NBTJsonUtil.JsonException var3) {
+            throw new CustomNPCsException(var3, "Failed converting " + str);
+         }
+      } else {
+         throw new CustomNPCsException("Cant cast empty string to nbt");
+      }
+   }
 
-	@Override
-	public INbt getINbt(NBTTagCompound nbtMC) {
-		if (nbtMC == null) {
-			return new NBTWrapper(new NBTTagCompound());
-		}
-		return new NBTWrapper(nbtMC);
-	}
+   public IDamageSource getIDamageSource(DamageSource damageMC) {
+      return new DamageSourceWrapper(damageMC);
+   }
 
-	@Override
-	public IPlayer<?> getIPlayer(String nameOrUUID) {
-		IPlayer<?>[] iPlayers = getAllPlayers();
-		for (IPlayer<?> iPlayer : iPlayers) {
-			if (iPlayer.getName().equals(nameOrUUID) || iPlayer.getUUID().equals(nameOrUUID)) { return iPlayer; }
-		}
-		return null;
-	}
+   public IDialogHandler getDialogs() {
+      return DialogController.instance;
+   }
 
-	@Override
-	public IPos getIPos(BlockPos posMC) {
-		return new BlockPosWrapper(posMC);
-	}
+   public ICloneHandler getClones() {
+      return ServerCloneController.Instance;
+   }
 
-	@Override
-	public IPos getIPos(double x, double y, double z) {
-		return new BlockPosWrapper(x, y, z);
-	}
+   public String executeCommand(IWorld level, String command) {
+      FakePlayer player = EntityNPCInterface.CommandPlayer;
+      ((IEntityMixin) player).setLevel(level.getMCLevel());
+      player.setPos(0.0D, 0.0D, 0.0D);
+      return NoppesUtilServer.runCommand(level.getMCLevel(), BlockPos.ZERO, "API", command, null, player);
+   }
 
-	@Override
-	public IWorld getIWorld(String dimension) {
-		resetWorlds();
-		for (World world : worlds) {
-			if (world.provider.getDimensionType().getName().equals(dimension)) {
-				return getIWorld(world);
-			}
-		}
-		if (!Thread.currentThread().getName().toLowerCase().contains("client")) {
-			throw new CustomNPCsException("Unknown dimension: \"" + dimension + "\"");
-		}
-		return null;
-	}
+   @Override
+   public INbt getRawPlayerData(String uuid, String name) {
+      if  (CustomNpcs.Server != null) {
+         UUID uuidMC;
+         try { uuidMC = UUID.fromString(uuid); }
+         catch (Exception e) { throw new CustomNPCsException("Invalid UUID string: \"" + uuid + "\""); }
+         ServerPlayer player = CustomNpcs.Server.getPlayerList().getPlayer(uuidMC);
+         if (player != null && player.getName().toString().equals(name)) {
+            PlayerData data = CustomNpcs.proxy.getPlayerData(player);
+            if (data != null) { return getINbt(data.getNBT()); }
+         }
+      }
+      return getINbt(PlayerData.loadPlayerData(uuid, name));
+   }
 
-	@Override
-	public IWorld getIWorld(int dimensionId) {
-		resetWorlds();
-		for (World world : worlds) {
-			if (world.provider.getDimension() == dimensionId) {
-				return getIWorld(world);
-			}
-		}
-		if (!Thread.currentThread().getName().toLowerCase().contains("client")) {
-			throw new CustomNPCsException("Unknown dimension: \"" + dimensionId + "\"");
-		}
-		return null;
-	}
+   @Override
+   public IPlayerMail createMail(String sender, String title) {
+      PlayerMail mail = new PlayerMail();
+      mail.sender = sender;
+      mail.title = title;
+      return mail;
+   }
 
-	private void resetWorlds() {
-		checkWorld();
-		if (CustomNpcs.Server != null) {
-			worlds.clear();
-			worlds.addAll(Arrays.asList(CustomNpcs.Server.worlds));
-			worlds.sort(sorter);
-		}
-		EntityPlayer player = CustomNpcs.proxy.getPlayer();
-		if (player != null && !worlds.contains(player.world)) {
-			worlds.add(player.world);
-			worlds.sort(sorter);
-		}
-	}
+   public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame, IPlayer<?> player) {
+      return new CustomGuiWrapper(player, id, width, height, pauseGame);
+   }
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public IWorld getIWorld(World worldMC) {
-		WorldWrapper w = WrapperNpcAPI.worldCache.get(worldMC.provider.getDimension());
-		if (w != null) {
-			if (w.world == null) {
-				w.world = worldMC;
-			}
-		} else {
-			WrapperNpcAPI.worldCache.put(worldMC.provider.getDimension(), w = WorldWrapper.createNew(worldMC));
-		}
-		return w;
-	}
+   public IOverlay createOverlay(int id) { return new OverlayWrapper(id); }
 
-	@Override
-	public IWorld[] getIWorlds() {
-		resetWorlds();
-		IWorld[] iWorlds = new IWorld[worlds.size()];
-		for (int i = 0; i < worlds.size(); i++) { iWorlds[i] = getIWorld(worlds.get(i)); }
-		return iWorlds;
-	}
+   public String getRandomName(int dictionary, int gender) {
+      return MarkovGenerator.fetch(dictionary, gender);
+   }
 
-	@Override
-	public IMarcetHandler getMarkets() {
-		return MarcetController.getInstance();
-	}
+   @Override
+   public IPlayer<?>[] getAllPlayers() {
+      List<IPlayer<?>> list = Lists.newArrayList();
+      if (CustomNpcs.Server != null) {
+         for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) {
+            if (player == null) { continue; }
+            list.add((IPlayer<?>) this.getIEntity(player));
+         }
+      } else { // Client Side
+         Player player = CustomNpcs.proxy.getPlayer();
+         if (player != null) { return getIWorld(player.level()).getAllPlayers(); }
+      }
+      return list.toArray(new IPlayer<?>[0]);
+   }
 
-	@Override
-	public IMethods getMethods() {
-		return Util.instance;
-	}
+   @Override
+   public IPlayer<?> getIPlayer(String nameOrUUID) {
+      IPlayer<?>[] iPlayers = getAllPlayers();
+      for (IPlayer<?> iPlayer : iPlayers) {
+         if (iPlayer.getName().equals(nameOrUUID) || iPlayer.getUUID().equals(nameOrUUID)) { return iPlayer; }
+      }
+      return null;
+   }
 
-	@Override
-	public IQuestHandler getQuests() {
-		this.checkWorld();
-		return QuestController.instance;
-	}
+   @Override
+   public IPos getIPos(BlockPos posMC) { return new BlockPosWrapper(posMC); }
 
-	@Override
-	public String getRandomName(int dictionary, int gender) {
-		return CustomNpcs.MARKOV_GENERATOR[dictionary].fetch(gender);
-	}
+   @Override
+   public ICustomPlayerData getPlayerData(IPlayer<?> player) {
+      if (player == null) { return null; }
+      return PlayerDataController.instance.getDataFromUsername(CustomNpcs.Server, player.getName());
+   }
 
-	@Override
-	@SuppressWarnings("all")
-	public INbt getRawPlayerData(String uuid, String name) {
-		if  (CustomNpcs.Server != null) {
-			UUID uuidMC;
-			try { uuidMC = UUID.fromString(uuid); }
-			catch (Exception e) { throw new CustomNPCsException("Invalid UUID string: \"" + uuid + "\""); }
-            EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uuidMC);
-            if (player != null && player.getName().equals(name)) {
-                PlayerData data = CustomNpcs.proxy.getPlayerData(player);
-                if (data != null) {
-                    return getINbt(data.getNBT());
-                }
-            }
-        }
-		return getINbt(PlayerData.loadPlayerData(uuid, name));
-	}
+   @Override
+   public IData getTempdata() { return WorldWrapper.getTempData(); }
 
-	@Override
-	public IRecipeHandler getRecipes() {
-		this.checkWorld();
-		return null;
-	}
+   @Override
+   public IData getStoreddata() { return WorldWrapper.getStoredData(); }
 
-	@Override
-	public File getWorldDir() {
-		return CustomNpcs.getWorldSaveDirectory();
-	}
+   @Override
+   public IComponent getIComponent(String text) { return ComponentWrapper.of(text); }
 
-	@Override
-	public boolean hasPermissionNode(String permission) {
-		return PermissionAPI.getPermissionHandler().getRegisteredNodes().contains(permission);
-	}
+   @Override
+   public IBorderHandler getBorders() { return BorderController.getInstance(); }
 
-	@Override
-	public void registerCommand(CommandNoppesBase command) {
-		CustomNpcs.NoppesCommand.registerCommand(command);
-	}
+   @Override
+   public INpcAttribute getIAttribute(AttributeInstance attributeMC) { return new AttributeWrapper(attributeMC); }
 
-	@Override
-	public void registerPermissionNode(String permission, int defaultType) {
-		if (defaultType < 0 || defaultType > 2) {
-			throw new CustomNPCsException("Default type cant be smaller than 0 or larger than 2");
-		}
-		if (this.hasPermissionNode(permission)) {
-			throw new CustomNPCsException("Permission already exists");
-		}
-		DefaultPermissionLevel level = DefaultPermissionLevel.values()[defaultType];
-		PermissionAPI.registerNode(permission, level, permission);
-	}
+   @Override
+   public IEntityDamageSource getIDamageSource(String name, IEntity<?> entity) {
+      if (entity == null) { return null; }
+      return NpcEntityDamageSource.create(name, entity.getMCEntity());
+   }
 
-	@Override
-	public ICustomNpc<?> spawnNPC(World worldMC, int x, int y, int z) {
-		if (worldMC.isRemote) { return null; }
-		EntityCustomNpc npc = new EntityCustomNpc(worldMC);
-		npc.setPositionAndRotation(x + 0.5, y, z + 0.5, 0.0f, 0.0f);
-		npc.ais.setStartPos(x, y, z);
-		npc.setHealth(npc.getMaxHealth());
-		worldMC.spawnEntity(npc);
-		return npc.wrappedNPC;
-	}
+   @Override
+   public IMethods getMethods() { return Util.instance; }
 
-	@Override
-	public INbt stringToNbt(String str) {
-		if (str == null || str.isEmpty()) {
-			throw new CustomNPCsException("Cant cast empty string to nbt");
-		}
-		try {
-			return this.getINbt(NBTJsonUtil.Convert(str));
-		} catch (NBTJsonUtil.JsonException e) {
-			throw new CustomNPCsException(e, "Failed converting " + str);
-		}
-	}
+   @Override
+   public IMarcetHandler getMarkets() { return MarcetController.getInstance(); }
 
-	@Override
-	public ICustomPlayerData getPlayerData(IPlayer<?> player) {
-		if (player == null) { return null; }
-		return PlayerDataController.instance.getDataFromUsername(CustomNpcs.Server, player.getName());
-	}
+   @Override
+   public IKeyBinding getIKeyBinding() { return KeyController.getInstance(); }
 
-	@Override
-	public ResourceData getResourceData(ResourceLocation texture, int u, int v, int width, int height) {
-		return new ResourceData(texture, u, v, width, height);
-	}
+   @Override
+   public IDimensionHandler getCustomDimension() { return null; }
 
-	@Override
-	public IData getTempdata() { return WorldWrapper.getTempData(); }
+   @Override
+   public ResourceData getResourceData(ResourceLocation texture, int u, int v, int width, int height) { return new ResourceData(texture, u, v, width, height); }
 
-	@Override
-	public IData getStoreddata() { return WorldWrapper.getStoredData(); }
+   @Override
+   public List<?> createList() { return new ArrayList<>(); }
+
+   @Override
+   public Map<?, ?> createMap() { return new LinkedHashMap<>(); }
+
+   @Override
+   public Map<?, ?> createTreeMap() { return new TreeMap<>(); }
 
 }

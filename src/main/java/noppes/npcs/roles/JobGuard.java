@@ -3,16 +3,14 @@ package noppes.npcs.roles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.NBTTags;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.data.role.IJobGuard;
@@ -20,71 +18,78 @@ import noppes.npcs.entity.EntityNPCInterface;
 
 public class JobGuard extends JobInterface implements IJobGuard {
 
-	public final List<String> targets = new ArrayList<>();
+   /**
+    * Entity description IDs
+    */
+   public final List<String> targets = new ArrayList<>();
 
-	public JobGuard(EntityNPCInterface npc) {
-		super(npc);
-		type = JobType.GUARD;
-	}
+   public JobGuard(EntityNPCInterface npc) {
+      super(npc);
+      type = JobType.GUARD;
+   }
 
-	public boolean isEntityApplicable(Entity entity) {
-		return !(entity instanceof EntityPlayer) && !(entity instanceof EntityNPCInterface) && targets.contains("entity." + EntityList.getEntityString(entity) + ".name");
-	}
+   public boolean isEntityApplicable(Entity entity) {
+      return !(entity instanceof Player) && !(entity instanceof EntityNPCInterface) && targets.contains(entity.getType().getDescriptionId());
+   }
 
-	@Override
-	public boolean isWorking() {
-		return !targets.isEmpty() && npc.isAttacking();
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      super.save(compound);
+      compound.put("GuardTargets", NBTTags.nbtStringList(targets));
+      return compound;
+   }
 
-	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = JobType.GUARD;
-		targets.clear();
-		targets.addAll(NBTTags.getStringList(compound.getTagList("GuardTargets", 10)));
-		if (compound.getBoolean("GuardAttackAnimals")) {
-			for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-				Class<? extends Entity> cl = ent.getEntityClass();
-				String name = "entity." + ent.getName() + ".name";
-				if (EntityAnimal.class.isAssignableFrom(cl) && !targets.contains(name)) {
-					targets.add(name);
-				}
-			}
-		}
-		if (compound.getBoolean("GuardAttackMobs")) {
-			for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-				Class<? extends Entity> cl = ent.getEntityClass();
-				String name = "entity." + ent.getName() + ".name";
-				if (EntityMob.class.isAssignableFrom(cl) && !EntityCreeper.class.isAssignableFrom(cl) && !targets.contains(name)) {
-					targets.add(name);
-				}
-			}
-		}
-		if (compound.getBoolean("GuardAttackCreepers")) {
-			for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-				Class<? extends Entity> cl = ent.getEntityClass();
-				String name = "entity." + ent.getName() + ".name";
-				if (EntityCreeper.class.isAssignableFrom(cl) && !targets.contains(name)) {
-					targets.add(name);
-				}
-			}
-		}
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      super.load(compound);
+      type = JobType.GUARD;
+      targets.clear();
+      targets.addAll(NBTTags.getStringList(compound.getList("GuardTargets", 10)));
+      // OLD loads
+      if (npc != null) {
+         if (compound.getBoolean("GuardAttackAnimals")) {
+            for (EntityType<?> ent : ForgeRegistries.ENTITY_TYPES.getValues()) {
+               String name = ent.getDescriptionId();
+               Entity entityO = ent.create(npc.level());
+               if (entityO != null && entityO.getClass().isAssignableFrom(Animal.class) && !targets.contains(name)) {
+                  targets.add(name);
+               }
+            }
+         }
+         if (compound.getBoolean("GuardAttackMobs")) {
+            for (EntityType<?> ent : ForgeRegistries.ENTITY_TYPES.getValues()) {
+               String name = ent.getDescriptionId();
+               Entity entityO = ent.create(npc.level());
+               if (entityO != null && entityO.getClass().isAssignableFrom(Mob.class) &&
+                       !ent.getClass().isAssignableFrom(Creeper.class) &&
+                       !targets.contains(name)) {
+                  targets.add(name);
+               }
+            }
+         }
+         if (compound.getBoolean("GuardAttackCreepers")) {
+            for (EntityType<?> ent : ForgeRegistries.ENTITY_TYPES.getValues()) {
+               String name = ent.getDescriptionId();
+               Entity entityO = ent.create(npc.level());
+               if (entityO != null && entityO.getClass().isAssignableFrom(Creeper.class) && !targets.contains(name)) {
+                  targets.add(name);
+               }
+            }
+         }
+      }
+   }
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setTag("GuardTargets", NBTTags.nbtStringList(targets));
-		return compound;
-	}
+   // New from Unofficial (BetaZavr)
+   @Override
+   public boolean isWorking() { return !targets.isEmpty() && npc != null && npc.isAttacking(); }
 
-	@Override
-	public String[] getTargets() { return targets.toArray(new String[0]); }
+   @Override
+   public String[] getTargets() { return targets.toArray(new String[0]); }
 
-	@Override
-	public void setTargets(String... targetsIn) {
-		targets.clear();
-        targets.addAll(Arrays.asList(targetsIn));
-	}
+   @Override
+   public void setTargets(String... targetsIn) {
+      targets.clear();
+      targets.addAll(Arrays.asList(targetsIn));
+   }
 
 }

@@ -3,57 +3,63 @@ package noppes.npcs.client.gui.roles;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.gui.util.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.client.multiplayer.IClientLevelMixin;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketNpcJobSave;
 import noppes.npcs.roles.JobFollower;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-public class GuiNpcFollowerJob extends GuiNPCInterface2 implements ICustomScrollListener {
+public class GuiNpcFollowerJob extends GuiNPCInterface2
+        implements ICustomScrollListener, ITextfieldListener {
 
-	protected final JobFollower job;
+   protected final JobFollower job;
+   protected GuiCustomScrollNop scroll;
 
-    public GuiNpcFollowerJob(EntityNPCInterface npc) {
-		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
+   protected final List<String> names = new ArrayList<>();
 
-		job = (JobFollower) npc.advanced.jobInterface;
-	}
+   public GuiNpcFollowerJob(EntityNPCInterface npc) {
+      super(npc);
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		addLabel(new GuiNpcLabel(1, "gui.name", guiLeft + 6, guiTop + 110));
-		addTextField(new GuiNpcTextField(1, this, guiLeft + 50, guiTop + 105, 200, 20, job.name));
-        GuiCustomScroll scroll = new GuiCustomScroll(this, 0).setSize(143, 208);
-		scroll.guiLeft = guiLeft + 268;
-		scroll.guiTop = guiTop + 4;
-		addScroll(scroll);
-		List<String> names = new ArrayList<>();
-		List<EntityNPCInterface> list = new ArrayList<>();
-		try { list = npc.world.getEntitiesWithinAABB(EntityNPCInterface.class, npc.getEntityBoundingBox().grow(40.0, 40.0, 40.0)); } catch (Exception ignored) { }
-		for (EntityNPCInterface npcEntity : list) {
-			if (npcEntity.equals(npc) || names.contains(npcEntity.display.getName())) { continue; }
-			names.add(npcEntity.display.getName());
-		}
-		scroll.setList(names);
-	}
+      backGui = EnumGuiType.MainMenuAdvanced;
+      job = (JobFollower) npc.job;
+      Iterable<Entity> allLoadEntities = ((IClientLevelMixin) player.level()).getEntityStorage().getEntityGetter().getAll();
+      for (Entity entity : allLoadEntities) {
+         if (entity instanceof EntityNPCInterface cnpc && npc != cnpc && !names.contains(cnpc.display.getName())) { names.add(cnpc.display.getName()); }
+      }
+   }
 
-	@Override
-	public void save() {
-		job.name = getTextField(1).getText();
-		Client.sendData(EnumPacketServer.JobSave, job.save(new NBTTagCompound()));
-	}
+   @Override
+   public void init() {
+      super.init();
+      addLabel(0, guiLeft + 6, guiTop + 110, Component.translatable("gui.name").append(":"))
+              .setSize(48, 10);
+      addTextField(0, guiLeft + 50, guiTop + 105, 200, 20, job.name);
+      int x = guiLeft + 268;
+      addLabel(1, x + 1, guiTop + 5, Component.translatable("spawner.all").append(" NPC:"))
+              .setSize(141, 10);
+      if (scroll == null) { scroll = addScroll(0).setSize(143, 198); }
+      add(scroll.setList(names).setPos(x, guiTop + 15));
+   }
 
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		getTextField(1).setText(scroll.getSelected());
-	}
+   @Override
+   public void save() { Packets.sendServer(new SPacketNpcJobSave(job.save(new CompoundTag()))); }
 
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) { getTextField(0).setValue(scroll.getSelected()); }
+
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
+
+   @Override
+   public void unFocused(GuiTextFieldNop textField) { job.name = textField.getValue(); }
 
 }

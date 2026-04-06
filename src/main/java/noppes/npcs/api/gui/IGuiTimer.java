@@ -1,25 +1,23 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IGuiTimer extends ICustomGuiComponent {
 
-	int getColor();
+    int getColor();
 
-	int getHeight();
+    int getHeight();
 
-	float getScale();
+    float getScale();
 
-	String getText();
+    String getText();
 
-	int getWidth();
+    int getWidth();
 
-	IGuiTimer setColor(@ParamName("color") int color);
+    IGuiTimer setColor(@ParamName("color") int color);
 
-	IGuiTimer setScale(@ParamName("scale") float scale);
+    IGuiTimer setScale(@ParamName("scale") float scale);
 
-	IGuiTimer setSize(@ParamName("width") int width, @ParamName("height") int height);
-
-	void setTime(@ParamName("start") long start, @ParamName("end") long end);
+    IGuiTimer setTime(@ParamName("start") long start, @ParamName("end") long end);
 
 }

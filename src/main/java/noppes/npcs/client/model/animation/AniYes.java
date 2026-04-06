@@ -1,21 +1,25 @@
 package noppes.npcs.client.model.animation;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.ModelBiped;
-import net.minecraft.entity.Entity;
-import noppes.npcs.entity.EntityNPCInterface;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class AniYes {
+public class AniYes implements AnimationBase {
 
-	public static void setRotationAngles(float ignoredLimbSwing, float ignoredLimbSwingAmount, float ignoredAgeInTicks, float ignoredNetHeadYaw, float ignoredHeadPitch, float ignoredScale, Entity entity, ModelBiped model) {
-		float ticks = (entity.ticksExisted - ((EntityNPCInterface) entity).animationStart) / 8.0f;
-		float ticks2 = (entity.ticksExisted + 1 - ((EntityNPCInterface) entity).animationStart) / 8.0f;
-		ticks += (ticks2 - ticks) * Minecraft.getMinecraft().getRenderPartialTicks();
-		ticks %= 2.0f;
-		float ani = ticks - 0.5f;
-		if (ticks > 1.0f) {
-			ani = 1.5f - ticks;
-		}
-		model.bipedHead.rotateAngleX = ani;
-	}
+   public void animatePre(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+   }
+
+   public void animatePost(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, Entity entity, HumanoidModel<? extends LivingEntity> model, int animationStart) {
+      float ticks = (float)(entity.tickCount - animationStart) / 8.0F;
+      float ticks2 = (float)(entity.tickCount + 1 - animationStart) / 8.0F;
+      ticks += (ticks2 - ticks) * Minecraft.getInstance().getDeltaFrameTime();
+      ticks %= 2.0F;
+      float ani = ticks - 0.5F;
+      if (ticks > 1.0F) {
+         ani = 1.5F - ticks;
+      }
+      model.head.xRot = ani;
+   }
+
 }

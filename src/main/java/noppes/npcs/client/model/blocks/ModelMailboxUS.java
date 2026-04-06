@@ -1,68 +1,84 @@
 package noppes.npcs.client.model.blocks;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.renderer.RenderType;
+import noppes.npcs.shared.client.model.NopModelPart;
+import org.jetbrains.annotations.NotNull;
 
-public class ModelMailboxUS extends ModelBase {
+public class ModelMailboxUS extends Model {
 
-	final ModelRenderer Shape1;
-	final ModelRenderer Shape10;
-	final ModelRenderer Shape11;
-	final ModelRenderer Shape12;
-	final ModelRenderer Shape13;
-	final ModelRenderer Shape2;
-	final ModelRenderer Shape3;
-	final ModelRenderer Shape4;
-	final ModelRenderer Shape5;
-	final ModelRenderer Shape6;
-	final ModelRenderer Shape7;
-	final ModelRenderer Shape8;
-	final ModelRenderer Shape9;
+   NopModelPart Shape1 = new NopModelPart(64, 128, 0, 48);
+   NopModelPart Shape2;
+   NopModelPart Shape3;
+   NopModelPart Shape4;
+   NopModelPart Shape5;
+   NopModelPart Shape6;
+   NopModelPart Shape7;
+   NopModelPart Shape8;
+   NopModelPart Shape9;
+   NopModelPart Shape10;
+   NopModelPart Shape11;
+   NopModelPart Shape12;
+   NopModelPart Shape13;
 
-	public ModelMailboxUS() {
-		this.textureWidth = 64;
-		this.textureHeight = 128;
-		(this.Shape1 = new ModelRenderer(this, 0, 48)).addBox(0.0f, 0.0f, 0.0f, 16, 14, 16);
-		this.Shape1.setRotationPoint(-8.0f, 8.0f, -8.0f);
-		(this.Shape2 = new ModelRenderer(this, 0, 79)).addBox(0.0f, 0.0f, 0.0f, 1, 2, 1);
-		this.Shape2.setRotationPoint(-8.0f, 22.0f, -8.0f);
-		(this.Shape3 = new ModelRenderer(this, 5, 79)).addBox(0.0f, 0.0f, 0.0f, 1, 2, 1);
-		this.Shape3.setRotationPoint(-8.0f, 22.0f, 7.0f);
-		(this.Shape4 = new ModelRenderer(this, 10, 79)).addBox(0.0f, 0.0f, 0.0f, 1, 2, 1);
-		this.Shape4.setRotationPoint(7.0f, 22.0f, -8.0f);
-		(this.Shape5 = new ModelRenderer(this, 15, 79)).addBox(0.0f, 0.0f, 0.0f, 1, 2, 1);
-		this.Shape5.setRotationPoint(7.0f, 22.0f, 7.0f);
-		(this.Shape6 = new ModelRenderer(this, 0, 14)).addBox(0.0f, 0.0f, 0.0f, 16, 3, 7);
-		this.Shape6.setRotationPoint(-8.0f, 5.0f, 0.0f);
-		(this.Shape7 = new ModelRenderer(this, 0, 6)).addBox(0.0f, 0.0f, 0.0f, 16, 2, 6);
-		this.Shape7.setRotationPoint(-8.0f, 3.0f, 0.0f);
-		(this.Shape8 = new ModelRenderer(this, 0, 0)).addBox(0.0f, 0.0f, 0.0f, 16, 1, 5);
-		this.Shape8.setRotationPoint(-8.0f, 2.0f, 0.0f);
-		(this.Shape9 = new ModelRenderer(this, 0, 37)).addBox(0.0f, 0.0f, 0.0f, 1, 3, 7);
-		this.Shape9.setRotationPoint(-8.0f, 5.0f, -7.0f);
-		(this.Shape10 = new ModelRenderer(this, 16, 37)).addBox(0.0f, 0.0f, 0.0f, 1, 3, 7);
-		this.Shape10.setRotationPoint(7.0f, 5.0f, -7.0f);
-		(this.Shape11 = new ModelRenderer(this, 0, 29)).addBox(0.0f, 0.0f, 0.0f, 1, 2, 6);
-		this.Shape11.setRotationPoint(-8.0f, 3.0f, -6.0f);
-		(this.Shape12 = new ModelRenderer(this, 14, 29)).addBox(0.0f, 0.0f, 0.0f, 1, 2, 6);
-		this.Shape12.setRotationPoint(7.0f, 3.0f, -6.0f);
-		(this.Shape13 = new ModelRenderer(this, 0, 25)).addBox(0.0f, 0.0f, 0.0f, 16, 1, 3);
-		this.Shape13.setRotationPoint(-8.0f, 2.0f, -3.0f);
-	}
+   public ModelMailboxUS() {
+      super(RenderType::entityCutout);
+      this.Shape1.addBox(0.0F, 0.0F, 0.0F, 16.0F, 14.0F, 16.0F);
+      this.Shape1.setPos(-8.0F, 8.0F, -8.0F);
+      this.Shape2 = new NopModelPart(64, 128, 0, 79);
+      this.Shape2.addBox(0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 1.0F);
+      this.Shape2.setPos(-8.0F, 22.0F, -8.0F);
+      this.Shape3 = new NopModelPart(64, 128, 5, 79);
+      this.Shape3.addBox(0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 1.0F);
+      this.Shape3.setPos(-8.0F, 22.0F, 7.0F);
+      this.Shape4 = new NopModelPart(64, 128, 10, 79);
+      this.Shape4.addBox(0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 1.0F);
+      this.Shape4.setPos(7.0F, 22.0F, -8.0F);
+      this.Shape5 = new NopModelPart(64, 128, 15, 79);
+      this.Shape5.addBox(0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 1.0F);
+      this.Shape5.setPos(7.0F, 22.0F, 7.0F);
+      this.Shape6 = new NopModelPart(64, 128, 0, 14);
+      this.Shape6.addBox(0.0F, 0.0F, 0.0F, 16.0F, 3.0F, 7.0F);
+      this.Shape6.setPos(-8.0F, 5.0F, 0.0F);
+      this.Shape7 = new NopModelPart(64, 128, 0, 6);
+      this.Shape7.addBox(0.0F, 0.0F, 0.0F, 16.0F, 2.0F, 6.0F);
+      this.Shape7.setPos(-8.0F, 3.0F, 0.0F);
+      this.Shape8 = new NopModelPart(64, 128, 0, 0);
+      this.Shape8.addBox(0.0F, 0.0F, 0.0F, 16.0F, 1.0F, 5.0F);
+      this.Shape8.setPos(-8.0F, 2.0F, 0.0F);
+      this.Shape9 = new NopModelPart(64, 128, 0, 37);
+      this.Shape9.addBox(0.0F, 0.0F, 0.0F, 1.0F, 3.0F, 7.0F);
+      this.Shape9.setPos(-8.0F, 5.0F, -7.0F);
+      this.Shape10 = new NopModelPart(64, 128, 16, 37);
+      this.Shape10.addBox(0.0F, 0.0F, 0.0F, 1.0F, 3.0F, 7.0F);
+      this.Shape10.setPos(7.0F, 5.0F, -7.0F);
+      this.Shape11 = new NopModelPart(64, 128, 0, 29);
+      this.Shape11.addBox(0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 6.0F);
+      this.Shape11.setPos(-8.0F, 3.0F, -6.0F);
+      this.Shape12 = new NopModelPart(64, 128, 14, 29);
+      this.Shape12.addBox(0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 6.0F);
+      this.Shape12.setPos(7.0F, 3.0F, -6.0F);
+      this.Shape13 = new NopModelPart(64, 128, 0, 25);
+      this.Shape13.addBox(0.0F, 0.0F, 0.0F, 16.0F, 1.0F, 3.0F);
+      this.Shape13.setPos(-8.0F, 2.0F, -3.0F);
+   }
 
-	public void render(float scale) {
-		this.Shape1.render(scale);
-		this.Shape2.render(scale);
-		this.Shape3.render(scale);
-		this.Shape4.render(scale);
-		this.Shape5.render(scale);
-		this.Shape6.render(scale);
-		this.Shape7.render(scale);
-		this.Shape8.render(scale);
-		this.Shape9.render(scale);
-		this.Shape10.render(scale);
-		this.Shape11.render(scale);
-		this.Shape12.render(scale);
-		this.Shape13.render(scale);
-	}
+   public void renderToBuffer(@NotNull PoseStack mStack, @NotNull VertexConsumer iVertex, int lightMapUV, int packedOverlayIn, float red, float green, float blue, float alpha) {
+      this.Shape1.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape2.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape3.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape4.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape5.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape6.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape7.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape8.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape9.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape10.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape11.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape12.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+      this.Shape13.render(mStack, iVertex, lightMapUV, packedOverlayIn, 1.0f);
+   }
+
 }

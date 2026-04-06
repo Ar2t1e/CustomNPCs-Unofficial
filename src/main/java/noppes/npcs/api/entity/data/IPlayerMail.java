@@ -1,35 +1,38 @@
 package noppes.npcs.api.entity.data;
 
 import noppes.npcs.api.IContainer;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.IQuest;
+
+import java.util.List;
 
 public interface IPlayerMail {
 
-	IContainer getContainer();
+   String getSender();
 
-	int getMoney();
+   void setSender(@ParamName("sender") String sender);
 
-	IQuest getQuest();
+   String getSubject();
 
-	int getRansom();
+   void setSubject(@ParamName("subject") String subject);
 
-	String getSender();
+   List<String> getText();
 
-	String getSubject();
+   void setText(@ParamName("pages") String ... pages);
 
-	String[] getText();
+   IQuest getQuest();
 
-	void setMoney(@ParamName("money") int money);
+   void setQuest(@ParamName("id") int id);
 
-	void setQuest(@ParamName("id") int id);
+   IContainer getContainer();
 
-	void setRansom(@ParamName("money") int money);
+   // New from Unofficial (BetaZavr)
+   int getMoney();
 
-	void setSender(@ParamName("sender") String sender);
+   int getRansom();
 
-	void setSubject(@ParamName("subject") String subject);
+   void setMoney(@ParamName("money") int money);
 
-	void setText(@ParamName("text") String[] text);
+   void setRansom(@ParamName("money") int money);
 
 }

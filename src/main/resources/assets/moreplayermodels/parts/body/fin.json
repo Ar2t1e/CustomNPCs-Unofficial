@@ -1,0 +1,27 @@
+{
+	"name": "part.fin",
+	"render_type": "simple",
+	"render_data": {
+		"texture_size": [64, 64],
+		"parts" : [
+			{
+				"name": "fin",
+				"texture_position": [56, 20],
+				"part_size": [8, 12],
+				"scale": [0.74, 0.74, 1.0],
+				"translate": [-0.5, 12, 10.0],
+				"rotate": [0, 90.0, 0.0],
+				"rotate_offset": [0, 0.0, 0.0]
+			}
+		]
+	},
+	"texture": "moreplayermodels:textures/fin/0.png",
+	"body_part": "body",
+	"menu": "part.body",
+	"preview_rotation": 135,
+	"translate": [0, 0.0, 0.0],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0, 0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

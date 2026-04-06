@@ -1,1 +1,1 @@
-{	"_comment": "Custom Door Block created by default",	"parent": "block/{type}",	"textures": {		"bottom": "{mod_id}:blocks/{file_name}_lower",		"top": "{mod_id}:blocks/{file_name}_upper"	}}
+{  "_comment": "Custom Door Block created by default",  "parent": "minecraft:block/door{type}",  "textures": {    "bottom": "{mod_id}:block/{name}_bottom",    "top": "{mod_id}:block/{name}_top"  }}

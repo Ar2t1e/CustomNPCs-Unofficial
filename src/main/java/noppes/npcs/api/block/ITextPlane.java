@@ -1,40 +1,39 @@
 package noppes.npcs.api.block;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface ITextPlane {
 
-	float getOffsetX();
+   String getText();
 
-	float getOffsetY();
+   void setText(@ParamName("text") String text);
 
-	float getOffsetZ();
+   int getRotationX();
 
-	int getRotationX();
+   int getRotationY();
 
-	int getRotationY();
+   int getRotationZ();
 
-	int getRotationZ();
+   void setRotationX(@ParamName("x") int x);
 
-	float getScale();
+   void setRotationY(@ParamName("y") int y);
 
-	String getText();
+   void setRotationZ(@ParamName("z") int z);
 
-	void setOffsetX(@ParamName("x") float x);
+   float getOffsetX();
 
-	void setOffsetY(@ParamName("y") float y);
+   float getOffsetY();
 
-	void setOffsetZ(@ParamName("z") float z);
+   float getOffsetZ();
 
-	void setRotationX(@ParamName("x") int x);
+   void setOffsetX(@ParamName("x") float x);
 
-	void setRotationY(@ParamName("y") int y);
+   void setOffsetY(@ParamName("y") float y);
 
-	void setRotationZ(@ParamName("z") int z);
+   void setOffsetZ(@ParamName("z") float z);
 
-	void setScale(@ParamName("scale") float scale);
+   float getScale();
 
-	void setText(@ParamName("text") String text);
+   void setScale(@ParamName("scale") float scale);
 
 }

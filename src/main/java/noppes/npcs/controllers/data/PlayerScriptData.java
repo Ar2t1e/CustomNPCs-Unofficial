@@ -1,181 +1,139 @@
 package noppes.npcs.controllers.data;
 
 import java.util.*;
+import java.util.Map.Entry;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.eventbus.api.Event;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NBTTags;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IPlayer;
-import noppes.npcs.api.event.PlayerEvent;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
-import noppes.npcs.util.Util;
 
-public class PlayerScriptData
-extends BaseScriptData {
+import javax.annotation.Nullable;
 
-	private static TreeMap<Long, String> console = new TreeMap<>();
-	private static List<Integer> errored = new ArrayList<>();
-	
-	private long lastPlayerUpdate = 0L;
-	private final EntityPlayer player;
-	private IPlayer<?> playerAPI;
+public class PlayerScriptData extends BaseScriptData {
 
-	public PlayerScriptData(EntityPlayer player) {
-		super();
-		this.player = player;
-		if (player != null) {
-			this.enabled = ScriptController.Instance.playerScripts.enabled;
-			this.hadInteract = ScriptController.Instance.playerScripts.hadInteract;
-			this.lastInited = ScriptController.Instance.playerScripts.lastInited;
-			this.scriptLanguage = ScriptController.Instance.playerScripts.scriptLanguage;
-			this.scripts.clear();
-			for (ScriptContainer sCon : ScriptController.Instance.playerScripts.scripts) {
-				this.scripts.add(sCon.copyTo(this));
-			}
-		}
-	}
+   private final @Nullable Player player;
+   private IPlayer<?> playerAPI;
+   private long lastPlayerUpdate = 0L;
+   public boolean hadInteract = true;
+   private static final TreeMap<Long, String> console = new TreeMap<>();
+   private static final List<Integer> errored = new ArrayList<>();
 
-	@Override
-	public void clear() {
-		PlayerScriptData.console = new TreeMap<>();
-		PlayerScriptData.errored = new ArrayList<>();
-		this.scripts = new ArrayList<>();
-	}
+   public PlayerScriptData(@Nullable Player playerIn) { player = playerIn; }
 
-	@Override
-	public void clearConsole() {
-		PlayerScriptData.console.clear();
-	}
+   @Override
+   public void clear() {
+      console.clear();
+      errored.clear();
+      scripts.clear();
+   }
 
-	@Override
-	public TreeMap<Long, String> getConsoleText() {
-		return PlayerScriptData.console;
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      super.load(compound);
+      console.clear();
+      console.putAll(NBTTags.getLongStringMap(compound.getList("ScriptConsole", 10)));
+   }
 
-	@Override
-	public void clearConsoleText(Long key) {
-		PlayerScriptData.console.remove(key);
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      super.save(compound);
+      compound.put("ScriptConsole", NBTTags.nbtLongStringMap(console));
+      return compound;
+   }
 
-	public IPlayer<?> getPlayer() {
-		if (playerAPI == null) { playerAPI = (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player); }
-		return playerAPI;
-	}
+   @Override
+   public void runScript(String type, Event event) {
+      if (this.isEnabled()) {
+         ScriptContainer script;
+         if (ScriptController.Instance.lastLoaded > this.lastInited || ScriptController.Instance.lastPlayerUpdate > this.lastPlayerUpdate) {
+            lastInited = ScriptController.Instance.lastLoaded;
+            errored.clear();
+            if (player != null) {
+               scripts.clear();
+               for (ScriptContainer scriptContainer : ScriptController.Instance.playerScripts.scripts) {
+                  script = scriptContainer;
+                  ScriptContainer s = new ScriptContainer(this);
+                  s.load(script.save(new CompoundTag()));
+                  scripts.add(s);
+               }
+            }
+            lastPlayerUpdate = ScriptController.Instance.lastPlayerUpdate;
+            if (!type.equals(EnumScriptType.INIT.function)) { EventHooks.onPlayerInit(this); }
+         }
+         for(int i = 0; i < scripts.size(); ++i) {
+            script = scripts.get(i);
+            if (!errored.contains(i)) {
+               script.run(type, event);
+               if (script.errored) {
+                  errored.add(i);
+               }
+               for (Entry<Long, String> entry : script.console.entrySet()) {
+                  if (!console.containsKey(entry.getKey())) { console.put(entry.getKey(), " tab " + (i + 1) + ":\n" + entry.getValue()); }
+               }
+               script.console.clear();
+            }
+         }
+      }
+   }
 
-	@Override
-	public ITextComponent noticeString(String type, Object event) {
-		EntityPlayer p = player;
-		if (event instanceof PlayerEvent && p == null) { p = ((PlayerEvent) event).player.getMCEntity(); }
+   @Override
+   public boolean isClient() { return player == null || player.level().isClientSide(); }
 
-		ITextComponent message = new TextComponentString("");
-		message.getStyle().setColor(TextFormatting.DARK_GRAY);
-		if (type != null) {
-			ITextComponent hook = new TextComponentString("Hook \"");
-			hook.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent hookType = new TextComponentString(type);
-			hookType.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent hookEnd = new TextComponentString("\"; ");
-			hookEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(hook).appendSibling(hookType).appendSibling(hookEnd);
-		}
+   @Override
+   public String getLanguage() {
+      return ScriptController.Instance.playerScripts.scriptLanguage;
+   }
 
-		ITextComponent mesPlayer;
-		if (p == null) {
-			mesPlayer = new TextComponentString("Global players script");
-			mesPlayer.getStyle().setColor(TextFormatting.DARK_GRAY);
-		} else {
-			mesPlayer = new TextComponentString("Player: \"");
-			mesPlayer.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent name = new TextComponentString(p.getName());
-			name.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesUUID = new TextComponentString("\"; UUID: \"");
-			mesUUID.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent uuid = new TextComponentString(p.getUniqueID().toString());
-			uuid.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesEnd = new TextComponentString("\" in ");
-			mesEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			mesPlayer = mesPlayer.appendSibling(name).appendSibling(mesUUID).appendSibling(uuid).appendSibling(mesEnd);
+   @Override
+   public void setLanguage(String lang) { scriptLanguage = lang; }
 
-			int dimID = p.world == null ? 0 : p.world.provider.getDimension();
-			double x = Math.round(p.posX * 100.0d) / 100.0d;
-			double y = Math.round(p.posY * 100.0d) / 100.0d;
-			double z = Math.round(p.posZ * 100.0d) / 100.0d;
-			ITextComponent posClick = new TextComponentString("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
-			posClick.getStyle().setColor(TextFormatting.BLUE)
-					.setUnderlined(true)
-					.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + y + " "+z))
-					.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("script.hover.error.pos.tp")));
-			mesPlayer = mesPlayer.appendSibling(posClick);
-		}
-		ITextComponent side = new TextComponentString("; Side: " + (isClient() ? "Client" : "Server"));
-		side.getStyle().setColor(TextFormatting.DARK_GRAY);
-		return message.appendSibling(mesPlayer).appendSibling(side);
-	}
+   @Override
+   public MutableComponent noticeString(String type, Object event) {
+      MutableComponent message = Component.literal((player == null ? "Global p" : "P") + "layers script")
+              .withStyle(ChatFormatting.DARK_GRAY);
+      if (type != null) {
+         message.append(Component.literal(" hook \"").withStyle(ChatFormatting.DARK_GRAY))
+                 .append(Component.literal(type).withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal("\"; ").withStyle(ChatFormatting.DARK_GRAY));
+      }
+      else { message.append(Component.literal("; ").withStyle(ChatFormatting.DARK_GRAY)); }
+      if (player != null) {
+         String dimID = player.level().dimensionTypeId().location().toString();
+         double x = Math.round(player.getX() * 100.0d) / 100.0d;
+         double y = Math.round(player.getY() * 100.0d) / 100.0d;
+         double z = Math.round(player.getZ() * 100.0d) / 100.0d;
+         MutableComponent posClick = Component.literal("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
+         Style style = posClick.getStyle().withColor(ChatFormatting.BLUE);
+         style = style.withUnderlined(true);
+         style = style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + y + " "+z));
+         style = style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+         posClick.setStyle(style);
+         message.append(Component.literal("name: \"").withStyle(ChatFormatting.DARK_GRAY))
+                 .append(Component.literal(player.getName().getString()).withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal("\"; UUID: \"").withStyle(ChatFormatting.DARK_GRAY))
+                 .append(Component.literal(player.getUUID().toString()).withStyle(ChatFormatting.GRAY))
+                 .append(Component.literal("\" in ").withStyle(ChatFormatting.DARK_GRAY))
+                 .append(posClick);
+      }
+      return message.append(Component.literal("; Side: " + (isClient() ? "Client" : "Server")).withStyle(ChatFormatting.DARK_GRAY));
+   }
 
-	public void readFromNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
-		this.scriptLanguage = Util.instance.deleteColor(compound.getString("ScriptLanguage"));
-		this.enabled = compound.getBoolean("ScriptEnabled");
-		PlayerScriptData.console = NBTTags.GetLongStringMap(compound.getTagList("ScriptConsole", 10));
-	}
+   public IPlayer<?> getPlayer() {
+      if (playerAPI == null) { playerAPI = (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player); }
+      return playerAPI;
+   }
 
-	@Override
-	public void runScript(String type, Event event) {
-		super.runScript(type, event);
-		if (!this.isEnabled()) {
-			return;
-		}
-		if (ScriptController.Instance.lastLoaded > this.lastInited
-				|| ScriptController.Instance.lastPlayerUpdate > this.lastPlayerUpdate) {
-			this.lastInited = ScriptController.Instance.lastLoaded;
-			PlayerScriptData.errored.clear();
-			if (this.player != null) {
-				this.scripts.clear();
-				for (ScriptContainer script : ScriptController.Instance.playerScripts.scripts) {
-					ScriptContainer s = new ScriptContainer(this, isClient());
-					s.readFromNBT(script.writeToNBT(new NBTTagCompound()), this.isClient());
-					this.scripts.add(s);
-				}
-			}
-			this.lastPlayerUpdate = ScriptController.Instance.lastPlayerUpdate;
-			if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) {
-				EventHooks.onPlayerInit(this);
-			}
-		}
-		for (int i = 0; i < this.scripts.size(); ++i) {
-			ScriptContainer script = this.scripts.get(i);
-			if (!PlayerScriptData.errored.contains(i)) {
-				script.run(type, event);
-				if (script.errored) {
-					PlayerScriptData.errored.add(i);
-				}
-				for (Map.Entry<Long, String> entry : script.console.entrySet()) {
-					if (!PlayerScriptData.console.containsKey(entry.getKey())) {
-						PlayerScriptData.console.put(entry.getKey(), " tab " + (i + 1) + ":\n" + entry.getValue());
-					}
-				}
-				script.console.clear();
-			}
-		}
-	}
-	
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.NBTScript(this.scripts));
-		compound.setString("ScriptLanguage", this.scriptLanguage);
-		compound.setBoolean("ScriptEnabled", this.enabled);
-		compound.setTag("ScriptConsole", NBTTags.NBTLongStringMap(PlayerScriptData.console));
-		return compound;
-	}
+   public TreeMap<Long, String> getConsoleText() { return console; }
+
+   public void clearConsole() { console.clear(); }
 
 }

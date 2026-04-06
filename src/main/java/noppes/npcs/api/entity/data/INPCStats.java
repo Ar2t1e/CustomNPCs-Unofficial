@@ -1,73 +1,77 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+
+import java.util.List;
 
 @SuppressWarnings("all")
 public interface INPCStats {
 
-	int getAggroRange();
+   int getMaxHealth();
 
-	int getCombatRegen();
+   void setMaxHealth(@ParamName("maxHealth") int maxHealth);
 
-	int getCreatureType();
+   List<String> getResistanceKeys();
 
-	int getHealthRegen();
+   float getResistance(@ParamName("type") String type);
 
-	boolean getHideDeadBody();
+   void setResistance(@ParamName("type") String type, @ParamName("value") float value);
 
-	boolean getImmune(@ParamName("type") int type);
+   int getCombatRegen();
 
-	int getLevel();
+   void setCombatRegen(@ParamName("regen") int regen);
 
-	double getMaxHealth();
+   int getHealthRegen();
 
-	INPCMelee getMelee();
+   void setHealthRegen(@ParamName("regen") int regen);
 
-	INPCRanged getRanged();
+   INPCMelee getMelee();
 
-	int getRarity();
+   INPCRanged getRanged();
 
-	String getRarityTitle();
+   boolean getImmune(@ParamName("type") int type);
 
-	float getResistance(@ParamName("damageName") String damageName);
-	
-	String[] getResistanceKeys();
+   void setImmune(@ParamName("type") int type, @ParamName("bo") boolean bo);
 
-	int getRespawnTime();
+   void setCreatureType(@ParamName("type") int type);
 
-	int getRespawnType();
+   int getCreatureType();
 
-	boolean isCalmdown();
+   int getRespawnType();
 
-	void setAggroRange(@ParamName("range") int range);
+   void setRespawnType(@ParamName("type") int type);
 
-	void setCalmdown(@ParamName("bo") boolean bo);
+   int getRespawnTime();
 
-	void setCombatRegen(@ParamName("range") int regen);
+   void setRespawnTime(@ParamName("seconds") int seconds);
 
-	void setCreatureType(@ParamName("type") int type);
+   boolean getHideDeadBody();
 
-	void setHealthRegen(@ParamName("regen") int regen);
+   void setHideDeadBody(@ParamName("hide") boolean hide);
 
-	void setHideDeadBody(@ParamName("hide") boolean hide);
+   int getAggroRange();
 
-	void setImmune(@ParamName("type") int type, @ParamName("bo") boolean bo);
+   void setAggroRange(@ParamName("range") int range);
 
-	void setLevel(@ParamName("level") int level);
+   // New from Unofficial (BetaZavr)
+    int getLevel();
 
-	void setMaxHealth(@ParamName("maxHealth") double maxHealth);
+   void setLevel(@ParamName("level") int level);
 
-	void setRarity(@ParamName("rarity") int rarity);
+   int getRarity();
 
-	void setRarityTitle(@ParamName("rarity") String rarity);
+   void setRarity(@ParamName("rarity") int rarityIn);
 
-	void setResistance(@ParamName("damageName") String damageName, @ParamName("value") float value);
+   String getRarityTitle();
 
-	void setRespawnTime(@ParamName("seconds") int seconds);
-
-	void setRespawnType(@ParamName("type") int type);
+   void setRarityTitle(@ParamName("rarityTitle") String rarityTitle);
 
     float getChanceBlockDamage();
 
-	void setChanceBlockDamage(@ParamName("chance") float chance);
+   void setChanceBlockDamage(float chance);
+
+    // New from Unofficial (BetaZavr)
+    boolean isCalmdown();
+
+   void setCalmdown(boolean range);
 }

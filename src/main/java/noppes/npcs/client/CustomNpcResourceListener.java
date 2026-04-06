@@ -1,50 +1,39 @@
 package noppes.npcs.client;
 
-import net.minecraft.client.resources.*;
-import net.minecraft.util.ResourceLocation;
+import com.mojang.blaze3d.systems.RenderSystem;
+
+import java.io.IOException;
+
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.client.gui.select.ResourceSelection;
+import noppes.npcs.client.parts.MpmPartReader;
+import noppes.npcs.shared.client.model.util.CustomRenderStates;
+import noppes.npcs.shared.common.util.LogWriter;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class CustomNpcResourceListener implements ResourceManagerReloadListener {
 
-@SuppressWarnings("deprecation")
-public class CustomNpcResourceListener implements IResourceManagerReloadListener {
+   public static int DefaultTextColor = CustomNpcs.LableColor.getRGB();
 
-	public static int DefaultTextColor = CustomNpcs.LableColor.getRGB();
+   public void onResourceManagerReload(@NotNull ResourceManager manager) {
 
-	private void createTextureCache(IResourceManager resourceManager) {
-		enlargeTexture("planks_oak", resourceManager);
-		enlargeTexture("planks_big_oak", resourceManager);
-		enlargeTexture("planks_birch", resourceManager);
-		enlargeTexture("planks_jungle", resourceManager);
-		enlargeTexture("planks_spruce", resourceManager);
-		enlargeTexture("planks_acacia", resourceManager);
-		enlargeTexture("iron_block", resourceManager);
-		enlargeTexture("diamond_block", resourceManager);
-		enlargeTexture("stone", resourceManager);
-		enlargeTexture("gold_block", resourceManager);
-		enlargeTexture("wool_colored_white", resourceManager);
-	}
+      try { DefaultTextColor = Integer.parseInt(Component.translatable(CustomNpcs.MODID + ".defaultTextColor").toString(), 16); }
+      catch (NumberFormatException var3) { DefaultTextColor = CustomNpcs.LableColor.getRGB(); }
 
-	private void enlargeTexture(String texture, IResourceManager resourceManager) {
-        ResourceLocation location = new ResourceLocation("minecraft", "textures/cache/" + texture + ".png");
-		IResource resource = null;
-		try { resource = resourceManager.getResource(location); } catch (Exception e) { LogWriter.debug("Not found texture: \""+location+"\""); }
-		if (!(resource instanceof TextureCache)) {
-			new TextureCache(location).loadTexture(resourceManager);
-		} else {
-			((TextureCache) resource).setImage(new ResourceLocation("minecraft", "textures/blocks/" + texture + ".png"));
-		}
-	}
-
-	public void onResourceManagerReload(@Nonnull IResourceManager resourceManager) {
-		if (resourceManager instanceof SimpleReloadableResourceManager) {
-			createTextureCache(resourceManager);
-			SimpleReloadableResourceManager simplemanager = (SimpleReloadableResourceManager) resourceManager;
-			FolderResourcePack pack = new FolderResourcePack(CustomNpcs.Dir);
-			simplemanager.reloadResourcePack(pack);
-			CustomNpcResourceListener.DefaultTextColor = CustomNpcs.LableColor.getRGB();
-		}
-	}
+      ResourceSelection.resourcesData.clear();
+      MpmPartReader.reload();
+      RenderSystem.recordRenderCall(() -> {
+         try {
+            CustomRenderStates.posTexNormalShader = new ShaderInstance(manager, new ResourceLocation("moreplayermodels", "position_tex_normal"), CustomRenderStates.POS_TEX_NORMAL);
+         } catch (IOException e) {
+            LogWriter.error(e);
+         }
+      });
+   }
 
 }

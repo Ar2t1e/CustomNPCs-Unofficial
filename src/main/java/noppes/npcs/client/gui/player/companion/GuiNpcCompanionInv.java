@@ -1,75 +1,76 @@
 package noppes.npcs.client.gui.player.companion;
 
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
-import noppes.npcs.client.gui.util.GuiNPCInterface;
-import noppes.npcs.client.gui.util.GuiNpcButton;
 import noppes.npcs.constants.EnumCompanionTalent;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.containers.ContainerNPCCompanion;
-import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleCompanion;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+public class GuiNpcCompanionInv extends GuiContainerNPCInterface<ContainerNPCCompanion> {
 
-public class GuiNpcCompanionInv extends GuiContainerNPCInterface {
+   protected final ResourceLocation resource = getResource("companioninv.png");
+   protected final RoleCompanion role;
 
-	protected final ResourceLocation resource = new ResourceLocation(CustomNpcs.MODID, "textures/gui/companioninv.png");
-	protected final RoleCompanion role;
+   public GuiNpcCompanionInv(ContainerNPCCompanion container, Inventory inv, Component titleIn) {
+      super(NoppesUtilServer.getEditingNpc(Minecraft.getInstance().player), container, inv, titleIn);
+      imageWidth = 171;
+      imageHeight = 166;
 
-	public GuiNpcCompanionInv(EntityNPCInterface npcIn, ContainerNPCCompanion container) {
-		super(npcIn, container);
-		closeOnEsc = true;
-		xSize = 171;
-		ySize = 166;
+      role = (RoleCompanion) npc.role;
+   }
 
-		role = (RoleCompanion) npc.advanced.roleInterface;
-	}
+   @Override
+   public void init() {
+      super.init();
+      GuiNpcCompanionStats.addTopMenu(role, this, 3);
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1: CustomNpcs.proxy.openGui(npc, EnumGuiType.Companion); break;
-			case 2: CustomNpcs.proxy.openGui(npc, EnumGuiType.CompanionTalent); break;
-		}
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      NoppesUtilServer.setEditingNpc(player, npc);
+      switch (button.id) {
+         case 1: CustomNpcs.proxy.openGui(npc, EnumGuiType.Companion, null); break;
+         case 2: CustomNpcs.proxy.openGui(npc, EnumGuiType.CompanionTalent, null); break;
+      }
+   }
 
-	@Override
-	protected void drawGuiContainerBackgroundLayer(float f, int xMouse, int yMouse) {
-		drawWorldBackground(0);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		mc.getTextureManager().bindTexture(resource);
-		drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
-		mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-		if (role.getTalentLevel(EnumCompanionTalent.ARMOR) > 0) {
-			for (int i = 0; i < 4; ++i) {
-				drawTexturedModalRect(guiLeft + 5, guiTop + 7 + i * 18, 0, 0, 18, 18);
-			}
-		}
-		if (role.getTalentLevel(EnumCompanionTalent.SWORD) > 0) {
-			drawTexturedModalRect(guiLeft + 78, guiTop + 16, 0, (npc.inventory.weapons.get(0) == null) ? 18 : 0, 18, 18);
-		}
-        role.getTalentLevel(EnumCompanionTalent.RANGED);
-        if (role.talents.containsKey(EnumCompanionTalent.INVENTORY)) {
-			for (int size = (role.getTalentLevel(EnumCompanionTalent.INVENTORY) + 1) * 2, j = 0; j < size; ++j) {
-				drawTexturedModalRect(guiLeft + 113 + j % 3 * 18, guiTop + 7 + j / 3 * 18, 0, 0, 18, 18);
-			}
-		}
-	}
+   @Override
+   protected void renderBg(@NotNull GuiGraphics graphics, float f, int xMouse, int yMouse) {
+      super.renderBackground(graphics);
+      graphics.blit(resource, guiLeft, guiTop, 0, 0, imageWidth, imageHeight);
+      int size;
+      if (role.getTalentLevel(EnumCompanionTalent.ARMOR) > 0) {
+         for(size = 0; size < 4; ++size) {
+            graphics.blit(resource, guiLeft + 5, guiTop + 7 + size * 18, 0, 0, 18, 18);
+         }
+      }
 
-    @Override
-	public void drawScreen(int mouseXIn, int mouseYIn, float partialTicks) {
-		super.drawScreen(mouseXIn, mouseYIn, partialTicks);
-		drawNpc(52, 70);
-	}
+      if (role.getTalentLevel(EnumCompanionTalent.SWORD) > 0) {
+         graphics.blit(resource, guiLeft + 78, guiTop + 16, 0, npc.inventory.weapons.get(0) == null ? 18 : 0, 18, 18);
+      }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		GuiNpcCompanionStats.addTopMenu(role, this, 3);
-	}
+      if (role.talents.containsKey(EnumCompanionTalent.INVENTORY)) {
+         size = (role.getTalentLevel(EnumCompanionTalent.INVENTORY) + 1) * 2;
+         for(int i = 0; i < size; ++i) {
+            graphics.blit(resource, guiLeft + 113 + i % 3 * 18, guiTop + 7 + i / 3 * 18, 0, 0, 18, 18);
+         }
+      }
+
+   }
+
+   @Override
+   public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      super.render(graphics, mouseX, mouseY, partialTicks);
+      super.drawNpc(graphics, 52, 70);
+   }
 
 }

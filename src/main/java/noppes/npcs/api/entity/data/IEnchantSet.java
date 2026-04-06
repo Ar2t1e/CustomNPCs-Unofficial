@@ -1,29 +1,29 @@
 package noppes.npcs.api.entity.data;
 
-import net.minecraft.enchantment.Enchantment;
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.item.enchantment.Enchantment;
+import noppes.npcs.api.interfaces.ParamName;
 
 @SuppressWarnings("all")
 public interface IEnchantSet {
 
-	double getChance();
+    double getChance();
 
-	String getEnchant();
+    String getEnchant();
 
-	int getMaxLevel();
+    int getMaxLevel();
 
-	int getMinLevel();
+    int getMinLevel();
 
-	void remove();
+    void remove();
 
-	void setChance(@ParamName("chance") double chance);
+    void setChance(@ParamName("chance") double chance);
 
-	void setEnchant(@ParamName("enchant") Enchantment enchant);
+    void setEnchant(@ParamName("enchant") Enchantment enchant);
 
-	boolean setEnchant(@ParamName("id") int id);
+    void setEnchant(@ParamName("id") int id);
 
-	boolean setEnchant(@ParamName("name") String name);
+    boolean setEnchant(@ParamName("name") String name);
 
-	void setLevels(@ParamName("min") int min, @ParamName("max") int max);
+    void setLevels(@ParamName("min") int min, @ParamName("max") int max);
 
 }

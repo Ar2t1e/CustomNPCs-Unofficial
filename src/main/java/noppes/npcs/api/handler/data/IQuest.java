@@ -1,83 +1,93 @@
 package noppes.npcs.api.handler.data;
 
+import net.minecraft.network.chat.Component;
 import noppes.npcs.api.IContainer;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.entity.data.ICustomDrop;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IPlayer;
 
-@SuppressWarnings("all")
+import java.util.List;
+
 public interface IQuest {
 
-	IQuestObjective addTask();
+   int getId();
 
-	IQuestCategory getCategory();
+   String getName();
 
-	ICustomNpc<?> getCompleterNpc();
+   void setName(@ParamName("name") String name);
 
-	String getCompleteText();
+   List<String> getLogText();
 
-	int getExtraButton();
+   void setLogText(@ParamName("text") String text);
 
-	String getExtraButtonText();
+   String getCompleteText();
 
-	int[] getForgetDialogues();
+   void setCompleteText(@ParamName("text") String text);
 
-	int[] getForgetQuests();
+   IQuest getNextQuest();
 
-	int getId();
+   void setNextQuest(@ParamName("quest") IQuest quest);
 
-	boolean getIsRepeatable();
+   IQuestObjective[] getObjectives(@ParamName("player") IPlayer<?> player);
 
-	int getLevel();
+   IQuestCategory getCategory();
 
-	String getLogText();
+   List<ICustomDrop> getRewards();
 
-	String getName();
+   void save();
 
-	IQuest getNextQuest();
+   boolean getIsRepeatable();
 
-	IQuestObjective[] getObjectives(@ParamName("player") IPlayer<?> player);
+   // New from Unofficial (BetaZavr)
+   IQuestObjective addTask();
 
-	IContainer getRewards();
+   ICustomNpc<?> getCompleterNpc();
 
-	int getRewardType();
+   int getExtraButton();
 
-	String getTitle();
+   String getExtraButtonText();
 
-	boolean isCancelable();
+   int[] getForgetDialogues();
 
-	boolean isSetUp();
+   int[] getForgetQuests();
 
-	boolean removeTask(@ParamName("task") IQuestObjective task);
+   int getLevel();
 
-	void save();
+   int getRewardType();
 
-	void sendChangeToAll();
+   Component getTitle();
 
-	void setCancelable(@ParamName("cancelable") boolean cancelable);
+   boolean isCancelable();
 
-	void setCompleterNpc(@ParamName("npc") ICustomNpc<?> npc);
+   boolean isSetUp();
 
-	void setCompleteText(@ParamName("text") String text);
+   boolean removeTask(@ParamName("task") IQuestObjective task);
 
-	void setExtraButton(@ParamName("type") int type);
+   void sendChangeToAll();
 
-	void setExtraButtonText(@ParamName("hover") String hover);
+   void setCancelable(@ParamName("cancelable") boolean cancelable);
 
-	void setForgetDialogues(@ParamName("forget") int[] forget);
+   void setCompleterNpc(@ParamName("npc") ICustomNpc<?> npc);
 
-	void setForgetQuests(@ParamName("forget") int[] forget);
+   void setExtraButton(@ParamName("type") int type);
 
-	void setLevel(@ParamName("level") int level);
+   void setExtraButtonText(@ParamName("hover") String hover);
 
-	void setLogText(@ParamName("text") String text);
+   void setForgetDialogues(@ParamName("forget") int[] forget);
 
-	void setName(@ParamName("name") String name);
+   void setForgetQuests(@ParamName("forget") int[] forget);
 
-	void setNextQuest(@ParamName("quest") IQuest quest);
+   void setLevel(@ParamName("level") int level);
 
-	void setRewardText(@ParamName("text") String text);
+   void setRewardText(@ParamName("text") String text);
 
-	void setRewardType(@ParamName("type") int type);
+   void setRewardType(@ParamName("type") int type);
+
+   // Removed
+   //int getType();
+   //void setType(int questType);
+   //String getNpcName();
+   //void setNpcName(String name);
 
 }

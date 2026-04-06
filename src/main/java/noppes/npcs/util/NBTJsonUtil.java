@@ -1,350 +1,364 @@
 package noppes.npcs.util;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagByte;
-import net.minecraft.nbt.NBTTagByteArray;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagFloat;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagIntArray;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagLong;
-import net.minecraft.nbt.NBTTagLongArray;
-import net.minecraft.nbt.NBTTagShort;
-import net.minecraft.nbt.NBTTagString;
-import noppes.npcs.reflection.nbt.NBTTagListReflection;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import net.minecraft.nbt.ByteArrayTag;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.IntArrayTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongArrayTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.ShortTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import noppes.npcs.mixin.nbt.IListTagMixin;
 
 public class NBTJsonUtil {
 
-	public static class JsonException extends Exception {
-		private static final long serialVersionUID = 1L;
-		public JsonException(String message, JsonFile json) {
-			super(message + ": " + json.getCurrentPos());
-		}
-	}
+   public static String Convert(CompoundTag compound) {
+      List<JsonLine> list = new ArrayList<>();
+      JsonLine line = ReadTag("", compound, list);
+      line.removeComma();
+      return ConvertList(list);
+   }
 
-	public static class JsonFile {
-		private final String original;
-		private String text;
+   public static CompoundTag Convert(String json) throws JsonException {
+      json = json.trim();
+      JsonFile file = new JsonFile(json);
+      if (json.startsWith("{") && json.endsWith("}")) {
+         CompoundTag compound = new CompoundTag();
+         FillCompound(compound, file);
+         return compound;
+      } else {
+         throw new JsonException("Not properly incapsulated between \"{ }\"", file);
+      }
+   }
 
-		public JsonFile(String text) {
-			this.text = text;
-			this.original = text;
-		}
+   public static void FillCompound(CompoundTag compound, JsonFile json) throws JsonException {
+      if (json.startsWith("{") || json.startsWith(",")) {
+         json.cut(1);
+      }
 
-		public String cut(int i) {
-			String s = this.text.substring(0, i);
-			this.text = this.text.substring(i).trim();
-			return s;
-		}
+      if (!json.startsWith("}")) {
+         int index = json.keyIndex();
+         if (index < 1) {
+            throw new JsonException("Expected key after ,", json);
+         } else {
+            String key = json.substring(0, index);
+            json.cut(index + 1);
+            Tag base = ReadValue(json);
+            if (base == null) {
+               base = StringTag.valueOf("");
+            }
 
-		public String cutDirty(int i) {
-			String s = this.text.substring(0, i);
-			this.text = this.text.substring(i);
-			return s;
-		}
+            if (key.startsWith("\"")) {
+               key = key.substring(1);
+            }
 
-		public boolean endsWith(String s) {
-			return this.text.endsWith(s);
-		}
+            if (key.endsWith("\"")) {
+               key = key.substring(0, key.length() - 1);
+            }
 
-		public String getCurrentPos() {
-			int lengthOr = this.original.length();
-			int lengthCur = this.text.length();
-			int currentPos = lengthOr - lengthCur;
-			String done = this.original.substring(0, currentPos);
-			String[] lines = done.split("\r\n|\r|\n");
-			int pos = 0;
-			String line = "";
-			if (lines.length > 0) {
-				pos = lines[lines.length - 1].length();
-				line = this.original.split("\r\n|\r|\n")[lines.length - 1].trim();
-			}
-			return "Line: " + lines.length + ", Pos: " + pos + ", Text: " + line;
-		}
+            compound.put(key, base);
+            if (json.startsWith(",")) {
+               FillCompound(compound, json);
+            }
 
-		public int indexOf(String s) {
-			return this.text.indexOf(s);
-		}
+         }
+      }
+   }
 
-		public int keyIndex() {
-			boolean hasQuote = false;
-			for (int i = 0; i < this.text.length(); ++i) {
-				char c = this.text.charAt(i);
-				if (i == 0 && c == '\"') {
-					hasQuote = true;
-				} else if (hasQuote && c == '\"') {
-					hasQuote = false;
-				}
-				if (!hasQuote && c == ':') {
-					return i;
-				}
-			}
-			return -1;
-		}
+   public static Tag ReadValue(JsonFile json) throws JsonException {
+      if (json.startsWith("{")) {
+         CompoundTag compound = new CompoundTag();
+         FillCompound(compound, json);
+         if (!json.startsWith("}")) {
+            throw new JsonException("Expected }", json);
+         } else {
+            json.cut(1);
+            return compound;
+         }
+      } else if (json.startsWith("[")) {
+         json.cut(1);
+         ListTag list = new ListTag();
+         if (json.startsWith("B;") || json.startsWith("I;") || json.startsWith("L;")) {
+            json.cut(2);
+         }
 
-		public boolean startsWith(String... ss) {
-			for (String s : ss) {
-				if (this.text.startsWith(s)) {
-					return true;
-				}
-			}
-			return false;
-		}
+         for(Tag value = ReadValue(json); value != null; value = ReadValue(json)) {
+            list.add(value);
+            if (!json.startsWith(",")) {
+               break;
+            }
 
-		public String substring(int beginIndex, int endIndex) {
-			return this.text.substring(beginIndex, endIndex);
-		}
-	}
+            json.cut(1);
+         }
 
-	static class JsonLine {
-		private String line;
+         if (!json.startsWith("]")) {
+            throw new JsonException("Expected ]", json);
+         } else {
+            json.cut(1);
+            int i;
+            if (list.getElementType() == 3) {
+               int[] arr = new int[list.size()];
 
-		public JsonLine(String line) {
-			this.line = line;
-		}
+               for(i = 0; !list.isEmpty(); ++i) {
+                  arr[i] = ((IntTag)list.remove(0)).getAsInt();
+               }
 
-		public boolean increaseTab() {
-			return this.line.endsWith("{") || this.line.endsWith("[");
-		}
+               return new IntArrayTag(arr);
+            } else if (list.getElementType() == 1) {
+               byte[] arr = new byte[list.size()];
 
-		public boolean reduceTab() {
-			int length = this.line.length();
-			return (length == 1 && (this.line.endsWith("}") || this.line.endsWith("]")))
-					|| (length == 2 && (this.line.endsWith("},") || this.line.endsWith("],")));
-		}
+               for(i = 0; !list.isEmpty(); ++i) {
+                  arr[i] = ((ByteTag)list.remove(0)).getAsByte();
+               }
 
-		public void removeComma() {
-			if (this.line.endsWith(",")) {
-				this.line = this.line.substring(0, this.line.length() - 1);
-			}
-		}
+               return new ByteArrayTag(arr);
+            } else if (list.getElementType() != 4) {
+               return list;
+            } else {
+               long[] arr = new long[list.size()];
 
-		@Override
-		public String toString() {
-			return this.line;
-		}
-	}
+               for(i = 0; !list.isEmpty(); ++i) {
+                  arr[i] = ((LongTag)list.remove(0)).getAsByte();
+               }
 
-	public static String Convert(NBTTagCompound compound) {
-		List<JsonLine> list = new ArrayList<>();
-		JsonLine line = ReadTag("", compound, list);
-		line.removeComma();
-		return ConvertList(list);
-	}
+               return new LongArrayTag(arr);
+            }
+         }
+      } else {
+         StringBuilder s;
+         if (json.startsWith("\"")) {
+            json.cut(1);
+            s = new StringBuilder();
 
-	public static NBTTagCompound Convert(String json) throws JsonException {
-		String newJson = json.trim();
-		JsonFile file = new JsonFile(newJson);
-		if (!newJson.startsWith("{") || !newJson.endsWith("}")) {
-			throw new JsonException("Not properly incapsulated between { }", file);
-		}
-		NBTTagCompound compound = new NBTTagCompound();
-		FillCompound(compound, file);
-		return compound;
-	}
+            String cut = "";
+            for(boolean ignore = false; !json.startsWith("\"") || ignore; s.append(cut)) {
+               cut = json.cutDirty(1);
+               ignore = cut.equals("\\");
+            }
 
-	private static String ConvertList(List<JsonLine> list) {
-		StringBuilder json = new StringBuilder();
-		int tab = 0;
-		for (JsonLine tag : list) {
-			if (tag.reduceTab()) {
-				--tab;
-			}
-			for (int i = 0; i < tab; ++i) {
-				json.append("	");
-			}
-			json.append(tag).append("\n");
-			if (tag.increaseTab()) {
-				++tab;
-			}
-		}
-		return json.toString();
-	}
+            json.cut(1);
+            return StringTag.valueOf(s.toString().replace("\\\\", "\\").replace("\\\"", "\""));
+         } else {
+            s = new StringBuilder();
+            while (!json.startsWith(",", "]", "}")) { s.append(json.cut(1)); }
+            s = new StringBuilder(s.toString().trim().toLowerCase());
+            if (s.isEmpty()) { return null; }
+            try {
+               if (s.toString().endsWith("d")) {
+                  return s.toString().equals("nand") ? DoubleTag.valueOf(Double.NaN) : DoubleTag.valueOf(Double.parseDouble(s.substring(0, s.length() - 1)));
+               } else if (s.toString().endsWith("f")) {
+                  return FloatTag.valueOf(Float.parseFloat(s.substring(0, s.length() - 1)));
+               } else if (s.toString().endsWith("b")) {
+                  return ByteTag.valueOf(Byte.parseByte(s.substring(0, s.length() - 1)));
+               } else if (s.toString().endsWith("s")) {
+                  return ShortTag.valueOf(Short.parseShort(s.substring(0, s.length() - 1)));
+               } else if (s.toString().endsWith("l")) {
+                  return LongTag.valueOf(Long.parseLong(s.substring(0, s.length() - 1)));
+               } else {
+                  return s.toString().contains(".") ? DoubleTag.valueOf(Double.parseDouble(s.toString())) : IntTag.valueOf(Integer.parseInt(s.toString()));
+               }
+            } catch (NumberFormatException var5) {
+               throw new JsonException("Unable to convert: " + s + " to a number", json);
+            }
+         }
+      }
+   }
 
-	public static void FillCompound(NBTTagCompound compound, JsonFile json) throws JsonException {
-		if (json.startsWith("{") || json.startsWith(",")) {
-			json.cut(1);
-		}
-		if (json.startsWith("}")) {
-			return;
-		}
-		int index = json.keyIndex();
-		if (index < 1) {
-			throw new JsonException("Expected key after ,", json);
-		}
-		String key = json.substring(0, index);
-		json.cut(index + 1);
-		NBTBase base = ReadValue(json);
-		if (key.startsWith("\"")) {
-			key = key.substring(1);
-		}
-		if (key.endsWith("\"")) {
-			key = key.substring(0, key.length() - 1);
-		}
-		if (base != null) {
-			compound.setTag(key, base);
-		}
-		if (json.startsWith(",")) {
-			FillCompound(compound, json);
-		}
-	}
+   private static JsonLine ReadTag(String name, Tag base, List<JsonLine> list) {
+      if (!name.isEmpty()) {
+         name = "\"" + name + "\": ";
+      }
 
-	private static List<NBTBase> getListData(NBTTagList list) {
-		return NBTTagListReflection.getTagList(list);
-	}
+      JsonLine line;
+      if (base.getId() == 9) {
+         list.add(new JsonLine(name + "["));
+         ListTag tags = (ListTag)base;
+         line = null;
+         List<Tag> data = ((IListTagMixin) tags).getList();
 
-	public static NBTTagCompound LoadFile(File file) throws IOException, JsonException {
-		return Convert(Util.instance.loadFile(file));
-	}
+         Tag b;
+         for(Iterator<Tag> var6 = data.iterator(); var6.hasNext(); line = ReadTag("", b, list)) {
+            b = var6.next();
+         }
 
-	public static void main(String[] args) {
-		NBTTagCompound comp = new NBTTagCompound();
-		NBTTagCompound comp2 = new NBTTagCompound();
-		comp2.setByteArray("test", new byte[] { 0, 0, 1, 1, 0 });
-		comp.setTag("comp", comp2);
-	}
+         if (line != null) {
+            line.removeComma();
+         }
 
-	private static JsonLine ReadTag(String name, NBTBase base, List<JsonLine> list) {
-		if (!name.isEmpty()) {
-			name = "\"" + name + "\": ";
-		}
-		if (base.getId() == 9) {
-			list.add(new JsonLine(name + "["));
-			NBTTagList tags = (NBTTagList) base;
-			JsonLine line = null;
-			List<NBTBase> data = getListData(tags);
-			for (NBTBase b : data) {
-				line = ReadTag("", b, list);
-			}
-			if (line != null) {
-				line.removeComma();
-			}
-			list.add(new JsonLine("]"));
-		} else if (base.getId() == 10) {
-			list.add(new JsonLine(name + "{"));
-			NBTTagCompound compound = (NBTTagCompound) base;
-			JsonLine line = null;
-			for (Object key : compound.getKeySet()) {
-				line = ReadTag(key.toString(), compound.getTag(key.toString()), list);
-			}
-			if (line != null) {
-				line.removeComma();
-			}
-			list.add(new JsonLine("}"));
-		} else if (base.getId() == 11) {
-			list.add(new JsonLine(name + base.toString().replaceFirst(",]", "]")));
-		} else {
-			list.add(new JsonLine(name + base));
-		}
-		JsonLine jsonLine;
-		JsonLine line2 = jsonLine = list.get(list.size() - 1);
-		jsonLine.line += ",";
-		return line2;
-	}
+         list.add(new JsonLine("]"));
+      }
+      else if (base.getId() == 10) {
+         list.add(new JsonLine(name + "{"));
+         CompoundTag compound = (CompoundTag) base;
+         line = null;
 
-	public static NBTBase ReadValue(JsonFile json) throws JsonException {
-		if (json.startsWith("{")) {
-			NBTTagCompound compound = new NBTTagCompound();
-			FillCompound(compound, json);
-			if (!json.startsWith("}")) {
-				throw new JsonException("Expected }", json);
-			}
-			json.cut(1);
-			return compound;
-		} else if (json.startsWith("[")) {
-			json.cut(1);
-			NBTTagList list = new NBTTagList();
-			if (json.startsWith("B;") || json.startsWith("I;") || json.startsWith("L;")) {
-				json.cut(2);
-			}
-			for (NBTBase value = ReadValue(json); value != null; value = ReadValue(json)) {
-				list.appendTag(value);
-				if (!json.startsWith(",")) {
-					break;
-				}
-				json.cut(1);
-			}
-			if (!json.startsWith("]")) {
-				throw new JsonException("Expected ]", json);
-			}
-			json.cut(1);
-			if (list.getTagType() == 3) {
-				int[] arr = new int[list.tagCount()];
-				int i = 0;
-				while (list.tagCount() > 0) {
-					arr[i] = ((NBTTagInt) list.removeTag(0)).getInt();
-					++i;
-				}
-				return new NBTTagIntArray(arr);
-			}
-			if (list.getTagType() == 1) {
-				byte[] arr2 = new byte[list.tagCount()];
-				int i = 0;
-				while (list.tagCount() > 0) {
-					arr2[i] = ((NBTTagByte) list.removeTag(0)).getByte();
-					++i;
-				}
-				return new NBTTagByteArray(arr2);
-			}
-			if (list.getTagType() == 4) {
-				long[] arr3 = new long[list.tagCount()];
-				int i = 0;
-				while (list.tagCount() > 0) {
-					arr3[i] = ((NBTTagLong) list.removeTag(0)).getByte();
-					++i;
-				}
-				return new NBTTagLongArray(arr3);
-			}
-			return list;
-		} else {
-			if (json.startsWith("\"")) {
-				json.cut(1);
-				String s = "";
-				String cut = "";
-				for (boolean ignore = false; !json.startsWith("\"") || ignore; ignore = cut.equals("\\"), s += cut) {
-					cut = json.cutDirty(1);
-				}
-				json.cut(1);
-				return new NBTTagString(s.replace("\\\\", "\\").replace("\\\"", "\""));
-			}
-			StringBuilder s = new StringBuilder();
-			while (!json.startsWith(",", "]", "}")) {
-				s.append(json.cut(1));
-			}
-			s = new StringBuilder(s.toString().trim().toLowerCase());
-			if ((s.length() == 0) || s.toString().contains("bytes]")) {
-				return null;
-			}
-			try {
-				if (s.toString().endsWith("d")) {
-					return new NBTTagDouble(Double.parseDouble(s.substring(0, s.length() - 1)));
-				}
-				if (s.toString().endsWith("f")) {
-					return new NBTTagFloat(Float.parseFloat(s.substring(0, s.length() - 1)));
-				}
-				if (s.toString().endsWith("b")) {
-					return new NBTTagByte(Byte.parseByte(s.substring(0, s.length() - 1)));
-				}
-				if (s.toString().endsWith("s")) {
-					return new NBTTagShort(Short.parseShort(s.substring(0, s.length() - 1)));
-				}
-				if (s.toString().endsWith("l")) {
-					return new NBTTagLong(Long.parseLong(s.substring(0, s.length() - 1)));
-				}
-				if (s.toString().contains(".")) {
-					return new NBTTagDouble(Double.parseDouble(s.toString()));
-				}
-				return new NBTTagInt(Integer.parseInt(s.toString()));
-			} catch (NumberFormatException ex) {
-				throw new JsonException("Unable to convert: " + s + " to a number", json);
-			}
-		}
-	}
+         List<String> keys = new ArrayList<>(compound.getAllKeys());
+         Collections.sort(keys);
+         for (String key : keys) {
+            line = ReadTag(key, compound.get(key), list);
+         }
 
+         if (line != null) {
+            line.removeComma();
+         }
+
+         list.add(new JsonLine("}"));
+      } else if (base.getId() == 11) {
+         list.add(new JsonLine(name + base.toString().replaceFirst(",]", "]")));
+      } else if (base.getId() == 8) {
+         list.add(new JsonLine(name + quoteAndEscape(base.getAsString())));
+      } else {
+         list.add(new JsonLine(name + base));
+      }
+
+      line = list.get(list.size() - 1);
+      line.line = line.line + ",";
+      return line;
+   }
+
+   private static String ConvertList(List<JsonLine> list) {
+      StringBuilder json = new StringBuilder();
+      int tab = 0;
+      for (JsonLine tag : list) {
+         if (tag.reduceTab()) {
+            --tab;
+         }
+         json.append("    ".repeat(Math.max(0, tab)));
+         json.append(tag).append("\n");
+         if (tag.increaseTab()) { ++tab; }
+      }
+      return json.toString();
+   }
+
+   public static CompoundTag LoadFile(File file) throws IOException, JsonException {
+      return Convert(Files.readString(file.toPath(), StandardCharsets.UTF_8));
+   }
+
+   public static void SaveFile(File file, CompoundTag compound) throws IOException, JsonException {
+      String json = Convert(compound);
+      try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8)) {
+         writer.write(json);
+      }
+   }
+
+   public static void main(String[] args) {
+      CompoundTag comp = new CompoundTag();
+      CompoundTag comp2 = new CompoundTag();
+      comp2.putByteArray("test", new byte[]{0, 0, 1, 1, 0});
+      comp.put("comp", comp2);
+      Convert(comp);
+   }
+
+   public static String quoteAndEscape(String p_193588_0_) {
+      StringBuilder stringbuilder = new StringBuilder("\"");
+
+      for(int i = 0; i < p_193588_0_.length(); ++i) {
+         char c0 = p_193588_0_.charAt(i);
+         if (c0 == '\\' || c0 == '"') {
+            stringbuilder.append('\\');
+         }
+
+         stringbuilder.append(c0);
+      }
+
+      return stringbuilder.append('"').toString();
+   }
+
+   public static JsonObject ConvertToJson(CompoundTag compound) {
+      JsonObject jsonObject = new JsonObject();
+      for (String key : compound.getAllKeys()) {
+         Tag value = compound.get(key);
+         Object convertedValue = convertTag(value);
+         if (convertedValue instanceof JsonObject jsObject) { jsonObject.add(key, jsObject); }
+         else if (convertedValue instanceof JsonPrimitive jsPrimitive) { jsonObject.add(key, jsPrimitive); }
+      }
+      return jsonObject;
+   }
+
+   private static Object convertTag(Tag tag) {
+      if (tag instanceof CompoundTag) {
+         return ConvertToJson((CompoundTag) tag);
+      } else if (tag instanceof ListTag) {
+         return convertList((ListTag) tag);
+      } else if (tag instanceof StringTag) {
+         return new JsonPrimitive(tag.getAsString());
+      } else if (tag instanceof ByteTag) {
+         return new JsonPrimitive(((ByteTag) tag).getAsByte());
+      } else if (tag instanceof ShortTag) {
+         return new JsonPrimitive(((ShortTag) tag).getAsShort());
+      } else if (tag instanceof IntTag) {
+         return new JsonPrimitive(((IntTag) tag).getAsInt());
+      } else if (tag instanceof LongTag) {
+         return new JsonPrimitive(((LongTag) tag).getAsLong());
+      } else if (tag instanceof FloatTag) {
+         return new JsonPrimitive(((FloatTag) tag).getAsFloat());
+      } else if (tag instanceof DoubleTag) {
+         return new JsonPrimitive(((DoubleTag) tag).getAsDouble());
+      }
+      throw new IllegalArgumentException("Unsupported tag type: " + tag.getClass().getSimpleName());
+   }
+
+   private static JsonObject convertList(ListTag listTag) {
+      JsonObject jsonArray = new JsonObject();
+      for (int i = 0; i < listTag.size(); i++) {
+         Tag element = listTag.get(i);
+         Object convertedElement = convertTag(element);
+         if (convertedElement instanceof JsonObject || convertedElement instanceof JsonPrimitive) {
+             assert convertedElement instanceof JsonObject;
+             jsonArray.add(Integer.toString(i), (JsonObject) convertedElement);
+         }
+      }
+      return jsonArray;
+   }
+
+   static class JsonLine {
+      private String line;
+
+      public JsonLine(String line) {
+         this.line = line;
+      }
+
+      public void removeComma() {
+         if (this.line.endsWith(",")) {
+            this.line = this.line.substring(0, this.line.length() - 1);
+         }
+
+      }
+
+      public boolean reduceTab() {
+         int length = this.line.length();
+         return length == 1 && (this.line.endsWith("}") || this.line.endsWith("]")) || length == 2 && (this.line.endsWith("},") || this.line.endsWith("],"));
+      }
+
+      public boolean increaseTab() {
+         return this.line.endsWith("{") || this.line.endsWith("[");
+      }
+
+      public String toString() {
+         return this.line;
+      }
+   }
+
+   public static class JsonException extends Exception {
+      public JsonException(String message, JsonFile json) {
+         super(message + "; Error in " + json.getCurrentPos());
+      }
+   }
 }

@@ -2,146 +2,153 @@ package noppes.npcs.client.gui;
 
 import java.util.*;
 
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.controllers.data.FactionOption;
 import noppes.npcs.controllers.data.FactionOptions;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketFactionsGet;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.Util;
 
-import javax.annotation.Nonnull;
+public class SubGuiNpcFactionOptions
+        extends GuiBasic
+        implements IScrollData, ICustomScrollListener, ITextfieldListener {
 
-public class SubGuiNpcFactionOptions extends SubGuiInterface
-		implements IScrollData, ICustomScrollListener, ITextfieldListener {
+   protected final FactionOptions options;
+   protected final Map<Component, Integer> data = new HashMap<>();
+   protected GuiCustomScrollNop scroll;
 
-	protected final Map<String, Integer> data = new HashMap<>();
-	protected final FactionOptions options;
-	protected GuiCustomScroll scroll;
+   public SubGuiNpcFactionOptions(FactionOptions optionsIn) {
+      super();
+      setBackground("menubg.png");
+      imageWidth = 256;
+      imageHeight = 216;
 
-	public SubGuiNpcFactionOptions(FactionOptions factionOptions) {
-		super(0);
-		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 216;
-		closeOnEsc = true;
+      options = optionsIn;
+      Packets.sendServer(new SPacketFactionsGet());
+   }
 
-		options = factionOptions;
-	}
+   @Override
+   public void init() {
+      super.init();
+      if (scroll == null) { scroll = addScroll(0).setSize(120, 195); }
+      int x0 = guiLeft + 6;
+      int x1 = x0 + 123;
+      int y = guiTop + 5;
+      addLabel(1, x0 + 1, y, Component.translatable("faction.options").append(":"))
+              .setSize(123, 10);
+      addLabel(2, x1 + 1, y, Component.translatable("gui.settings").append(":"))
+              .setSize(123, 10)
+              .setIsVisible(scroll.hasSelected());
+      add(scroll.setPos(x0, y += 11));
+      FactionOption fo = null;
+      if (scroll.hasSelected() && data.get(scroll.getNormalSelected()) != null) { fo = options.get(data.get(scroll.getNormalSelected())); }
+      // faction points
+      addTextField(1, x1 + 1, y + 1, 120, 18, fo != null ? "" + fo.factionPoints : "0")
+              .setMinMaxDefault(-100000, 100000, fo != null ? fo.factionPoints : 0)
+              .setEditableIn(scroll.hasSelected())
+              .setHoverTexts("faction.hover.option.points");
+      addButton(1, x1, y + 22, false, fo != null && fo.decreaseFactionPoints ? 1 : 0, "gui.add", "gui.decrease")
+              .setSize(90, 20)
+              .setIsVisible(scroll.hasSelected())
+              .setHoverTexts("faction.hover.option.decrease");
+      addButton(66, x1, guiTop + imageHeight - 25, "gui.back")
+              .setSize(90, 20)
+              .setHoverTexts("hover.back");
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1 : change(button.getValue() == 1, getTextField(1) == null ? 0 : getTextField(1).getInteger()); break;
-			case 66 : onClosed(); break;
-		}
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop guiButton) {
+      switch (guiButton.id) {
+         case 1 : change(guiButton.getValue() == 1, getTextField(1) == null ? 0 : getTextField(1).getInteger()); break;
+         case 66 : onClose(); break;
+      }
+   }
 
-	private void change(boolean isTake, int value) {
-		if (!scroll.hasSelected() || !data.containsKey(scroll.getSelected())) { return; }
-		FactionOption fo = null;
-		int id = -1;
-		if (scroll.getSelected() != null && data.containsKey(scroll.getSelected())) {
-			id = data.get(scroll.getSelected());
-			fo = options.get(id);
-		}
-		if (fo == null) {
-			if (value == 0) { return; }
-			fo = new FactionOption(id, value, isTake);
-			options.fps.add(fo);
-		} else {
-			if (value == 0) {
-				if (options.remove(id)) { fo = null; }
-			} else {
-				fo.factionPoints = value;
-				fo.decreaseFactionPoints = isTake;
-			}
-		}
-		if (fo != null) { fo.check(); }
-		setData(null, new HashMap<>(data));
-	}
+   @Override
+   public void scrollClicked(GuiCustomScrollNop scroll) { init(); }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(120, 196); }
-		scroll.guiLeft = guiLeft + 4;
-		scroll.guiTop = guiTop + 14;
-		addScroll(scroll);
+   @Override
+   public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
-		addLabel(new GuiNpcLabel(1, new TextComponentTranslation("faction.options").getFormattedText() + ":", guiLeft + 5, guiTop + 4));
+   @Override
+   public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
+      data.clear();
+      String name = Util.instance.deleteColor(scroll.getSelected());
+      if (name != null && name.contains("ID:") && name.indexOf(" - ") >= name.indexOf("ID:")) {
+         name = name.substring(name.indexOf(" - ") + 3);
+      }
+      Map<String, Component> newList = new TreeMap<>();
+      Map<Component, Component> hoverMap = new HashMap<>();
+      for (String key : dataMap.keySet()) {
+         int id = dataMap.get(key);
+         String newName = Util.instance.deleteColor(key);
+         if (newName.contains("ID:" + id + " - ")) {
+            newName = newName.substring(newName.indexOf(" - ") + 3);
+         }
+         newName = Component.translatable(newName).getString();
 
-		FactionOption fo = null;
-		if (scroll.getSelected() != null && data.get(scroll.getSelected()) != null) { fo = options.get(data.get(scroll.getSelected())); }
-		GuiNpcLabel label = new GuiNpcLabel(2, new TextComponentTranslation("gui.settings").getFormattedText() + ":", guiLeft + 130, guiTop + 4);
-		label.setIsEnable(scroll.getSelect() >= 0);
-		addLabel(label);
-		// faction points
-		addTextField(new GuiNpcTextField(1, this, guiLeft + 130, guiTop + 16, 110, 20, fo != null ? "" + fo.factionPoints : "0")
-				.setMinMaxDefault(-100000, 100000, fo != null ? fo.factionPoints : 0)
-				.setIsEnable(scroll.getSelect() >= 0)
-				.setHoverText("faction.hover.option.points"));
+         Component str = Component.empty().append(Component.literal("ID:" + id + " - " + newName).withStyle(ChatFormatting.GRAY));
+         if (options.hasFaction(id)) {
+            FactionOption fo = options.get(id);
+            str = Component.empty()
+                    .append(Component.literal("ID:" + id + " - ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(newName).withStyle(fo.decreaseFactionPoints ? ChatFormatting.RED : ChatFormatting.DARK_GREEN));
+         }
+         newList.put(str.getString(), str);
+         hoverMap.put(str, Component.literal(newName));
+         data.put(str, id);
+         if (name != null && name.equals(Util.instance.deleteColor(newName))) { name = str.getString(); }
+      }
+      LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+      int i = 0;
+      for (Component key : newList.values()) {
+         hts.put(i, Collections.singletonList(hoverMap.get(key)));
+         i++;
+      }
+      scroll.setUnsortedList(new ArrayList<>(newList.values()));
+      scroll.setHoverTexts(hts);
+      if (name != null) { scroll.setSelected(name); }
+      init();
+   }
 
-		addButton(new GuiNpcButton(1, guiLeft + 130, guiTop + 38, 90, 20, new String[] { "gui.add", "gui.decrease" }, fo != null ? fo.decreaseFactionPoints ? 1 : 0 : 0)
-				.setIsVisible(scroll.getSelect() >= 0)
-				.setHoverText("faction.hover.option.decrease"));
+   @Override
+   public void setSelected(String selected) { }
 
-		addButton(new GuiNpcButton(66, guiLeft + 130, guiTop + ySize - 26, 90, 20, "gui.back")
-				.setHoverText("hover.back"));
-	}
+   // New from Unofficial (BetaZavr)
+   private void change(boolean isTake, int value) {
+      if (!scroll.hasSelected() || !data.containsKey(scroll.getNormalSelected())) { return; }
+      int id = data.get(scroll.getNormalSelected());
+      FactionOption fo = options.get(id);
+      if (fo == null) {
+         if (value == 0) { return; }
+         fo = new FactionOption(id, value, isTake);
+         options.factionOptions.add(fo);
+      }
+      else {
+         if (value == 0) {
+            if (options.remove(id)) { fo = null; }
+         } else {
+            fo.factionPoints = value;
+            fo.decreaseFactionPoints = isTake;
+         }
+      }
+      if (fo != null) { fo.check(); }
+      Map<String, Integer> dataMap = new HashMap<>();
+      for (Component component : data.keySet()) { dataMap.put(component.getString(), data.get(component)); }
+      setData(null, dataMap);
+   }
 
-	@Override
-	public void initPacket() { Client.sendData(EnumPacketServer.FactionsGet); }
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { initGui(); }
-
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
-
-	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		data.clear();
-		String name = Util.instance.deleteColor(scroll.getSelected());
-		if (name != null && name.contains("ID:") && name.indexOf(" - ") >= name.indexOf("ID:")) { name = name.substring(name.indexOf(" - ") + 3); }
-		List<String> newList = new ArrayList<>();
-		Map<String, String> hoverMap = new HashMap<>();
-		Map<String, Integer> newData = new HashMap<>();
-		for (String key : dataMap.keySet()) {
-			int id = dataMap.get(key);
-			String newName = Util.instance.deleteColor(key);
-			if (newName.contains("ID:" + id + " - ")) { newName = newName.substring(newName.indexOf(" - ") + 3); }
-			newName = new TextComponentTranslation(newName).getFormattedText();
-			String str = ((char) 167) + "7ID:" + id + " - " + newName;
-			if (options.hasFaction(id)) {
-				FactionOption fo = options.get(id);
-				str = ((char) 167) + "7ID:" + id + " - " + ((char) 167) + (fo.decreaseFactionPoints ? "c" : "2") + newName;
-			}
-			newList.add(str);
-			hoverMap.put(str, newName);
-			newData.put(str, id);
-			if (name != null && name.equals(Util.instance.deleteColor(newName))) { name = str; }
-		}
-		Collections.sort(newList);
-		data.putAll(newData);
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		int i = 0;
-		for (String key : newList) {
-			hts.put(i, Collections.singletonList(hoverMap.get(key)));
-			i++;
-		}
-		scroll.setUnsortedList(newList).setHoverTexts(hts);
-		if (name != null) { scroll.setSelected(name); }
-		initGui();
-	}
-
-	@Override
-	public void setSelected(String selected) { }
-
-	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		change(getButton(1) != null && getButton(1).getValue() == 1, textField.getInteger());
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      change(getButton(1) != null && getButton(1).getValue() == 1, textField.getInteger());
+   }
 
 }

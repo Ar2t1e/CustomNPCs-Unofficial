@@ -1,130 +1,104 @@
 package noppes.npcs.roles;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.nbt.CompoundTag;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.data.role.IJobFollower;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.ValueUtil;
 
 public class JobFollower extends JobInterface implements IJobFollower {
 
-	public EntityNPCInterface following = null;
-	public String name = "";
+    public EntityNPCInterface following = null;
+    public String name = "";
+    protected int ticks = 40;
 
-	public JobFollower(EntityNPCInterface npc) {
-		super(npc);
-		type = JobType.FOLLOWER;
-	}
-
-	@Override
-	public boolean isWorking() {
-		return isFollowing();
-	}
-
-	@Override
-	public boolean aiShouldExecute() {
-		if (npc.isAttacking()) {
-			return false;
-		}
-		if (following != null) {
-			if (following.isKilled()) {
-				following = null;
-				return false;
-			}
-			double dist = npc.getDistance(following);
-			if (dist <= 1.5d) {
-				if (!npc.getNavigator().noPath()) {
-					npc.getNavigator().clearPath();
-				}
-				return true;
-			} else if (dist > getRange()) {
-				boolean bo = npc.getNavigator().tryMoveToEntityLiving(following, 1.0d);
-				if (!bo) { following = null; }
-			} else {
-				following = null;
-			}
-			if (following != null) {
-				return true;
-			}
-		}
-		List<EntityNPCInterface> list = new ArrayList<>();
-		try {
-			list = npc.world.getEntitiesWithinAABB(EntityNPCInterface.class,
-					npc.getEntityBoundingBox().grow(getRange(), getRange(), getRange()));
-		}
-		catch (Exception ignored) { }
-		for (EntityNPCInterface entity : list) {
-			if (entity == npc || entity.isKilled()) {
-				continue;
-			}
-			if (entity.display.getName().equalsIgnoreCase(name)) {
-				following = entity;
-				break;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public void aiUpdateTask() {
-		npc.getLookHelper().setLookPosition(following.posX, following.posY + following.getEyeHeight(), following.posZ, 10.0f, npc.getVerticalFaceSpeed());
-	}
-
-	@Override
-	public String getFollowing() {
-		return name;
-	}
-
-	@Override
-	public ICustomNpc<?> getFollowingNpc() {
-		if (following == null) {
-			return null;
-		}
-		return following.wrappedNPC;
-	}
-
-	private int getRange() {
-		int dist = Math.min(npc.followRange(), npc.stats.aggroRange);
-		if (dist > CustomNpcs.NpcNavRange) { return CustomNpcs.NpcNavRange; }
-		return dist;
-	}
-
-	@SuppressWarnings("all")
-	public boolean hasOwner() {
-		return !name.isEmpty() && isFollowing();
-	}
-
-	@Override
-	public boolean isFollowing() {
-		return following != null;
-	}
-
-	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = JobType.FOLLOWER;
-		name = compound.getString("FollowingEntityName");
-	}
+    public JobFollower(EntityNPCInterface npc) {
+        super(npc);
+        type = JobType.FOLLOWER;
+    }
 
     @Override
-	public void resetTask() {
-		following = null;
-	}
+    public CompoundTag save(CompoundTag compound) {
+        super.save(compound);
+        compound.putString("FollowingEntityName", name);
+        return compound;
+    }
 
-	@Override
-	public void setFollowing(String n) {
-		name = n;
-	}
+    @Override
+    public void load(CompoundTag compound) {
+        super.load(compound);
+        type = JobType.FOLLOWER;
+        name = compound.getString("FollowingEntityName");
+    }
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setString("FollowingEntityName", name);
-		return compound;
-	}
+    @Override
+    public boolean aiShouldExecute() {
+        if (npc != null && !npc.isAttacking()) {
+            --ticks;
+            if (ticks <= 0) {
+                ticks = 10;
+
+                // New from Unofficial (BetaZavr)
+                if (following != null) {
+                    double dist = npc.distanceTo(following);
+                    if (dist <= 1.5d) {
+                        if (!npc.getNavigation().isDone()) { npc.getNavigation().stop(); }
+                        return true;
+                    }
+                    if (dist > getRange()) {
+                        if (!npc.getNavigation().moveTo(following, 1.0d)) { following = null; }
+                    }
+                    else { following = null; }
+                    if (following != null) { return true; }
+                }
+
+                List<EntityNPCInterface> list = npc.level().getEntitiesOfClass(EntityNPCInterface.class,
+                        npc.getBoundingBox().inflate(getRange(), getRange(), getRange()));
+                for (EntityNPCInterface entity : list) {
+                    if (entity != npc && !entity.isKilled() && entity.display.getName().equalsIgnoreCase(name)) {
+                        following = entity;
+                        break;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isFollowing() { return following != null; }
+
+    @Override
+    public void stop() { following = null; }
+
+    @Override
+    public String getFollowing() { return name; }
+
+    @Override
+    public void setFollowing(String nameIn) { name = nameIn; }
+
+    @Override
+    public ICustomNpc<?> getFollowingNpc() { return following == null ? null : following.wrappedNPC; }
+
+    public boolean hasOwner() { return !name.isEmpty(); }
+
+    // New from Unofficial (BetaZavr)
+    @Override
+    public void aiUpdateTask() {
+        if (npc != null && isFollowing()) { npc.getLookControl().setLookAt(following.getEyePosition()); }
+    }
+
+    @Override
+    public boolean isWorking() { return isFollowing(); }
+
+    private int getRange() {
+        return ValueUtil.correctInt(npc != null ? Math.min(npc.followRange(), npc.stats.aggroRange) : 4, 2, CustomNpcs.NpcNavRange);
+    }
 
 }

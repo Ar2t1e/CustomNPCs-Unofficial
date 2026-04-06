@@ -1,65 +1,62 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.item.ItemStack;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.handler.data.IAvailability;
 import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.controllers.data.Availability;
 
-@SuppressWarnings("all")
 public interface ICustomDrop {
 
-	IAttributeSet addAttribute(@ParamName("attributeName") String attributeName);
+    IAttributeSet addAttribute(@ParamName("name") String attributeName);
 
-	IDropNbtSet addDropNbtSet(@ParamName("type") int type, @ParamName("chance") double chance,
-							  @ParamName("path") String path, @ParamName("values") String[] values);
+    IDropNbtSet addDropNbtSet(@ParamName("name") int type, @ParamName("name") double chance, @ParamName("name") String path, @ParamName("name") String[] values);
 
-	IEnchantSet addEnchant(@ParamName("enchantId") int enchantId);
+    IEnchantSet addEnchant(@ParamName("name") int enchantId);
 
-	IEnchantSet addEnchant(@ParamName("enchantName") String enchantName);
+    IEnchantSet addEnchant(@ParamName("name") String enchantName);
 
-	IItemStack createLoot(@ParamName("addChance") double addChance);
+    IItemStack createLoot(@ParamName("name") double addChance);
 
-	IAttributeSet[] getAttributeSets();
+    IAttributeSet[] getAttributeSets();
 
-	double getChance();
+    double getChance();
 
-	float getDamage();
+    IDropNbtSet[] getDropNbtSets();
 
-	IDropNbtSet[] getDropNbtSets();
+    IEnchantSet[] getEnchantSets();
 
-	IEnchantSet[] getEnchantSets();
+    IItemStack getItem();
 
-	IItemStack getItem();
+    ItemStack getMCItemStack();
 
-	int getLootMode();
+    int getLootMode();
 
-	int getMaxAmount();
+    int getMaxAmount();
 
-	int getMinAmount();
+    int getMinAmount();
 
-    Availability getAvailability();
+    IAvailability getAvailability();
 
-	boolean getTiedToLevel();
+    boolean getTiedToLevel();
 
-	void remove();
+    void remove();
 
-	void removeAttribute(@ParamName("attribute") IAttributeSet attribute);
+    void removeAttribute(@ParamName("attribute") IAttributeSet attribute);
 
-	void removeDropNbt(@ParamName("nbt") IDropNbtSet nbt);
+    void removeDropNbt(@ParamName("nbt") IDropNbtSet nbt);
 
-	void removeEnchant(@ParamName("enchant") IEnchantSet enchant);
+    void removeEnchant(@ParamName("enchant") IEnchantSet enchant);
 
-	void resetTo(@ParamName("item") IItemStack item);
+    void resetTo(@ParamName("item") IItemStack item);
 
-	void setAmount(@ParamName("min") int min, @ParamName("max") int max);
+    void setAmount(@ParamName("min") int min, @ParamName("max") int max);
 
-	void setChance(@ParamName("chance") double chance);
+    void setChance(@ParamName("chance") double chance);
 
-	void setDamage(@ParamName("damage") float damage);
+    void setItem(@ParamName("item") IItemStack item);
 
-	void setItem(@ParamName("item") IItemStack item);
+    void setLootMode(@ParamName("lootMode") int lootMode);
 
-	void setLootMode(@ParamName("lootMode") int lootMode);
-
-	void setTiedToLevel(@ParamName("tiedToLevel") boolean tiedToLevel);
+    void setTiedToLevel(@ParamName("tiedToLevel") boolean tiedToLevel);
 
 }

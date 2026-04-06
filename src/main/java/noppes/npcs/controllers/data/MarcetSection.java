@@ -3,83 +3,81 @@ package noppes.npcs.controllers.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.util.ValueUtil;
 
 public class MarcetSection {
 
-	public static MarcetSection create(NBTTagCompound compound) {
-		MarcetSection ms = new MarcetSection(compound.getInteger("ID"));
-		ms.name = compound.getString("Name");
-		ms.setIcon(compound.getInteger("IconId"));
-		NBTTagList list = compound.getTagList("Deals", 10);
-        for (NBTBase nbt : list) {
+    public static MarcetSection create(CompoundTag compound) {
+        MarcetSection ms = new MarcetSection(compound.getInt("ID"));
+        ms.name = compound.getString("Name");
+        ms.setIcon(compound.getInt("IconId"));
+        ListTag list = compound.getList("Deals", 10);
+        for (Tag nbt : list) {
             Deal deal = new Deal();
-            deal.readData((NBTTagCompound) nbt);
+            deal.loadData((CompoundTag) nbt);
             ms.deals.add(deal);
         }
-
         return ms;
-	}
-	protected final int id;
-	protected int iconId;
-	public String name = "market.default.section";
-	public List<Deal> deals = new ArrayList<>();
+    }
 
-	public MarcetSection(int idIn) { id = idIn; }
+    protected final int id;
+    protected int iconId;
+    public String name = "market.default.section";
+    public List<Deal> deals = new ArrayList<>();
 
-	public void addDeal(int dealId) {
-		if (hadDeal(dealId)) { return; }
-		Deal deal = MarcetController.getInstance().getDeal(dealId);
-		if (deal == null || !deal.isValid()) { return; }
-		Deal marcetDeal = deal.copy();
-		marcetDeal.updateNew();
-		deals.add(marcetDeal);
-	}
+    public MarcetSection(int idIn) { id = idIn; }
 
-	public int getId() { return id; }
+    public void addDeal(int dealId) {
+        if (hadDeal(dealId)) { return; }
+        Deal deal = MarcetController.getInstance().getDeal(dealId);
+        if (deal == null || !deal.isValid()) { return; }
+        Deal marcetDeal = deal.copy();
+        marcetDeal.updateNew();
+        deals.add(marcetDeal);
+    }
 
-	public int getIcon() { return iconId; }
+    public int getId() { return id; }
 
-	public void setIcon(int id) { iconId = ValueUtil.correctInt(id, 0, 29); }
+    public int getIcon() { return iconId; }
 
-	public String getName() { return new TextComponentTranslation(name).getFormattedText(); }
+    public void setIcon(int id) { iconId = ValueUtil.correctInt(id, 0, 29); }
 
-	private boolean hadDeal(int dealId) {
-		for (Deal deal : deals) {
-			if (deal.getId() == dealId) { return true; }
-		}
-		return false;
-	}
+    public Component getName() { return Component.translatable(name); }
 
-	public void removeAllDeals() { deals.clear(); }
+    private boolean hadDeal(int dealId) {
+        for (Deal deal : deals) {
+            if (deal.getId() == dealId) { return true; }
+        }
+        return false;
+    }
 
-	public void removeDeal(int dealId) {
-		for (Deal deal : deals) {
-			if (deal.getId() == dealId) {
-				deals.remove(deal);
-				return;
-			}
-		}
-	}
+    public void removeAllDeals() { deals.clear(); }
 
-	public NBTTagCompound save() {
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("ID", id);
-		compound.setInteger("IconId", iconId);
-		compound.setString("Name", name);
+    public void removeDeal(int dealId) {
+        for (Deal deal : deals) {
+            if (deal.getId() == dealId) {
+                deals.remove(deal);
+                return;
+            }
+        }
+    }
 
-		NBTTagList list = new NBTTagList();
-		for (Deal deal : deals) {
-			list.appendTag(deal.save());
-		}
-		compound.setTag("Deals", list);
+    public CompoundTag save() {
+        CompoundTag compound = new CompoundTag();
+        compound.putInt("ID", id);
+        compound.putInt("IconId", iconId);
+        compound.putString("Name", name);
 
-		return compound;
-	}
+        ListTag list = new ListTag();
+        for (Deal deal : deals) { list.add(deal.saveData()); }
+        compound.put("Deals", list);
+
+        return compound;
+    }
 
 }

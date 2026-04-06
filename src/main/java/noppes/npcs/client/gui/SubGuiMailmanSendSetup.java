@@ -1,98 +1,101 @@
 package noppes.npcs.client.gui;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
 import noppes.npcs.api.handler.data.IQuest;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.gui.player.GuiMailmanWrite;
 import noppes.npcs.client.gui.select.SubGuiQuestSelection;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.containers.ContainerMail;
 import noppes.npcs.controllers.data.PlayerMail;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketMailSetup;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.GuiSelectionListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
+public class SubGuiMailmanSendSetup extends GuiBasic implements ITextfieldListener, GuiSelectionListener {
 
-public class SubGuiMailmanSendSetup extends SubGuiInterface
-		implements ITextfieldListener, GuiSelectionListener {
+   protected final PlayerMail mail;
 
-	protected final PlayerMail mail;
+   public SubGuiMailmanSendSetup(PlayerMail mailIn) {
+      super();
+      setBackground("menubg.png");
+      imageWidth = 256;
 
-	public SubGuiMailmanSendSetup(PlayerMail mailIn) {
-		super(0);
-		setBackground("menubg.png");
-		xSize = 256;
+      mail = mailIn;
+   }
 
-		mail = mailIn;
-	}
+   @Override
+   public void buttonEvent(GuiButtonNop button) {
+      switch (button.id) {
+         case 0: onClose(); break;
+         case 1: {
+            mail.questId = -1;
+            mail.message = new CompoundTag();
+            onClose();
+            break;
+         }
+         case 2: {
+            GuiMailmanWrite.parent = getParent();
+            GuiMailmanWrite.mail = mail;
+            Packets.sendServer(new SPacketMailSetup(mail.save()));
+            break;
+         }
+         case 3: setSubGui(new SubGuiQuestSelection(mail.questId)); break;
+         case 4: mail.questId = -1; init(); break;
+      }
+   }
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				onClosed();
-				break;
-			}
-			case 1: {
-				mail.questId = -1;
-				mail.message = new NBTTagCompound();
-				onClosed();
-				break;
-			}
-			case 2: {
-				GuiMailmanWrite.parent = getParent();
-				GuiMailmanWrite.mail = mail;
-				Client.sendData(EnumPacketServer.MailOpenSetup, mail.writeNBT());
-				break;
-			}
-			case 3: setSubGui(new SubGuiQuestSelection(mail.questId)); break;
-			case 4: {
-				mail.questId = -1;
-				initGui();
-				break;
-			}
-		}
-	}
+   @Override
+   public void init() {
+      super.init();
+      int w = 60;
+      int x0 = guiLeft + 5;
+      int x1 = x0 + w + 2;
+      int x2 = guiLeft + 26;
+      int y = guiTop + 14;
+      int lId = 0;
+      // title
+      addLabel(lId++, x0, y + 4, "mailbox.subject").setSize(w, 10);
+      addTextField(1, x1 + 1, y, 180, 18, mail.title);
+      // sender
+      addLabel(lId++, x0, (y += 25) + 4, "mailbox.sender").setSize(w, 10);
+      addTextField(0, x1 + 1, y, 180, 18, mail.sender);
+      // texts
+      addLabel(lId++, x0, (y += 55) + 5, "mailbox.setup").setSize(w, 10);
+      addButton(2, x1, y, "mailbox.write").setSize(180, 20);
+      // next quest
+      addLabel(lId, x0, (y += 27) + 5, "quest.quest").setSize(w, 10);
+      IQuest quest = mail.getQuest();
+      addButton(3, x1, y, quest != null ? quest.getName() : "gui.select").setSize(158, 20);
+      addButton(4, x1 + 160, y, "X").setSize(20, 20);
+      addButton(0, x2, y = guiTop + 190, "gui.done").setSize(100, 20);
+      addButton(1, x2 + 104, y, "gui.cancel").setSize(100, 20);
+      if (player.containerMenu instanceof ContainerMail container) {
+         mail.items.clear();
+         for (int i =0; i < 4; i++) { mail.items.set(i, container.mail.items.get(i)); }
+      }
+   }
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		// title
-		addLabel(new GuiNpcLabel(1, "mailbox.subject", guiLeft + 4, guiTop + 19));
-		addTextField(new GuiNpcTextField(1, this, guiLeft + 60, guiTop + 14, 180, 20, mail.title));
-		// sender
-		addLabel(new GuiNpcLabel(0, "mailbox.sender", guiLeft + 4, guiTop + 41));
-		addTextField(new GuiNpcTextField(0, this, guiLeft + 60, guiTop + 36, 180, 20, mail.sender));
-		// write
-		addButton(new GuiNpcButton(2, guiLeft + 29, guiTop + 100, "mailbox.write"));
-		// quest
-		addLabel(new GuiNpcLabel(3, "quest.quest", guiLeft + 13, guiTop + 135));
-		IQuest quest = mail.getQuest();
-		String title = "gui.select";
-		if (quest != null) { title = quest.getName(); }
-		addButton(new GuiNpcButton(3, guiLeft + 70, guiTop + 130, 100, 20, title));
-		// del
-		addButton(new GuiNpcButton(4, guiLeft + 171, guiTop + 130, 20, 20, "X"));
-		// exit
-		addButton(new GuiNpcButton(0, guiLeft + 26, guiTop + 190, 100, 20, "gui.done"));
-		// cancel
-		addButton(new GuiNpcButton(1, guiLeft + 130, guiTop + 190, 100, 20, "gui.cancel"));
-		if (player.openContainer instanceof ContainerMail) {
-			ContainerMail container = (ContainerMail) player.openContainer;
-			mail.items = container.mail.items;
-		}
-	}
+   @Override
+   public void selected(int ob, String name) {
+      mail.questId = ob;
+      init();
+   }
 
-    @Override
-	public void selected(int ob, String name) {
-		mail.questId = ob;
-		initGui();
-	}
+   @Override
+   public void onClose() {
+      super.onClose();
+      if (player.containerMenu instanceof ContainerMail) { player.containerMenu = player.inventoryMenu; }
+   }
 
-	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		if (textField.getID() == 0) { mail.sender = textField.getText(); }
-		else if (textField.getID() == 1) { mail.title = textField.getText(); }
-	}
+   @Override
+   public void unFocused(GuiTextFieldNop textField) {
+      switch (textField.id) {
+         case 0: mail.sender = textField.getValue(); break;
+         case 1: mail.title = textField.getValue(); break;
+      }
+   }
 
 }

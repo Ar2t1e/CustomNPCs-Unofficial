@@ -1,64 +1,60 @@
 package noppes.npcs.client.layer;
 
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import noppes.npcs.ModelPartConfig;
-import noppes.npcs.client.model.ModelNpcAlt;
-import noppes.npcs.constants.EnumParts;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import noppes.npcs.entity.EntityNPCInterface;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-public class LayerNpcCloak<T extends EntityLivingBase> extends LayerInterface<T> {
+public class LayerNpcCloak<T extends EntityNPCInterface, M extends HumanoidModel<T>> extends LayerInterface<T, M> {
 
-	public LayerNpcCloak(RenderLiving<?> render) {
-		super(render);
-	}
+   public LayerNpcCloak(LivingEntityRenderer<T, M> render) {
+      super(render);
+   }
 
-	@Override
-	public void render(float par2, float par3, float par4, float par5, float par6, float par7) {
-		if (!(this.model instanceof ModelNpcAlt)) {
-			return;
-		}
-		if (this.npc.textureCloakLocation == null) {
-			if (this.npc.display.getCapeTexture() == null || this.npc.display.getCapeTexture().isEmpty()
-					|| !(this.model instanceof ModelNpcAlt)) {
-				return;
-			}
-			this.npc.textureCloakLocation = new ResourceLocation(this.npc.display.getCapeTexture());
-		}
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		this.render.bindTexture(this.npc.textureCloakLocation);
-		GlStateManager.pushMatrix();
-		ModelPartConfig config = this.playerdata.getPartConfig(EnumParts.BODY);
-		if (this.npc.isSneaking()) {
-			GlStateManager.translate(0.0f, 0.2f, 0.0f);
-		}
-		GlStateManager.translate(config.offset[0], config.offset[1], config.offset[2]);
-		GlStateManager.translate(0.0f, 0.0f, 0.125f);
-		double d = this.npc.field_20066_r + (this.npc.field_20063_u - this.npc.field_20066_r) * par7 - (this.npc.prevPosX + (this.npc.posX - this.npc.prevPosX) * par7);
-		double d3 = this.npc.field_20064_t + (this.npc.field_20061_w - this.npc.field_20064_t) * par7 - (this.npc.prevPosZ + (this.npc.posZ - this.npc.prevPosZ) * par7);
-		float f11 = this.npc.prevRenderYawOffset + (this.npc.renderYawOffset - this.npc.prevRenderYawOffset) * par7;
-		double d4 = MathHelper.sin(f11 * 3.141593f / 180.0f);
-		double d5 = -MathHelper.cos(f11 * 3.141593f / 180.0f);
-		float f12 = (float) (d * d4 + d3 * d5) * 100.0f;
-		float f13 = (float) (d * d5 - d3 * d4) * 100.0f;
-		if (f12 < 0.0f) {
-			f12 = 0.0f;
-		}
-		float f15 = 5.0f;
-		if (this.npc.isSneaking()) {
-			f15 += 25.0f;
-		}
-		GlStateManager.rotate(6.0f + f12 / 2.0f + f15, 1.0f, 0.0f, 0.0f);
-		GlStateManager.rotate(f13 / 2.0f, 0.0f, 0.0f, 1.0f);
-		GlStateManager.rotate(-f13 / 2.0f, 0.0f, 1.0f, 0.0f);
-		GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-		((ModelNpcAlt) this.model).renderCape(0.0625f);
-		GlStateManager.popMatrix();
-	}
+   public void render(PoseStack mStack, MultiBufferSource typeBuffer, int lightMapUV, float limbSwing, float limbSwingAmount, float partialTicks, float age, float netHeadYaw, float headPitch) {
+      if (npc.textureCloakLocation == null) {
+         if (npc.display.getCapeTexture() == null || npc.display.getCapeTexture().isEmpty() || !(base instanceof PlayerModel)) { return; }
+         npc.textureCloakLocation = ResourceLocation.tryParse(npc.display.getCapeTexture());
+      }
+      ItemStack chestStack = npc.getItemBySlot(EquipmentSlot.CHEST);
+      if (!chestStack.is(Items.ELYTRA)) {
+         mStack.pushPose();
+         mStack.translate(0.0D, 0.0D, 0.125D);
+         double d0 = Mth.lerp(partialTicks, npc.prevChasingPosX, npc.chasingPosX) - Mth.lerp(partialTicks, npc.xo, npc.getX());
+         double d1 = Mth.lerp(partialTicks, npc.prevChasingPosY, npc.chasingPosY) - Mth.lerp(partialTicks, npc.yo, npc.getY());
+         double d2 = Mth.lerp(partialTicks, npc.prevChasingPosZ, npc.chasingPosZ) - Mth.lerp(partialTicks, npc.zo, npc.getZ());
+         float f = npc.yBodyRotO + (npc.yBodyRot - npc.yBodyRotO);
+         double d3 = Mth.sin(f * 0.017453292F);
+         double d4 = -Mth.cos(f * 0.017453292F);
+         float f1 = (float)d1 * 10.0F;
+         f1 = Mth.clamp(f1, -6.0F, 32.0F);
+         float f2 = (float)(d0 * d3 + d2 * d4) * 100.0F;
+         f2 = Mth.clamp(f2, 0.0F, 150.0F);
+         float f3 = (float)(d0 * d4 - d2 * d3) * 100.0F;
+         f3 = Mth.clamp(f3, -20.0F, 20.0F);
+         if (f2 < 0.0F) { f2 = 0.0F; }
 
-	@Override
-	public void rotate(float par1, float par2, float par3, float par4, float par5, float par6) {
-	}
+         f1 += Mth.sin(Mth.lerp(partialTicks, npc.walkDistO, npc.walkDist) * 6.0F) * 32.0F * partialTicks;
+         if (npc.isCrouching()) { f1 += 25.0F; }
+
+         mStack.mulPose(Axis.XP.rotationDegrees(6.0F + f2 / 2.0F + f1));
+         mStack.mulPose(Axis.ZP.rotationDegrees(f3 / 2.0F));
+         mStack.mulPose(Axis.YP.rotationDegrees(180.0F - f3 / 2.0F));
+         ((PlayerModel<T>)base).renderCloak(mStack, typeBuffer.getBuffer(RenderType.entityTranslucent(npc.textureCloakLocation)), lightMapUV, OverlayTexture.NO_OVERLAY);
+         mStack.popPose();
+      }
+   }
+
+   public void rotate(PoseStack matrixStack, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+   }
 }

@@ -1,7 +1,7 @@
 {
     "parent": "builtin/generated",
     "textures": {
-        "layer0": "customnpcs:items/npcscripteddoor"
+        "layer0": "customnpcs:item/npcscripteddoor"
     },
     "display": {
         "thirdperson": {

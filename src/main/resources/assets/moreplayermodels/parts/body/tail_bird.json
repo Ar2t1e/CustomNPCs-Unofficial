@@ -1,0 +1,25 @@
+{
+	"name": "part.tail",
+	"render_type": "simple",
+	"render_data" : {
+		"texture_size": [64, 64],
+		"parts" : [
+			{ "name" : "tail", "empty": true, "translate": [0, 0, 0], "rotate": [0, 0, 0] },
+			{ "parent" : "tail", "plane": true, "texture_position": [56, 16], "part_size": [3, 8], "translate": [0, 0, 0], "rotate": [190, 0, 0], "direction": "down", "rotate_offset": [-1.5, 0, -7] },
+			{ "parent" : "tail", "plane": true, "texture_position": [56, 16], "part_size": [3, 8], "translate": [0, 0.2, 0], "rotate": [190, 20, 20], "direction": "down", "rotate_offset": [-0.5, 0, -7] },
+			{ "parent" : "tail", "plane": true, "texture_position": [56, 16], "part_size": [3, 8], "translate": [0, 0.2, 0], "rotate": [190, -20, -20], "direction": "down", "rotate_offset": [-2.5, 0, -7] },
+			{ "parent" : "tail", "plane": true, "texture_position": [56, 16], "part_size": [3, 8], "translate": [0, 1, 0], "rotate": [190, 20, 45], "direction": "down", "rotate_offset": [-0.5, 0, -7] },
+			{ "parent" : "tail", "plane": true, "texture_position": [56, 16], "part_size": [3, 8], "translate": [0, 1, 0], "rotate": [190, -20, -45], "direction": "down", "rotate_offset": [-2.5, 0, -7] }
+		]
+	},
+	"texture": "moreplayermodels:textures/tail/6.png",
+	"body_part": "body",
+	"menu": "part.tail",
+	"animation_inherit": "tails",
+	"preview_rotation": 135,
+	"translate": [0, 8, 3],
+	"scale": [1.0, 1.0, 1.0],
+	"rotate_offset": [0, 0.0, 0.0],
+	"rotate": [0.0, 0, 0.0],
+	"author": "Noppes"
+}

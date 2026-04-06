@@ -1,30 +1,29 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.projectile.EntityThrowable;
-import noppes.npcs.api.ParamName;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
-public interface IProjectile<T extends EntityThrowable> extends IThrowable<T> {
+public interface IProjectile<T extends ThrowableProjectile> extends IThrowable<T> {
 
-	void enableEvents();
+   IItemStack getItem();
 
-	int getAccuracy();
+   void setItem(@ParamName("item") IItemStack item);
 
-	boolean getHasGravity();
+   boolean getHasGravity();
 
-	IItemStack getItem();
+   void setHasGravity(@ParamName("bo") boolean bo);
 
-	void setAccuracy(@ParamName("accuracy") int accuracy);
+   int getAccuracy();
 
-	void setHasGravity(@ParamName("bo") boolean bo);
+   void setAccuracy(@ParamName("accuracy") int accuracy);
 
-	void setHeading(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
+   void setHeading(@ParamName("entity") IEntity<?> entity);
 
-	void setHeading(@ParamName("yaw") float yaw, @ParamName("pitch") float pitch);
+   void setHeading(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
-	void setHeading(@ParamName("entity") IEntity<?> entity);
+   void setHeading(@ParamName("yaw") float yaw, @ParamName("pitch") float pitch);
 
-	void setItem(@ParamName("item") IItemStack item);
+   void enableEvents();
 
 }

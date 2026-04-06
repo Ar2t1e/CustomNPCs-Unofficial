@@ -1,8 +1,8 @@
 package noppes.npcs.roles;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.entity.data.role.IRoleTrader;
@@ -15,59 +15,58 @@ import noppes.npcs.entity.EntityNPCInterface;
 
 public class RoleTrader extends RoleInterface implements IRoleTrader {
 
-	private int marcetID;
+   private int marcetId = -1;
 
-	public RoleTrader(EntityNPCInterface npc) {
-		super(npc);
-		marcetID = -1;
-		type = RoleType.TRADER;
-	}
+   public RoleTrader(EntityNPCInterface npc) {
+      super(npc);
+      type = RoleType.TRADER;
+   }
 
-	@Override
-	public IMarcet getMarket() { return MarcetController.getInstance().getMarcet(marcetID); }
+   @Override
+   public IMarcet getMarket() { return MarcetController.getInstance().getMarcet(marcetId); }
 
-	@Override
-	public int getMarketID() { return marcetID; }
+   @Override
+   public int getMarketID() { return marcetId; }
 
-	@Override
-	public void interact(EntityPlayer player) {
-		npc.say(player, npc.advanced.getInteractLine());
-		Marcet marcet = (Marcet) getMarket();
-		if (marcet == null || !marcet.isValid()) { return; }
-		if (player instanceof EntityPlayerMP) {
-			marcet.addListener(player, true);
-			PlayerData.get(player).game.getMarcetLevel(marcetID);
-		}
-		NoppesUtilServer.sendOpenGui(player, EnumGuiType.PlayerTrader, npc);
-	}
+   @Override
+   public void interact(Player player) {
+      npc.say(player, npc.advanced.getInteractLine());
+      Marcet marcet = (Marcet) getMarket();
+      if (marcet != null && marcet.isValid() && player instanceof ServerPlayer sPlayer) {
+         marcet.addListener(player, true);
+         PlayerData.get(player).game.getMarkupData(marcetId);
+         NoppesUtilServer.sendExtraData(sPlayer, npc, EnumGuiType.PlayerTrader);
+         NoppesUtilServer.openContainerGui(sPlayer, EnumGuiType.PlayerTrader, (buffer) -> buffer.writeInt(marcetId));
+      }
+   }
 
-	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = RoleType.TRADER;
-		if (!compound.hasKey("MarketID", 3)) { marcetID = MarcetController.getInstance().loadOld(compound); }
-		else { marcetID = compound.getInteger("MarketID"); }
-	}
+   @Override
+   public void load(CompoundTag compound) {
+      super.load(compound);
+      type = RoleType.TRADER;
+      if (!compound.contains("MarketID", 3)) { marcetId = MarcetController.getInstance().loadOld(compound); }
+      else { marcetId = compound.getInt("MarketID"); }
+   }
 
-	@Override
-	public void setMarket(IMarcet marcet) {
-		IMarcet m = getMarket();
-		if (m != null) { ((Marcet) m).closeForAllPlayers(); }
-		marcetID = marcet.getId();
-	}
+   @Override
+   public void setMarket(IMarcet marcet) {
+      IMarcet m = getMarket();
+      if (m != null) { ((Marcet) m).closeForAllPlayers(); }
+      marcetId = marcet.getId();
+   }
 
-	@Override
-	public void setMarket(int id) {
-		IMarcet m = getMarket();
-		if (m != null) { ((Marcet) m).closeForAllPlayers(); }
-		marcetID = id;
-	}
+   @Override
+   public void setMarket(int id) {
+      IMarcet m = getMarket();
+      if (m != null) { ((Marcet) m).closeForAllPlayers(); }
+      marcetId = id;
+   }
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setInteger("MarketID", marcetID);
-		return compound;
-	}
+   @Override
+   public CompoundTag save(CompoundTag compound) {
+      super.save(compound);
+      compound.putInt("MarketID", marcetId);
+      return compound;
+   }
 
 }

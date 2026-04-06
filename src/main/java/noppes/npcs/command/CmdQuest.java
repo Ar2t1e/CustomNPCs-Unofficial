@@ -1,202 +1,199 @@
 package noppes.npcs.command;
 
-import java.util.List;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.TextComponentString;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
-import noppes.npcs.api.CommandNoppesBase;
+import java.util.Collection;
+
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.minecraft.commands.CommandRuntimeException;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import noppes.npcs.api.handler.data.IQuestObjective;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.controllers.PlayerDataController;
-import noppes.npcs.controllers.PlayerQuestController;
 import noppes.npcs.controllers.QuestController;
-import noppes.npcs.controllers.SyncController;
-import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.controllers.data.Quest;
-import noppes.npcs.util.ValueUtil;
+import noppes.npcs.controllers.data.*;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketAchievement;
+import noppes.npcs.packets.client.PacketChat;
+import noppes.npcs.packets.client.PacketSync;
 
 import javax.annotation.Nonnull;
 
-public class CmdQuest extends CommandNoppesBase {
+public class CmdQuest {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+    public static LiteralArgumentBuilder<CommandSourceStack> register() {
+        LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("quest");
+        command.then(Commands.literal("start")
+                .then(Commands.argument("players", EntityArgument.players())
+                        .requires((source) -> source.hasPermission(2))
+                        .then(Commands.argument("quest", IntegerArgumentType.integer(0))
+                                .suggests(getQuestSuggests())
+                                .executes((context) -> {
+                                    Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                    if (!players.isEmpty()) {
+                                        Quest quest = getQuest(context);
+                                        for (ServerPlayer player : players) {
+                                            PlayerData data = PlayerData.get(player);
+                                            QuestData questdata = new QuestData(quest);
+                                            data.questData.activeQuests.put(quest.id, questdata);
+                                            data.save(true);
+                                            Packets.send(player, new PacketAchievement(Component.translatable("quest.newquest"), Component.translatable(quest.title), 2, new CompoundTag()));
+                                            Packets.send(player, new PacketChat(Component.translatable("quest.newquest").append(":").append(Component.translatable(quest.title))));
+                                        }
 
-	@SuppressWarnings("all")
-	@SubCommand(desc = "Finish a quest", usage = "<player> <quest>", permission = 2)
-	public void finish(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String playername = args[0];
-		int questId;
-		try {
-			questId = Integer.parseInt(args[1]);
-		} catch (NumberFormatException ex) {
-			throw new CommandException("QuestID must be an integer");
-		}
-		List<PlayerData> data = PlayerDataController.instance.getPlayersData(sender, playername);
-		if (data.isEmpty()) {
-			throw new CommandException(String.format("Unknown player '%s'", playername));
-		}
-		Quest quest = QuestController.instance.quests.get(questId);
-		if (quest == null) {
-			throw new CommandException("Unknown QuestID");
-		}
-		for (PlayerData playerdata : data) {
-			boolean hasFinishedQuest = playerdata.questData.finishedQuests.containsKey(questId);
-			playerdata.questData.finishedQuests.put(questId, System.currentTimeMillis());
-			if (playerdata.questData.activeQuests.containsKey(questId)) {
-				playerdata.questData.activeQuests.remove(questId);
-				hasFinishedQuest = false;
-			}
-			try {
-				EntityPlayerMP player = CommandBase.getPlayer(server, sender, playername);
-				if (!hasFinishedQuest && player != null) {
-					Server.sendData(player, EnumPacketClient.MESSAGE, "quest.completed", quest.getTitle(), 2);
-					Server.sendData(player, EnumPacketClient.CHAT, "quest.completed", ": ", quest.getTitle());
-				}
-			} catch (Exception e) { LogWriter.error(e); }
-			playerdata.updateClient = true;
-			playerdata.save(true);
-		}
-	}
+                                    }
+                                    return 1;
+                                }))));
+        command.then(Commands.literal("finish")
+                .then(Commands.argument("players", EntityArgument.players()).requires((source) -> source.hasPermission(2))
+                        .then(Commands.argument("quest", IntegerArgumentType.integer(0))
+                                .suggests(getQuestSuggests())
+                                .executes((context) -> {
+                                    Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                    if (!players.isEmpty()) {
+                                        Quest quest = getQuest(context);
+                                        for (ServerPlayer player : players) {
+                                            PlayerData data = PlayerData.get(player);
+                                            data.questData.finish(quest, player);
+                                            data.save(true);
+                                        }
+                                    }
+                                    return 1;
+                                }))));
+        command.then(Commands.literal("stop")
+                .then(Commands.argument("players", EntityArgument.players()).requires((source) -> source.hasPermission(2))
+                        .then(Commands.argument("quest", IntegerArgumentType.integer(0))
+                                .suggests(getQuestSuggests())
+                                .executes((context) -> {
+                                    Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                    if (!players.isEmpty()) {
+                                        Quest quest = getQuest(context);
+                                        for (ServerPlayer player : players) {
+                                            PlayerData data = PlayerData.get(player);
+                                            data.questData.activeQuests.remove(quest.id);
+                                            data.save(true);
+                                        }
+                                        return 1;
+                                    }
+                                    return 1;
+                                }))));
+        command.then(Commands.literal("remove")
+                .then(Commands.argument("players", EntityArgument.players()).requires((source) -> source.hasPermission(2))
+                        .then(Commands.argument("quest", IntegerArgumentType.integer(0))
+                                .suggests(getQuestSuggests())
+                                .executes((context) -> {
+                                    Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                    if (!players.isEmpty()) {
+                                        Quest quest = getQuest(context);
+                                        for (ServerPlayer player : players) {
+                                            PlayerData data = PlayerData.get(player);
+                                            data.questData.activeQuests.remove(quest.id);
+                                            data.questData.removeFinishedQuest(quest.id);
+                                            data.save(true);
+                                        }
+                                    }
+                                    return 1;
+                                }))));
+        command.then(Commands.literal("objective")
+                .then(Commands.argument("players", EntityArgument.players()).requires((source) -> source.hasPermission(2))
+                        .then(Commands.argument("quest", IntegerArgumentType.integer(0))
+                                .suggests(getQuestSuggests())
+                                .executes((context) -> {
+                                    Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                    if (!players.isEmpty()) {
+                                        Quest quest = getQuest(context);
+                                        for (ServerPlayer player : players) {
+                                            PlayerData data = PlayerData.get(player);
+                                            if (data.questData.activeQuests.containsKey(quest.id)) {
+                                                for (IQuestObjective ob : quest.questInterface.getObjectives(player)) {
+                                                    player.sendSystemMessage(ob.getMCText());
+                                                }
+                                            }
+                                        }
+                                    }
+                                    return 1;
+                                })
+                                .then(Commands.argument("objective", IntegerArgumentType.integer(0, 3))
+                                        .executes((context) -> {
+                                            Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                            if (!players.isEmpty()) {
+                                                Quest quest = getQuest(context);
+                                                int objective = IntegerArgumentType.getInteger(context, "objective");
+                                                for (ServerPlayer player : players) {
+                                                    PlayerData data = PlayerData.get(player);
+                                                    if (data.questData.activeQuests.containsKey(quest.id)) {
+                                                        IQuestObjective[] objectives = quest.questInterface.getObjectives(player);
+                                                        if (objective < objectives.length) {
+                                                            player.sendSystemMessage(objectives[objective].getMCText());
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            return 1;
+                                        })
+                                        .then(Commands.argument("value", IntegerArgumentType.integer())
+                                                .executes((context) -> {
+                                                    Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
+                                                    if (!players.isEmpty()) {
+                                                        Quest quest = getQuest(context);
+                                                        int objective = IntegerArgumentType.getInteger(context, "objective");
+                                                        int value = IntegerArgumentType.getInteger(context, "value");
+                                                        for (ServerPlayer player : players) {
+                                                            PlayerData data = PlayerData.get(player);
+                                                            if (data.questData.activeQuests.containsKey(quest.id)) {
+                                                                IQuestObjective[] objectives = quest.questInterface.getObjectives(player);
+                                                                if (objective < objectives.length) {
+                                                                    objectives[objective].setProgress(value);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    return 1;
+                                                }))))));
+        command.requires((source) -> source.hasPermission(4)).then(Commands.literal("reload").executes((context) -> {
+            (new QuestController()).load();
+            for (QuestCategory category : QuestController.instance.categories.values()) {
+                Packets.sendAll(new PacketSync(3, category.save(new CompoundTag()), false));
+            }
+            Packets.sendAll(new PacketSync(3, new CompoundTag(), true));
+            return 1;
+        }));
+        return command;
+    }
 
-	@Override
-	public String getDescription() {
-		return "Quest operations";
-	}
+    private static @Nonnull Quest getQuest(CommandContext<CommandSourceStack> context) throws CommandRuntimeException {
+        String questValue = "";
+        Quest quest = null;
+        try {
+            int id = context.getArgument("quest", Integer.TYPE);
+            questValue = "" + id;
+            quest = QuestController.instance.get(id);
+        }
+        catch (Exception ignored) { }
+        if (quest == null) {
+            try {
+                questValue = context.getArgument("quest", String.class);
+                quest = QuestController.instance.getQuestFromName(questValue);
+            }
+            catch (Exception ignored) { }
+        }
+        if (quest == null) { throw new CommandRuntimeException(Component.literal("Unknown QuestID \"").append(questValue).append("\"")); }
+        return quest;
+    }
 
-	@Nonnull
-	public String getName() {
-		return "quest";
-	}
-
-	@SuppressWarnings("all")
-	@SubCommand(desc = "get/set objectives for quests progress", usage = "<player> <quest> [objective] [value]", permission = 2)
-	public void objective(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		EntityPlayer player = CommandBase.getPlayer(server, sender, args[0]);
-		int questId;
-		try {
-			questId = Integer.parseInt(args[1]);
-		} catch (NumberFormatException ex) {
-			throw new CommandException("QuestID must be an integer");
-		}
-		Quest quest = QuestController.instance.quests.get(questId);
-		if (quest == null) {
-			throw new CommandException("Unknown QuestID");
-		}
-		PlayerData data = PlayerData.get(player);
-		if (!data.questData.activeQuests.containsKey(quest.id)) {
-			throw new CommandException("Player doesnt have quest active");
-		}
-		IQuestObjective[] objectives = quest.questInterface.getObjectives(player);
-		if (args.length == 2) {
-			for (IQuestObjective ob : objectives) {
-				sender.sendMessage(new TextComponentString(ob.getText()));
-			}
-			return;
-		}
-		int objective;
-		try {
-			objective = Integer.parseInt(args[2]);
-		} catch (NumberFormatException ex2) {
-			throw new CommandException("Objective must be an integer. Most often 0, 1 or 2");
-		}
-		if (objective < 0 || objective >= objectives.length) {
-			throw new CommandException("Invalid objective number was given");
-		}
-		if (args.length == 3) {
-			sender.sendMessage(new TextComponentString(objectives[objective].getText()));
-			return;
-		}
-		IQuestObjective object = objectives[objective];
-		String s = args[3];
-		int value;
-		try {
-			value = Integer.parseInt(args[3]);
-		} catch (NumberFormatException ex3) {
-			throw new CommandException("Value must be an integer.");
-		}
-		if (s.startsWith("-") || s.startsWith("+")) {
-			value = ValueUtil.correctInt(object.getProgress() + value, 0, object.getMaxProgress());
-		}
-		object.setProgress(value);
-	}
-
-	@SubCommand(desc = "reload quests from disk", permission = 2)
-	public void reload(MinecraftServer server, ICommandSender sender, String[] args) {
-		new QuestController().load();
-		SyncController.syncAllQuests(server);
-	}
-
-	@SuppressWarnings("all")
-	@SubCommand(desc = "Removes a quest from finished and active quests", usage = "<player> <quest>", permission = 2)
-	public void remove(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String playername = args[0];
-		int questId;
-		try {
-			questId = Integer.parseInt(args[1]);
-		} catch (NumberFormatException ex) {
-			throw new CommandException("QuestID must be an integer");
-		}
-		List<PlayerData> data = PlayerDataController.instance.getPlayersData(sender, playername);
-		if (data.isEmpty()) {
-			throw new CommandException(String.format("Unknown player '%s'", playername));
-		}
-		Quest quest = QuestController.instance.quests.get(questId);
-		if (quest == null) {
-			throw new CommandException("Unknown QuestID");
-		}
-		for (PlayerData playerdata : data) {
-			playerdata.questData.activeQuests.remove(questId);
-			playerdata.questData.finishedQuests.remove(questId);
-			playerdata.save(true);
-		}
-	}
-
-	@SuppressWarnings("all")
-	@SubCommand(desc = "Start a quest", usage = "<player> <quest>", permission = 2)
-	public void start(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String playername = args[0];
-		int questId;
-		try { questId = Integer.parseInt(args[1]); }
-		catch (NumberFormatException ex) { throw new CommandException("QuestID must be an integer"); }
-		EntityPlayerMP player = CommandBase.getPlayer(server, sender, playername);
-		if (player == null) { throw new CommandException("Unknown player '%s'", playername); }
-		Quest quest = QuestController.instance.quests.get(questId);
-		if (quest == null) { throw new CommandException("Unknown QuestID"); }
-		PlayerQuestController.addActiveQuest(quest, player, true);
-		sender.sendMessage(new TextComponentString("Player \"" + player.getName() + "\" started the quest ID: " + questId));
-	}
-
-	@SuppressWarnings("all")
-	@SubCommand(desc = "Stop a started quest", usage = "<player> <quest>", permission = 2)
-	public void stop(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String playername = args[0];
-		int questId;
-		try {
-			questId = Integer.parseInt(args[1]);
-		} catch (NumberFormatException ex) {
-			throw new CommandException("QuestID must be an integer");
-		}
-		List<PlayerData> data = PlayerDataController.instance.getPlayersData(sender, playername);
-		if (data.isEmpty()) {
-			throw new CommandException(String.format("Unknown player '%s'", playername));
-		}
-		Quest quest = QuestController.instance.quests.get(questId);
-		if (quest == null) {
-			throw new CommandException("Unknown QuestID");
-		}
-		for (PlayerData playerdata : data) {
-			playerdata.questData.activeQuests.remove(questId);
-			playerdata.save(true);
-		}
-	}
+    private static SuggestionProvider<CommandSourceStack> getQuestSuggests() {
+        return (context, builder) -> {
+            for (Quest quest : QuestController.instance.quests.values()) {
+                builder.suggest("" + quest.id);
+                builder.suggest(quest.getName());
+            }
+            return builder.buildFuture();
+        };
+    }
 
 }

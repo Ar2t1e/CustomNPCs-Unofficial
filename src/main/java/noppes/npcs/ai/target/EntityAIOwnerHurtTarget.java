@@ -1,48 +1,45 @@
 package noppes.npcs.ai.target;
 
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAITarget;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.constants.AiMutex;
+import java.util.EnumSet;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.target.TargetGoal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import noppes.npcs.entity.EntityNPCInterface;
 
-public class EntityAIOwnerHurtTarget extends EntityAITarget {
-	EntityNPCInterface npc;
-	EntityLivingBase theTarget;
-	private int timestamp;
+public class EntityAIOwnerHurtTarget extends TargetGoal {
 
-	public EntityAIOwnerHurtTarget(EntityNPCInterface npc) {
-		super(npc, false);
-		this.npc = npc;
-		this.setMutexBits(AiMutex.PASSIVE);
-	}
+   EntityNPCInterface npc;
+   LivingEntity theTarget;
+   private int timestamp;
 
-	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
-		if (!this.npc.isFollower() || this.npc.advanced.roleInterface == null
-				|| this.npc.advanced.roleInterface.defendOwner()) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		EntityLivingBase entitylivingbase = this.npc.getOwner();
-		if (entitylivingbase == null) {
-			CustomNpcs.debugData.end(npc);
-			return false;
-		}
-		this.theTarget = entitylivingbase.getLastAttackedEntity();
-		int i = entitylivingbase.getLastAttackedEntityTime();
-		CustomNpcs.debugData.end(npc);
-		return i != this.timestamp && this.isSuitableTarget(this.theTarget, false);
-	}
+   public EntityAIOwnerHurtTarget(EntityNPCInterface npc) {
+      super(npc, false);
+      this.npc = npc;
+      this.setFlags(EnumSet.of(Flag.TARGET));
+   }
 
-	public void startExecuting() {
-		CustomNpcs.debugData.start(npc);
-		this.npc.setAttackTarget(this.theTarget);
-		EntityLivingBase entitylivingbase = this.npc.getOwner();
-		if (entitylivingbase != null) {
-			this.timestamp = entitylivingbase.getLastAttackedEntityTime();
-		}
-		super.startExecuting();
-		CustomNpcs.debugData.end(npc);
-	}
+   public boolean canUse() {
+      if (this.npc.isFollower() && this.npc.role.defendOwner()) {
+         LivingEntity entity = this.npc.getOwner();
+         if (entity == null) {
+            return false;
+         } else {
+            this.theTarget = entity.getLastHurtMob();
+            int i = entity.getLastHurtMobTimestamp();
+            return i != timestamp && this.canAttack(this.theTarget, TargetingConditions.DEFAULT);
+         }
+      } else {
+         return false;
+      }
+   }
+
+   public void start() {
+      this.npc.setTarget(this.theTarget);
+      LivingEntity entity = this.npc.getOwner();
+      if (entity != null) {
+         timestamp = entity.getLastHurtMobTimestamp();
+      }
+      super.start();
+   }
+
 }

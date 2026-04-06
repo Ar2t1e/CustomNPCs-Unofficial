@@ -1,26 +1,27 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface ITransportLocation {
 
-	int getDimension();
+    String getDimension();
 
-	int getId();
+    int getId();
 
-	String getName();
+    String getName();
 
-	int getType();
+    int getType();
 
-	int getX();
+    int getX();
 
-	int getY();
+    int getY();
 
-	int getZ();
+    int getZ();
 
-	void setPos(@ParamName("dimensionId") int dimensionId,
-				@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
+    // New from Unofficial (BetaZavr)
+    void setPos(@ParamName("dimensionId") String dimensionId,
+                @ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
-	void setType(@ParamName("type") int type);
+    void setType(@ParamName("type") int type);
 
 }

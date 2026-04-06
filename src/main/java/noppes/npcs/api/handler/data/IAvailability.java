@@ -1,80 +1,97 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
 public interface IAvailability {
 
-	int[] getDaytime();
+   boolean hasMoneyData(@ParamName("type") int type);
 
-	int getHealth();
+   boolean isAvailable(@ParamName("player") IPlayer<?> player);
 
-	int getHealthType();
+   void removeMoneyData(@ParamName("type") int type);
 
-	int getMinPlayerLevel();
+   void setDaytime(@ParamName("type") int type);
 
-	String[] getPlayerNames();
+   int getMinPlayerLevel();
 
-	String getStoredDataValue(@ParamName("key") String key);
+   void setMinPlayerLevel(@ParamName("level") int level);
 
-	boolean hasDialog(@ParamName("id") int id);
+   void removeDialog(@ParamName("id") int id);
 
-	boolean hasFaction(@ParamName("id") int id);
+   void removeQuest(@ParamName("id") int id);
 
-	boolean hasPlayerName(@ParamName("name") String name);
+   void removeFaction(@ParamName("id") int id);
 
-	boolean hasQuest(@ParamName("id") int id);
+   // New from Unofficial (BetaZavr)
+   int[] getDaytime();
 
-	boolean hasScoreboard(@ParamName("objective") String objective);
+   int getHealth();
 
-	boolean hasStoredData(@ParamName("key") String key, @ParamName("value") String value);
+   int getHealthType();
 
-	boolean isAvailable(@ParamName("player") IPlayer<?> player);
+   String[] getPlayerNames();
 
-	void removeDialog(@ParamName("id") int id);
+   String getStoredDataValue(@ParamName("key") String key);
 
-	void removeFaction(@ParamName("id") int id);
+    int getMoneyValue(@ParamName("type") int type);
 
-	void removePlayerName(@ParamName("name") String name);
+    boolean hasDialog(@ParamName("id") int id);
 
-	void removeQuest(@ParamName("id") int id);
+   boolean hasFaction(@ParamName("id") int id);
 
-	void removeScoreboard(@ParamName("objective") String objective);
+   boolean hasPlayerName(@ParamName("name") String name);
 
-	void removeStoredData(@ParamName("key") String key);
+   boolean hasQuest(@ParamName("id") int id);
 
-	void setDaytime(@ParamName("type") int type);
+   boolean hasScoreboard(@ParamName("objective") String objective);
 
-	void setDaytime(@ParamName("minHour") int minHour, @ParamName("maxHour") int maxHour);
+   boolean hasStoredData(@ParamName("key") String key);
 
-	void setDialog(@ParamName("id") int id, @ParamName("type") int type);
+   void removePlayerName(@ParamName("name") String name);
 
-	void setFaction(@ParamName("id") int id, @ParamName("type") int type, @ParamName("stance") int stance);
+   void removeScoreboard(@ParamName("objective") String objective);
 
-	void setHealth(@ParamName("value") int value, @ParamName("type") int type);
+   void removeStoredData(@ParamName("key") String key);
 
-	void setMinPlayerLevel(@ParamName("level") int level);
+   void setDaytime(@ParamName("minHour") int minHour, @ParamName("maxHour") int maxHour);
 
-	void setPlayerName(@ParamName("id") String name, @ParamName("type") int type);
+   void setDialog(@ParamName("id") int id, @ParamName("type") int type);
 
-	void setQuest(@ParamName("id") int id, @ParamName("type") int type);
+   void setFaction(@ParamName("id") int id, @ParamName("type") int type, @ParamName("stance") int stance);
 
-	void setScoreboard(@ParamName("objective") String objective, @ParamName("type") int type, @ParamName("value") int value);
+   void setHealth(@ParamName("value") int value, @ParamName("type") int type);
 
-	void setStoredData(@ParamName("key") String key, @ParamName("value") String value, @ParamName("type") int type);
+   void setPlayerName(@ParamName("name") String name, @ParamName("type") int type);
 
-	boolean getGMOnly();
+   void setQuest(@ParamName("id") int id, @ParamName("type") int type);
 
-	void setGMOnly(@ParamName("gmOnly") boolean gmOnly);
+   void setScoreboard(@ParamName("objective") String objective, @ParamName("type") int type, @ParamName("value") int value);
 
-	IItemStack getIItemStack(@ParamName("slotId") int slotId);
+   void setStoredData(@ParamName("key") String key, @ParamName("value") String value, @ParamName("type") int type);
 
-	IItemStack[] getIItemStacks();
+   void setMoneyData(@ParamName("type") int type, @ParamName("equal") int equal, @ParamName("value") int value);
 
-	void setIItemStack(@ParamName("slotId") int slotId, @ParamName("item") IItemStack item);
+   boolean getGMOnly();
 
-	void removeIItemStack(@ParamName("slotId") int slotId);
+   void setGMOnly(@ParamName("gmOnly") boolean gmOnly);
+
+   IItemStack getIItemStack(@ParamName("slotId") int slotId);
+
+   IItemStack[] getIItemStacks();
+
+   void setIItemStack(@ParamName("slotId") int slotId, @ParamName("item") IItemStack item);
+
+   void removeIItemStack(@ParamName("slotId") int slotId);
+
+   /* Removed:
+   int getDialog(int slotId);
+   void setDialog(int slotId, int id, int type);
+   int getQuest(int slotId);
+   void setQuest(int slotId, int id, int type);
+   void setFaction(int slotId, int id, int type, int stance);
+   void setScoreboard(int slotId, String objective, int type, int value);
+   */
 
 }

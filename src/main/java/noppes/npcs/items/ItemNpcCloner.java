@@ -1,118 +1,102 @@
 package noppes.npcs.items;
 
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import io.netty.buffer.Unpooled;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.item.INPCToolItem;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.GuiNpcMobSpawnerAdd;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.IPermission;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketCloneSet;
+import noppes.npcs.packets.server.SPacketGuiOpen;
+import noppes.npcs.packets.server.SPacketToolMobSpawner;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
-public class ItemNpcCloner extends Item implements IPermission, INPCToolItem {
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.List;
 
-	public ItemNpcCloner() {
-		this.setRegistryName(CustomNpcs.MODID, "npcmobcloner");
-		this.setUnlocalizedName("npcmobcloner");
-		this.setFull3D();
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
-	}
+public class ItemNpcCloner extends Item implements INPCToolItem {
 
-	@SideOnly(Side.CLIENT)
-	@Override
-	public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> list, @Nonnull ITooltipFlag flagIn) {
-		list.add(new TextComponentTranslation("info.item.cloner").getFormattedText());
-		NBTTagCompound nbt = stack.getTagCompound();
-		if (nbt == null || !nbt.hasKey("Settings", 10)) {
-			list.add(new TextComponentTranslation("info.item.cloner.empty.0").getFormattedText());
-			list.add(new TextComponentTranslation("info.item.cloner.empty.1").getFormattedText());
-		} else {
-			list.add(new TextComponentTranslation("info.item.cloner.set.0",
-					nbt.getCompoundTag("Settings").getString("Name")).getFormattedText());
-			list.add(new TextComponentTranslation("info.item.cloner.set.1").getFormattedText());
-		}
-	}
+   public ItemNpcCloner() {
+      super((new Properties()).stacksTo(1));
+   }
 
-	@SideOnly(Side.CLIENT)
-	@Override
-	public boolean hasEffect(@Nonnull ItemStack stack) {
-		NBTTagCompound nbt = stack.getTagCompound();
-		return super.hasEffect(stack) || (nbt != null && nbt.hasKey("Settings", 10)
-				&& !nbt.getCompoundTag("Settings").getString("Name").isEmpty());
-	}
+   @Override
+   public @Nonnull InteractionResult useOn(UseOnContext context) {
+      if (context.getLevel().isClientSide() && context.getPlayer() != null) {
+         Player player = context.getPlayer();
+         PlayerData data = CustomNpcs.proxy.getPlayerData(player);
+         boolean summon = false;
+         ItemStack stackCloner = player.getMainHandItem();
+         if (data != null && data.overlay.isPressedShift()) {
+            CompoundTag nbt = stackCloner.getTag();
+            if (nbt != null && nbt.contains("Settings", 10)) {
+               CompoundTag nbtData = nbt.getCompound("Settings");
+               if (nbtData.getBoolean("isServerClone")) {
+                  Packets.sendServer(new SPacketToolMobSpawner(true, false, context.getClickedPos().above(),
+                          nbtData.getString("Name"), nbtData.getInt("Tab"), new CompoundTag()));
+               } else {
+                  Packets.sendServer(new SPacketToolMobSpawner(false, false,
+                       context.getClickedPos().above(), "", -1, nbtData.getCompound("EntityNBT")));
+               }
+               summon = true;
+            }
+         }
+         if (!summon) {
+            Entity rayTraceEntity = Util.instance.getLookEntity(player, 4.0d, false);
+            if (rayTraceEntity instanceof EntityNPCInterface) {
+               CompoundTag compound = new CompoundTag();
+               if (!rayTraceEntity.save(compound)) { return InteractionResult.FAIL; }
+               ServerCloneController.Instance.cleanTags(compound);
+               try {
+                  Packets.sendServer(new SPacketCloneSet(compound));
+                  NoppesUtil.openGUI(player, new GuiNpcMobSpawnerAdd(compound));
+               } catch (Exception e) { LogWriter.error("Error send data:", e); }
+               return InteractionResult.FAIL;
+            }
+            Packets.sendServer(new SPacketGuiOpen(EnumGuiType.MobSpawner, context.getClickedPos().above()));
+         }
+      }
+      return InteractionResult.SUCCESS;
+   }
 
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.CloneList || e == EnumPacketServer.SpawnMob || e == EnumPacketServer.MobSpawner
-				|| e == EnumPacketServer.ClonePreSave || e == EnumPacketServer.CloneRemove
-				|| e == EnumPacketServer.CloneSave || e == EnumPacketServer.GetClone || e == EnumPacketServer.Gui;
-	}
+   // New from Unofficial (BetaZavr)
+   @OnlyIn(Dist.CLIENT)
+   @Override
+   public void appendHoverText(@Nonnull ItemStack stack, @Nullable Level worldIn, @Nonnull List<Component> list, @Nonnull TooltipFlag flagIn) {
+      list.add(Component.translatable("info.item.cloner"));
+      CompoundTag nbt = stack.getTag();
+      if (nbt == null || !nbt.contains("Settings", 10)) {
+         list.add(Component.translatable("info.item.cloner.empty.0"));
+         list.add(Component.translatable("info.item.cloner.empty.1"));
+      } else {
+         list.add(Component.translatable("info.item.cloner.set.0", nbt.getCompound("Settings").getString("Name")));
+         list.add(Component.translatable("info.item.cloner.set.1"));
+      }
+   }
 
-	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (world.isRemote) {
-			PlayerData data = CustomNpcs.proxy.getPlayerData(player);
-			boolean summon = false;
-			ItemStack stackCloner = player.getHeldItemMainhand();
-			if (data != null && data.hud.hasOrKeysPressed(42, 54)) {
-				NBTTagCompound nbt = stackCloner.getTagCompound();
-				if (nbt != null && nbt.hasKey("Settings", 10)) {
-					NBTTagCompound nbtData = nbt.getCompoundTag("Settings");
-					if (nbtData.getBoolean("isServerClone")) {
-						Client.sendData(EnumPacketServer.SpawnMob, true, pos.getX(), pos.getY(), pos.getZ(), nbtData.getString("Name"), nbtData.getInteger("Tab"));
-                    } else {
-						Client.sendData(EnumPacketServer.SpawnMob, false, pos.getX(), pos.getY(), pos.getZ(), nbtData.getCompoundTag("EntityNBT"));
-                    }
-                    summon = true;
-                }
-			}
-			if (!summon) {
-				Entity rayTraceEntity = Util.instance.getLookEntity(player, 4.0d, false);
-				if (rayTraceEntity instanceof EntityNPCInterface) {
-					NBTTagCompound compound = new NBTTagCompound();
-					if (!rayTraceEntity.writeToNBTAtomically(compound)) { return EnumActionResult.FAIL; }
-					String s = compound.getString("id");
-					if (s.equals("minecraft:customnpcs.customnpc") || s.equals("minecraft:customnpcs:customnpc")) {
-						compound.setString("id", CustomNpcs.MODID + ":customnpc");
-					}
-					ServerCloneController.Instance.cleanTags(compound);
-					try {
-						if (Server.fillBuffer(new PacketBuffer(Unpooled.buffer()), EnumPacketClient.CLONE, compound)) {
-							Client.sendData(EnumPacketServer.CloneSet, compound);
-							NoppesUtil.openGUI(player, new GuiNpcMobSpawnerAdd(compound));
-						}
-					} catch (Exception e) { LogWriter.error("Error send data:", e); }
-					return EnumActionResult.FAIL;
-				}
-				Client.sendData(EnumPacketServer.Gui, EnumGuiType.MobSpawner, pos.getX(), pos.getY(), pos.getZ());
-			}
-		}
-		return EnumActionResult.SUCCESS;
-	}
+   @OnlyIn(Dist.CLIENT)
+   @Override
+   public boolean isFoil(@Nonnull ItemStack stack) {
+      CompoundTag nbt = stack.getTag();
+      return super.isFoil(stack) || (nbt != null && nbt.contains("Settings", 10) &&
+              !nbt.getCompound("Settings").getString("Name").isEmpty());
+   }
 
 }

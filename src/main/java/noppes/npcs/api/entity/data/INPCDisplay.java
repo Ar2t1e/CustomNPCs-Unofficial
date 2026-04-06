@@ -1,87 +1,88 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IPlayer;
 
 @SuppressWarnings("all")
 public interface INPCDisplay {
 
-	int getBossbar();
+   String getName();
 
-	int getBossColor();
+   void setName(@ParamName("name") String name);
 
-	String getCapeTexture();
+   String getTitle();
 
-	int getHitboxState();
+   void setTitle(@ParamName("title") String title);
 
-	boolean getHasLivingAnimation();
+   String getSkinUrl();
 
-	String getModel();
+   void setSkinUrl(@ParamName("url") String url);
 
-	float[] getModelScale(@ParamName("part") int part);
+   String getSkinPlayer();
 
-	String getName();
+   void setSkinPlayer(@ParamName("name") String name);
 
-	String getOverlayTexture();
+   String getSkinTexture();
 
-	int getShadowType();
+   void setSkinTexture(@ParamName("texture") String texture);
 
-	int getShowName();
+   boolean getHasLivingAnimation();
 
-	int getSize();
+   void setHasLivingAnimation(@ParamName("enabled") boolean enabled);
 
-	String getSkinPlayer();
+   int getVisible();
 
-	String getSkinTexture();
+   void setVisible(@ParamName("type") int type);
 
-	String getSkinUrl();
+   boolean isVisibleTo(@ParamName("player") IPlayer<?> playerIn);
 
-	int getTint();
+   int getBossbar();
 
-	String getTitle();
+   void setBossbar(@ParamName("type") int type);
 
-	int getVisible();
+   int getSize();
 
-	boolean isVisibleTo(@ParamName("player") IPlayer<?> player);
+   void setSize(@ParamName("size") int size);
 
-	void setBossbar(@ParamName("type") int type);
+   int getTint();
 
-	void setBossColor(@ParamName("color") int color);
+   void setTint(@ParamName("color") int color);
 
-	void setCapeTexture(@ParamName("texture") String texture);
+   int getShowName();
 
-	void setHitboxState(@ParamName("state") int state);
+   void setShowName(@ParamName("type") int type);
 
-	void setHasLivingAnimation(@ParamName("enabled") boolean enabled);
+   void setCapeTexture(@ParamName("texture") String texture);
 
-	void setModel(@ParamName("model") String model);
+   String getCapeTexture();
 
-	void setModelScale(@ParamName("part") int part, @ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
+   void setOverlayTexture(@ParamName("texture") String texture);
 
-	void setName(@ParamName("name") String name);
+   String getOverlayTexture();
 
-	void setOverlayTexture(@ParamName("texture") String texture);
+   void setModelScale(@ParamName("part") int part, @ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
 
-	void setShadowType(@ParamName("type") int type);
+   float[] getModelScale(@ParamName("part") int part);
 
-	void setShowName(@ParamName("type") int type);
+   int getBossColor();
 
-	void setSize(@ParamName("size") int size);
+   void setBossColor(@ParamName("color") int color);
 
-	void setSkinPlayer(@ParamName("name") String name);
+   void setModel(@ParamName("id") String id);
 
-	void setSkinTexture(@ParamName("texture") String texture);
+   String getModel();
 
-	void setSkinUrl(@ParamName("url") String url);
+   void setHitboxState(@ParamName("state") byte state);
 
-	void setTint(@ParamName("color") int color);
+   byte getHitboxState();
 
-	void setTitle(@ParamName("title") String title);
+   // New from Unofficial (BetaZavr)
+   float[] getDimensions();
 
-	void setVisible(@ParamName("type") int type);
+   void setDimensions(@ParamName("width") float widthIn, @ParamName("height") float heightIn);
 
-	boolean isNormalModel();
+   int getShadowType();
 
-	void setNormalModel(@ParamName("bo") boolean bo);
+   void setShadowType(@ParamName("type") int type);
 
 }

@@ -4,281 +4,208 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ItemStackHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IContainer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.data.IPlayerMail;
 import noppes.npcs.controllers.QuestController;
+import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
 
-public class PlayerMail implements IInventory, IPlayerMail {
+// Changed by Unofficial (BetaZavr)
+public class PlayerMail implements IPlayerMail, Container {
 
-	public boolean beenRead, returned;
-	public NonNullList<ItemStack> items;
-	public NBTTagCompound message;
-	public int money, ransom, questId;
-	public String sender, title;
-	public long timeWillCome, timeWhenReceived;
+   public final NonNullList<ItemStack> items = NonNullList.withSize(4, ItemStack.EMPTY);
+   public CompoundTag message = new CompoundTag();
+   public long timeWhenReceived = System.currentTimeMillis();
+   public long timeWillCome = 0L;
+   public int questId = -1;
+   public int ransom = 0;
+   public int money = 0;
+   public boolean beenRead = false;
+   public boolean returned = false;
+   public String sender = "";
+   public String title = "";
 
-	public PlayerMail() {
-		this.clear();
-		this.timeWillCome = 0L;
-		this.timeWhenReceived = System.currentTimeMillis();
-	}
+   @Override
+   public void clearContent() {
+      title = "";
+      sender = "";
+      beenRead = false;
+      returned = false;
+      questId = -1;
+      items.clear();
+      money = 0;
+      ransom = 0;
+      timeWhenReceived = System.currentTimeMillis();
+      for (String key : message.getAllKeys()) { message.remove(key); }
+   }
 
-	public void clear() {
-		this.title = "";
-		this.sender = "";
-		this.message = new NBTTagCompound();
-		this.beenRead = false;
-		this.returned = false;
-		this.questId = -1;
-		if (this.items == null) {
-			this.items = NonNullList.withSize(4, ItemStack.EMPTY);
-		} else {
-			this.items.clear();
-		}
-		this.money = 0;
-		this.ransom = 0;
-		this.timeWhenReceived = System.currentTimeMillis();
-	}
+   public void load(CompoundTag compound) {
+      title = compound.getString("Subject");
+      sender = compound.getString("Sender");
+      message = compound.getCompound("Message");
+      beenRead = compound.getBoolean("BeenRead");
+      returned = compound.getBoolean("Returned");
+      timeWillCome = compound.getLong("TimeWillCome");
+      timeWhenReceived = compound.getLong("TimeWhenReceived");
+      if (compound.contains("MailQuest")) { questId = compound.getInt("MailQuest"); }
+      items.clear();
+      ListTag list = compound.getList("MailItems", 10);
+      for (int i = 0; i < list.size(); ++i) {
+         CompoundTag nbt = list.getCompound(i);
+         int j = nbt.getByte("Slot") & 0xFF;
+         if (j < items.size()) { items.set(j, ItemStack.of(nbt)); }
+      }
+      money = compound.getInt("Money");
+      ransom = compound.getInt("Ransom");
+   }
 
-	public void closeInventory(@Nonnull EntityPlayer player) {
-	}
+   public CompoundTag save() {
+      CompoundTag compound = new CompoundTag();
+      compound.putString("Subject", title);
+      compound.putString("Sender", sender);
+      compound.put("Message", message);
+      compound.putBoolean("BeenRead", beenRead);
+      compound.putBoolean("Returned", returned);
+      compound.putLong("TimeWillCome", timeWillCome);
+      compound.putLong("TimeWhenReceived", timeWhenReceived);
+      compound.putInt("MailQuest", questId);
+      if (hasQuest()) { compound.putString("MailQuestTitle", getQuest().getTitle().getString()); }
+      ListTag list = new ListTag();
+      for (int i = 0; i < items.size(); ++i) {
+         if (!(items.get(i)).isEmpty()) {
+            CompoundTag nbt = new CompoundTag();
+            nbt.putByte("Slot", (byte) i);
+            (items.get(i)).save(nbt);
+            list.add(nbt);
+         }
+      }
+      compound.put("MailItems", list);
+      compound.putInt("Money", money);
+      compound.putInt("Ransom", ransom);
+      return compound;
+   }
 
-	public PlayerMail copy() {
-		PlayerMail mail = new PlayerMail();
-		mail.readNBT(this.writeNBT());
-		return mail;
-	}
+   public boolean isValid() { return !title.isEmpty() && !message.isEmpty() && !sender.isEmpty(); }
 
-	public @Nonnull ItemStack decrStackSize(int slot, int count) {
-		ItemStack itemstack = ItemStackHelper.getAndSplit(this.items, slot, count);
-		if (!itemstack.isEmpty()) {
-			this.markDirty();
-		}
-		return itemstack;
-	}
+   public boolean hasQuest() { return getQuest() != null; }
 
-	public IContainer getContainer() {
-		return Objects.requireNonNull(NpcAPI.Instance()).getIContainer(this);
-	}
+   @Override
+   public Quest getQuest() { return QuestController.instance != null ? QuestController.instance.quests.get(questId) : null; }
 
-	public @Nonnull ITextComponent getDisplayName() {
-		return new TextComponentString(getName());
-	}
+   @Override
+   public void setQuest(int id) {
+      if (id < 0) { throw new CustomNPCsException("Quest id is lower than 0"); }
+      questId = id;
+   }
 
-	public int getField(int id) {
-		return 0;
-	}
+   @Override
+   public int getContainerSize() { return items.size(); }
 
-	public int getFieldCount() {
-		return 0;
-	}
+   @Override
+   public @Nonnull ItemStack getItem(int slotId) { return items.get(slotId); }
 
-	public int getInventoryStackLimit() {
-		return 64;
-	}
+   @Override
+   public @Nonnull ItemStack removeItem(int slotId, int count) {
+      ItemStack itemstack = ContainerHelper.removeItem(items, slotId, count);
+      if (!itemstack.isEmpty()) { setChanged(); }
+      return itemstack;
+   }
 
-	@Override
-	public int getMoney() {
-		return this.money;
-	}
+   @Override
+   public @Nonnull ItemStack removeItemNoUpdate(int slotId) { return items.set(slotId, ItemStack.EMPTY); }
 
-	public @Nonnull String getName() {
-		return "Mail Inventory";
-	}
+   @Override
+   public void setItem(int slotId, @Nonnull ItemStack stack) {
+      items.set(slotId, stack);
+      if (stack.getCount() > getMaxStackSize()) { stack.setCount(getMaxStackSize()); }
+      setChanged();
+   }
 
-	public Quest getQuest() {
-		return (QuestController.instance != null) ? QuestController.instance.quests.get(this.questId) : null;
-	}
+   @Override
+   public void setChanged() { }
 
-	@Override
-	public int getRansom() {
-		return this.ransom;
-	}
+   @Override
+   public boolean stillValid(@Nonnull Player player) { return true; }
 
-	public String getSender() {
-		return this.sender;
-	}
+   @Override
+   public void startOpen(@Nonnull Player player) { }
 
-	public int getSizeInventory() {
-		return this.items.size();
-	}
+   @Override
+   public void stopOpen(@Nonnull Player player) { }
 
-	public @Nonnull ItemStack getStackInSlot(int slot) {
-		return this.items.get(slot);
-	}
+   @Override
+   public boolean canPlaceItem(int slotId, @Nonnull ItemStack itemStack) { return true; }
 
-	public String getSubject() {
-		return this.title;
-	}
+   @Override
+   public boolean isEmpty() {
+      for(int slot = 0; slot < getContainerSize(); ++slot) {
+         if (!NoppesUtilServer.isItemStackNull(getItem(slot))) { return false; }
+      }
+      return true;
+   }
 
-	public String[] getText() {
-		List<String> list = new ArrayList<>();
-		NBTTagList pages = this.message.getTagList("pages", 8);
-		for (int i = 0; i < pages.tagCount(); ++i) {
-			list.add(pages.getStringTagAt(i));
-		}
-		return list.toArray(new String[0]);
-	}
+   @Override
+   public String getSender() { return sender; }
 
-	public boolean hasCustomName() {
-		return false;
-	}
+   @Override
+   public void setSender(String senderIn) { sender = senderIn == null ? "" : senderIn; }
 
-	public boolean hasQuest() {
-		return this.getQuest() != null;
-	}
+   @Override
+   public String getSubject() { return title; }
 
-	public boolean isEmpty() {
-		for (int slot = 0; slot < this.getSizeInventory(); ++slot) {
-			ItemStack item = this.getStackInSlot(slot);
-			if (!NoppesUtilServer.IsItemStackNull(item) && !item.isEmpty()) {
-				return false;
-			}
-		}
-		return true;
-	}
+   @Override
+   public void setSubject(String titleIn) { title = titleIn == null ? "" : titleIn; }
 
-	public boolean isItemValidForSlot(int slot, @Nonnull ItemStack item) {
-		return true;
-	}
+   @Override
+   public List<String> getText() {
+      List<String> list = new ArrayList<>();
+      ListTag pages = message.getList("pages", 8);
+      for(int i = 0; i < pages.size(); ++i) { list.add(pages.getString(i)); }
+      return list;
+   }
 
-	public boolean isReturned() {
-		return this.returned;
-	}
+   @Override
+   public void setText(String ... pages) {
+      ListTag list = new ListTag();
+      if (pages != null) {
+         for(String page : pages) { list.add(StringTag.valueOf(page)); }
+      }
+      message.put("pages", list);
+   }
 
-	public boolean isUsableByPlayer(@Nonnull EntityPlayer player) {
-		return true;
-	}
+   @Override
+   public IContainer getContainer() { return Objects.requireNonNull(NpcAPI.Instance()).getIContainer(this); }
 
-	public boolean isValid() {
-		return !this.title.isEmpty() && !this.message.getKeySet().isEmpty() && !this.sender.isEmpty();
-	}
+   @Override
+   public int getMoney() { return money; }
 
-	public void markDirty() {
-	}
+   @Override
+   public void setMoney(int moneyIn) { money = ValueUtil.correctInt(moneyIn, 0, Integer.MAX_VALUE); }
 
-	public void openInventory(@Nonnull EntityPlayer player) {
-	}
+   @Override
+   public int getRansom() { return ransom; }
 
-	public void readNBT(NBTTagCompound compound) {
-		this.title = compound.getString("Subject");
-		this.sender = compound.getString("Sender");
-		this.message = compound.getCompoundTag("Message");
-		this.beenRead = compound.getBoolean("BeenRead");
-		this.returned = compound.getBoolean("Returned");
-		this.timeWillCome = compound.getLong("TimeWillCome");
-		this.timeWhenReceived = compound.getLong("TimeWhenReceived");
-		if (compound.hasKey("MailQuest")) {
-			this.questId = compound.getInteger("MailQuest");
-		}
-		this.items.clear();
-		NBTTagList nbttaglist = compound.getTagList("MailItems", 10);
-		for (int i = 0; i < nbttaglist.tagCount(); ++i) {
-			NBTTagCompound nbt = nbttaglist.getCompoundTagAt(i);
-			int j = nbt.getByte("Slot") & 0xFF;
-			if (j < this.items.size()) {
-				this.items.set(j, new ItemStack(nbt));
-			}
-		}
-		this.money = compound.getInteger("Money");
-		this.ransom = compound.getInteger("Ransom");
-	}
+   @Override
+   public void setRansom(int moneyIn) { ransom = ValueUtil.correctInt(moneyIn, 0, Integer.MAX_VALUE); }
 
-	public @Nonnull ItemStack removeStackFromSlot(int slot) {
-		return this.items.set(slot, ItemStack.EMPTY);
-	}
+   public boolean isReturned() { return returned; }
 
-	public void setField(int id, int value) {
-	}
-
-	public void setInventorySlotContents(int index, @Nonnull ItemStack stack) {
-		this.items.set(index, stack);
-		if (stack.getCount() > this.getInventoryStackLimit()) {
-			stack.setCount(this.getInventoryStackLimit());
-		}
-		this.markDirty();
-	}
-
-	@Override
-	public void setMoney(int money) {
-		if (money < 0) {
-			money = 0;
-		}
-		this.money = money;
-	}
-
-	public void setQuest(int id) {
-		this.questId = id;
-	}
-
-	@Override
-	public void setRansom(int money) {
-		if (money < 0) {
-			money = 0;
-		}
-		this.ransom = money;
-	}
-
-	public void setSender(String sender) {
-		this.sender = sender;
-	}
-
-	public void setSubject(String subject) {
-		this.title = subject;
-	}
-
-	public void setText(String[] pages) {
-		NBTTagList list = new NBTTagList();
-		if (pages != null) {
-			for (String page : pages) {
-				list.appendTag(new NBTTagString(page));
-			}
-		}
-		this.message.setTag("pages", list);
-	}
-
-	public NBTTagCompound writeNBT() {
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setString("Subject", this.title);
-		compound.setString("Sender", this.sender);
-		compound.setTag("Message", this.message);
-		compound.setBoolean("BeenRead", this.beenRead);
-		compound.setBoolean("Returned", this.returned);
-
-		compound.setLong("TimeWillCome", this.timeWillCome);
-		compound.setLong("TimeWhenReceived", this.timeWhenReceived);
-
-		compound.setInteger("MailQuest", this.questId);
-		if (this.hasQuest()) {
-			compound.setString("MailQuestTitle", this.getQuest().getTitle());
-		}
-		NBTTagList nbttaglist = new NBTTagList();
-		for (int i = 0; i < this.items.size(); ++i) {
-			if (!(this.items.get(i)).isEmpty()) {
-				NBTTagCompound nbt = new NBTTagCompound();
-				nbt.setByte("Slot", (byte) i);
-				(this.items.get(i)).writeToNBT(nbt);
-				nbttaglist.appendTag(nbt);
-			}
-		}
-		compound.setTag("MailItems", nbttaglist);
-		compound.setInteger("Money", this.money);
-		compound.setInteger("Ransom", this.ransom);
-		return compound;
-	}
+   public PlayerMail copy() {
+      PlayerMail mail = new PlayerMail();
+      mail.load(save());
+      return mail;
+   }
 
 }
