@@ -112,17 +112,17 @@ ai.swim=Bisa berenang
 ai.tacticalvariant=Pilihan taktik pertempuran
 ai.wandering=mengembara
 
-aitactics.commander=Commander
-aitactics.default=Secara default
-aitactics.dodge=Dodge
-aitactics.hitandrun=Tabrak lari
-aitactics.hitnrun=Tabrak lari
-aitactics.none=TIDAK
-aitactics.orbit=Mengelilingi
-aitactics.rush=Serangan gencar
-aitactics.stagger=Stagger
-aitactics.stalk=menyelinap
-aitactics.surround=Mengelilingi
+ai.tactic.commander=Commander
+ai.tactic.default=Secara default
+ai.tactic.dodge=Dodge
+ai.tactic.hit_and_run=Tabrak lari
+ai.tactic.hitnrun=Tabrak lari
+ai.tactic.none=TIDAK
+ai.tactic.orbit=Mengelilingi
+ai.tactic.rush=Serangan gencar
+ai.tactic.stagger=Stagger
+ai.tactic.stalk=menyelinap
+ai.tactic.surround=Mengelilingi
 
 animation.add.part.hover.location=Lokasi jenis file sumber daya "§9.png§r" sebagai tekstur yang digunakan untuk model
 animation.add.part.hover.name=Nama bagian tubuh demi kenyamanan<br>%s
@@ -1739,7 +1739,7 @@ message.dimensions.tp.isdelete=§2CustomNPCs§6: Anda dipindahkan dari Dimensi j
 message.mod.error=§sUps. Something has expressed a desire to filibuster. Contact the Developer with this problem: %s
 message.pather.add=Posisi yang ditambahkan x :%s kamu :%s z :%s untuk NPC "%s "
 message.pather.home=Mengubah posisi awal x :%s kamu :%s z :%s untuk NPC "%s "
-message.pather.reg=Daftarkan "%s " ke %s Anda
+message.pather.register=Daftarkan "%s " ke %s Anda
 message.pather.warn.add=§C Khotbah §r: Posisi baru yang terlalu jauh dari yang sebelumnya.
 
 minimap.set.points.1=§F [§2customnpcs §f]: §8 Sistem memperbarui posisi untuk kartu mini: %s

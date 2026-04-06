@@ -13,19 +13,13 @@ public class TileNpcEntity extends TileEntity {
 	public Data storedData = new Data();
 
 	public void readFromNBT(@Nonnull NBTTagCompound compound) {
-		CustomNpcs.debugData.start(this);
 		super.readFromNBT(compound);
-		NBTTagCompound extraData = compound.getCompoundTag("ExtraData");
-		if (extraData.getSize() > 0) {
-			getTileData().setTag("CustomNPCsData", extraData);
-		}
-		CustomNpcs.debugData.end(this);
+		NBTTagCompound extraData = compound.getCompoundTag("CustomNPCsData");
+		if (extraData.getSize() > 0) { storedData.setNbt(extraData); }
 	}
 
 	public @Nonnull NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-		CustomNpcs.debugData.start(this);
-		compound.setTag("ExtraData", storedData.getNbt().getMCNBT());
-		CustomNpcs.debugData.end(this);
+		compound.setTag("CustomNPCsData", storedData.getNbt().getMCNBT());
 		return super.writeToNBT(compound);
 	}
 

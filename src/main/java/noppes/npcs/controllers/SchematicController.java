@@ -12,22 +12,23 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.schematics.Blueprint;
 import noppes.npcs.schematics.BlueprintUtil;
 import noppes.npcs.schematics.ISchematic;
 import noppes.npcs.schematics.Schematic;
 import noppes.npcs.schematics.SchematicWrapper;
+import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.util.Util;
+
+import javax.annotation.Nullable;
 
 public class SchematicController {
 
@@ -52,21 +53,20 @@ public class SchematicController {
 		SchematicController.Instance.build(sw, player);
 	}
 
-	@SuppressWarnings("all")
-	public static File getDir() {
-		File schematicDir = new File(CustomNpcs.getWorldSaveDirectory(), "schematics");
+	public static @Nullable File getDir() {
 		File saveDir = CustomNpcs.getWorldSaveDirectory();
-		while (saveDir.getParentFile() != null) {
-			saveDir = saveDir.getParentFile();
-			if ((new File(saveDir, "config")).exists()) {
-				schematicDir = new File(saveDir, "schematics");
-				break;
+		if (saveDir != null) {
+			File schematicDir = new File(saveDir, "schematics");
+			while (saveDir.getParentFile() != null) {
+				saveDir = saveDir.getParentFile();
+				if ((new File(saveDir, "config")).exists()) {
+					schematicDir = new File(saveDir, "schematics");
+					break;
+				}
 			}
+			if (schematicDir.exists() || schematicDir.mkdir()) { return schematicDir; }
 		}
-		if (!schematicDir.exists()) {
-			schematicDir.mkdir();
-		}
-		return schematicDir;
+		return null;
 	}
 
 	private final List<SchematicWrapper> buildingList = new ArrayList<>();
@@ -96,9 +96,7 @@ public class SchematicController {
 	}
 
 	public SchematicWrapper getSchema(String name) {
-		if (!this.map.containsKey(name.toLowerCase())) {
-			this.load(name.toLowerCase());
-		}
+		if (!this.map.containsKey(name.toLowerCase())) { load(name.toLowerCase()); }
 		return this.map.get(name.toLowerCase());
 	}
 
@@ -114,10 +112,16 @@ public class SchematicController {
 
 	public List<String> list() {
         List<String> list = new ArrayList<>(included);
-		for (File file : Objects.requireNonNull(SchematicController.getDir().listFiles())) {
-			String name = file.getName();
-			if (name.toLowerCase().endsWith(".schematic") || name.toLowerCase().endsWith(".blueprint")) {
-				list.add(name);
+		File dir = SchematicController.getDir();
+		if (dir != null) {
+			File[] files = dir.listFiles();
+			if (files != null) {
+				for (File file : files) {
+					String name = file.getName();
+					if (name.toLowerCase().endsWith(".schematic") || name.toLowerCase().endsWith(".blueprint")) {
+						list.add(name);
+					}
+				}
 			}
 		}
 		Collections.sort(list);
@@ -133,10 +137,16 @@ public class SchematicController {
 		if (stream == null) {
 			File file = new File(SchematicController.getDir(), name);
 			if (!file.exists()) {
-				for (File f : Objects.requireNonNull(SchematicController.getDir().listFiles())) {
-					if (f.getName().equalsIgnoreCase(name)) {
-						file = f;
-						break;
+				File dir = SchematicController.getDir();
+				if (dir != null) {
+					File[] files = dir.listFiles();
+					if (files != null) {
+						for (File f : files) {
+							if (f.getName().equalsIgnoreCase(name)) {
+								file = f;
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -194,9 +204,7 @@ public class SchematicController {
 			file = new File(SchematicController.getDir(), name + ".blueprint");
 			schema = BlueprintUtil.createBlueprint(world, pos, width, length, height);
 		}
-		ITextComponent message = new TextComponentString("Schematic " + name + " successfully created");
-		message.getStyle().setColor(TextFormatting.GRAY);
-		NoppesUtilServer.NotifyOPs(message, false);
+		CommonUtil.NotifyOPs(Component.literal("Schematic " + name + " successfully created").withStyle(TextFormatting.GRAY), false);
 		try {
 			if (schema != null) {
 				CompressedStreamTools.writeCompressed(schema.getNBT(), Files.newOutputStream(file.toPath()));

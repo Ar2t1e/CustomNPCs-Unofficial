@@ -112,17 +112,17 @@ ai.swim=Kan simma
 ai.tacticalvariant=Alternativ för stridstaktik
 ai.wandering=Vandrar
 
-aitactics.commander=Commander
-aitactics.default=Som standard
-aitactics.dodge=Dodge
-aitactics.hitandrun=Smitolycka
-aitactics.hitnrun=Smitolycka
-aitactics.none=Nej
-aitactics.orbit=Omge
-aitactics.rush=Angrepp
-aitactics.stagger=Stagger
-aitactics.stalk=smyga på
-aitactics.surround=Omge
+ai.tactic.commander=Commander
+ai.tactic.default=Som standard
+ai.tactic.dodge=Dodge
+ai.tactic.hit_and_run=Smitolycka
+ai.tactic.hitnrun=Smitolycka
+ai.tactic.none=Nej
+ai.tactic.orbit=Omge
+ai.tactic.rush=Angrepp
+ai.tactic.stagger=Stagger
+ai.tactic.stalk=smyga på
+ai.tactic.surround=Omge
 
 animation.add.part.hover.location=Plats för resursfiltypen "§9.png§r" som textur som används för modellen
 animation.add.part.hover.name=Kroppsdelens namn för bekvämlighet<br>%s
@@ -1739,7 +1739,7 @@ message.dimensions.tp.isdelete=§2CustomNPCs§6: Du transporterades från en fj�
 message.mod.error=§sUps. Something has expressed a desire to filibuster. Contact the Developer with this problem: %s
 message.pather.add=Lade till position x :%s y :%s z :%s för NPC "%s "
 message.pather.home=Ändrad hemmaposition x :%s y :%s z :%s för NPC "%s "
-message.pather.reg=Registrerade "%s " till din %s
+message.pather.register=Registrerade "%s " till din %s
 message.pather.warn.add=§C Predikning av§R: En ny position för långt från den föregående.
 
 minimap.set.points.1=§F [§2Customnpcs §F]: §8 System uppdaterat positionen för minikort: %s

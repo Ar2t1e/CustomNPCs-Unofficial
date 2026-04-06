@@ -19,31 +19,23 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.Server;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.constants.EnumPlayerPacket;
-import noppes.npcs.constants.EnumSync;
 import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSyncUpdate;
+import noppes.npcs.packets.server.SPacketGetBuildData;
 import noppes.npcs.util.BuilderData;
-import noppes.npcs.util.IPermission;
 
-public class ItemReplacer
-extends Item
-implements IPermission, ISpecBuilder {
-
-	private final EnumGuiType guiType = EnumGuiType.ReplaceSetting;
+public class ItemReplacer extends Item implements ISpecBuilder {
 
 	public ItemReplacer() {
-		this.setRegistryName(CustomNpcs.MODID, "npcreplacer");
-		this.setUnlocalizedName("npcreplacer");
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
+		setRegistryName(CustomNpcs.MODID, "npcreplacer");
+		setUnlocalizedName("npcreplacer");
+		maxStackSize = 1;
+		setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -60,15 +52,10 @@ implements IPermission, ISpecBuilder {
 			list.add(new TextComponentTranslation("info.item.builder.range.0", "" + builder.region[0], "" + builder.region[1], "" + builder.region[2]).getFormattedText());
 		} else {
 			list.add(new TextComponentTranslation("info.item.builder.main.2").getFormattedText());
-			if (stack.hasTagCompound() && stack.getTagCompound() != null && stack.getTagCompound().hasKey("ID", 8) && stack.getTagCompound().hasKey("BuilderType", 3)) {
-				NoppesUtilPlayer.sendDataCheckDelay(EnumPlayerPacket.GetBuildData, stack, 2000, stack.getTagCompound().getString("ID"), stack.getTagCompound().getInteger("BuilderType"));
+			if (stack.hasTagCompound() && stack.getTagCompound() != null && stack.getTagCompound().hasKey("ID", 3) && stack.getTagCompound().hasKey("BuilderType", 3)) {
+				Packets.sendServerDelayed(new SPacketGetBuildData(stack.getTagCompound().getInteger("ID"), stack.getTagCompound().getInteger("BuilderType")), stack, 2000);
             }
 		}
-	}
-	
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.BuilderSetting || e == EnumPacketServer.Gui;
 	}
 
 	@Override
@@ -77,10 +64,13 @@ implements IPermission, ISpecBuilder {
 		PlayerData data = PlayerData.get(player);
 		BuilderData builder = ItemBuilder.getBuilder(stack, player);
 		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
+			NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
+				buffer.writeInt(-1);
+				buffer.writeBlockPos(new BlockPos(-1, getType(), 0));
+			});
 			return;
 		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed <-
+		if (data.overlay.isPressedCtrl()) {
 			builder.undo();
 			return;
 		}
@@ -94,12 +84,12 @@ implements IPermission, ISpecBuilder {
 			st.setTagCompound(tile.writeToNBT(new NBTTagCompound()));
 		}
 		String name = Objects.requireNonNull(st.getItem().getRegistryName()) + (st.getItemDamage() != 0 ? " [" + st.getItemDamage() + "]" : "");
-		builder.inv.items.set(0, st);
+		builder.inv.setInventorySlotContents(0, st);
 		player.sendMessage(new TextComponentTranslation("builder.put.block", name));
 		NBTTagCompound nbtStack = builder.getNbt();
 		stack.setTagCompound(nbtStack);
 		player.openContainer.detectAndSendChanges();
-		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.BuilderData, nbtStack);
+		Packets.send(player, new PacketSyncUpdate(builder.getID(), 7, nbtStack));
 	}
 
 	@Override
@@ -108,10 +98,13 @@ implements IPermission, ISpecBuilder {
 		PlayerData data = PlayerData.get(player);
 		BuilderData builder = ItemBuilder.getBuilder(stack, player);
 		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
+			NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
+				buffer.writeInt(-1);
+				buffer.writeBlockPos(new BlockPos(-1, getType(), 0));
+			});
 			return;
 		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed ->
+		if (data.overlay.isPressedCtrl()) {
 			builder.redo();
 			return;
 		}
@@ -122,6 +115,6 @@ implements IPermission, ISpecBuilder {
 	public int getType() { return 2; }
 
 	@Override
-	public EnumGuiType getGUIType() { return this.guiType; }
+	public EnumGuiType getGUIType() { return EnumGuiType.ReplaceTool; }
 
 }

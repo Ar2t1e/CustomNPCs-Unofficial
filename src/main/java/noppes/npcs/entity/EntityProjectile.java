@@ -39,7 +39,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.EventHooks;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.ParticleType;
 import noppes.npcs.api.constants.PotionEffectType;

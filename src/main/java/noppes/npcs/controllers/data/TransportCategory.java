@@ -9,13 +9,13 @@ import net.minecraft.nbt.NBTTagList;
 
 public class TransportCategory {
 
-	public int id = -1;
 	public Map<Integer, TransportLocation> locations = new TreeMap<>();
 	public String title = "";
+	public int id = -1;
 
 	public Vector<TransportLocation> getDefaultLocations() {
 		Vector<TransportLocation> list = new Vector<>();
-		for (TransportLocation loc : this.locations.values()) {
+		for (TransportLocation loc : locations.values()) {
 			if (loc.isDefault()) {
 				list.add(loc);
 			}
@@ -23,11 +23,11 @@ public class TransportCategory {
 		return list;
 	}
 
-	public void readNBT(NBTTagCompound compound) {
-		this.id = compound.getInteger("CategoryId");
-		this.title = compound.getString("CategoryTitle");
-		if (this.title.isEmpty()) {
-			this.title = "Default";
+	public void load(NBTTagCompound compound) {
+		id = compound.getInteger("CategoryId");
+		title = compound.getString("CategoryTitle");
+		if (title.isEmpty()) {
+			title = "Default";
 		}
 		NBTTagList locs = compound.getTagList("CategoryLocations", 10);
 		if (locs.tagCount() == 0) {
@@ -35,18 +35,18 @@ public class TransportCategory {
 		}
 		for (int ii = 0; ii < locs.tagCount(); ++ii) {
 			TransportLocation location = new TransportLocation();
-			location.readNBT(locs.getCompoundTagAt(ii));
+			location.load(locs.getCompoundTagAt(ii));
 			location.category = this;
-			this.locations.put(location.id, location);
+			locations.put(location.id, location);
 		}
 	}
 
-	public void writeNBT(NBTTagCompound compound) {
-		compound.setInteger("CategoryId", this.id);
-		compound.setString("CategoryTitle", this.title);
+	public void save(NBTTagCompound compound) {
+		compound.setInteger("CategoryId", id);
+		compound.setString("CategoryTitle", title);
 		NBTTagList locs = new NBTTagList();
-		for (TransportLocation location : this.locations.values()) {
-			locs.appendTag(location.writeNBT());
+		for (TransportLocation location : locations.values()) {
+			locs.appendTag(location.save());
 		}
 		compound.setTag("CategoryLocations", locs);
 	}

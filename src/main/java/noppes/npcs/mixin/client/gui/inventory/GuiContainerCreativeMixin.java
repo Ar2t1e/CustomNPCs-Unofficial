@@ -7,8 +7,6 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.ClientGuiEventHandler;
-import noppes.npcs.client.gui.util.GuiNpcButton;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.util.Util;
 import org.spongepowered.asm.mixin.Mixin;

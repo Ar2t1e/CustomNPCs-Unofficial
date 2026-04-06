@@ -6,121 +6,103 @@ import noppes.npcs.api.entity.data.INPCMelee;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.ValueUtil;
 
+import javax.annotation.Nonnull;
+
 public class DataMelee implements INPCMelee {
 
 	private static final int version = 1;
+	private final @Nonnull EntityNPCInterface npc;
 	private double attackRange = 2.0d;
 	private int attackSpeed = 20;
 	private int attackStrength = 5;
 	private int knockback = 0;
-	private final EntityNPCInterface npc;
 	private int potionAmp = 0;
 	private int potionDuration = 5;
 	private int potionType = 0;
 
-	public DataMelee(EntityNPCInterface npc) {
-		this.npc = npc;
-	}
+	public DataMelee(@Nonnull EntityNPCInterface npcIn) { npc = npcIn; }
 
-	@Override
-	public int getDelay() {
-		return this.attackSpeed;
-	}
+	public void load(NBTTagCompound compound) {
+		attackSpeed = compound.getInteger("AttackSpeed");
+		setStrength(compound.getInteger("AttackStrenght"));
+		knockback = compound.getInteger("KnockBack");
+		potionType = compound.getInteger("PotionEffect");
+		potionDuration = compound.getInteger("PotionDuration");
+		potionAmp = compound.getInteger("PotionAmp");
 
-	public int getDelayRNG() {
-		int delay = this.attackSpeed;
-		if (this.attackSpeed < 120 && this.attackSpeed > 10) {
-			delay += this.npc.world.rand.nextInt((int) ((double) this.attackSpeed * 0.15d));
-		}
-		return delay;
-	}
-
-	@Override
-	public int getEffectStrength() {
-		return this.potionAmp;
-	}
-
-	@Override
-	public int getEffectTime() {
-		return this.potionDuration;
-	}
-
-	@Override
-	public int getEffectType() {
-		return this.potionType;
-	}
-
-	@Override
-	public int getKnockback() {
-		return this.knockback;
-	}
-
-	@Override
-	public double getRange() {
-		return this.attackRange;
-	}
-
-	@Override
-	public int getStrength() {
-		return this.attackStrength;
-	}
-
-	public void readFromNBT(NBTTagCompound compound) {
-		this.attackSpeed = compound.getInteger("AttackSpeed");
-		this.setStrength(compound.getInteger("AttackStrenght"));
-		if (compound.hasKey("AttackRange", 3)) {
-			this.attackRange = (float) compound.getInteger("AttackRange");
-		} else {
-			this.attackRange = compound.getDouble("AttackRange");
-		}
-		this.knockback = compound.getInteger("KnockBack");
+		// New from Unofficial (BetaZavr)
+		if (compound.hasKey("AttackRange", 3)) { attackRange = compound.getInteger("AttackRange"); }
+		else { attackRange = compound.getDouble("AttackRange"); }
 		if (version != compound.getInteger("version")) {
 			int v = compound.getInteger("version");
 			if (v < 1) { knockback++; }
 		}
-		this.potionType = compound.getInteger("PotionEffect");
-		this.potionDuration = compound.getInteger("PotionDuration");
-		this.potionAmp = compound.getInteger("PotionAmp");
+	}
+
+	public NBTTagCompound save(NBTTagCompound compound) {
+		compound.setInteger("AttackStrenght", attackStrength);
+		compound.setInteger("AttackSpeed", attackSpeed);
+		compound.setInteger("KnockBack", knockback);
+		compound.setInteger("PotionEffect", potionType);
+		compound.setInteger("PotionDuration", potionDuration);
+		compound.setInteger("PotionAmp", potionAmp);
+
+		// New from Unofficial (BetaZavr)
+		compound.setDouble("AttackRange", attackRange);
+		compound.setInteger("version", version);
+		return compound;
 	}
 
 	@Override
-	public void setDelay(int speed) {
-		this.attackSpeed = speed;
-	}
+	public int getDelay() { return attackSpeed; }
+
+	@Override
+	public int getEffectStrength() { return potionAmp; }
+
+	@Override
+	public int getEffectTime() { return potionDuration; }
+
+	@Override
+	public int getEffectType() { return potionType; }
+
+	@Override
+	public int getKnockback() { return knockback; }
+
+	@Override
+	public double getRange() { return attackRange; }
+
+	@Override
+	public int getStrength() { return attackStrength; }
+
+	@Override
+	public void setDelay(int speed) { attackSpeed = speed; }
 
 	@Override
 	public void setEffect(int type, int strength, int time) {
-		this.potionType = type;
-		this.potionDuration = time;
-		this.potionAmp = strength;
+		potionType = type;
+		potionDuration = time;
+		potionAmp = strength;
 	}
 
 	@Override
-	public void setKnockback(int knockback) {
-		this.knockback = knockback;
-	}
+	public void setKnockback(int knockbackIn) { knockback = knockbackIn; }
 
 	@Override
-	public void setRange(double range) {
-		this.attackRange = ValueUtil.correctDouble(range, 0.2d, 30.0d);
-	}
+	public void setRange(double range) { attackRange = ValueUtil.correctDouble(range, 0.2d, 30.0d); }
 
 	@Override
 	public void setStrength(int strength) {
-		this.attackStrength = strength;
-		this.npc.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(this.attackStrength);
+		attackStrength = strength;
+		npc.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(attackStrength);
 	}
 
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-		compound.setInteger("AttackStrenght", this.attackStrength);
-		compound.setInteger("AttackSpeed", this.attackSpeed);
-		compound.setDouble("AttackRange", this.attackRange);
-		compound.setInteger("KnockBack", this.knockback);
-		compound.setInteger("PotionEffect", this.potionType);
-		compound.setInteger("PotionDuration", this.potionDuration);
-		compound.setInteger("PotionAmp", this.potionAmp);
-		compound.setInteger("version", version);
-		return compound;
+	// New from Unofficial (BetaZavr)
+	public int getDelayRNG() {
+		int delay = attackSpeed;
+		if (attackSpeed < 120 && attackSpeed > 10) {
+			delay += npc.world.rand.nextInt((int) ((double) attackSpeed * 0.15d));
+		}
+		return delay;
 	}
 
 }

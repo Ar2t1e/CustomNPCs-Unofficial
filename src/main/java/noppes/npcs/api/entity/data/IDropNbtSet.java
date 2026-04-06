@@ -1,7 +1,7 @@
 package noppes.npcs.api.entity.data;
 
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IDropNbtSet {
 

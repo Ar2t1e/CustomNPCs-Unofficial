@@ -11,7 +11,7 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
 
 import javax.annotation.Nonnull;
 
@@ -26,7 +26,7 @@ public class TileDoor extends TileNpcEntity implements ITickable {
 
 	public TileDoor() {
 		this.ticksExisted = 0;
-		this.blockModel = CustomRegisters.scriptedDoor;
+		this.blockModel = CustomBlocks.scriptedDoor;
 		this.needsClientUpdate = false;
 		this.renderTileErrored = true;
 		this.renderTileUpdate = null;
@@ -36,9 +36,7 @@ public class TileDoor extends TileNpcEntity implements ITickable {
 		compound.setString("ScriptDoorBlockModel", Block.REGISTRY.getNameForObject(this.blockModel) + "");
 	}
 
-	public SPacketUpdateTileEntity getUpdatePacket() {
-		return new SPacketUpdateTileEntity(this.pos, 0, this.getUpdateTag());
-	}
+	public SPacketUpdateTileEntity getUpdatePacket() { return new SPacketUpdateTileEntity(pos, 0, getUpdateTag()); }
 
 	@Nonnull
 	public NBTTagCompound getUpdateTag() {
@@ -67,7 +65,7 @@ public class TileDoor extends TileNpcEntity implements ITickable {
 	public void setDoorNBT(NBTTagCompound compound) {
 		this.blockModel = Block.REGISTRY.getObject(new ResourceLocation(compound.getString("ScriptDoorBlockModel")));
 		if (!(this.blockModel instanceof BlockDoor)) {
-			this.blockModel = CustomRegisters.scriptedDoor;
+			this.blockModel = CustomBlocks.scriptedDoor;
 		}
 		this.renderTileUpdate = null;
 		this.renderTile = null;
@@ -76,7 +74,7 @@ public class TileDoor extends TileNpcEntity implements ITickable {
 
 	public void setItemModel(Block block) {
 		if (!(block instanceof BlockDoor)) {
-			block = CustomRegisters.scriptedDoor;
+			block = CustomBlocks.scriptedDoor;
 		}
 		if (this.blockModel == block) {
 			return;

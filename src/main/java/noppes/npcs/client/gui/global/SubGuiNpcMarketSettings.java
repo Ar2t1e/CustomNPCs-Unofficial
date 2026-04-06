@@ -5,50 +5,55 @@ import java.util.*;
 import java.util.List;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.SubGuiEditText;
 import noppes.npcs.client.gui.SubGuiNPCLinesEdit;
+import noppes.npcs.client.gui.player.GuiNPCTrader;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.controllers.data.Marcet;
 import noppes.npcs.controllers.data.MarcetSection;
 import noppes.npcs.controllers.data.MarkupData;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 
-public class SubGuiNpcMarketSettings extends SubGuiInterface
-		implements ICustomScrollListener, ITextfieldListener, GuiYesNoCallback {
+public class SubGuiNpcMarketSettings extends GuiNPCInterface
+		implements ICustomScrollListener, ITextfieldListener {
 
-	protected final Map<String, Integer> data = new HashMap<>();
-	protected GuiCustomScroll scroll;
+	protected static final Object[] icons = new Object[] { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29 };
+	protected final Map<Component, Integer> data = new HashMap<>();
+	protected GuiCustomScrollNop scroll;
 	public Marcet marcet;
 	public int level = 0;
 
 	public SubGuiNpcMarketSettings(Marcet marketIn) {
-		super(0);
+		super();
 		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 217;
-		closeOnEsc = true;
+		imageWidth = 256;
+		imageHeight = 217;
 
 		marcet = marketIn;
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
+		switch (button.id) {
 			case 0: {
 				marcet.limitedType = button.getValue();
-				button.setHoverText("market.hover.only.currency." + marcet.limitedType);
+				button.setHoverTexts("market.hover.only.currency." + marcet.limitedType);
 				break;
 			}
 			case 1: setSubGui(new SubGuiNPCLinesEdit(0, npc, marcet.lines, null)); break; // message
-			case 2: marcet.isLimited = ((GuiNpcCheckBox) button).isSelected(); break; // is limited
-			case 3: marcet.showXP = ((GuiNpcCheckBox) button).isSelected(); break; // show xp
+			case 2: marcet.isLimited = ((GuiCheckBoxNop) button).selected(); break; // is limited
+			case 3: marcet.showXP = ((GuiCheckBoxNop) button).selected(); break; // show xp
 			case 4: {
 				level = button.getValue();
 				if (!marcet.markup.containsKey(0)) { marcet.markup.put(0, new MarkupData(0, 0.15f, 0.80f, 1000)); }
@@ -57,27 +62,32 @@ public class SubGuiNpcMarketSettings extends SubGuiInterface
 				break;
 			} // level
 			case 5: {
-				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(new TextComponentTranslation("gui.new").getFormattedText())));
+				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(Component.translatable("gui.new").getString())));
 				break;
 			} // add section
 			case 6: {
 				if (!scroll.hasSelected()) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						new TextComponentTranslation("gui.sections").getFormattedText() + ": " + scroll.getSelected(),
-						new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 0);
-				displayGuiScreen(guiyesno);
+				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+					if (agree && data.containsKey(scroll.getNormalSelected()) && marcet.sections.size() > 1) {
+						marcet.sections.remove(data.get(scroll.getNormalSelected()));
+						scroll.setSelect(scroll.getSelectedIndex() - 1);
+						initGui();
+					}
+					NoppesUtil.openGUI(player, this);
+				},
+						Component.translatable("gui.sections").append(": ").append(scroll.getNormalSelected()),
+						Component.translatable("message.delete"));
+				setScreen(guiYesNo);
 				break;
 			} // del section
-			case 66: onClosed(); break;
+			case 7: {
+				if (scroll.hasSelected() && data.containsKey(scroll.getNormalSelected())) {
+					marcet.sections.get(data.get(scroll.getNormalSelected())).setIcon(button.getValue());
+				}
+				break;
+			}
+			case 66: onClose(); break;
 		}
-	}
-
-	public void confirmClicked(boolean result, int id) {
-		NoppesUtil.openGUI(player, this);
-		if (!result || scroll.getSelect() < 0 || !data.containsKey(scroll.getSelected()) || marcet.sections.size() < 2) { return; }
-		marcet.sections.remove(data.get(scroll.getSelected()));
-		scroll.setSelect(scroll.getSelect() - 1);
-		initGui();
 	}
 
 	@Override
@@ -86,9 +96,18 @@ public class SubGuiNpcMarketSettings extends SubGuiInterface
 		if (hasSubGui()) { return; }
 		if (getButton(4) != null) {
 			int color = new Color(0x80000000).getRGB();
-			drawHorizontalLine(guiLeft + 4, guiLeft + xSize - 4, getButton(4).x - 3, color);
-			drawHorizontalLine(guiLeft + 4, guiLeft + xSize - 4, getButton(4).y + 44, color);
+			drawHorizontalLine(guiLeft + 4, guiLeft + imageWidth - 4, guiTop + 47, color);
+			drawHorizontalLine(guiLeft + 4, guiLeft + imageWidth - 4, guiTop + 133, color);
 		}
+		int u = 0;
+		int v = 0;
+		if (scroll.hasSelected() && data.containsKey(scroll.getNormalSelected())) {
+			int icon = marcet.sections.get(data.get(scroll.getNormalSelected())).getIcon();
+			u = (icon % 10) * 24;
+			v = (int) Math.floor((float) icon / 10.0f) * 72;
+		}
+		minecraft.getTextureManager().bindTexture(GuiNPCTrader.ICONS);
+		drawTexturedModalRect(guiLeft + 180, guiTop + 178, u, v, 24, 24);
 	}
 
 	@Override
@@ -98,73 +117,78 @@ public class SubGuiNpcMarketSettings extends SubGuiInterface
 		int x = guiLeft + 4;
 		int y = guiTop + 5;
 		// name
-		addLabel(new GuiNpcLabel(lID++, "role.trader", x + 2, y + 5));
-		addTextField(new GuiNpcTextField(0, this, x + 80, y, 167, 18, marcet.name)
-				.setHoverText("market.hover.set.name", new TextComponentTranslation(marcet.name).getFormattedText()));
+		addLabel(lID++, x + 2, y + 5, "role.trader")
+				.setSize(78, 12);
+		addTextField(0, x + 80, y, 167, 18, marcet.name)
+				.setHoverTexts(Component.translatable("market.hover.set.name", Component.translatable(marcet.name)));
 		// time
-		y += 22;
-		addLabel(new GuiNpcLabel(lID++, "market.uptime", x + 2, y + 5));
-		addTextField(new GuiNpcTextField(1, this, x + 80, y, 60, 18, "" + marcet.updateTime)
+		addLabel(lID++, x + 2, (y += 22) + 5, "market.uptime")
+				.setSize(78, 12);
+		addTextField(1, x + 80, y, 60, 18, marcet.updateTime)
 				.setMinMaxDefault(0, 360, marcet.updateTime)
-				.setHoverText("market.hover.set.update",
+				.setHoverTexts(Component.translatable("market.hover.set.update",
 						Util.instance.ticksToElapsedTime(marcet.updateTime * 1200L, false, false, false)));
 		if (marcet.updateTime >= 5) {
 			y += 22;
-			addButton(new GuiNpcButton(0, x, y, 170, 20, new String[] { "market.limited.0", "market.limited.1", "market.limited.2" }, marcet.limitedType)
-					.setHoverText("market.hover.only.currency." + marcet.limitedType));
+			addButton(0, x, y, false, marcet.limitedType, "market.limited.0", "market.limited.1", "market.limited.2")
+					.setSize(170, 20)
+					.setHoverTexts("market.hover.only.currency." + marcet.limitedType);
 		}
 		// tabs
-		addLabel(new GuiNpcLabel(lID++, "gui.sections", x + 176, y - 17));
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(72, 60); }
-		scroll.guiLeft = x + 175;
-		scroll.guiTop = y;
-		List<String> list = new ArrayList<>();
+		addLabel(lID++, x + 176, y - 17, "gui.sections")
+				.setSize(72, 12);
+		if (scroll == null) { scroll = addScroll(0).setSize(72, 60); }
+		List<Component> list = new ArrayList<>();
 		data.clear();
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
+		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
 		int i = 0;
 		for (int id : marcet.sections.keySet()) {
-			List<String> l = new ArrayList<>();
-			l.add("ID: " + id);
-			l.add(new TextComponentTranslation("gui.name").getFormattedText() + ": " + marcet.sections.get(id));
+			List<Component> l = new ArrayList<>();
+			l.add(Component.literal("ID: " + id));
+			l.add(Component.translatable("gui.name").append(": " + marcet.sections.get(id).toString()));
 			hts.put(i, l);
-			String key = marcet.sections.get(id).name;
+			Component key = marcet.sections.get(id).getName();
 			data.put(key, id);
 			list.add(key);
 			i++;
 		}
-		scroll.setUnsortedList(list)
-				.setHoverTexts(hts);
-		addScroll(scroll);
+		add(scroll.setPos(x + 175, y)
+				.setUnsortedList(list)
+				.setHoverTexts(hts));
+		if (!scroll.hasSelected()) { scroll.setSelectedIndex(0); }
 		// update message
-		y += 22;
-		addButton(new GuiNpcButton(1, x, y, 170, 20, "lines.title")
-				.setHoverText("market.hover.message"));
+		addButton(1, x, y += 22, "lines.title")
+				.setSize(170, 20)
+				.setHoverTexts("market.hover.message");
 		// isLimited
-		y += 20;
-		addButton(new GuiNpcCheckBox(2, x, y, 170, 18, "market.select.limited.true", "market.select.limited.false", marcet.isLimited)
-				.setHoverText("market.hover.limited"));
+		addCheckBox(2, x, y += 20, "market.select.limited.true", "market.select.limited.false", marcet.isLimited)
+				.setSize(170, 18)
+				.setHoverTexts("market.hover.limited");
 		// show XP
-		y += 20;
-		addButton(new GuiNpcCheckBox(3, x, y, 170, 18, "market.select.show.xp.true", "market.select.show.xp.false", marcet.showXP)
-				.setHoverText("market.hover.show.xp"));
+		addCheckBox(3, x, y += 20, "market.select.show.xp.true", "market.select.show.xp.false", marcet.showXP)
+				.setSize(170, 18)
+				.setHoverTexts("market.hover.show.xp");
 		// add new section
-		addButton(new GuiNpcButton(5, x + 175, y, 37, 20, "type.add")
-				.setHoverText("market.hover.section.add"));
+		addButton(5, x + 175, y, "type.add")
+				.setSize(37, 20)
+				.setHoverTexts("market.hover.section.add");
 		// del section
-		addButton(new GuiNpcButton(6, x + 213, y, 35, 20, "type.del")
-				.setIsEnable(marcet.sections.size() > 1 && scroll.getSelect() > 0)
-				.setHoverText("market.hover.section.del"));
+		addButton(6, x + 213, y, "type.del")
+				.setSize(35, 20)
+				.setIsEnabled(marcet.sections.size() > 1 && scroll.hasSelected())
+				.setHoverTexts("market.hover.section.del");
 		// levels
-		y += 25;
-		String[] values = new String[marcet.markup.size()];
+		Object[] values = new Object[marcet.markup.size()];
 		i = 0;
 		for (int level : marcet.markup.keySet()) {
-			values[i] = (new TextComponentTranslation("type.level")).getFormattedText() + " " + level;
+			values[i] = Component.translatable("type.level").append(" " + level);
 			i++;
 		}
-		addLabel(new GuiNpcLabel(lID++, "gui.type", x + 2, y + 5));
-		addButton(new GuiNpcButton(4, x + 22, y, 50, 20, values, level)
-				.setHoverText("market.hover.extra.slot"));
+		addLabel(lID++, x + 2, (y += 25) + 5, "gui.type")
+				.setSize(48, 12);
+		addButton(4, x + 22, y, true, level, values)
+				.setSize(50, 20)
+				.setHoverTexts("market.hover.extra.slot");
 		// extra markup
 		MarkupData md = marcet.markup.get(level);
 		if (md == null) {
@@ -173,43 +197,55 @@ public class SubGuiNpcMarketSettings extends SubGuiInterface
 			md = marcet.markup.get(level);
 		}
 		// buy
-		addLabel(new GuiNpcLabel(lID++, "market.extra.markup", x + 76, y + 5));
-		addLabel(new GuiNpcLabel(lID++, "%", x + 174, y + 5));
-		addTextField(new GuiNpcTextField(2, this, x + 120, y, 50, 20, "" + (int) (md.buy * 100.0f))
+		addLabel(lID++, x + 76, y + 5, "market.extra.markup")
+				.setSize(48, 12);
+		addLabel(lID++, x + 174, y + 5, "%")
+				.setSize(10, 12);
+		addTextField(2, x + 120, y, 50, 20, "" + (int) (md.buy * 100.0f))
 				.setMinMaxDefault(-100, 500, (int) (md.buy * 100.0f))
-				.setHoverText("market.hover.extra.buy"));
+				.setHoverTexts("market.hover.extra.buy");
 		// sell
-		addLabel(new GuiNpcLabel(lID++, "%", x + 238, y + 5));
-		addTextField(new GuiNpcTextField(3, this, x + 184, y, 50, 20, "" + (int) (md.sell * 100.0f))
-				.setMinMaxDoubleDefault(-500, 100, (int) (md.sell * 100.0f))
-				.setHoverText("market.hover.extra.sell"));
+		addLabel(lID++, x + 238, y + 5, "%")
+				.setSize(10, 12);
+		addTextField(3, x + 184, y, 50, 20, "" + (int) (md.sell * 100.0f))
+				.setMinMaxDefault(-500, 100, (int) (md.sell * 100.0f))
+				.setHoverTexts("market.hover.extra.sell");
 		// xp
-		y += 22;
-		addLabel(new GuiNpcLabel(lID, "quest.exp", x + 76, y + 5));
-		addTextField(new GuiNpcTextField(4, this, x + 120, y, 50, 20, "" + md.xp)
+		addLabel(lID++, x + 76, (y += 22) + 5, "quest.exp")
+				.setSize(42, 12);
+		addTextField(4, x + 120, y, 50, 20, "" + md.xp)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, md.xp)
-				.setHoverText("market.hover.xp"));
+				.setHoverTexts("market.hover.xp");
+		// section icon
+		if (scroll.hasSelected() && data.containsKey(scroll.getNormalSelected())) {
+			int icon = marcet.sections.get(data.get(scroll.getNormalSelected())).getIcon();
+			addLabel(lID, x + 76, (y += 22) + 5, "dialog.icon")
+					.setSize(42, 12);
+			addButton(7, x + 120, y, true, icon, icons)
+					.setSize(50, 20)
+					.setHoverTexts("market.hover.section.icon");
+		}
 		// exit
-		addButton(new GuiNpcButton(66, x, guiTop + ySize - 24, 60, 20, "gui.done")
-				.setHoverText("hover.back"));
+		addButton(66, x, guiTop + imageHeight - 24, "gui.done")
+				.setSize(60, 20)
+				.setHoverTexts("hover.back");
 	}
 
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (getButton(6) != null) { getButton(6).setIsEnable(marcet.sections.size() > 1 && scroll.getSelect() > 0); }
-	}
+	public void scrollClicked(GuiCustomScrollNop scroll) { initGui(); }
 
 	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) {
-		if (scroll.getSelected() == null) { return; }
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+		if (!scroll.hasSelected()) { return; }
 		setSubGui(new SubGuiEditText(2, scroll.getSelected()));
 	}
 
 	@Override
 	public void subGuiClosed(GuiScreen subgui) {
 		if (subgui instanceof SubGuiEditText) {
-			if (((SubGuiEditText) subgui).cancelled) { return; }
-			if (((SubGuiEditText) subgui).getId() == 1) {
+			SubGuiEditText gui = (SubGuiEditText) subgui;
+			if (gui.cancelled) { return; }
+			if (gui.id == 1) {
 				String name = ((SubGuiEditText) subgui).text[0];
 				boolean has = true;
 				while (has) {
@@ -225,10 +261,11 @@ public class SubGuiNpcMarketSettings extends SubGuiInterface
 				MarcetSection ms = new MarcetSection(marcet.sections.size());
 				ms.name = name;
 				marcet.sections.put(ms.getId(), ms);
-			} else if (((SubGuiEditText) subgui).getId() == 2) {
-				if (!data.containsKey(scroll.getSelected())) { return; }
+			}
+			else if (gui.id == 2) {
+				if (!data.containsKey(scroll.getNormalSelected())) { return; }
 				String name = ((SubGuiEditText) subgui).text[0];
-				int idSel = data.get(scroll.getSelected());
+				int idSel = data.get(scroll.getNormalSelected());
 				boolean next = true;
 				while (next) {
 					next = false;
@@ -246,19 +283,19 @@ public class SubGuiNpcMarketSettings extends SubGuiInterface
 				marcet.sections.put(ms.getId(), ms);
 			}
 			initGui();
-		} else if (subgui instanceof SubGuiNPCLinesEdit) {
-			SubGuiNPCLinesEdit sub = (SubGuiNPCLinesEdit) subgui;
-			sub.lines.correctLines();
-			marcet.lines = sub.lines;
+		}
+		else if (subgui instanceof SubGuiNPCLinesEdit) {
+			((SubGuiNPCLinesEdit) subgui).lines.correctLines();
+			marcet.lines = ((SubGuiNPCLinesEdit) subgui).lines;
 		}
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textField) {
+	public void unFocused(GuiTextFieldNop textField) {
 		if (hasSubGui()) { return; }
-		String text = textField.getText();
+		String text = textField.getValue();
 		MarkupData md = marcet.markup.get(level);
-		switch (textField.getID()) {
+		switch (textField.id) {
 			case 0: {
 				if (text.equals(marcet.name)) { return; }
 				marcet.name = text;

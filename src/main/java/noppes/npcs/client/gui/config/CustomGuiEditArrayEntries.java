@@ -181,7 +181,6 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 				CustomGuiEditArray.subGui.width = owningEntryList.width;
 				CustomGuiEditArray.subGui.height = owningEntryList.height;
 				CustomGuiEditArray.subGui.initGui();
-				CustomGuiEditArray.subGui.parent = owningScreen;
 				CustomGuiEditArray.subGui.object = this;
 				return true;
 			}

@@ -11,7 +11,8 @@ import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
 import net.minecraft.entity.ai.EntityAITarget;
 import net.minecraft.entity.monster.EntityMob;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.constants.EnumSeeTarget;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.CustomNPCsScheduler;
 
@@ -22,8 +23,8 @@ public class EntityAIClosestTarget extends EntityAITarget {
 	private final Predicate<EntityLivingBase> targetEntitySelector;
 	private final EntityAINearestAttackableTarget.Sorter theNearestAttackableTargetSorter;
 
-	public EntityAIClosestTarget(EntityNPCInterface npcIn, int targetChanceIn, boolean directLOS, boolean onlyNearby, Predicate<EntityLivingBase> attackEntitySelector) {
-		super(npcIn, directLOS, onlyNearby);
+	public EntityAIClosestTarget(EntityNPCInterface npcIn, int targetChanceIn, EnumSeeTarget checkSight, boolean onlyNearby, Predicate<EntityLivingBase> attackEntitySelector) {
+		super(npcIn, checkSight != EnumSeeTarget.NONE && checkSight != EnumSeeTarget.BLIND, onlyNearby);
 		targetChance = targetChanceIn;
 		theNearestAttackableTargetSorter = new EntityAINearestAttackableTarget.Sorter(npcIn);
         setMutexBits(1);

@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import noppes.npcs.NoppesStringUtils;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 
 import javax.annotation.Nonnull;
 

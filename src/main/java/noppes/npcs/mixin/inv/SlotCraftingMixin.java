@@ -181,7 +181,7 @@ public class SlotCraftingMixin {
                 for (int i = 0; i < craftMatrix.getSizeInventory(); i++) {
                     if (founds.contains(i)) { continue; }
                     ItemStack itemInSlot = craftMatrix.getStackInSlot(i);
-                    if (!NoppesUtilServer.IsItemStackNull(itemInSlot) && NoppesUtilPlayer.compareItems(itemInSlot, ingredientStack, ignoreDamage, ignoreNBT)) {
+                    if (!NoppesUtilServer.isItemStackNull(itemInSlot) && NoppesUtilPlayer.compareItems(itemInSlot, ingredientStack, ignoreDamage, ignoreNBT)) {
                         boolean added = true;
                         for (ItemStack recipeStack : recipeStacks.keySet()) {
                             if (NoppesUtilPlayer.compareItems(recipeStack, itemInSlot, ignoreDamage, ignoreNBT)) {

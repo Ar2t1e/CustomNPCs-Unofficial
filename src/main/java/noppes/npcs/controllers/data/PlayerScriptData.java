@@ -123,11 +123,11 @@ extends BaseScriptData {
 		return message.appendSibling(mesPlayer).appendSibling(side);
 	}
 
-	public void readFromNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
+	public void load(NBTTagCompound compound) {
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
 		this.scriptLanguage = Util.instance.deleteColor(compound.getString("ScriptLanguage"));
 		this.enabled = compound.getBoolean("ScriptEnabled");
-		PlayerScriptData.console = NBTTags.GetLongStringMap(compound.getTagList("ScriptConsole", 10));
+		PlayerScriptData.console = NBTTags.getLongStringMap(compound.getTagList("ScriptConsole", 10));
 	}
 
 	@Override
@@ -144,7 +144,7 @@ extends BaseScriptData {
 				this.scripts.clear();
 				for (ScriptContainer script : ScriptController.Instance.playerScripts.scripts) {
 					ScriptContainer s = new ScriptContainer(this, isClient());
-					s.readFromNBT(script.writeToNBT(new NBTTagCompound()), this.isClient());
+					s.load(script.save(new NBTTagCompound()), this.isClient());
 					this.scripts.add(s);
 				}
 			}
@@ -170,11 +170,11 @@ extends BaseScriptData {
 		}
 	}
 	
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.NBTScript(this.scripts));
+	public NBTTagCompound save(NBTTagCompound compound) {
+		compound.setTag("Scripts", NBTTags.nbtScript(this.scripts));
 		compound.setString("ScriptLanguage", this.scriptLanguage);
 		compound.setBoolean("ScriptEnabled", this.enabled);
-		compound.setTag("ScriptConsole", NBTTags.NBTLongStringMap(PlayerScriptData.console));
+		compound.setTag("ScriptConsole", NBTTags.nbtLongStringMap(PlayerScriptData.console));
 		return compound;
 	}
 

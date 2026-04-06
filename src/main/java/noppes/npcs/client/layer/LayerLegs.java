@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.math.MathHelper;
 import noppes.npcs.ModelPartConfig;
-import noppes.npcs.ModelPartData;
+import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.client.model.part.legs.ModelDigitigradeLegs;
 import noppes.npcs.client.model.part.legs.ModelHorseLegs;
 import noppes.npcs.client.model.part.legs.ModelMermaidLegs;

@@ -18,7 +18,9 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.stats.RecipeBook;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomItems;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.util.Util;
 
 // Displaying a tab button on the left edge of the GUI recipes window
@@ -31,77 +33,66 @@ public class NpcGuiButtonRecipeTab extends GuiButtonRecipeTab {
 
     public NpcGuiButtonRecipeTab(int buttonId, CreativeTabs tab, boolean globalRecipes) {
         super(buttonId, tab);
-        this.category = tab;
-        this.initTextureValues(153, 2, 35, 0, Util.RECIPE_BOOK);
-        this.isGlobal = globalRecipes;
+        category = tab;
+        initTextureValues(153, 2, 35, 0, Util.RECIPE_BOOK);
+        isGlobal = globalRecipes;
     }
 
     /**
      * Draws this button to the screen.
      */
     public void drawButton(@Nonnull Minecraft mc, int mouseX, int mouseY, float partialTicks) {
-        if (!this.visible) {
-            return;
-        }
-        if (this.animationTime > 0.0F) {
-            float f = 1.0F + 0.1F * (float) Math.sin(this.animationTime / 15.0F * (float) Math.PI);
+        if (!visible) { return; }
+        if (animationTime > 0.0F) {
+            float f = 1.0F + 0.1F * (float) Math.sin(animationTime / 15.0F * (float) Math.PI);
             GlStateManager.pushMatrix();
-            GlStateManager.translate((float) (this.x + 8), (float) (this.y + 12), 0.0F);
+            GlStateManager.translate((float) (x + 8), (float) (y + 12), 0.0F);
             GlStateManager.scale(1.0F, f, 1.0F);
-            GlStateManager.translate((float) (-(this.x + 8)), (float) (-(this.y + 12)), 0.0F);
+            GlStateManager.translate((float) (-(x + 8)), (float) (-(y + 12)), 0.0F);
         }
-
-        this.hovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
-        mc.getTextureManager().bindTexture(this.resourceLocation);
+        hovered = mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
+        mc.getTextureManager().bindTexture(resourceLocation);
         GlStateManager.disableDepth();
-        int k = this.xTexStart;
-        int i = this.yTexStart;
-        if (this.stateTriggered) {
-            k += this.xDiffTex;
-        }
-        if (this.hovered) {
-            i += this.yDiffTex;
-        }
-        int j = this.x;
-        if (this.stateTriggered) {
-            j -= 2;
-        }
+        int k = xTexStart;
+        int i = yTexStart;
+        if (stateTriggered) { k += xDiffTex; }
+        if (hovered) { i += yDiffTex; }
+        int j = x;
+        if (stateTriggered) { j -= 2; }
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        this.drawTexturedModalRect(j, this.y, k, i, this.width, this.height);
+        drawTexturedModalRect(j, y, k, i, width, height);
         GlStateManager.enableDepth();
         RenderHelper.enableGUIStandardItemLighting();
         GlStateManager.disableLighting();
-        this.renderIcon(mc.getRenderItem());
+        renderIcon(mc.getRenderItem());
         GlStateManager.enableLighting();
         RenderHelper.disableStandardItemLighting();
-        if (this.animationTime > 0.0F) {
+        if (animationTime > 0.0F) {
             GlStateManager.popMatrix();
-            this.animationTime -= partialTicks;
+            animationTime -= partialTicks;
         }
     }
 
-    public @Nonnull CreativeTabs getCategory() {
-        return this.category;
-    }
+    public @Nonnull CreativeTabs getCategory() { return category; }
 
     private void renderIcon(RenderItem render) {
-        ItemStack itemstack = this.category.getIconItemStack();
-        if (this.category == CreativeTabs.TOOLS) {
-            render.renderItemAndEffectIntoGUI(itemstack, this.x + 3, this.y + 5);
-            render.renderItemAndEffectIntoGUI(CreativeTabs.COMBAT.getIconItemStack(), this.x + 14, this.y + 5);
-        } else if (this.category == CreativeTabs.MISC) {
-            render.renderItemAndEffectIntoGUI(itemstack, this.x + 3, this.y + 5);
-            render.renderItemAndEffectIntoGUI(CreativeTabs.FOOD.getIconItemStack(), this.x + 14, this.y + 5);
+        ItemStack itemstack = category.getIconItemStack();
+        if (category == CreativeTabs.TOOLS) {
+            render.renderItemAndEffectIntoGUI(itemstack, x + 3, y + 5);
+            render.renderItemAndEffectIntoGUI(CreativeTabs.COMBAT.getIconItemStack(), x + 14, y + 5);
+        } else if (category == CreativeTabs.MISC) {
+            render.renderItemAndEffectIntoGUI(itemstack, x + 3, y + 5);
+            render.renderItemAndEffectIntoGUI(CreativeTabs.FOOD.getIconItemStack(), x + 14, y + 5);
         }
-        else if (this.category == CustomRegisters.tab || this.category == CustomRegisters.tabItems) { // Custom
-            if (this.isGlobal) {
-                render.renderItemAndEffectIntoGUI(itemstack, this.x + 3, this.y + 5);
-                render.renderItemAndEffectIntoGUI(new ItemStack(CustomRegisters.cloner), this.x + 14, this.y + 5);
+        else if (category == CustomTabs.TOOLS || category == CustomTabs.ITEMS) { // Custom
+            if (isGlobal) {
+                render.renderItemAndEffectIntoGUI(itemstack, x + 3, y + 5);
+                render.renderItemAndEffectIntoGUI(new ItemStack(CustomItems.cloner), x + 14, y + 5);
             } else {
-                render.renderItemAndEffectIntoGUI(new ItemStack(CustomRegisters.carpentyBench), this.x + 9, this.y + 5);
+                render.renderItemAndEffectIntoGUI(new ItemStack(CustomBlocks.carpentyBench), x + 9, y + 5);
             }
         } else {
-            render.renderItemAndEffectIntoGUI(itemstack, this.x + 9, this.y + 5);
+            render.renderItemAndEffectIntoGUI(itemstack, x + 9, y + 5);
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
@@ -125,13 +116,13 @@ public class NpcGuiButtonRecipeTab extends GuiButtonRecipeTab {
                     break;
                 }
             }
-            this.animationTime = 15.0F;
+            animationTime = 15.0F;
             return;
         }
     }
 
     public boolean updateVisibility() {
-        if (this.category == CustomRegisters.tab || this.category == CustomRegisters.tabItems) { visible = true; }
+        if (category == CustomTabs.TOOLS || category == CustomTabs.ITEMS) { visible = true; }
         else { visible = super.updateVisibility(); }
         return visible;
     }

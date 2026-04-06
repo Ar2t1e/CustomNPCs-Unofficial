@@ -4,10 +4,11 @@ import java.util.HashSet;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IPlayer;
@@ -17,148 +18,33 @@ import noppes.npcs.entity.EntityNPCInterface;
 
 public class Faction implements IFaction {
 
-	public HashSet<Integer> attackFactions = new HashSet<>();
-	public HashSet<Integer> frendFactions = new HashSet<>();
+	public String name;
+	public int color = 0xFFFFFF;
+	public final HashSet<Integer> attackFactions = new HashSet<>();
 	public int id = -1;
-	public int color = Integer.parseInt("FF00", 16);
-	public int defaultPoints = 1000;
-	public int friendlyPoints = 1500;
 	public int neutralPoints = 500;
-	public boolean getsAttacked = false;
+	public int friendlyPoints = 1500;
+	public int defaultPoints = 1000;
 	public boolean hideFaction = false;
-	public String name = "";
-	public String description = "";
-	public ResourceLocation flag = new ResourceLocation(CustomNpcs.MODID + ":textures/cloak/mojang.png");
+	public boolean getsAttacked = false;
 	public FactionOptions factions = new FactionOptions();
 
-	public Faction() {
-	}
+	// New from Unofficial (BetaZavr)
+	public HashSet<Integer> frendFactions = new HashSet<>();
+	public Component description = Component.empty();
+	public ResourceLocation flag = new ResourceLocation(CustomNpcs.MODID + ":textures/cloak/mojang.png");
 
-	public Faction(int id, String name, int color, int defaultPoints) {
-		this();
-		this.id = id;
-		this.name = name;
-		this.color = color;
-		this.defaultPoints = defaultPoints;
-	}
+	public Faction() { }
 
-	@Override
-	public void addHostile(int factionId) {
-		if (attackFactions.contains(factionId)) {
-			throw new CustomNPCsException("Faction " + factionId + " is already hostile to " + factionId);
-		}
-		attackFactions.add(factionId);
-	}
-
-	@Override
-	public boolean getAttackedByMobs() {
-		return getsAttacked;
-	}
-
-	@Override
-	public int getColor() {
-		return color;
-	}
-
-	@Override
-	public int getDefaultPoints() {
-		return defaultPoints;
-	}
-
-	@Override
-	public String getDescription() {
-		return description;
-	}
-
-	@Override
-	public String getFlag() {
-		return flag == null ? "" : flag.toString();
-	}
-
-	@Override
-	public int[] getHostileList() {
-		int[] a = new int[attackFactions.size()];
-		int i = 0;
-		for (Integer val : attackFactions) {
-			a[i++] = val;
-		}
-		return a;
-	}
-
-	@Override
-	public int getId() {
-		return id;
-	}
-
-	@Override
-	public boolean getIsHidden() {
-		return hideFaction;
-	}
-
-	@Override
-	public String getName() {
-		return new TextComponentTranslation(name).getFormattedText();
-	}
-
-	@Override
-	public boolean hasHostile(int factionId) {
-		return attackFactions.contains(factionId);
-	}
-
-	@Override
-	public boolean hostileToFaction(int factionId) {
-		return attackFactions.contains(factionId);
-	}
-
-	@Override
-	public boolean hostileToNpc(ICustomNpc<?> npc) {
-		return attackFactions.contains(npc.getFaction().getId());
-	}
-
-	public boolean isAggressiveToNpc(EntityNPCInterface entity) {
-		return attackFactions.contains(entity.faction.id) || entity.advanced.attackFactions.contains(id);
-	}
-
-	public boolean isAggressiveToPlayer(EntityPlayer player) {
-		if (player.capabilities.isCreativeMode) {
-			return false;
-		}
-		PlayerFactionData data = PlayerData.get(player).factionData;
-		return data.getFactionPoints(player, id) < neutralPoints;
-	}
-
-	public boolean isFriendlyToPlayer(EntityPlayer player) {
-		PlayerFactionData data = PlayerData.get(player).factionData;
-		return data.getFactionPoints(player, id) >= friendlyPoints;
-	}
-
-	public boolean isNeutralToPlayer(EntityPlayer player) {
-		PlayerFactionData data = PlayerData.get(player).factionData;
-		int points = data.getFactionPoints(player, id);
-		return points >= neutralPoints && points < friendlyPoints;
-	}
-
-	@Override
-	public int playerStatus(IPlayer<?> player) {
-		PlayerFactionData data = PlayerData.get(player.getMCEntity()).factionData;
-		int points = data.getFactionPoints(player.getMCEntity(), id);
-		if (points >= friendlyPoints) {
-			return 1;
-		}
-		if (points < neutralPoints) {
-			return -1;
-		}
-		return 0;
+	public Faction(int idIn, String nameIn, int colorIn, int defaultPointsIn) {
+		id = idIn;
+		name = nameIn;
+		color = colorIn;
+		defaultPoints = defaultPointsIn;
 	}
 
 	public void load(NBTTagCompound compound) {
 		name = compound.getString("Name");
-		if (compound.hasKey("Flag", 8)) {
-			setFlag(compound.getString("Flag"));
-		}
-		if (compound.hasKey("Description", 8)) {
-			description = compound.getString("Description");
-		}
 		color = compound.getInteger("Color");
 		id = compound.getInteger("Slot");
 		neutralPoints = compound.getInteger("NeutralPoints");
@@ -166,56 +52,22 @@ public class Faction implements IFaction {
 		defaultPoints = compound.getInteger("DefaultPoints");
 		hideFaction = compound.getBoolean("HideFaction");
 		getsAttacked = compound.getBoolean("GetsAttacked");
-		attackFactions = NBTTags.getIntegerSet(compound.getTagList("AttackFactions", 10));
-		frendFactions = NBTTags.getIntegerSet(compound.getTagList("FrendFactions", 10));
 		factions.load(compound.getCompoundTag("FactionPoints"));
+		attackFactions.clear();
+		attackFactions.addAll(NBTTags.getIntegerSet(compound.getTagList("AttackFactions", 10)));
+
+		// New from Unofficial (BetaZavr)
+		frendFactions.addAll(NBTTags.getIntegerSet(compound.getTagList("FrendFactions", 10)));
+		if (compound.hasKey("Flag", 8)) { setFlag(compound.getString("Flag")); }
+		if (compound.hasKey("Description", 8)) { description = Component.Serializer.fromJson(compound.getString("Description")); }
 	}
 
 	@Override
-	public void removeHostile(int factionId) {
-		attackFactions.remove(factionId);
-	}
-
-	@Override
-	public void save() {
-		FactionController.instance.saveFaction(this);
-	}
-
-	@Override
-	public void setAttackedByMobs(boolean bo) {
-		getsAttacked = bo;
-	}
-
-	@Override
-	public void setDefaultPoints(int points) {
-		defaultPoints = points;
-	}
-
-	@Override
-	public void setDescription(String description) {
-		if (description == null) { description = ""; }
-		this.description = description;
-	}
-
-	@Override
-	public void setFlag(String flagPath) {
-		if (flagPath == null || flagPath.isEmpty()) {
-			flag = null;
-			return;
-		}
-		flag = new ResourceLocation(flagPath);
-	}
-
-	@Override
-	public void setIsHidden(boolean bo) {
-		hideFaction = bo;
-	}
+	public void save() { FactionController.instance.saveFaction(this); }
 
 	public NBTTagCompound save(NBTTagCompound compound) {
 		compound.setInteger("Slot", id);
 		compound.setString("Name", name);
-		compound.setString("Flag", flag != null ? flag.toString() : "");
-		compound.setString("Description", description);
 		compound.setInteger("Color", color);
 		compound.setInteger("NeutralPoints", neutralPoints);
 		compound.setInteger("FriendlyPoints", friendlyPoints);
@@ -223,9 +75,137 @@ public class Faction implements IFaction {
 		compound.setBoolean("HideFaction", hideFaction);
 		compound.setBoolean("GetsAttacked", getsAttacked);
 		compound.setTag("AttackFactions", NBTTags.nbtIntegerCollection(attackFactions));
-		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(frendFactions));
 		compound.setTag("FactionPoints", factions.save(new NBTTagCompound()));
+
+		// New from Unofficial (BetaZavr)
+		compound.setString("Flag", flag != null ? flag.toString() : "");
+		compound.setString("Description", Component.Serializer.toJson(description));
+		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(frendFactions));
 		return compound;
+	}
+
+	public boolean isFriendlyToPlayer(EntityPlayer player) {
+		PlayerFactionData data = PlayerData.get(player).factionData;
+		if (data.getFactionPoints(player, id) < friendlyPoints) { return false; }
+		FactionController fData = FactionController.instance;
+		for (int idIn : attackFactions) {
+			Faction faction = fData.factions.get(idIn);
+			if (faction != null && data.getFactionPoints(player, idIn) < faction.neutralPoints) { return false; }
+		}
+		return true;
+	}
+
+	public boolean isAggressiveToPlayer(EntityPlayer player) {
+		if (player.isCreative()) { return false; }
+		PlayerFactionData data = PlayerData.get(player).factionData;
+		if (data.getFactionPoints(player, id) < neutralPoints) { return true; }
+		FactionController fData = FactionController.instance;
+		for (int idIn : attackFactions) {
+			Faction faction = fData.factions.get(idIn);
+			if (faction != null && data.getFactionPoints(player, idIn) < faction.neutralPoints) { return true; }
+		}
+		return false;
+	}
+
+	public boolean isNeutralToPlayer(EntityPlayer player) {
+		PlayerFactionData data = PlayerData.get(player).factionData;
+		int points = data.getFactionPoints(player, id);
+		if (points < neutralPoints || points >= friendlyPoints) { return false; }
+		FactionController fData = FactionController.instance;
+		for (int idIn : attackFactions) {
+			Faction faction = fData.factions.get(idIn);
+			if (faction != null && data.getFactionPoints(player, idIn) < faction.neutralPoints) { return false; }
+		}
+		return true;
+	}
+
+	public boolean isAggressiveToNpc(EntityNPCInterface npc) {
+		return attackFactions.contains(npc.faction.id) || npc.advanced.attackFactions.contains(id);
+	}
+
+	@Override
+	public int getId() { return id; }
+
+	@Override
+	public String getName() { return name; }
+
+	@Override
+	public int getDefaultPoints() { return defaultPoints; }
+
+	@Override
+	public void setDefaultPoints(int points) { defaultPoints = points; }
+
+	@Override
+	public int getColor() { return color; }
+
+	@Override
+	public int playerStatus(IPlayer<?> player) {
+		return player == null ? -1 : playerStatus(player.getMCEntity());
+	}
+
+	public int playerStatus(EntityPlayer player) {
+		return player == null || isAggressiveToPlayer(player) ? -1 : isFriendlyToPlayer(player) ? 1 : 0;
+	}
+
+	@Override
+	public boolean hostileToNpc(ICustomNpc<?> npc) { return npc != null && attackFactions.contains(npc.getFaction().getId()); }
+
+	@Override
+	public int[] getHostileList() {
+		int[] a = new int[attackFactions.size()];
+		int i = 0;
+		for (Integer val : attackFactions) { a[i++] = val; }
+		return a;
+	}
+
+	@Override
+	public void addHostile(int factionId) {
+		if (attackFactions.contains(factionId)) { throw new CustomNPCsException("Faction " + factionId + " is already hostile to " + id); }
+		frendFactions.remove(factionId);
+		attackFactions.add(factionId);
+	}
+
+	@Override
+	public void removeHostile(int factionId) { attackFactions.remove(factionId); }
+
+	@Override
+	public boolean hasHostile(int factionId) { return attackFactions.contains(factionId); }
+
+	@Override
+	public boolean getIsHidden() { return hideFaction; }
+
+	@Override
+	public void setIsHidden(boolean bo) { hideFaction = bo; }
+
+	@Override
+	public boolean getAttackedByMobs() { return getsAttacked; }
+
+	@Override
+	public void setAttackedByMobs(boolean bo) { getsAttacked = bo; }
+
+	// New from Unofficial (BetaZavr)
+	@Override
+	public String getDescription() { return description.getString(); }
+
+	@Override
+	public void setDescription(String descriptionIn) {
+		if (descriptionIn == null || descriptionIn.isEmpty()) { description = Component.empty(); }
+		else { description = Component.translatable(descriptionIn); }
+	}
+
+	@Override
+	public String getFlag() { return flag == null ? "" : flag.toString(); }
+
+	@Override
+	public boolean hostileToFaction(int factionId) { return attackFactions.contains(factionId); }
+
+	@Override
+	public void setFlag(String flagPath) {
+		if (flagPath == null || flagPath.isEmpty()) {
+			flag = null;
+			return;
+		}
+		flag = new ResourceLocation(NoppesUtilServer.validLocation(flagPath));
 	}
 
 }

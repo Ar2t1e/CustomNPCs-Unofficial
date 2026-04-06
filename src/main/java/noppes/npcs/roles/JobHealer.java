@@ -13,7 +13,7 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.EnumHand;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.constants.JobType;
@@ -33,83 +33,6 @@ public class JobHealer extends JobInterface implements IJobHealer {
 	public JobHealer(EntityNPCInterface npc) {
 		super(npc);
 		type = JobType.HEALER;
-	}
-
-	@Override
-	public boolean isWorking() {
-		return !affected.isEmpty() && npc.isAttacking();
-	}
-
-	@Override
-	public boolean aiContinueExecute() { return false; }
-
-	@Override
-	public boolean aiShouldExecute() {
-		boolean canAdd = false;
-		affected.clear();
-		for (Integer id : effects.keySet()) {
-			if (npc.totalTicksAlive % effects.get(id).speed < 3) {
-				canAdd = true;
-				int r = effects.get(id).range;
-				List<EntityLivingBase> list = new ArrayList<>();
-				try {
-					list = npc.world.getEntitiesWithinAABB(EntityLivingBase.class, npc.getEntityBoundingBox().grow(r, r / 2.0d, r));
-				}
-				catch (Exception ignored) { }
-				affected.put(id, list);
-				if (!effects.get(id).onHimself) {
-					affected.get(id).remove(npc);
-				}
-			}
-		}
-		return canAdd;
-	}
-
-	@Override
-	public void aiStartExecuting() {
-		boolean activated = false;
-		for (Integer id : affected.keySet()) {
-			Potion potion = Potion.getPotionById(id);
-			if (potion == null) { continue; }
-			HealerSettings hs = effects.get(id);
-			if (!hs.isMassive) {
-				if (affected.get(id).isEmpty()) { continue; }
-				EntityLivingBase entity = null;
-				try {
-					List<EntityLivingBase> filteredEntities = affected.get(id).stream()
-							.filter(e -> e.getActivePotionEffects().stream().noneMatch(effect -> effect.getPotion() == potion))
-							.collect(Collectors.toList());
-					if (!filteredEntities.isEmpty()) { entity = filteredEntities.get(rnd.nextInt(filteredEntities.size())); }
-				} catch (Exception e) { LogWriter.error(e); }
-				if (entity != null) {
-					boolean isEnemy = isEnemy(entity);
-					if (hs.type == 2 || (hs.type == 0 && !isEnemy) || (hs.type == 1 && isEnemy)) {
-						entity.addPotionEffect(new PotionEffect(potion, hs.time, hs.amplifier));
-						activated = true;
-						if (entity != npc && (!CustomNpcs.ShowCustomAnimation || !npc.animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.INIT, AnimationKind.INTERACT, AnimationKind.DIES))) {
-							npc.getLookHelper().setLookPositionWithEntity(entity, 10.0f, npc.getVerticalFaceSpeed());
-						}
-					}
-				}
-			} else {
-				for (EntityLivingBase entity : affected.get(id)) {
-					if ((entity instanceof EntityMob || entity instanceof EntityAnimal) && !hs.possibleOnMobs) { continue; }
-					boolean isEnemy = isEnemy(entity);
-					if (hs.type == 2 || (hs.type == 0 && !isEnemy) || (hs.type == 1 && isEnemy)) {
-						entity.addPotionEffect(new PotionEffect(potion, hs.time, hs.amplifier));
-						activated = true;
-					}
-				}
-			}
-		}
-		affected.clear();
-		if (activated) {
-			if (!npc.getHeldItemMainhand().isEmpty()) {
-				npc.swingArm(EnumHand.MAIN_HAND);
-			} else {
-				npc.swingArm(EnumHand.OFF_HAND);
-			}
-		}
 	}
 
 	@Override
@@ -138,9 +61,81 @@ public class JobHealer extends JobInterface implements IJobHealer {
 	public NBTTagCompound save(NBTTagCompound compound) {
 		super.save(compound);
 		NBTTagList list = new NBTTagList();
-		for (HealerSettings hs : effects.values()) { list.appendTag(hs.writeNBT()); }
+		for (HealerSettings hs : effects.values()) { list.appendTag(hs.save()); }
 		compound.setTag("HealerData", list);
 		return compound;
+	}
+
+	@Override
+	public boolean isWorking() { return !affected.isEmpty() && npc != null && npc.isAttacking(); }
+
+	@Override
+	public boolean aiContinueExecute() { return false; }
+
+	@Override
+	public boolean aiShouldExecute() {
+		boolean shouldExecute = false;
+		affected.clear();
+		for (Integer id : effects.keySet()) {
+			if (npc != null && npc.totalTicksAlive % effects.get(id).speed < 3) {
+				shouldExecute = true;
+				int r = effects.get(id).range;
+				List<EntityLivingBase> list = new ArrayList<>();
+				try {
+					list = npc.world.getEntitiesWithinAABB(EntityLivingBase.class, npc.getEntityBoundingBox().grow(r, r / 2.0d, r));
+				}
+				catch (Exception ignored) { }
+				affected.put(id, list);
+				if (!effects.get(id).onHimself) {
+					affected.get(id).remove(npc);
+				}
+			}
+		}
+		return shouldExecute;
+	}
+
+	@Override
+	public void aiStartExecuting() {
+		boolean activated = false;
+		for (Integer id : affected.keySet()) {
+			Potion potion = Potion.getPotionById(id);
+			if (potion == null) { continue; }
+			HealerSettings hs = effects.get(id);
+			if (!hs.isMassive) {
+				if (affected.get(id).isEmpty()) { continue; }
+				EntityLivingBase entity = null;
+				try {
+					List<EntityLivingBase> filteredEntities = affected.get(id).stream()
+							.filter(e -> e.getActivePotionEffects().stream().noneMatch(effect -> effect.getPotion() == potion))
+							.collect(Collectors.toList());
+					if (!filteredEntities.isEmpty()) { entity = filteredEntities.get(rnd.nextInt(filteredEntities.size())); }
+				} catch (Exception e) { LogWriter.error(e); }
+				if (entity != null) {
+					boolean isEnemy = isEnemy(entity);
+					if (hs.type == 2 || (hs.type == 0 && !isEnemy) || (hs.type == 1 && isEnemy)) {
+						entity.addPotionEffect(new PotionEffect(potion, hs.time, hs.amplifier));
+						activated = true;
+						if (npc != null && entity != npc && (!CustomNpcs.ShowCustomAnimation || !npc.animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.INIT, AnimationKind.INTERACT, AnimationKind.DIES))) {
+							npc.getLookHelper().setLookPositionWithEntity(entity, 10.0f, npc.getVerticalFaceSpeed());
+						}
+					}
+				}
+			} else {
+				for (EntityLivingBase entity : affected.get(id)) {
+					if ((entity instanceof EntityMob || entity instanceof EntityAnimal) && !hs.possibleOnMobs) { continue; }
+					boolean isEnemy = isEnemy(entity);
+					if (hs.type == 2 || (hs.type == 0 && !isEnemy) || (hs.type == 1 && isEnemy)) {
+						entity.addPotionEffect(new PotionEffect(potion, hs.time, hs.amplifier));
+						activated = true;
+					}
+				}
+			}
+		}
+		affected.clear();
+		if (npc != null && activated) {
+			if (!npc.getHeldItemMainhand().isEmpty()) { npc.swingArm(EnumHand.MAIN_HAND); }
+			else { npc.swingArm(EnumHand.OFF_HAND); }
+		}
 	}
 
 	// New from Unofficial (BetaZavr)

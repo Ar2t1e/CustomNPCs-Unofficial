@@ -18,19 +18,16 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcsPermissions;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileRedstoneBlock;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
 import javax.annotation.Nonnull;
 
-public class BlockNpcRedstone
-extends BlockInterface
-implements IPermission {
+public class BlockNpcRedstone extends BlockInterface {
 
 	public static PropertyBool ACTIVE = PropertyBool.create("active");
 
@@ -39,7 +36,7 @@ implements IPermission {
 		this.setName("npcredstoneblock");
 		this.setHardness(50.0f);
 		this.setResistance(2000.0f);
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	public boolean canProvidePower(@Nonnull IBlockState state) {
@@ -83,11 +80,6 @@ implements IPermission {
 		return state.getValue(BlockNpcRedstone.ACTIVE) ? 15 : 0;
 	}
 
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.SaveTileEntity;
-	}
-
 	public boolean isFullCube(@Nonnull IBlockState state) {
 		return false;
 	}
@@ -99,7 +91,7 @@ implements IPermission {
 	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (par1World.isRemote) { return false; }
 		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (currentItem.getItem() == CustomRegisters.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
+		if (currentItem.getItem() == CustomItems.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
 			NoppesUtilServer.sendOpenGui(player, EnumGuiType.RedstoneBlock, null, pos.getX(), pos.getY(), pos.getZ());
 			return true;
 		}

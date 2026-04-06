@@ -3,9 +3,8 @@ package noppes.npcs.controllers.data;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.Server;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSync;
 import noppes.npcs.util.ValueUtil;
 
 public class DialogGuiSettings {
@@ -42,6 +41,7 @@ public class DialogGuiSettings {
 
     public ResourceLocation backTexture;
     public ResourceLocation windowTexture;
+
 
     public void load(NBTTagCompound compound) {
         showNPC = compound.getBoolean("ShowNPC");
@@ -187,7 +187,7 @@ public class DialogGuiSettings {
     }
 
     public void update() {
-        if (CustomNpcs.Server != null) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.SYNC_UPDATE, EnumSync.DialogGuiSettings, save()); }
+        if (CustomNpcs.Server != null) { Packets.sendAll(new PacketSync(10, save(), false)); }
     }
 
     public ResourceLocation getBackgroundTexture() { return backTexture; }

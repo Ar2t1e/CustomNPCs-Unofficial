@@ -14,7 +14,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import noppes.npcs.client.util.aw.CustomSkinModelRenderHelper;
 import noppes.npcs.constants.EnumParts;

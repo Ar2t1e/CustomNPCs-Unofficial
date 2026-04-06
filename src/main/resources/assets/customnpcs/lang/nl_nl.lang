@@ -112,17 +112,17 @@ ai.swim=Kan zwemmen
 ai.tacticalvariant=Optie van gevechtstactieken
 ai.wandering=Dwaalt
 
-aitactics.commander=Commander
-aitactics.default=Standaard
-aitactics.dodge=Dodge
-aitactics.hitandrun=Hit en rennen
-aitactics.hitnrun=Hit en rennen
-aitactics.none=Nee
-aitactics.orbit=Omringen
-aitactics.rush=Aanval
-aitactics.stagger=Stagger
-aitactics.stalk=sluipen
-aitactics.surround=Omringen
+ai.tactic.commander=Commander
+ai.tactic.default=Standaard
+ai.tactic.dodge=Dodge
+ai.tactic.hit_and_run=Hit en rennen
+ai.tactic.hitnrun=Hit en rennen
+ai.tactic.none=Nee
+ai.tactic.orbit=Omringen
+ai.tactic.rush=Aanval
+ai.tactic.stagger=Stagger
+ai.tactic.stalk=sluipen
+ai.tactic.surround=Omringen
 
 animation.add.part.hover.location=Locatie van het bronbestandstype "§9.png§r" als textuur die voor het model wordt gebruikt
 animation.add.part.hover.name=Naam van lichaamsdeel voor het gemak<br>%s
@@ -1739,7 +1739,7 @@ message.dimensions.tp.isdelete=§2 Aangepaste NPC's §6: Je werd vervoerd vanuit
 message.mod.error=§sUps. Something has expressed a desire to filibuster. Contact the Developer with this problem: %s
 message.pather.add=Toegevoegde positie x :%s j :%s z :%s voor NPC "%s "
 message.pather.home=Gewijzigde thuispositie x :%s j :%s z :%s voor NPC "%s "
-message.pather.reg=Geregistreerd "%s " voor uw %s
+message.pather.register=Geregistreerd "%s " voor uw %s
 message.pather.warn.add=§C Preachment of§r: een nieuwe positie te ver van de vorige.
 
 minimap.set.points.1=§F [§2Customnpcs §f]: §8 Systeem bijgewerkt de functie voor mini-kaart: %s

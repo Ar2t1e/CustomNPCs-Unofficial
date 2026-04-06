@@ -1,39 +1,139 @@
 package noppes.npcs.client.gui;
 
-import noppes.npcs.client.gui.util.*;
+import net.minecraft.potion.Potion;
+import noppes.npcs.api.constants.PotionEffectType;
 import noppes.npcs.entity.data.DataRanged;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 
-public class SubGuiNpcProjectiles extends SubGuiInterface implements ITextfieldListener {
+public class SubGuiNpcProjectiles extends GuiBasic implements ITextfieldListener {
 
-	protected static final String[] potionNames = new String[] { "gui.none", "tile.fire.name", "effect.poison", "effect.hunger", "effect.weakness", "effect.moveSlowdown", "effect.confusion", "effect.blindness", "effect.wither" };
-	protected static final String[] trailNames= new String[] { "gui.none", "Smoke", "Portal", "Redstone", "Lightning", "LargeSmoke", "Magic", "Enchant" };
+	protected static final Object[] potionNames;
+	protected final Object[] trailNames = new Object[] { "gui.none", "Smoke", "Portal", "Redstone", "Lightning", "LargeSmoke", "Magic", "Enchant" };
 	protected final DataRanged stats;
 
+	static {
+		List<String> list = new ArrayList<>();
+		list.add("gui.none");
+		for(PotionEffectType ept : PotionEffectType.values()) {
+			Potion pt = PotionEffectType.getMCType(ept.get());
+			if (pt != null && pt.getRegistryName() != null) { list.add(pt.getRegistryName().toString()); }
+		}
+		list.add("block.minecraft.fire");
+		potionNames = list.toArray(new String[0]);
+	}
+
 	public SubGuiNpcProjectiles(DataRanged statsIn) {
-		super(0);
+		super();
 		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 216;
-		closeOnEsc = true;
+		imageWidth = 256;
+		imageHeight = 216;
 
 		stats = statsIn;
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
+	public void initGui() {
+		super.initGui();
+		// attack strength / arrow damage
+		addLabel(1, guiLeft + 5, guiTop + 15, "effect.minecraft.strength");
+		addTextField(1, guiLeft + 45, guiTop + 10, 50, 18, stats.getStrength())
+				.setMinMaxDefault(0, Integer.MAX_VALUE, 5)
+				.setHoverTexts("stats.hover.attack.strength");
+		// arrow knockback
+		addLabel(2, guiLeft + 110, guiTop + 15, "enchantment.minecraft.knockback");
+		addTextField(2, guiLeft + 150, guiTop + 10, 50, 18, stats.getKnockback())
+				.setMinMaxDefault(0, 3, 0)
+				.setHoverTexts("stats.hover.attack.knockback");
+		// arrow size
+		addLabel(3, guiLeft + 5, guiTop + 45, "stats.size");
+		addTextField(3, guiLeft + 45, guiTop + 40, 50, 18, stats.getSize())
+				.setMinMaxDefault(5, 20, 10)
+				.setHoverTexts("stats.hover.bullet.size");
+		addLabel(4, guiLeft + 5, guiTop + 75, "stats.speed");
+		addTextField(4, guiLeft + 45, guiTop + 70, 50, 18, stats.getSpeed())
+				.setMinMaxDefault(1, 50, 10)
+				.setHoverTexts("stats.hover.bullet.speed");
+		// hasgravity
+		addLabel(5, guiLeft + 5, guiTop + 105, "stats.hasgravity");
+		addYesNo(0, guiLeft + 60, guiTop + 100, stats.getHasGravity()).setSize(60, 20)
+				.setHoverTexts("stats.hover.gravity");
+		if (!stats.getHasGravity()) {
+			addButton(1, guiLeft + 140, guiTop + 100, false, stats.getAccelerate() ? 1 : 0, "gui.constant", "gui.accelerate")
+					.setSize(60, 20)
+					.setHoverTexts("stats.hover.accelerating");
+		}
+		// explosive
+		addLabel(6, guiLeft + 5, guiTop + 135, "stats.explosive");
+		addButton(3, guiLeft + 60, guiTop + 130, false, stats.getExplodeSize() % 4,
+				"gui.none", "gui.small", "gui.medium", "gui.large")
+				.setSize(60, 20)
+				.setHoverTexts("stats.hover.explosion");
+		int effect = stats.getEffectType();
+		// ranged effect
+		addLabel(7, guiLeft + 5, guiTop + 165, "stats.rangedeffect");
+		addButton(4, guiLeft + 40, guiTop + 160, true, effect, potionNames)
+				.setSize(100, 20)
+				.setHoverTexts("stats.hover.attack.effects");
+		if (stats.getEffectType() != 0) {
+			addTextField(5, guiLeft + 140, guiTop + 160, 60, 18, stats.getEffectTime())
+					.setMinMaxDefault(1, 99999, 5)
+					.setHoverTexts("stats.hover.effect.time");
+			if (stats.getEffectType() != 1) {
+				addButton(10, guiLeft + 210, guiTop + 160, false,
+						stats.getEffectStrength() % 2, "stats.regular", "stats.amplified")
+						.setSize(40, 20)
+						.setHoverTexts("stats.hover.effect.power");
+			}
+		}
+		// trail
+		addLabel(8, guiLeft + 5, guiTop + 195, "stats.trail");
+		addButton(5, guiLeft + 60, guiTop + 190, false, stats.getParticle(), trailNames)
+				.setSize(60, 20)
+				.setHoverTexts("stats.hover.particle");
+		addButton(7, guiLeft + 220, guiTop + 10, false, stats.getRender3D() ? 1 : 0, "2D", "3D")
+				.setSize(30, 20)
+				.setHoverTexts("stats.hover.bullet.3d");
+		if (stats.getRender3D()) {
+			// spin
+			addLabel(10, guiLeft + 160, guiTop + 45, "stats.spin");
+			addYesNo(8, guiLeft + 220, guiTop + 40, stats.getSpins())
+					.setSize(30, 20)
+					.setHoverTexts("stats.hover.bullet.rotate");
+			// stick
+			addLabel(11, guiLeft + 160, guiTop + 75, "stats.stick");
+			addYesNo(9, guiLeft + 220, guiTop + 70, stats.getSticks())
+					.setSize(30, 20)
+					.setHoverTexts("stats.hover.bullet.cling");
+		}
+		// glows
+		addButton(6, guiLeft + 140, guiTop + 190, false, stats.getGlows() ? 1 : 0, "stats.noglow", "stats.glows")
+				.setSize(60, 20)
+				.setHoverTexts("stats.hover.in.fire");
+		addButton(66, guiLeft + 210, guiTop + 190, "gui.done")
+				.setSize(40, 20)
+				.setHoverTexts("hover.back");
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 0: {
 				stats.setHasGravity(button.getValue() == 1);
 				initGui();
 				break;
 			}
 			case 1: stats.setAccelerate(button.getValue() == 1); break;
-			case 3: stats.setExplodeSize(button.getValue()); break;
+			case 2: break;
+			case 3: stats.setExplodeSize(button.getValue());break;
 			case 4: {
-				stats.setEffect(button.getValue(), stats.getEffectStrength(), stats.getEffectTime());
+				int effect = button.getValue();
+				stats.setEffect(effect, stats.getEffectStrength(), stats.getEffectTime());
 				initGui();
 				break;
 			}
@@ -47,90 +147,18 @@ public class SubGuiNpcProjectiles extends SubGuiInterface implements ITextfieldL
 			case 8: stats.setSpins(button.getValue() == 1); break;
 			case 9: stats.setSticks(button.getValue() == 1); break;
 			case 10: stats.setEffect(stats.getEffectType(), button.getValue(), stats.getEffectTime()); break;
-			case 66: onClosed(); break;
+			case 66: onClose(); break;
 		}
 	}
 
 	@Override
-	public void initGui() {
-		super.initGui();
-		// attack strength / arrow damage
-		addLabel(new GuiNpcLabel(1, "enchantment.arrowDamage", guiLeft + 5, guiTop + 15));
-		addTextField(new GuiNpcTextField(1, this, guiLeft + 45, guiTop + 10, 50, 18, stats.getStrength() + "")
-				.setMinMaxDefault(0, Integer.MAX_VALUE, 5)
-				.setHoverText("stats.hover.attack.strength"));
-		// arrow knockback
-		addLabel(new GuiNpcLabel(2, "enchantment.arrowKnockback", guiLeft + 110, guiTop + 15));
-		addTextField(new GuiNpcTextField(2, this, guiLeft + 150, guiTop + 10, 50, 18, stats.getKnockback() + "")
-				.setMinMaxDefault(0, 3, 0)
-				.setHoverText("stats.hover.attack.knockback"));
-		// arrow size
-		addLabel(new GuiNpcLabel(3, "stats.size", guiLeft + 5, guiTop + 45));
-		addTextField(new GuiNpcTextField(3, this, guiLeft + 45, guiTop + 40, 50, 18, stats.getSize() + "")
-				.setMinMaxDefault(2, 20, 10)
-				.setHoverText("stats.hover.bullet.size"));
-		// arrow speed
-		addLabel(new GuiNpcLabel(4, "stats.speed", guiLeft + 5, guiTop + 75));
-		addTextField(new GuiNpcTextField(4, this, guiLeft + 45, guiTop + 70, 50, 18, stats.getSpeed() + "")
-				.setMinMaxDefault(1, 50, 10)
-				.setHoverText("stats.hover.bullet.speed"));
-		// hasgravity
-		addLabel(new GuiNpcLabel(5, "stats.hasgravity", guiLeft + 5, guiTop + 105));
-		addButton(new GuiNpcButton(0, guiLeft + 60, guiTop + 100, 60, 20, new String[] { "gui.no", "gui.yes" }, (stats.getHasGravity() ? 1 : 0))
-				.setHoverText("stats.hover.gravity"));
-		if (!stats.getHasGravity()) {
-			addButton(new GuiNpcButton(1, guiLeft + 140, guiTop + 100, 60, 20, new String[] { "gui.constant", "gui.accelerate" }, (stats.getAccelerate() ? 1 : 0))
-					.setHoverText("stats.hover.accelerating"));
-		}
-		// explosive
-		addLabel(new GuiNpcLabel(6, "stats.explosive", guiLeft + 5, guiTop + 135));
-		addButton(new GuiNpcButton(3, guiLeft + 60, guiTop + 130, 60, 20, new String[] { "gui.none", "gui.small", "gui.medium", "gui.large" }, stats.getExplodeSize() % 4)
-				.setHoverText("stats.hover.explosion"));
-		// ranged effect
-		addLabel(new GuiNpcLabel(7, "stats.rangedeffect", guiLeft + 5, guiTop + 165));
-		addButton(new GuiNpcButton(4, guiLeft + 60, guiTop + 160, 60, 20, potionNames, stats.getEffectType())
-				.setHoverText("stats.hover.attack.effects"));
-		if (stats.getEffectType() != 0) {
-			addTextField(new GuiNpcTextField(5, this, guiLeft + 140, guiTop + 160, 60, 18, stats.getEffectTime() + "")
-					.setMinMaxDefault(1, 99999, 5)
-					.setHoverText("stats.hover.effect.time"));
-			if (stats.getEffectType() != 1) {
-				addButton(new GuiNpcButton(10, guiLeft + 210, guiTop + 160, 40, 20, new String[] { "stats.regular", "stats.amplified" }, stats.getEffectStrength() % 2)
-						.setHoverText("stats.hover.effect.power"));
-			}
-		}
-		// trail
-		addLabel(new GuiNpcLabel(8, "stats.trail", guiLeft + 5, guiTop + 195));
-		addButton(new GuiNpcButton(5, guiLeft + 60, guiTop + 190, 60, 20, trailNames, stats.getParticle())
-				.setHoverText("stats.hover.particle"));
-		addButton(new GuiNpcButton(7, guiLeft + 220, guiTop + 10, 30, 20, new String[] { "2D", "3D" }, (stats.getRender3D() ? 1 : 0))
-				.setHoverText("stats.hover.bullet.3d"));
-		if (stats.getRender3D()) {
-			// spin
-			addLabel(new GuiNpcLabel(10, "stats.spin", guiLeft + 160, guiTop + 45));
-			addButton(new GuiNpcButton(8, guiLeft + 220, guiTop + 40, 30, 20, new String[] { "gui.no", "gui.yes" }, (stats.getSpins() ? 1 : 0))
-					.setHoverText("stats.hover.bullet.rotate"));
-			// stick
-			addLabel(new GuiNpcLabel(11, "stats.stick", guiLeft + 160, guiTop + 75));
-			addButton(new GuiNpcButton(9, guiLeft + 220, guiTop + 70, 30, 20, new String[] { "gui.no", "gui.yes" }, (stats.getSticks() ? 1 : 0))
-					.setHoverText("stats.hover.bullet.cling"));
-		}
-		// glows
-		addButton(new GuiNpcButton(6, guiLeft + 140, guiTop + 190, 60, 20, new String[] { "stats.noglow", "stats.glows" }, (stats.getGlows() ? 1 : 0))
-				.setHoverText("stats.hover.in.fire"));
-		// exit
-		addButton(new GuiNpcButton(66, guiLeft + 210, guiTop + 190, 40, 20, "gui.done")
-				.setHoverText("hover.back"));
-	}
-
-	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		switch (textfield.getID()) {
-			case 1: stats.setStrength(textfield.getInteger()); break;
-			case 2: stats.setKnockback(textfield.getInteger()); break;
-			case 3: stats.setSize(textfield.getInteger()); break;
-			case 4: stats.setSpeed(textfield.getInteger()); break;
-			case 5: stats.setEffect(stats.getEffectType(), stats.getEffectStrength(), textfield.getInteger()); break;
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
+			case 1: stats.setStrength(textField.getInteger()); break;
+			case 2: stats.setKnockback(textField.getInteger()); break;
+			case 3: stats.setSize(textField.getInteger()); break;
+			case 4: stats.setSpeed(textField.getInteger()); break;
+			case 5: stats.setEffect(stats.getEffectType(), stats.getEffectStrength(), textField.getInteger()); break;
 		}
 	}
 

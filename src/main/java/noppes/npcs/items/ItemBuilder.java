@@ -20,33 +20,25 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.Server;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.constants.EnumPlayerPacket;
-import noppes.npcs.constants.EnumSync;
 import noppes.npcs.controllers.SyncController;
 import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSyncUpdate;
+import noppes.npcs.packets.server.SPacketGetBuildData;
 import noppes.npcs.util.BuilderData;
-import noppes.npcs.util.IPermission;
 
-public class ItemBuilder // set schematics
-extends Item
-implements IPermission, ISpecBuilder {
-	
-	private final EnumGuiType guiType = EnumGuiType.BuilderSetting;
-	
+public class ItemBuilder extends Item implements ISpecBuilder { // set schematics
+
 	public ItemBuilder() {
-		this.setRegistryName(CustomNpcs.MODID, "npcbuilder");
-		this.setUnlocalizedName("npcbuilder");
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
-		this.setHasSubtypes(true);
+		setRegistryName(CustomNpcs.MODID, "npcbuilder");
+		setUnlocalizedName("npcbuilder");
+		maxStackSize = 1;
+		setCreativeTab(CustomTabs.TOOLS);
+		setHasSubtypes(true);
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -64,14 +56,9 @@ implements IPermission, ISpecBuilder {
 		} else {
 			list.add(new TextComponentTranslation("info.item.builder.main.2").getFormattedText());
 			if (stack.hasTagCompound() && stack.getTagCompound() != null  && stack.getTagCompound().hasKey("ID", 3) && stack.getTagCompound().hasKey("BuilderType", 3)) {
-				NoppesUtilPlayer.sendDataCheckDelay(EnumPlayerPacket.GetBuildData, stack, 2000, stack.getTagCompound().getInteger("ID"), stack.getTagCompound().getInteger("BuilderType"));
+				Packets.sendServerDelayed(new SPacketGetBuildData(stack.getTagCompound().getInteger("ID"), stack.getTagCompound().getInteger("BuilderType")), stack, 2000);
 			}
 		}
-	}
-	
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.BuilderSetting || e == EnumPacketServer.Gui;
 	}
 
 	@Override
@@ -80,10 +67,13 @@ implements IPermission, ISpecBuilder {
 		PlayerData data = PlayerData.get(player);
 		BuilderData builder = ItemBuilder.getBuilder(stack, player);
 		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
+			NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
+				buffer.writeInt(-1);
+				buffer.writeBlockPos(new BlockPos(-1, getType(), 0));
+			});
 			return;
 		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed <-
+		if (data.overlay.isPressedCtrl()) {
 			builder.undo();
 			return;
 		}
@@ -109,13 +99,13 @@ implements IPermission, ISpecBuilder {
 			player.sendMessage(new TextComponentTranslation("builder.err.add.block.1"));
 			return;
 		}
-		builder.inv.items.set(emp, st);
+		builder.inv.setInventorySlotContents(emp, st);
 		builder.chances.put(emp, 100);
 		player.sendMessage(new TextComponentTranslation("builder.add.block", name));
 		NBTTagCompound nbtStack = builder.getNbt();
 		stack.setTagCompound(nbtStack);
 		player.openContainer.detectAndSendChanges();
-		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.BuilderData, nbtStack);
+		Packets.send(player, new PacketSyncUpdate(builder.getID(), 7, nbtStack));
 	}
 
 	@Override
@@ -124,10 +114,13 @@ implements IPermission, ISpecBuilder {
 		PlayerData data = PlayerData.get(player);
 		BuilderData builder = ItemBuilder.getBuilder(stack, player);
 		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
-			NoppesUtilServer.sendOpenGui(player, this.guiType, null, -1, this.getType(), 0);
+			NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
+				buffer.writeInt(-1);
+				buffer.writeBlockPos(new BlockPos(-1, getType(), 0));
+			});
 			return;
 		}
-		if (data.hud.hasOrKeysPressed(29, 157)) { // Ctrl pressed ->
+		if (data.overlay.isPressedCtrl()) {
 			builder.redo();
 			return;
 		}
@@ -139,12 +132,15 @@ implements IPermission, ISpecBuilder {
 
 	public static BuilderData getBuilder(ItemStack stack, EntityPlayer player) {
 		if (stack.getItem() instanceof ISpecBuilder && stack.hasTagCompound() && stack.getTagCompound() != null && stack.getTagCompound().hasKey("ID", 3)) {
-			BuilderData builder = SyncController.dataBuilder.get(stack.getTagCompound().getInteger("ID"));
+			int id = stack.getTagCompound().getInteger("ID");
+			BuilderData builder = SyncController.dataBuilder.get(id);
 			if (builder == null) {
-				builder = new BuilderData(stack.getTagCompound().getInteger("ID"), ((ISpecBuilder) stack.getItem()).getType());
+				builder = new BuilderData(id, ((ISpecBuilder) stack.getItem()).getType());
 				builder.read(stack.getTagCompound());
-				SyncController.dataBuilder.put(stack.getTagCompound().getInteger("ID"), builder);
-				if (player instanceof EntityPlayerMP) { Server.sendData((EntityPlayerMP) player, EnumPacketClient.SYNC_UPDATE, EnumSync.BuilderData, builder.getNbt()); }
+				SyncController.dataBuilder.put(id, builder);
+				if (player instanceof EntityPlayerMP) {
+					Packets.send((EntityPlayerMP) player, new PacketSyncUpdate(id , 7, builder.getNbt()));
+				}
 			}
 			return builder;
 		}
@@ -160,6 +156,6 @@ implements IPermission, ISpecBuilder {
 	}
 
 	@Override
-	public EnumGuiType getGUIType() { return this.guiType; }
+	public EnumGuiType getGUIType() { return EnumGuiType.BuilderTool; }
 
 }

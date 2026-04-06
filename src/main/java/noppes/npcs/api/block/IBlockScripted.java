@@ -2,7 +2,7 @@ package noppes.npcs.api.block;
 
 import noppes.npcs.api.ILayerModel;
 import noppes.npcs.api.ITimers;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
 @SuppressWarnings("all")
@@ -16,7 +16,7 @@ public interface IBlockScripted extends IBlock {
 
 	boolean getIsLadder();
 
-	boolean getIsPassable();
+	boolean getIsPassible();
 
 	ILayerModel[] getLayerModels();
 
@@ -60,9 +60,9 @@ public interface IBlockScripted extends IBlock {
 
 	void setHardness(@ParamName("hardness") float hardness);
 
-	void setIsLadder(@ParamName("enabled") boolean enabled);
+	void setIsLadder(@ParamName("bo") boolean bo);
 
-	void setIsPassible(@ParamName("passable") boolean passable);
+	void setIsPassible(@ParamName("bo") boolean bo);
 
 	void setLight(@ParamName("value") int value);
 
@@ -74,7 +74,7 @@ public interface IBlockScripted extends IBlock {
 
 	void setModel(@ParamName("blockName") String blockName, @ParamName("meta") int meta);
 
-	void setRedstonePower(@ParamName("power") int power);
+	void setRedstonePower(@ParamName("strength") int strength);
 
 	void setResistance(@ParamName("resistance") float resistance);
 

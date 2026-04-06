@@ -36,7 +36,7 @@ public class HealerSettings implements IHealerEffect {
 		amplifier = nbtSet.getInteger("Amplifier");
 	}
 
-	public NBTTagCompound writeNBT() {
+	public NBTTagCompound save() {
 		NBTTagCompound nbtSet = new NBTTagCompound();
 		nbtSet.setBoolean("OnHimself", onHimself);
 		nbtSet.setBoolean("PossibleOnMobs", possibleOnMobs);
@@ -50,6 +50,7 @@ public class HealerSettings implements IHealerEffect {
 		return nbtSet;
 	}
 
+	// New from Unofficial (BetaZavr)
 	@Override
 	public int getEffect() { return id; }
 

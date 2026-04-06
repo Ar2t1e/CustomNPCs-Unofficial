@@ -2,32 +2,53 @@ package noppes.npcs.client.gui.util;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.Container;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.gui.INpcMenuGui;
+import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.entity.EntityNPCInterface;
-import org.lwjgl.input.Keyboard;
 
-public abstract class GuiContainerNPCInterface2
-extends GuiContainerNPCInterface {
+public abstract class GuiContainerNPCInterface2<T extends Container>
+extends GuiContainerNPCInterface<T> implements INpcMenuGui {
 
-	protected ResourceLocation defaultBackground = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menubg.png");
-	protected EnumGuiType parentGui = EnumGuiType.MainMenuDisplay;
-	private GuiNpcMenu menu;
+	protected final GuiNpcMenu menuTabs;
+	protected final ResourceLocation defaultBackground;
+	protected EnumGuiType backGui = EnumGuiType.MainMenuDisplay;
+	protected ResourceLocation background;
 	public int menuYOffset;
 
-	public GuiContainerNPCInterface2(EntityNPCInterface npc, Container cont) {
-		this(npc, cont, -1);
+	public GuiContainerNPCInterface2(EntityNPCInterface npc, T cont, Component titleIn) { this(npc, cont, titleIn, -1); }
+
+	public GuiContainerNPCInterface2(EntityNPCInterface npc, T cont, Component titleIn, int activeMenu) {
+		super(npc, cont, titleIn);
+		background = getResource("menubg.png");
+		defaultBackground = getResource("menubg.png");
+		menuYOffset = 0;
+		xSize = 420;
+		menuTabs = new GuiNpcMenu(this, activeMenu, npc);
 	}
 
-	public GuiContainerNPCInterface2(EntityNPCInterface npc, Container cont, int activeMenu) {
-		super(npc, cont);
-		closeOnEsc = true;
-		title = "";
-		xSize = 420;
+	@Override
+	public void setBackground(String texture) { background = getResource(texture); }
 
-		menuYOffset = 0;
-		if (npc != null) { menu = new GuiNpcMenu(this, activeMenu, npc); }
+	@Override
+	public void initGui() {
+		super.initGui();
+		menuTabs.initGui(guiLeft, guiTop + menuYOffset, xSize);
+	}
+
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+		if (!hasSubGui() && menuTabs.mouseClicked(mouseX, mouseY, mouseButton)) { return true; }
+		return super.mouseClicked(mouseX, mouseY, mouseButton);
+	}
+
+	public void delete() {
+		if (npc != null) { npc.delete(); }
+		setScreen(null);
+		mc.mouseHelper.grabMouseCursor();
 	}
 
 	@Override
@@ -45,36 +66,34 @@ extends GuiContainerNPCInterface {
 	@Override
 	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
 		super.drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
-		if (menu != null) { menu.drawElements(this, mouseX, mouseY, partialTicks); }
-	}
-
-    @Override
-	public void initGui() {
-		super.initGui();
-		if (menu != null) { menu.initGui(guiLeft, guiTop + menuYOffset, xSize); }
-	}
-
-	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (!hasSubGui() && menu != null && menu.mouseCnpcsPressed(mouseX, mouseY, mouseButton)) { return true; }
-		return super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
+		menuTabs.drawElements(mouseX, mouseY, partialTicks);
 	}
 
 	// New from Unofficial (BetaZavr)
 	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		boolean hasSubGui = hasSubGui();
-		boolean bo = super.keyCnpcsPressed(typedChar, keyCode);
-		if (!hasSubGui &&
-				closeOnEsc &&
-				keyCode == Keyboard.KEY_ESCAPE &&
-				menu != null &&
-				menu.activeMenu != 1 &&
-				npc != null) {
-			CustomNpcs.proxy.openGui(npc, parentGui);
-			return true;
+	public void onClose() {
+		if (menuTabs.activeMenu != 1) {
+			menuTabs.save();
+			if (backGui != null && (npc != null || backGui != EnumGuiType.MainMenuDisplay)) {
+				NoppesUtil.requestOpenGUI(backGui);
+				return;
+			}
 		}
-		return bo;
+		super.onClose();
+		if (menuTabs.activeMenu != 1 && npc == null && backGui == EnumGuiType.MainMenuDisplay) {
+			CustomNpcs.proxy.openGui(player, EnumGuiType.NpcRemote);
+		}
+	}
+
+	@Override
+	public void setMenuData(boolean display, boolean stats, boolean ai, boolean inventory, boolean advanced) {
+		if (menuTabs != null) {
+			menuTabs.permissions[0] = display;
+			menuTabs.permissions[1] = stats;
+			menuTabs.permissions[2] = ai;
+			menuTabs.permissions[3] = inventory;
+			menuTabs.permissions[4] = advanced;
+		}
 	}
 
 }

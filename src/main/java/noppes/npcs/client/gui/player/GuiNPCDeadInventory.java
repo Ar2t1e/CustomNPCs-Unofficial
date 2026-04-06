@@ -2,48 +2,51 @@ package noppes.npcs.client.gui.player;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.Slot;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.NoppesUtilPlayer;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.containers.ContainerDead;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.Util;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDeadLootsGet;
+import noppes.npcs.packets.server.SPacketDeadLootsOpen;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
-public class GuiNPCDeadInventory extends GuiContainerNPCInterface implements ICustomScrollListener,  IScrollData {
+public class GuiNPCDeadInventory extends GuiContainerNPCInterface<ContainerDead>
+        implements ICustomScrollListener, IScrollData {
 
-    protected final ContainerDead container;
-    protected GuiCustomScroll scroll;
+    protected final ContainerDead menu;
+    protected GuiCustomScrollNop scroll;
     protected boolean wait = false;
 
-    public GuiNPCDeadInventory(EntityNPCInterface npc, ContainerDead cont) {
-        super(npc, cont);
+    public GuiNPCDeadInventory(EntityNPCInterface npc, ContainerDead container) {
+        super(npc, container, Component.empty());
         setBackground("largebg.png");
         drawDefaultBackground = false;
-        closeOnEsc = true;
-        title = "";
         xSize = 177;
-        ySize = cont.size + 152;
+        ySize = container.size + 152;
 
-        container = cont;
+        menu = container;
+        Packets.sendServer(new SPacketDeadLootsGet());
     }
 
     @Override
     public void drawDefaultBackground() {
         super.drawDefaultBackground();
-        if (npc.isEntityAlive()) { onClosed(); }
-        int size = container.size - 1;
+        if (npc.isEntityAlive()) { onClose(); }
+        int size = menu.size - 1;
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
         GlStateManager.pushMatrix();
         GlStateManager.translate(guiLeft, guiTop + 20, 0.0f);
         GlStateManager.scale(bgScale, bgScale, bgScale);
         // background
-        mc.getTextureManager().bindTexture(background);
+        minecraft.getTextureManager().bindTexture(background);
         int w = xSize - 4;
         // up
         drawTexturedModalRect(0, 0, 0, 0, w, ySize - 34);
@@ -56,7 +59,7 @@ public class GuiNPCDeadInventory extends GuiContainerNPCInterface implements ICu
         // down
         drawTexturedModalRect(0, ySize - 34, 0, sh, w, h);
         // left
-        if (player.capabilities.isCreativeMode) {
+        if (player.isCreative()) {
             GlStateManager.translate(xSize - 5, 0.0f, 0.0f);
             drawTexturedModalRect(0, 0, 84, 0, 108, ySize - 34);
             drawTexturedModalRect(0, ySize - 34, 84, sh, 108, h);
@@ -66,58 +69,51 @@ public class GuiNPCDeadInventory extends GuiContainerNPCInterface implements ICu
             drawTexturedModalRect(w, ySize - 34, 189, sh, 3, h);
         }
         // inventory slots
-        mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
+        minecraft.getTextureManager().bindTexture(GuiBasic.RESOURCE_SLOT);
         GlStateManager.translate(-1.0f, -21.0f, 0.0f);
         if (size > 0) { GlStateManager.translate(0.0f, size * 9.0f, 0.0f); }
-        for (Slot slot : container.inventorySlots) { drawTexturedModalRect(slot.xPos, slot.yPos, 0, 0, 18, 18); }
+        for (Slot slot : menu.inventorySlots) { drawTexturedModalRect(slot.xPos, slot.yPos, 0, 0, 18, 18); }
         GlStateManager.popMatrix();
         // title
-        ITextComponent textComponent= new TextComponentTranslation("inv.loot.0", npc.getName());
-        if (container.pos > -1) { textComponent.appendSibling(new TextComponentTranslation("inv.loot.1", container.playerParent)); }
+        Component textComponent = Component.translatable("inv.loot.0", npc.getName());
+        if (menu.pos > -1) { textComponent.append(Component.translatable("inv.loot.1", menu.playerParent)); }
         String customTitle = textComponent.getFormattedText();
-        mc.fontRenderer.drawString(customTitle, (width - mc.fontRenderer.getStringWidth(customTitle)) / 2, guiTop + 24, CustomNpcResourceListener.DefaultTextColor);
+        font.drawString(customTitle, (width - font.getStringWidth(customTitle)) / 2, guiTop + 24, CustomNpcResourceListener.DefaultTextColor);
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        if (wait) { drawWait(); return; }
-        super.drawScreen(mouseX, mouseY, partialTicks);
-    }
-
-    @Override
-    public void initPacket() {
-        NoppesUtilPlayer.sendData(EnumPlayerPacket.DropsData);
+        if (wait) { drawWait(); }
+        else { super.drawScreen(mouseX, mouseY, partialTicks); }
     }
 
     @Override
     public void initGui() {
         super.initGui();
-        int size = container.size - 1;
+        int size = menu.size - 1;
         if (size > 0) { guiTop -= size * 9; }
-        if (player.capabilities.isCreativeMode) {
-            if (scroll == null) { (scroll = new GuiCustomScroll(this, 0)).setSize(100, ySize - 50); }
-            scroll.guiLeft = guiLeft + xSize - 1;
-            scroll.guiTop = guiTop + 35;
-            addScroll(scroll);
-            addLabel(new GuiNpcLabel(0, "inv.loot.players", guiLeft + xSize, guiTop + 25));
+        if (player.isCreative()) {
+            if (scroll == null) { scroll = addScroll(0).setSize(100, ySize - 50); }
+            add(scroll.setPos(guiLeft + xSize - 1, guiTop + 35));
+            addLabel(0, guiLeft + xSize, guiTop + 25, "inv.loot.players");
         }
     }
 
     @Override
-    public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
+    public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
         scroll.setList(dataList);
-        scroll.setSelected(container.playerParent);
+        scroll.setSelected(menu.playerParent);
     }
 
     @Override
-    public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-        if (container.playerParent.equals(scroll.getSelected())) { return; }
+    public void scrollClicked(GuiCustomScrollNop scroll) {
+        if (menu.playerParent.equals(scroll.getSelected())) { return; }
         wait = true;
-        NoppesUtilPlayer.sendData(EnumPlayerPacket.DropData, Util.instance.deleteColor(scroll.getSelected()));
+        Packets.sendServer(new SPacketDeadLootsOpen(scroll.getSelected()));
     }
 
     @Override
-    public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
+    public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
     @Override
     public void setSelected(String select) { }

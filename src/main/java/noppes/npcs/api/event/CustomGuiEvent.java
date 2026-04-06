@@ -2,7 +2,10 @@ package noppes.npcs.api.event;
 
 import net.minecraft.inventory.Slot;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import noppes.npcs.api.EventName;
+import noppes.npcs.api.gui.IButton;
+import noppes.npcs.api.gui.IItemSlot;
+import noppes.npcs.api.gui.IScroll;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.item.IItemStack;
@@ -12,11 +15,14 @@ public class CustomGuiEvent extends CustomNPCsEvent {
 
 	@EventName(EnumScriptType.CUSTOM_GUI_BUTTON)
 	public static class ButtonEvent extends CustomGuiEvent {
-		public int buttonId;
 
-		public ButtonEvent(IPlayer<?> player, ICustomGui gui, int buttonId) {
+		public final int buttonId;
+		public final IButton button;
+
+		public ButtonEvent(IPlayer<?> player, ICustomGui gui, IButton buttonIn) {
 			super(player, gui);
-			this.buttonId = buttonId;
+			button = buttonIn;
+			buttonId = buttonIn.getId();
 		}
 	}
 
@@ -27,30 +33,21 @@ public class CustomGuiEvent extends CustomNPCsEvent {
 		}
 	}
 
-	@EventName(EnumScriptType.KEY_GUI_UP)
-	public static class KeyPressedEvent extends CustomGuiEvent {
-		public int key;
-
-		public KeyPressedEvent(IPlayer<?> player, ICustomGui gui, int k) {
-			super(player, gui);
-			this.key = k;
-		}
-	}
-
 	@EventName(EnumScriptType.CUSTOM_GUI_SCROLL)
 	public static class ScrollEvent extends CustomGuiEvent {
-		public boolean doubleClick;
-		public int scrollId;
-		public int scrollIndex;
-		public String[] selection;
+		public final boolean doubleClick;
+		public final int scrollId;
+		public final int scrollIndex;
+		public final String[] selection;
+		public final IScroll scroll;
 
-		public ScrollEvent(IPlayer<?> player, ICustomGui gui, int scrollId, int scrollIndex, String[] selection,
-				boolean doubleClick) {
+		public ScrollEvent(IPlayer<?> player, ICustomGui gui, IScroll scrollIn, int scrollIndexIn, String[] selectionIn, boolean doubleClickIn) {
 			super(player, gui);
-			this.scrollId = scrollId;
-			this.selection = selection;
-			this.doubleClick = doubleClick;
-			this.scrollIndex = scrollIndex;
+			scroll = scrollIn;
+			scrollId = scrollIn.getId();
+			selection = selectionIn;
+			doubleClick = doubleClickIn;
+			scrollIndex = scrollIndexIn;
 		}
 	}
 
@@ -79,27 +76,38 @@ public class CustomGuiEvent extends CustomNPCsEvent {
 
 	@EventName(EnumScriptType.CUSTOM_GUI_SLOT)
 	public static class SlotEvent extends CustomGuiEvent {
-		// New
-		public IItemStack heldItem;
-		public int slotId;
-		public IItemStack stack;
 
-		public SlotEvent(IPlayer<?> player, ICustomGui gui, int slotId, IItemStack stack, IItemStack heldItem) {
+		public final int slotId;
+		public final IItemStack stack;
+		public final IItemStack heldItem;
+		public final IItemSlot slot;
+
+		public SlotEvent(IPlayer<?> player, ICustomGui gui, IItemSlot slotIn, IItemStack heldItemIn) {
 			super(player, gui);
-			this.slotId = slotId;
-			this.stack = stack;
-			// New
-			this.heldItem = heldItem;
+			slotId = slotIn.getId();
+			stack = slotIn.getStack();
+			slot = slotIn;
+			heldItem = heldItemIn;
 		}
 	}
 
 	public ICustomGui gui;
-
 	public IPlayer<?> player;
 
 	public CustomGuiEvent(IPlayer<?> playerIn, ICustomGui guiIn) {
 		player = playerIn;
 		gui = guiIn;
+	}
+
+	// New from Unofficial (BetaZavr)
+	@EventName(EnumScriptType.KEY_GUI_UP)
+	public static class KeyPressedEvent extends CustomGuiEvent {
+		public int key;
+
+		public KeyPressedEvent(IPlayer<?> player, ICustomGui gui, int k) {
+			super(player, gui);
+			this.key = k;
+		}
 	}
 
 }

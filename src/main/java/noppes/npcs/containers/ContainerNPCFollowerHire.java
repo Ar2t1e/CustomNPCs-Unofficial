@@ -1,6 +1,7 @@
 package noppes.npcs.containers;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -10,13 +11,13 @@ import javax.annotation.Nonnull;
 
 public class ContainerNPCFollowerHire extends ContainerNpcInterface {
 
-	public RoleFollower role;
-	public int type;
+	public final InventoryBasic currencyMatrix;
+	public final RoleFollower role;
 
-	public ContainerNPCFollowerHire(EntityNPCInterface npc, EntityPlayer player, int type) {
+	public ContainerNPCFollowerHire(EntityNPCInterface npc, EntityPlayer player, int entityId) {
 		super(player);
-		this.type = type;
-		this.role = (RoleFollower) npc.advanced.roleInterface;
+		this.currencyMatrix = new InventoryBasic("", false, 1);
+		this.role = (RoleFollower) npc.role;
 		int offSet = type == 0 ? 0 : 58;
 		int size = this.role.inventory.getSizeInventory();
 		if (size > 0) {

@@ -6,6 +6,8 @@ public interface ICustomElement {
 
 	INbt getCustomNbt();
 	
-	int getType();
+	int getElementType();
+
+	boolean showInCreative();
 	
 }

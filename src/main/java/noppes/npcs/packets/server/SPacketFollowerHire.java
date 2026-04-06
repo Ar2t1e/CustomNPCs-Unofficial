@@ -1,0 +1,86 @@
+package noppes.npcs.packets.server;
+
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.EventHooks;
+import noppes.npcs.api.event.RoleEvent;
+import noppes.npcs.containers.ContainerNPCFollowerHire;
+import noppes.npcs.controllers.data.Line;
+import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.mixin.inv.IInventoryBasicMixin;
+import noppes.npcs.shared.common.PacketServerBasic;
+import noppes.npcs.roles.RoleFollower;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
+import noppes.npcs.util.Util;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class SPacketFollowerHire extends PacketServerBasic {
+
+   protected static int channelId;
+   private int pos;
+
+   public SPacketFollowerHire() { }
+
+   public SPacketFollowerHire(int posIn) { pos = posIn; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return true; }
+
+   @Override
+   public boolean requiresNpc() { return true; }
+
+   @Override
+   public void encode(FriendlyByteBuf buf) { buf.writeInt(pos); }
+
+   @Override
+   public void decode(FriendlyByteBuf buf) { pos = buf.readInt(); }
+
+   @Override
+   public int getChannelId() { return channelId; }
+
+   @Override
+   protected void handle() {
+      CustomNpcs.debugData.start("Packets");
+      if (npc.role instanceof RoleFollower && player.openContainer instanceof ContainerNPCFollowerHire) {
+         RoleFollower role = (RoleFollower) npc.role;
+         if (pos >= 0 && pos < 4 && role.rates.containsKey(pos)) {
+            if (pos == 3) {
+               if (!player.isCreative()) {
+                  if (PlayerData.get(player).game.getMoney() < role.rentalMoney) {
+                     CustomNpcs.debugData.end("Packets");
+                     return;
+                  }
+                  PlayerData.get(player).game.addMoney(role.rentalMoney * -1);
+               }
+            } else {
+               ItemStack currency = role.rentalItems.getStackInSlot(0);
+               if (currency.isEmpty()) {
+                  CustomNpcs.debugData.end("Packets");
+                  return;
+               }
+               if (!player.isCreative()) {
+                  Map<ItemStack, Integer> map = new HashMap<>();
+                  map.put(currency, currency.getCount());
+                  if (!Util.instance.canRemoveItems(((IInventoryBasicMixin) role.rentalItems).getItems(), map, false, false)) {
+                     CustomNpcs.debugData.end("Packets");
+                     return;
+                  }
+                  Util.instance.removeItem(player, currency, false, false);
+               }
+            }
+            int days = role.rates.get(pos);
+            RoleEvent.FollowerHireEvent event = new RoleEvent.FollowerHireEvent(player, npc.wrappedNPC, days);
+            if (!EventHooks.onNPCRole(npc, event) && event.days > 0) {
+               npc.say(player, new Line(NoppesStringUtils.formatText(role.dialogHire.replace("{days}", days + ""), player, npc)));
+               role.setOwner(player);
+               role.addDays(days);
+            }
+         }
+      }
+      CustomNpcs.debugData.end("Packets");
+   }
+
+}

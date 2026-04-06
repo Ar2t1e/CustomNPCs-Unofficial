@@ -3,13 +3,8 @@ package noppes.npcs.mixin.client.renderer.entity;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.entity.EntityLivingBase;
-import noppes.npcs.LogWriter;
 import noppes.npcs.api.mixin.client.renderer.entity.IRenderLivingBaseMixin;
-import noppes.npcs.entity.EntityCustomNpc;
 import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
 

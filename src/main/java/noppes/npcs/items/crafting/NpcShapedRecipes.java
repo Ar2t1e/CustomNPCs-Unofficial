@@ -30,8 +30,9 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
 import noppes.npcs.api.wrapper.WrapperRecipe;
 import noppes.npcs.controllers.data.Availability;
-import noppes.npcs.reflection.item.crafting.IngredientReflection;
+import noppes.npcs.mixin.item.crafting.IIngredientMixin;
 import noppes.npcs.reflection.item.crafting.ShapedRecipesReflection;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
 public class NpcShapedRecipes extends ShapedRecipes implements INpcRecipe, IRecipe
@@ -112,7 +113,7 @@ public class NpcShapedRecipes extends ShapedRecipes implements INpcRecipe, IReci
 			if (ingredient.getMatchingStacks().length > 0) {
 				boolean hasStack = false;
 				for (ItemStack stack : ingredient.getMatchingStacks()) {
-					if (!NoppesUtilServer.IsItemStackNull(stack)) {
+					if (!NoppesUtilServer.isItemStackNull(stack)) {
 						hasStack = true;
 						break;
 					}
@@ -326,7 +327,7 @@ public class NpcShapedRecipes extends ShapedRecipes implements INpcRecipe, IReci
 
 	@Override
 	public IItemStack getProduct() {
-		return (IItemStack) getRecipeOutput().getCapability(ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY, null);
+		return (IItemStack) getRecipeOutput().getCapability(ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY, null);
 	}
 
 	// New
@@ -423,7 +424,7 @@ public class NpcShapedRecipes extends ShapedRecipes implements INpcRecipe, IReci
 		wrapper.recipeItems.clear();
 		int pos = 0;
 		for (Ingredient ingr : recipeItems) {
-			ItemStack[] rawMatchingStacks = IngredientReflection.getRawMatchingStacks(ingr);
+			ItemStack[] rawMatchingStacks = ((IIngredientMixin) ingr).getMatchingStacks();
 			ItemStack[] array = new ItemStack[rawMatchingStacks.length];
 			for (int j = 0; j < rawMatchingStacks.length; j++) {
 				array[j] = rawMatchingStacks[j].copy();

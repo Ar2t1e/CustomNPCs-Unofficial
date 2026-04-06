@@ -1,15 +1,13 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.constants.EnumSeeTarget;
 
-@SuppressWarnings("all")
 public interface INPCAi {
 
 	int getAnimation();
 
 	boolean getAttackInvisible();
-
-	boolean getAttackLOS();
 
 	boolean getAvoidsWater();
 
@@ -55,8 +53,6 @@ public interface INPCAi {
 
 	void setAttackInvisible(@ParamName("attack") boolean attack);
 
-	void setAttackLOS(@ParamName("enabled") boolean enabled);
-
 	void setAvoidsWater(@ParamName("enabled") boolean enabled);
 
 	void setCanSwim(@ParamName("canSwim") boolean canSwim);
@@ -100,4 +96,19 @@ public interface INPCAi {
     boolean canBeCollide();
 
 	void setCanBeCollide(@ParamName("bo") boolean bo);
+
+	float getOffsetX();
+
+	float getOffsetY();
+
+	float getOffsetZ();
+
+	void setOffset(@ParamName("x") float x, @ParamName("y") float y, @ParamName("z") float z);
+
+	EnumSeeTarget getAttackLOS();
+
+	void setAttackLOS(@ParamName("type") int type);
+
+    // New from Unofficial (GoodBird)
+    void setMountControl(boolean enabled);
 }

@@ -2,9 +2,7 @@ package noppes.npcs.api.wrapper;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
-import noppes.npcs.Server;
 import noppes.npcs.api.IContainerCustomChest;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.containers.ContainerNpcInterface;
 import noppes.npcs.controllers.ScriptContainer;
 

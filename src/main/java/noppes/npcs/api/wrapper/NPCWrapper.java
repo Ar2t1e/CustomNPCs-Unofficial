@@ -120,24 +120,12 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 
 	@Override
 	public INPCJob getJob() {
-		return this.entity.advanced.jobInterface;
+		return this.entity.job;
 	}
 
 	@Override
 	public String getName() {
 		return this.entity.display.getName();
-	}
-
-	public int getOffsetX() {
-		return (int) this.entity.ais.bodyOffsetX;
-	}
-
-	public int getOffsetY() {
-		return (int) this.entity.ais.bodyOffsetY;
-	}
-
-	public int getOffsetZ() {
-		return (int) this.entity.ais.bodyOffsetZ;
 	}
 
 	@Override
@@ -151,7 +139,7 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 
 	@Override
 	public INPCRole getRole() {
-		return this.entity.advanced.roleInterface;
+		return this.entity.role;
 	}
 
 	@Override
@@ -244,13 +232,6 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 	@Override
 	public void setName(String name) {
 		this.entity.display.setName(name);
-	}
-
-	public void setOffset(int x, int y, int z) {
-		this.entity.ais.bodyOffsetX = ValueUtil.correctFloat(x, 0.0f, 9.0f);
-		this.entity.ais.bodyOffsetY = ValueUtil.correctFloat(y, 0.0f, 9.0f);
-		this.entity.ais.bodyOffsetZ = ValueUtil.correctFloat(z, 0.0f, 9.0f);
-		this.entity.updateClient = true;
 	}
 
 	@Override

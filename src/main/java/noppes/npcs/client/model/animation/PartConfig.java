@@ -3,7 +3,7 @@ package noppes.npcs.client.model.animation;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagList;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.entity.data.IAnimationPart;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.util.ValueUtil;

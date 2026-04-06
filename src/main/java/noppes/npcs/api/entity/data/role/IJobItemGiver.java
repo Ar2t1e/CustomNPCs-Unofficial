@@ -1,9 +1,8 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
 public interface IJobItemGiver {
 
     IItemStack[] getItemStacks();
@@ -12,13 +11,14 @@ public interface IJobItemGiver {
 
     String[] getLines();
 
-    void setLines(String[] linesIn);
+    void setLines(@ParamName("lines") String[] linesIn);
 
     int getCooldownType();
 
-    void setCooldownType(int type);
+    void setCooldownType(@ParamName("type") int type);
 
     int getGivingType();
 
-    void setGivingType(int type);
+    void setGivingType(@ParamName("type") int type);
+
 }

@@ -37,7 +37,7 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
@@ -62,7 +62,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 	protected static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "itemscripteddata");
 
 	@CapabilityInject(IItemStackWrapperHandler.class)
-	public static Capability<IItemStackWrapperHandler> ITEM_SCRIPTED_DATA_CAPABILITY = null;
+	public static Capability<IItemStackWrapperHandler> ITEMSCRIPTEDDATA_CAPABILITY = null;
 	public static ItemStackWrapper AIR = new ItemStackWrapper(ItemStack.EMPTY);
 
 	protected final Data tempdata;
@@ -159,7 +159,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 
 	@Override
 	public double getAttackDamage() {
-		HashMultimap map = (HashMultimap) this.item.getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
+		HashMultimap map = (HashMultimap) item.getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
 		Iterator iterator = map.entries().iterator();
 		double damage = 0.0;
 		while (iterator.hasNext()) {
@@ -172,7 +172,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 				catch (Exception e) { LogWriter.error(e); }
 			}
 		}
-		damage += EnchantmentHelper.getModifierForCreature(this.item, EnumCreatureAttribute.UNDEFINED);
+		damage += EnchantmentHelper.getModifierForCreature(item, EnumCreatureAttribute.UNDEFINED);
 		return damage;
 	}
 
@@ -325,7 +325,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 	}
 
 	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) {
-		return capability == ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY;
+		return capability == ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY;
 	}
 
 	@Override

@@ -1,0 +1,67 @@
+package noppes.npcs.packets.server;
+
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.controllers.QuestController;
+import noppes.npcs.controllers.data.Quest;
+import noppes.npcs.entity.data.DropSet;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiUpdate;
+import noppes.npcs.shared.common.PacketServerBasic;
+
+public class SPacketQuestDropSetSave extends PacketServerBasic {
+
+    protected static int channelId;
+    private int questId;
+    private NBTTagCompound data;
+
+    public SPacketQuestDropSetSave() { }
+
+    public SPacketQuestDropSetSave(int questIdIn, NBTTagCompound dataIn) {
+        questId = questIdIn;
+        data = dataIn;
+    }
+
+    @Override
+    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_MARKETS; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return true; }
+
+    @Override
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeInt(questId);
+        buf.writeNbt(data);
+    }
+
+    @Override
+    public void decode(FriendlyByteBuf buf) {
+        questId = buf.readInt();
+        data = buf.readAnySizeNbt();
+    }
+
+    @Override
+    public int getChannelId() { return channelId; }
+
+    @Override
+    protected void handle() {
+        CustomNpcs.debugData.start("Packets");
+        Quest quest = QuestController.instance.get(questId);
+        if (quest != null) {
+            int pos = data.getInteger("Slot");
+            if (pos < 0 || !quest.rewardItems.containsKey(pos)) {
+                pos = quest.rewardItems.size();
+                DropSet ds = new DropSet(quest);
+                ds.pos = pos;
+                quest.rewardItems.put(ds.pos, ds);
+            }
+            quest.rewardItems.get(pos).load(data);
+            Packets.send(player, new PacketGuiUpdate());
+        }
+        CustomNpcs.debugData.end("Packets");
+    }
+
+}

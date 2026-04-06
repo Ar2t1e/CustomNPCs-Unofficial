@@ -1,10 +1,7 @@
 package noppes.npcs.api.wrapper;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.collect.Lists;
 
@@ -45,10 +42,11 @@ import noppes.npcs.api.entity.data.INpcAttribute;
 import noppes.npcs.api.entity.data.IPlayerMail;
 import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.handler.*;
+import noppes.npcs.api.handler.capability.IItemStackWrapperHandler;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.data.AttributeWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiWrapper;
-import noppes.npcs.client.util.ResourceData;
+import noppes.npcs.shared.client.gui.util.ResourceData;
 import noppes.npcs.containers.ContainerNpcInterface;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.PlayerData;
@@ -98,8 +96,8 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame) {
-		return new CustomGuiWrapper(id, width, height, pauseGame, null);
+	public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame, IPlayer<?> player) {
+		return new CustomGuiWrapper(id, width, height, pauseGame, player.getMCEntity());
 	}
 
 	@Override
@@ -162,9 +160,7 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public IDimensionHandler getCustomDimension() {
-		return DimensionHandler.getInstance();
-	}
+	public IDimensionHandler getCustomDimension() { return DimensionHandler.getInstance(); }
 
 	@Override
 	public IDialogHandler getDialogs() {
@@ -183,9 +179,7 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public INpcAttribute getIAttribute(IAttributeInstance attributeMC) {
-		return new AttributeWrapper(attributeMC);
-	}
+	public INpcAttribute getIAttribute(IAttributeInstance attributeMC) { return new AttributeWrapper(attributeMC); }
 
 	@Override
 	public IBlock getIBlock(World worldMC, BlockPos posMC) {
@@ -225,14 +219,13 @@ public class WrapperNpcAPI extends NpcAPI {
 
 	@Override
 	public IItemStack getIItemStack(ItemStack stackMC) {
-		if (stackMC == null || stackMC.isEmpty()) { return ItemStackWrapper.AIR; }
-		return (IItemStack) stackMC.getCapability(ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY, null);
+		if (NoppesUtilServer.isItemStackNull(stackMC)) { return ItemStackWrapper.AIR; }
+		IItemStackWrapperHandler iStack = stackMC.getCapability(ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY, null);
+		return iStack != null ? (IItemStack) iStack : ItemStackWrapper.AIR;
 	}
 
 	@Override
-	public IKeyBinding getIKeyBinding() {
-		return KeyController.getInstance();
-	}
+	public IKeyBinding getIKeyBinding() { return KeyController.instance; }
 
 	@Override
 	public INbt getINbt(NBTTagCompound nbtMC) {
@@ -427,14 +420,21 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public ResourceData getResourceData(ResourceLocation texture, int u, int v, int width, int height) {
-		return new ResourceData(texture, u, v, width, height);
-	}
+	public ResourceData getResourceData(ResourceLocation texture, int u, int v, int width, int height) { return new ResourceData(texture, u, v, width, height); }
 
 	@Override
 	public IData getTempdata() { return WorldWrapper.getTempData(); }
 
 	@Override
 	public IData getStoreddata() { return WorldWrapper.getStoredData(); }
+
+	@Override
+	public List<?> createList() { return new ArrayList<>(); }
+
+	@Override
+	public Map<?, ?> createMap() { return new LinkedHashMap<>(); }
+
+	@Override
+	public Map<?, ?> createTreeMap() { return new TreeMap<>(); }
 
 }

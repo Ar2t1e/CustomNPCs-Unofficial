@@ -1,7 +1,7 @@
 package noppes.npcs.api.event;
 
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import noppes.npcs.api.EventName;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.handler.data.IQuest;
 import noppes.npcs.api.item.IItemStack;
@@ -9,6 +9,8 @@ import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.data.FactionOptions;
 import noppes.npcs.controllers.data.PlayerMail;
 import noppes.npcs.controllers.data.Quest;
+
+import java.util.List;
 
 public class QuestEvent extends CustomNPCsEvent {
 
@@ -45,20 +47,21 @@ public class QuestEvent extends CustomNPCsEvent {
 	@EventName(EnumScriptType.QUEST_TURNING)
 	public static class QuestTurnedInEvent extends QuestEvent {
 
-		public int expReward, moneyReward;
-		public IItemStack[] itemRewards;
+		public int expReward;
+		public int moneyReward;
+		public List<IItemStack> itemRewards;
 		public FactionOptions factionOptions;
 		public PlayerMail mail;
 		public int nextQuestId;
 		public String command;
 
-		public QuestTurnedInEvent(IPlayer<?> player, IQuest quest) {
+		public QuestTurnedInEvent(IPlayer<?> player, IQuest quest, List<IItemStack> itemRewardsIn) {
 			super(player, quest);
-			itemRewards = new IItemStack[0];
+			itemRewards = itemRewardsIn;
 			factionOptions = ((Quest) quest).factionOptions.copy();
-			this.mail = ((Quest) quest).mail.copy();
-			this.nextQuestId = ((Quest) quest).nextQuest;
-			this.command = ((Quest) quest).command;
+			mail = ((Quest) quest).mail.copy();
+			nextQuestId = ((Quest) quest).nextQuestId;
+			command = ((Quest) quest).command;
 		}
 	}
 

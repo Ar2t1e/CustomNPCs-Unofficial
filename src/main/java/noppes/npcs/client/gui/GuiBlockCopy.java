@@ -3,80 +3,70 @@ package noppes.npcs.client.gui;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import noppes.npcs.blocks.tiles.TileCopy;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketSchematicsStore;
+import noppes.npcs.packets.server.SPacketTileEntityGet;
+import noppes.npcs.packets.server.SPacketTileEntitySave;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
-
-public class GuiBlockCopy extends GuiNPCInterface implements IGuiData, ITextfieldListener {
+public class GuiBlockCopy
+		extends GuiNPCInterface
+		implements IGuiData, ITextfieldListener {
 
 	protected final TileCopy tile;
-	protected int x;
-	protected int y;
-	protected int z;
 
-	public GuiBlockCopy(int xPos, int yPos, int zPos) {
+	public GuiBlockCopy(BlockPos posIn) {
 		super();
 		setBackground("menubg.png");
-		closeOnEsc = true;
-		xSize = 256;
-		ySize = 216;
+		imageWidth = 256;
+		imageHeight = 216;
 
-		x = xPos;
-		y = yPos;
-		z = zPos;
-		tile = (TileCopy) player.world.getTileEntity(new BlockPos(x, y, z));
-		Client.sendData(EnumPacketServer.GetTileEntity, x, y, z);
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				NBTTagCompound compound = new NBTTagCompound();
-				tile.writeToNBT(compound);
-				Client.sendData(EnumPacketServer.SchematicStore, getTextField(5).getText(), getButton(6).getValue(), compound);
-				onClosed();
-				break;
-			}
-			case 66: onClosed(); break;
-		}
+		tile = (TileCopy) player.world.getTileEntity(posIn);
+		Packets.sendServer(new SPacketTileEntityGet(posIn));
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		int xL = guiLeft + 5;
-		int xTF = guiLeft + 104;
 		int y = guiTop + 4;
-		addLabel(new GuiNpcLabel(0, "schematic.height", xL, y + 5));
-		addTextField(new GuiNpcTextField(0, this, xTF, y, 50, 20, tile.height + "")
-				.setMinMaxDefault(0, 1000, 10));
-		y += 23;
-		addLabel(new GuiNpcLabel(1, "schematic.width", xL, y + 5));
-		addTextField(new GuiNpcTextField(1, this, xTF, y, 50, 20, tile.width + "")
-				.setMinMaxDefault(0, 1000, 10));
-		y += 23;
-		addLabel(new GuiNpcLabel(2, "schematic.length", xL, y + 5));
-		addTextField(new GuiNpcTextField(2, this, xTF, y, 50, 20, tile.length + "")
-				.setMinMaxDefault(0, 1000, 10));
-		y += 23;
-		addLabel(new GuiNpcLabel(5, "gui.name", xL, y + 5));
-		addTextField(new GuiNpcTextField(5, this, xTF, y, 100, 20, ""));
-		y += 23;
-		addButton(new GuiNpcButton(6, xL, y, 200, 20, 0, "copy.schematic", "copy.blueprint"));
-		y += 30;
-		addButton(new GuiNpcButton(0, xL, y, 60, 20, "gui.save"));
-		addButton(new GuiNpcButton(66, guiLeft + 67, y, 60, 20, "gui.cancel"));
+		int x = guiLeft + 104;
+		addTextField(0, x, y, 50, 20, tile.height)
+				.setMinMaxDefault(0, 1000, 10);
+		addLabel(0, guiLeft + 5, y + 5, "schematic.height");
+		addTextField(1, x, y += 23, 50, 20, tile.width)
+				.setMinMaxDefault(0, 1000, 10);
+		addLabel(1, guiLeft + 5, y + 5, "schematic.width");
+		addTextField(2, x, y += 23, 50, 20, tile.length)
+				.setMinMaxDefault(0, 1000, 10);
+		addLabel(2, guiLeft + 5, y + 5, "schematic.length");
+		addTextField(5, x, y += 23, 100, 20, "");
+		addLabel(5, guiLeft + 5, y + 5, "gui.name");
+		x = guiLeft + 5;
+		addButton(0, x, y += 30, "gui.save")
+				.setSize(60, 20);
+		addButton(1, guiLeft + 67, y, "gui.cancel")
+				.setSize(60, 20);
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		if (button.id == 0) {
+			NBTTagCompound compound = new NBTTagCompound();
+			tile.writeToNBT(compound);
+			Packets.sendServer(new SPacketSchematicsStore(getTextField(5).getValue(), 0, compound));
+		}
+		onClose();
 	}
 
     @Override
 	public void save() {
 		NBTTagCompound compound = new NBTTagCompound();
 		tile.writeToNBT(compound);
-		Client.sendData(EnumPacketServer.SaveTileEntity, compound);
+		Packets.sendServer(new SPacketTileEntitySave(compound));
 	}
 
 	@Override
@@ -86,11 +76,11 @@ public class GuiBlockCopy extends GuiNPCInterface implements IGuiData, ITextfiel
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		switch (textfield.getID()) {
-			case 0: tile.height = (short) textfield.getInteger(); break;
-			case 1: tile.width = (short) textfield.getInteger(); break;
-			case 2: tile.length = (short) textfield.getInteger(); break;
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
+			case 0: tile.height = (short) textField.getInteger(); break;
+			case 1: tile.width = (short) textField.getInteger(); break;
+			case 2: tile.length = (short) textField.getInteger(); break;
 		}
 	}
 

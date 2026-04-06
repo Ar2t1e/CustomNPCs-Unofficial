@@ -1,6 +1,6 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.item.IItemStack;
 
@@ -19,6 +19,8 @@ public interface IAvailability {
 
 	String getStoredDataValue(@ParamName("key") String key);
 
+	int getMoneyValue(@ParamName("type") int type);
+
 	boolean hasDialog(@ParamName("id") int id);
 
 	boolean hasFaction(@ParamName("id") int id);
@@ -29,7 +31,9 @@ public interface IAvailability {
 
 	boolean hasScoreboard(@ParamName("objective") String objective);
 
-	boolean hasStoredData(@ParamName("key") String key, @ParamName("value") String value);
+	boolean hasStoredData(@ParamName("key") String key);
+
+	boolean hasMoneyData(@ParamName("type") int type);
 
 	boolean isAvailable(@ParamName("player") IPlayer<?> player);
 
@@ -45,6 +49,8 @@ public interface IAvailability {
 
 	void removeStoredData(@ParamName("key") String key);
 
+	void removeMoneyData(@ParamName("type") int type);
+
 	void setDaytime(@ParamName("type") int type);
 
 	void setDaytime(@ParamName("minHour") int minHour, @ParamName("maxHour") int maxHour);
@@ -57,13 +63,15 @@ public interface IAvailability {
 
 	void setMinPlayerLevel(@ParamName("level") int level);
 
-	void setPlayerName(@ParamName("id") String name, @ParamName("type") int type);
+	void setPlayerName(@ParamName("name") String name, @ParamName("type") int type);
 
 	void setQuest(@ParamName("id") int id, @ParamName("type") int type);
 
 	void setScoreboard(@ParamName("objective") String objective, @ParamName("type") int type, @ParamName("value") int value);
 
 	void setStoredData(@ParamName("key") String key, @ParamName("value") String value, @ParamName("type") int type);
+
+	void setMoneyData(@ParamName("type") int type, @ParamName("equal") int equal, @ParamName("value") int value);
 
 	boolean getGMOnly();
 

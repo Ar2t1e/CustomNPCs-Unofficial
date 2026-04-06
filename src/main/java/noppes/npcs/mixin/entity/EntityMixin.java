@@ -8,7 +8,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.capabilities.CapabilityDispatcher;
-import noppes.npcs.api.mixin.entity.IEntityMixin;
+import noppes.npcs.api.mixin.entity.IEntityIMixin;
 import noppes.npcs.api.wrapper.data.Data;
 import noppes.npcs.entity.EntityNPCInterface;
 import org.spongepowered.asm.mixin.*;
@@ -18,54 +18,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = Entity.class, priority = 499)
-public class EntityMixin implements IEntityMixin {
-
-    @Shadow
-    protected EntityDataManager dataManager;
-
-    @Final
-    @Shadow
-    protected static DataParameter<Byte> FLAGS;
-
-    @Mutable
-    @Shadow(remap = false)
-    private CapabilityDispatcher capabilities;
+public class EntityMixin implements IEntityIMixin {
 
     @Shadow
     public int timeUntilPortal;
 
-    @Shadow
-    protected BlockPos lastPortalPos;
-
-    @Shadow
-    protected Vec3d lastPortalVec;
-
-    @Shadow
-    protected EnumFacing teleportDirection;
-
     @Unique
     protected final Data npcs$storeddata = new Data();
-
-    @Override
-    public EntityDataManager npcs$getDataManager() { return dataManager; }
-
-    @Override
-    public DataParameter<Byte> npcs$getFLAGS() { return FLAGS; }
-
-    @Override
-    public CapabilityDispatcher npcs$getCapabilities() { return capabilities; }
-
-    @Override
-    public void npcs$setCapabilities(CapabilityDispatcher newCapabilities) { capabilities = newCapabilities; }
-
-    @Override
-    public BlockPos npcs$getLastPortalPos() { return lastPortalPos; }
-
-    @Override
-    public Vec3d npcs$getLastPortalVec() { return lastPortalVec; }
-
-    @Override
-    public EnumFacing npcs$getTeleportDirection() { return teleportDirection; }
 
     @Override
     public void npcs$copyDataFromOld(Entity entity) {
@@ -73,9 +32,10 @@ public class EntityMixin implements IEntityMixin {
         nbttagcompound.removeTag("Dimension");
         ((Entity) (Object) this).readFromNBT(nbttagcompound);
         timeUntilPortal = entity.timeUntilPortal;
-        lastPortalPos = ((IEntityMixin) entity).npcs$getLastPortalPos();
-        lastPortalVec = ((IEntityMixin) entity).npcs$getLastPortalVec();
-        teleportDirection = ((IEntityMixin) entity).npcs$getTeleportDirection();
+        IEntityMixin parent = (IEntityMixin) this;
+        parent.setLastPortalPos(((IEntityMixin) entity).getLastPortalPos());
+        parent.setLastPortalVec(((IEntityMixin) entity).getLastPortalVec());
+        parent.setTeleportDirection(((IEntityMixin) entity).getTeleportDirection());
     }
 
     @Inject(method = "writeToNBT", at = @At("RETURN"), cancellable = true)

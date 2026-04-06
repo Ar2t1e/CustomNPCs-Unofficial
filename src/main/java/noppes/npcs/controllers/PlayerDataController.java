@@ -17,18 +17,20 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NpcMiscInventory;
+import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerMail;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.NBTJsonUtil;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public class PlayerDataController {
 
 	public static PlayerDataController instance;
 
-	@SuppressWarnings("all")
 	public PlayerDataController() {
 		CustomNpcs.debugData.start(null);
 		PlayerDataController.instance = this;
@@ -136,38 +138,44 @@ public class PlayerDataController {
 		}
 	}
 
-	public PlayerData getDataFromUsername(MinecraftServer server, String user_name_or_uuid) {
-		EntityPlayer player = server.getPlayerList().getPlayerByUsername(user_name_or_uuid);
-		if (player == null) {
+	public @Nullable PlayerData getDataFromUsername(@Nullable MinecraftServer server, @Nullable String userPartNameOrUUID) {
+		if (userPartNameOrUUID == null || userPartNameOrUUID.isEmpty()) { return null; }
+		if (server == null) { server = CustomNpcs.Server; }
+		if (server != null) {
+			EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(userPartNameOrUUID);
+			if (player != null) { return PlayerData.get(player); }
 			try {
-				player = server.getPlayerList().getPlayerByUUID(UUID.fromString(user_name_or_uuid));
-			} catch (Exception ignored) { }
+				player = server.getPlayerList().getPlayerByUUID(UUID.fromString(userPartNameOrUUID));
+				if (player != null) { return PlayerData.get(player); }
+			}
+			catch (Exception ignored) { }
 		}
-		PlayerData data = null;
-		if (player == null) {
-			File playerDir = this.getPlayerDirectory(user_name_or_uuid);
-			if (playerDir != null) {
-				data = new PlayerData();
-				for (File f : Objects.requireNonNull(playerDir.listFiles())) {
-					if (f.isFile() && f.getName().endsWith(".json")) {
-						try {
-							NBTTagCompound nbt = NBTJsonUtil.LoadFile(f);
-							if (!nbt.hasKey("GameData", 10)) {
-								continue;
+		File dir = CustomNpcs.getWorldSaveDirectory("playerdata");
+		if (dir != null && dir.exists()) {
+			File[] dirs = dir.listFiles();
+			if (dirs != null) {
+				for (File playerDir : dirs) {
+					if (!playerDir.isDirectory()) { continue; }
+					for (File file : Objects.requireNonNull(playerDir.listFiles())) {
+						if (file.isFile() && file.getName().endsWith(".json")) {
+							String uuid = playerDir.getName();
+							String name = file.getName().replace(".json", "");
+							if (name.toLowerCase().contains(userPartNameOrUUID.toLowerCase()) || uuid.equalsIgnoreCase(userPartNameOrUUID)) {
+								if (server != null) {
+									EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(name);
+									if (player != null) { return PlayerData.get(player); }
+								}
+								PlayerData data = new PlayerData();
+								data.setNBT(PlayerData.loadPlayerData(uuid, name));
+								return data;
 							}
-							data.setNBT(nbt);
-							data.uuid = playerDir.getName();
-							if (data.playername == null || data.playername.isEmpty()) {
-								data.playername = f.getName().substring(0, f.getName().lastIndexOf("."));
-							}
-						} catch (Exception e) { LogWriter.error(e); }
+							break;
+						}
 					}
 				}
 			}
-		} else {
-			data = PlayerData.get(player);
 		}
-		return data;
+		return null;
 	}
 
 	private File getPlayerDirectory(String user_name_or_uuid) {

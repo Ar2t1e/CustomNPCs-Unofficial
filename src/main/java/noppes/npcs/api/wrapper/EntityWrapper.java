@@ -10,19 +10,18 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketAnimation;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EntityDamageSource;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IEntityDamageSource;
 import noppes.npcs.api.INbt;
@@ -35,7 +34,8 @@ import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityItem;
 import noppes.npcs.api.entity.data.IData;
 import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.api.mixin.entity.IEntityMixin;
+import noppes.npcs.api.mixin.entity.IEntityIMixin;
+import noppes.npcs.api.util.IRayTraceResults;
 import noppes.npcs.api.wrapper.data.Data;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.util.Util;
@@ -45,7 +45,9 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 
 	public static List<Entity> findEntityOnPath(Entity entity, double distance, Vec3d vec3d, Vec3d vec3d1) {
 		List<Entity> result = new ArrayList<>();
-		for (Entity entity1 : Util.instance.getEntitiesWithinDist(Entity.class, entity.world, entity, distance)) {
+		for (Entity entity1 : entity.world.getEntitiesWithinAABB(Entity.class,
+				new AxisAlignedBB(-distance, -distance, -distance, distance, distance, distance).offset(entity.posX, entity.posY, entity.posZ),
+				(e) -> e.getDistance(entity) < distance)) {
 			if (entity1.canBeCollidedWith() && entity1 != entity) {
 				AxisAlignedBB axisalignedbb = entity1.getEntityBoundingBox().grow(entity1.getCollisionBorderSize());
 				RayTraceResult raytraceresult = axisalignedbb.calculateIntercept(vec3d, vec3d1);
@@ -76,7 +78,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 
 	public EntityWrapper(T entityIn) {
 		entity = entityIn;
-		storeddata = ((IEntityMixin) entityIn).npcs$getStoredData();
+		storeddata = ((IEntityIMixin) entityIn).npcs$getStoredData();
 		resetWorld();
 	}
 
@@ -110,16 +112,25 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public void damage(float amount) { entity.attackEntityFrom(DamageSource.GENERIC, amount); }
 
 	@Override
-	public void damage(float amount, IEntityDamageSource source) {
+	public void damage(float amount, IEntity source) {
+		if (source == null) {
+			damage(amount);
+			return;
+		}
+		damage(amount, new NpcEntityDamageSource("", source));
+	}
+
+	@Override
+	public void damage(float amount, IEntityDamageSource damageSource) {
 		if (!(entity instanceof EntityLivingBase)) { return; }
-		if (source instanceof EntityDamageSource) {
-			entity.attackEntityFrom((DamageSource) source, amount);
-			if (((EntityDamageSource) source).getTrueSource() instanceof EntityLivingBase) {
+		if (damageSource instanceof EntityDamageSource) {
+			entity.attackEntityFrom((DamageSource) damageSource, amount);
+			if (((EntityDamageSource) damageSource).getTrueSource() instanceof EntityLivingBase) {
 				if (entity instanceof EntityLiving) {
-					((EntityLiving) entity).setAttackTarget((EntityLivingBase) ((EntityDamageSource) source).getTrueSource());
+					((EntityLiving) entity).setAttackTarget((EntityLivingBase) ((EntityDamageSource) damageSource).getTrueSource());
 				}
 				if (entity instanceof EntityLivingBase) {
-					((EntityLivingBase) entity).setRevengeTarget((EntityLivingBase) ((EntityDamageSource) source).getTrueSource());
+					((EntityLivingBase) entity).setRevengeTarget((EntityLivingBase) ((EntityDamageSource) damageSource).getTrueSource());
 				}
 			}
 		}
@@ -302,8 +313,13 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 
 	@Override
 	public void playAnimation(int type) {
-		if (!(worldWrapper.getMCWorld() instanceof WorldServer)) { return; }
-		((WorldServer) worldWrapper.getMCWorld()).getEntityTracker().sendToTrackingAndSelf(entity, new SPacketAnimation(entity, type));
+		if (worldWrapper.getMCWorld().isRemote) {
+			if (type == 0) { ((EntityLivingBase) entity).swingArm(EnumHand.MAIN_HAND); }
+			else if (type == 1) { entity.performHurtAnimation(); }
+			else if (type == 2) { ((EntityPlayer) entity).wakeUpPlayer(false, false, false); }
+			else if (type == 3) { ((EntityLivingBase) entity).swingArm(EnumHand.OFF_HAND); }
+		}
+		else { ((WorldServer) worldWrapper.getMCWorld()).getEntityTracker().sendToTrackingAndSelf(entity, new SPacketAnimation(entity, type)); }
 	}
 
 	@Override
@@ -314,6 +330,11 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 		RayTraceResult result = entity.world.rayTraceBlocks(vec3d, vec3d3, stopOnLiquid, ignoreBlockWithoutBoundingBox, true);
 		if (result == null) { return null; }
 		return new RayTraceWrapper(Objects.requireNonNull(NpcAPI.Instance()).getIBlock(entity.world, result.getBlockPos()), result.sideHit.getIndex());
+	}
+
+	@Override
+	public IRayTraceResults rayTrace(double distance) {
+		return Util.instance.rayTraceBlocksAndEntitys(entity, entity.rotationYaw, entity.rotationPitch, distance);
 	}
 
 	@Override
@@ -330,7 +351,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public void removeTag(String tag) { entity.removeTag(tag); }
 
 	@Override
-	public void setBurning(int ticks) { entity.setFire(ticks); }
+	public void setBurning(int seconds) { entity.setFire(seconds); }
 
 	@Override
 	public void setEntityNbt(INbt nbt) { entity.readFromNBT(nbt.getMCNBT()); }
@@ -366,7 +387,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public void setName(String name) { entity.setCustomNameTag(name); }
 
 	@Override
-	public void setPitch(float rotation) { entity.rotationPitch = rotation; }
+	public void setPitch(float pitch) { entity.rotationPitch = pitch; }
 
 	@Override
 	public void setPos(IPos pos) { entity.setPosition((pos.getX() + 0.5f), pos.getY(), (pos.getZ() + 0.5f)); }
@@ -423,6 +444,9 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	}
 
 	@Override
-	public boolean typeOf(int type) { return type == getType(); }
+	public boolean typeOf(int type) {
+		if (type == noppes.npcs.api.constants.EntityType.ANY.get()) { return true; }
+		return type == getType();
+	}
 
 }

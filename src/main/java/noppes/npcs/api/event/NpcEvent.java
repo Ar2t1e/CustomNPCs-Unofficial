@@ -8,7 +8,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import noppes.npcs.ai.CombatHandler;
-import noppes.npcs.api.EventName;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.IDamageSource;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.NpcAPI;
@@ -19,6 +19,7 @@ import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.IProjectile;
 import noppes.npcs.api.entity.data.IAnimation;
 import noppes.npcs.api.entity.data.ILine;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.AnimationController;
@@ -39,7 +40,8 @@ public class NpcEvent extends CustomNPCsEvent {
 	@EventName(EnumScriptType.CUSTOM_TELEPORT)
 	public static class CustomNpcTeleport extends NpcEvent {
 
-		public IPos pos, portal;
+		public IPos pos;
+		public IPos portal;
 		public int dimension;
 
 		public CustomNpcTeleport(ICustomNpc<?> npc, IPos portalIn, IPos posIn, int dimensionIn) {
@@ -115,7 +117,7 @@ public class NpcEvent extends CustomNPCsEvent {
 		public IEntity<?>[] getEntitys() { return damageMap.keySet().toArray(new IEntity<?>[0]); }
 
 		@SuppressWarnings("all")
-		public double getDamageFromEntity(IEntity<?> entity) {
+		public double getDamageFromEntity(@ParamName("entity") IEntity<?> entity) {
 			if (damageMap.containsKey(entity)) { return damageMap.get(entity); }
 			else if (entity != null) {
 				for (IEntity<?> ie : damageMap.keySet()) {
@@ -184,7 +186,7 @@ public class NpcEvent extends CustomNPCsEvent {
 		}
 	}
 
-	@EventName(EnumScriptType.STOP_ANIMATION)
+	@EventName(EnumScriptType.ANIMATION_STOP)
 	public static class StopAnimation extends NpcEvent {
 
 		public IAnimation animation;

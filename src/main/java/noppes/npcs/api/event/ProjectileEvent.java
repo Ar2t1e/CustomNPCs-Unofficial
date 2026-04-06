@@ -1,6 +1,6 @@
 package noppes.npcs.api.event;
 
-import noppes.npcs.api.EventName;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.entity.IProjectile;
 import noppes.npcs.constants.EnumScriptType;
 

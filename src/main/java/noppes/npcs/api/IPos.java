@@ -1,6 +1,8 @@
 package noppes.npcs.api;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IPos {
 
@@ -53,5 +55,7 @@ public interface IPos {
 	IPos west();
 
 	IPos west(@ParamName("n") double n);
+
+    Vec3d getMCVec3();
 
 }

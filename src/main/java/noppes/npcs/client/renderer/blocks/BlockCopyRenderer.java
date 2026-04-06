@@ -10,7 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.blocks.tiles.TileCopy;
 import noppes.npcs.schematics.Schematic;
 
@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 
 public class BlockCopyRenderer<T extends TileEntity> extends TileEntitySpecialRenderer<T> {
 
-	private static final ItemStack item = new ItemStack(CustomRegisters.copy);
+	private static final ItemStack item = new ItemStack(CustomBlocks.copy);
 	public static BlockPos pos = null;
 	public static Schematic schematic = null;
 

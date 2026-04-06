@@ -21,6 +21,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagDouble;
 import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
@@ -30,11 +31,10 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.*;
 import noppes.npcs.controllers.SchematicController;
+import noppes.npcs.shared.common.CommonUtil;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
 public class Schematic implements ISchematic {
@@ -232,7 +232,9 @@ public class Schematic implements ISchematic {
 		}
 		return schema;
 	}
+
 	public static Schematic create(World world, String name, BlockPos pos, short height, short width, short length) {
+		CommonUtil.NotifyOPs(new Component("Creating schematic at: " + pos + " might lag slightly").withStyle(TextFormatting.GRAY), false);
 		Schematic schema = new Schematic(name);
 		schema.offset = BlockPos.ORIGIN;
 		schema.height = height;
@@ -241,11 +243,6 @@ public class Schematic implements ISchematic {
 		int size = height * width * length;
 		schema.blockIdsArray = new short[size];
 		schema.blockMetadataArray = new byte[size];
-
-		ITextComponent message = new TextComponentString("Creating schematic at: " + pos + " might lag slightly");
-		message.getStyle().setColor(TextFormatting.GRAY);
-		NoppesUtilServer.NotifyOPs(message, false);
-
 		schema.tileList = new NBTTagList();
 		for (int i = 0; i < size; ++i) {
 			int x = i % width;
@@ -253,7 +250,7 @@ public class Schematic implements ISchematic {
 			int y = ((i - x) / width - z) / length;
 			IBlockState state = world.getBlockState(pos.add(x, y, z));
 			if (state.getBlock() != Blocks.AIR) {
-				if (state.getBlock() != CustomRegisters.copy) {
+				if (state.getBlock() != CustomBlocks.copy) {
 					schema.blockIdsArray[i] = (short) Block.REGISTRY.getIDForObject(state.getBlock());
 					schema.blockMetadataArray[i] = (byte) state.getBlock().getMetaFromState(state);
 					if (state.getBlock() instanceof ITileEntityProvider) {
@@ -271,6 +268,7 @@ public class Schematic implements ISchematic {
 		}
 		return schema;
 	}
+
 	public short[] blockIdsArray = new short[0];
 	public byte[] blockMetadataArray = new byte[0];
 	public NBTTagList tileList = new NBTTagList();

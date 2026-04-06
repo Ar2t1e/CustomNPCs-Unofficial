@@ -16,7 +16,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -56,19 +56,20 @@ public class CmdClone extends CommandNoppesBase {
 	@SuppressWarnings("all")
 	@SubCommand(desc = "Remove NPC from clone storage", usage = "<name> <tab>", permission = 2)
 	public void del(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String nameModel = args[0];
+		String nameToDel = args[0];
 		int tab = 0;
 		try {
 			tab = Integer.parseInt(args[1]);
 		} catch (NumberFormatException e) { LogWriter.error(e); }
+		boolean deleted = false;
 		for (String name : ServerCloneController.Instance.getClones(tab)) {
-			if (nameModel.equalsIgnoreCase(name)) {
-				ServerCloneController.Instance.removeClone(name, tab);
+			if (nameToDel.equalsIgnoreCase(name)) {
+				deleted = ServerCloneController.Instance.removeClone(name, tab);
 				break;
 			}
 		}
-		if (!ServerCloneController.Instance.removeClone(nameModel, tab)) {
-			throw new CommandException("Npc '%s' wasn't found", nameModel);
+		if (!deleted) {
+			throw new CommandException("message.mod.error", tab, nameToDel);
 		}
 	}
 

@@ -1,6 +1,8 @@
 package noppes.npcs.api;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
@@ -15,7 +17,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IEntity;
@@ -25,34 +27,29 @@ import noppes.npcs.api.entity.data.INpcAttribute;
 import noppes.npcs.api.entity.data.IPlayerMail;
 import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.handler.*;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.WrapperNpcAPI;
-import noppes.npcs.client.util.ResourceData;
+import noppes.npcs.shared.client.gui.util.ResourceData;
 
-@SuppressWarnings("all")
+import javax.annotation.Nullable;
+
 public abstract class NpcAPI {
 
 	private static NpcAPI instance = null;
 
-	public static NpcAPI Instance() {
-		if (NpcAPI.instance != null) {
-			return NpcAPI.instance;
-		}
-		if (!IsAvailable()) {
-			return null;
-		}
-		try {
-			NpcAPI.instance = WrapperNpcAPI.Instance();
-		}
+	public static @Nullable NpcAPI Instance() {
+		if (instance != null) { return instance;}
+		if (!IsAvailable()) { return null; }
+		try { NpcAPI.instance = WrapperNpcAPI.Instance(); }
 		catch (Exception e) { LogWriter.error(e); }
-		return NpcAPI.instance;
+		return instance;
 	}
 
-	public static boolean IsAvailable() {
-		return Loader.isModLoaded(CustomNpcs.MODID);
-	}
+	public static boolean IsAvailable() { return Loader.isModLoaded(CustomNpcs.MODID); }
 
-	public abstract ICustomGui createCustomGui(@ParamName("id") int id, @ParamName("width") int width, @ParamName("height") int height, @ParamName("pauseGame") boolean pauseGame);
+	public abstract ICustomGui createCustomGui(@ParamName("id") int id, @ParamName("width") int width, @ParamName("height") int height,
+											   @ParamName("pauseGame") boolean pauseGame, @ParamName("player") IPlayer<?> player);
 
 	public abstract IPlayerMail createMail(@ParamName("sender") String sender, @ParamName("title") String title);
 
@@ -143,5 +140,11 @@ public abstract class NpcAPI {
 	public abstract IData getTempdata();
 
 	public abstract IData getStoreddata();
+
+	public abstract List<?> createList();
+
+	public abstract Map<?, ?> createMap();
+
+	public abstract Map<?, ?> createTreeMap();
 
 }

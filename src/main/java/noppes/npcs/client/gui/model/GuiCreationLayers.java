@@ -6,21 +6,26 @@ import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.inventory.Slot;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.mixin.client.renderer.entity.IRenderLivingBaseMixin;
-import noppes.npcs.client.gui.util.*;
 import noppes.npcs.client.renderer.RenderCustomNpc;
 import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class GuiCreationLayers  extends GuiCreationScreenInterface implements ICustomScrollListener {
+public class GuiCreationLayers  extends GuiCreationScreenInterface<ContainerLayer> implements ICustomScrollListener {
 
-    private GuiCustomScroll scroll;
+    private GuiCustomScrollNop scroll;
 
     public GuiCreationLayers(EntityNPCInterface npc, ContainerLayer container) {
         super(npc, container);
@@ -30,13 +35,13 @@ public class GuiCreationLayers  extends GuiCreationScreenInterface implements IC
     }
 
     @Override
-    public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-        super.buttonEvent(button, mouseButton);
+    public void buttonEvent(@Nonnull GuiButtonNop button) {
+        super.buttonEvent(button);
     }
 
     @Override
     public void initGui() {
-        GuiNpcTextField.unfocus();
+        GuiTextFieldNop.unfocus();
         super.initGui();
         int x = guiLeft;
         int y = guiTop + 48;
@@ -45,20 +50,24 @@ public class GuiCreationLayers  extends GuiCreationScreenInterface implements IC
             y -= 22;
             h += 22;
         }
-        if (scroll == null) { scroll = new GuiCustomScroll(this, 1, true, true); }
-        addLabel(new GuiNpcLabel(20, "part.layers.info.1", x, y)
-                .setColor(CustomNpcs.MainColor.getRGB()));
+        if (scroll == null) { scroll = addScroll(1, true); }
+        addLabel(20, x, y, "part.layers.info.1")
+                .setColor(CustomNpcs.MainColor.getRGB());
         Render<Entity> render = mc.getRenderManager().getEntityRenderObject(npc);
-        Map<String, List<String>> map = new TreeMap<>();
-        Map<String, String> sfx = new HashMap<>();
+        Map<Component, List<Component>> map = new LinkedHashMap<>();
+        Map<Component, Component> sfx = new HashMap<>();
         if (render instanceof RenderCustomNpc) {
             for (LayerRenderer<?> layer : ((RenderCustomNpc<?>) render).getLayers()) {
-                String name = layer.getClass().getSimpleName();
-                if (name.isEmpty()) { continue; }
-                map.put(name, Collections.singletonList(((char) 167) + "7Layer from " +
-                        ((char) 167) + "aRenderCustomNpc" +
-                        ((char) 167) + "7; in mod:" + ((char) 167) + "6 CustomNpc"));
-                sfx.put(name, ((char) 167) + "6CN");
+                Component name = Component.literal(layer.getClass().getSimpleName());
+                if (!name.getString().isEmpty()) {
+                    map.put(name, Collections.singletonList(Component.empty()
+                            .append(Component.literal("Layer from ").withStyle(TextFormatting.GRAY))
+                            .append(Component.literal("RenderCustomNpc").withStyle(TextFormatting.GREEN))
+                            .append(Component.literal("; in mod: ").withStyle(TextFormatting.GRAY))
+                            .append(Component.literal("CustomNpc").withStyle(TextFormatting.GOLD))
+                    ));
+                    sfx.put(name, Component.literal("CN").withStyle(TextFormatting.GOLD));
+                }
             }
         }
         EntityLivingBase customModel = playerdata.getEntity(npc);
@@ -66,8 +75,8 @@ public class GuiCreationLayers  extends GuiCreationScreenInterface implements IC
             render = mc.getRenderManager().getEntityRenderObject(customModel);
             if (render instanceof RenderLivingBase) {
                 for (LayerRenderer<?> layer : ((IRenderLivingBaseMixin) render).npcs$getLayers()) {
-                    String name = layer.getClass().getSimpleName();
-                    if (name.isEmpty()) { continue; }
+                    Component name = Component.literal(layer.getClass().getSimpleName());
+                    if (name.getString().isEmpty()) { continue; }
                     if (!map.containsKey(name)) {
                         String modName = "";
                         for (ModContainer mod : Loader.instance().getActiveModList()) {
@@ -76,36 +85,37 @@ public class GuiCreationLayers  extends GuiCreationScreenInterface implements IC
                                 break;
                             }
                         }
+                        Component nameMod;
                         if (modName.isEmpty()) {
-                            modName = "in" + ((char) 167) + "e Minecraft";
-                            sfx.put(name, ((char) 167) + "eMC");
+                            nameMod = Component.literal("in ").append(Component.literal("Minecraft").withStyle(TextFormatting.YELLOW));
+                            sfx.put(name, Component.literal("MC").withStyle(TextFormatting.YELLOW));
                         } else {
-                            modName = "in mod: " + ((char) 167) + "e " + modName;
-                            sfx.put(name, ((char) 167) + "c" + String.valueOf(modName.charAt(0)).toUpperCase());
+                            nameMod = Component.literal("in mod: ").append(Component.literal(modName).withStyle(TextFormatting.GREEN));
+                            sfx.put(name, Component.literal(String.valueOf(modName.charAt(0)).toUpperCase()).withStyle(TextFormatting.RED));
                         }
-                        map.put(name, Collections.singletonList(((char) 167) + "7Layer from " +
-                                ((char) 167) + "b" + render.getClass().getSimpleName() +
-                                ((char) 167) + "7; " +modName));
+                        map.put(name, Collections.singletonList(Component.empty()
+                                .append(Component.literal("Layer from ").withStyle(TextFormatting.GRAY))
+                                .append(Component.literal(render.getClass().getSimpleName()).withStyle(TextFormatting.AQUA))
+                                .append(Component.literal("; ").withStyle(TextFormatting.GRAY))
+                                .append(nameMod)));
                     }
                 }
             }
         }
-        LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-        List<String> suffixes = new ArrayList<>();
+        LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+        List<Component> suffixes = new ArrayList<>();
         int i = 0;
-        for (String key : map.keySet()) {
+        for (Component key : map.keySet()) {
             hts.put(i++, map.get(key));
             suffixes.add(sfx.get(key));
         }
-        scroll.setUnsortedList(new ArrayList<>(map.keySet()))
+        y += 12;
+        add(scroll.setPos(x, y)
+                .setUnsortedList(new ArrayList<>(map.keySet()))
                 .setSize(121, h)
                 .setSelectedList(new HashSet<>(Arrays.asList(playerdata.getDisableLayers())))
                 .setHoverTexts(hts)
-                .setSuffixes(suffixes);
-        y += 12;
-        scroll.guiLeft = x;
-        scroll.guiTop = y;
-        addScroll(scroll);
+                .setSuffixes(suffixes));
         for (Slot slot : inventorySlots.inventorySlots) {
             slot.xPos = -5000;
             slot.yPos = -5000;
@@ -113,12 +123,12 @@ public class GuiCreationLayers  extends GuiCreationScreenInterface implements IC
     }
 
     @Override
-    public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-        playerdata.setDisableLayers(scroll.getSelectedList().toArray(new String[0]));
+    public void scrollClicked(GuiCustomScrollNop scroll) {
+        playerdata.setDisableLayers(scroll.getList().toArray(new String[0]));
         initGui();
     }
 
     @Override
-    public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
+    public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 }

@@ -7,6 +7,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
@@ -15,24 +16,25 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NpcMiscInventory;
-import noppes.npcs.Server;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IContainer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.data.ICustomDrop;
 import noppes.npcs.api.handler.data.IAvailability;
 import noppes.npcs.api.handler.data.IDeal;
+import noppes.npcs.api.handler.data.IDropSetData;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
-import noppes.npcs.constants.EnumPacketClient;
+import noppes.npcs.containers.NpcMiscInventory;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.entity.data.DropSet;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketDealUpdate;
 import noppes.npcs.util.ValueUtil;
 
 import java.util.*;
 
-public class Deal implements IDeal {
+public class Deal implements IDeal, IDropSetData {
 
 	public final static ResourceLocation defaultCaseOBJ = new ResourceLocation(CustomNpcs.MODID, "models/util/chest.obj");
 	public static ResourceLocation defaultCaseTexture = new ResourceLocation("minecraft", "entity/chest/christmas");
@@ -98,19 +100,13 @@ public class Deal implements IDeal {
 	}
 
 	@Override
-	public int getAmount() {
-		return amount;
-	}
+	public int getAmount() { return amount; }
 
 	@Override
-	public IAvailability getAvailability() {
-		return availability;
-	}
+	public IAvailability getAvailability() { return availability; }
 
 	@Override
-	public int getChance() {
-		return (int) (chance * 100.0f);
-	}
+	public int getChance() { return (int) (chance * 100.0f); }
 
 	@Override
 	public IContainer getCurrency() { return Objects.requireNonNull(NpcAPI.Instance()).getIContainer(inventoryCurrency); }
@@ -119,19 +115,13 @@ public class Deal implements IDeal {
 	public int getId() { return id; }
 
 	@Override
-	public boolean getIgnoreDamage() {
-		return ignoreDamage;
-	}
+	public boolean getIgnoreDamage() { return ignoreDamage; }
 
 	@Override
-	public boolean getIgnoreNBT() {
-		return ignoreNBT;
-	}
+	public boolean getIgnoreNBT() { return ignoreNBT; }
 
 	@Override
-	public int getMaxCount() {
-		return count[1];
-	}
+	public int getMaxCount() { return count[1]; }
 
 	@Override
 	public IInventory getMCInventoryCurrency() { return inventoryCurrency; }
@@ -140,9 +130,7 @@ public class Deal implements IDeal {
 	public IInventory getMCInventoryProduct() { return inventoryProduct; }
 
 	@Override
-	public int getMinCount() {
-		return count[0];
-	}
+	public int getMinCount() { return count[0]; }
 
 	@Override
 	public int getMoney() { return money; }
@@ -152,19 +140,22 @@ public class Deal implements IDeal {
 
 	@Override
 	public String getName() {
-		ITextComponent name = new TextComponentString("");
-		ITextComponent temp;
+		Component name = Component.empty();
 		if (isCase) {
-			temp = new TextComponentTranslation(caseName);
-			temp.getStyle().setColor(count[1] != 0 && amount == 0 ? TextFormatting.DARK_RED : TextFormatting.RESET);
-			name.appendSibling(temp);
+			name.append(Component.empty()
+					.append(Component.translatable(caseName)).withStyle(count[1] != 0 && amount == 0 ? TextFormatting.DARK_RED : TextFormatting.RESET));
 		}
 		else {
 			ItemStack stack = inventoryProduct.getStackInSlot(0);
 			if (count[1] != 0 && amount == 0) {
-				name.appendText(stack.getDisplayName()).appendText(TextFormatting.DARK_RED + " x" + stack.getCount());
+				name.append(Component.empty().append(stack.getDisplayName())
+						.append(Component.literal(" x" + stack.getCount()))
+						.withStyle(TextFormatting.DARK_RED));
 			} else {
-				name.appendText(stack.getDisplayName()).appendText(TextFormatting.RESET + " x" + stack.getCount());
+				name.append(Component.empty()
+						.append(stack.getDisplayName())
+						.append(Component.literal(" x").withStyle(TextFormatting.RESET))
+						.append(Component.literal("" + stack.getCount()).withStyle(TextFormatting.GOLD)));
 			}
 		}
 		return name.getFormattedText();
@@ -173,30 +164,27 @@ public class Deal implements IDeal {
 	@Override
 	public IItemStack getProduct() { return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(inventoryProduct.getStackInSlot(0)); }
 
-	public String getSettingName() {
+	public Component getSettingName() {
 		ItemStack stack = inventoryProduct.getStackInSlot(0);
-		ITextComponent keyName = new TextComponentString("ID:" + id + " ");
-		keyName.getStyle().setColor(TextFormatting.GRAY);
-		ITextComponent temp;
+		Component keyName = Component.empty()
+				.append(Component.literal("ID:" + id + " ").withStyle(TextFormatting.GRAY));
 		if (isCase) {
-			temp = new TextComponentTranslation(caseName);
-			temp.getStyle().setColor(inventoryCurrency.isEmpty() && money == 0 && donat == 0 ? TextFormatting.DARK_RED : TextFormatting.RESET);
-			keyName.appendSibling(temp);
+			Component stackName = Component.empty()
+					.append(Component.translatable(caseName));
+			keyName.append(stackName.withStyle(inventoryCurrency.isEmpty() && money == 0 && donat == 0 ? TextFormatting.DARK_RED : TextFormatting.RESET));
 		}
 		else {
-			if (stack.isEmpty()) {
-				temp = new TextComponentTranslation("type.empty");
-				temp.getStyle().setColor(TextFormatting.DARK_RED);
-				keyName.appendSibling(temp);
-			}
+			if (stack.isEmpty()) { keyName.append(Component.translatable("type.empty").withStyle(TextFormatting.DARK_RED)); }
 			else {
-				temp = new TextComponentString(stack.getDisplayName());
-				temp.getStyle().setColor(inventoryCurrency.isEmpty() && money == 0 && donat == 0 ? TextFormatting.DARK_RED : TextFormatting.RESET);
-				if (!stack.isEmpty()) { temp.appendText(TextFormatting.GRAY + " x" + TextFormatting.GOLD + stack.getCount()); }
-				keyName.appendSibling(temp);
+				Component stackName = Component.empty().append(stack.getDisplayName()).withStyle(TextFormatting.RESET);
+				if (!stack.isEmpty()) {
+					stackName.append(Component.literal(" x").withStyle(TextFormatting.GRAY))
+							.append(Component.literal("" + stack.getCount()).withStyle(TextFormatting.GOLD));
+				}
+				keyName.append(stackName.withStyle(inventoryCurrency.isEmpty() && money == 0 && donat == 0 ? TextFormatting.DARK_RED : TextFormatting.RESET));
 			}
 		}
-		return keyName.getFormattedText();
+		return keyName;
 	}
 
 	@Override
@@ -209,7 +197,7 @@ public class Deal implements IDeal {
 		else { return !inventoryProduct.getStackInSlot(0).isEmpty() && (money > 0 || donat > 0 || !inventoryCurrency.isEmpty()); }
 	}
 
-	public void readData(NBTTagCompound compound) {
+	public void loadData(NBTTagCompound compound) {
 		load(compound);
 		amount = compound.getInteger("Amount");
 		id = compound.getInteger("DealID");
@@ -242,7 +230,7 @@ public class Deal implements IDeal {
 
 		caseItems.clear();
 		for (int i = 0; i < compound.getTagList("NpcInv", 10).tagCount(); i++) {
-			DropSet ds = new DropSet(null, this);
+			DropSet ds = new DropSet(this);
 			ds.load(compound.getTagList("NpcInv", 10).getCompoundTagAt(i));
 			ds.pos = i;
 			caseItems.put(i, ds);
@@ -460,7 +448,7 @@ public class Deal implements IDeal {
 
 	public DropSet addCaseItem(ItemStack item, double chance) {
 		chance = ValueUtil.correctDouble(chance, 0.0001d, 100.0d);
-		DropSet ds = new DropSet(null, this);
+		DropSet ds = new DropSet(this);
 		ds.setInventorySlotContents(0, item);
 		ds.chance = chance;
 		ds.pos = caseItems.size();
@@ -549,12 +537,12 @@ public class Deal implements IDeal {
 		if (update) {
 			update = false;
 			MarcetController mData = MarcetController.getInstance();
-			NBTTagCompound nbt = save();
+			NBTTagCompound nbt = saveData();
 			for (Marcet marcet : mData.markets.values()) {
 				if (marcet.getSection(id) == -1) { continue;}
 				for (EntityPlayer listener : marcet.listeners) {
 					if (listener instanceof EntityPlayerMP) {
-						Server.sendData((EntityPlayerMP) listener, EnumPacketClient.MARCET_DATA, 5, marcet.getId(), nbt);
+						Packets.send((EntityPlayerMP) listener, new PacketDealUpdate(marcet.getId(), nbt));
 					}
 				}
 			}
@@ -570,13 +558,13 @@ public class Deal implements IDeal {
 		else { amount = 0; }
 	}
 
-	public NBTTagCompound save() {
-		NBTTagCompound compound = write();
+	public NBTTagCompound saveData() {
+		NBTTagCompound compound = save();
 		compound.setInteger("Amount", amount);
 		return compound;
 	}
 
-	public NBTTagCompound write() {
+	public NBTTagCompound save() {
 		NBTTagCompound compound = new NBTTagCompound();
 		compound.setTag("Availability", availability.save(new NBTTagCompound()));
 		compound.setBoolean("IgnoreDamage", ignoreDamage);
@@ -614,7 +602,46 @@ public class Deal implements IDeal {
 	}
 
 	@SideOnly(Side.CLIENT)
-	public void putHoverCaseItems(List<String> hovers, ITooltipFlag.TooltipFlags type) {
+	public void putHoverCaseItems(List<Component> hovers, ITooltipFlag.TooltipFlags type) {
+		for (int pos: caseItems.keySet()) {
+			DropSet dropSet = caseItems.get(pos);
+			Component line = Component.empty()
+					.append(Component.literal(type == ITooltipFlag.TooltipFlags.ADVANCED ? pos + ": \"" : "- \"").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(dropSet.item.getDisplayName()).withStyle(TextFormatting.RESET))
+					.append(Component.literal("\" x").withStyle(TextFormatting.GRAY));
+			if (dropSet.amount[0] == dropSet.amount[1]) { line.append(Component.literal("" + dropSet.amount[0]).withStyle(TextFormatting.GOLD)); }
+			else {
+				line.append(Component.literal("[").withStyle(TextFormatting.GRAY))
+						.append(Component.literal("" + dropSet.amount[0]).withStyle(TextFormatting.GOLD))
+						.append(Component.literal("...").withStyle(TextFormatting.GRAY))
+						.append(Component.literal("" + dropSet.amount[1]).withStyle(TextFormatting.GOLD))
+						.append(Component.literal("]").withStyle(TextFormatting.GRAY));
+			}
+			if (type == ITooltipFlag.TooltipFlags.ADVANCED) {
+				double ch = Math.round(dropSet.chance * 10.0d) / 10.d;
+				String chance = String.valueOf(ch).replace(".", ",");
+				if (ch == (int) ch) { chance = String.valueOf((int) ch); }
+				chance += "%";
+				line.append(Component.literal("; ").withStyle(TextFormatting.GRAY))
+						.append(Component.translatable("drop.chance").append(": " + chance).withStyle(TextFormatting.GRAY));
+				if (!dropSet.enchants.isEmpty()) {
+					line.append(Component.literal(" |").withStyle(TextFormatting.GRAY))
+							.append(Component.literal("E").withStyle(TextFormatting.AQUA));
+				}
+				if (!dropSet.attributes.isEmpty()) {
+					line.append(Component.literal(" |").withStyle(TextFormatting.GRAY))
+							.append(Component.literal("A").withStyle(TextFormatting.GREEN));
+				}
+				if (!dropSet.tags.isEmpty()) {
+					line.append(Component.literal(" |").withStyle(TextFormatting.GRAY))
+							.append(Component.literal("T").withStyle(TextFormatting.RED));
+				}
+			}
+			line.append(Component.literal(";").withStyle(TextFormatting.GRAY));
+			hovers.add(line);
+		}
+
+
 		ITextComponent line, temp;
 		for (int pos: caseItems.keySet()) {
 			DropSet dropSet = caseItems.get(pos);
@@ -678,5 +705,11 @@ public class Deal implements IDeal {
 		}
 		return stacks;
 	}
+
+	@Override
+	public int getNpcLevel() { return 1; }
+
+	@Override
+	public boolean removeDrop(DropSet dropSet) { return removeCaseItem(dropSet); }
 
 }

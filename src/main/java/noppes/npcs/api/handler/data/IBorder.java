@@ -5,7 +5,7 @@ import java.awt.Point;
 import net.minecraft.util.math.Vec3d;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IEntity;
 
 @SuppressWarnings("all")
@@ -45,7 +45,7 @@ public interface IBorder {
 
 	int getColor();
 
-	int getDimensionId();
+	int getDimension();
 
 	IPos getHomePos();
 
@@ -103,7 +103,7 @@ public interface IBorder {
 
 	void setColor(@ParamName("color") int color);
 
-	void setDimensionId(@ParamName("dimensionId") int dimensionId);
+	void setDimensionId(@ParamName("dimensionName") int dimensionName);
 
 	void setHomePos(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 

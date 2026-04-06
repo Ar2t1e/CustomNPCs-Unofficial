@@ -12,12 +12,8 @@ import javax.annotation.Nonnull;
 public class ContainerNpcInterface extends Container {
 
 	public static IContainer getOrCreateIContainer(ContainerNpcInterface container) {
-		if (container.scriptContainer != null) {
-			return container.scriptContainer;
-		}
-		if (container instanceof ContainerCustomChest) {
-			return container.scriptContainer = new ContainerCustomChestWrapper(container);
-		}
+		if (container.scriptContainer != null) { return container.scriptContainer; }
+		if (container instanceof ContainerCustomChest) { return container.scriptContainer = new ContainerCustomChestWrapper(container); }
 		return container.scriptContainer = new ContainerWrapper(container);
 	}
 
@@ -27,14 +23,15 @@ public class ContainerNpcInterface extends Container {
 
 	public IContainer scriptContainer;
 
-	public ContainerNpcInterface(EntityPlayer player) {
-		this.player = player;
-		this.posX = MathHelper.floor(player.posX);
-		this.posZ = MathHelper.floor(player.posZ);
-		player.motionX = 0.0;
-		player.motionZ = 0.0;
+	public ContainerNpcInterface(EntityPlayer playerIn) {
+		player = playerIn;
+		posX = MathHelper.floor(playerIn.posX);
+		posZ = MathHelper.floor(playerIn.posZ);
+		playerIn.motionX = 0.0;
+		playerIn.motionZ = 0.0;
 	}
 
+	@Override
 	public boolean canInteractWith(@Nonnull EntityPlayer player) {
 		return !player.isDead && this.posX == MathHelper.floor(player.posX) && this.posZ == MathHelper.floor(player.posZ);
 	}

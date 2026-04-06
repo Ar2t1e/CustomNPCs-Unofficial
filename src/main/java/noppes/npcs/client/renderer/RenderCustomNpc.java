@@ -22,7 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomItems;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.layer.*;
@@ -50,6 +50,7 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 		addLayer(new LayerArms(this));
 		addLayer(new LayerLegs(this));
 		addLayer(new LayerBody(this));
+		addLayer(new LayerGlow<>(this));
 		addLayer(new LayerNpcCloak(this));
 		addLayer(new LayerCustomModels(this));
 		addLayer(new LayerCustomHead(npcmodel.bipedHead));
@@ -116,7 +117,7 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 	}
 
 	public ModelBiped.ArmPose getPose(T npc, ItemStack item) {
-		if (NoppesUtilServer.IsItemStackNull(item)) {
+		if (NoppesUtilServer.isItemStackNull(item)) {
 			return ModelBiped.ArmPose.EMPTY;
 		}
 		if (npc.getItemInUseCount() > 0) {
@@ -181,7 +182,7 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 			if (npc.display.getVisible() == 1) {
 				isInvisible = npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player);
 			} else if (npc.display.getVisible() == 2) {
-				isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand;
+				isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand;
 			}
 			if (isInvisible) {
 				GlStateManager.enableBlendProfile(GlStateManager.Profile.TRANSPARENT_MODEL);

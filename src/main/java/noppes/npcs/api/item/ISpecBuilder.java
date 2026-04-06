@@ -3,7 +3,7 @@ package noppes.npcs.api.item;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.constants.EnumGuiType;
 
 public interface ISpecBuilder {

@@ -30,7 +30,7 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
 import noppes.npcs.api.wrapper.WrapperRecipe;
 import noppes.npcs.controllers.data.Availability;
-import noppes.npcs.reflection.item.crafting.IngredientReflection;
+import noppes.npcs.mixin.item.crafting.IIngredientMixin;
 import noppes.npcs.reflection.item.crafting.ShapelessRecipesReflection;
 import noppes.npcs.util.Util;
 
@@ -152,7 +152,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
             if (ingredient.getMatchingStacks().length == 0) { continue; }
             boolean added = false;
             for (ItemStack stack : ingredient.getMatchingStacks()) {
-                if (!NoppesUtilServer.IsItemStackNull(stack)) {
+                if (!NoppesUtilServer.isItemStackNull(stack)) {
                     added = true;
                     break;
                 }
@@ -298,7 +298,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 
 	@Override
 	public IItemStack getProduct() {
-		return (IItemStack) getRecipeOutput().getCapability(ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY, null);
+		return (IItemStack) getRecipeOutput().getCapability(ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY, null);
 	}
 
 	@Override
@@ -396,7 +396,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 		wrapper.recipeItems.clear();
 		int pos = 0;
 		for (Ingredient ingr : recipeItems) {
-			ItemStack[] rawMatchingStacks = IngredientReflection.getRawMatchingStacks(ingr);
+			ItemStack[] rawMatchingStacks = ((IIngredientMixin) ingr).getMatchingStacks();
 			ItemStack[] array = new ItemStack[rawMatchingStacks.length];
 			for (int j = 0; j < rawMatchingStacks.length; j++) {
 				array[j] = rawMatchingStacks[j].copy();

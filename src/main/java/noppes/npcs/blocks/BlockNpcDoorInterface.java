@@ -12,8 +12,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.blocks.tiles.TileDoor;
 
 import javax.annotation.Nonnull;
@@ -26,7 +27,7 @@ public abstract class BlockNpcDoorInterface extends BlockDoor implements ITileEn
 		this.setUnlocalizedName("npcscripteddoor");
 		this.setHardness(5.0f);
 		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 		this.hasTileEntity = true;
 	}
 
@@ -60,7 +61,7 @@ public abstract class BlockNpcDoorInterface extends BlockDoor implements ITileEn
 	}
 
 	public @Nonnull ItemStack getItem(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-		return new ItemStack(CustomRegisters.scriptedDoorTool, 1, this.damageDropped(state));
+		return new ItemStack(CustomBlocks.scripted_door_item, 1, this.damageDropped(state));
 	}
 
 	public @Nonnull Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) {

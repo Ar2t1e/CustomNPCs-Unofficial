@@ -21,9 +21,9 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.api.item.INPCToolItem;
-import noppes.npcs.blocks.CustomBlockSlab.CustomBlockSlabDouble;
-import noppes.npcs.blocks.CustomBlockSlab.CustomBlockSlabSingle;
-import noppes.npcs.blocks.CustomDoor;
+import noppes.npcs.blocks.custom.CustomBlockSlab.CustomBlockSlabDouble;
+import noppes.npcs.blocks.custom.CustomBlockSlab.CustomBlockSlabSingle;
+import noppes.npcs.blocks.custom.CustomDoor;
 
 import javax.annotation.Nonnull;
 

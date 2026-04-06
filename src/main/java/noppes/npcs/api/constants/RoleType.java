@@ -3,8 +3,8 @@ package noppes.npcs.api.constants;
 import java.util.ArrayList;
 import java.util.List;
 
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesStringUtils;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleBank;
 import noppes.npcs.roles.RoleCompanion;
@@ -17,12 +17,12 @@ import noppes.npcs.roles.RoleTransporter;
 
 public enum RoleType {
 
-	DEFAULT("none", 0, false),
+	NONE("none", 0, false),
 	TRADER("trader", 1, true),
 	FOLLOWER("mercenary", 2, true),
 	BANK("bank", 3, true),
 	TRANSPORTER("transporter", 4, true),
-	POSTMAN("mailman", 5, false),
+	MAILMAN("mailman", 5, false),
 	COMPANION("companion", 6, true),
 	DIALOG("dialog", 7, true);
 
@@ -32,28 +32,25 @@ public enum RoleType {
 				return er;
 			}
 		}
-		return RoleType.DEFAULT;
+		return RoleType.NONE;
 	}
 
-	public static String[] getNames() {
-		List<String> list = new ArrayList<>();
+	public static Object[] getNames() {
+		List<Component> list = new ArrayList<>();
 		for (RoleType er : RoleType.values()) {
-			if (er == COMPANION) {
-				list.add(NoppesStringUtils.translate(er.name, " (WIP)"));
-			} else {
-				list.add(er.name);
-			}
+			if (er == COMPANION) { list.add(er.name.append(" (WIP)")); }
+			else { list.add(er.name); }
 		}
-		return list.toArray(new String[0]);
+		return list.toArray(new Component[0]);
 	}
 
 	private final int type;
-	public final String name;
+	public final Component name;
 	public final boolean hasSettings;
 
 	RoleType(String named, int t, boolean hasSet) {
 		type = t;
-		name = "role." + named;
+		name = Component.translatable("role." + named);
 		hasSettings = hasSet;
 	}
 
@@ -63,14 +60,14 @@ public enum RoleType {
 
 	public void setToNpc(EntityNPCInterface npc) {
 		switch (this) {
-			case DEFAULT: npc.advanced.roleInterface = new RoleInterface(npc); break;
-			case TRADER: npc.advanced.roleInterface = new RoleTrader(npc); break;
-			case FOLLOWER: npc.advanced.roleInterface = new RoleFollower(npc); break;
-			case BANK: npc.advanced.roleInterface = new RoleBank(npc); break;
-			case TRANSPORTER: npc.advanced.roleInterface = new RoleTransporter(npc); break;
-			case POSTMAN: npc.advanced.roleInterface = new RolePostman(npc); break;
-			case COMPANION: npc.advanced.roleInterface = new RoleCompanion(npc); break;
-			case DIALOG: npc.advanced.roleInterface = new RoleDialog(npc); break;
+			case NONE: npc.role = new RoleInterface(npc); break;
+			case TRADER: npc.role = new RoleTrader(npc); break;
+			case FOLLOWER: npc.role = new RoleFollower(npc); break;
+			case BANK: npc.role = new RoleBank(npc); break;
+			case TRANSPORTER: npc.role = new RoleTransporter(npc); break;
+			case MAILMAN: npc.role = new RolePostman(npc); break;
+			case COMPANION: npc.role = new RoleCompanion(npc); break;
+			case DIALOG: npc.role = new RoleDialog(npc); break;
 		}
 	}
 

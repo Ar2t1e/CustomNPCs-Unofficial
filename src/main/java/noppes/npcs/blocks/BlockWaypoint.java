@@ -16,19 +16,16 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcsPermissions;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileWaypoint;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
 import javax.annotation.Nonnull;
 
-public class BlockWaypoint
-extends BlockInterface
-implements IPermission {
+public class BlockWaypoint extends BlockInterface {
 
 	public BlockWaypoint() {
 		super(Material.IRON);
@@ -36,7 +33,7 @@ implements IPermission {
 		this.setSoundType(SoundType.METAL);
 		this.setHardness(5.0f);
 		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
@@ -52,11 +49,6 @@ implements IPermission {
 		return EnumBlockRenderType.MODEL;
 	}
 
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.SaveTileEntity;
-	}
-
 	public boolean isFullCube(@Nonnull IBlockState state) {
 		return false;
 	}
@@ -70,7 +62,7 @@ implements IPermission {
 			return false;
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (currentItem.getItem() == CustomRegisters.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
+		if (currentItem.getItem() == CustomItems.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
 			NoppesUtilServer.sendOpenGui(player, EnumGuiType.Waypoint, null, pos.getX(), pos.getY(), pos.getZ());
 			return true;
 		}

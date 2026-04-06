@@ -10,8 +10,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import noppes.npcs.util.CustomNPCsScheduler;
 
-import java.util.Objects;
-
+// New from Unofficial (BetaZavr)
 public class SchematicBlockData {
 
 	public BlockPos pos;
@@ -20,67 +19,61 @@ public class SchematicBlockData {
 	public World world;
 	public int meta = 0, id = 0;
 
-	public SchematicBlockData(World world, IBlockState state, BlockPos pos) {
-		this.world = world;
-		this.pos = pos;
-		this.state = state;
-		this.meta = this.state.getBlock().getMetaFromState(state);
-		this.nbtTile = null;
+	public SchematicBlockData(World worldIn, IBlockState stateIn, BlockPos posIn) {
+		world = worldIn;
+		pos = posIn;
+		state = stateIn;
+		meta = state.getBlock().getMetaFromState(state);
+		nbtTile = null;
 		if (state.getBlock() instanceof ITileEntityProvider && world != null && world.getTileEntity(pos) != null) {
-			this.nbtTile = new NBTTagCompound();
-			Objects.requireNonNull(world.getTileEntity(pos)).writeToNBT(this.nbtTile);
+			nbtTile = new NBTTagCompound();
+			TileEntity tile = world.getTileEntity(pos);
+			if (tile != null) { nbtTile = tile.writeToNBT(nbtTile); }
 		}
 	}
 
-
-	public SchematicBlockData(World world, ItemStack stack) {
-		this.world = world;
-		this.pos = null;
+	public SchematicBlockData(World worldIn, ItemStack stack) {
+		world = worldIn;
+		pos = null;
 		Block b = Block.getBlockFromItem(stack.getItem());
-		this.state = b.getDefaultState();
-		if (stack.getItemDamage() < b.getBlockState().getValidStates().size()) {
-			this.state = b.getStateFromMeta(stack.getItemDamage());
-		}
-		this.nbtTile = null;
-		if (stack.hasTagCompound()) {
-            assert stack.getTagCompound() != null;
-            this.nbtTile = stack.getTagCompound().copy();
-		}
+		state = b.getDefaultState();
+		if (stack.getItemDamage() < b.getBlockState().getValidStates().size()) { state = b.getStateFromMeta(stack.getItemDamage()); }
+		nbtTile = null;
+		if (stack.getTagCompound() != null) { nbtTile = stack.getTagCompound().copy(); }
 	}
 
 	public void set(BlockPos pos) {
-		if (this.world == null || pos == null || this.state == null) {
+		if (world == null || pos == null || state == null) {
 			return;
 		}
-		this.world.setBlockState(pos, this.state);
-		if (this.nbtTile != null) {
-			this.nbtTile.setInteger("x", pos.getX());
-			this.nbtTile.setInteger("y", pos.getY());
-			this.nbtTile.setInteger("z", pos.getZ());
+		world.setBlockState(pos, state);
+		if (nbtTile != null) {
+			nbtTile.setInteger("x", pos.getX());
+			nbtTile.setInteger("y", pos.getY());
+			nbtTile.setInteger("z", pos.getZ());
 			CustomNPCsScheduler.runTack(() -> {
-				TileEntity tile = this.world.getTileEntity(this.pos);
+				TileEntity tile = world.getTileEntity(pos);
 				if (tile == null) {
-					tile = this.state.getBlock().createTileEntity(this.world, this.state);
+					tile = state.getBlock().createTileEntity(world, state);
 				}
                 assert tile != null;
-                tile.readFromNBT(this.nbtTile);
-				this.nbtTile.setInteger("x", this.pos.getX());
-				this.nbtTile.setInteger("y", this.pos.getY());
-				this.nbtTile.setInteger("z", this.pos.getZ());
+                tile.readFromNBT(nbtTile);
+				nbtTile.setInteger("x", pos.getX());
+				nbtTile.setInteger("y", pos.getY());
+				nbtTile.setInteger("z", pos.getZ());
 			}, 200);
 		}
 	}
 
-	public void setMeta(int meta) {
-		this.meta = meta;
-		if (meta < this.state.getBlock().getBlockState().getValidStates().size()) {
-			this.state = this.state.getBlock().getBlockState().getValidStates().get(meta);
-		}
+	public void setMeta(int metaIn) {
+		meta = metaIn;
+		if (meta < state.getBlock().getBlockState().getValidStates().size()) { state = state.getBlock().getBlockState().getValidStates().get(meta); }
 	}
 
+	@Override
 	public String toString() {
-        return "SchematicBlockData [ ID:" + this.id + "; state:" + this.state + "," + "; pos:" + this.pos
-				+ "; meta:" + this.meta + "; hasNbt:" + (this.nbtTile != null) + " ]";
+        return "SchematicBlockData [ ID:" + id + "; state:" + state + "," + "; pos:" + pos
+				+ "; meta:" + meta + "; hasNbt:" + (nbtTile != null) + " ]";
 	}
 
 }

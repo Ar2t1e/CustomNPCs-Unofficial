@@ -26,10 +26,7 @@ import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.EventHooks;
-import noppes.npcs.NBTTags;
-import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.*;
 import noppes.npcs.api.ILayerModel;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.block.ITextPlane;
@@ -40,7 +37,6 @@ import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.entity.data.DataTimers;
 import noppes.npcs.entity.data.TextBlock;
-import noppes.npcs.util.LayerModel;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
@@ -214,82 +210,46 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 			TileScripted.this.needsClientUpdate = true;
 		}
 	}
-	public int activePowering;
-	private IBlock blockDummy;
-	public float blockHardness;
-	public Block blockModel;
-	public float blockResistance;
-	public boolean enabled;
-	public boolean isLadder;
-	public boolean isPassable;
-	public ItemStack itemModel;
-	public int metaModel;
-	public long lastInited;
-	public int lightValue;
-	public boolean needsClientUpdate;
-	public int newPower;
-	public int powering;
-	public int prevPower;
+	public int activePowering = 0;
+	private IBlock blockDummy = null;
+	public float blockHardness = 5.0f;
+	public Block blockModel = null;
+	public float blockResistance = 10.0f;
+	public boolean enabled = false;
+	public boolean isLadder = false;
+	public boolean isPassable = false;
+	public ItemStack itemModel = new ItemStack(CustomBlocks.scripted);
+	public int metaModel = 0;
+	public long lastInited = -1L;
+	public int lightValue = 0;
+	public boolean needsClientUpdate = false;
+	public int newPower = 0;
+	public int powering = 0;
+	public int prevPower = 0;
 	public TileEntity renderTile;
-	public boolean renderTileErrored;
-	public ITickable renderTileUpdate;
-	public int rotationX;
-	public int rotationY;
-	public int rotationZ;
-	public float scaleX;
-	public float scaleY;
-	public float scaleZ;
-	public String scriptLanguage;
-	public List<ScriptContainer> scripts;
-	public TextPlane text1;
-	public TextPlane text2;
-	public TextPlane text3;
-	public TextPlane text4;
-	public TextPlane text5;
-	public TextPlane text6;
+	public boolean renderTileErrored = true;
+	public ITickable renderTileUpdate = null;
+	public int rotationX = 0;
+	public int rotationY = 0;
+	public int rotationZ = 0;
+	public float scaleX = 1.0f;
+	public float scaleY = 1.0f;
+	public float scaleZ = 1.0f;
+	public String scriptLanguage = "ECMAScript";
+	public List<ScriptContainer> scripts = new ArrayList<>();
+	public TextPlane text1 = new TextPlane();
+	public TextPlane text2 = new TextPlane();
+	public TextPlane text3 = new TextPlane();
+	public TextPlane text4 = new TextPlane();
+	public TextPlane text5 = new TextPlane();
+	public TextPlane text6 = new TextPlane();
 
-	private short ticksExisted;
+	private short ticksExisted = 0;
 	public DataTimers timers;
 
-	public ILayerModel[] layers;
+	public ILayerModel[] layers = new ILayerModel[0];
 
-	public TileScripted() {
-		this.scripts = new ArrayList<>();
-		this.scriptLanguage = "ECMAScript";
-		this.enabled = false;
-		this.blockDummy = null;
-		this.timers = new DataTimers(this);
-		this.lastInited = -1L;
-		this.ticksExisted = 0;
-		this.itemModel = new ItemStack(CustomRegisters.scripted);
-		this.blockModel = null;
-		this.needsClientUpdate = false;
-		this.powering = 0;
-		this.activePowering = 0;
-		this.newPower = 0;
-		this.prevPower = 0;
-		this.isPassable = false;
-		this.isLadder = false;
-		this.lightValue = 0;
-		this.blockHardness = 5.0f;
-		this.blockResistance = 10.0f;
-		this.rotationX = 0;
-		this.rotationY = 0;
-		this.rotationZ = 0;
-		this.scaleX = 1.0f;
-		this.scaleY = 1.0f;
-		this.scaleZ = 1.0f;
-		this.renderTileErrored = true;
-		this.renderTileUpdate = null;
-		this.text1 = new TextPlane();
-		this.text2 = new TextPlane();
-		this.text3 = new TextPlane();
-		this.text4 = new TextPlane();
-		this.text5 = new TextPlane();
-		this.text6 = new TextPlane();
-		this.metaModel = 0;
-		this.layers = new ILayerModel[0];
-	}
+	public TileScripted() { timers = new DataTimers(this); }
 
 	public void clearConsole() {
 		for (ScriptContainer script : this.getScripts()) {
@@ -367,7 +327,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 	}
 
 	public NBTTagCompound getNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.NBTScript(this.scripts));
+		compound.setTag("Scripts", NBTTags.nbtScript(this.scripts));
 		compound.setString("ScriptLanguage", this.scriptLanguage);
 		compound.setBoolean("ScriptEnabled", this.enabled);
 		compound.setInteger("BlockPowering", this.powering);
@@ -497,7 +457,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 	public void setDisplayNBT(NBTTagCompound compound) {
 		this.itemModel = new ItemStack(compound.getCompoundTag("ScriptBlockModel"));
 		if (this.itemModel.isEmpty()) {
-			this.itemModel = new ItemStack(CustomRegisters.scripted);
+			this.itemModel = new ItemStack(CustomBlocks.scripted);
 		}
 		if (compound.hasKey("ScriptBlockModelBlock")) {
 			this.blockModel = Block.getBlockFromName(compound.getString("ScriptBlockModelBlock"));
@@ -544,7 +504,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 
 	public void setItemModel(ItemStack item, Block b) {
 		if (item == null || item.isEmpty()) {
-			item = new ItemStack(CustomRegisters.scripted);
+			item = new ItemStack(CustomBlocks.scripted);
 		}
 		if (NoppesUtilPlayer.compareItems(item, this.itemModel, false, false) && b != this.blockModel) {
 			return;
@@ -638,7 +598,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 	}
 
 	public void setNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
 		this.scriptLanguage = compound.getString("ScriptLanguage");
 		this.enabled = compound.getBoolean("ScriptEnabled");
 		int pw = compound.getInteger("BlockPowering");

@@ -1,6 +1,6 @@
 package noppes.npcs.api.gui;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IGuiTimer extends ICustomGuiComponent {
 
@@ -18,8 +18,6 @@ public interface IGuiTimer extends ICustomGuiComponent {
 
 	IGuiTimer setScale(@ParamName("scale") float scale);
 
-	IGuiTimer setSize(@ParamName("width") int width, @ParamName("height") int height);
-
-	void setTime(@ParamName("start") long start, @ParamName("end") long end);
+	IGuiTimer setTime(@ParamName("start") long start, @ParamName("end") long end);
 
 }

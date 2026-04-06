@@ -3,15 +3,14 @@ package noppes.npcs.ai.attack;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IRangedAttackMob;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.constants.AiMutex;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.reflection.entity.ai.EntityAITasksReflection;
+import noppes.npcs.mixin.entity.ai.IEntityAITasksMixin;
 
-public class EntityAICustom extends EntityAIBase {
+public abstract class EntityAICustom extends EntityAIBase {
 
 	protected final EntityNPCInterface npc;
 	protected final int tickRate;
@@ -33,27 +32,25 @@ public class EntityAICustom extends EntityAIBase {
 	public double distance;
 	public double range;
 
-	public EntityAICustom(EntityNPCInterface npc) {
-		this.npc = npc;
-		navOverride(true);
-		tickRate = EntityAITasksReflection.getTickRate(npc.tasks);
+	public EntityAICustom(EntityNPCInterface npcIn) {
+		npc = npcIn;
+		tickRate = ((IEntityAITasksMixin) npc.tasks).getTickRate();
 		step = 0;
 		distance = -1.0d;
+		setMutexBits(AiMutex.PATHING);
 	}
 
 	public EntityAICustom(IRangedAttackMob npcIn) {
 		if (!(npcIn instanceof EntityNPCInterface)) {
 			throw new IllegalArgumentException("ArrowAttackGoal requires Mob implements RangedAttackMob");
 		}
-		this.npc = (EntityNPCInterface) npcIn;
-		navOverride(true);
-		tickRate = EntityAITasksReflection.getTickRate(npc.tasks);
+		npc = (EntityNPCInterface) npcIn;
+		tickRate = ((IEntityAITasksMixin) npc.tasks).getTickRate();
 		distance = -1.0d;
+		setMutexBits(AiMutex.PATHING);
 	}
 
 	public EntityLivingBase getTarget() { return target; }
-
-	public void navOverride(boolean nav) { setMutexBits(nav ? AiMutex.PATHING : (AiMutex.LOOK + AiMutex.PASSIVE)); }
 
 	/**
 	 * resets this AI's work when "shouldContinueExecuting" returns "false"
@@ -68,9 +65,7 @@ public class EntityAICustom extends EntityAIBase {
 	 * checks whether this AI can continue to execute -> updateTask
 	 */
 	@Override
-	public boolean shouldContinueExecuting() {
-		return npc != null && npc.isEntityAlive() && setTarget();
-	}
+	public boolean shouldContinueExecuting() { return npc != null && npc.isEntityAlive() && setTarget(); }
 
 	private boolean setTarget() {
 		target = npc.getAttackTarget();
@@ -95,12 +90,10 @@ public class EntityAICustom extends EntityAIBase {
 	 */
 	@Override
 	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
 		distance = -1.0d;
 		canSeeToAttack = false;
 		hasAttack = false;
 		setTarget();
-		CustomNpcs.debugData.end(npc);
 		return setTarget();
 	}
 
@@ -133,15 +126,14 @@ public class EntityAICustom extends EntityAIBase {
 		meleeTick = npc.stats.melee.getDelayRNG();
 		npc.swingArm(EnumHand.MAIN_HAND);
 		npc.attackEntityAsMob(target);
+		attacked();
 		hasAttack = true;
 	}
 
 	public void update() {
-		CustomNpcs.debugData.start(npc);
 		if (!startRangedAttack || target == null || !target.isEntityAlive() || !npc.isEntityAlive()) {
 			startRangedAttack = false;
-			//this.step = 0; this.burstCount = 0;
-			CustomNpcs.debugData.end(npc);
+			//step = 0; burstCount = 0;
 			return;
 		}
 		step++;
@@ -167,12 +159,10 @@ public class EntityAICustom extends EntityAIBase {
 				}
 			}
 			npc.attackEntityWithRangedAttack(target, indirect ? 1.0f : 0.0f);
-			if (npc.currentAnimation != 6) {
-				npc.swingArm(EnumHand.MAIN_HAND);
-			}
+			attacked();
+			if (npc.currentAnimation != 6) { npc.swingArm(EnumHand.MAIN_HAND); }
 			step = 0;
 		}
-		CustomNpcs.debugData.end(npc);
 	}
 
 	/**
@@ -180,11 +170,10 @@ public class EntityAICustom extends EntityAIBase {
 	 */
 	@Override
 	public void updateTask() {
-		CustomNpcs.debugData.start(npc);
 		inMove = !npc.getNavigator().noPath();
 		tacticalRange = npc.ais.getTacticalRange();
-		distance = npc.getDistance(this.target.posX, this.target.getEntityBoundingBox().minY, this.target.posZ);
-		isRanged = npc.inventory.getProjectile() != null && (this.npc.stats.ranged.getMeleeRange() <= 0 || this.distance > this.npc.stats.ranged.getMeleeRange());
+		distance = npc.getDistance(target.posX, target.getEntityBoundingBox().minY, target.posZ);
+		isRanged = npc.inventory.getProjectile() != null && (npc.stats.ranged.getMeleeRange() <= 0 || distance > npc.stats.ranged.getMeleeRange());
 		if (isRanged) {
 			rangedTick--;
 			range = npc.stats.ranged.getRange();
@@ -196,10 +185,12 @@ public class EntityAICustom extends EntityAIBase {
 				range = minRange;
 			}
 		}
-		CustomNpcs.debugData.end(npc);
 	}
 
-	public void writeToClientNBT(NBTTagCompound compound) {
-	}
+    public boolean canNewAttack() { return true; }
+
+	public void attacked() { }
+
+	public boolean damaged() { return false; }
 
 }

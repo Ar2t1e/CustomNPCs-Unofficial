@@ -3,25 +3,27 @@ package noppes.npcs.client.gui.global;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.EntityList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.gui.select.SubGuiColorSelector;
 import noppes.npcs.client.gui.select.SubGuiTextureSelection;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.DialogGuiSettings;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDialogGuiSettings;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.ISliderListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.Util;
 import org.lwjgl.opengl.GL11;
 
-import javax.annotation.Nonnull;
-
-public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
+public class GuiNpcDialogGuiSettings
+        extends GuiNPCInterface2
         implements ISliderListener, ITextfieldListener {
 
     protected final ResourceLocation[] resources = {
@@ -30,28 +32,27 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
             new ResourceLocation(CustomNpcs.MODID, "textures/gui/screens/endworld.png")
     };
     protected final DialogGuiSettings guiSettings;
-    protected final EntityNPCInterface dialogNpc;
     protected int dialogHeight;
-    protected ScaledResolution sw = new ScaledResolution(mc);
+    protected final EntityNPCInterface dialogNpc;
     protected int screenID = 0;
+    protected ScaledResolution sw;
 
     public GuiNpcDialogGuiSettings(EntityNPCInterface npc) {
         super(npc);
-        closeOnEsc = true;
-        parentGui = EnumGuiType.MainMenuGlobal;
 
+        sw = new ScaledResolution(minecraft);
         guiSettings = DialogController.instance.getGuiSettings();
-        dialogNpc = Util.instance.copyToGUI(npc != null ? npc : (EntityNPCInterface) EntityList.createEntityByIDFromName(new ResourceLocation(CustomNpcs.MODID, "customnpc"), mc.world), mc.world, false);
+        backGui = EnumGuiType.MainMenuGlobal;
+        dialogNpc = Util.instance.copyToGUI(npc != null ? npc : new EntityCustomNpc(player.world), player.world, false);
         dialogNpc.display.setVisible(0);
     }
 
     @Override
-    public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-        if (mouseButton != 0) { return; }
-        switch (button.getID()) {
+    public void buttonEvent(GuiButtonNop button) {
+        switch (button.id) {
             case 1: guiSettings.setType(button.getValue()); initGui(); break;
-            case 2: guiSettings.npcInLeft = ((GuiNpcCheckBox) button).isSelected(); initGui(); break;
-            case 3: guiSettings.showNPC = ((GuiNpcCheckBox) button).isSelected(); initGui(); break;
+            case 2: guiSettings.npcInLeft = ((GuiCheckBoxNop) button).selected(); initGui(); break;
+            case 3: guiSettings.showNPC = ((GuiCheckBoxNop) button).selected(); initGui(); break;
             case 4: {
                 setSubGui(new SubGuiColorSelector(guiSettings.backWindowColor, new SubGuiColorSelector.ColorCallback() {
                     @Override
@@ -70,8 +71,8 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
                 }).setIsAlpha().setOffsetX(-100));
                 break;
             } // background color
-            case 6: setSubGui(new SubGuiTextureSelection(0, npc, guiSettings.getBackgroundTexture() == null ? "" : guiSettings.getBackgroundTexture().toString(), ".png", 3)); break;
-            case 7: setSubGui(new SubGuiTextureSelection(1, npc, guiSettings.getWindowTexture() == null ? "" : guiSettings.getWindowTexture().toString(), ".png", 3)); break;
+            case 6: setSubGui(new SubGuiTextureSelection(this, 0, npc, guiSettings.getBackgroundTexture() == null ? "" : guiSettings.getBackgroundTexture().toString(), ".png", 3)); break;
+            case 7: setSubGui(new SubGuiTextureSelection(this, 1, npc, guiSettings.getWindowTexture() == null ? "" : guiSettings.getWindowTexture().toString(), ".png", 3)); break;
             case 8: guiSettings.setShowVerticalLines(button.getValue()); break;
             case 9: {
                 setSubGui(new SubGuiColorSelector(guiSettings.linesColor, new SubGuiColorSelector.ColorCallback() {
@@ -83,6 +84,24 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
                 break;
             } // lines color
             case 10: guiSettings.setShowHorizontalLines(button.getValue()); break;
+            case 11: {
+                setSubGui(new SubGuiColorSelector(guiSettings.scrollLineColor, new SubGuiColorSelector.ColorCallback() {
+                    @Override
+                    public void color(int colorIn) { guiSettings.scrollLineColor = colorIn; }
+                    @Override
+                    public void preColor(int colorIn) { guiSettings.scrollLineColor = colorIn; }
+                }).setIsAlpha().setOffsetX(-100));
+                break;
+            } // scroll line color
+            case 12: {
+                setSubGui(new SubGuiColorSelector(guiSettings.hoverLineColor, new SubGuiColorSelector.ColorCallback() {
+                    @Override
+                    public void color(int colorIn) { guiSettings.hoverLineColor = colorIn; }
+                    @Override
+                    public void preColor(int colorIn) { guiSettings.hoverLineColor = colorIn; }
+                }).setIsAlpha().setOffsetX(-100));
+                break;
+            } // hover line color
             case 13: {
                 setSubGui(new SubGuiColorSelector(guiSettings.selectOptionLeftColor, new SubGuiColorSelector.ColorCallback() {
                     @Override
@@ -110,8 +129,8 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
                 }).setIsAlpha().setOffsetX(-100));
                 break;
             } // slider color
+            case 66: onClose(); break;
             case 100: screenID = button.getValue() - 1; break;
-            case 66: onClosed(); break;
         }
     }
 
@@ -310,11 +329,14 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
     @Override
     public void initGui() {
         super.initGui();
-        sw = new ScaledResolution(mc);
+        sw = new ScaledResolution(minecraft);
         guiSettings.init(427.0d, 240.0d);
 
-        width = (int) Math.ceil(sw.getScaledWidth_double());
-        height = (int) Math.ceil(sw.getScaledHeight_double());
+        int windowWidth = (int) Math.ceil(sw.getScaledWidth_double());
+        int windowHeight = (int) Math.ceil(sw.getScaledHeight_double());
+
+        width = windowWidth;
+        height = windowHeight;
         dialogHeight = 240 - guiSettings.optionHeight;
 
         int x0 = guiLeft + 5;
@@ -323,155 +345,201 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
         int y = guiTop + 4;
         int lId = 0;
         // type
-        addLabel(new GuiNpcLabel(lId++, "gui.type", x0, y + 2));
-        addButton(new GuiButtonBiDirectional(1, x1, y, 60, 14, new String[] { "gui.left", "gui.center", "gui.right"}, guiSettings.getType())
-                .setHoverText("dialog.gui.settings.hover.place"));
+        addLabel(lId++, x0, y + 1, "gui.type")
+                .setSize(43, 12);
+        addButton(1, x1, y, true, guiSettings.getType(), "gui.left", "gui.center", "gui.right")
+                .setSize(60, 14)
+                .setHoverTexts("dialog.gui.settings.hover.place");
         // npc in left
-        addButton(new GuiNpcCheckBox(2, x1 + 63, y - 1, 83, 14, "gui.left", "gui.right", guiSettings.npcInLeft)
-                .setHoverText("dialog.gui.settings.hover.in.left")
-                .setIsVisible(guiSettings.getType() == 1));
+        addCheckBox(2, x1 + 63, y - 1, "gui.left", "gui.right", guiSettings.npcInLeft)
+                .setSize(83, 14)
+                .setIsVisible(guiSettings.getType() == 1)
+                .setHoverTexts("dialog.gui.settings.hover.in.left");
         // width
-        addLabel(new GuiNpcLabel(lId++, "scale.width", x0, (y += 16) + 2));
-        addSlider(new GuiNpcSlider(this, 0, x1, y + 2, 108, 8, 2.0f * (float) guiSettings.getWidth() - 0.8f)
-                .setHoverText("dialog.gui.settings.hover.width"));
-        addTextField(new GuiNpcTextField(0, this, x1 + 110, y, 30, 13, "" + (int) (guiSettings.getWidth() * 100.0d))
+        addLabel(lId++, x0, (y += 16) + 1, "scale.width")
+                .setSize(43, 12);
+        addSlider(0, x1, y + 3, 2.0f * (float) guiSettings.getWidth() - 0.8f)
+                .setSize(108, 8)
+                .setHoverTexts("dialog.gui.settings.hover.width");
+        addTextField(0, x1 + 110, y, 30, 13, (int) (guiSettings.getWidth() * 100.0d))
                 .setMinMaxDefault(40, 90, (int) (guiSettings.getWidth() * 100.0d))
-                .setHoverText("dialog.gui.settings.hover.width"));
-        addLabel(new GuiNpcLabel(lId++, "%", x1 + 142, y + 2));
+                .setHoverTexts("dialog.gui.settings.hover.width");
+        addLabel(lId++, x1 + 142, y + 1, "%")
+                .setSize(7, 12);
         // option height
-        addLabel(new GuiNpcLabel(lId++, "schematic.height", x0, (y += 15) + 2));
-        addSlider(new GuiNpcSlider(this, 1, x1, y + 2, 108, 8, 1.666667f * (float) guiSettings.getOptionHeight() - 0.25f)
-                .setHoverText("dialog.gui.settings.hover.height"));
-        addTextField(new GuiNpcTextField(1, this, x1 + 110, y, 30, 13, "" + (int) (guiSettings.getOptionHeight() * 100.0d))
+        addLabel(lId++, x0, (y += 15) + 1, "schematic.height")
+                .setSize(43, 12);
+        addSlider(1, x1, y + 3, 1.666667f * (float) guiSettings.getOptionHeight() - 0.25f)
+                .setSize(108, 8)
+                .setHoverTexts("dialog.gui.settings.hover.height");
+        addTextField(1, x1 + 110, y, 30, 13, (int) (guiSettings.getOptionHeight() * 100.0d))
                 .setMinMaxDefault(15, 75, (int) (guiSettings.getOptionHeight() * 100.0d))
-                .setHoverText("dialog.gui.settings.hover.height"));
-        addLabel(new GuiNpcLabel(lId++, "%", x1 + 142, y + 2));
+                .setHoverTexts("dialog.gui.settings.hover.height");
+        addLabel(lId++, x1 + 142, y + 1, "%")
+                .setSize(7, 12);
         // npc
-            // show
-        addLabel(new GuiNpcLabel(lId++, "NPC: ", x0, (y += 18) + 4));
-        addButton(new GuiNpcCheckBox(3, x1, y, 83, 14, "availability.visible", "availability.invisible", guiSettings.showNPC)
-                .setHoverText("dialog.gui.settings.hover.visible"));
-            // pos x
-        addLabel(new GuiNpcLabel(lId++, "X: ", x1 - 12, (y += 15) + 2));
+        // show
+        addLabel(lId++, x0, (y += 18) + 1, "NPC: ")
+                .setSize(43, 12);
+        addCheckBox(3, x1, y, "availability.visible", "availability.invisible", guiSettings.showNPC)
+                .setSize(83, 14)
+                .setHoverTexts("dialog.gui.settings.hover.visible");
+        // pos x
+        addLabel(lId++, x1 - 12, (y += 15) + 1, "X: ")
+                .setSize(43, 12);
         float[] pos = guiSettings.getNpcPos();
-        addSlider(new GuiNpcSlider(this, 2, x1, y + 2, 108, 8, pos[0] + 0.5f)
-                .setHoverText("dialog.gui.settings.hover.pos", "X"));
-        addTextField(new GuiNpcTextField(2, this, x1 + 110, y, 30, 13, "" + (int) (100.0f * pos[0]))
+        addSlider(2, x1, y + 3, pos[0] + 0.5f)
+                .setSize(108, 8)
+                .setHoverTexts("dialog.gui.settings.hover.pos", "X");
+        addTextField(2, x1 + 110, y, 30, 13, (int) (100.0f * pos[0]))
                 .setMinMaxDefault(-50, 50, (int) (100.0f * pos[0]))
-                .setHoverText("dialog.gui.settings.hover.pos", "X"));
-        addLabel(new GuiNpcLabel(lId++, "%", x1 + 142, y + 2));
-            // pos y
-        addLabel(new GuiNpcLabel(lId++, "Y: ", x1 - 12, (y += 15) + 2));
-        addSlider(new GuiNpcSlider(this, 3, x1, y + 2, 108, 8, 2.0f * pos[1] + 0.5f)
-                .setHoverText("dialog.gui.settings.hover.pos", "Y"));
-        addTextField(new GuiNpcTextField(3, this, x1 + 110, y, 30, 13, "" + Math.round(100.0f * pos[1]))
+                .setHoverTexts("dialog.gui.settings.hover.pos", "X");
+        addLabel(lId++, x1 + 142, y + 1, "%")
+                .setSize(7, 12);
+        // pos y
+        addLabel(lId++, x1 - 12, (y += 15) + 1, "Y: ")
+                .setSize(43, 12);
+        addSlider(3, x1, y + 3, 2.0f * pos[1] + 0.5f)
+                .setSize(108, 8)
+                .setHoverTexts("dialog.gui.settings.hover.pos", "Y");
+        addTextField(3, x1 + 110, y, 30, 13, Math.round(100.0f * pos[1]))
                 .setMinMaxDefault(-25, 25, Math.round(100.0f * pos[1]))
-                .setHoverText("dialog.gui.settings.hover.pos", "Y"));
-        addLabel(new GuiNpcLabel(lId++, "%", x1 + 142, y + 2));
-            // scale
-        addLabel(new GuiNpcLabel(lId++, "model.scale", x0, (y += 15) + 2));
-        addSlider(new GuiNpcSlider(this, 4, x1, y + 2, 108, 8, 0.206186f * guiSettings.getNpcScale() - 0.030928f)
-                .setHoverText("dialog.gui.settings.hover.scale"));
-        addTextField(new GuiNpcTextField(4, this, x1 + 110, y, 30, 13, "" + Math.round(100.0f * guiSettings.getNpcScale()))
+                .setHoverTexts("dialog.gui.settings.hover.pos", "Y");
+        addLabel(lId++, x1 + 142, y + 1, "%")
+                .setSize(7, 12);
+        // scale
+        addLabel(lId++, x0, (y += 15) + 1, "model.scale")
+                .setSize(43, 12);
+        addSlider(4, x1, y + 3, 0.206186f * guiSettings.getNpcScale() - 0.030928f)
+                .setSize(108, 8)
+                .setHoverTexts("dialog.gui.settings.hover.scale");
+        addTextField(4, x1 + 110, y, 30, 13, Math.round(100.0f * guiSettings.getNpcScale()))
                 .setMinMaxDefault(15, 500, Math.round(100.0f * guiSettings.getNpcScale()))
-                .setHoverText("dialog.gui.settings.hover.scale"));
-        addLabel(new GuiNpcLabel(lId++, "%", x1 + 142, y + 2));
+                .setHoverTexts("dialog.gui.settings.hover.scale");
+        addLabel(lId++, x1 + 142, y + 1, "%")
+                .setSize(7, 12);
         // blurring line
-        addLabel(new GuiNpcLabel(lId++, "gui.conversion", x0, (y += 15) + 2));
-        addSlider(new GuiNpcSlider(this, 5, x1, y + 2, 108, 8, 4.0f * guiSettings.getBlurringLine())
-                .setHoverText("dialog.gui.settings.hover.blurring.line"));
-        addTextField(new GuiNpcTextField(5, this, x1 + 110, y, 30, 13, "" + Math.round(100.0f * guiSettings.getBlurringLine()))
+        addLabel(lId++, x0, (y += 15) + 1, "gui.conversion")
+                .setSize(43, 12);
+        addSlider(5, x1, y + 3, 4.0f * guiSettings.getBlurringLine())
+                .setSize(108, 8)
+                .setHoverTexts("dialog.gui.settings.hover.blurring.line");
+        addTextField(5, x1 + 110, y, 30, 13, Math.round(100.0f * guiSettings.getBlurringLine()))
                 .setMinMaxDefault(0, 25, Math.round(100.0f * guiSettings.getBlurringLine()))
-                .setHoverText("dialog.gui.settings.hover.blurring.line"));
-        addLabel(new GuiNpcLabel(lId++, "%", x1 + 142, y + 2));
+                .setHoverTexts("dialog.gui.settings.hover.blurring.line");
+        addLabel(lId++, x1 + 142, y + 1, "%")
+                .setSize(7, 12);
         // background color
-        addLabel(new GuiNpcLabel( lId++, "gui.background", x0, (y += 16) + 1));
-        addTextField(new GuiNpcTextField(6, this, x1, y, 146, 13, guiSettings.getBackgroundTexture() == null ? "" : guiSettings.getBackgroundTexture().toString())
-                .setHoverText("dialog.gui.settings.hover.blurring.line"));
-        addButton(new GuiNpcButton(6, x2, y - 1, 50, 15, "mco.template.button.select"));
-        addButton(new GuiColorButton(5, x2 + 52, y - 1, 30, 15, guiSettings.backBorderColor)
-                .setHoverText("dialog.gui.settings.hover.back.color"));
-        addButton(new GuiButtonBiDirectional(100, guiLeft + xSize - 67, y, 60, 14, new String[] { "type.empty", "over", "nether", "end"}, screenID + 1)
-                .setHoverText("dialog.gui.settings.hover.place"));
+        addLabel(lId++, x0, (y += 16) + 1, "gui.background")
+                .setSize(43, 12);
+        addTextField(6, x1, y, 146, 13, guiSettings.getBackgroundTexture() == null ? "" : guiSettings.getBackgroundTexture())
+                .setHoverTexts("dialog.gui.settings.hover.background");
+        addButton(6, x2, y - 1, "mco.template.button.select")
+                .setSize(50, 15);
+        add(new GuiColorButtonNop(this, 5, x2 + 52, y - 1, guiSettings.backBorderColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.hover.back.color"));
+        addButton(100, guiLeft + imageWidth - 67, y, true, screenID + 1, "over", "nether", "end")
+                .setSize(60, 14)
+                .setHoverTexts("dialog.gui.settings.hover.place");
         // window color
-        addLabel(new GuiNpcLabel(lId++, "gui.texture", x0, (y += 15) + 1));
-        addTextField(new GuiNpcTextField(7, this, x1, y, 146, 13, guiSettings.getWindowTexture() == null ? "" : guiSettings.getWindowTexture().toString())
-                .setHoverText("dialog.gui.settings.hover.window"));
-        addButton(new GuiNpcButton(7, x2, y - 1, 50, 15, "mco.template.button.select"));
-        addButton(new GuiColorButton(4, x2 + 52, y - 1, 30, 15, guiSettings.backWindowColor)
-                .setHoverText("dialog.gui.settings.hover.win.color"));
+        addLabel(lId++, x0, (y += 15) + 1, "gui.texture")
+                .setSize(43, 12);
+        addTextField(7, x1, y, 146, 13, guiSettings.getWindowTexture() == null ? "" : guiSettings.getWindowTexture())
+                .setHoverTexts("dialog.gui.settings.hover.window");
+        addButton(7, x2, y - 1, "mco.template.button.select")
+                .setSize(50, 15);
+        add(new GuiColorButtonNop(this, 4, x2 + 52, y - 1, guiSettings.backWindowColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.hover.win.color"));
         // colors
         x1 += 30;
         // lines
-        addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.color").getFormattedText() + ":", x0, (y += 15) + 2));
-        addLabel(new GuiNpcLabel(lId++, "dialog.gui.settings.line.v", x0, (y += 15) + 1));
-        addButton(new GuiButtonBiDirectional(8, x1, y, 35, 14, new String[] { "0", "1", "2"}, guiSettings.getShowVerticalLines())
-                .setHoverText("dialog.gui.settings.hover.line.v.type"));
-        addButton(new GuiColorButton(9, x1 + 37, y + 7, 30, 15, guiSettings.linesColor)
-                .setHoverText("dialog.gui.settings.hover.line.color"));
-        addLabel(new GuiNpcLabel(lId++, "dialog.gui.settings.line.h", x0, (y += 15) + 1));
-        addButton(new GuiButtonBiDirectional(10, x1, y, 35, 14, new String[] { "0", "1", "2"}, guiSettings.getShowHorizontalLines())
-                .setHoverText("dialog.gui.settings.hover.line.h.type"));
+        addLabel(lId++, x0, (y += 15) + 2, Component.translatable("gui.color").append(Component.literal(":")))
+                .setSize(43, 12);
+        addLabel(lId++, x0, (y += 15) + 1, "dialog.gui.settings.line.v")
+                .setSize(73, 12);
+        addButton(8, x1, y, true, guiSettings.getShowVerticalLines(), 0, 1, 2)
+                .setSize(35, 14)
+                .setHoverTexts("dialog.gui.settings.hover.line.v.type");
+        add(new GuiColorButtonNop(this, 9, x1 + 37, y + 7, guiSettings.linesColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.hover.line.color"));
+        addLabel(lId++, x0, (y += 15) + 1, "dialog.gui.settings.line.h")
+                .setSize(73, 12);
+        addButton(10, x1, y, true, guiSettings.getShowHorizontalLines(), 0, 1, 2)
+                .setSize(35, 14)
+                .setHoverTexts("dialog.gui.settings.hover.line.h.type");
         // options
         x0 = x1 + 69;
         x1 = x0 + 75;
         y -= 30;
-        addLabel(new GuiNpcLabel(lId++, "dialog.gui.settings.line.option.slot", x0, y + 1));
-        addButton(new GuiColorButton(11, x1, y, 30, 15, guiSettings.scrollLineColor)
-                .setHoverText("dialog.gui.settings.hover.line.option.slot"));
-        addLabel(new GuiNpcLabel(lId++, "dialog.gui.settings.line.option.select", x0, (y += 15) + 1));
-        addButton(new GuiColorButton(12, x1, y, 30, 15, guiSettings.hoverLineColor)
-                .setHoverText("dialog.gui.settings.hover.line.option.select"));
-        addLabel(new GuiNpcLabel(lId++, "dialog.gui.settings.line.option.back", x0, (y += 15) + 1));
-        addButton(new GuiColorButton(13, x1, y, 30, 15, guiSettings.selectOptionLeftColor)
-                .setHoverText("dialog.gui.settings.hover.line.option.back"));
+        addLabel(lId++, x0, y + 1, "dialog.gui.settings.line.option.slot")
+                .setSize(73, 12);
+        add(new GuiColorButtonNop(this, 11, x1, y, guiSettings.scrollLineColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.hover.line.option.slot"));
+        addLabel(lId++, x0, (y += 15) + 1, "dialog.gui.settings.line.option.select")
+                .setSize(73, 12);
+        add(new GuiColorButtonNop(this, 12, x1, y, guiSettings.hoverLineColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.hover.line.option.select"));
+        addLabel(lId++, x0, (y += 15) + 1, "dialog.gui.settings.option.back")
+                .setSize(73, 12);
+        add(new GuiColorButtonNop(this, 13, x1, y, guiSettings.selectOptionLeftColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.hover.option.back"));
         // select
         x0 = x1 + 32;
         x1 = x0 + 75;
         y -= 30;
-        addLabel(new GuiNpcLabel(lId++, "dialog.gui.settings.pointer.color", x0, y + 1));
-        addButton(new GuiColorButton(14, x1, y, 30, 15, guiSettings.pointerColor)
-                .setHoverText("dialog.gui.settings.hover.pointer.color"));
-        addLabel(new GuiNpcLabel(lId, "dialog.gui.settings.slider.color", x0, (y += 15) + 1));
-        addButton(new GuiColorButton(15, x1, y, 30, 15, guiSettings.sliderColor)
-                .setHoverText("dialog.gui.settings.hover.slider.color"));
+        addLabel(lId++, x0, y + 1, "dialog.gui.settings.pointer.color")
+                .setSize(73, 12);
+        add(new GuiColorButtonNop(this, 14, x1, y, guiSettings.pointerColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.hover.pointer.color"));
+        addLabel(lId, x0, (y += 15) + 1, "dialog.gui.settings.slider.color")
+                .setSize(73, 12);
+        add(new GuiColorButtonNop(this, 15, x1, y, guiSettings.sliderColor)
+                .setSize(30, 15)
+                .setHoverTexts("dialog.gui.settings.slider.color"));
     }
 
     @Override
-    public void mouseDragged(GuiNpcSlider slider) {
-        switch (slider.getID()) {
+    public void mouseDragged(GuiSliderNop slider) {
+        switch (slider.id) {
             case 0: {
                 guiSettings.setWidth(Math.ceil((0.5f * slider.sliderValue + 0.4f) * 100.0f) / 100.0f);
-                if (getTextField(0) != null) { getTextField(0).setText("" + Math.round(guiSettings.getWidth() * 100.0d)); }
+                if (getTextField(0) != null) { getTextField(0).setValue("" + Math.round(guiSettings.getWidth() * 100.0d)); }
                 break;
             } // width
             case 1: {
                 guiSettings.setOptionHeight(Math.round((0.6f * slider.sliderValue + 0.15f) * 100.0d) / 100.0d);
-                if (getTextField(1) != null) { getTextField(1).setText("" + Math.round(guiSettings.getOptionHeight() * 100.0d)); }
+                if (getTextField(1) != null) { getTextField(1).setValue("" + Math.round(guiSettings.getOptionHeight() * 100.0d)); }
                 break;
             } // option height
             case 2: {
                 float[] pos = guiSettings.getNpcPos();
                 pos[0] = Math.round((slider.sliderValue - 0.5f) * 100.0f) / 100.0f;
                 guiSettings.setNpcPos(pos[0], pos[1]);
-                if (getTextField(2) != null) { getTextField(2).setText("" + Math.round(100.0f * pos[0])); }
+                if (getTextField(2) != null) { getTextField(2).setValue("" + Math.round(100.0f * pos[0])); }
                 break;
             } // npc pos x
             case 3: {
                 float[] pos = guiSettings.getNpcPos();
                 pos[1] = Math.round((0.5f * slider.sliderValue - 0.25f) * 100.0f) / 100.0f;
                 guiSettings.setNpcPos(pos[0], pos[1]);
-                if (getTextField(3) != null) { getTextField(3).setText("" + Math.round(100.0f * pos[1])); }
+                if (getTextField(3) != null) { getTextField(3).setValue("" + Math.round(100.0f * pos[1])); }
                 break;
             } // npc pos y
             case 4: {
                 guiSettings.setNpcScale(4.85f * slider.sliderValue + 0.15f);
-                if (getTextField(4) != null) { getTextField(4).setText("" + Math.round(100.0f * guiSettings.getNpcScale())); }
+                if (getTextField(4) != null) { getTextField(4).setValue("" + Math.round(100.0f * guiSettings.getNpcScale())); }
                 break;
             } // npc scale
             case 5: {
                 guiSettings.setBlurringLine(slider.sliderValue / 4.0f);
-                if (getTextField(5) != null) { getTextField(5).setText("" + Math.round(100.0f * guiSettings.getBlurringLine())); }
+                if (getTextField(5) != null) { getTextField(5).setValue("" + Math.round(100.0f * guiSettings.getBlurringLine())); }
                 break;
             } // blurring line
         }
@@ -480,8 +548,8 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
     }
 
     @Override
-    public void unFocused(GuiNpcTextField textField) {
-        switch (textField.getID()) {
+    public void unFocused(GuiTextFieldNop textField) {
+        switch (textField.id) {
             case 0: {
                 guiSettings.setWidth(textField.getInteger() / 100.0d);
                 if (getSlider(0) != null) { getSlider(0).setSliderValue(2.0f * (float) guiSettings.getWidth() - 0.8f); }
@@ -520,12 +588,12 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
             } // blurring line
             case 6: {
                 if (textField.isEmpty()) { guiSettings.backTexture = null; }
-                else { guiSettings.backTexture = new ResourceLocation(textField.getText()); }
+                else { guiSettings.backTexture = new ResourceLocation(textField.getValue()); }
                 break;
             } // background texture
             case 7: {
                 if (textField.isEmpty()) { guiSettings.windowTexture = null; }
-                else { guiSettings.windowTexture = new ResourceLocation(textField.getText()); }
+                else { guiSettings.windowTexture = new ResourceLocation(textField.getValue()); }
                 break;
             } // window texture
         }
@@ -534,26 +602,26 @@ public class GuiNpcDialogGuiSettings extends GuiNPCInterface2
     }
 
     @Override
-    public void mousePressed(GuiNpcSlider slider) { }
+    public void mousePressed(GuiSliderNop slider) { }
 
     @Override
-    public void mouseReleased(GuiNpcSlider slider) { }
+    public void mouseReleased(GuiSliderNop slider) { }
 
     @Override
     public void subGuiClosed(GuiScreen subgui) {
         if (subgui instanceof SubGuiTextureSelection) {
-            SubGuiTextureSelection tGui = (SubGuiTextureSelection) subgui;
-            if (tGui.id == 0) {
-                guiSettings.backTexture = tGui.resource;
+            if (((SubGuiTextureSelection) subgui).id == 0) {
+                guiSettings.backTexture = ((SubGuiTextureSelection) subgui).resource;
             } // Background
-            else if (tGui.id == 1) {
-                guiSettings.windowTexture = tGui.resource;
+            else if (((SubGuiTextureSelection) subgui).id == 1) {
+                guiSettings.windowTexture = ((SubGuiTextureSelection) subgui).resource;
             } // window
+            initGui();
         }
     }
 
     @Override
-    public void save() { Client.sendData(EnumPacketServer.DialogGuiSettings, guiSettings.save()); }
+    public void save() { Packets.sendServer(new SPacketDialogGuiSettings(guiSettings.save())); }
 
     private String getTempLine(String line) {
         if (mc.fontRenderer.getStringWidth(line) > guiSettings.dialogWidth / 2 - 7) {

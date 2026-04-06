@@ -75,7 +75,7 @@ public class EntityLivingBaseWrapper<T extends EntityLivingBase> extends EntityW
 
 	@Override
 	public IMark addMark(int type) {
-		MarkData data = MarkData.get(this.entity);
+		MarkData data = MarkData.get(entity);
 		return data.addMark(type);
 	}
 

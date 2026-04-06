@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
@@ -23,7 +24,7 @@ public interface IScriptHandler {
 
 	boolean isClient();
 
-	ITextComponent noticeString(String type, Object event);
+	Component noticeString(String type, Object event);
 
 	void runScript(String type, Event event);
 
@@ -33,4 +34,5 @@ public interface IScriptHandler {
 
 	void setLastInited(long timeMC);
 
+    void init();
 }

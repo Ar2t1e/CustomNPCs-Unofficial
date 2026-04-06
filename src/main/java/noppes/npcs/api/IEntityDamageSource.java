@@ -1,6 +1,7 @@
 package noppes.npcs.api;
 
 import noppes.npcs.api.entity.IEntity;
+import noppes.npcs.api.interfaces.ParamName;
 
 @SuppressWarnings("all")
 public interface IEntityDamageSource {

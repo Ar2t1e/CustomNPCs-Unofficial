@@ -3,7 +3,7 @@ package noppes.npcs.client.util.aw;
 import java.util.ArrayList;
 import java.util.Map;
 
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import org.lwjgl.opengl.GL11;
 
 import moe.plushie.armourers_workshop.api.common.skin.data.ISkin;

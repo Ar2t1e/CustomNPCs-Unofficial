@@ -11,15 +11,13 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
 import javax.annotation.Nonnull;
 
-public class ItemScriptedDoor extends ItemDoor implements IPermission {
+public class ItemScriptedDoor extends ItemDoor {
 
 	public ItemScriptedDoor(Block block) {
 		super(block);
@@ -27,11 +25,7 @@ public class ItemScriptedDoor extends ItemDoor implements IPermission {
 		this.setUnlocalizedName("npcscripteddoortool");
 		this.setFull3D();
 		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
-	}
-
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.ScriptDoorDataSave;
+		this.setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer playerIn, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {

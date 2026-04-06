@@ -1,12 +1,15 @@
 package noppes.npcs.client.gui.script;
 
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.util.*;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 
 import javax.annotation.Nonnull;
 
-public class SubGuiScriptEncrypt extends SubGuiInterface {
+public class SubGuiScriptEncrypt extends GuiNPCInterface {
 
 	public String path;
 	public String ext;
@@ -14,11 +17,11 @@ public class SubGuiScriptEncrypt extends SubGuiInterface {
 	public boolean send;
 
 	public SubGuiScriptEncrypt(String pathStr, String extStr) {
-		super(1);
+		super();
 		setBackground("smallbg.png");
 		closeOnEsc = true;
-		xSize = 176;
-		ySize = 80;
+		imageWidth = 176;
+		imageHeight = 80;
 
 		onlyTab = true;
 		pathStr = pathStr.replaceAll("\\\\", "/");
@@ -28,24 +31,26 @@ public class SubGuiScriptEncrypt extends SubGuiInterface {
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
+		switch (button.id) {
 			case 0: {
-				if (!(button instanceof GuiNpcCheckBox)) { return; }
-				onlyTab = ((GuiNpcCheckBox) button).isSelected();
+				if (button instanceof GuiCheckBoxNop) {
+					onlyTab = ((GuiCheckBoxNop) button).selected();
+				}
 				break;
 			}
-			case 1: send = true; onClosed(); break;
-			case 66: onClosed(); break;
+			case 1: send = true; onClose(); break;
+			case 66: onClose(); break;
 		}
 	}
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		GlStateManager.translate(0.0f, 0.0f, id);
+		GlStateManager.translate(0.0f, 0.0f, 1.0f);
 		drawDefaultBackground();
-		if (getButton(1) != null && getTextField(0) != null) { getButton(1).setIsEnable(!getTextField(0).getText().isEmpty()); }
+		if (getButton(1) != null && getTextField(0) != null) {
+			getButton(1).setIsEnabled(!getTextField(0).getValue().isEmpty());
+		}
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 
@@ -54,16 +59,19 @@ public class SubGuiScriptEncrypt extends SubGuiInterface {
 		super.initGui();
 		int x = guiLeft + 5;
 		int y = guiTop + 14;
-		addLabel(new GuiNpcLabel(0, new TextComponentTranslation("gui.path", ":").getFormattedText(), x + 2, y - 10));
-		addTextField(new GuiNpcTextField(0, this, x, y, 166, 20, "default")
-				.setHoverText(new TextComponentTranslation("encrypt.hover.path", path + "default" + ext)));
-		getTextField(0).prohibitedSpecialChars = GuiNpcTextField.filePath;
-		addButton(new GuiNpcCheckBox(0, x + 1, y += 22, 164, 16, "encrypt.only.tab", "encrypt.all.scripts", onlyTab)
-				.setHoverText("encrypt.hover.type." + onlyTab));
-		addButton(new GuiNpcButton(66, x, y += 20, 82, 20, "gui.back")
-				.setHoverText("hover.back"));
-		addButton(new GuiNpcButton(1, x + 84, y, 82, 20, "gui.encrypt")
-				.setHoverText("encrypt.hover.encrypt"));
+		addLabel(0, x + 2, y - 10, Component.translatable("gui.path", ":"));
+		addTextField(0, x, y, 166, 20, "default")
+				.setHoverTexts(Component.translatable("encrypt.hover.path", path + "default" + ext));
+		getTextField(0).prohibitedSpecialChars = GuiTextFieldNop.filePath;
+		addCheckBox(0, x + 1, y += 22, "encrypt.only.tab", "encrypt.all.scripts", onlyTab)
+				.setSize(164, 16)
+				.setHoverTexts("encrypt.hover.type." + onlyTab);
+		addButton(66, x, y += 20, "gui.back")
+				.setSize(82, 20)
+				.setHoverTexts("hover.back");
+		addButton(1, x + 84, y, "gui.encrypt")
+				.setSize(82, 20)
+				.setHoverTexts("encrypt.hover.encrypt");
 	}
 
 }

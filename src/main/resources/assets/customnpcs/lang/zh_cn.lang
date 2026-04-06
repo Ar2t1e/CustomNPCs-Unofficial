@@ -114,17 +114,17 @@ ai.swim=会游泳
 ai.tacticalvariant=战斗策略的选择
 ai.wandering=流浪者
 
-aitactics.commander=指挥官
-aitactics.default=默认
-aitactics.dodge=躲闪
-aitactics.hitandrun=打了就跑
-aitactics.hitnrun=打了就跑
-aitactics.none=不
-aitactics.orbit=环绕
-aitactics.rush=猛攻
-aitactics.stagger=Stagger
-aitactics.stalk=偷袭
-aitactics.surround=环绕
+ai.tactic.commander=指挥官
+ai.tactic.default=默认
+ai.tactic.dodge=躲闪
+ai.tactic.hit_and_run=打了就跑
+ai.tactic.hitnrun=打了就跑
+ai.tactic.none=不
+ai.tactic.orbit=环绕
+ai.tactic.rush=猛攻
+ai.tactic.stagger=Stagger
+ai.tactic.stalk=偷袭
+ai.tactic.surround=环绕
 
 animation.add.part.hover.location=作为模型使用的纹理的资源文件类型“§9.png§r”的位置
 animation.add.part.hover.name=为方便起见，身体部位名称<br>%s
@@ -1729,7 +1729,7 @@ message.dimensions.tp.isdelete=§2CustomNPCs§6：你是从远程维度传送来
 message.mod.error=§s问题。有人表达了阻挠议事的意愿。请联系开发者解决此问题：%s
 message.pather.add=添加位置x :%s y ：%s z :%s代表NPC “%s ”
 message.pather.home=改变起始位置x :%s y ：%s z :%s代表NPC “%s ”
-message.pather.reg=已将“%s ”注册到您的%s
+message.pather.register=已将“%s ”注册到您的%s
 message.pather.warn.add=§c警告§r：新位置与先前位置相距过远。最大移动距离（以方块为单位）：%s
 
 minimap.set.points.1=§f[§2CustomNpcs§f]: §8系统已更新小地图位置：%s

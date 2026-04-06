@@ -1,0 +1,191 @@
+package noppes.npcs.client.gui.util;
+
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.IPos;
+import noppes.npcs.api.handler.data.IQuestObjective;
+import noppes.npcs.client.gui.player.GuiLog;
+import noppes.npcs.client.gui.util.quests.QuestObjective;
+import noppes.npcs.constants.EnumQuestCompletion;
+import noppes.npcs.constants.EnumQuestTask;
+import noppes.npcs.constants.EnumRewardType;
+import noppes.npcs.controllers.data.Quest;
+import noppes.npcs.controllers.data.QuestData;
+import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.entity.data.DropSet;
+import noppes.npcs.util.Util;
+
+import java.util.*;
+
+public class QuestInfo {
+
+    protected final Map<Integer, List<String>> map = new TreeMap<>(); // [key, data texts]
+    protected final World world;
+    public final QuestData qData;
+    public final List<ItemStack> stacks = new ArrayList<>();
+    public final Map<Integer, Entity> entitys = new TreeMap<>();
+    public EntityNPCInterface npc;
+
+    protected boolean newInstance = true;
+
+    public QuestInfo(QuestData qd, World worldIn) {
+        world = worldIn;
+        qData = qd;
+        if (qd.quest.completer != null) {
+            NBTTagCompound compound = new NBTTagCompound();
+            qd.quest.completer.writeToNBTOptional(compound);
+            compound.setUniqueId("UUID", UUID.randomUUID());
+            Entity e = EntityList.createEntityFromNBT(compound, world);
+            if (e instanceof EntityNPCInterface) { npc = (EntityNPCInterface) e; }
+            else {
+                npc = (EntityNPCInterface) EntityList.createEntityByIDFromName(new ResourceLocation(CustomNpcs.MODID, "customnpc"), world);
+                if (npc != null) { npc.readEntityFromNBT(compound); }
+            }
+        } else {
+            npc = (EntityNPCInterface) EntityList.createEntityByIDFromName(new ResourceLocation(CustomNpcs.MODID, "customnpc"), world);
+            qd.quest.completer = npc;
+            if (npc != null) {
+                qd.quest.completerPos[0] = (int) npc.posX;
+                qd.quest.completerPos[1] = (int) (npc.posY + 0.5d);
+                qd.quest.completerPos[2] = (int) npc.posZ;
+                qd.quest.completerPos[3] = npc.world.provider.getDimension();
+            }
+        }
+        npc = Util.instance.copyToGUI(npc, world, false);
+    }
+
+    public Map<Integer, List<String>> getText(int first, EntityPlayer player) {
+        if (!newInstance && !map.isEmpty()) { return map; }
+        map.clear();
+        stacks.clear();
+        entitys.clear();
+        List<String> preLines = new ArrayList<>();
+        // quest name
+        preLines.add(Component.translatable("gui.quest", ": ").getString() + TextFormatting.BOLD +
+                Component.translatable(qData.quest.title).getString());
+        // completion npc name
+        if (qData.quest.completion == EnumQuestCompletion.Npc && qData.quest.completer != null) {
+            preLines.add(Component.translatable("quest.completewith", qData.quest.completer.getName()).getString());
+        }
+        // all objectives
+        IQuestObjective[] allObj = qData.quest.getObjectives(player);
+        if (allObj.length > 0) {
+            preLines.add("");
+            preLines.add(TextFormatting.BOLD + Component.translatable("quest.objectives." + qData.quest.step).getString());
+            String line;
+            for (int i = 0; i < allObj.length; i++) {
+                line = (i + 1) + "-";
+                if (((QuestObjective) allObj[i]).getEnumType() == EnumQuestTask.ITEM || ((QuestObjective) allObj[i]).getEnumType() == EnumQuestTask.CRAFT) {
+                    stacks.add(((QuestObjective) allObj[i]).getItemStack());
+                    line += " " + ((char) 0xffff) + " ";
+                }
+                else if (((QuestObjective) allObj[i]).getEnumType() == EnumQuestTask.KILL || ((QuestObjective) allObj[i]).getEnumType() == EnumQuestTask.AREAKILL) {
+                    line += " " + ((char) 0xfffe) + " ";
+                    if (allObj[i].isNotShowLogEntity()) { entitys.put(entitys.size(), null); }
+                    else {
+                        String target = allObj[i].getTargetName();
+                        Entity entity = EntityList.createEntityByIDFromName(new ResourceLocation(target), world);
+                        if (entity == null) {
+                            IPos pos = allObj[i].getCompassPos();
+                            if (pos.getY() >= 0 && (pos.getX() != 0 || pos.getZ() != 0) && world.provider.getDimension() == allObj[i].getCompassDimension()) {
+                                int r = allObj[i].getCompassRange();
+                                List<Entity> list = new ArrayList<>();
+                                try {
+                                    list = world.getEntitiesWithinAABB(Entity.class,
+                                            new AxisAlignedBB(pos.getX() - r, pos.getY() - r, pos.getZ() - r,
+                                                    pos.getX() + r, pos.getY() + r, pos.getZ() + r));
+                                }
+                                catch (Exception ignored) { }
+                                for (Entity en : list) {
+                                    if (en.getName().equals(target)) {
+                                        NBTTagCompound compound = new NBTTagCompound();
+                                        en.writeToNBTAtomically(compound);
+                                        Entity e = EntityList.createEntityFromNBT(compound, world);
+                                        if (e instanceof EntityNPCInterface) {
+                                            entity = Util.instance.copyToGUI((EntityNPCInterface) e, world, false);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        entitys.put(entitys.size(), entity);
+                    }
+                }
+                preLines.add(line + allObj[i].getText());
+            }
+        }
+        preLines.addAll(qData.quest.getLogText());
+        List<Quest.TempDropData> listTdd = new ArrayList<>();
+        for (int i = 0; i < qData.quest.rewardItems.size(); i++) {
+            DropSet ds = qData.quest.rewardItems.get(i);
+            if (!ds.item.isEmpty()) {
+                boolean has = false;
+                if (qData.quest.rewardType == EnumRewardType.ALL) {
+                    for (Quest.TempDropData tdd : listTdd) {
+                        if (ds.item.isItemEqual(tdd.stack) && ItemStack.areItemStackShareTagsEqual(ds.item, tdd.stack)) {
+                            tdd.add(ds);
+                            has = true;
+                            break;
+                        }
+                    }
+                }
+                if (!has) { listTdd.add(new Quest.TempDropData(ds)); }
+            }
+        }
+        if (!listTdd.isEmpty()) {
+            for (Quest.TempDropData tdd : listTdd) {
+                stacks.add(tdd.getStack());
+            }
+        }
+
+        int currentList = 0;
+        List<String> lines = new ArrayList<>();
+        for (String sentence : preLines) { lines.addAll(GuiLog.createLines(sentence)); }
+
+        List<String> list = new ArrayList<>();
+        float height = 147.0f * GuiLog.scaleH;
+        for (String l : lines) {
+            if ((list.size() * GuiLog.fontHeight) > height - (currentList == 0 ? first : 0)) {
+                map.put(currentList, list);
+                list = new ArrayList<>();
+                currentList++;
+            }
+            list.add(l);
+        }
+        if (!list.isEmpty()) { map.put(currentList, list); }
+        newInstance = false;
+
+        List<ItemStack> rewarList = new ArrayList<>();
+        for (int i = 0; i < qData.quest.rewardItems.size(); i++) {
+            ItemStack stack = qData.quest.rewardItems.get(i).getMCItemStack();
+            if (stack.isEmpty()) { continue; }
+            boolean has = false;
+            if (qData.quest.rewardType == EnumRewardType.ALL) {
+                for (ItemStack it : rewarList) {
+                    if (it.isItemEqual(stack) && ItemStack.areItemStackShareTagsEqual(it, stack)) {
+                        has = true;
+                        break;
+                    }
+                }
+            }
+            if (!has) { rewarList.add(stack); }
+        }
+        if (!rewarList.isEmpty()) { stacks.addAll(rewarList); }
+        return map;
+    }
+
+    public void reset() { newInstance = true; }
+
+    public int size() { return map.size(); }
+
+}

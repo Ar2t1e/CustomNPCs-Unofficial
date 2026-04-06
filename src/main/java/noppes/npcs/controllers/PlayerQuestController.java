@@ -7,13 +7,11 @@ import java.util.Vector;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import noppes.npcs.EventHooks;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.handler.data.IDialog;
 import noppes.npcs.api.handler.data.IQuestObjective;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.constants.EnumQuestRepeat;
 import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.controllers.data.MiniMapData;
@@ -21,7 +19,7 @@ import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.controllers.data.QuestData;
-import noppes.npcs.quests.QuestObjective;
+import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.util.Util;
 
 public class PlayerQuestController {

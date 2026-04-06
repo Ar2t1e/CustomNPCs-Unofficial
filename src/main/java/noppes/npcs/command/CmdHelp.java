@@ -5,8 +5,8 @@ import java.util.Map;
 
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.api.CommandNoppesBase;
 
 import javax.annotation.Nonnull;
@@ -41,7 +41,7 @@ public class CmdHelp extends CommandNoppesBase {
 			throw new CommandException("You are not allowed to use \""+command.getName().toLowerCase()+"\" command");
 		}
 		if (command.subcommands.isEmpty()) {
-			sender.sendMessage(new TextComponentTranslation(command.getUsage(sender)));
+			sender.sendMessage(Component.translatable(command.getUsage(sender)));
 			return;
 		}
 		Method m = null;
@@ -53,7 +53,7 @@ public class CmdHelp extends CommandNoppesBase {
 			for (Map.Entry<String, Method> entry2 : command.subcommands.entrySet()) {
 				SubCommand sc = entry2.getValue().getAnnotation(SubCommand.class);
 				if (sc == null || sc.permission() > per) { continue; }
-				sender.sendMessage(new TextComponentTranslation(((char) 167) + "e" + entry2.getKey() + ((char) 167) + "r: " + sc.desc()));
+				sender.sendMessage(Component.translatable(((char) 167) + "e" + entry2.getKey() + ((char) 167) + "r: " + sc.desc()));
 			}
 		}
 		else {
@@ -62,9 +62,9 @@ public class CmdHelp extends CommandNoppesBase {
 				throw new CommandException("You are not allowed to use \""+command.getName().toLowerCase()+"\" command");
 			}
 			this.sendMessage(sender, "------" + command.getName() + "." + args[1].toLowerCase() + " Command------");
-			sender.sendMessage(new TextComponentTranslation(sc.desc()));
+			sender.sendMessage(Component.translatable(sc.desc()));
 			if (!sc.usage().isEmpty()) {
-				sender.sendMessage(new TextComponentTranslation("Usage: " + sc.usage()));
+				sender.sendMessage(Component.translatable("Usage: " + sc.usage()));
 			}
 		}
 	}

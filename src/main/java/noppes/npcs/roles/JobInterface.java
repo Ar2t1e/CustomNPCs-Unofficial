@@ -1,25 +1,44 @@
 package noppes.npcs.roles;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.data.INPCJob;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.entity.EntityNPCInterface;
 
+import javax.annotation.Nullable;
+
 public class JobInterface implements INPCJob {
 
-	public EntityNPCInterface npc;
+	public static final JobInterface NONE = new JobInterface(null) {
+
+		@Override
+		public NBTTagCompound save(NBTTagCompound compound) { return compound; }
+
+		@Override
+		public void load(NBTTagCompound compound) { }
+
+		@Override
+		public int getType() { return JobType.NONE.get(); }
+
+		@Override
+		public JobType getEnumType() { return JobType.NONE; }
+
+	};
+
+	public @Nullable EntityNPCInterface npc;
 	public boolean overrideMainHand = false;
 	public boolean overrideOffHand = false;
-	public JobType type = JobType.DEFAULT;
+	public JobType type = JobType.NONE;
 
-	public JobInterface(EntityNPCInterface npcIn) { npc = npcIn; }
+	public JobInterface(@Nullable EntityNPCInterface npcIn) { npc = npcIn; }
 
-	public boolean aiContinueExecute() { return this.aiShouldExecute(); }
+	public boolean aiContinueExecute() { return aiShouldExecute(); }
 
 	public void aiDeathExecute(Entity attackingEntity) { }
 
@@ -60,7 +79,7 @@ public class JobInterface implements INPCJob {
 
 	public void reset() { }
 
-	public void resetTask() { }
+	public void stop() { }
 
 	public ItemStack stringToItem(String s) {
 		if (s.isEmpty()) { return ItemStack.EMPTY; }
@@ -82,5 +101,7 @@ public class JobInterface implements INPCJob {
 		compound.setInteger("Type", this.type.get());
 		return compound;
 	}
+
+	public void interact(EntityPlayer player) {}
 
 }

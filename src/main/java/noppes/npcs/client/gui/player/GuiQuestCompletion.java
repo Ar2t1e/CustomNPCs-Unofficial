@@ -1,6 +1,7 @@
 package noppes.npcs.client.gui.player;
 
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
@@ -8,8 +9,8 @@ import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.TextBlockClient;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.constants.EnumRewardType;
+import noppes.npcs.controllers.QuestController;
 import noppes.npcs.controllers.data.Quest;
 import org.lwjgl.input.Keyboard;
 
@@ -25,14 +26,14 @@ public class GuiQuestCompletion extends GuiNPCInterface {
 	protected int currentPage = 0;
 	protected int hover;
 
-	public GuiQuestCompletion(Quest questIn) {
+	public GuiQuestCompletion(int questId) {
 		super();
 		drawDefaultBackground = false;
 		title = "";
 		xSize = 176;
 		ySize = 222;
 
-		quest = questIn;
+		quest = QuestController.instance.get(questId);
 	}
 
 	@Override
@@ -88,7 +89,7 @@ public class GuiQuestCompletion extends GuiNPCInterface {
 		String questTitle = new TextComponentTranslation("questlog.completed").getFormattedText() + new TextComponentTranslation(quest.getName()).getFormattedText();
 		int left = (xSize - fontRenderer.getStringWidth(questTitle)) / 2;
 		addLabel(new GuiNpcLabel(0, questTitle, guiLeft + left, guiTop + 4));
-		textBlockClient = new TextBlockClient(quest.getCompleteText(), 170, true, npc, player);
+		textBlockClient = new TextBlockClient(Component.translatable(quest.getCompleteText()).getString(), 170, true, npc, player);
 		maxLine = 180 / fontRenderer.FONT_HEIGHT;
 		if (textBlockClient.lines.size() > maxLine) { addButton(new GuiNpcButton(0, guiLeft + 28, guiTop + ySize - 24, 80, 20, new TextComponentTranslation("quest.complete").getFormattedText())); }
 		else { addButton(new GuiNpcButton(66, guiLeft + 48, guiTop + ySize - 24, 80, 20, new TextComponentTranslation("quest.complete").getFormattedText())); }

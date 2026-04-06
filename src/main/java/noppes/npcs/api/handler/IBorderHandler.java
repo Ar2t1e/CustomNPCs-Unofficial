@@ -1,7 +1,7 @@
 package noppes.npcs.api.handler;
 
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.IBorder;
 import noppes.npcs.controllers.data.Zone3D;
 
@@ -20,7 +20,7 @@ public interface IBorderHandler {
 
 	boolean removeRegion(@ParamName("regionId") int regionId);
 
-	List<Zone3D> getNearestRegions(@ParamName("dimensionId") int dimensionId,
+	List<Zone3D> getNearestRegions(@ParamName("dimensionName") int dimensionName,
 								   @ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
 								   @ParamName("distance") double distance);
 

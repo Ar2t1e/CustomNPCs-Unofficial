@@ -9,7 +9,7 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.world.storage.ISaveFormat;
 import net.minecraft.world.storage.WorldSummary;
 import net.minecraftforge.fml.client.FMLClientHandler;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.mixin.client.world.storage.IWorldSummaryMixin;
 import noppes.npcs.controllers.ScriptController;
 import org.spongepowered.asm.mixin.Final;

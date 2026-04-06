@@ -8,8 +8,8 @@ public class AvailabilityScoreboardData {
 	public int scoreboardValue;
 
 	public AvailabilityScoreboardData(EnumAvailabilityScoreboard type, int value) {
-		this.scoreboardType = type;
-		this.scoreboardValue = value;
+		scoreboardType = type;
+		scoreboardValue = value;
 	}
 
 }

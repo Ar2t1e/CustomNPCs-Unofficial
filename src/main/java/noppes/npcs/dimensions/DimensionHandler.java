@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDimensionTeleport;
 import org.apache.commons.io.FileUtils;
 
 import net.minecraft.command.ICommandSender;
@@ -19,7 +21,6 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.ServerWorldEventHandler;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
@@ -29,14 +30,12 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.Server;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.handler.IDimensionHandler;
 import noppes.npcs.api.handler.data.IWorldInfo;
-import noppes.npcs.constants.EnumPacketClient;
 
 import javax.annotation.Nonnull;
 
@@ -44,10 +43,7 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
 
 	static String NAME = "CustomNpcsHandler";
 
-	@SuppressWarnings("all")
-	public DimensionHandler(String mapName) {
-		super(mapName);
-	}
+	public DimensionHandler(String mapName) { super(mapName); }
 	
 	public static DimensionHandler getInstance() {
 		DimensionHandler INSTANCE = (DimensionHandler) Objects.requireNonNull(FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld().getMapStorage()).getOrLoadData(DimensionHandler.class, DimensionHandler.NAME);
@@ -57,13 +53,12 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
 		}
 		return INSTANCE;
 	}
+
 	private final Map<Integer, CustomWorldInfo> dimensionInfo = new TreeMap<>();
 
 	private final Map<Integer, UUID> toBeDeleted = new TreeMap<>();
 
-	public DimensionHandler() {
-		super(DimensionHandler.NAME);
-	}
+	public DimensionHandler() { super(DimensionHandler.NAME); }
 
 	@Override
 	public IWorldInfo createDimension() {
@@ -121,7 +116,7 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
 				players.add((EntityPlayerMP) player);
 			}
 			for (EntityPlayerMP player : players) {
-				NoppesUtilPlayer.teleportPlayer(player, coords.getX(), coords.getY(), coords.getZ(), 0,
+				SPacketDimensionTeleport.teleportPlayer(player, 0, coords.getX(), coords.getY(), coords.getZ(),
 						player.rotationYaw, player.rotationPitch);
 			}
 		}
@@ -169,30 +164,8 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
 		return arr;
 	}
 
-	public Map<String, Integer> getMapDimensionsIDs() {
-		HashMap<String, Integer> map = new HashMap<>();
-		for (int id : DimensionManager.getStaticDimensionIDs()) {
-			WorldProvider provider = DimensionManager.createProviderFor(id);
-			StringBuilder key = new StringBuilder((DimensionManager.getWorld(id) != null) + "&" + provider.getDimensionType().getName());
-			if (this.dimensionInfo.containsKey(id)) {
-				if (this.toBeDeleted.containsKey(id)) {
-					continue;
-				}
-				key = new StringBuilder((DimensionManager.getWorld(id) != null) + "&" + this.dimensionInfo.get(id).getWorldName());
-			}
-			while (map.containsKey(key + "&" + provider.getDimensionType().getSuffix())) {
-				key.append("_");
-			}
-			key.append("&").append(provider.getDimensionType().getSuffix());
-			map.put(key.toString(), id);
-		}
-		return map;
-	}
-
 	@Override
-	public IWorldInfo getMCWorldInfo(int dimensionId) {
-		return this.dimensionInfo.get(dimensionId);
-	}
+	public IWorldInfo getMCWorldInfo(int dimensionId) { return this.dimensionInfo.get(dimensionId); }
 
 	@Override
 	public INbt getNbt() {
@@ -265,8 +238,7 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
 	}
 
 	private void syncWithClients() {
-		Object ids = this.getAllIDs();
-		Server.sendToAll(CustomNpcs.Server, EnumPacketClient.DIMENSION_IDS, ids);
+		Packets.sendAll(new PacketDimensions(getAllIDs()));
 	}
 
 	public void unload(World world, int dimensionID) {

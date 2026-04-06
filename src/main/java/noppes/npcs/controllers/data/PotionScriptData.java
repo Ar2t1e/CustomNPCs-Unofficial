@@ -10,13 +10,11 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import noppes.npcs.EventHooks;
-import noppes.npcs.LogWriter;
+import noppes.npcs.api.event.CustomPotionEvent;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.event.ForgeEvent;
-import noppes.npcs.api.event.potion.AffectEntity;
-import noppes.npcs.api.event.potion.EndEffect;
-import noppes.npcs.api.event.potion.PerformEffect;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
@@ -44,9 +42,9 @@ extends BaseScriptData {
 		message = message.appendSibling(mes);
 
 		IEntity<?> iEntity = null;
-		if (event instanceof AffectEntity && ((AffectEntity) event).entity != null) { iEntity = ((AffectEntity) event).entity; }
-		else if (event instanceof EndEffect && ((EndEffect) event).entity != null) { iEntity = ((EndEffect) event).entity; }
-		else if (event instanceof PerformEffect && ((PerformEffect) event).entity != null) { iEntity = ((PerformEffect) event).entity; }
+		if (event instanceof CustomPotionEvent.AffectEntity && ((CustomPotionEvent.AffectEntity) event).entity != null) { iEntity = ((CustomPotionEvent.AffectEntity) event).entity; }
+		else if (event instanceof CustomPotionEvent.EndEffect && ((CustomPotionEvent.EndEffect) event).entity != null) { iEntity = ((CustomPotionEvent.EndEffect) event).entity; }
+		else if (event instanceof CustomPotionEvent.PerformEffect && ((CustomPotionEvent.PerformEffect) event).entity != null) { iEntity = ((CustomPotionEvent.PerformEffect) event).entity; }
 		if (iEntity != null) {
 			ITextComponent mesEntity;
 			if (iEntity.getMCEntity() instanceof EntityPlayer) { mesEntity = new TextComponentString("Player \""); }
@@ -80,13 +78,13 @@ extends BaseScriptData {
 		return message.appendSibling(side);
 	}
 	
-	public void readFromNBT(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		this.scripts.clear();
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
 		this.scriptLanguage = Util.instance.deleteColor(compound.getString("ScriptLanguage"));
 		this.enabled = compound.getBoolean("ScriptEnabled");
 		if (this.scripts.isEmpty() || this.scripts.get(0).script.isEmpty()) {
-			ScriptContainer script = new ScriptContainer(this, false);
+			ScriptContainer script = new ScriptContainer(this);
 			char chr = Character.toChars(0x000A)[0];
 			script.script = "// IPotion.getCustomName() - String (custom potion name)" + chr
 					+ "// IPotion.getNbt() - INbt (nbt data)" + chr + "function isReady(event) {" + chr

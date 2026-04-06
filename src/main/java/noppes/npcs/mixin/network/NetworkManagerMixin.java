@@ -38,7 +38,6 @@ public class NetworkManagerMixin {
      * @reason Processing packets with scripts
      */
     @Inject(method = "channelRead0*", at = @At("HEAD"), cancellable = true)
-    @SuppressWarnings("all")
     private void npcs$channelRead0(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
         if (channel.isOpen() && !npcs$notAllowed.contains(packet.getClass().getSimpleName())) {
             PackageReceived event = new PackageReceived(packet);
@@ -46,8 +45,7 @@ public class NetworkManagerMixin {
             if (event.isCanceled()) { ci.cancel(); }
             if (event.message != null && event.message.getClass() == packet.getClass()) {
                 ci.cancel();
-                try { ((Packet<INetHandler>) event.message).processPacket(packetListener); }
-                catch (Exception ignored) { }
+                try { ((Packet<INetHandler>) event.message).processPacket(packetListener); } catch (Exception ignored) { }
             }
         }
     }

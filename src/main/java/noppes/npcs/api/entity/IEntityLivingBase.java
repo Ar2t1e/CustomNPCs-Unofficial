@@ -1,7 +1,7 @@
 package noppes.npcs.api.entity;
 
 import net.minecraft.entity.EntityLivingBase;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.IMark;
 import noppes.npcs.api.entity.data.INpcAttribute;
 import noppes.npcs.api.item.IItemStack;

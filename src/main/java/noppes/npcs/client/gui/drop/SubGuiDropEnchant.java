@@ -5,87 +5,91 @@ import java.util.Collections;
 import java.util.List;
 
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.entity.data.EnchantSet;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
 import javax.annotation.Nonnull;
 
-public class SubGuiDropEnchant extends SubGuiInterface implements ITextfieldListener {
+public class SubGuiDropEnchant extends GuiNPCInterface implements ITextfieldListener {
 
-	protected String[] enchIds;
+	protected Object[] enchIds;
 	protected int[] levels;
 	public EnchantSet enchant;
 
-	public SubGuiDropEnchant(EnchantSet ench) {
-		super(0);
+	public SubGuiDropEnchant(EnchantSet enchantIn) {
+		super();
 		setBackground("companion_empty.png");
 		closeOnEsc = true;
-		xSize = 172;
-		ySize = 167;
+		imageWidth = 172;
+		imageHeight = 167;
 
-		enchant = ench;
+		enchant = enchantIn;
 		List<Integer> el = new ArrayList<>();
 		for (Enchantment en : ForgeRegistries.ENCHANTMENTS.getValuesCollection()) { el.add(Enchantment.getEnchantmentID(en)); }
 		Collections.sort(el);
-		enchIds = new String[el.size()];
-		for (int i = 0; i < el.size(); i++) { enchIds[i] = "" + el.get(i); }
+		enchIds = new Object[el.size()];
+		for (int i = 0; i < el.size(); i++) { enchIds[i] = el.get(i); }
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 50: enchant.setEnchant(Integer.parseInt(button.getVariants()[button.getValue()])); initGui(); break;
-			case 66: onClosed(); break;
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
+		switch (button.id) {
+			case 50: enchant.setEnchant(Integer.parseInt(button.getVariants()[button.getValue()].getString())); initGui(); break;
+			case 66: onClose(); break;
 		}
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		int anyIDs = 60;
+		int lId = 60;
 		// name
-		String name = new TextComponentTranslation("drop.enchants").getFormattedText() + ": " + new TextComponentTranslation(enchant.getEnchant()).getFormattedText();
-		addLabel(new GuiNpcLabel(anyIDs++, name, guiLeft + 4, guiTop + 5));
+		addLabel(lId++, guiLeft + 4, guiTop + 5, Component.translatable("drop.enchants").append(": ")
+				.append(Component.translatable(enchant.getEnchant())));
 		// select
 		int posId = 0;
-		String idName = "" + Enchantment.getEnchantmentID(enchant.ench);
+		int idName = Enchantment.getEnchantmentID(enchant.ench);
 		for (int i = 0; i < enchIds.length; i++) {
-			if (enchIds[i].equals(idName)) { posId = i; }
+			if ((int) enchIds[i] == idName) { posId = i; }
 		}
-		addButton(new GuiButtonBiDirectional(50, guiLeft + 4, guiTop + 17, 80, 20, enchIds, posId)
-				.setHoverText("drop.hover.enchant.list"));
+		addButton(50, guiLeft + 4, guiTop + 17, true, posId, enchIds)
+				.setSize(80, 20)
+				.setHoverTexts("drop.hover.enchant.list");
 		// levels
 		levels = new int[] { enchant.getMinLevel(), enchant.getMaxLevel() };
-		addLabel(new GuiNpcLabel(anyIDs++, "type.level", guiLeft + 56, guiTop + 48));
-		String tied = new TextComponentTranslation("drop.tied.random").getFormattedText();
-		if (enchant.parent.tiedToLevel) { tied = new TextComponentTranslation("drop.tied.level").getFormattedText(); }
+		addLabel(lId++, guiLeft + 56, guiTop + 48, "type.level");
+		String tied = Component.translatable("drop.tied.random").getString();
+		if (enchant.parent.tiedToLevel) { tied = Component.translatable("drop.tied.level").getString(); }
 		// min
-		addTextField(new GuiNpcTextField(52, this, guiLeft + 4, guiTop + 39, 50, 14, "" + levels[0])
+		addTextField(52, guiLeft + 4, guiTop + 39, 50, 14, "" + levels[0])
 				.setMinMaxDefault(0, 100000, enchant.getMinLevel())
-				.setHoverText(new TextComponentTranslation("drop.hover.enchant.levels", "" + enchant.ench.getMaxLevel(), tied)));
+				.setHoverTexts(Component.translatable("drop.hover.enchant.levels", "" + enchant.ench.getMaxLevel(), tied));
 		// max
-		addTextField(new GuiNpcTextField(53, this, guiLeft + 4, guiTop + 53, 50, 14, "" + levels[1])
+		addTextField(53, guiLeft + 4, guiTop + 53, 50, 14, "" + levels[1])
 				.setMinMaxDefault(0, 100000, enchant.getMaxLevel())
-				.setHoverText(new TextComponentTranslation("drop.hover.enchant.levels", "" + enchant.ench.getMaxLevel(), tied)));
+				.setHoverTexts(Component.translatable("drop.hover.enchant.levels", "" + enchant.ench.getMaxLevel(), tied));
 		// chance
-		addLabel(new GuiNpcLabel(anyIDs, "drop.chance", guiLeft + 56, guiTop + 74));
-		addTextField(new GuiNpcTextField(54, this, guiLeft + 4, guiTop + 69, 50, 20, String.valueOf(enchant.getChance()))
-				.setMinMaxDoubleDefault(0.0001d, 100.0d, enchant.getChance())
-				.setHoverText("drop.hover.enchant.chance"));
+		addLabel(lId, guiLeft + 56, guiTop + 74, "drop.chance");
+		addTextField(54, guiLeft + 4, guiTop + 69, 50, 20, String.valueOf(enchant.getChance()))
+				.setMinMaxDefault(0.0001d, 100.0d, enchant.getChance())
+				.setHoverTexts("drop.hover.enchant.chance");
 		// done
-		addButton(new GuiNpcButton(66, guiLeft + 4, guiTop + 142, 80, 20, "gui.done")
-				.setHoverText("hover.back"));
+		addButton(66, guiLeft + 4, guiTop + 142, "gui.done")
+				.setSize(80, 20)
+				.setHoverTexts("hover.back");
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		switch (textfield.getID()) {
-			case 52: levels[0] = textfield.getInteger(); enchant.setLevels(levels[0], levels[1]); initGui(); break; // level min
-			case 53: levels[1] = textfield.getInteger(); enchant.setLevels(levels[0], levels[1]); initGui(); break; // level max
-			case 54: enchant.setChance(textfield.getDouble()); initGui(); break; // chance
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
+			case 52: levels[0] = textField.getInteger(); enchant.setLevels(levels[0], levels[1]); initGui(); break; // level min
+			case 53: levels[1] = textField.getInteger(); enchant.setLevels(levels[0], levels[1]); initGui(); break; // level max
+			case 54: enchant.setChance(textField.getDouble()); initGui(); break; // chance
 		}
 	}
 

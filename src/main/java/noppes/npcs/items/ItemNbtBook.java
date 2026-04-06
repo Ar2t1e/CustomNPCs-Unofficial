@@ -18,21 +18,17 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.Server;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
-public class ItemNbtBook extends Item implements IPermission, INPCToolItem {
+public class ItemNbtBook extends Item implements INPCToolItem {
 
 	public ItemNbtBook() {
 		this.setRegistryName(CustomNpcs.MODID, "nbt_book");
 		this.setUnlocalizedName("nbt_book");
 		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -61,11 +57,6 @@ public class ItemNbtBook extends Item implements IPermission, INPCToolItem {
 		compound.setInteger("EntityId", target.getEntityId());
 		compound.setTag("Data", data);
 		Server.sendData(player, EnumPacketClient.GUI_DATA, compound);
-	}
-	
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.NbtBookSaveItem || e == EnumPacketServer.NbtBookSaveEntity
-				|| e == EnumPacketServer.NbtBookSaveBlock || e == EnumPacketServer.NbtBookCopyStack;
 	}
 
 	public void itemEvent(EntityPlayerMP player) {

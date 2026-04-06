@@ -7,6 +7,7 @@ import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.IShapedRecipe;
@@ -27,9 +28,9 @@ public class WrapperRecipe {
     public int id = -1;
     public int width = 3;
     public int height = 3;
-    public String group = "";
-    public String name = "";
-    public String domen = "minecraft";
+    public Component group = Component.empty();
+    public Component name = Component.empty();
+    public Component domen = Component.literal("minecraft");
     // recipeItems -> ItemStack[].length == 0 ... 16 max (not null)
     public final Map<Integer, ItemStack[]> recipeItems = new TreeMap<>();
     public ItemStack product = new ItemStack(Blocks.COBBLESTONE);

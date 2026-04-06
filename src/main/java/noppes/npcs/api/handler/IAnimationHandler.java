@@ -1,10 +1,9 @@
 package noppes.npcs.api.handler;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.IAnimation;
 import noppes.npcs.api.entity.data.IEmotion;
 
-@SuppressWarnings("all")
 public interface IAnimationHandler {
 
 	IAnimation createNewAnim();

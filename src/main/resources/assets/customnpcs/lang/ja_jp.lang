@@ -112,17 +112,17 @@ ai.swim=泳げる
 ai.tacticalvariant=戦闘戦術のバリエーション
 ai.wandering=放浪
 
-aitactics.commander=指揮官
-aitactics.default=デフォルトで
-aitactics.dodge=ドッジ
-aitactics.hitandrun=ひき逃げ
-aitactics.hitnrun=ひき逃げ
-aitactics.none=いいえ
-aitactics.orbit=囲む
-aitactics.rush=猛攻撃
-aitactics.stagger=よろめき
-aitactics.stalk=忍び寄る
-aitactics.surround=囲む
+ai.tactic.commander=指揮官
+ai.tactic.default=デフォルトで
+ai.tactic.dodge=ドッジ
+ai.tactic.hit_and_run=ひき逃げ
+ai.tactic.hitnrun=ひき逃げ
+ai.tactic.none=いいえ
+ai.tactic.orbit=囲む
+ai.tactic.rush=猛攻撃
+ai.tactic.stagger=よろめき
+ai.tactic.stalk=忍び寄る
+ai.tactic.surround=囲む
 
 animation.add.part.hover.location=モデルに使用されるテクスチャとしてリソース ファイル タイプ「§9.png§r」の場所
 animation.add.part.hover.name=便宜上のボディパーツ名<br>%s
@@ -1739,7 +1739,7 @@ message.dimensions.tp.isdelete=§2CustomNPCs§6: あなたは遠隔ディメン�
 message.mod.error=§sアップ。
 message.pather.add=NPC「%s」に x:%s y:%s z:%s の位置を追加しました
 message.pather.home=NPC "%s" のホーム位置 x:%s y:%s z:%s を変更しました
-message.pather.reg=「%s」を %s に登録しました
+message.pather.register=「%s」を %s に登録しました
 message.pather.warn.add=§Cの説教：前の位置から遠すぎる新しい位置。
 
 minimap.set.points.1=§f[§2customnpcs§f]：§8システムは、ミニカードの位置を更新しました：％s

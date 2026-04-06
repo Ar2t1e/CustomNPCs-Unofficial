@@ -4,7 +4,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.stats.RecipeBook;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.api.mixin.stats.IRecipeBookMixin;
 import org.spongepowered.asm.mixin.*;
@@ -119,8 +119,10 @@ public class RecipeBookMixin implements IRecipeBookMixin {
             }
         }
         if (!bo) {
-            recipes = recipesN;
-            newRecipes = newRecipesN;
+            recipes.clear();
+            for (int id = 0; id < recipesN.length(); ++id) { recipes.set(id); }
+            newRecipes.clear();
+            for (int id = 0; id < newRecipesN.length(); ++id) { newRecipes.set(id); }
         }
         return bo;
     }

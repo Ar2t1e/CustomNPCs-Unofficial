@@ -2,7 +2,6 @@ package noppes.npcs.util;
 
 import java.awt.*;
 import java.io.*;
-import java.lang.reflect.*;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -25,11 +24,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.internal.LinkedTreeMap;
+import net.minecraft.entity.*;
 import net.minecraft.nbt.*;
+import net.minecraft.network.chat.Component;
 import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -39,10 +39,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandBase.CoordinateArg;
 import net.minecraft.command.CommandException;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -66,13 +62,12 @@ import net.minecraftforge.fml.common.ModContainer;
 import noppes.npcs.api.*;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IPlayer;
-import noppes.npcs.api.handler.data.IDataElement;
 import noppes.npcs.api.handler.data.IQuestObjective;
+import noppes.npcs.api.mixin.entity.IEntityIMixin;
 import noppes.npcs.api.util.IRayTraceResults;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.NBTWrapper;
-import noppes.npcs.api.wrapper.data.DataElement;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.MarkData;
@@ -81,14 +76,25 @@ import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.QuestData;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.items.CustomArmor;
-import noppes.npcs.api.mixin.entity.IEntityMixin;
-import noppes.npcs.reflection.nbt.TagLongArrayReflection;
-import noppes.npcs.reflection.world.WorldReflection;
+import noppes.npcs.items.custom.CustomArmor;
+import noppes.npcs.mixin.nbt.INBTTagLongArrayMixin;
+import noppes.npcs.mixin.world.IWorldMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 import org.apache.commons.io.IOUtils;
 
 public class Util implements IMethods {
 
+    private static class NumInfo {
+		public final int step;
+		public final String type;
+		public final String color;
+		private NumInfo(int stepIn, String typeIn, String colorIn) {
+			step = stepIn;
+			type = typeIn;
+			color = colorIn;
+		}
+	}
+	private static final NumInfo[] steps = new NumInfo[17];
 	private static final TreeMap<Integer, String> ROMAN_DIGITS = new TreeMap<Integer, String>() {{
 		put(1, "I");
 		put(5, "V");
@@ -98,27 +104,78 @@ public class Util implements IMethods {
 		put(500, "D");
 		put(1000, "M");
 	}};
+	public static final Util instance = new Util();
 	private static final Map<String, String> translateDate = new HashMap<>();
 	private static final Gson gson = new Gson();
+	public static Object temp;
 
-	public static final Util instance = new Util();
 	public static boolean hasInternet = false;
 	public static final ResourceLocation RECIPE_BOOK = new ResourceLocation("textures/gui/recipe_book.png");
+
+	static {
+		steps[0] = new NumInfo(-24, "y", "d");  // yocto
+		steps[1] = new NumInfo(-21, "z", "9");  // zeppo
+		steps[2] = new NumInfo(-18, "a", "3");  // atto
+		steps[3] = new NumInfo(-15, "f", "b");  // femto
+		steps[4] = new NumInfo(-12, "p", "2");  // pico
+		steps[5] = new NumInfo(-9,  "n", "a");  // nano
+		steps[6] = new NumInfo(-6,  "µ", "e");  // micro
+		steps[7] = new NumInfo(-3,  "m", "5");  // milli
+		steps[8] = new NumInfo(3,   "",  "" );  // hecto
+		steps[9] = new NumInfo(6,   "K", "e");  // kilo
+		steps[10] = new NumInfo(9,  "M", "a");  // mega
+		steps[11] = new NumInfo(12, "G", "2");  // giga
+		steps[12] = new NumInfo(15, "T", "b");  // tera
+		steps[13] = new NumInfo(18, "P", "3");  // peta
+		steps[14] = new NumInfo(21, "E", "9");  // hexa
+		steps[15] = new NumInfo(24, "E", "d");  // zetta
+		steps[16] = new NumInfo(27, "Y", "5");  // yotta
+	}
+
+	public List<String> getStringData(String str) {
+		int maxLength = 32767;
+		List<String> list = new ArrayList<>();
+		for (int i = 0; i < str.length(); i += maxLength) {
+			int endIndex = Math.min(i + maxLength, str.length());
+			String part = str.substring(i, endIndex);
+			list.add(part);
+		}
+		return list;
+	}
+
+	public String sanitizeFilename(String name) {
+		String forbiddenChars = "/\\:*?\"<>|";
+		char[] chars = name.toCharArray();
+		for (int i = 0; i < chars.length; i++) {
+			if (forbiddenChars.indexOf(chars[i]) >= 0) { chars[i] = '_'; }
+		}
+		String newName = new String(chars);
+		while (newName.contains("__")) { newName = newName.replace("__", "_"); }
+		return newName;
+	}
+
+	public Map<Component, Integer> convertStringMap(Map<String, Integer> parent) {
+		Map<Component, Integer> map = new HashMap<>();
+		for (Map.Entry<String, Integer> entry : parent.entrySet()) {
+			map.put(Component.literal(entry.getKey()), entry.getValue());
+		}
+		return map;
+	}
 
 	public boolean canAddItemAfterRemoveItems(NonNullList<ItemStack> inventory, ItemStack addStack, Map<ItemStack, Integer> items, boolean ignoreDamage, boolean ignoreNBT) {
 		if (inventory == null || addStack.isEmpty()) { return false; }
 		NonNullList<ItemStack> inv = NonNullList.withSize(inventory.size(), ItemStack.EMPTY);
 		for (int i = 0; i < inventory.size(); ++i) {
-			if (NoppesUtilServer.IsItemStackNull(inventory.get(i))) { continue; }
+			if (NoppesUtilServer.isItemStackNull(inventory.get(i))) { continue; }
 			inv.set(i, inventory.get(i).copy());
 		}
 		if (items != null && !items.isEmpty()) {
 			for (ItemStack stack : items.keySet()) {
-				if (NoppesUtilServer.IsItemStackNull(stack)) { continue; }
+				if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
 				int count = items.get(stack);
 				for (int i = 0; i < inv.size(); ++i) {
 					ItemStack is = inv.get(i);
-					if (NoppesUtilServer.IsItemStackNull(is)) { continue; }
+					if (NoppesUtilServer.isItemStackNull(is)) { continue; }
 					if (NoppesUtilPlayer.compareItems(stack, is, ignoreDamage, ignoreNBT)) {
 						if (count < is.getCount()) {
 							is.splitStack(count);
@@ -143,9 +200,9 @@ public class Util implements IMethods {
 		if (inventory == null || items == null || items.isEmpty()) { return false; }
 		for (ItemStack stack : items.keySet()) {
 			int count = items.get(stack);
-			if (NoppesUtilServer.IsItemStackNull(stack)) { continue; }
+			if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
 			for (ItemStack is : inventory.keySet()) {
-				if (!NoppesUtilServer.IsItemStackNull(is) && NoppesUtilPlayer.compareItems(stack, is, ignoreDamage, ignoreNBT)) { count -= inventory.get(is); }
+				if (!NoppesUtilServer.isItemStackNull(is) && NoppesUtilPlayer.compareItems(stack, is, ignoreDamage, ignoreNBT)) { count -= inventory.get(is); }
 				if (count <= 0) { break; }
 			}
 			if (count > 0) { return false; }
@@ -159,7 +216,7 @@ public class Util implements IMethods {
 		}
 		Map<ItemStack, Integer> items = new HashMap<>();
 		items.put(stack, stack.getCount());
-		return this.canRemoveItems(inventory, items, ignoreDamage, ignoreNBT);
+		return canRemoveItems(inventory, items, ignoreDamage, ignoreNBT);
 	}
 
 	public boolean canRemoveItems(NonNullList<ItemStack> inventory, Map<ItemStack, Integer> items, boolean ignoreDamage, boolean ignoreNBT) {
@@ -167,10 +224,10 @@ public class Util implements IMethods {
 		if (items == null || items.isEmpty()) { return true; }
 		Map<ItemStack, Integer> inv = new HashMap<>();
         for (ItemStack stack : inventory) {
-            if (NoppesUtilServer.IsItemStackNull(stack) || stack.isEmpty()) { continue; }
+            if (NoppesUtilServer.isItemStackNull(stack) || stack.isEmpty()) { continue; }
             boolean found = false;
             for (ItemStack st : inv.keySet()) {
-                if (NoppesUtilServer.IsItemStackNull(st) || st.isEmpty()) { continue; }
+                if (NoppesUtilServer.isItemStackNull(st) || st.isEmpty()) { continue; }
                 if (NoppesUtilPlayer.compareItems(stack, st, false, false)) {
                     inv.put(st, inv.get(st) + stack.getCount());
                     found = true;
@@ -179,7 +236,7 @@ public class Util implements IMethods {
             }
             if (!found) { inv.put(stack, stack.getCount()); }
         }
-		return this.canRemoveItems(inv, items, ignoreDamage, ignoreNBT);
+		return canRemoveItems(inv, items, ignoreDamage, ignoreNBT);
 	}
 
 	public EntityNPCInterface copyToGUI(EntityNPCInterface npcParent, World world, boolean copyRotation) {
@@ -241,108 +298,9 @@ public class Util implements IMethods {
 		return Util.instance.getAngles3D(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ, target.posX, target.posY + target.getEyeHeight(), target.posZ);
 	}
 
-	public List<IDataElement> getClassData(Object obj, boolean onlyPublic, boolean addConstructor) {
-		if (obj == null) { return new ArrayList<>(); }
-		LogWriter.debug("Trying to get all fields, methods and classes from object \"" + obj + "\"");
-		List<IDataElement> list = new ArrayList<>();
-		Class<?> cz = (obj instanceof Class) ? (Class<?>) obj : obj.getClass();
-		// Constructors
-		if (addConstructor) {
-			Constructor<?>[] cns = onlyPublic ? cz.getConstructors() : cz.getDeclaredConstructors();
-			for (Constructor<?> c : cns) {
-				list.add(new DataElement(c, obj));
-			}
-		}
-		Map<String, Class<?>> classes = new HashMap<>();
-		Map<String, Field> fields = new HashMap<>();
-		Map<String, Method> methods = new HashMap<>();
-
-		for (Class<?> cl : onlyPublic ? cz.getClasses() : cz.getDeclaredClasses()) {
-			if (!classes.containsKey(cl.getSimpleName())) {
-				classes.put(cl.getSimpleName(), cl);
-			}
-		}
-		// Data
-		List<Class<?>> czs = new ArrayList<>();
-		czs.add(cz);
-		while (cz.getSuperclass() != Object.class && !czs.contains(cz.getSuperclass())) {
-			czs.add(cz.getSuperclass());
-			cz = cz.getSuperclass();
-		}
-		for (Class<?> c : czs) {
-			for (Field f : onlyPublic ? c.getFields() : c.getDeclaredFields()) {
-				if (!fields.containsKey(f.getName())) {
-					fields.put(f.getName(), f);
-				}
-			}
-			for (Method m : onlyPublic ? c.getMethods() : c.getDeclaredMethods()) {
-				if (!methods.containsKey(m.getName())) {
-					methods.put(m.getName(), m);
-				}
-			}
-		}
-		// Fields
-		if (!fields.isEmpty()) {
-			List<String> sortNames = new ArrayList<>(fields.keySet());
-			Collections.sort(sortNames);
-			List<String> names = new ArrayList<>();
-			for (String name : sortNames) {
-				boolean next = false;
-				if (names.contains(name)) {
-					continue;
-				}
-				Field f = fields.get(name);
-				for (IDataElement td : list) {
-					if (td.getObject().equals(f)) {
-						next = true;
-						break;
-					}
-				}
-				if (next) {
-					continue;
-				}
-				list.add(new DataElement(f, obj));
-				names.add(f.getName());
-			}
-		}
-		// Methods
-		if (!methods.isEmpty()) {
-			List<String> sortNames = new ArrayList<>(methods.keySet());
-			Collections.sort(sortNames);
-			List<String> names = new ArrayList<>();
-			for (String name : sortNames) {
-				boolean next = false;
-				if (names.contains(name)) {
-					continue;
-				}
-				Method m = methods.get(name);
-				for (IDataElement td : list) {
-					if (td.getObject().equals(m)) {
-						next = true;
-						break;
-					}
-				}
-				if (next) {
-					continue;
-				}
-				list.add(new DataElement(m, obj));
-				names.add(m.getName());
-			}
-		}
-		// Classes
-		if (!classes.isEmpty()) {
-			List<String> sortNames = new ArrayList<>(classes.keySet());
-			Collections.sort(sortNames);
-			for (String name : sortNames) {
-				list.add(new DataElement(classes.get(name), obj));
-			}
-		}
-		return list;
-	}
-
 	public Entity getEntityByUUID(UUID uuid, World startWorld) {
 		if (startWorld == null) { return null; }
-		Entity e = this.getEntityInWorld(uuid, startWorld);
+		Entity e = getEntityInWorld(uuid, startWorld);
 		if (e == null) {
 			MinecraftServer server = CustomNpcs.Server != null ? CustomNpcs.Server
 					: startWorld.getMinecraftServer() != null ? startWorld.getMinecraftServer()
@@ -355,7 +313,7 @@ public class Util implements IMethods {
 					if (world.equals(startWorld)) {
 						continue;
 					}
-					e = this.getEntityInWorld(uuid, world);
+					e = getEntityInWorld(uuid, world);
 					if (e != null) {
 						return e;
 					}
@@ -371,7 +329,7 @@ public class Util implements IMethods {
 				return entity;
 			}
 		}
-		List<Entity> unloadedEntityList = WorldReflection.getUnloadedEntityList(world);
+		List<Entity> unloadedEntityList = ((IWorldMixin) world).getUnloadedEntityList();
 		if (unloadedEntityList != null) {
 			for (Entity entity : unloadedEntityList) {
 				if (entity.getUniqueID().equals(uuid)) {
@@ -383,21 +341,38 @@ public class Util implements IMethods {
 	}
 
 	@Override
-	public List<File> getFiles(File dir, String index) {
+	public List<File> getFiles(File directory, String index) {
+		if (CustomNpcs.VerboseDebug && temp == null) {
+			temp = new Object[] { directory, System.currentTimeMillis(), 0, 1 };
+		}
 		List<File> list = new ArrayList<>();
-		if (dir == null || !dir.exists() || !dir.isDirectory()) {
-			return list;
-		}
-		for (File f : Objects.requireNonNull(dir.listFiles())) {
-			if (f.isDirectory()) {
-				list.addAll(this.getFiles(f, index));
-				continue;
+		if (directory != null && directory.exists() && directory.isDirectory()) {
+			File[] files = directory.listFiles();
+			if (files != null) {
+				if (temp instanceof Object[] && ((Object[]) temp).length > 3 && ((Object[]) temp)[0] == directory) {
+					int i = 0;
+					for (File f : files) {
+						if (f.isDirectory()) { i++; }
+					}
+					((Object[]) temp)[3] = i;
+				}
+				for (File f : files) {
+					if (f.isDirectory()) {
+						list.addAll(getFiles(f, index));
+						if (temp instanceof Object[] && ((Object[]) temp).length > 3 && ((Object[]) temp)[0] == directory) {
+							((Object[]) temp)[2] = ((int) ((Object[]) temp)[2]) + 1;
+							LogWriter.debug(ticksToElapsedTime(System.currentTimeMillis() - (long) ((Object[]) temp)[1], true, false, false) +
+									" ... process found files["+((Object[]) temp)[2]+"/"+((Object[]) temp)[3]+"] in \"" + ((Object[]) temp)[0] + "\"; now: \""+f+"\"");
+						}
+					}
+					else {
+						if (!f.isFile() || (index != null && !index.isEmpty() && !f.getName().toLowerCase().endsWith(index.toLowerCase()))) { continue; }
+						list.add(f);
+					}
+				}
 			}
-			if (!f.isFile() || (index != null && !index.isEmpty() && !f.getName().toLowerCase().endsWith(index.toLowerCase()))) {
-				continue;
-			}
-			list.add(f);
 		}
+		if (temp instanceof Object[] && ((Object[]) temp).length > 0 && ((Object[]) temp)[0] == directory) { temp = null; }
 		return list;
 	}
 
@@ -407,7 +382,7 @@ public class Util implements IMethods {
 		List<ItemStack> list = new ArrayList<>();
 		for (int i = 0; i < inventory.getSizeInventory(); i++) {
 			ItemStack stack = inventory.getStackInSlot(i);
-			if (NoppesUtilServer.IsItemStackNull(stack)) {
+			if (NoppesUtilServer.isItemStackNull(stack)) {
 				continue;
 			}
 			boolean has = false;
@@ -453,7 +428,7 @@ public class Util implements IMethods {
 			int count = 0;
 			for (int i = 0; i < player.inventory.mainInventory.size(); ++i) {
 				ItemStack s = player.inventory.mainInventory.get(i);
-				if (NoppesUtilServer.IsItemStackNull(s)) {
+				if (NoppesUtilServer.isItemStackNull(s)) {
 					continue;
 				}
 				if (NoppesUtilPlayer.compareItems(stack, s, false, false)) {
@@ -485,7 +460,7 @@ public class Util implements IMethods {
 				}
 				color = str.substring(start, end);
 			} else {
-				color = this.getLastColor(color, str.substring(0, str.length() - 1));
+				color = getLastColor(color, str.substring(0, str.length() - 1));
 			}
 		}
 		return color;
@@ -516,126 +491,67 @@ public class Util implements IMethods {
 
 	@Override
 	public String getTextReducedNumber(double value, boolean isInteger, boolean color, boolean notPfx) {
-		if (value == 0.0d) {
-			return isInteger ? "0" : String.valueOf(value).replace(".", ",");
-		}
+		if (value == 0.0d) { return isInteger ? "0" : "0,0"; }
 		String chr = "" + ((char) 167);
-		String chrPR= "" + ((char) 8776);
-		String type = "";
+		StringBuilder type = new StringBuilder();
 		String sufc = "";
 		double corr = value;
 		int exp;
 		boolean negatively = false;
-
+		// Number processing
 		if (value <= 0) {
 			negatively = true;
 			value *= -1.0d;
 		}
-		if (value < Math.pow(10, 3)) { // xxxx,x hecto
-			corr = Math.round(value * 10.0d) / 10.0d;
-		}
-		else if (value < Math.pow(10, 6)) { // xxx,xxK kilo
-			corr = Math.round(value / 100.0d) / 10.0d;
-			if (color) {
-				type = chr + "e";
-			}
-			type += "K";
-			if (corr * Math.pow(10, 3) != value) {
-				sufc = chrPR;
-			}
-		}
-		else if (value < Math.pow(10, 9)) { // xxx,xxM mega
-			corr = Math.round(value / Math.pow(10, 5)) / 10.0d;
-			if (color) {
-				type = chr + "a";
-			}
-			type += "M";
-			if (corr * Math.pow(10, 6) != value) {
-				sufc = chrPR;
-			}
-		} else if (value < Math.pow(10, 12)) { // xxx,xxG giga
-			corr = Math.round(value / Math.pow(10, 8)) / 10.0d;
-			if (color) {
-				type = chr + "2";
-			}
-			type += "G";
-			if (corr * Math.pow(10, 9) != value) {
-				sufc = chrPR;
-			}
-		} else if (value < Math.pow(10, 15)) { // xxx,xxT tera
-			corr = Math.round(value / Math.pow(10, 11)) / 10.0d;
-			if (color) {
-				type = chr + "b";
-			}
-			type += "T";
-			if (corr * Math.pow(10, 12) != value) {
-				sufc = chrPR;
-			}
-		} else if (value < Math.pow(10, 18)) { // xxx, xxP peta
-			corr = Math.round(value / Math.pow(10, 14)) / 10.0d;
-			if (color) {
-				type = chr + "3";
-			}
-			type += "P";
-			if (corr * Math.pow(10, 15) != value) {
-				sufc = chrPR;
-			}
-		} else if (value < Math.pow(10, 21)) { // xxx, xxE hexa
-			corr = Math.round(value / Math.pow(10, 17)) / 10.0d;
-			if (color) {
-				type = chr + "9";
-			}
-			type += "E";
-			if (corr * Math.pow(10, 18) != value) {
-				sufc = chrPR;
-			}
-		} else if (value < Math.pow(10, 24)) { // xxx, xxZ zetta
-			corr = Math.round(value / Math.pow(10, 20)) / 10.0d;
-			if (color) {
-				type = chr + "d";
-			}
-			type += "Z";
-			if (corr * Math.pow(10, 21) != value) {
-				sufc = chrPR;
-			}
-		} else if (value < Math.pow(10, 27)) { // xxx, xxY yotta
-			corr = Math.round(value / Math.pow(10, 23)) / 10.0d;
-			if (color) {
-				type = chr + "5";
-			}
-			type += "Y";
-			if (corr * Math.pow(10, 24) != value) {
-				sufc = chrPR;
-			}
-		} else { // x, xxxe + exp
-			if (String.valueOf(value).contains("e+") || String.valueOf(value).contains("E+")) {
-				String index = "e+";
-				if (String.valueOf(value).contains("E+")) {
-					index = "E+";
+		boolean found = false;
+        for (NumInfo numInfo : steps) {
+            if (numInfo.step < 0) {
+				if (value < Math.pow(10, numInfo.step)) {
+					int step = numInfo.step * -1;
+					corr = Math.round(value * Math.pow(10, step)) / Math.pow(10, step);
+					if (color && !numInfo.color.isEmpty()) { type = new StringBuilder(chr + numInfo.color); }
+					if (!steps[0].type.isEmpty()) { type.append(numInfo.type); }
+					if (Math.abs(corr * Math.pow(10, step) - value) > 0.001) { sufc = "≈"; }
+					found = true;
 				}
+            }
+			else if (numInfo.step == 3 && value < Math.pow(10, 3)) {
+                corr = Math.round(value * 10.0d) / 10.0d;
+                found = true;
+            }
+			else {
+				if (value < Math.pow(10, numInfo.step)) {
+					corr = Math.round(value / Math.pow(10, numInfo.step - 4)) / 10.0d;
+					if (color && !numInfo.color.isEmpty()) { type = new StringBuilder(chr + numInfo.color); }
+					if (!steps[0].type.isEmpty()) { type.append(numInfo.type); }
+					if (corr * Math.pow(10, numInfo.step - 3) != value) { sufc = "≈"; }
+					found = true;
+				}
+            }
+            if (found) { break; }
+        }
+		if (!found) {
+			String power = "+";
+			if (value < Math.pow(10, -24)) { power = "-"; }
+			if (String.valueOf(value).contains("e" + power) || String.valueOf(value).contains("E" + power)) {
+				String index = "e" + power;
+				if (String.valueOf(value).contains("E" + power)) { index = "E" + power; }
 				exp = Integer.parseInt(String.valueOf(value).substring(String.valueOf(value).indexOf(index) + 2));
 				corr = Math.round(Integer.parseInt(String.valueOf(value).substring(0, String.valueOf(value).indexOf(index))) * 1000.0d) / 1000.0d;
-			} else {
+			}
+			else {
 				exp = String.valueOf(corr).length();
 				corr = value;
 			}
-			type = "E+" + exp;
+			type = new StringBuilder("E" + power + exp);
 		}
-		if (negatively) { // negative or zero
-			if (color) {
-				sufc = chr + "c";
-			}
-			if (corr != 0.0d) {
-				sufc += "-";
-			}
-		}
+		if (negatively) {
+			if (color) { sufc = chr + "c"; }
+			if (corr != 0.0d) { sufc += "-"; }
+		} // negative or zero
 		String end = "";
-		if (color) {
-			end = chr + "r";
-		}
-		if (notPfx) {
-			sufc = "";
-		}
+		if (color) { end = chr + "r"; }
+		if (notPfx) { sufc = ""; }
 		String num = isInteger ? ("" + (long) corr) : ("" + corr).replace(".", ",");
 		return sufc + num + type + end;
 	}
@@ -647,7 +563,7 @@ public class Util implements IMethods {
 		int count = 0;
 		for (int i = 0; i < player.inventory.mainInventory.size(); ++i) {
 			ItemStack is = player.inventory.mainInventory.get(i);
-			if (NoppesUtilServer.IsItemStackNull(is)) {
+			if (NoppesUtilServer.isItemStackNull(is)) {
 				continue;
 			}
 			if (NoppesUtilPlayer.compareItems(stack, is, ignoreDamage, ignoreNBT)) {
@@ -661,14 +577,14 @@ public class Util implements IMethods {
 	@Override
 	public boolean removeFile(File directory) {
 		if (directory == null) { return false; }
-		LogWriter.debug("Trying remove file \"" + directory + "\"");
+		//LogWriter.debug("Trying remove file \"" + directory + "\"");
 		if (!directory.isDirectory()) {
 			return directory.delete();
 		}
 		File[] list = directory.listFiles();
 		if (list != null) {
 			for (File tempFile : list) {
-				this.removeFile(tempFile);
+				removeFile(tempFile);
 			}
 		}
 		return directory.delete();
@@ -678,7 +594,7 @@ public class Util implements IMethods {
 		if (player == null || stack == null || stack.isEmpty()) {
 			return false;
 		}
-		return this.removeItem(player, stack, stack.getCount(), ignoreDamage, ignoreNBT);
+		return removeItem(player, stack, stack.getCount(), ignoreDamage, ignoreNBT);
 	}
 
 	public boolean removeItem(EntityPlayerMP player, ItemStack stack, int count, boolean ignoreDamage, boolean ignoreNBT) {
@@ -687,13 +603,13 @@ public class Util implements IMethods {
 		}
 		for (int i = 0; i < player.inventory.mainInventory.size(); ++i) {
 			ItemStack is = player.inventory.getStackInSlot(i);
-			if (NoppesUtilServer.IsItemStackNull(is)) {
+			if (NoppesUtilServer.isItemStackNull(is)) {
 				continue;
 			}
 			if (NoppesUtilPlayer.compareItems(stack, is, ignoreDamage, ignoreNBT)) {
 				if (count < is.getCount()) {
 					is.splitStack(count);
-					this.updatePlayerInventory(player);
+					updatePlayerInventory(player);
 					return true;
 				}
 				count -= is.getCount();
@@ -707,34 +623,20 @@ public class Util implements IMethods {
 	public void teleportEntity(Entity entityIn, CoordinateArg argX, CoordinateArg argY, CoordinateArg argZ, CoordinateArg argYaw, CoordinateArg argPitch) {
 		if (entityIn instanceof EntityPlayerMP) {
 			Set<SPacketPlayerPosLook.EnumFlags> set = EnumSet.noneOf(SPacketPlayerPosLook.EnumFlags.class);
-			if (argX.isRelative()) {
-				set.add(SPacketPlayerPosLook.EnumFlags.X);
-			}
-			if (argY.isRelative()) {
-				set.add(SPacketPlayerPosLook.EnumFlags.Y);
-			}
-			if (argZ.isRelative()) {
-				set.add(SPacketPlayerPosLook.EnumFlags.Z);
-			}
-			if (argPitch.isRelative()) {
-				set.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
-			}
-			if (argYaw.isRelative()) {
-				set.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
-			}
+			if (argX.isRelative()) { set.add(SPacketPlayerPosLook.EnumFlags.X); }
+			if (argY.isRelative()) { set.add(SPacketPlayerPosLook.EnumFlags.Y); }
+			if (argZ.isRelative()) { set.add(SPacketPlayerPosLook.EnumFlags.Z); }
+			if (argPitch.isRelative()) { set.add(SPacketPlayerPosLook.EnumFlags.X_ROT); }
+			if (argYaw.isRelative()) { set.add(SPacketPlayerPosLook.EnumFlags.Y_ROT); }
 			float f = (float) argYaw.getAmount();
-			if (!argYaw.isRelative()) {
-				f = MathHelper.wrapDegrees(f);
-			}
+			if (!argYaw.isRelative()) { f = MathHelper.wrapDegrees(f); }
 			float f1 = (float) argPitch.getAmount();
-			if (!argPitch.isRelative()) {
-				f1 = MathHelper.wrapDegrees(f1);
-			}
+			if (!argPitch.isRelative()) { f1 = MathHelper.wrapDegrees(f1); }
 			entityIn.dismountRidingEntity();
-			((EntityPlayerMP) entityIn).connection.setPlayerLocation(argX.getAmount(), argY.getAmount(),
-					argZ.getAmount(), f, f1, set);
+			((EntityPlayerMP) entityIn).connection.setPlayerLocation(argX.getAmount(), argY.getAmount(), argZ.getAmount(), f, f1, set);
 			entityIn.setRotationYawHead(f);
-		} else {
+		}
+		else {
 			float f2 = (float) MathHelper.wrapDegrees(argYaw.getResult());
 			float f3 = (float) MathHelper.wrapDegrees(argPitch.getResult());
 			f3 = MathHelper.clamp(f3, -90.0F, 90.0F);
@@ -748,28 +650,33 @@ public class Util implements IMethods {
 	}
 
 	public Entity teleportEntity(MinecraftServer server, Entity entity, int dimension, BlockPos pos) throws CommandException {
-		return this.teleportEntity(server, entity, dimension, pos.getX() + 0.5d, pos.getY(), pos.getZ() + 0.5d);
+		return teleportEntity(server, entity, dimension, pos.getX() + 0.5d, pos.getY(), pos.getZ() + 0.5d);
 	}
 
-	public Entity teleportEntity(MinecraftServer server, Entity entity, int dimension, double x, double y, double z) throws CommandException {
-		if (entity == null) { return null; }
-		int homeDim = entity.world.provider.getDimension();
-		if (entity instanceof EntityNPCInterface) {
-			homeDim = ((EntityNPCInterface) entity).homeDimensionId;
-		}
-		if (entity.world.provider.getDimension() != dimension) {
-			entity = travelAndCopyEntity(server, entity, dimension);
+	public Entity teleportEntity(MinecraftServer server, Entity entity, int dimension, double x, double y, double z) {
+		Entity newEntity = entity;
+		if (server != null && entity != null) {
+			int homeDim = entity.world.provider.getDimension();
 			if (entity instanceof EntityNPCInterface) {
-				((EntityNPCInterface) entity).homeDimensionId = homeDim;
+				homeDim = ((EntityNPCInterface) entity).homeDimensionId;
 			}
-		}
-		if (entity == null) { return null; }
-		CoordinateArg xn = CommandBase.parseCoordinate(entity.posX, "" + x, true);
-		CoordinateArg yn = CommandBase.parseCoordinate(entity.posY, "" + y, -4096, 4096, false);
-		CoordinateArg zn = CommandBase.parseCoordinate(entity.posZ, "" + z, true);
-		CoordinateArg w = CommandBase.parseCoordinate(entity.rotationYaw, "~", false);
-		CoordinateArg p = CommandBase.parseCoordinate(entity.rotationPitch, "~", false);
-		teleportEntity(entity, xn, yn, zn, w, p);
+			if (entity.world.provider.getDimension() != dimension) {
+				newEntity = travelAndCopyEntity(server, entity, dimension);
+				if (entity instanceof EntityNPCInterface) {
+					((EntityNPCInterface) entity).homeDimensionId = homeDim;
+				}
+			}
+			if (newEntity == null) { newEntity = entity; }
+			try {
+				CoordinateArg xn = CommandBase.parseCoordinate(entity.posX, "" + x, true);
+				CoordinateArg yn = CommandBase.parseCoordinate(entity.posY, "" + y, -4096, 4096, false);
+				CoordinateArg zn = CommandBase.parseCoordinate(entity.posZ, "" + z, true);
+				CoordinateArg w = CommandBase.parseCoordinate(entity.rotationYaw, "~", false);
+				CoordinateArg p = CommandBase.parseCoordinate(entity.rotationPitch, "~", false);
+				teleportEntity(newEntity, xn, yn, zn, w, p);
+			}
+			catch (Exception e) { newEntity.setPositionAndRotation(x, y, z, entity.rotationYaw, entity.rotationPitch); }
+        }
 		return entity;
 	}
 
@@ -846,23 +753,21 @@ public class Util implements IMethods {
 		return time;
 	}
 
-	@SuppressWarnings("all")
-	public Entity travelAndCopyEntity(MinecraftServer server, Entity entity, int dimension) throws CommandException {
-		if (server == null) {
-			throw new CommandException("Server cannot " + "have value Null");
-		}
-        if (entity instanceof EntityPlayerMP) {
-			try {
-				WorldServer world = (WorldServer) server.getEntityWorld();
-				if (world == null || world.provider == null) { world = (WorldServer) entity.world; }
-				server.getPlayerList().transferPlayerToDimension((EntityPlayerMP) entity, dimension, new CustomNpcsTeleporter(world));
-			} catch (Exception e) {
-                LogWriter.error("Try travel player: "+entity.getName()+"; to "+dimension, e);
-            }
-			return entity;
-		} else {
+	public Entity travelAndCopyEntity(MinecraftServer server, Entity entity, int dimension) {
+		if (server != null) {
+			if (entity instanceof EntityPlayerMP) {
+				try {
+					WorldServer world = (WorldServer) server.getEntityWorld();
+					if (world == null || world.provider == null) { world = (WorldServer) entity.world; }
+					server.getPlayerList().transferPlayerToDimension((EntityPlayerMP) entity, dimension, new CustomNpcsTeleporter(world));
+				} catch (Exception e) {
+					LogWriter.error("Try travel player: "+entity.getName()+"; to "+dimension, e);
+				}
+				return entity;
+			}
 			return travelEntity(server, entity, dimension);
 		}
+		return entity;
 	}
 
 	/* [Teleport] Copy and Place Entity to Spawn next Dimensions */
@@ -878,7 +783,7 @@ public class Util implements IMethods {
 		entity.dimension = dimensionId;
 		Entity newEntity = EntityList.createEntityByIDFromName(Objects.requireNonNull(EntityList.getKey(entity.getClass())), worldserverEnd);
 		if (newEntity != null) {
-			((IEntityMixin) newEntity).npcs$copyDataFromOld(entity);
+			((IEntityIMixin) newEntity).npcs$copyDataFromOld(entity);
 			entity.world.removeEntity(entity);
 			newEntity.forceSpawn = true;
 			worldserverEnd.spawnEntity(newEntity);
@@ -909,28 +814,11 @@ public class Util implements IMethods {
 
 	// Stripping a string of color
 	@Override
-	public String deleteColor(String str) {
-		if (str == null) {
-			return null;
-		}
-		if (str.isEmpty()) {
-			return str;
-		}
-		for (int i = 0; i < 3; i++) {
-			String chr = "" + ((char) 167);
-			if (i == 1) {
-				chr = "&";
-			} else if (i == 2) {
-				chr = "" + ((char) 65535);
-			}
-			try {
-				while (str.contains(chr)) {
-					int p = str.indexOf(chr);
-					str = (p > 0 ? str.substring(0, p) : "") + (p + 2 == str.length() ? "" : str.substring(p + 2));
-				}
-			} catch (Exception e) { LogWriter.error(e); }
-		}
-		return str;
+	public String deleteColor(String input) {
+		if (input == null || input.isEmpty()) { return input; }
+		return input.replaceAll("§[0-9A-Za-z]", "")
+				.replaceAll("&[0-9A-Za-z]", "")
+				.replaceAll("\uffff[0-9A-Za-z]", "");
 	}
 
 	@Override
@@ -943,27 +831,27 @@ public class Util implements IMethods {
 
 	public double distanceTo(Entity entity, Entity target) {
 		if (entity == null || target == null) { return 0.0d; }
-		return this.distanceTo(entity.posX, entity.posY, entity.posZ, target.posX, target.posY, target.posZ);
+		return distanceTo(entity.posX, entity.posY, entity.posZ, target.posX, target.posY, target.posZ);
 	}
 
 	@Override
 	public double distanceTo(IEntity<?> entity, IEntity<?> target) {
 		if (entity == null || target == null) { return 0.0d; }
-		return this.distanceTo(entity.getMCEntity().posX, entity.getMCEntity().posY, entity.getMCEntity().posZ,
+		return distanceTo(entity.getMCEntity().posX, entity.getMCEntity().posY, entity.getMCEntity().posZ,
 				target.getMCEntity().posX, target.getMCEntity().posY, target.getMCEntity().posZ);
 	}
 
 	@Override
-	public @Nonnull IRayTraceRotate getAngles3D(double dx, double dy, double dz, double mx, double my, double mz) {
+	public @Nonnull IRayTraceRotate getAngles3D(double x0, double y0, double z0, double x1, double y1, double z1) {
 		RayTraceRotate rtr = new RayTraceRotate();
-		rtr.calculate(dx, dy, dz, mx, my, mz);
+		rtr.calculate(x0, y0, z0, x1, y1, z1);
 		return rtr;
 	}
 
 	@Override
 	public @Nonnull IRayTraceRotate getAngles3D(IEntity<?> entity, IEntity<?> target) {
 		if (entity == null || target == null) { return RayTraceRotate.EMPTY; }
-		return this.getAngles3D(entity.getMCEntity(), target.getMCEntity());
+		return getAngles3D(entity.getMCEntity(), target.getMCEntity());
 	}
 
 	@Override
@@ -974,18 +862,16 @@ public class Util implements IMethods {
 		if (obj.getClass().isArray()) {
 			str = new StringBuilder("[");
 			for (Object value : (Object[]) obj) {
-				String s = this.getJSONStringFromObject(value);
+				String s = getJSONStringFromObject(value);
 				if (str.length() > 0) {
 					str.append(", ");
 				}
 				str.append(s);
 			}
 			str.append("]");
-		} else if (obj instanceof Number) {
-			str = new StringBuilder(obj.toString());
-		} else if (obj instanceof String) {
-			str = new StringBuilder("\"" + obj + "\"");
-		} else if (obj instanceof Bindings) {
+		} else if (obj instanceof Number) { str = new StringBuilder(obj.toString()); }
+		else if (obj instanceof String) { str = new StringBuilder("\"" + obj + "\""); }
+		else if (obj instanceof Bindings) {
 			ScriptEngine engine = ScriptController.Instance.getEngineByName("ECMAScript");
 			if (engine != null) {
 				engine.put("temp", obj);
@@ -1027,7 +913,7 @@ public class Util implements IMethods {
 						zip.close();
 					} catch (Exception e) { LogWriter.error(e); }
 				} else {
-					List<File> list = this.getFiles(mod.getSource(), fileName.substring(fileName.lastIndexOf(".")));
+					List<File> list = getFiles(mod.getSource(), fileName.substring(fileName.lastIndexOf(".")));
 					for (File file : list) {
 						if (!file.isFile() || !file.getName().equals(fileName)) { continue; }
 						try {
@@ -1105,42 +991,40 @@ public class Util implements IMethods {
 	}
 
 	@Override
-	public IRayTraceVec getPosition(double cx, double cy, double cz, double yaw, double pitch, double radius) {
+	public IRayTraceVec getPosition(double x, double y, double z, double yaw, double pitch, double radius) {
 		RayTraceVec rtv = new RayTraceVec();
-		rtv.calculatePos(cx, cy, cz, yaw, pitch, radius);
+		rtv.calculatePos(x, y, z, yaw, pitch, radius);
 		return rtv;
 	}
 
 	@Override
 	public IRayTraceVec getPosition(IEntity<?> entity, double yaw, double pitch, double radius) {
 		if (entity == null) { return RayTraceVec.EMPTY; }
-		return this.getPosition(entity.getMCEntity().posX, entity.getMCEntity().posY, entity.getMCEntity().posZ, yaw,
+		return getPosition(entity.getMCEntity().posX, entity.getMCEntity().posY, entity.getMCEntity().posZ, yaw,
 				pitch, radius);
 	}
 
 	@Override
-	public RayTraceVec getVector3D(double dx, double dy, double dz, double mx, double my, double mz) {
+	public RayTraceVec getVector3D(double x0, double y0, double z0, double x1, double y1, double z1) {
 		RayTraceVec rtv = new RayTraceVec();
-		rtv.calculateVec(dx, dy, dz, mx, my, mz);
+		rtv.calculateVec(x0, y0, z0, x1, y1, z1);
 		return rtv;
 	}
 
 	@Override
 	public RayTraceVec getVector3D(IEntity<?> entity, IEntity<?> target) {
 		if (entity == null || target == null) { return RayTraceVec.EMPTY; }
-		return this.getVector3D(entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), target.getX(), target.getY() + target.getEyeHeight(), target.getZ());
+		return getVector3D(entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), target.getX(), target.getY() + target.getEyeHeight(), target.getZ());
 	}
 
 	@Override
 	public RayTraceVec getVector3D(IEntity<?> entity, IPos pos) {
 		if (entity == null || pos == null) { return RayTraceVec.EMPTY; }
-		return this.getVector3D(entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), pos.getX(), pos.getY(), pos.getZ());
+		return getVector3D(entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ(), pos.getX(), pos.getY(), pos.getZ());
 	}
 
 	public IRayTraceResults rayTraceBlocksAndEntitys(Entity entity, double yaw, double pitch, double distance) {
-		if (entity == null || entity.world == null || distance <= 0.0d) {
-			return RayTraceResults.EMPTY;
-		}
+		if (entity == null || entity.world == null || distance <= 0.0d) { return RayTraceResults.EMPTY; }
 		RayTraceResults rtrs = new RayTraceResults();
 
 		Vec3d vecStart = entity.getPositionEyes(1.0f);
@@ -1339,7 +1223,7 @@ public class Util implements IMethods {
 		else if (tag instanceof NBTTagString) { return ((NBTTagString) tag).getString(); }
 		else if (tag instanceof NBTTagByteArray) { return ((NBTTagByteArray) tag).getByteArray(); }
 		else if (tag instanceof NBTTagIntArray) { return ((NBTTagIntArray) tag).getIntArray(); }
-		else if (tag instanceof NBTTagLongArray) { return TagLongArrayReflection.getData((NBTTagLongArray) tag); }
+		else if (tag instanceof NBTTagLongArray) { return ((INBTTagLongArrayMixin) tag).getData(); }
 		else if (tag instanceof NBTTagList) {
 			Object[] arr = new Object[((NBTTagList) tag).tagCount()];
 			int i = 0;
@@ -1543,9 +1427,9 @@ public class Util implements IMethods {
 		Entity e = null;
 		try {
 			if (pos != null) {
-				e = this.teleportEntity(CustomNpcs.Server, entity.getMCEntity(), dimension, pos.getMCBlockPos());
+				e = teleportEntity(CustomNpcs.Server, entity.getMCEntity(), dimension, pos.getMCBlockPos());
 			} else {
-				e = this.travelAndCopyEntity(CustomNpcs.Server, entity.getMCEntity(), dimension);
+				e = travelAndCopyEntity(CustomNpcs.Server, entity.getMCEntity(), dimension);
 			}
 		} catch (Exception ee) { LogWriter.error(ee); }
 		if (e != null) {
@@ -1573,7 +1457,7 @@ public class Util implements IMethods {
 				mapPotion.get(key).add(stack);
 			}
 			else if (stack.getItem() instanceof ICustomElement) {
-				int key = ((ICustomElement) stack.getItem()).getType();
+				int key = ((ICustomElement) stack.getItem()).getElementType();
 				if (!mapSimple.containsKey(key)) { mapSimple.put(key, new ArrayList<>()); }
 				mapSimple.get(key).add(stack);
 			}
@@ -1666,7 +1550,7 @@ public class Util implements IMethods {
 
     public String getResourceName(String name) {
 		if (name == null) { return null; }
-		String preName = this.deleteColor(name);
+		String preName = deleteColor(name);
 		StringBuilder newName = new StringBuilder();
 		for (int i = 0; i < preName.length(); i++) {
 			char c = preName.charAt(i);
@@ -1770,7 +1654,6 @@ public class Util implements IMethods {
 		return Math.abs(entityTo.posX - (double) pos.x) <= 1.0 && Math.abs(entityTo.posY - (double) pos.y) < 2.0d && Math.abs(entityTo.posZ - (double) pos.z) <= 1.0d;
 	}
 
-	@SuppressWarnings("all")
 	public float getCurrentXZSpeed(EntityLivingBase entity) {
 		IAttributeInstance movementAttribute = entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
 		float speed = 1.0f;
@@ -1782,8 +1665,8 @@ public class Util implements IMethods {
 		return ValueUtil.correctFloat(speed, 0.25f, 1.0f);
 	}
 
-	@SuppressWarnings("all")
 	public boolean isMoving(EntityLivingBase entity) {
+		if (entity instanceof EntityLiving && !((EntityLiving) entity).getNavigator().noPath()) { return true; }
 		IAttributeInstance movementAttribute = entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
 		double speed = 0.004d;
 		if (movementAttribute != null) {
@@ -1845,48 +1728,24 @@ public class Util implements IMethods {
 		return new LinkedHashMap<>(map);
 	}
 
-	public static String getAgrName(Class<?> classType) {
-		StringBuilder key = new StringBuilder(classType.getName());
-		if (classType.isArray()) {
-			Class<?> ct = classType.getComponentType();
-			key = new StringBuilder(getAgrName(ct));
-			key.append("[]");
-		}
-		TypeVariable<?>[] typeParams = classType.getTypeParameters();
-		if (typeParams.length != 0) {
-			key.append("<");
-			for (int i = 0; i < typeParams.length; i++) {
-				key.append(typeParams[i].getName()).append(" extends ");
-				for (Type bound : typeParams[i].getBounds()) {
-					Class<?> boundClass = null;
-					if (bound instanceof Class) {
-						boundClass = (Class<?>) bound;
-					} else {
-						try { boundClass = Class.forName(bound.getTypeName()); }
-						catch (Exception ignored) {}
-                    }
-					if (boundClass != null) {
-						key.append(getAgrName(boundClass));
-						break;
-					}
-				}
-				if (i < typeParams.length - 1) { key.append(", "); }
-			}
-			key.append(">");
-		}
-		return key.toString();
-	}
-
-	public static List<String> splitString(String input, int offset) {
-		if (input == null || input.isEmpty()) {
-			return Collections.emptyList();
-		}
-		int maxLength = 32767 - offset;
+	public static List<String> splitString(String input) {
 		List<String> result = new ArrayList<>();
-		for (int i = 0; i < input.length(); i += maxLength) {
-			int endIndex = Math.min(i + maxLength, input.length());
-			String part = input.substring(i, endIndex);
-			result.add(part);
+		if (input != null && !input.isEmpty()) {
+			byte[] abyte = input.getBytes(StandardCharsets.UTF_8);
+			StringBuilder temp = new StringBuilder();
+			int size = 0;
+			for (int i = 0; i < abyte.length; i++) {
+				if (size + abyte[i] > 32768) {
+					result.add(temp.toString());
+					temp = new StringBuilder("" + input.charAt(i));
+					size = 0;
+				}
+				else {
+					temp.append(input.charAt(i));
+					size += abyte[i];
+				}
+			}
+			if (!temp.toString().isEmpty()) { result.add(temp.toString()); }
 		}
 		return result;
 	}
@@ -1897,25 +1756,8 @@ public class Util implements IMethods {
 		return Side.SERVER;
 	}
 
-	public <T extends Entity> List<T> getEntitiesWithinDist(Class<T> entityClass, World world, BlockPos pos, double range) {
-		return getEntitiesWithinDist(entityClass, world, pos.getX() + 0.5d, pos.getY(), pos.getZ() + 0.5d, range);
-	}
-
-	public <T extends Entity> List<T> getEntitiesWithinDist(Class<T> entityClass, World world, Entity e, double range) {
-		return getEntitiesWithinDist(entityClass, world, e.posX, e.posY, e.posZ, range - e.width);
-	}
-
-	public <T extends Entity> List<T> getEntitiesWithinDist(Class<T> entityClass, World world, double x, double y, double z, double range) {
-		List<T> list = new ArrayList<>();
-		if (entityClass == null || world == null) { return list; }
-		for (Entity e : world.loadedEntityList) {
-			if (entityClass.isInstance(e) && e.getDistance(x, y, z) - e.width <= range) { list.add(entityClass.cast(e)); }
-		}
-		return list;
-	}
-
 	@SideOnly(Side.CLIENT)
-	public void putHovers(List<String> hoverText, Object... components) {
+	public void putHovers(List<Component> hoverText, Object... components) {
 		if (hoverText == null || components == null) { return; }
 		for (Object component : components) {
 			if (component == null) { continue; }
@@ -1926,23 +1768,51 @@ public class Util implements IMethods {
 			String text = null;
 			if (component instanceof String) {
 				String lines = (String) component;
-				if (!lines.contains("%")) {
-					text = new TextComponentTranslation(lines).getFormattedText();
-				}
-				else { hoverText.add(lines); }
+				if (!lines.contains("%")) { text = Component.translatable(lines).getFormattedText(); }
+				else { hoverText.add(Component.literal(lines)); }
 			}
-			else if (component instanceof ITextComponent) {
-				text = ((ITextComponent) component).getFormattedText();
-			}
+			else if (component instanceof Component) { text = ((Component) component).getFormattedText(); }
+			else if (component instanceof ITextComponent) { text = ((ITextComponent) component).getFormattedText(); }
 			if (text != null) {
 				if (text.contains("~~~")) { text = text.replaceAll("~~~", "%"); }
 				while (text.contains("<br>")) {
-					hoverText.add(text.substring(0, text.indexOf("<br>")));
+					hoverText.add(Component.literal(text.substring(0, text.indexOf("<br>"))));
 					text = text.substring(text.indexOf("<br>") + 4);
 				}
-				if (!text.isEmpty()) { hoverText.add(text); }
+				if (!text.isEmpty()) { hoverText.add(Component.literal(text)); }
 			}
 		}
+	}
+
+	public void jumpTowards(IEntity<?> iEntity, IPos iPos) { jumpTowards(1.3f, iEntity.getMCEntity(), iPos.getMCVec3()); }
+
+	public void jumpTowards(float speed, Entity entity, Vec3d vec) {
+		double x = vec.x - entity.posX;
+		double y = vec.y - entity.getEntityBoundingBox().minY;
+		double z = vec.z - entity.posZ;
+		float varF = (float) Math.sqrt(x * x + z * z);
+		float pitch = getPitch(speed, y, varF);
+		float yaw = (float)(Math.atan2(x, z) * 180.0D / Math.PI);
+		float f0 = (float) Math.PI;
+		Vec3d motion = new Vec3d(Math.sin(yaw / 180.0F * f0) * Math.cos(pitch / 180.0F * f0),
+				Math.sin((pitch + 1.0F) / 180.0F * f0),
+				Math.cos(yaw / 180.0F * f0) * Math.cos(pitch / 180.0F * f0));
+		motion.scale(speed);
+		entity.motionX = motion.x;
+		entity.motionY = motion.y;
+		entity.motionZ = motion.z;
+		entity.velocityChanged = true;
+	}
+
+	public float getPitch(float speed, double y, double horizontalDist) {
+		float f0 = 0.2F;
+		float f1 = speed * speed;
+		double f2 = (double) f0 * horizontalDist;
+		double f3 = (double) f0 * horizontalDist * horizontalDist + 2.0D * y * (double) f1;
+		double f4 = (double) (f1 * f1) - (double) f0 * f3;
+		if (f4 < 0.0D) { return 90.0F; }
+		float f5 = f1 - (float) Math.sqrt(f4);
+		return (float) (Math.atan2(f5, f2) * 180.0D / Math.PI);
 	}
 
 }

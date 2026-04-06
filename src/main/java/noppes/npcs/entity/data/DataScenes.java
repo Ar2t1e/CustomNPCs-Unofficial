@@ -15,7 +15,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.AnimationType;
@@ -24,6 +24,7 @@ import noppes.npcs.api.wrapper.ItemStackWrapper;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.EntityProjectile;
+import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
@@ -160,12 +161,12 @@ public class DataScenes {
 					} else {
 						ITextComponent message = new TextComponentString("Unknown scene stat: " + type);
 						message.getStyle().setColor(TextFormatting.GRAY);
-						NoppesUtilServer.NotifyOPs(message, false);
+						CommonUtil.NotifyOPs(message);
 					}
 				} catch (NumberFormatException e) {
 					ITextComponent message = new TextComponentString("Unknown scene stat " + type + " value: " + value);
 					message.getStyle().setColor(TextFormatting.GRAY);
-					NoppesUtilServer.NotifyOPs(message, false);
+					CommonUtil.NotifyOPs(message);
 				}
 			} else if (event.type == SceneType.FACTION) {
 				npc.setFaction(Integer.parseInt(event.param));
@@ -317,14 +318,14 @@ public class DataScenes {
 			}
 			ITextComponent message = new TextComponentString("Paused all scenes");
 			message.getStyle().setColor(TextFormatting.GRAY);
-			NoppesUtilServer.NotifyOPs(message, false);
+			CommonUtil.NotifyOPs(message);
 		} else {
 			SceneState state2 = DataScenes.StartedScenes.get(id.toLowerCase());
 			state2.paused = true;
 
 			ITextComponent message = new TextComponentString("Paused scene " + id + " at " + state2.ticks);
 			message.getStyle().setColor(TextFormatting.GRAY);
-			NoppesUtilServer.NotifyOPs(message, false);
+			CommonUtil.NotifyOPs(message);
 		}
 	}
 
@@ -336,13 +337,13 @@ public class DataScenes {
 			DataScenes.StartedScenes = new HashMap<>();
 			ITextComponent message = new TextComponentString("Reset all scene");
 			message.getStyle().setColor(TextFormatting.GRAY);
-			NoppesUtilServer.NotifyOPs(message, false);
+			CommonUtil.NotifyOPs(message);
 		} else if (DataScenes.StartedScenes.remove(id.toLowerCase()) == null) {
 			sender.sendMessage(new TextComponentTranslation("Unknown scene %s ", id));
 		} else {
 			ITextComponent message = new TextComponentString("Reset scene " + id);
 			message.getStyle().setColor(TextFormatting.GRAY);
-			NoppesUtilServer.NotifyOPs(message, false);
+			CommonUtil.NotifyOPs(message);
 		}
 	}
 
@@ -351,13 +352,13 @@ public class DataScenes {
 		if (state == null) {
 			ITextComponent message = new TextComponentString("Started scene " + id);
 			message.getStyle().setColor(TextFormatting.GRAY);
-			NoppesUtilServer.NotifyOPs(message, false);
+			CommonUtil.NotifyOPs(message);
 			DataScenes.StartedScenes.put(id.toLowerCase(), new SceneState());
 		} else if (state.paused) {
 			state.paused = false;
 			ITextComponent message = new TextComponentString("Started scene " + id + " from " + state.ticks);
 			message.getStyle().setColor(TextFormatting.GRAY);
-			NoppesUtilServer.NotifyOPs(message, false);
+			CommonUtil.NotifyOPs(message);
 		}
 	}
 
@@ -369,7 +370,7 @@ public class DataScenes {
 			state.paused = true;
 			ITextComponent message = new TextComponentString("Paused scene " + id + " from " + state.ticks);
 			message.getStyle().setColor(TextFormatting.GRAY);
-			NoppesUtilServer.NotifyOPs(message, false);
+			CommonUtil.NotifyOPs("Paused scene %s at %s", id, state.ticks);
 		}
 	}
 
@@ -401,7 +402,7 @@ public class DataScenes {
 		return this.owner;
 	}
 
-	public void readFromNBT(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		NBTTagList list = compound.getTagList("Scenes", 10);
 		List<SceneContainer> scenes = new ArrayList<>();
 		for (int i = 0; i < list.tagCount(); ++i) {
@@ -424,7 +425,7 @@ public class DataScenes {
 		}
 	}
 
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+	public NBTTagCompound save(NBTTagCompound compound) {
 		NBTTagList list = new NBTTagList();
 		for (SceneContainer scene : this.scenes) {
 			list.appendTag(scene.writeToNBT(new NBTTagCompound()));

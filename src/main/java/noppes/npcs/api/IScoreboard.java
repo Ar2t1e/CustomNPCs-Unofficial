@@ -1,11 +1,13 @@
 package noppes.npcs.api;
 
+import noppes.npcs.api.interfaces.ParamName;
+
 @SuppressWarnings("all")
 public interface IScoreboard {
 
-	IScoreboardObjective addObjective(@ParamName("player") String objective, @ParamName("criteria") String criteria);
+	IScoreboardObjective addObjective(@ParamName("objective") String objective, @ParamName("criteria") String criteria);
 
-	IScoreboardTeam addTeam(@ParamName("player") String name);
+	IScoreboardTeam addTeam(@ParamName("name") String name);
 
 	void deletePlayerScore(@ParamName("player") String player, @ParamName("objective") String objective, @ParamName("datatag") String datatag);
 

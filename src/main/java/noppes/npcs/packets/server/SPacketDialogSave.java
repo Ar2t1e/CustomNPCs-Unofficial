@@ -1,0 +1,58 @@
+package noppes.npcs.packets.server;
+
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.controllers.DialogController;
+import noppes.npcs.controllers.data.Dialog;
+import noppes.npcs.controllers.data.DialogCategory;
+import noppes.npcs.shared.common.PacketServerBasic;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiUpdate;
+
+public class SPacketDialogSave extends PacketServerBasic {
+
+   protected static int channelId;
+   private int id;
+   private NBTTagCompound data;
+
+   public SPacketDialogSave() { }
+
+   public SPacketDialogSave(int idIn, NBTTagCompound dataIn) {
+      id = idIn;
+      data = dataIn;
+   }
+
+   @Override
+   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_DIALOG; }
+
+   @Override
+   public void encode(FriendlyByteBuf buf) {
+      buf.writeInt(id);
+      buf.writeNbt(data);
+   }
+
+   @Override
+   public void decode(FriendlyByteBuf buf) {
+      id = buf.readInt();
+      data = buf.readNbt();
+   }
+
+   @Override
+   public int getChannelId() { return channelId; }
+
+   @Override
+   public void handle() {
+      CustomNpcs.debugData.start("Packets");
+      DialogCategory category = DialogController.instance.categories.get(id);
+      if (category != null) {
+         Dialog dialog = new Dialog(category);
+         dialog.load(data);
+         DialogController.instance.saveDialog(category, dialog);
+         Packets.send(player, new PacketGuiUpdate());
+      }
+      CustomNpcs.debugData.end("Packets");
+   }
+
+}

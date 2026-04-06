@@ -2,24 +2,14 @@ package noppes.npcs.ai.attack;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IRangedAttackMob;
-import net.minecraft.nbt.NBTTagCompound;
 
 public class EntityAIStalkTarget extends EntityAICustom {
 
-	public boolean discovered;
 	private EntityLivingBase oldTarget;
 
-	public EntityAIStalkTarget(IRangedAttackMob npc) {
-		super(npc);
-		discovered = false;
-	}
-
-	private void setDiscovered(boolean discoveredIn) {
-		discovered = discoveredIn;
-		if (npc.aiIsSneak == discovered) {
-			npc.aiIsSneak = !discovered;
-			npc.setSneaking(!discovered);
-		}
+	public EntityAIStalkTarget(IRangedAttackMob npcIn) {
+		super(npcIn);
+		npc.setPose(1, false);
 	}
 
 	@Override
@@ -27,9 +17,9 @@ public class EntityAIStalkTarget extends EntityAICustom {
 		if (super.shouldExecute()) {
 			return true;
 		}
-		if (discovered) {
+		if (npc.hasPose(1)) {
 			oldTarget = null;
-			setDiscovered(false);
+			npc.setPose(1, false);
 		}
 		return false;
 	}
@@ -37,24 +27,19 @@ public class EntityAIStalkTarget extends EntityAICustom {
 	@Override
 	public void updateTask() {
 		super.updateTask();
-		if (isFriend || npc.ticksExisted % (tickRate * 2) > 3) { return; }
+		if (isFriend || npc.ticksExisted % (tickRate * 2) != 0) { return; }
 		canSeeToAttack = npc.canSee(target);
-		if (!discovered && distance < tacticalRange) { setDiscovered(true); }
+		if (!npc.hasPose(1) && distance < tacticalRange) { npc.setPose(1, true); }
 		if (canSeeToAttack && distance <= range) {
 			if (inMove) { npc.getNavigator().clearPath(); }
 		}
-		else { npc.getNavigator().tryMoveToEntityLiving(target, discovered ? 1.3d : 0.725d); }
+		else { npc.getNavigator().tryMoveToEntityLiving(target, npc.hasPose(1) ? 0.725d : 1.3d); }
 		tryToCauseDamage();
-		if (!discovered && hasAttack || target.canEntityBeSeen(npc)) { setDiscovered(true); }
+		if (!npc.hasPose(1) && hasAttack || target.canEntityBeSeen(npc)) { npc.setPose(1, true); }
 		if (!target.equals(oldTarget)) {
 			oldTarget = target;
-			setDiscovered(discovered);
+			npc.setPose(1, npc.hasPose(1));
 		}
-	}
-
-	@Override
-	public void writeToClientNBT(NBTTagCompound compound) {
-		compound.setBoolean("aiIsSneak", !discovered);
 	}
 
 }

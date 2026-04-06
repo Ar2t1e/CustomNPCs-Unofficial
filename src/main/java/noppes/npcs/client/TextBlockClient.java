@@ -10,7 +10,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
-import noppes.npcs.NoppesStringUtils;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.entity.data.TextBlock;
 import noppes.npcs.util.Util;
 

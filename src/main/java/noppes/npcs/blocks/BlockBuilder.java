@@ -16,16 +16,16 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomItems;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileBuilder;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
 import javax.annotation.Nonnull;
 
-public class BlockBuilder extends BlockInterface implements IPermission {
+public class BlockBuilder extends BlockInterface {
 
 	public static PropertyInteger ROTATION = PropertyInteger.create("rotation", 0, 3);
 
@@ -34,7 +34,7 @@ public class BlockBuilder extends BlockInterface implements IPermission {
 		this.setName("npcbuilderblock");
 		this.setHardness(5.0f);
 		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 		this.setSoundType(SoundType.STONE);
 	}
 
@@ -64,19 +64,13 @@ public class BlockBuilder extends BlockInterface implements IPermission {
 		return this.getDefaultState().withProperty(BlockBuilder.ROTATION, meta);
 	}
 
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.SchematicsSet || e == EnumPacketServer.SchematicsTile
-				|| e == EnumPacketServer.SchematicsTileSave || e == EnumPacketServer.SchematicsBuild;
-	}
-
 	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (par1World.isRemote) {
 			return true;
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (currentItem.getItem() == CustomRegisters.wand
-				|| currentItem.getItem() == Item.getItemFromBlock(CustomRegisters.builder)) {
+		if (currentItem.getItem() == CustomItems.wand
+				|| currentItem.getItem() == Item.getItemFromBlock(CustomBlocks.builder)) {
 			NoppesUtilServer.sendOpenGui(player, EnumGuiType.BuilderBlock, null, pos.getX(), pos.getY(), pos.getZ());
 		}
 		return true;

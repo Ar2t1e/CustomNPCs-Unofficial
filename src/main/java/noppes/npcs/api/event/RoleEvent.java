@@ -7,7 +7,7 @@ import java.util.Objects;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import noppes.npcs.api.EventName;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IPlayer;
@@ -113,6 +113,7 @@ public class RoleEvent extends CustomNPCsEvent {
 	@Cancelable
 	@EventName(EnumScriptType.ROLE)
 	public static class TransporterUseEvent extends RoleEvent {
+
 		public ITransportLocation location;
 
 		public TransporterUseEvent(EntityPlayer player, ICustomNpc<?> npc, ITransportLocation locationIn) {

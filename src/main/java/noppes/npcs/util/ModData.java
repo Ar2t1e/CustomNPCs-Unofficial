@@ -55,7 +55,6 @@ public class ModData {
         compound.setBoolean("IsPassable", false);
         compound.setBoolean("IsOpaqueCube", false);
         compound.setBoolean("IsFullCube", false);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -68,7 +67,6 @@ public class ModData {
             nbtProperty.setByte("Type", (byte) 4);
             nbtProperty.setString("Name", "facing");
         compound.setTag("Property", nbtProperty);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -83,7 +81,6 @@ public class ModData {
         compound.setInteger("Viscosity", 900);
         compound.setInteger("Temperature", 300);
         compound.setInteger("Color", 0xFFFFFFFF);
-        compound.setBoolean("CreateAllFiles", true);
         compound.setString("Material", "WATER");
         return compound;
     }
@@ -93,8 +90,8 @@ public class ModData {
         compound.setString("RegistryName", "chestexample");
         compound.setByte("BlockType", (byte) 2);
         compound.setString("Material", "WOOD");
-        compound.setBoolean("CreateAllFiles", true);
         compound.setBoolean("IsChest", true);
+        compound.setBoolean("IsOBJModel", true);
         compound.setInteger("Size", 14);
         compound.setInteger("GUIColor", 0x46AB86);
         compound.setString("Name", "Custom Chest");
@@ -106,7 +103,6 @@ public class ModData {
         compound.setString("RegistryName", "containerexample");
         compound.setByte("BlockType", (byte) 2);
         compound.setString("Material", "STONE");
-        compound.setBoolean("CreateAllFiles", true);
         compound.setInteger("Size", 96);
         compound.setIntArray("GUIColor", new int[] { 0x00DC8C, 0xDC8000 });
         compound.setString("Name", "Custom Container");
@@ -126,7 +122,6 @@ public class ModData {
         compound.setString("RegistryName", "stairsexample");
         compound.setByte("BlockType", (byte) 3);
         compound.setString("Material", "STONE");
-        compound.setBoolean("CreateAllFiles", true);
         compound.setBoolean("IsFullCube", false);
         compound.setBoolean("IsOpaqueCube", false);
         return compound;
@@ -137,7 +132,6 @@ public class ModData {
         compound.setString("RegistryName", "slabexample");
         compound.setByte("BlockType", (byte) 4);
         compound.setString("Material", "STONE");
-        compound.setBoolean("CreateAllFiles", true);
         compound.setBoolean("IsFullCube", false);
         compound.setBoolean("IsOpaqueCube", false);
         return compound;
@@ -155,7 +149,6 @@ public class ModData {
         compound.setTag("RenderData", nbtRender);
         compound.setInteger("DimensionID", 100);
         compound.setInteger("HomeDimensionID", 0);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -166,7 +159,6 @@ public class ModData {
         compound.setString("Material", "IRON");
         compound.setFloat("Hardness", 1.0f);
         compound.setFloat("Resistance", 25.0f);
-        compound.setBoolean("CreateAllFiles", true);
         compound.setBoolean("InteractOpen", true);
         compound.setFloat("LightLevel", 2.0f);
         return compound;
@@ -200,7 +192,6 @@ public class ModData {
         compound.setString("RegistryName", "itemexample");
         compound.setByte("ItemType", (byte) 0);
         compound.setInteger("MaxStackSize", 64);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -218,7 +209,6 @@ public class ModData {
             collectionMaterial.setString("Material", "WEB");
             collectionMaterial.setFloat("Speed", 15.0f);
         compound.setTag("CollectionMaterial", collectionMaterial);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -239,7 +229,6 @@ public class ModData {
             collectionBlocks.appendTag(new NBTTagString(Objects.requireNonNull(Blocks.STONE.getRegistryName()).toString()));
             collectionBlocks.appendTag(new NBTTagString(Objects.requireNonNull(Blocks.OBSIDIAN.getRegistryName()).toString()));
         compound.setTag("CollectionBlocks", collectionBlocks);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -256,7 +245,6 @@ public class ModData {
         compound.setTag("RepairItem", (new ItemStack(Items.GOLD_INGOT)).writeToNBT(new NBTTagCompound()));
         compound.setInteger("HarvestLevel", 2);
         compound.setInteger("Enchantability", 28);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -264,23 +252,35 @@ public class ModData {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "armorexample");
         compound.setByte("ItemType", (byte) 3);
-        compound.setDouble("EntityDamage", 0.0d);
-        compound.setInteger("RenderIndex", 4);
         compound.setString("Material", "GOLD");
         compound.setTag("RepairItem", (new ItemStack(Items.GOLD_NUGGET)).writeToNBT(new NBTTagCompound()));
-        compound.setBoolean("CreateAllFiles", true);
-        compound.setIntArray("MaxStackDamage", new int[] { 2250, 3100, 1800 });
-            NBTTagList slots = new NBTTagList();
-            slots.appendTag(new NBTTagString("HEAD"));
-            slots.appendTag(new NBTTagString("Chest"));
-            slots.appendTag(new NBTTagString("feet"));
+
+        NBTTagList slots = new NBTTagList();
+        NBTTagCompound part = new NBTTagCompound();
+            part.setString("Slot", "HEAD");
+            part.setInteger("MaxStackDamage", 2250);
+            part.setInteger("Defense", 5);
+            part.setFloat("Toughness", 2.2f);
+            part.setInteger("Enchantability", 22);
+            part.setInteger("RenderIndex", 4);
+        slots.appendTag(part);
+        part = new NBTTagCompound();
+            part.setString("Slot", "Chest");
+            part.setInteger("MaxStackDamage", 3100);
+            part.setInteger("Defense", 7);
+            part.setFloat("Toughness", 3.5f);
+            part.setInteger("Enchantability", 25);
+            part.setInteger("RenderIndex", 4);
+        slots.appendTag(part);
+        part = new NBTTagCompound();
+            part.setString("Slot", "feet");
+            part.setInteger("MaxStackDamage", 1800);
+            part.setInteger("Defense", 4);
+            part.setFloat("Toughness", 1.8f);
+            part.setInteger("Enchantability", 22);
+            part.setInteger("RenderIndex", 4);
+        slots.appendTag(part);
         compound.setTag("EquipmentSlots", slots);
-        compound.setIntArray("DamageReduceAmount", new int[] { 5, 7, 4 });
-            NBTTagList toughness = new NBTTagList();
-            toughness.appendTag(new NBTTagFloat(2.2f));
-            toughness.appendTag(new NBTTagFloat(3.5f));
-            toughness.appendTag(new NBTTagFloat(1.8f));
-        compound.setTag("Toughness", toughness);
         return compound;
     }
 
@@ -288,23 +288,43 @@ public class ModData {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "armorobjexample");
         compound.setByte("ItemType", (byte) 3);
-            NBTTagList toughness = new NBTTagList();
-            toughness.appendTag(new NBTTagFloat(2.2f));
-            toughness.appendTag(new NBTTagFloat(3.5f));
-            toughness.appendTag(new NBTTagFloat(2.6f));
-            toughness.appendTag(new NBTTagFloat(1.8f));
-        compound.setTag("Toughness", toughness);
-        compound.setIntArray("DamageReduceAmount", new int[] { 5, 7, 6, 4 });
         compound.setString("Material", "IRON");
         compound.setTag("RepairItem", (new ItemStack(Items.IRON_INGOT)).writeToNBT(new NBTTagCompound()));
-        compound.setIntArray("MaxStackDamage", new int[] { 2250, 3100, 2700, 1800 });
-            NBTTagList slots = new NBTTagList();
-            slots.appendTag(new NBTTagString("HEAD"));
-            slots.appendTag(new NBTTagString("Chest"));
-            slots.appendTag(new NBTTagString("LeGs"));
-            slots.appendTag(new NBTTagString("feet"));
+
+        NBTTagList slots = new NBTTagList();
+        NBTTagCompound part = new NBTTagCompound();
+            part.setString("Slot", "HEAD");
+            part.setInteger("MaxStackDamage", 2250);
+            part.setInteger("Defense", 5);
+            part.setFloat("Toughness", 2.2f);
+            part.setInteger("Enchantability", 22);
+            part.setInteger("RenderIndex", 4);
+        slots.appendTag(part);
+        part = new NBTTagCompound();
+            part.setString("Slot", "Chest");
+            part.setInteger("MaxStackDamage", 3100);
+            part.setInteger("Defense", 7);
+            part.setFloat("Toughness", 3.5f);
+            part.setInteger("Enchantability", 25);
+            part.setInteger("RenderIndex", 4);
+        slots.appendTag(part);
+        part = new NBTTagCompound();
+            part.setString("Slot", "LeGs");
+            part.setInteger("MaxStackDamage", 2700);
+            part.setInteger("Defense", 6);
+            part.setFloat("Toughness", 2.6f);
+            part.setInteger("Enchantability", 23);
+            part.setInteger("RenderIndex", 4);
+        slots.appendTag(part);
+        part = new NBTTagCompound();
+            part.setString("Slot", "feet");
+            part.setInteger("MaxStackDamage", 1800);
+            part.setInteger("Defense", 4);
+            part.setFloat("Toughness", 1.8f);
+            part.setInteger("Enchantability", 22);
+            part.setInteger("RenderIndex", 4);
+        slots.appendTag(part);
         compound.setTag("EquipmentSlots", slots);
-        compound.setDouble("EntityDamage", 0.0d);
 
         NBTTagCompound objData = new NBTTagCompound();
             NBTTagList meshes = new NBTTagList();
@@ -340,7 +360,7 @@ public class ModData {
             objData.setTag("Leg Right Mesh Names", meshes);
 
             meshes = new NBTTagList();
-            meshes.appendTag(new NBTTagString(EnumParts.FOOT_RIGHT.name));
+            meshes.appendTag(new NBTTagString(EnumParts.FEET_RIGHT.name));
             objData.setTag("Foot Right Mesh Names", meshes);
 
             meshes = new NBTTagList();
@@ -348,7 +368,7 @@ public class ModData {
             objData.setTag("Leg Left Mesh Names", meshes);
 
             meshes = new NBTTagList();
-            meshes.appendTag(new NBTTagString(EnumParts.FOOT_LEFT.name));
+            meshes.appendTag(new NBTTagString(EnumParts.FEET_LEFT.name));
             objData.setTag("Foot Left Mesh Names", meshes);
 
             meshes = new NBTTagList();
@@ -365,13 +385,13 @@ public class ModData {
             String slot = s == 0 ? "CHEST" : s == 1 ? "LEGS" : s == 2 ? "FEET" : "HEAD";
             NBTTagCompound cameraData = new NBTTagCompound();
             for (int i = 0; i < 8; i++) {
-                String part;
+                String p;
                 NBTTagList rotation = new NBTTagList();
                 NBTTagList translation = new NBTTagList();
                 NBTTagList scale = new NBTTagList();
                 switch(i) {
                     case 0: { // THIRD_PERSON_LEFT_HAND
-                        part = "thirdperson_lefthand";
+                        p = "thirdperson_lefthand";
                         switch(slot) {
                             case "CHEST": {
                                 translation.appendTag(new NBTTagFloat(0.0f));
@@ -411,7 +431,7 @@ public class ModData {
                         break;
                     }
                     case 1: { // THIRD_PERSON_RIGHT_HAND
-                        part = "thirdperson_righthand";
+                        p = "thirdperson_righthand";
                         switch(slot) {
                             case "CHEST": {
                                 translation.appendTag(new NBTTagFloat(0.5f));
@@ -451,7 +471,7 @@ public class ModData {
                         break;
                     }
                     case 2: { // FIRST_PERSON_LEFT_HAND
-                        part = "firstperson_lefthand";
+                        p = "firstperson_lefthand";
                         switch(slot) {
                             case "CHEST": {
                                 rotation.appendTag(new NBTTagFloat(0.0f));
@@ -497,7 +517,7 @@ public class ModData {
                         break;
                     }
                     case 3: { // FIRST_PERSON_RIGHT_HAND
-                        part = "firstperson_righthand";
+                        p = "firstperson_righthand";
                         switch(slot) {
                             case "CHEST": {
                                 rotation.appendTag(new NBTTagFloat(0.0f));
@@ -543,7 +563,7 @@ public class ModData {
                         break;
                     }
                     case 4: { // HEAD
-                        part = "head";
+                        p = "head";
                         switch(slot) {
                             case "CHEST": {
                                 rotation.appendTag(new NBTTagFloat(270.0f));
@@ -577,7 +597,7 @@ public class ModData {
                         break;
                     }
                     case 5: { // GUI
-                        part = "gui";
+                        p = "gui";
                         switch(slot) {
                             case "CHEST": {
                                 rotation.appendTag(new NBTTagFloat(30.0f));
@@ -620,7 +640,7 @@ public class ModData {
                         break;
                     }
                     case 6: { // GROUND
-                        part = "ground";
+                        p = "ground";
                         switch(slot) {
                             case "CHEST": {
                                 translation.appendTag(new NBTTagFloat(0.5f));
@@ -654,7 +674,7 @@ public class ModData {
                         break;
                     }
                     default: { // FIXED
-                        part = "fixed";
+                        p = "fixed";
                         switch(slot) {
                             case "CHEST": {
                                 rotation.appendTag(new NBTTagFloat(0.0f));
@@ -701,13 +721,11 @@ public class ModData {
                 if (rotation.tagCount() > 0) { transform.setTag("rotation", rotation); }
                 if (translation.tagCount() > 0) { transform.setTag("translation", translation); }
                 if (scale.tagCount() > 0) { transform.setTag("scale", scale); }
-                cameraData.setTag(part, transform);
+                cameraData.setTag(p, transform);
             }
             display.setTag(slot, cameraData);
         }
         compound.setTag("Display", display);
-
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -719,7 +737,6 @@ public class ModData {
         compound.setDouble("EntityDamage", 0.0d);
         compound.setString("Material", "IRON");
         compound.setTag("RepairItem", (new ItemStack(Items.IRON_NUGGET)).writeToNBT(new NBTTagCompound()));
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -734,7 +751,6 @@ public class ModData {
         compound.setBoolean("SetFlame", false);
         compound.setFloat("CritChance", 0.25f);
         compound.setFloat("DrawstringSpeed", 20.0f);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -756,7 +772,6 @@ public class ModData {
             potionEffect.setBoolean("ShowParticles", false);
             potionEffect.setFloat("Probability", 0.95f);
         compound.setTag("PotionEffect", potionEffect);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -768,7 +783,6 @@ public class ModData {
         compound.setTag("RepairItem", (new ItemStack(Items.STICK)).writeToNBT(new NBTTagCompound()));
         compound.setInteger("MaxStackDamage", 150);
         compound.setInteger("Enchantability", 5);
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 
@@ -776,7 +790,6 @@ public class ModData {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "potionexample");
         compound.setByte("ItemType", (byte) 7);
-        compound.setBoolean("CreateAllFiles", true);
         compound.setBoolean("IsBadEffect", false);
         compound.setBoolean("IsInstant", false);
         compound.setBoolean("IsBeneficial", true);
@@ -823,9 +836,6 @@ public class ModData {
         compound.setIntArray("UVpos", new int[]{1, 5});
         compound.setFloat("Gravity", 0.25f);
         compound.setFloat("Scale", 1.5f);
-        compound.setString("Texture", "particles");
-        compound.setBoolean("IsFullTexture", false);
-        compound.setBoolean("CreateAllFiles", true);
         NBTTagList motion = new NBTTagList();
         motion.appendTag(new NBTTagDouble(0.2d));
         motion.appendTag(new NBTTagDouble(0.1d));
@@ -844,7 +854,6 @@ public class ModData {
         compound.setFloat("Gravity", 1.0f / 3.0f);
         compound.setFloat("Scale", 1.0f);
         compound.setString("OBJModel", "ring");
-        compound.setBoolean("CreateAllFiles", true);
         return compound;
     }
 

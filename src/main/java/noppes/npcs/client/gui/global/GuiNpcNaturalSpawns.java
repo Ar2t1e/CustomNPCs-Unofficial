@@ -1,12 +1,13 @@
 package noppes.npcs.client.gui.global;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
@@ -17,91 +18,190 @@ import net.minecraft.entity.item.EntityItemFrame;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.client.Client;
+import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.SubGuiNpcMobSpawnerSelector;
 import noppes.npcs.client.gui.SubGuiNpcBiomes;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.data.SpawnData;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketNaturalSpawnGet;
+import noppes.npcs.packets.server.SPacketNaturalSpawnGetAll;
+import noppes.npcs.packets.server.SPacketNaturalSpawnRemove;
+import noppes.npcs.packets.server.SPacketNaturalSpawnSave;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.*;
+import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
-import javax.annotation.Nonnull;
-
+// Changed by Unofficial (BetaZavr)
 public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 		implements IGuiData, IScrollData, ITextfieldListener, ICustomScrollListener, ISliderListener, GuiYesNoCallback {
 
-	protected final HashMap<String, Integer> data = new HashMap<>();
-	protected GuiCustomScroll scroll;
+	protected final HashMap<Component, Integer> data = new HashMap<>();
+	protected GuiCustomScrollNop scroll;
 	protected SpawnData spawn = new SpawnData();
 	protected Entity displayNpc = null;
-	protected int maxSize;
 	protected boolean accept = false;
+	protected int maxSize;
 
 	public GuiNpcNaturalSpawns(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuGlobal;
 
-		Client.sendData(EnumPacketServer.NaturalSpawnGetAll);
+		backGui = EnumGuiType.MainMenuGlobal;
+		Packets.sendServer(new SPacketNaturalSpawnGetAll());
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch(button.getID()) {
+	public void initGui() {
+		super.initGui();
+		if (scroll == null) { scroll = addScroll(0).setSize(143, 208); }
+		add(scroll.setPos(guiLeft + 214, guiTop + 4));
+		addButton(1, guiLeft + 358, guiTop + 38, "gui.add")
+				.setSize(58, 20)
+				.setHoverTexts("spawning.hover.add");
+		addButton(2, guiLeft + 358, guiTop + 61, "gui.remove")
+				.setSize(58, 20)
+				.setHoverTexts("spawning.hover.del");
+		if (spawn.id < 0) { return; }
+		// entity max size
+		Entity entity = null;
+		try { entity = EntityList.createEntityFromNBT(spawn.getCompound(), player.world); } catch (Exception ignored) { }
+		maxSize = 50;
+		if (entity instanceof EntityNPCInterface) { maxSize = 70; }
+		else if (entity instanceof EntityAnimal) { maxSize = 10; }
+		else if (entity instanceof EntityMob) { maxSize = 70; }
+		// Spawner name
+		int lId = 0;
+		int x = guiLeft + 5;
+		int y = guiTop + 5;
+		addLabel(lId++, x, y + 3, "gui.title");
+		addTextField(1, x + 56, y, 150, 14, spawn.name)
+				.setHoverTexts("spawning.hover.name");
+		// Biomes
+		addLabel(lId++, x, (y += 17) + 3, "spawning.biomes");
+		addButton(3, x + 56, y, "selectServer.edit")
+				.setSize(74, 16)
+				.setColor(spawn.biomes.isEmpty() ? new Color(0xFFF02020).getRGB() : 0)
+				.setHoverTexts("spawning.hover.biomes");
+		// spawner type
+		addLabel(lId++, x, (y += 18) + 3, "gui.type");
+		addButton(27, x + 56, y, false, spawn.type, "spawner.any", "spawner.dark", "spawner.light")
+				.setSize(74, 16)
+				.setHoverTexts("spawning.hover.type");
+		addButton(4, x + 132, y, false, spawn.liquid ? 0 : 1, "spawning.liquid.0", "spawning.liquid.1")
+				.setSize(74, 16)
+				.setHoverTexts("spawning.hover.liquid." + (spawn.liquid ? 0 : 1));
+		// select entity
+		addButton(5, x, y += 18, getTitle(spawn.getCompound()))
+				.setSize(184, 16)
+				.setHoverTexts("spawning.hover.sel.npc");
+		addButton(25, x + 186, y, "X")
+				.setSize(20, 16)
+				.setHoverTexts("spawning.hover.del.npc");
+		// chance
+		addLabel(lId++, x, (y += 29) - 10, Component.translatable("spawning.weightedChance").append(":"));
+		addSlider(2, x, y, (float) spawn.itemWeight / 100.0f)
+				.setSize(160, 12)
+				.setHoverTexts("spawning.hover.chance");
+		addTextField(2, x + 163, y, 43, 12, "" + spawn.itemWeight)
+				.setMinMaxDefault(1, 100, spawn.itemWeight)
+				.setHoverTexts("spawning.hover.chance");
+		// group size
+		addLabel(lId++, x, (y += 25) - 10, "spawning.group");
+		addSlider(3, x, y, (float) spawn.group / 8.0f)
+				.setSize(160, 12)
+				.setHoverTexts("spawning.hover.chance");
+		addTextField(3, x + 163, y, 43, 12, "" + spawn.group)
+				.setMinMaxDefault(1, 8, spawn.group)
+				.setHoverTexts("spawning.hover.group");
+		// distance
+		addLabel(lId, x, (y += 25) - 10, "spawning.range");
+		addSlider(4, x, y, (float) spawn.range / 16.0f)
+				.setSize(160, 12)
+				.setHoverTexts("spawning.hover.chance");
+		addTextField(4, x + 163, y, 43, 12, "" + spawn.range)
+				.setMinMaxDefault(1, 16, spawn.range)
+				.setHoverTexts("spawning.hover.range");
+		// maximum in player
+		addLabel(lId, x, (y += 25) - 10, "spawning.maximum.in");
+		addSlider(5, x, y, (float) spawn.maxNearPlayer / (float) maxSize)
+				.setSize(160, 12)
+				.setHoverTexts(Component.translatable("spawning.hover.maximum.in", TextFormatting.GOLD + "" + maxSize));
+		addTextField(5, x + 163, y, 43, 12, "" + spawn.maxNearPlayer)
+				.setMinMaxDefault(1, maxSize, spawn.maxNearPlayer)
+				.setHoverTexts(Component.translatable("spawning.hover.maximum.in", TextFormatting.GOLD + "" + maxSize));
+		// player can see
+		addCheckBox(6, x, y + 14, "spawning.can.see", "spawning.not.see", spawn.canSeeSummon)
+				.setSize(184, 14)
+				.setHoverTexts("spawning.hover.can.see");
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 1: {
 				if (!accept) {
-					GuiYesNo guiyesno = new GuiYesNo(this,
-							new TextComponentTranslation("gui.acceptMessage").getFormattedText(),
-							new TextComponentTranslation("spawning.accept.message").getFormattedText(),
-							0);
-					displayGuiScreen(guiyesno);
-					return;
+					ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+						if (agree) {
+							accept = true;
+							buttonEvent(getButton(1));
+						}
+						NoppesUtil.openGUI(player, this);
+					},
+							Component.translatable("spawning.accept.message"),
+							Component.translatable("gui.acceptMessage"));
+					setScreen(guiYesNo);
 				}
-				save();
-				String name = new TextComponentTranslation("gui.new").getFormattedText();
-				while (data.containsKey(name)) { name += "_"; }
-				SpawnData spawn = new SpawnData();
-				spawn.name = name;
-				Client.sendData(EnumPacketServer.NaturalSpawnSave, spawn.writeNBT(new NBTTagCompound()));
+				else {
+					save();
+					String name = Component.translatable("gui.new").getFormattedText();
+					while (true) {
+						boolean found = false;
+						for (Component key : data.keySet()) {
+							if (key.getString().equals(name)) {
+								found = true;
+								name += "_";
+								break;
+							}
+						}
+						if (!found) { break;}
+					}
+					SpawnData spawn = new SpawnData();
+					spawn.name = name;
+					Packets.sendServer(new SPacketNaturalSpawnSave(spawn.save(new NBTTagCompound())));
+				}
 				break;
 			} // add
 			case 2: {
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				Client.sendData(EnumPacketServer.NaturalSpawnRemove, spawn.id);
-				spawn = new SpawnData();
-				scroll.clear();
-				displayNpc = null;
+				if (data.containsKey(scroll.getNormalSelected())) {
+					Packets.sendServer(new SPacketNaturalSpawnRemove(spawn.id));
+					spawn = new SpawnData();
+					scroll.clear();
+					displayNpc = null;
+				}
 				break;
 			} // remove
 			case 3: setSubGui(new SubGuiNpcBiomes(spawn)); break; // set biome
 			case 4: {
 				spawn.liquid = button.getValue() == 0;
-				button.setHoverText("spawning.hover.liquid." + button.getValue());
+				button.setHoverTexts("spawning.hover.liquid." + button.getValue());
 				break;
 			} // set liquid
-			case 5: setSubGui(new SubGuiNpcMobSpawnerSelector()); break; // select npc
-			case 6: spawn.canSeeSummon = ((GuiNpcCheckBox) button).isSelected(); break; // select npc
+			case 5: setSubGui(new SubGuiNpcMobSpawnerSelector(null)); break; // select npc
+			case 6: spawn.canSeeSummon = ((GuiCheckBoxNop) button).selected(); break; // select npc
 			case 25: {
-				spawn.compoundEntity = new NBTTagCompound();
+				spawn.setCompound(new NBTTagCompound());
 				displayNpc = null;
 				initGui();
 				break;
-			} // nbt
+			} // clear entity
 			case 27: spawn.type = button.getValue(); break; // type
 		}
-	}
-
-	@Override
-	public void confirmClicked(boolean result, int id) {
-		displayGuiScreen(this);
-		if (!result) { return; }
-		accept = true;
-		buttonEvent(getButton(1), 1);
 	}
 
 	@Override
@@ -110,7 +210,7 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 			SubGuiNpcMobSpawnerSelector selector = (SubGuiNpcMobSpawnerSelector) gui;
 			NBTTagCompound compound = selector.getCompound();
 			if (compound != null) {
-				spawn.compoundEntity = compound;
+				spawn.setCompound(compound);
 				if (compound.hasKey("SpawnCycle", 3)) { compound.setInteger("SpawnCycle", 4); }
 			}
 		}
@@ -119,17 +219,17 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (subgui == null) {
-			int x = 387, y = 196;
+		super.drawScreen(mouseX, mouseY, partialTicks);
+		if (!hasSubGui()) {
+			int r;
+			int p = 0;
+			int x = 387;
+			int y = 196;
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(0.0f, 0.0f, 1.0f);
 			Gui.drawRect(guiLeft + x - 30, guiTop + y - 77, guiLeft + x + 31, guiTop + y + 9, 0xFF808080);
 			Gui.drawRect(guiLeft + x - 29, guiTop + y - 76, guiLeft + x + 30, guiTop + y + 8, 0xFF000000);
 			GlStateManager.popMatrix();
-		}
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		if (subgui == null) {
-			int r, p = 0, x = 387, y = 196;
 			if (displayNpc != null) {
 				displayNpc.ticksExisted = player.ticksExisted;
 				if (displayNpc instanceof EntityLivingBase) { r = (int) (3 * player.world.getTotalWorldTime() % 360); }
@@ -148,164 +248,78 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 			}
 		}
 	}
-	
-	private String getTitle(NBTTagCompound compound) {
-		displayNpc = EntityList.createEntityFromNBT(compound, mc.world);
-		if (displayNpc != null) { return displayNpc.getName(); }
-		return "gui.selectnpc";
-	}
 
 	@Override
-	public void initGui() {
-		super.initGui();
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(143, 208); }
-		scroll.guiLeft = guiLeft + 214;
-		scroll.guiTop = guiTop + 4;
-		addScroll(scroll);
-		addButton(new GuiNpcButton(1, guiLeft + 358, guiTop + 38, 58, 20, "gui.add")
-				.setHoverText("spawning.hover.add"));
-		addButton(new GuiNpcButton(2, guiLeft + 358, guiTop + 61, 58, 20, "gui.remove")
-				.setHoverText("spawning.hover.del"));
-		if (spawn.id < 0) { return; }
-		// entity max size
-		Entity entity = null;
-		try { entity = EntityList.createEntityFromNBT(spawn.compoundEntity, mc.world); } catch (Exception ignored) { }
-		maxSize = 50;
-		if (entity instanceof EntityNPCInterface) { maxSize = 70; }
-		else if (entity instanceof EntityAnimal) { maxSize = 10; }
-		else if (entity instanceof EntityMob) { maxSize = 70; }
-		// Spawner name
-		int lId = 0;
-		int x = guiLeft + 5;
-		int y = guiTop + 5;
-		addLabel(new GuiNpcLabel(lId++, "gui.title", x, y + 3));
-		addTextField(new GuiNpcTextField(1, this, x + 56, y, 150, 14, spawn.name)
-				.setHoverText("spawning.hover.name"));
-		// Biomes
-		addLabel(new GuiNpcLabel(lId++, "spawning.biomes", x, (y += 17) + 3));
-		addButton(new GuiNpcButton(3, x + 56, y, 74, 16, "selectServer.edit")
-				.setLayerColor(spawn.biomes.isEmpty() ? new Color(0xFFF02020).getRGB() : 0)
-				.setHoverText("spawning.hover.biomes"));
-		// spawner type
-		addLabel(new GuiNpcLabel(lId++, "gui.type", x, (y += 18) + 3));
-		addButton(new GuiNpcButton(27, x + 56, y, 74, 16, new String[] { "spawner.any", "spawner.dark", "spawner.light" }, spawn.type)
-				.setHoverText("spawning.hover.type"));
-		addButton(new GuiNpcButton(4, x + 132, y, 74, 16, new String[] { "spawning.liquid.0", "spawning.liquid.1" }, spawn.liquid ? 0 : 1)
-				.setHoverText("spawning.hover.liquid." + (spawn.liquid ? 0 : 1)));
-		// select entity
-		addButton(new GuiNpcButton(5, x, y += 18, 184, 16, getTitle(spawn.compoundEntity))
-				.setHoverText("spawning.hover.sel.npc"));
-		addButton(new GuiNpcButton(25, x + 186, y, 20, 16, "X")
-				.setHoverText("spawning.hover.del.npc"));
-		// chance
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("spawning.weightedChance").getFormattedText() + ":", x, (y += 29) - 10));
-		addSlider(new GuiNpcSlider(this, 2, x, y, 160, 12, (float) spawn.itemWeight / 100.0f)
-				.setHoverText(new TextComponentTranslation("spawning.hover.chance").getFormattedText()));
-		addTextField(new GuiNpcTextField(2, this, x + 163, y, 43, 12, "" + spawn.itemWeight)
-				.setMinMaxDefault(1, 100, spawn.itemWeight)
-				.setHoverText("spawning.hover.chance"));
-		// group size
-		addLabel(new GuiNpcLabel(lId++, "spawning.group", x, (y += 25) - 10));
-		addSlider(new GuiNpcSlider(this, 3, x, y, 160, 12, (float) spawn.group / 8.0f)
-				.setHoverText(new TextComponentTranslation("spawning.hover.chance").getFormattedText()));
-		addTextField(new GuiNpcTextField(3, this, x + 163, y, 43, 12, "" + spawn.group)
-				.setMinMaxDefault(1, 8, spawn.group)
-				.setHoverText("spawning.hover.group"));
-		// distance
-		addLabel(new GuiNpcLabel(lId, "spawning.range", x, (y += 25) - 10));
-		addSlider(new GuiNpcSlider(this, 4, x, y, 160, 12, (float) spawn.range / 16.0f)
-				.setHoverText(new TextComponentTranslation("spawning.hover.chance").getFormattedText()));
-		addTextField(new GuiNpcTextField(4, this, x + 163, y, 43, 12, "" + spawn.range)
-				.setMinMaxDefault(1, 16, spawn.range)
-				.setHoverText("spawning.hover.range"));
-		// maximum in player
-		addLabel(new GuiNpcLabel(lId, "spawning.maximum.in", x, (y += 25) - 10));
-		addSlider(new GuiNpcSlider(this, 5, x, y, 160, 12, (float) spawn.maxNearPlayer / (float) maxSize)
-				.setHoverText(new TextComponentTranslation("spawning.hover.maximum.in", TextFormatting.GOLD + "" + maxSize).getFormattedText()));
-		addTextField(new GuiNpcTextField(5, this, x + 163, y, 43, 12, "" + spawn.maxNearPlayer)
-				.setMinMaxDefault(1, maxSize, spawn.maxNearPlayer)
-				.setHoverText("spawning.hover.maximum.in", TextFormatting.GOLD + "" + maxSize));
-		// player can see
-		addButton(new GuiNpcCheckBox(6, x, y + 14, 184, 14, "spawning.can.see", "spawning.not.see", spawn.canSeeSummon)
-				.setHoverText("spawning.hover.can.see"));
-	}
-
-	@Override
-	public void mouseDragged(GuiNpcSlider guiNpcSlider) {
+	public void mouseDragged(GuiSliderNop guiNpcSlider) {
 		String value;
-		switch (guiNpcSlider.getID()) {
+		switch (guiNpcSlider.id) {
 			case 2: {
 				spawn.itemWeight = ValueUtil.correctInt((int) (guiNpcSlider.sliderValue * 100.0f), 1, 100);
 				value = "" + spawn.itemWeight;
-				guiNpcSlider.displayString = value + "%";
+				guiNpcSlider.setMessage(Component.literal(value + "%"));
 				break;
-			}
+			} // chance
 			case 3: {
 				spawn.group = ValueUtil.correctInt((int) (guiNpcSlider.sliderValue * 8.0f), 1, 8);
 				value = "" + spawn.group;
-				guiNpcSlider.displayString = value;
+				guiNpcSlider.setMessage(Component.literal(value));
 				break;
-			}
+			} // group
 			case 4: {
 				spawn.range = ValueUtil.correctInt((int) (guiNpcSlider.sliderValue * 16.0f), 1, 16);
 				value = "" + spawn.range;
-				guiNpcSlider.displayString = value;
+				guiNpcSlider.setMessage(Component.literal(value));
 				break;
-			}
+			} // range
 			case 5: {
 				spawn.maxNearPlayer = ValueUtil.correctInt((int) (guiNpcSlider.sliderValue * (float) maxSize), 1, maxSize);
 				value = "" + spawn.maxNearPlayer;
-				guiNpcSlider.displayString = value;
+				guiNpcSlider.setMessage(Component.literal(value));
 				break;
-			}
+			} // maximum near player
 			default: return;
 		}
-		if (getTextField(guiNpcSlider.getID()) != null) { getTextField(guiNpcSlider.getID()).setText(value); }
+		if (getTextField(guiNpcSlider.id) != null) { getTextField(guiNpcSlider.id).setValue(value); }
 	}
 
 	@Override
-	public void mousePressed(GuiNpcSlider guiNpcSlider) { }
+	public void mousePressed(GuiSliderNop guiNpcSlider) { }
 
 	@Override
-	public void mouseReleased(GuiNpcSlider guiNpcSlider) {
-		if (guiNpcSlider.getID() == 2) {
+	public void mouseReleased(GuiSliderNop guiNpcSlider) {
+		if (guiNpcSlider.id == 2) {
 			spawn.itemWeight = ValueUtil.correctInt((int) (guiNpcSlider.sliderValue * 100.0f), 1, 100);
 		}
 	}
 
 	@Override
 	public void save() {
-		GuiNpcTextField.unfocus();
-		if (spawn.id >= 0) { Client.sendData(EnumPacketServer.NaturalSpawnSave, spawn.writeNBT(new NBTTagCompound())); }
+		GuiTextFieldNop.unfocus();
+		if (spawn.id >= 0) { Packets.sendServer(new SPacketNaturalSpawnSave(spawn.save(new NBTTagCompound()))); }
 	}
 
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 0) {
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		if (scroll.id == 0 && data.containsKey(scroll.getNormalSelected())) {
 			save();
-			String selected = scroll.getSelected();
 			spawn = new SpawnData();
-			Client.sendData(EnumPacketServer.NaturalSpawnGet, data.get(selected));
+			Packets.sendServer(new SPacketNaturalSpawnGet(data.get(scroll.getNormalSelected())));
+			initGui();
 		}
 	}
 
 	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
+	public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
 		String name = scroll.getSelected();
 		data.clear();
-		data.putAll(dataMap);
-		scroll.setList(dataList);
-		if (name != null) { scroll.setSelected(name); }
-		initGui();
-	}
-
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		spawn.readNBT(compound);
-		setSelected(spawn.name);
+		for (Map.Entry<String, Integer> entry : dataMap.entrySet()) {
+			data.put(Component.translatable(entry.getKey()), entry.getValue());
+		}
+		scroll.setNormalList(new ArrayList<>(data.keySet()));
+		scroll.setSelected(name);
 		initGui();
 	}
 
@@ -313,29 +327,58 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 	public void setSelected(String selected) { }
 
 	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		switch (textField.getID()) {
+	public void setGuiData(NBTTagCompound compound) {
+		spawn.load(compound);
+		setSelected(spawn.name);
+		initGui();
+	}
+
+	@Override
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
 			case 1: {
-				String name = textField.getText();
-				if (name.isEmpty() || data.containsKey(name)) { textField.setText(spawn.name); }
+				String name = textField.getValue();
+				boolean found = false;
+				for (Component key : data.keySet()) {
+					if (Util.instance.deleteColor(key.getString()).equals(name)) {
+						found = true;
+						break;
+					}
+				}
+				if (name.isEmpty() || found) { textField.setValue(spawn.name); }
 				else {
-					String old = spawn.name;
-					data.remove(old);
-					spawn.name = name;
-					data.put(spawn.name, spawn.id);
-					scroll.replace(old, spawn.name);
+					for (Component key : new ArrayList<>(data.keySet())) {
+						if (Util.instance.deleteColor(key.getString()).equals(spawn.name)) {
+							data.remove(key);
+							spawn.name = name;
+							Component newKey = Component.translatable(spawn.name);
+							data.put(newKey, spawn.id);
+							scroll.replace(key, newKey);
+							break;
+						}
+					}
 				}
 				break;
 			}
 			case 2: {
 				spawn.itemWeight = textField.getInteger();
-				if (getSlider(4) != null) { getSlider(4).displayString = new TextComponentTranslation("spawning.weightedChance").getFormattedText() + ": " + spawn.itemWeight; }
+				if (getSlider(4) != null) {
+					getSlider(4).setMessage(Component.translatable("spawning.weightedChance")
+						.append(": ")
+						.append(String.valueOf(spawn.itemWeight)));
+				}
 				break;
 			}
 			case 3: spawn.group = textField.getInteger(); break;
 			case 4: spawn.range = textField.getInteger(); break;
 			case 5: spawn.maxNearPlayer = textField.getInteger(); break;
 		}
+	}
+
+	private Component getTitle(NBTTagCompound compound) {
+		displayNpc = EntityList.createEntityFromNBT(compound, player.world);
+		if (displayNpc != null) { return Component.literal(displayNpc.getName()); }
+		return Component.translatable("gui.selectnpc");
 	}
 
 }

@@ -21,15 +21,15 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 
 import net.minecraft.nbt.*;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.controllers.data.ClientScriptData;
+import noppes.npcs.mixin.nbt.INBTTagLongArrayMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.constants.AnimationType;
@@ -55,19 +55,17 @@ import noppes.npcs.blocks.tiles.TileNpcEntity;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataScript;
-import noppes.npcs.reflection.nbt.TagLongArrayReflection;
+import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.ScriptEncryption;
 import noppes.npcs.util.Util;
 
 public class ScriptContainer {
 
-	public static class Dump implements Function<Object, IDataObject> {
+    public static class Dump implements Function<Object, IDataObject> {
 
 		@Override
-		public IDataObject apply(Object o) {
-			return new DataObject(o);
-		}
+		public IDataObject apply(Object object) { return new DataObject(object); }
 
 	}
 	
@@ -174,7 +172,7 @@ public class ScriptContainer {
 				value = ((NBTTagIntArray) tag).getIntArray();
 				break;
 			case 12:
-				value = TagLongArrayReflection.getData((NBTTagLongArray) tag);
+				value = ((INBTTagLongArrayMixin) tag).getData();
 				break;
 		}
 		return value;
@@ -189,28 +187,31 @@ public class ScriptContainer {
 	public boolean isClient;
 	public boolean errored = false;
 	private String fullscript = null;
-	private boolean hasNoEncryptScriptCode = false;
+	private boolean canEncryptCode = false;
 	private final IScriptHandler handler;
 	public long lastCreated = 0L;
 	public String script = "";
 	public List<String> scripts = new ArrayList<>();
 	private HashSet<String> unknownFunctions = new HashSet<>();
 
-	public ScriptContainer(IScriptHandler handlerIn, boolean isClientIn) {
+	public ScriptContainer(IScriptHandler handlerIn) {
 		handler = handlerIn;
-		isClient = isClientIn;
+		canEncryptCode = handlerIn instanceof ClientScriptData;
+		isClient = handlerIn.isClient();
 	}
 
 	public ScriptContainer copyTo(IScriptHandler scriptHandler) {
-		ScriptContainer scriptContainer = new ScriptContainer(scriptHandler, isClient);
-		scriptContainer.readFromNBT(writeToNBT(new NBTTagCompound()), isClient);
+		ScriptContainer scriptContainer = new ScriptContainer(scriptHandler);
+		scriptContainer.load(save(new NBTTagCompound()));
 		return scriptContainer;
 	}
+
+	public IScriptHandler getHandler() { return handler; }
 
 	public boolean hasHandler() {
 		if (handler == null) { return false; }
 		if (handler instanceof DataScript) {
-			EntityNPCInterface npc = ((DataScript) handler).npc;
+			EntityNPCInterface npc = ((DataScript) handler).getNPC();
 			try { return npc != null && npc.world != null && npc.getEntityId() > 0 && npc.equals(npc.world.getEntityByID(npc.getEntityId())); }
 			catch (Throwable ignored) {}
 			return false;
@@ -223,7 +224,7 @@ public class ScriptContainer {
 		return true;
 	}
 
-	public ITextComponent noticeString() {
+	public Component noticeString() {
 		return hasHandler() ? handler.noticeString(null, null) : null;
 	}
 
@@ -244,7 +245,7 @@ public class ScriptContainer {
 
 	private String getTotalCode() {
 		if (fullscript == null) {
-			hasNoEncryptScriptCode = script != null && !script.isEmpty();
+			canEncryptCode = script != null && !script.isEmpty();
 			fullscript = script;
 			if (!fullscript.isEmpty()) {
 				fullscript += "\n";
@@ -260,7 +261,7 @@ public class ScriptContainer {
 				}
 				else {
 					code =  map.get(loc);
-					if (code != null) { hasNoEncryptScriptCode = true; }
+					if (code != null) { canEncryptCode = true; }
 				}
 				if (code != null && !code.isEmpty()) {
 					sbCode.append(code).append("\n");
@@ -273,13 +274,15 @@ public class ScriptContainer {
 		return fullscript;
 	}
 
-	public boolean hasNoEncryptScriptCode() {
-		boolean sr = !(script == null || script.isEmpty());
-		if (sr) {
-			String tempScript = script.replace(" ", "").replace("" + ((char) 9), "").replace("" + ((char) 10), "");
-			sr = !tempScript.isEmpty();
+	public boolean canEncryptCode() {
+		if (canEncryptCode) { return true; }
+		if (!(script == null || script.isEmpty())) {
+			String tempScript = script.replace(" ", "")
+					.replace("" + ((char) 9), "")
+					.replace("" + ((char) 10), "");
+			return !tempScript.isEmpty();
 		}
-		return sr || hasNoEncryptScriptCode;
+		return false;
 	}
 
 	public boolean hasScriptCode() {
@@ -294,27 +297,26 @@ public class ScriptContainer {
 		return isInit() && !errored;
 	}
 
-	public void readFromNBT(NBTTagCompound compound, boolean isClientIn) {
+	public void load(NBTTagCompound compound) {
+		TreeMap<Long, String> tempMap = NBTTags.getLongStringMap(compound.getTagList("Console", 10));
+		if (!tempMap.isEmpty()) { console = tempMap; }
+		scripts = NBTTags.getStringList(compound.getTagList("ScriptList", 10));
+		lastCreated = 0L;
+
+		// New from Unofficial (BetaZavr)
 		if (compound.hasKey("Script", 9)) {
 			NBTTagList list = compound.getTagList("Script", 8);
 			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < list.tagCount(); i++) {
-				sb.append(list.getStringTagAt(i));
-			}
+			for (int i = 0; i < list.tagCount(); i++) { sb.append(list.getStringTagAt(i)); }
 			script = sb.toString();
-		} else {
-			script = compound.getString("Script");
 		}
-		console = NBTTags.GetLongStringMap(compound.getTagList("Console", 10));
+		else { script = compound.getString("Script"); }
 		if (console.isEmpty()) { ScriptController.Instance.tryRemoveErrored(this); }
 		else { ScriptController.Instance.tryAddErrored(this); }
-		scripts = NBTTags.getStringList(compound.getTagList("ScriptList", 10));
-		hasNoEncryptScriptCode = compound.getBoolean("HasNoEncryptScriptCode");
-		isClient = isClientIn;
-		if (isClient) { errored = false; }
-		lastCreated = 0L;
 		fullscript = null;
 		unknownFunctions.clear();
+		canEncryptCode = compound.getBoolean("HasNoEncryptScriptCode");
+		if (isClient) { errored = false; }
 	}
 
 	public void run(String type, Event event) {
@@ -334,7 +336,7 @@ public class ScriptContainer {
 		if (ScriptController.Instance.lastLoaded > lastCreated) {
 			lastCreated = ScriptController.Instance.lastLoaded;
 			fullscript = null;
-			hasNoEncryptScriptCode = false;
+			canEncryptCode = false;
 		}
 		synchronized ("lock") {
 			ScriptContainer.Current = this;
@@ -360,21 +362,14 @@ public class ScriptContainer {
 				else { ((Invocable) engine).invokeFunction(type, event); }
 			}
 			catch (NoSuchMethodException notFunction) { unknownFunctions.add(type); }
-			catch (Throwable e) {
+			catch (Throwable t) {
 				errored = true;
-				ITextComponent notice = handler.noticeString(type, event);
-				String noticeToLog = Util.instance.deleteColor(notice.getFormattedText());
+				Component notice = handler.noticeString(type, event);
+				String noticeToLog = Util.instance.deleteColor(notice.getString());
 				pw.write(noticeToLog + "\n");
-				e.printStackTrace(pw);
-				LogWriter.debug("Script error: " + e);
-				String errorText = "" + e;
-				String errorName = "Error";
-				try {
-					errorText = e.getCause().getLocalizedMessage().replaceAll("" + (char) 13, "");
-				} catch (Throwable ignored) {  }
-				try {
-					errorName = e.getCause().getClass().getSimpleName();
-				} catch (Throwable ignored) {  }
+				t.printStackTrace(pw);
+				Throwable cause = t.getCause();
+				String errorText = cause != null ? cause.getLocalizedMessage().replaceAll("" + ((char) 13), "") : t.toString();
 				StringBuilder error = new StringBuilder();
 				if (errorText.contains("" + (char) 10)) {
 					for (int c = 0; c < errorText.length(); c++) {
@@ -382,11 +377,11 @@ public class ScriptContainer {
 						if (errorText.charAt(c) == 10) { error.append((char) 167).append("8"); }
 					}
 				}
-				else { error = new StringBuilder(((char) 167) + "8" + e); }
-				ITextComponent errInfo = new TextComponentString("Script " + errorName + ": " + error);
-				errInfo.getStyle().setColor(TextFormatting.DARK_GRAY);
-				NoppesUtilServer.NotifyOPs(notice.appendText("\n").appendSibling(errInfo), true);
-				LogWriter.error(noticeToLog + " ", e);
+				else { error = new StringBuilder(((char) 167) + "8" + t); }
+				Component errInfo = Component.literal("Script " + (cause != null ? cause.getClass().getSimpleName() : "") + ": " + error);
+				errInfo.setStyle(errInfo.getStyle().setColor(TextFormatting.DARK_GRAY));
+				CommonUtil.NotifyOPs(notice.append("\n").append(errInfo), true);
+				LogWriter.error(noticeToLog + " ", t);
 			}
 			finally {
 				appendConsole(sw.getBuffer().toString().trim());
@@ -398,7 +393,6 @@ public class ScriptContainer {
 		CustomNpcs.debugData.end(key, type);
 	}
 
-	@SuppressWarnings("all")
 	public void runAsync(String link, String async, String sync, Object arguments) {
 		if (!async.isEmpty()) {
 			if (!link.isEmpty()) {
@@ -440,12 +434,12 @@ public class ScriptContainer {
 	public void setEngine(String scriptLanguage) {
 		engine = ScriptController.Instance.getEngineByName(scriptLanguage);
 		fullscript = null;
-		hasNoEncryptScriptCode = false;
+		canEncryptCode = false;
 		if (engine != null) { fillEngine(engine); }
 		errored = engine == null;
 	}
 
-	private void fillEngine(ScriptEngine scriptEngine) {
+	public void fillEngine(ScriptEngine scriptEngine) {
 		NBTTagCompound constants = ScriptController.Instance.constants;
 		String language = Util.instance.deleteColor(handler.getLanguage()).toLowerCase();
 		String side = isClient ? "Client" : "Server";
@@ -557,13 +551,31 @@ public class ScriptContainer {
 		catch (Throwable ignored) { LogWriter.error("Not put key \"storedData\" to engine"); }
 	}
 
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-		compound.setString("Script", script);
-		compound.setTag("Console", NBTTags.NBTLongStringMap(console));
+	public NBTTagCompound save(NBTTagCompound compound) {
+		compound.setTag("Console", NBTTags.nbtLongStringMap(console));
 		compound.setTag("ScriptList", NBTTags.nbtStringList(scripts));
+
+		// New from Unofficial (BetaZavr)
+		if (script.length() < 25000) { compound.setString("Script", script); }
+		else {
+			NBTTagList list = new NBTTagList();
+			int length = script.length();
+			for (int start = 0; start < length; start += 25000) {
+				int end = Math.min(start + 25000, length);
+				list.appendTag(new NBTTagString(script.substring(start, end)));
+			}
+			compound.setTag("Script", list);
+		}
 		compound.setBoolean("isClient", isClient);
-		compound.setBoolean("HasNoEncryptScriptCode", hasNoEncryptScriptCode);
+		compound.setBoolean("HasNoEncryptScriptCode", canEncryptCode);
+
 		return compound;
+	}
+
+	public void setInit(boolean bo) {
+		lastCreated = 0L;
+		canEncryptCode = false;
+		unknownFunctions.clear();
 	}
 
 }

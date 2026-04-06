@@ -2,146 +2,158 @@ package noppes.npcs.client.gui.roles;
 
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.Client;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.gui.select.SubGuiSoundSelection;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketNpcJobSave;
 import noppes.npcs.roles.JobBard;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
 public class GuiNpcBard extends GuiNPCInterface2 implements ITextfieldListener {
 
-	private final JobBard job;
+	protected final JobBard job;
 
 	public GuiNpcBard(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
 
-		job = (JobBard) npc.advanced.jobInterface;
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				MusicController.Instance.stopSound("", SoundCategory.MUSIC);
-				MusicController.Instance.stopSound("", SoundCategory.AMBIENT);
-				setSubGui(new SubGuiSoundSelection(job.song));
-				break;
-			}
-			case 1: {
-				job.song = "";
-				getTextField(1).setText("");
-				MusicController.Instance.stopSound("", SoundCategory.MUSIC);
-				MusicController.Instance.stopSound("", SoundCategory.AMBIENT);
-				break;
-			}
-			case 2: {
-				job.isStreamer = button.getValue() == 0;
-				initGui();
-				break;
-			}
-			case 3: {
-				job.hasOffRange = button.getValue() == 0;
-				initGui();
-				break;
-			}
-			case 4: {
-				job.isRange = button.getValue() == 0;
-				initGui();
-				break;
-			}
-		}
+		backGui = EnumGuiType.MainMenuAdvanced;
+		job = (JobBard) npc.job;
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		int x = guiLeft + 56;
-		int y = guiTop + 50;
+		int x0 = guiLeft + 31;
+		int x1 = x0 + 122;
+		int x2 = x1 + 122;
+		int y = guiTop + 20;
 		// song
-		addTextField(new GuiNpcTextField(1, this, x, y, 200, 20, job.song)
-				.setHoverText("bard.hover.song"));
+		addTextField(1, x0 + 1, y + 1, 240, 18, job.song)
+				.setHoverTexts("bard.hover.song");
 		// select sound
-		addButton(new GuiNpcButton(0, x + 205, y, 80, 20, "gui.selectSound")
-				.setHoverText("bard.hover.select"));
+		addButton(0, x2, y, "gui.selectSound")
+				.setSize(98, 20)
+				.setHoverTexts("bard.hover.select");
 		// del sound
-		addButton(new GuiNpcButton(1, x + 289, y, 20, 20, "X")
-				.setHoverText("bard.hover.del"));
+		addButton(1, x2 + 100, y, "X")
+				.setSize(20, 20)
+				.setHoverTexts("bard.hover.del");
 		// is streamer
-		addButton(new GuiNpcButton(2, x - 25, y += 30, 120, 20, new String[] { "bard.jukebox", "bard.background" }, job.isStreamer ? 0 : 1)
-				.setHoverText(new TextComponentTranslation("bard.hover.range." + (job.isStreamer ? 0 : 1)).appendSibling(new TextComponentTranslation("bard.hover.range.2")).getFormattedText()));
-		addButton(new GuiNpcButton(3, x + 97, y, 120, 20, new String[] { "bard.hasoff", "bard.hason" }, job.hasOffRange ? 0 : 1)
-				.setHoverText("bard.hover.dist." + (job.hasOffRange ? 0 : 1)));
-		addButton(new GuiNpcButton(4, x + 219, y, 120, 20, new String[] { "type.range", "parameter.position" }, job.isRange ? 0 : 1)
-				.setHoverText("bard.hover.type." + job.isRange));
-		addLabel(new GuiNpcLabel(0, "bard.ondistance", x, (y += 30) + 6));
-		GuiNpcTextField textField;
-		for (int i = 0; i < 3; i++) {
-			textField = new GuiNpcTextField(2 + i, this, x + 104 + i * 44, y, 40, 20, "")
+		addButton(2, x0, y += 30, false, job.isStreamer ? 0 : 1, "bard.jukebox", "bard.background")
+				.setSize(120, 20)
+				.setHoverTexts(Component.translatable("bard.hover.range." + (job.isStreamer ? 0 : 1))
+						.append(Component.translatable("bard.hover.range.2")));
+		addButton(3, x1, y, false, job.hasOffRange ? 0 : 1, "bard.hasoff", "bard.hason")
+				.setSize(120, 20)
+				.setHoverTexts("bard.hover.dist." + (job.hasOffRange ? 0 : 1));
+		addButton(4, x2, y, false, job.isRange ? 0 : 1, "type.range", "parameter.position")
+				.setSize(120, 20)
+				.setHoverTexts("bard.hover.type." + job.isRange);
+		// on
+		addLabel(0, x0, (y += 30) + 6, Component.translatable("bard.ondistance").append(":"))
+				.setSize(120, 10);
+		GuiTextFieldNop textField;
+		for (int i = 0; i < (job.isRange ? 1 : 3); i++) {
+			textField = addTextField(2 + i, x1 + i * 44, y, 40, 20, "")
 					.setMinMaxDefault(2, 64, 5);
 			if (job.isRange && i == 0) {
-				textField.setText(job.range[0] + "");
-				textField.setHoverText("bard.hover.min");
+				textField.setValue(job.range[0] + "");
+				textField.setHoverTexts("bard.hover.min");
 			}
 			else {
-				textField.setText(job.minPos[i] + "");
-				textField.enabled = !job.isRange;
-				if (i == 0) { textField.setHoverText(new TextComponentTranslation("bard.hover.min").appendSibling(new TextComponentString("<br>")).appendSibling(new TextComponentTranslation("hover.scale.x")).getFormattedText()); }
-				else if (i == 1) { textField.setHoverText(new TextComponentTranslation("bard.hover.min").appendSibling(new TextComponentString("<br>")).appendSibling(new TextComponentTranslation("hover.scale.y")).getFormattedText()); }
-				else { textField.setHoverText(new TextComponentTranslation("bard.hover.min").appendSibling(new TextComponentString("<br>")).appendSibling(new TextComponentTranslation("hover.scale.z")).getFormattedText()); }
+				textField.setValue(job.minPos[i] + "");
+				textField.setIsEnabled(!job.isRange);
+				if (i == 0) {
+					textField.setHoverTexts(Component.translatable("bard.hover.min")
+							.append("<br>").append(Component.translatable("hover.scale.x")));
+				}
+				else if (i == 1) { textField.setHoverTexts(Component.translatable("bard.hover.min")
+						.append("<br>").append(Component.translatable("hover.scale.y")));
+				}
+				else { textField.setHoverTexts(Component.translatable("bard.hover.min")
+						.append("<br>").append(Component.translatable("hover.scale.z")));
+				}
 			}
-			addTextField(textField);
 		}
-		addLabel(new GuiNpcLabel(1, "bard.offdistance", x, (y += 30) + 6)
-				.setIsEnable(job.hasOffRange));
+		// off
 		if (job.hasOffRange) {
-			for (int i = 0; i < 3; i++) {
-				textField = new GuiNpcTextField(5 + i, this, x + 104 + i * 44, y, 40, 20, "")
+			addLabel(1, x0, (y += 30) + 6, Component.translatable("bard.offdistance").append(":"))
+					.setSize(120, 10);
+			for (int i = 0; i < (job.isRange ? 1 : 3); i++) {
+				textField = addTextField(5 + i, x1 + i * 44, y, 40, 20, "")
 						.setMinMaxDefault(2, 256, 64);
 				if (job.isRange && i == 0) {
-					textField.setHoverText(new TextComponentTranslation("bard.hover.max").getFormattedText())
-							.setText(job.range[1] + "");
+					textField.setHoverTexts(Component.translatable("bard.hover.max"))
+							.setValue(job.range[1] + "");
 				} else {
-					textField.setText(job.maxPos[i] + "");
-					textField.enabled = !job.isRange;
-					if (i == 0) { textField.setHoverText(new TextComponentTranslation("bard.hover.max").appendSibling(new TextComponentString("<br>")).appendSibling(new TextComponentTranslation("hover.scale.x")).getFormattedText()); }
-					else if (i == 1) { textField.setHoverText(new TextComponentTranslation("bard.hover.max").appendSibling(new TextComponentString("<br>")).appendSibling(new TextComponentTranslation("hover.scale.y")).getFormattedText()); }
-					else { textField.setHoverText(new TextComponentTranslation("bard.hover.max").appendSibling(new TextComponentString("<br>")).appendSibling(new TextComponentTranslation("hover.scale.z")).getFormattedText()); }
+					textField.setValue(job.maxPos[i] + "");
+					textField.setIsEnabled(!job.isRange);
+					if (i == 0) {
+						textField.setHoverTexts(Component.translatable("bard.hover.max")
+								.append("<br>").append(Component.translatable("hover.scale.x")));
+					}
+					else if (i == 1) {
+						textField.setHoverTexts(Component.translatable("bard.hover.max")
+								.append("<br>").append(Component.translatable("hover.scale.y")));
+					}
+					else {
+						textField.setHoverTexts(Component.translatable("bard.hover.max")
+								.append("<br>").append(Component.translatable("hover.scale.z")));
+					}
 				}
-				addTextField(textField);
 			}
+		}
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 0: {
+				setSubGui(new SubGuiSoundSelection(this, 0, npc, job.song == null ? "" : job.song.toString()));
+				MusicController.Instance.stopSounds();
+				break;
+			} // select sound
+			case 1: {
+				job.song = null;
+				getLabel(0).setMessage(Component.empty());
+				getTextField(1).setValue("");
+				MusicController.Instance.stopSounds();
+				break;
+			} // clear sound
+			case 2: job.isStreamer = button.getValue() == 0; initGui(); break;
+			case 3: job.hasOffRange = ((GuiButtonYesNo) button).getBoolean(); initGui(); break;
+			case 4: job.isRange = button.getValue() == 0; initGui(); break;
 		}
 	}
 
 	@Override
 	public void save() {
 		if (job.range[0] > job.range[1]) { job.range[1] = job.range[0]; }
-		MusicController.Instance.stopSound("", SoundCategory.MUSIC);
-		MusicController.Instance.stopSound("", SoundCategory.AMBIENT);
-		Client.sendData(EnumPacketServer.JobSave, job.save(new NBTTagCompound()));
+		MusicController.Instance.stopSounds();
+		Packets.sendServer(new SPacketNpcJobSave(job.save(new NBTTagCompound())));
 	}
 
 	@Override
 	public void subGuiClosed(GuiScreen subgui) {
-		SubGuiSoundSelection gss = (SubGuiSoundSelection) subgui;
-		if (gss.selectedResource != null) { job.song = gss.selectedResource.toString(); }
-		initGui();
+		if (subgui instanceof SubGuiSoundSelection && ((SubGuiSoundSelection) subgui).resource != null) {
+			job.song = ((SubGuiSoundSelection) subgui).resource;
+			getLabel(0).setMessage(Component.translatable(job.song.toString()));
+			initGui();
+		}
 	}
 
+	// New from Unofficial (BetaZavr)
 	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		switch (textField.getID()) {
-			case 1: job.song = textField.getText(); break;
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
+			case 1: job.song = textField.getResourceLocation(); break;
 			case 2: {
 				if (job.isRange) { job.range[0] = textField.getInteger(); }
 				else { job.minPos[0] = textField.getInteger(); }

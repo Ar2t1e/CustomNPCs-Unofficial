@@ -105,12 +105,12 @@ public class NpcGuiButtonRecipe extends GuiButtonRecipe {
             ItemStack itemstack1 = list.get(0).getRecipeOutput();
             for (IRecipe rec : list) {
                 ItemStack stack = rec.getRecipeOutput();
-                if (!NoppesUtilServer.IsItemStackNull(stack) && !NoppesUtilPlayer.compareItems(itemstack, stack, false, false)) {
+                if (!NoppesUtilServer.isItemStackNull(stack) && !NoppesUtilPlayer.compareItems(itemstack, stack, false, false)) {
                     itemstack1 = stack;
                     break;
                 }
             }
-            if (!NoppesUtilServer.IsItemStackNull(itemstack1) && !NoppesUtilPlayer.compareItems(itemstack, itemstack1, false, false)) {
+            if (!NoppesUtilServer.isItemStackNull(itemstack1) && !NoppesUtilPlayer.compareItems(itemstack, itemstack1, false, false)) {
                 mc.getRenderItem().renderItemAndEffectIntoGUI(itemstack1, this.x + k + 1, this.y + k + 1);
                 GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
                 --k;

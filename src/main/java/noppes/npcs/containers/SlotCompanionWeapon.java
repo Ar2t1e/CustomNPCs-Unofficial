@@ -11,18 +11,22 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 
 class SlotCompanionWeapon extends Slot {
-	RoleCompanion role;
 
-	public SlotCompanionWeapon(RoleCompanion role, IInventory iinventory, int id, int x, int y) {
+	final RoleCompanion role;
+
+	public SlotCompanionWeapon(RoleCompanion roleIn, IInventory iinventory, int id, int x, int y) {
 		super(iinventory, id, x, y);
-		this.role = role;
+		role = roleIn;
 	}
 
-	public int getSlotStackLimit() {
-		return 1;
-	}
+	@Override
+	public int getSlotStackLimit() { return 1; }
 
+	@Override
 	public boolean isItemValid(@Nonnull ItemStack itemstack) {
-		return !NoppesUtilServer.IsItemStackNull(itemstack) && this.role.canWearSword(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(itemstack));
+		return !NoppesUtilServer.isItemStackNull(itemstack) &&
+				role.isWeapon(itemstack) &&
+				role.canWearWeapon(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(itemstack));
 	}
+
 }

@@ -3,6 +3,8 @@ package noppes.npcs.client.gui.dimentions;
 import java.io.IOException;
 import java.util.Random;
 
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDimensionSettings;
 import org.apache.commons.lang3.StringUtils;
 import org.lwjgl.input.Keyboard;
 
@@ -19,11 +21,8 @@ import net.minecraft.world.storage.WorldInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.dimensions.CustomWorldInfo;
-import noppes.npcs.entity.EntityNPCInterface;
 
 import javax.annotation.Nonnull;
 
@@ -31,25 +30,23 @@ import javax.annotation.Nonnull;
 public class GuiCreateDimension extends GuiScreen {
 
 	private static final String[] disallowedFilenames = new String[] { "CON", "COM", "PRN", "AUX", "CLOCK$", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
-	public static String func_146317_a(ISaveFormat p_146317_0_, String p_146317_1_) {
-		p_146317_1_ = p_146317_1_.replaceAll("[\\\\./\"]", "_");
-        StringBuilder p_146317_1_Builder = new StringBuilder(p_146317_1_);
+	public static String getUncollidingSaveDirName(ISaveFormat format, String name) {
+		name = name.replaceAll("[\\\\./\"]", "_");
+        StringBuilder nameBuilder = new StringBuilder(name);
         for (String s1 : disallowedFilenames) {
-            if (p_146317_1_Builder.toString().equalsIgnoreCase(s1)) {
-                p_146317_1_Builder = new StringBuilder("_" + p_146317_1_Builder + "_");
+            if (nameBuilder.toString().equalsIgnoreCase(s1)) {
+				nameBuilder = new StringBuilder("_" + nameBuilder + "_");
             }
         }
-        p_146317_1_ = p_146317_1_Builder.toString();
-        while (p_146317_0_.getWorldInfo(p_146317_1_) != null) {
-			p_146317_1_ = p_146317_1_ + "-";
-		}
-		return p_146317_1_;
+		name = nameBuilder.toString();
+        while (format.getWorldInfo(name) != null) { name = name + "-"; }
+		return name;
 	}
 	private GuiTextField dimensionNameTextField;
 	private GuiTextField seedTextField;
-	private String field_146336_i;
+	private String saveDirName;
 	private String gameType = "survival";
-	private String field_175300_s;
+	private String savedGameMode;
 	private boolean generateStructures = true;
 	private boolean allowCheats;
     private boolean alreadyGenerated;
@@ -76,9 +73,9 @@ public class GuiCreateDimension extends GuiScreen {
 	@Override
 	protected void actionPerformed(@Nonnull GuiButton button) throws IOException {
 		if (!button.enabled) { return; }
-		if (button.id == 1) { CustomNpcs.proxy.openGui((EntityNPCInterface) null, EnumGuiType.NpcDimensions); }
+		if (button.id == 1) { CustomNpcs.proxy.openGui(mc.player, EnumGuiType.NpcDimensions); }
 		else if (button.id == 0) {
-			CustomNpcs.proxy.openGui((EntityNPCInterface) null, EnumGuiType.NpcDimensions);
+			CustomNpcs.proxy.openGui(mc.player, EnumGuiType.NpcDimensions);
 			if (alreadyGenerated) { return; }
 			alreadyGenerated = true;
 			long i = (new Random()).nextLong();
@@ -92,9 +89,9 @@ public class GuiCreateDimension extends GuiScreen {
 			}
 			WorldType.WORLD_TYPES[selectedIndex].onGUICreateWorldPress();
 			final WorldInfo worldInfo = getWorldInfo(i);
-			Client.sendData(EnumPacketServer.DimensionSettings, dimensionId, worldInfo);
+			Packets.sendServer(new SPacketDimensionSettings(dimensionId, worldInfo));
 		}
-		else if (button.id == 3) { func_146315_i(); }
+		else if (button.id == 3) { toggleMoreWorldOptions(); }
 		else if (button.id == 4) {
 			generateStructures = !generateStructures;
 			updateDisplayState();
@@ -103,7 +100,7 @@ public class GuiCreateDimension extends GuiScreen {
             do {
                 ++selectedIndex;
                 if (selectedIndex >= WorldType.WORLD_TYPES.length) { selectedIndex = 0; }
-            } while (!func_175299_g());
+            } while (!canSelectCurWorldType());
 			chunkProviderSettingsJson = "";
 			updateDisplayState();
 			showMoreWorldOptions(userInMoreOptions);
@@ -144,37 +141,37 @@ public class GuiCreateDimension extends GuiScreen {
 		} else {
 			drawString(fontRenderer, new TextComponentTranslation("dimensions.enter.name").getFormattedText(), width / 2 - 100, 47, 0xFFA0A0A0);
 			drawString(fontRenderer,
-					new TextComponentTranslation("selectWorld.resultFolder").getFormattedText() + " " + field_146336_i,
+					new TextComponentTranslation("selectWorld.resultFolder").getFormattedText() + " " + saveDirName,
 					width / 2 - 100, 85, 0xFFA0A0A0);
 			dimensionNameTextField.drawTextBox();
 		}
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 
-	private void func_146314_g() {
-		field_146336_i = dimensionNameTextField.getText().toLowerCase().trim();
-		while (field_146336_i.contains(" ")) { field_146336_i = field_146336_i.replace(" ", "_"); }
+	private void calcSaveDirName() {
+		saveDirName = dimensionNameTextField.getText().toLowerCase().trim();
+		while (saveDirName.contains(" ")) { saveDirName = saveDirName.replace(" ", "_"); }
 		char[] aChar = ChatAllowedCharacters.ILLEGAL_FILE_CHARACTERS;
-        for (char c0 : aChar) { field_146336_i = field_146336_i.replace(c0, '_'); }
-		if (StringUtils.isEmpty(field_146336_i)) { field_146336_i = "World"; }
-		field_146336_i = func_146317_a(mc.getSaveLoader(), field_146336_i);
+        for (char c0 : aChar) { saveDirName = saveDirName.replace(c0, '_'); }
+		if (StringUtils.isEmpty(saveDirName)) { saveDirName = "World"; }
+		saveDirName = getUncollidingSaveDirName(mc.getSaveLoader(), saveDirName);
 	}
 
-	private void func_146315_i() { showMoreWorldOptions(!userInMoreOptions); }
+	private void toggleMoreWorldOptions() { showMoreWorldOptions(!userInMoreOptions); }
 
-	public void func_146318_a(WorldInfo p_146318_1_) {
-		dimensionName = new TextComponentTranslation("selectWorld.newWorld.copyOf", p_146318_1_.getWorldName()).getFormattedText();
-		seedID = p_146318_1_.getSeed() + "";
-		selectedIndex = p_146318_1_.getTerrainType().getId();
-		chunkProviderSettingsJson = p_146318_1_.getGeneratorOptions();
-		generateStructures = p_146318_1_.isMapFeaturesEnabled();
-		allowCheats = p_146318_1_.areCommandsAllowed();
-		if (p_146318_1_.isHardcoreModeEnabled()) { gameType = "hardcore"; }
-		else if (p_146318_1_.getGameType().isSurvivalOrAdventure()) { gameType = "survival"; }
-		else if (p_146318_1_.getGameType().isCreative()) { gameType = "creative"; }
+	public void recreateFromExistingWorld(WorldInfo original) {
+		dimensionName = new TextComponentTranslation("selectWorld.newWorld.copyOf", original.getWorldName()).getFormattedText();
+		seedID = original.getSeed() + "";
+		selectedIndex = original.getTerrainType().getId();
+		chunkProviderSettingsJson = original.getGeneratorOptions();
+		generateStructures = original.isMapFeaturesEnabled();
+		allowCheats = original.areCommandsAllowed();
+		if (original.isHardcoreModeEnabled()) { gameType = "hardcore"; }
+		else if (original.getGameType().isSurvivalOrAdventure()) { gameType = "survival"; }
+		else if (original.getGameType().isCreative()) { gameType = "creative"; }
 	}
 
-	private boolean func_175299_g() {
+	private boolean canSelectCurWorldType() {
 		WorldType worldtype = WorldType.WORLD_TYPES[selectedIndex];
 		return worldtype != null && worldtype.canBeCreated() && (worldtype != WorldType.DEBUG_ALL_BLOCK_STATES || isShiftKeyDown());
 	}
@@ -198,7 +195,7 @@ public class GuiCreateDimension extends GuiScreen {
 		seedTextField = new GuiTextField(10, fontRenderer, width / 2 - 100, 60, 200, 20);
 		seedTextField.setText(seedID);
 		showMoreWorldOptions(userInMoreOptions);
-		func_146314_g();
+		calcSaveDirName();
 		updateDisplayState();
 	}
 
@@ -215,7 +212,7 @@ public class GuiCreateDimension extends GuiScreen {
 		}
 		if (keyCode == 28 || keyCode == 156) { actionPerformed(buttonList.get(0)); }
 		buttonList.get(0).enabled = !dimensionNameTextField.getText().isEmpty();
-		func_146314_g();
+		calcSaveDirName();
 	}
 
 	@Override
@@ -233,15 +230,15 @@ public class GuiCreateDimension extends GuiScreen {
 	private void showMoreWorldOptions(boolean toggle) {
 		userInMoreOptions = toggle;
 		if (WorldType.WORLD_TYPES[selectedIndex] == WorldType.DEBUG_ALL_BLOCK_STATES) {
-			if (field_175300_s == null) { field_175300_s = gameType; }
+			if (savedGameMode == null) { savedGameMode = gameType; }
 			gameType = "spectator";
 			btnStructures.visible = false;
 			btnDimensionType.visible = userInMoreOptions;
 			btnCustomizeType.visible = false;
 		} else {
-			if (field_175300_s != null) {
-				gameType = field_175300_s;
-				field_175300_s = null;
+			if (savedGameMode != null) {
+				gameType = savedGameMode;
+				savedGameMode = null;
 			}
 			btnStructures.visible = userInMoreOptions && WorldType.WORLD_TYPES[selectedIndex] != WorldType.CUSTOMIZED;
 			btnDimensionType.visible = userInMoreOptions;

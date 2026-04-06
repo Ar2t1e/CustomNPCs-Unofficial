@@ -1,7 +1,7 @@
 package noppes.npcs.api.entity.data;
 
 import net.minecraft.entity.ai.attributes.AttributeModifier;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IAttributeModifier {
 

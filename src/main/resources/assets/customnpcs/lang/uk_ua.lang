@@ -114,17 +114,17 @@ ai.swim=Може плавати
 ai.tacticalvariant=Варіант тактики бою
 ai.wandering=Блукає
 
-aitactics.commander=Командир
-aitactics.default=За замовчуванням
-aitactics.dodge=Ухилення
-aitactics.hitandrun=Вдарити й бігти
-aitactics.hitnrun=Вдарити й бігти
-aitactics.none=Немає
-aitactics.orbit=Оточувати
-aitactics.rush=Натиск
-aitactics.stagger=Ухилення
-aitactics.stalk=Підкрадатися
-aitactics.surround=Оточувати
+ai.tactic.commander=Командир
+ai.tactic.default=За замовчуванням
+ai.tactic.dodge=Ухилення
+ai.tactic.hit_and_run=Вдарити й бігти
+ai.tactic.hitnrun=Вдарити й бігти
+ai.tactic.none=Немає
+ai.tactic.orbit=Оточувати
+ai.tactic.rush=Натиск
+ai.tactic.stagger=Ухилення
+ai.tactic.stalk=Підкрадатися
+ai.tactic.surround=Оточувати
 
 animation.add.part.hover.location=Локація ресурсу файлу типу "§9.png§r" як використовуваної текстури для моделі
 animation.add.part.hover.name=Ім'я частини тіла для зручності<br>%s
@@ -1782,7 +1782,7 @@ message.dimensions.tp.isdelete=§2CustomNPCs§6: Вас було перенес�
 message.mod.error=§cУпс. Щось побажало ухилитися від роботи. Зверніться до Розробника з цією проблемою: %s
 message.pather.add=Додано позицію x:%s y:%s z:%s для NPC "%s"
 message.pather.home=Змінено домашню позицію x:%s y:%s z:%s для NPC "%s"
-message.pather.reg=Зареєстровано "%s" на ваш %s
+message.pather.register=Зареєстровано "%s" на ваш %s
 message.pather.warn.add=§cПопередження§r: нова позиція занадто далеко від попередньої. Максимальна дистанція (у блоках) для переміщення: %s
 
 minimap.set.points.1=§f[§2CustomNpcs§f]:§8 Система оновила позиції для міні-карти: %s

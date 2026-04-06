@@ -130,7 +130,7 @@ public class ItemScriptedWrapper extends ItemStackWrapper implements IItemScript
 	}
 
 	public NBTTagCompound getScriptNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.NBTScript(this.scripts));
+		compound.setTag("Scripts", NBTTags.nbtScript(this.scripts));
 		compound.setString("ScriptLanguage", this.scriptLanguage);
 		compound.setBoolean("ScriptEnabled", this.enabled);
 		return compound;
@@ -324,7 +324,7 @@ public class ItemScriptedWrapper extends ItemStackWrapper implements IItemScript
 		if (!compound.hasKey("Scripts")) {
 			return;
 		}
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
 		this.scriptLanguage = compound.getString("ScriptLanguage");
 		this.enabled = compound.getBoolean("ScriptEnabled");
 	}

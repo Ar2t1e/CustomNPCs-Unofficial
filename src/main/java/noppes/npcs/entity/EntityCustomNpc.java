@@ -5,8 +5,8 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.ModelPartData;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.client.EntityUtil;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.constants.EnumParts;
@@ -62,8 +62,9 @@ public class EntityCustomNpc extends EntityNPCFlying {
 		if (modelData == null || entity == null) {
 			if (modelData != null) {
 				baseWidth = 0.6f - modelData.getBodyX() +
-						(Math.max(modelData.getPartConfig(EnumParts.HEAD).scale[0], modelData.getPartConfig(EnumParts.HEAD).scale[2]) - 1.0f) / 2.0f;
-				baseHeight = 1.9f - modelData.getBodyY() + (modelData.getPartConfig(EnumParts.HEAD).scale[1] - 1.0f) / 2.0f;
+						(Math.max(modelData.getPartConfig(EnumParts.HEAD).scaleX,
+								modelData.getPartConfig(EnumParts.HEAD).scaleZ) - 1.0f) / 2.0f;
+				baseHeight = 1.9f - modelData.getBodyY() + (modelData.getPartConfig(EnumParts.HEAD).scaleY - 1.0f) / 2.0f;
 			}
 			super.updateHitbox();
 		} else {

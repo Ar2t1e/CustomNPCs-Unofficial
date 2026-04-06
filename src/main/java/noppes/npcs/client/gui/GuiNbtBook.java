@@ -12,103 +12,183 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityItemFrame;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.Client;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketGiveStack;
+import noppes.npcs.packets.server.SPacketNbtBookBlockSave;
+import noppes.npcs.packets.server.SPacketNbtBookEntitySave;
+import noppes.npcs.packets.server.SPacketNbtBookStackSave;
+import noppes.npcs.shared.client.gui.GuiTextAreaScreen;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.CustomNPCsScheduler;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.util.NBTJsonUtil;
 
-import javax.annotation.Nonnull;
+public class GuiNbtBook extends GuiNPCInterface implements IGuiData {
 
-public class GuiNbtBook extends GuiNPCInterface implements ICustomScrollListener, IGuiData {
 
-	protected ItemStack blockStack;
-	protected String errorMessage;
-	protected String faultyText;
-	protected String jsonCompound;
-	protected IBlockState state;
+	protected final BlockPos pos;
 	protected TileEntity tile;
-	protected final int x;
-	protected final int y;
-	protected final int z;
+	protected IBlockState state;
+	protected ItemStack blockStack;
+	protected String faultyText = null;
+	protected String errorMessage = null;
+
+	// New from Unofficial (BetaZavr)
 	protected ItemStack stack;
-	protected GuiCustomScroll scroll;
+	protected GuiCustomScrollNop scroll;
 	public NBTTagCompound originalCompound;
 	public NBTTagCompound compound;
 	public Entity entity;
 	public int entityId;
 
-	public GuiNbtBook(int xPos, int yPos, int zPos) {
+	public GuiNbtBook(BlockPos posIn) {
 		super();
 		setBackground("menubg.png");
-		closeOnEsc = true;
-		xSize = 256;
-		ySize = 217;
+		imageWidth = 256;
+		imageHeight = 217;
 
-		faultyText = null;
-		errorMessage = null;
-		x = xPos;
-		y = yPos;
-		z = zPos;
+		pos = posIn;
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: {
-				if (compound == null) { return; }
-				if (jsonCompound == null || jsonCompound.isEmpty()) { jsonCompound = compound.toString(); }
-				if (faultyText != null) { setSubGui(new SubGuiNpcTextArea(jsonCompound, faultyText).enableHighlighting()); }
-				else { setSubGui(new SubGuiNpcTextArea(0, jsonCompound).enableHighlighting()); }
-				break;
-			} // edit
-			case 1: {
-				if (stack != null && !stack.isEmpty()) { Client.sendData(EnumPacketServer.NbtBookCopyStack, stack.writeToNBT(new NBTTagCompound())); }
-				break;
-			} // copy
-			case 2: {
-				if (compound == null) { return; }
-				if (faultyText != null) { setSubGui(new SubGuiNpcTextArea(compound.toString(), faultyText).enableHighlighting()); }
-				else { setSubGui(new SubGuiNpcTextArea(0, compound.toString()).enableHighlighting()); }
-				break;
-			} // edit fast
-			case 66: onClosed(); break;
-			case 67: {
-				getLabel(0).setLabel("Saved");
-				if (compound.equals(originalCompound)) { return; }
-				if (stack != null) { Client.sendData(EnumPacketServer.NbtBookSaveItem, compound); }
-				if (tile == null) { Client.sendData(EnumPacketServer.NbtBookSaveEntity, entityId, compound); }
-				else { Client.sendData(EnumPacketServer.NbtBookSaveBlock, x, y, z, compound); }
-				originalCompound = compound.copy();
-				button.setIsEnable(false);
-				break;
-			} // save
+	public void initGui() {
+		super.initGui();
+		boolean onlyClient = stack == null && state == null && entity == null;
+		int h = 120;
+		if (scroll == null) { scroll = addScroll(0).setSize(188, h); }
+		add(scroll.setPos(guiLeft + 60, guiTop + 45));
+		if (stack != null) {
+			h = 118;
+			scroll.setSize(188, h - 20);
+			addLabel(11, guiLeft + 60, guiTop + 6, "id: \"" + stack.getItem().getRegistryName() + "\"");
+			addButton(1, guiLeft + 38, guiTop + 144, "gui.copy").setSize(180, 20);
+			setObjectToScroll(stack);
+		}
+		else if (state != null) {
+			addLabel(11, guiLeft + 60, guiTop + 6, "x: " + pos.getX() + ", y: " + pos.getY() + ", z: " + pos.getZ());
+			addLabel(12, guiLeft + 60, guiTop + 16, "id: " + Block.REGISTRY.getNameForObject(state.getBlock()));
+			addLabel(13, guiLeft + 60, guiTop + 26, "meta: " + state.getBlock().getMetaFromState(state));
+			setObjectToScroll(state);
+		}
+		else if (entity != null) {
+			h = 140;
+			scroll.setSize(188, h - 20);
+			String name = "Not registered name!";
+			if (EntityRegistry.getEntry(entity.getClass()) == null) { onlyClient = true; }
+			else {
+				EntityEntry entry = EntityRegistry.getEntry(entity.getClass());
+				if (entry != null) {
+					ResourceLocation reg = entry.getRegistryName();
+					if (reg != null) { name = "id: " + reg; }
+				}
+			}
+			addLabel(12, guiLeft + 60, guiTop + 6, name);
+			setObjectToScroll(entity);
+		}
+		addLabel(2, guiLeft + 4, guiTop + 172, "nbt.edit");
+		addButton(0, guiLeft + 128, guiTop + 166, "nbt.edit")
+				.setSize(59, 20)
+				.setIsEnabled(compound != null && !compound.hasNoTags());
+		addButton(2, guiLeft + 189, guiTop + 166, "gui.fast")
+				.setSize(59, 20)
+				.setIsEnabled(compound != null && !compound.hasNoTags());
+		addLabel(0, guiLeft + 4, guiTop + 167, "")
+				.setSize(58, 12)
+				.setCentered(false)
+				.setColor(0xFFA00000);
+		addLabel(1, guiLeft + 4, guiTop + 177, "")
+				.setSize(imageWidth - 8, 12)
+				.setCentered(false)
+				.setColor(0xFFA00000);
+		addButton(66, guiLeft + 128, guiTop + 190, "gui.close")
+				.setSize(120, 20);
+		GuiButtonNop button = addButton(67, guiLeft + 4, guiTop + 190, "gui.save")
+				.setSize(120, 20)
+				.setIsEnabled(!onlyClient);
+		if (!onlyClient) {
+			if (errorMessage != null) {
+				button.setIsEnabled(false);
+				int i = errorMessage.indexOf(" at: ");
+				if (i > 0) {
+					getLabel(0).setSize(58, 12)
+							.setMessage(errorMessage.substring(0, i));
+					getLabel(1).setSize(imageWidth - 8, 12)
+							.setMessage(errorMessage.substring(i));
+				}
+				else {
+					getLabel(0).setSize(imageWidth - 8, 12)
+						.setMessage(errorMessage);
+				}
+			}
+			else if (originalCompound != null) { button.setIsEnabled(!originalCompound.equals(compound)); }
 		}
 	}
 
 	@Override
-	public void subGuiClosed(GuiScreen gui) {
-		if (gui instanceof SubGuiNpcTextArea) {
-			try {
-				setCompound(JsonToNBT.getTagFromJson(((SubGuiNpcTextArea) gui).text));
-				errorMessage = faultyText = null;
-			}
-			catch (NBTException e) {
-				errorMessage = e.getLocalizedMessage();
-				faultyText = ((SubGuiNpcTextArea) gui).text;
-			}
-			initGui();
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 0: {
+				if (compound != null) {
+					String text = NBTJsonUtil.Convert(compound);
+					if (text.length() > 30000) { text = compound.toString(); }
+					if (text.length() <= 100000) {
+						if (faultyText != null) { setSubGui((new GuiTextAreaScreen(0, text, faultyText)).enableHighlighting()); }
+						else { setSubGui((new GuiTextAreaScreen(0, text)).enableHighlighting()); }
+					} else {
+						errorMessage = "NBT data is too long! Length: " + text.length();
+						NoppesStringUtils.setClipboardContents(text);
+						initGui();
+					}
+				}
+				break;
+			} // edit
+			case 1: {
+				if (stack != null && !stack.isEmpty()) { Packets.sendServer(new SPacketGiveStack(stack.writeToNBT(new NBTTagCompound()))); }
+				break;
+			} // copy
+			case 2: {
+				if (compound != null) {
+					String text = compound.toString();
+					if (text.length() <= 100000) {
+						if (faultyText != null) { setSubGui((new GuiTextAreaScreen(0, text, faultyText)).enableHighlighting()); }
+						else { setSubGui((new GuiTextAreaScreen(0, text)).enableHighlighting()); }
+					} else {
+						errorMessage = "NBT data is too long! Length: " + text.length();
+						NoppesStringUtils.setClipboardContents(text);
+						initGui();
+					}
+				}
+				break;
+			} // edit fast
+			case 66: onClose(); break;
+			case 67: {
+				if (!compound.equals(originalCompound)) {
+					if (stack != null) { Packets.sendServer(new SPacketNbtBookStackSave(compound)); }
+					else if (tile == null) { Packets.sendServer(new SPacketNbtBookEntitySave(entityId, compound)); }
+					else { Packets.sendServer(new SPacketNbtBookBlockSave(pos, compound)); }
+					originalCompound = compound.copy();
+					button.active = false;
+					errorMessage = "Saved";
+					initGui();
+				}
+				break;
+			} // save
 		}
 	}
 
@@ -117,93 +197,76 @@ public class GuiNbtBook extends GuiNPCInterface implements ICustomScrollListener
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		if (hasSubGui()) { return; }
 		if (stack != null || state != null) {
+			// background
 			GlStateManager.pushMatrix();
 			Gui.drawRect(guiLeft + 3, guiTop + 3, guiLeft + 55, guiTop + 55, 0xFF808080);
 			Gui.drawRect(guiLeft + 4, guiTop + 4, guiLeft + 54, guiTop + 54, 0xFF000000);
 			GlStateManager.popMatrix();
+			// object
 			GlStateManager.pushMatrix();
-			GlStateManager.translate((guiLeft + 5), (guiTop + 5), 0.0f);
+			GlStateManager.translate(guiLeft + 5.0f, guiTop + 5.0f, 0.0f);
 			GlStateManager.scale(3.0f, 3.0f, 3.0f);
-			RenderHelper.enableGUIStandardItemLighting();
-			itemRender.renderItemAndEffectIntoGUI(stack != null ? stack : blockStack, 0, 0);
-			itemRender.renderItemOverlays(fontRenderer, stack != null ? stack : blockStack, 0, 0);
-			RenderHelper.disableStandardItemLighting();
+			ItemStack item = stack != null ? stack : blockStack;
+			itemRender.renderItemAndEffectIntoGUI(item, 0, 0);
+			itemRender.renderItemOverlays(fontRenderer, item, 0, 0);
 			GlStateManager.popMatrix();
 		}
 		if (entity != null) {
 			GlStateManager.pushMatrix();
-			drawNpc(entity, 30, 80, 1.0f, 0, 0, 1);
+			int x = 30;
+			int y = 80;
+			float s = 1.0F;
+			if (entity instanceof EntityItemFrame) {
+				x = 10;
+				y = 54;
+				s = 1.4f;
+			}
+			drawNpc(entity, x, y, s, 0, 0, 1);
 			GlStateManager.translate(0.0f, 0.0f, 1.0f);
 			int color = 0xFF808080;
 			if (EntityRegistry.getEntry(entity.getClass()) == null) { color = 0xFFFF4040; }
-			Gui.drawRect(guiLeft + 5, guiTop + 13, guiLeft + 55, guiTop + 99, color);
-			Gui.drawRect(guiLeft + 6, guiTop + 14, guiLeft + 54, guiTop + 98, 0xFF000000);
+			Gui.drawRect(guiLeft + 5, guiTop + 11, guiLeft + 55, guiTop + 97, color);
+			Gui.drawRect(guiLeft + 6, guiTop + 12, guiLeft + 54, guiTop + 96, 0xFF000000);
 			GlStateManager.popMatrix();
 		}
 	}
 
 	@Override
-	public void initGui() {
-		super.initGui();
-		boolean onlyClient = stack == null && state == null && entity == null;
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(188, 120); }
-		scroll.guiLeft = guiLeft + 60;
-		scroll.guiTop = guiTop + 45;
-		if (stack != null) {
-			scroll.setSize(188, 118);
-			scroll.guiTop -= 20;
-			addLabel(new GuiNpcLabel(11, "id: \"" + stack.getItem().getRegistryName() + "\"", guiLeft + 60, guiTop + 6));
-			addButton(new GuiNpcButton(1, guiLeft + 38, guiTop + 144, 180, 20, "gui.copy"));
-			setObjectToScroll(stack);
-		}
-		else if (state != null) {
-			addLabel(new GuiNpcLabel(11, "x: " + x + ", y: " + y + ", z: " + z, guiLeft + 60, guiTop + 6));
-			addLabel(new GuiNpcLabel(12, "id: " + Block.REGISTRY.getNameForObject(state.getBlock()), guiLeft + 60, guiTop + 16));
-			addLabel(new GuiNpcLabel(13, "meta: " + state.getBlock().getMetaFromState(state), guiLeft + 60, guiTop + 26));
-			setObjectToScroll(state);
-		}
-		else if (entity != null) {
-			scroll.setSize(188, 140);
-			scroll.guiTop -= 20;
-			String name;
-			if (EntityRegistry.getEntry(entity.getClass()) == null) {
-				name = "Not registered name!";
-				onlyClient = true;
-			} else {
-				name = "id: " + Objects.requireNonNull(Objects.requireNonNull(EntityRegistry.getEntry(entity.getClass())).getRegistryName());
+	public void subGuiClosed(GuiScreen gui) {
+		if (gui instanceof GuiTextAreaScreen) {
+			try {
+				compound = JsonToNBT.getTagFromJson(((GuiTextAreaScreen) gui).text);
+				errorMessage = faultyText = null;
 			}
-			addLabel(new GuiNpcLabel(12, name, guiLeft + 60, guiTop + 6));
-			setObjectToScroll(entity);
-		}
-		addScroll(scroll);
-		addLabel(new GuiNpcLabel(2, "nbt.edit", guiLeft + 4, guiTop + 172));
-		addButton(new GuiNpcButton(0, guiLeft + 128, guiTop + 166, 59, 20, "selectServer.edit")
-				.setIsEnable(compound != null && !compound.getKeySet().isEmpty()));
-		addButton(new GuiNpcButton(2, guiLeft + 189, guiTop + 166, 59, 20, "gui.fast")
-				.setIsEnable(compound != null && !compound.getKeySet().isEmpty()));
-		addLabel(new GuiNpcLabel(0, "", guiLeft + 4, guiTop + 167));
-		addLabel(new GuiNpcLabel(1, "", guiLeft + 4, guiTop + 177));
-		addButton(new GuiNpcButton(66, guiLeft + 128, guiTop + 190, 120, 20, "gui.close"));
-		addButton(new GuiNpcButton(67, guiLeft + 4, guiTop + 190, 120, 20, "gui.save"));
-		getButton(67).setIsEnable(!onlyClient);
-		if (!onlyClient) {
-			if (errorMessage != null) {
-				getButton(67).setIsEnable(false);
-				int i = errorMessage.indexOf(" at: ");
-				if (i > 0) {
-					getLabel(0).setLabel(errorMessage.substring(0, i));
-					getLabel(1).setLabel(errorMessage.substring(i));
-				}
-				else { getLabel(0).setLabel(errorMessage); }
+			catch (NBTException e) {
+				errorMessage = e.getLocalizedMessage();
+				faultyText = ((GuiTextAreaScreen) gui).text;
 			}
-			if (getButton(67).enabled && originalCompound != null) { getButton(67).setIsEnable(!originalCompound.equals(compound)); }
+			initGui();
 		}
 	}
 
+	@SuppressWarnings("deprecation")
+	@Override
+	public void setGuiData(NBTTagCompound nbt) {
+		if (nbt.hasKey("Item") && nbt.getBoolean("Item")) { stack = new ItemStack(nbt.getCompoundTag("Data")); }
+		else if (nbt.hasKey("EntityId")) {
+			entityId = nbt.getInteger("EntityId");
+			entity = player.world.getEntityByID(entityId);
+		} else {
+			tile = player.world.getTileEntity(pos);
+			state = player.world.getBlockState(pos);
+			blockStack = state.getBlock().getItem(player.world, pos, state);
+		}
+		originalCompound = nbt.getCompoundTag("Data");
+		compound = originalCompound.copy();
+		initGui();
+	}
+
 	private void setObjectToScroll(Object obj) {
-		addLabel(new GuiNpcLabel(15, "(?) Class \"" + obj.getClass().getSimpleName() + "\":", guiLeft + 60, guiTop + (state != null ? 36 : 16)));
-		getLabel(15).setHoverText(obj.getClass().getName());
-		List<String> list = new ArrayList<>();
+		addLabel(15, guiLeft + 60, guiTop + (state != null ? 36 : 16), "(?) Class \"" + obj.getClass().getSimpleName() + "\":")
+				.setHoverTexts(obj.getClass().getName());
+		// get data
 		Map<String, Field> fs = new TreeMap<>();
 		Map<String, Method> ms = new TreeMap<>();
 		Map<String, Class<?>> cs = new TreeMap<>();
@@ -213,127 +276,111 @@ public class GuiNbtBook extends GuiNPCInterface implements ICustomScrollListener
 		for (Method m : obj.getClass().getMethods()) { if (!ms.containsKey(m.getName())) { ms.put(m.getName(), m); } }
 		for (Class<?> c : obj.getClass().getDeclaredClasses()) { cs.put(c.getName(), c); }
 		for (Class<?> c : obj.getClass().getClasses()) { if (!cs.containsKey(c.getName())) { cs.put(c.getName(), c); } }
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
+		// create list
+		List<Component> list = new ArrayList<>();
+		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
 		int i = 0;
 		for (String key : fs.keySet()) {
 			try {
 				Field f = fs.get(key);
-				boolean isAccessible = f.isAccessible();
-				if (!isAccessible) { f.setAccessible(true); }
 				int mdf = f.getModifiers();
-				list.add(((char) 167) + "6F: " + ((char) 167) + (Modifier.isPublic(mdf) ? "a" : "c") + key);
-				hts.put(i, getFieldTypes(obj, mdf, f));
-				if (!isAccessible) { f.setAccessible(false); }
+				list.add(Component.empty()
+						.append(Component.literal("F: ").withStyle(TextFormatting.GOLD))
+						.append(Component.literal(key).withStyle(Modifier.isPublic(mdf) ? TextFormatting.GREEN : TextFormatting.RED)));
+				hts.put(i++, getFieldTypes(obj, mdf, f));
 			}
-			catch (Exception e) {
-				hts.put(i, Collections.singletonList(""));
-				LogWriter.error(e);
-			}
-			i++;
+			catch (Exception e) { LogWriter.error("Error:", e); }
 		}
 		for (String key : ms.keySet()) {
 			try {
 				Method m = ms.get(key);
-				boolean isAccessible = m.isAccessible();
-				if (!isAccessible) { m.setAccessible(true); }
 				int mdf = m.getModifiers();
-				list.add(((char) 167) + "3M: " + ((char) 167) + (Modifier.isPublic(mdf) ? "a" : "c") + key);
-				hts.put(i, getMethodTypes(mdf, m));
-				if (!isAccessible) { m.setAccessible(false); }
+				list.add(Component.empty()
+						.append(Component.literal("M: ").withStyle(TextFormatting.DARK_AQUA))
+						.append(Component.literal(key).withStyle(Modifier.isPublic(mdf) ? TextFormatting.GREEN : TextFormatting.RED)));
+				hts.put(i++, getMethodTypes(mdf, m));
 			}
-			catch (Exception e) {
-				hts.put(i, Collections.singletonList(""));
-				LogWriter.error(e);
-			}
-			i++;
+			catch (Exception e) { LogWriter.error("Error:", e); }
 		}
 		for (String key : cs.keySet()) {
 			Class<?> c = cs.get(key);
 			int mdf = c.getModifiers();
-			list.add(((char) 167) + "3M: " + ((char) 167) + (Modifier.isPublic(mdf) ? "a" : "c") + key);
-			String mf = ((char) 167) + "9subclass: ";
-			if (Modifier.isPublic(mdf)) { mf += ((char) 167) + "apublic"; }
-			else if (Modifier.isProtected(mdf)) { mf += ((char) 167) + "cprotected"; }
-			else { mf += ((char) 167) + "4private"; }
-			if (Modifier.isStatic(mdf)) { mf += ((char) 167) + "e static"; }
-			if (Modifier.isFinal(mdf)) { mf += ((char) 167) + "b final"; }
-			List<String> l = new ArrayList<>();
+			Component mf = Component.empty();
+			if (Modifier.isPublic(mdf)) { mf.append(Component.literal("public ").withStyle(TextFormatting.GREEN)); }
+			else if (Modifier.isProtected(mdf)) { mf.append(Component.literal("protected ").withStyle(TextFormatting.RED)); }
+			else { mf.append(Component.literal("private ").withStyle(TextFormatting.DARK_RED)); }
+			if (Modifier.isStatic(mdf)) { mf.append(Component.literal("static ").withStyle(TextFormatting.YELLOW)); }
+			if (Modifier.isFinal(mdf)) { mf.append(Component.literal("final ").withStyle(TextFormatting.AQUA)); }
+			mf.append(Component.literal("subclass:").withStyle(TextFormatting.BLUE));
+			List<Component> l = new ArrayList<>();
 			l.add(mf);
-			l.add(c.getSimpleName());
-			hts.put(i, l);
-			i++;
+			l.add(Component.literal(c.getSimpleName()));
+
+			list.add(Component.empty()
+					.append(Component.literal("C: ").withStyle(TextFormatting.DARK_BLUE))
+					.append(Component.literal(key).withStyle(Modifier.isPublic(mdf) ? TextFormatting.GREEN : TextFormatting.RED)));
+			hts.put(i++, l);
 		}
-		scroll.setUnsortedList(list).setHoverTexts(hts);
+		scroll.setUnsortedList(list)
+				.setHoverTexts(hts);
 	}
 
-	private static List<String> getFieldTypes(Object obj, int mdf, Field f) throws IllegalAccessException {
-		String mf = ((char) 167) + "6field: ";
-		if (Modifier.isPublic(mdf)) { mf += ((char) 167) + "apublic"; }
-		else if (Modifier.isProtected(mdf)) { mf += ((char) 167) + "cprotected"; }
-		else { mf += ((char) 167) + "4private"; }
-		if (Modifier.isStatic(mdf)) { mf += ((char) 167) + "e static"; }
-		if (Modifier.isFinal(mdf)) { mf += ((char) 167) + "b final"; }
-		Object v = f.get(obj);
-		List<String> l = new ArrayList<>();
-		l.add(mf);
-		l.add(((char) 167) + "7value type: " + ((char) 167) + "r" + f.getType().getName());
-		l.add(((char) 167) + "7value = " + ((char) 167) + "r" + (v != null ? v.toString() : "null"));
-		return l;
-	}
-
-	private static List<String> getMethodTypes(int mdf, Method m) {
-		String mf = ((char) 167) + "3method: ";
-		if (Modifier.isPublic(mdf)) { mf += ((char) 167) + "apublic"; }
-		else if (Modifier.isProtected(mdf)) { mf += ((char) 167) + "cprotected"; }
-		else { mf += ((char) 167) + "4private"; }
-		if (Modifier.isStatic(mdf)) { mf += ((char) 167) + "e static"; }
-		if (Modifier.isFinal(mdf)) { mf += ((char) 167) + "b final"; }
-		List<String> hoverText = new ArrayList<>();
+	private static List<Component> getFieldTypes(Object obj, int mdf, Field f) {
+		Component mf = Component.empty()
+				.append(Component.literal("field: ").withStyle(TextFormatting.GOLD));
+		if (Modifier.isPublic(mdf)) { mf.append(Component.literal("public ").withStyle(TextFormatting.GREEN)); }
+		else if (Modifier.isProtected(mdf)) { mf.append(Component.literal("protected ").withStyle(TextFormatting.RED)); }
+		else { mf.append(Component.literal("private ").withStyle(TextFormatting.DARK_RED)); }
+		if (Modifier.isStatic(mdf)) { mf.append(Component.literal("static ").withStyle(TextFormatting.YELLOW)); }
+		if (Modifier.isFinal(mdf)) { mf.append(Component.literal("final ").withStyle(TextFormatting.AQUA)); }
+		Object v = null;
+		try {
+			boolean bo = !f.isAccessible();
+			if (bo) { f.setAccessible(true); }
+			v = f.get(obj);
+			if (bo) { f.setAccessible(false); }
+		} catch (Exception ignored) { }
+		List<Component> hoverText = new ArrayList<>();
 		hoverText.add(mf);
-		hoverText.add(((char) 167) + "7return type: " + ((char) 167) + "r" + m.getReturnType().getName());
-		if (m.getParameters() != null && m.getParameters().length > 0) {
-			hoverText.add(((char) 167) + "7parameters: (");
-			Parameter[] prms = m.getParameters();
-			for (int j = 0; j < prms.length; j++) {
-				String nm = ((char) 167) + "8" + prms[j].getType().getName();
-				nm = nm.replace(prms[j].getType().getSimpleName(), ((char) 167) + "e" + prms[j].getType().getSimpleName());
-				nm += ((char) 167) + "r " + prms[j].getName() + (j < prms.length - 1 ? "," : "");
-				hoverText.add(nm);
-			}
-			hoverText.add(((char) 167) + "7)");
-		}
-		else { hoverText.add(((char) 167) + "7parameters: " + ((char) 167) + "r()"); }
+		hoverText.add(Component.empty()
+				.append(Component.literal("value type: ").withStyle(TextFormatting.GRAY))
+				.append(Component.literal(f.getType().getName()).withStyle(TextFormatting.RESET)));
+		hoverText.add(Component.empty()
+				.append(Component.literal("value: ").withStyle(TextFormatting.GRAY))
+				.append(Component.literal(v != null ? v.toString() : "null").withStyle(TextFormatting.RESET)));
 		return hoverText;
 	}
 
-    @SuppressWarnings("deprecation")
-	@Override
-	public void setGuiData(NBTTagCompound nbt) {
-		if (nbt.hasKey("Item") && nbt.getBoolean("Item")) { stack = new ItemStack(nbt.getCompoundTag("Data")); }
-		else if (nbt.hasKey("EntityId")) {
-			entityId = nbt.getInteger("EntityId");
-			entity = player.world.getEntityByID(entityId);
+	private static List<Component> getMethodTypes(int mdf, Method m) {
+		Component mf = Component.empty()
+				.append(Component.literal("method: ").withStyle(TextFormatting.DARK_AQUA));
+		if (Modifier.isPublic(mdf)) { mf.append(Component.literal("public ").withStyle(TextFormatting.GREEN)); }
+		else if (Modifier.isProtected(mdf)) { mf.append(Component.literal("protected ").withStyle(TextFormatting.RED)); }
+		else { mf.append(Component.literal("private ").withStyle(TextFormatting.DARK_RED)); }
+		if (Modifier.isStatic(mdf)) { mf.append(Component.literal("static ").withStyle(TextFormatting.YELLOW)); }
+		if (Modifier.isFinal(mdf)) { mf.append(Component.literal("final ").withStyle(TextFormatting.AQUA)); }
+
+		List<Component> hoverText = new ArrayList<>();
+		hoverText.add(mf);
+		if (m.getParameters() != null && m.getParameters().length > 0) {
+			hoverText.add(Component.literal("parameters: (").withStyle(TextFormatting.GRAY));
+			Parameter[] prms = m.getParameters();
+			for (int j = 0; j < prms.length; j++) {
+				String pName = prms[j].getType().getName();
+				String aName = prms[j].getType().getSimpleName();
+				Component ps = Component.literal(" ").append(Component.literal(pName.replace(aName, "")).withStyle(TextFormatting.DARK_GRAY))
+						.append(Component.literal(aName).withStyle(TextFormatting.YELLOW));
+				if (j < prms.length - 1) { ps.append(Component.literal(",").withStyle(TextFormatting.GRAY)); }
+				hoverText.add(ps);
+			}
+			hoverText.add(Component.literal(")").withStyle(TextFormatting.GRAY));
+		} else {
+			hoverText.add(Component.literal("parameters: ()").withStyle(TextFormatting.GRAY));
 		}
-		else {
-			tile = player.world.getTileEntity(new BlockPos(x, y, z));
-			state = player.world.getBlockState(new BlockPos(x, y, z));
-			blockStack = state.getBlock().getItem(player.world, new BlockPos(x, y, z), state);
-		}
-		originalCompound = nbt.getCompoundTag("Data");
-		setCompound(originalCompound.copy());
-		initGui();
+		hoverText.add(Component.empty()
+				.append(Component.literal("return type: ").withStyle(TextFormatting.GRAY))
+				.append(Component.literal(m.getReturnType().getName()).withStyle(TextFormatting.RESET)));
+		return hoverText;
 	}
-
-	private void setCompound(NBTTagCompound nbt) {
-		compound = nbt;
-		jsonCompound = nbt.toString();
-		CustomNPCsScheduler.runTack(() -> jsonCompound = NBTJsonUtil.Convert(nbt));
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { }
-
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
 
 }

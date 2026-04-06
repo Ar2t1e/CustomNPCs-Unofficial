@@ -3,7 +3,9 @@ package noppes.npcs.api.entity;
 import net.minecraft.entity.Entity;
 import noppes.npcs.api.*;
 import noppes.npcs.api.entity.data.IData;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.util.IRayTraceResults;
 
 @SuppressWarnings("all")
 public interface IEntity<T extends Entity> {
@@ -16,7 +18,9 @@ public interface IEntity<T extends Entity> {
 
 	void damage(@ParamName("amount") float amount);
 
-	void damage(@ParamName("amount") float amount, @ParamName("source") IEntityDamageSource source);
+	void damage(@ParamName("amount") float amount, @ParamName("source") IEntity<?> source);
+
+	void damage(@ParamName("amount") float amount, @ParamName("damageSource") IEntityDamageSource damageSource);
 
 	void despawn();
 
@@ -114,6 +118,8 @@ public interface IEntity<T extends Entity> {
 
 	IRayTrace rayTraceBlock(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
 							@ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);
+
+	IRayTraceResults rayTrace(@ParamName("distance") double distance);
 
 	IEntity<?>[] rayTraceEntities(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
 								  @ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);

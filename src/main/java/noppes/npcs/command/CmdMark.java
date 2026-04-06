@@ -7,7 +7,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.server.MinecraftServer;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.data.MarkData;
 
@@ -49,11 +49,10 @@ public class CmdMark extends CommandNoppesBase {
 		try {
 			type = Integer.parseInt(args[1]);
 		} catch (Exception e) { LogWriter.error(e); }
-		int color = 16777215;
+		int color = 0xFFFFFF;
 		if (args.length > 2) {
-			try {
-				color = Integer.parseInt(args[2], 16);
-			} catch (Exception e) { LogWriter.error(e); }
+			try { color = Integer.parseInt(args[2], 16); }
+			catch (Exception e) { LogWriter.error(e); }
 		}
 		for (Entity e : list) {
 			if (!(e instanceof EntityLivingBase)) {

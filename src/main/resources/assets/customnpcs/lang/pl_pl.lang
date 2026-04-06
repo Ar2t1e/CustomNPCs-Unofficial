@@ -113,17 +113,17 @@ ai.swim=Potrafi pływać
 ai.tacticalvariant=Opcja taktyki bojowej
 ai.wandering=Wędruje
 
-aitactics.commander=Commander
-aitactics.default=Domyślnie
-aitactics.dodge=Dodge
-aitactics.hitandrun=Uderz i uciekaj
-aitactics.hitnrun=Uderz i uciekaj
-aitactics.none=NIE
-aitactics.orbit=Otaczać
-aitactics.rush=Atak
-aitactics.stagger=Stagger
-aitactics.stalk=podkradać się
-aitactics.surround=Otaczać
+ai.tactic.commander=Commander
+ai.tactic.default=Domyślnie
+ai.tactic.dodge=Dodge
+ai.tactic.hit_and_run=Uderz i uciekaj
+ai.tactic.hitnrun=Uderz i uciekaj
+ai.tactic.none=NIE
+ai.tactic.orbit=Otaczać
+ai.tactic.rush=Atak
+ai.tactic.stagger=Stagger
+ai.tactic.stalk=podkradać się
+ai.tactic.surround=Otaczać
 
 animation.add.part.hover.location=Lokalizacja pliku zasobów typu „§9.png§r” jako tekstury użytej w modelu
 animation.add.part.hover.name=Nazwa części ciała dla wygody<br>%s
@@ -1740,7 +1740,7 @@ message.dimensions.tp.isdelete=§2 Niestandardowi NPC §6: Zostałeś przeniesio
 message.mod.error=§sUps. Something has expressed a desire to filibuster. Contact the Developer with this problem: %s
 message.pather.add=Dodano pozycję x :%s y :%s z :%s dla NPC „%s ”
 message.pather.home=Zmieniono pozycję wyjściową x :%s y :%s z :%s dla NPC „%s ”
-message.pather.reg=Zarejestrowano "%s " na Twoim %s
+message.pather.register=Zarejestrowano "%s " na Twoim %s
 message.pather.warn.add=§C kazanie §r: nowa pozycja zbyt daleko od poprzedniej.
 
 minimap.set.points.1=§F [§2customnpcs §f]: §8 System zaktualizował stanowisko dla mini-karty: %s

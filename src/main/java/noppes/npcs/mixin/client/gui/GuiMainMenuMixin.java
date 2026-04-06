@@ -7,7 +7,6 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.util.GuiNpcButton;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,6 +43,10 @@ public class GuiMainMenuMixin {
         if (CustomNpcs.ReplaceCustomBackground && CustomNpcs.ShowButtonsInGuiMenu) {
             ((GuiScreen) (Object) this).buttonList.add(new GuiNpcButton(150, 3, 3, 20, 16, cnpc$variant + 1,
                             "MC", "1", "2", "3", "4"));
+        }
+        if (!CustomNpcs.ReplaceCustomBackground && cnpc$variant > 0) {
+            cnpc$variant = -1;
+            for(int i = 0; i < 6; ++i) { TITLE_PANORAMA_PATHS[i] = new ResourceLocation("textures/gui/title/background/panorama_" + i + ".png"); }
         }
     }
 

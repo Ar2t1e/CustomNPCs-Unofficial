@@ -32,39 +32,34 @@ public class JobGuard extends JobInterface implements IJobGuard {
 	}
 
 	@Override
-	public boolean isWorking() {
-		return !targets.isEmpty() && npc.isAttacking();
-	}
-
-	@Override
 	public void load(NBTTagCompound compound) {
 		super.load(compound);
 		type = JobType.GUARD;
 		targets.clear();
 		targets.addAll(NBTTags.getStringList(compound.getTagList("GuardTargets", 10)));
+		// OLD loads
 		if (compound.getBoolean("GuardAttackAnimals")) {
 			for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-				Class<? extends Entity> cl = ent.getEntityClass();
 				String name = "entity." + ent.getName() + ".name";
-				if (EntityAnimal.class.isAssignableFrom(cl) && !targets.contains(name)) {
+				if (ent.getEntityClass().isAssignableFrom(EntityAnimal.class) && !targets.contains(name)) {
 					targets.add(name);
 				}
 			}
 		}
 		if (compound.getBoolean("GuardAttackMobs")) {
 			for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-				Class<? extends Entity> cl = ent.getEntityClass();
 				String name = "entity." + ent.getName() + ".name";
-				if (EntityMob.class.isAssignableFrom(cl) && !EntityCreeper.class.isAssignableFrom(cl) && !targets.contains(name)) {
+				if (ent.getEntityClass().isAssignableFrom(EntityMob.class) &&
+						!ent.getEntityClass().isAssignableFrom(EntityCreeper.class) &&
+						!targets.contains(name)) {
 					targets.add(name);
 				}
 			}
 		}
 		if (compound.getBoolean("GuardAttackCreepers")) {
 			for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-				Class<? extends Entity> cl = ent.getEntityClass();
 				String name = "entity." + ent.getName() + ".name";
-				if (EntityCreeper.class.isAssignableFrom(cl) && !targets.contains(name)) {
+				if (ent.getEntityClass().isAssignableFrom(EntityCreeper.class) && !targets.contains(name)) {
 					targets.add(name);
 				}
 			}
@@ -77,6 +72,10 @@ public class JobGuard extends JobInterface implements IJobGuard {
 		compound.setTag("GuardTargets", NBTTags.nbtStringList(targets));
 		return compound;
 	}
+
+	// New from Unofficial (BetaZavr)
+	@Override
+	public boolean isWorking() { return !targets.isEmpty() && npc != null && npc.isAttacking(); }
 
 	@Override
 	public String[] getTargets() { return targets.toArray(new String[0]); }

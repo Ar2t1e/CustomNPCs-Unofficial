@@ -3,7 +3,6 @@ package noppes.npcs.mixin.client.gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiButtonImage;
 import net.minecraft.client.gui.inventory.GuiCrafting;
-import noppes.npcs.api.mixin.client.gui.IGuiScreenMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

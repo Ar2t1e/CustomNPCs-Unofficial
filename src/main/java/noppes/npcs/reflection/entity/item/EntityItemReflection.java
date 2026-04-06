@@ -1,7 +1,7 @@
 package noppes.npcs.reflection.entity.item;
 
 import net.minecraft.entity.item.EntityItem;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import java.lang.reflect.Field;
 

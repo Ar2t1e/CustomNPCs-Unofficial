@@ -1,7 +1,7 @@
 package noppes.npcs.reflection.entity.ai.attributes;
 
 import net.minecraft.entity.ai.attributes.AttributeModifier;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ValueUtil;
 
 import java.lang.reflect.Field;

@@ -7,20 +7,17 @@ import java.util.*;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesStringUtils;
-import noppes.npcs.Server;
+import noppes.npcs.controllers.data.*;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSyncRemove;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.api.constants.OptionType;
 import noppes.npcs.api.handler.IDialogHandler;
 import noppes.npcs.api.handler.data.IDialogCategory;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
-import noppes.npcs.controllers.data.Dialog;
-import noppes.npcs.controllers.data.DialogCategory;
-import noppes.npcs.controllers.data.DialogGuiSettings;
-import noppes.npcs.controllers.data.DialogOption;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.NBTJsonUtil;
 
@@ -35,9 +32,7 @@ public class DialogController implements IDialogHandler {
 
 	private final DialogGuiSettings guiSettings = new DialogGuiSettings();
 
-	public DialogController() {
-		DialogController.instance = this;
-	}
+	public DialogController() { DialogController.instance = this; }
 
 	@Override
 	public IDialogCategory[] categories() {
@@ -86,7 +81,6 @@ public class DialogController implements IDialogHandler {
 		CustomNpcs.debugData.end(null);
 	}
 
-	@SuppressWarnings("all")
 	private void loadCategories() {
 		categories.clear();
 		dialogs.clear();
@@ -176,54 +170,94 @@ public class DialogController implements IDialogHandler {
 		DialogCategory cat = new DialogCategory();
 		cat.id = lastUsedCatID++;
 		cat.title = "Villager";
+
 		Dialog dia1 = new Dialog(cat);
-		dia1.id = 1;
+		dia1.id = lastUsedDialogID++;
 		dia1.title = "Start";
 		dia1.text = "dialog.base.1.text";
 
 		Dialog dia2 = new Dialog(cat);
-		dia2.id = 2;
+		dia2.id = lastUsedDialogID++;
 		dia2.title = "Ask about village";
-		dia2.text = Util.instance.deleteColor(new TextComponentTranslation("dialog.base.2.text").getFormattedText());
+		dia2.text = Util.instance.deleteColor(Component.translatable("dialog.base.2.text").getString());
 
 		Dialog dia3 = new Dialog(cat);
-		dia3.id = 3;
+		dia3.id = lastUsedDialogID++;
 		dia3.title = "Who are you";
-		dia3.text = Util.instance.deleteColor(new TextComponentTranslation("dialog.base.3.text").getFormattedText());
+		dia3.text = Util.instance.deleteColor(Component.translatable("dialog.base.3.text").getString());
+
+		Dialog dia4 = new Dialog(cat);
+		dia4.id = lastUsedDialogID++;
+		dia4.title = "Quest description";
+		dia4.text = Util.instance.deleteColor(Component.translatable("dialog.base.4.text").getString());
+
+		Dialog dia5 = new Dialog(cat);
+		dia5.id = lastUsedDialogID++;
+		dia5.title = "Issue a quest";
+		dia5.text = Util.instance.deleteColor(Component.translatable("dialog.base.5.text").getString());
+		dia5.quest = 0;
+		for (Quest quest : new ArrayList<>(QuestController.instance.quests.values())) {
+			if (quest.title.equals("quest.base.0")) {
+				dia5.quest = quest.id;
+				break;
+			}
+		}
 
 		cat.dialogs.put(dia1.id, dia1);
 		cat.dialogs.put(dia2.id, dia2);
 		cat.dialogs.put(dia3.id, dia3);
+		cat.dialogs.put(dia4.id, dia4);
+		cat.dialogs.put(dia5.id, dia5);
 
 		DialogOption option = new DialogOption();
 		option.title = "dialog.base.1.option.0";
-		option.addDialog(2);
+		option.addDialog(dia2.id);
 		option.optionType = OptionType.DIALOG_OPTION;
 
+		DialogOption option1 = new DialogOption();
+		option1.title = "dialog.base.1.option.1";
+		option1.addDialog(dia3.id);
+		option1.optionType = OptionType.DIALOG_OPTION;
+
 		DialogOption option2 = new DialogOption();
-		option2.title = "dialog.base.1.option.1";
-		option2.addDialog(3);
+		option2.title = "dialog.base.1.option.3";
+		option2.addDialog(dia4.id);
 		option2.optionType = OptionType.DIALOG_OPTION;
 
 		DialogOption option3 = new DialogOption();
 		option3.title = "dialog.base.1.option.2";
 		option3.optionType = OptionType.QUIT_OPTION;
-		dia1.options.put(0, option2);
-		dia1.options.put(1, option);
-		dia1.options.put(2, option3);
 
 		DialogOption option4 = new DialogOption();
-		option4.title = Util.instance.deleteColor(new TextComponentTranslation("dialog.base.2.option.0").getFormattedText());
-		option4.addDialog(1);
+		option4.title = Util.instance.deleteColor(Component.translatable("dialog.base.4.option.0").getString());
+		option4.addDialog(dia1.id);
+
+		DialogOption option5 = new DialogOption();
+		option5.title = Util.instance.deleteColor(Component.translatable("dialog.base.5.option.0").getString());
+		option5.addDialog(dia5.id);
+
+		dia1.options.put(0, option);
+		dia1.options.put(1, option1);
+		dia1.options.put(2, option2);
+		dia1.options.put(3, option3);
+
+		dia2.options.put(0, option2);
 		dia2.options.put(1, option4);
+
+		dia3.options.put(0, option2);
 		dia3.options.put(1, option4);
 
-		lastUsedDialogID = 3;
-		lastUsedCatID = 1;
+		dia4.options.put(0, option5);
+		dia4.options.put(1, option4);
+
+		dia5.options.put(1, option3);
+
 		saveCategory(cat);
 		saveDialog(cat, dia1);
 		saveDialog(cat, dia2);
 		saveDialog(cat, dia3);
+		saveDialog(cat, dia4);
+		saveDialog(cat, dia5);
 	}
 
 	public void removeCategory(int category) {
@@ -233,7 +267,7 @@ public class DialogController implements IDialogHandler {
 		if (!Util.instance.removeFile(dir)) { LogWriter.error("Error delete " + dir + "; no access or file not uploaded!"); }
 		for (int dia : cat.dialogs.keySet()) { dialogs.remove(dia); }
 		categories.remove(category);
-		Server.sendToAll(CustomNpcs.Server, EnumPacketClient.SYNC_REMOVE, EnumSync.DialogCategoriesData, category);
+		Packets.sendAll(new PacketSyncRemove(category, 5));
 	}
 
 	public void removeDialog(Dialog dialog) {
@@ -242,11 +276,10 @@ public class DialogController implements IDialogHandler {
 		if (file.delete()) {
 			category.dialogs.remove(dialog.id);
 			dialogs.remove(dialog.id);
-			Server.sendToAll(CustomNpcs.Server, EnumPacketClient.SYNC_REMOVE, EnumSync.DialogData, dialog.id);
+			Packets.sendAll(new PacketSyncRemove(dialog.id, 4));
 		}
 	}
 
-	@SuppressWarnings("all")
 	public void saveCategory(DialogCategory category) {
 		CustomNpcs.debugData.start(null);
 		category.title = NoppesStringUtils.cleanFileName(category.title);
@@ -290,7 +323,6 @@ public class DialogController implements IDialogHandler {
 		CustomNpcs.debugData.end(null);
 	}
 
-	@SuppressWarnings("all")
 	public void saveDialog(DialogCategory category, Dialog dialog) {
 		if (category == null) { return; }
 		CustomNpcs.debugData.start(null);
@@ -309,15 +341,15 @@ public class DialogController implements IDialogHandler {
 		try {
 			NBTTagCompound compound = dialog.save(new NBTTagCompound());
 			Util.instance.saveFile(file, compound);
-			if (file2.exists()) { file2.delete(); }
-			file.renameTo(file2);
+			if (file2.exists() && file2.delete() && file.renameTo(file2)) {
+
+			}
 			Server.sendToAll(CustomNpcs.Server, EnumPacketClient.SYNC_UPDATE, EnumSync.DialogData, compound, category.id);
 		}
 		catch (Exception e) { LogWriter.except(e);}
 		CustomNpcs.debugData.end(null);
 	}
 
-	@SuppressWarnings("all")
 	public void saveSettings() {
 		CustomNpcs.debugData.start(null);
 		try {

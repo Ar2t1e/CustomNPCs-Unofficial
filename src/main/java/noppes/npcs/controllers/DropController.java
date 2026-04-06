@@ -14,11 +14,7 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
-import noppes.npcs.client.Client;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.controllers.data.DropsTemplate;
 import noppes.npcs.entity.data.AttributeSet;
 import noppes.npcs.entity.data.DropSet;
@@ -26,27 +22,12 @@ import noppes.npcs.entity.data.EnchantSet;
 
 public class DropController {
 
-	private static DropController instance;
-	public static DropController getInstance() {
-		if (newInstance()) {
-			DropController.instance = new DropController();
-		}
-		return DropController.instance;
-	}
-	private static boolean newInstance() {
-		if (DropController.instance == null) {
-			return true;
-		}
-		return CustomNpcs.Dir != null && !DropController.instance.filePath.equals(CustomNpcs.Dir.getAbsolutePath());
-	}
-
-	private String filePath;
-
+	protected static DropController instance = new DropController();
 	public final Map<String, DropsTemplate> templates = new TreeMap<>();
 
-	public DropController() {
-		this.filePath = CustomNpcs.Dir.getAbsolutePath();
-		DropController.instance = this;
+	public static DropController getInstance() {
+		if (instance == null) { instance = new DropController(); }
+		return instance;
 	}
 
 	public List<DropSet> getDrops(String saveDropsName) {
@@ -125,7 +106,6 @@ public class DropController {
 	public void loadFile() {
 		CustomNpcs.debugData.start(null);
 		LogWriter.info("Loading Drops");
-		this.filePath = CustomNpcs.Dir.getAbsolutePath();
 		try {
 			File file = new File(CustomNpcs.Dir, "drops.dat");
 			if (file.exists()) {

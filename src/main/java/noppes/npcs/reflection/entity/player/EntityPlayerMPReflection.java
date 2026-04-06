@@ -1,7 +1,7 @@
 package noppes.npcs.reflection.entity.player;
 
 import net.minecraft.entity.player.EntityPlayerMP;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import java.lang.reflect.Field;
 

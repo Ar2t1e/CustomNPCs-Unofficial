@@ -1,7 +1,7 @@
 package noppes.npcs.api.entity;
 
 import net.minecraft.entity.projectile.EntityThrowable;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
 @SuppressWarnings("all")

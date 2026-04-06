@@ -15,12 +15,9 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.handler.IFactionHandler;
 import noppes.npcs.api.handler.data.IFaction;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
 import noppes.npcs.controllers.data.Faction;
 
 public class FactionController implements IFactionHandler {
@@ -78,11 +75,9 @@ public class FactionController implements IFactionHandler {
 		return this.factions.get(faction);
 	}
 
-	public Faction getFactionFromName(String faction) {
-		for (Map.Entry<Integer, Faction> entryfaction : this.factions.entrySet()) {
-			if (entryfaction.getValue().name.equalsIgnoreCase(faction)) {
-				return entryfaction.getValue();
-			}
+	public Faction getFactionFromName(String factionName) {
+		for (Faction faction : factions.values()) {
+			if (faction.name.equalsIgnoreCase(factionName)) { return faction; }
 		}
 		return null;
 	}

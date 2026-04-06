@@ -35,20 +35,20 @@ public class CmdFaction extends CommandNoppesBase {
 		} catch (NumberFormatException ex) {
 			throw new CommandException(args[0]+" must be an integer");
 		}
-		int factionId = this.selectedFaction.id;
-		for (PlayerData playerdata : this.data) {
+		int factionId = selectedFaction.id;
+		for (PlayerData playerdata : data) {
 			PlayerFactionData playerfactiondata = playerdata.factionData;
 			playerfactiondata.increasePoints(playerdata.player, factionId, points);
-			sender.sendMessage(new TextComponentString(points + " points added to player \""+playerdata.playername+"\" Faction ID: "+factionId));
+			sender.sendMessage(new TextComponentString(points + " points added to player \""+playerdata.name+"\" Faction ID: "+factionId));
 			playerdata.save(true);
 		}
 	}
 
 	@SubCommand(desc = "Drop relationship", permission = 2)
 	public void drop(MinecraftServer server, ICommandSender sender, String[] args) {
-		for (PlayerData playerdata : this.data) {
+		for (PlayerData playerdata : data) {
 			playerdata.factionData.factionData.remove(selectedFaction.id);
-			sender.sendMessage(new TextComponentString("Player \""+playerdata.playername+"\" has Faction ID: "+selectedFaction.id+" removed"));
+			sender.sendMessage(new TextComponentString("Player \""+playerdata.name+"\" has Faction ID: "+selectedFaction.id+" removed"));
 			playerdata.save(true);
 		}
 	}
@@ -58,19 +58,17 @@ public class CmdFaction extends CommandNoppesBase {
 		if (args == null) { return; }
 		String playername = args[0];
 		String factionName = args[1];
-		this.data = PlayerDataController.instance.getPlayersData(sender, playername);
-		if (this.data.isEmpty()) {
+		data = PlayerDataController.instance.getPlayersData(sender, playername);
+		if (data.isEmpty()) {
 			throw new CommandException("Unknown player " + playername);
 		}
 		try {
-			this.selectedFaction = FactionController.instance.getFaction(Integer.parseInt(factionName));
+			selectedFaction = FactionController.instance.getFaction(Integer.parseInt(factionName));
 		} catch (NumberFormatException e) {
-			this.selectedFaction = FactionController.instance.getFactionFromName(factionName);
+			selectedFaction = FactionController.instance.getFactionFromName(factionName);
 		}
-		if (this.selectedFaction == null) {
-			throw new CommandException("Unknown faction " + factionName);
-		}
-		this.executeSub(server, sender, args[2], Arrays.copyOfRange(args, 3, args.length));
+		if (selectedFaction == null) { throw new CommandException("Unknown FactionID \"" + factionName + "\""); }
+		executeSub(server, sender, args[2], Arrays.copyOfRange(args, 3, args.length));
 	}
 
 	@Override
@@ -83,13 +81,6 @@ public class CmdFaction extends CommandNoppesBase {
 		return "faction";
 	}
 
-	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender par1, @Nonnull String[] args, BlockPos pos) {
-		if (args.length == 3) {
-			return CommandBase.getListOfStringsMatchingLastWord(args, "add", "subtract", "set", "reset", "drop", "create");
-		}
-		return new ArrayList<>();
-	}
-
 	@Override
 	public String getUsage() {
 		return "<player> <faction> <command>";
@@ -97,8 +88,8 @@ public class CmdFaction extends CommandNoppesBase {
 
 	@SubCommand(desc = "Reset points to default", permission = 2)
 	public void reset(MinecraftServer server, ICommandSender sender, String[] args) {
-		for (PlayerData playerdata : this.data) {
-			playerdata.factionData.factionData.put(this.selectedFaction.id, this.selectedFaction.defaultPoints);
+		for (PlayerData playerdata : data) {
+			playerdata.factionData.factionData.put(selectedFaction.id, selectedFaction.defaultPoints);
 			playerdata.save(true);
 		}
 	}
@@ -116,28 +107,43 @@ public class CmdFaction extends CommandNoppesBase {
 		} catch (NumberFormatException ex) {
 			throw new CommandException(args[0]+" - must be an integer");
 		}
-		for (PlayerData playerdata : this.data) {
+		for (PlayerData playerdata : data) {
 			PlayerFactionData playerfactiondata = playerdata.factionData;
-			playerfactiondata.factionData.put(this.selectedFaction.id, points);
+			playerfactiondata.factionData.put(selectedFaction.id, points);
 			playerdata.save(true);
 		}
 	}
 
-	@SuppressWarnings("all")
 	@SubCommand(desc = "Subtract points", usage = "<points>", permission = 2)
 	public void subtract(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		int points;
 		try {
 			points = Integer.parseInt(args[0]);
 		} catch (NumberFormatException ex) {
-			throw new CommandException("Must be an integer");
+			throw new CommandException("Must be " + "an integer");
 		}
-		int factionId = this.selectedFaction.id;
-		for (PlayerData playerdata : this.data) {
+		int factionId = selectedFaction.id;
+		for (PlayerData playerdata : data) {
 			PlayerFactionData playerfactiondata = playerdata.factionData;
 			playerfactiondata.increasePoints(playerdata.player, factionId, -points);
 			playerdata.save(true);
 		}
+	}
+
+	@Override
+	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender par1, @Nonnull String[] args, BlockPos pos) {
+		if (args.length == 2) {
+			List<String> list = new ArrayList<>();
+			for (Faction faction : FactionController.instance.factions.values()) {
+				list.add("" + faction.id);
+				list.add(faction.getName());
+			}
+			return list;
+		}
+		if (args.length == 3) {
+			return CommandBase.getListOfStringsMatchingLastWord(args, "add", "subtract", "set", "reset", "drop", "create");
+		}
+		return new ArrayList<>();
 	}
 
 }

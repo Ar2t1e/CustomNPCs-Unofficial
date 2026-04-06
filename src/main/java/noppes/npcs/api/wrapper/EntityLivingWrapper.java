@@ -72,15 +72,14 @@ public class EntityLivingWrapper<T extends EntityLiving> extends EntityLivingBas
 	}
 
 	@Override
-	public void navigateTo(Integer[][] posses, double speed) {
+	public void navigateTo(IPos[] posses, double speed) {
 		PathNavigate nav = this.entity.getNavigator();
 		nav.clearPath();
 		List<PathPoint> points = new ArrayList<>();
-		for (Integer[] posId : posses) {
-			if (posId == null || posId.length < 3) {
-				return;
-			}
-			points.add(new PathPoint(posId[0], posId[1], posId[2]));
+		for (IPos pos : posses) {
+			if (pos == null) { return; }
+			BlockPos bp = pos.getMCBlockPos();
+			points.add(new PathPoint(bp.getX(), bp.getY(), bp.getZ()));
 		}
 		nav.setPath(new Path(points.toArray(new PathPoint[0])), speed);
 	}

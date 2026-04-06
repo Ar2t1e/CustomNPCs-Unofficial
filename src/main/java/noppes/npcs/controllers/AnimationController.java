@@ -13,14 +13,14 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSyncRemove;
+import noppes.npcs.packets.client.PacketSyncUpdate;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.handler.IAnimationHandler;
 import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.model.animation.EmotionConfig;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
 import noppes.npcs.util.Util;
 
 public class AnimationController implements IAnimationHandler {
@@ -29,11 +29,16 @@ public class AnimationController implements IAnimationHandler {
 	protected final TreeMap<Integer, AnimationConfig> animations = new TreeMap<>();
 	protected final TreeMap<Integer, EmotionConfig> emotions = new TreeMap<>();
 
+	public static AnimationController getInstance() {
+		if (instance == null) { instance = new AnimationController(); }
+		return instance;
+	}
+
 	protected int baseMaxAnimID = 0;
 
-	public static AnimationController getInstance() {
-		if (AnimationController.instance == null) { AnimationController.instance = new AnimationController(); }
-		return AnimationController.instance;
+	public void clear() {
+		animations.clear();
+		emotions.clear();
 	}
 
 	@Override
@@ -141,7 +146,7 @@ public class AnimationController implements IAnimationHandler {
 		return emotions.get(nbtEmotion.getInteger("ID"));
 	}
 
-	@SuppressWarnings("all")
+
 	public void loadAnimations() {
 		CustomNpcs.debugData.start(null);
 		LogWriter.info("Start load animations");
@@ -341,7 +346,7 @@ public class AnimationController implements IAnimationHandler {
 		return false;
 	}
 
-	@SuppressWarnings("all")
+
 	public void save() {
 		CustomNpcs.debugData.start(null);
 		File animDir = CustomNpcs.getWorldSaveDirectory("animations");
@@ -366,6 +371,7 @@ public class AnimationController implements IAnimationHandler {
 
 	public void sendTo(EntityPlayerMP player) {
 		if (CustomNpcs.Server != null && CustomNpcs.Server.isSinglePlayer()) { return; }
+		Packets.sendAll(new PacketSyncUpdate(0, 9, new NBTTagCompound()));
 		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.AnimationData, new NBTTagCompound());
 		for (AnimationConfig ac : animations.values()) { Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.AnimationData, ac.save()); }
 		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.EmotionData, new NBTTagCompound());
@@ -393,5 +399,26 @@ public class AnimationController implements IAnimationHandler {
 
 	public boolean hasEmotion(int id) { return emotions.containsKey(id); }
 
+	public void sendAnimationToAll(int id) {
+		if (CustomNpcs.Server != null) {
+			NBTTagCompound data = animations.containsKey(id) ? animations.get(id).save() : null;
+			for (EntityPlayerMP player : CustomNpcs.Server. getPlayerList().getPlayers()) {
+				if (id < 0) { sendTo(player); }
+				else if (data == null) { Packets.send(player, new PacketSyncRemove(id, 9)); }
+				else { Packets.send(player, new PacketSyncUpdate(0, 9, data)); }
+			}
+		}
+	}
+
+	public void sendEmotionToAll(int id) {
+		if (CustomNpcs.Server != null) {
+			NBTTagCompound data = emotions.containsKey(id) ? emotions.get(id).save() : null;
+			for (EntityPlayerMP player : CustomNpcs.Server. getPlayerList().getPlayers()) {
+				if (id < 0) { sendTo(player); }
+				else if (data == null) { Packets.send(player, new PacketSyncRemove(id, 9)); }
+				else { Packets.send(player, new PacketSyncUpdate(0, 9, data)); }
+			}
+		}
+	}
 
 }

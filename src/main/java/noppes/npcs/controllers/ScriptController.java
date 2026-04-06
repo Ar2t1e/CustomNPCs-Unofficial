@@ -23,6 +23,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagLongArray;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -36,19 +37,21 @@ import noppes.npcs.api.wrapper.WorldWrapper;
 import noppes.npcs.api.wrapper.WrapperNpcAPI;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.blocks.tiles.TileScriptedDoor;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemScripted;
-import noppes.npcs.util.CustomNPCsScheduler;
-import noppes.npcs.util.Util;
-import noppes.npcs.util.NBTJsonUtil;
-import noppes.npcs.util.TempFile;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketClientScripts;
+import noppes.npcs.packets.client.PacketScriptConsole;
+import noppes.npcs.packets.client.PacketScriptText;
+import noppes.npcs.packets.client.PacketSendFileList;
+import noppes.npcs.shared.common.CommonUtil;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.*;
 
 public class ScriptController {
 
-	public static final Map<Class<?>, String> forgeEventNames = new HashMap<>();
-	public static final Map<Class<?>, String> forgeClientEventNames = new HashMap<>();
+	public static final Map<String, TempFile> downloadableFiles = new HashMap<>();
 	private static final boolean isClient = Thread.currentThread().getName().toLowerCase().contains("client");
 	public static boolean HasStart = false;
 	public static ScriptController Instance;
@@ -82,6 +85,7 @@ public class ScriptController {
 	public PlayerScriptData playerScripts = new PlayerScriptData(null);
 	public PotionScriptData potionScripts = new PotionScriptData();
 	public NpcScriptData npcsScripts = new NpcScriptData();
+	public File localDir;
 
 	public ScriptController() {
 		CustomNpcs.debugData.start(null);
@@ -214,7 +218,6 @@ public class ScriptController {
 		return factory.getScriptEngine();
 	}
 
-	@SuppressWarnings("all")
 	private ScriptEngine getNewGraalEngine() {
 		try {
 			/*GraalJSScriptEngine.create((Engine)null, Context.newBuilder("js")
@@ -374,16 +377,15 @@ public class ScriptController {
 
 	public void loadCategories() {
 		dir = new File(CustomNpcs.getWorldSaveDirectory(), "scripts");
+		localDir = CustomNpcs.getWorldSaveDirectory("scripts", true);
 		if (!dir.exists() && !dir.mkdirs()) { return; }
 		clientDir = new File(dir, "client");
 		if (!clientDir.exists() && !clientDir.mkdirs()) { return; }
-
 		if (!worldDataFile().exists()) { shouldSave = true; }
 		WorldWrapper.clearTempdata();
 		scripts.clear();
-		encrypts.clear();
 		sizes.clear();
-		for (String key : clients.keySet()) { CommonProxy.downloadableFiles.remove(key); }
+		for (String key : clients.keySet()) { downloadableFiles.remove(key); }
 		clients.clear();
 		clientSizes.clear();
 		for (String language : languages.keySet()) {
@@ -405,13 +407,13 @@ public class ScriptController {
 		clientScripts.clear();
 		File file = clientScriptsFile();
 		try {
-			if (!file.exists()) { return false; }
-			clientScripts.readFromNBT(NBTJsonUtil.LoadFile(file));
-		} catch (Exception e) {
-			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			return false;
+			if (!file.exists()) {
+				clientScripts.load(NBTJsonUtil.LoadFile(file));
+				return true;
+			}
 		}
-		return true;
+		catch (Exception e) { LogWriter.error("Error loading: " + file.getAbsolutePath(), e); }
+		return false;
 	}
 
 	public boolean loadConstantData() {
@@ -473,9 +475,9 @@ public class ScriptController {
 				if (needResave) {
 					try {
 						Util.instance.saveFile(file, constants.copy());
-						ITextComponent message = new TextComponentString("Constants have been rewritten for all scripts to ");
-						message.getStyle().setColor(TextFormatting.GRAY);
-						NoppesUtilServer.NotifyOPs(message.appendText(file.getName()), true);
+						CommonUtil.NotifyOPs(Component.literal("Constants have been rewritten for all scripts to ")
+								.withStyle(TextFormatting.GRAY)
+								.append(file.getName()), false);
 					}
 					catch (Exception e) { LogWriter.except(e); }
 				}
@@ -494,7 +496,7 @@ public class ScriptController {
 				list.appendTag(new NBTTagString("function getField(key,object) { try { var f = dump(object).getField(key); if (f) { return f.getValue(); } } catch (error) { log('Error: \"'+key+'\" is not a Field or not found in \"'+object.getClass().getName()+'\"');} return null; }"));
 				list.appendTag(new NBTTagString("function setField(value,object,key) { try { var f = dump(object).getField(key); if (f) { return f.setValue(value); } } catch (error) { log('Error: \"'+key+'\" is not a Field or not found, or not type mismatch in \"'+object.getClass().getName()+'\". Error: ' + error); } return false; }"));
 				list.appendTag(new NBTTagString("function invoke(value,object,key) { try { var m = dump(object).getMethod(key); if (m) { var jo = Java.type('java.lang.Object[]'); if (value!=jo) { try { if (value.length>=0) { var v = new jo(value.length); for (var i=0; i<value.length; i++) { v[i] = value[i]; } return m.invoke(v); } } catch (err) { } var v = new jo(1); v[0] = value; return m.invoke(v); } else { return m.invoke(value); } } } catch (error) { log('Error: \"'+key+'\" is not a Method or not found, or not type mismatch in \"'+object.getClass().getName()+'\"'); } return null; }"));
-				list.appendTag(new NBTTagString("function getCustomFunction(name, ev) {var fhm;try {var actor=\"Any\";if (ev) {if (ev.player) { actor = \"Player\"; }else if (ev.npc) { actor = \"NPC\"; }else if (ev.block) { actor = \"Block\"; }};fhm = api.getIWorld(0).getTempdata().get(\"functions\");if (fhm instanceof JHMap && fhm.containsKey(name)) {return fhm.get(name)};if (name!=\"loadFile\") {var dir = existsDir(api.getWorldDir().toPath().resolve(\"data\").resolve(\"functions\"));gFunc(\"loadFile\",ev)(dir.resolve(name+\".json\"), \"fhm\");if (fhm instanceof JHMap && fhm.containsKey(name)) {return fhm.get(name)}}} catch (error) {if (fhm && fhm instanceof JHMap) {gFunc(\"errorMes\",ev)(actor, error, \"Name: §f\"+name, ev);}};return eval(\"function fnull(a,b,c,d,e,f,g,h,i,k,l,m,n,o,p,r,s,t,q,v) {return;}\");}"));
+				list.appendTag(new NBTTagString("var HashMap = Java.type('java.util.HashMap'); var EMPTY_FUNCTION = new Function('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'return;'); function getFunction(name) { var error; var key = 'custom_functions'; try { var fhm = api.getTempdata().get(key); if (fhm instanceof HashMap && fhm.containsKey(name)) { return fhm.get(name); } var dir = api.getLWorldDir().toPath().resolve('scripts').resolve('functions'); var file = dir.resolve('example.json'); if (!file.toFile().exists()) { api.getMethods().saveFile(file.toFile(), 'args=agr0, agr1\\nbody=agr0 += 4.2;\\nreturn agr0 * agr1;'); } file = dir.resolve(name+'.json'); if (dir.toFile().exists()) { if (file.toFile().exists()) { var contex = api.getMethods().loadFile(file.toFile()); if (contex.contains('args=') && contex.contains('body=')) { var i = contex.indexOf('args='); var args = contex.substring(i + 5, contex.indexOf('\\n', i)).replace('\t', '').replace(' ', '').split(','); i = contex.indexOf('body='); var body = contex.substring(i + 5); var func = new Function(args, body); if (!(fhm instanceof HashMap)) { fhm = new HashMap(); } fhm.put(name, func); api.getTempdata().put(key, fhm); return func; } } } } catch (e) { error = e; } if (error) { log(error); } else { log('Error: Custom function \"' + name + '\" - not found'); } return EMPTY_FUNCTION; }"));
 				constants.setTag("Constants", new NBTTagCompound());
 				constants.setTag("Functions", new NBTTagCompound());
 				constants.getCompoundTag("Constants").setTag("ecmascript", nbtC);
@@ -502,9 +504,8 @@ public class ScriptController {
 				try {
 					Util.instance.saveFile(file, constants.copy());
 					isLoad = false;
-				} catch (Exception e) {
-					LogWriter.except(e);
 				}
+				catch (Exception e) { LogWriter.except(e); }
 			}
 			ScriptContainer.reloadConstants();
 		} catch (Exception e) {
@@ -584,7 +585,7 @@ public class ScriptController {
 					code = "var hi = \"Hello\";" + ((char) 10) +
 							"function init(ev) {" + ((char) 10) +
 							((char) 9) + "var id = 0;" + ((char) 10) +
-							((char) 9) + "ev.API.getIWorld(0).broadcast(hi  + \" world ID:\" + id);" + ((char) 10) +
+							((char) 9) + "ev.API.getIWorld(id).broadcast(hi  + \" world ID:\" + id);" + ((char) 10) +
 							"}" + ((char) 10);
 					break;
 				}
@@ -600,7 +601,7 @@ public class ScriptController {
 					code = "binding.setVariable('hi', 'Hello')" + ((char) 10) +
 							"void init(def ev) {" + ((char) 10) +
 							((char) 9) + "def id = 0" + ((char) 10) +
-							((char) 9) + "ev.API.getIWorld(0).broadcast(hi + \" world ID:\" + id)" + ((char) 10) +
+							((char) 9) + "ev.API.getIWorld(id).broadcast(hi + \" world ID:\" + id)" + ((char) 10) +
 							"}" + ((char) 10);
 					break;
 				}
@@ -608,7 +609,7 @@ public class ScriptController {
 					code = "hi = \"Hello\"" + ((char) 10) +
 							"def init(ev)" + ((char) 10) +
 							((char) 9) + "id = 0" + ((char) 10) +
-							((char) 9) + "ev.API.getIWorld(0).broadcast(hi + \" world ID:\" + id.to_s)" + ((char) 10) +
+							((char) 9) + "ev.API.getIWorld(id).broadcast(hi + \" world ID:\" + id.to_s)" + ((char) 10) +
 							"end" + ((char) 10);
 					break;
 				}
@@ -616,14 +617,14 @@ public class ScriptController {
 					code = "hi = \"Hello\"" + ((char) 10) +
 							"def init(ev):" + ((char) 10) +
 							((char) 9) + "id = 0" + ((char) 10) +
-							((char) 9) + "ev.API.getIWorld(0).broadcast(hi + \" world ID:\" + str(id))" + ((char) 10);
+							((char) 9) + "ev.API.getIWorld(id).broadcast(hi + \" world ID:\" + str(id))" + ((char) 10);
 					break;
 				}
 				case "luaj": {
 					code = "local hi = \"Hello\"" + ((char) 10) +
 							"function init(ev)" + ((char) 10) +
 							((char) 9) + "local id = 0" + ((char) 10) +
-							((char) 9) + "ev.API:getIWorld(0):broadcast(hi .. \" world ID:\" .. tostring(id))" + ((char) 10) +
+							((char) 9) + "ev.API:getIWorld(id):broadcast(hi .. \" world ID:\" .. tostring(id))" + ((char) 10) +
 							"end" + ((char) 10);
 					break;
 				}
@@ -645,124 +646,100 @@ public class ScriptController {
 		npcsScripts.clear();
 		File file = npcsScriptsFile();
 		try {
-			if (!file.exists()) { return false; }
-			npcsScripts.readFromNBT(NBTJsonUtil.LoadFile(file));
-		} catch (Exception e) {
-			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			return false;
+			if (file.exists()) {
+				npcsScripts.load(NBTJsonUtil.LoadFile(file));
+				return true;
+			}
 		}
-		return true;
+		catch (Exception e) { LogWriter.error("Error loading: " + file.getAbsolutePath(), e); }
+		return false;
 	}
 	
 	public boolean loadForgeScripts() {
 		forgeScripts.clear();
 		File file = forgeScriptsFile();
 		try {
-			if (!file.exists()) {
-				return false;
+			if (file.exists()) {
+				forgeScripts.load(NBTJsonUtil.LoadFile(file));
+				return true;
 			}
-			forgeScripts.readFromNBT(NBTJsonUtil.LoadFile(file));
-		} catch (Exception e) {
-			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			return false;
 		}
-		return true;
+		catch (Exception e) { LogWriter.error("Error loading: " + file.getAbsolutePath(), e); }
+		return false;
 	}
 
 	public void loadItemTextures() {
 		ItemScripted.Resources.clear();
 		File file = new File(dir, "item_models.dat");
-		if (!file.exists()) {
-			return;
-		}
-		try {
-			NBTTagCompound compound = NBTJsonUtil.LoadFile(file);
-			for (NBTBase nbt : compound.getTagList("Models", 10)) {
-				ItemScripted.Resources.put(((NBTTagCompound) nbt).getInteger("meta"), ((NBTTagCompound) nbt).getString("model"));
+		if (file.exists()) {
+			try {
+				NBTTagCompound compound = NBTJsonUtil.LoadFile(file);
+				for (NBTBase nbt : compound.getTagList("Models", 10)) {
+					ItemScripted.Resources.put(((NBTTagCompound) nbt).getInteger("meta"), ((NBTTagCompound) nbt).getString("model"));
+				}
+				CustomNpcs.proxy.reloadItemTextures();
 			}
-			CustomNpcs.proxy.reloadItemTextures();
-		} catch (Exception e) { LogWriter.error("File: \""+file+"\" error:", e); }
+			catch (Exception e) { LogWriter.error("File: \""+file+"\" error:", e); }
+		}
 	}
 
 	public boolean loadPlayerScripts() {
 		playerScripts.clear();
 		File file = playerScriptsFile();
 		try {
-			if (!file.exists()) {
-				return false;
+			if (file.exists()) {
+				playerScripts.load(NBTJsonUtil.LoadFile(file));
+				return true;
 			}
-			playerScripts.readFromNBT(NBTJsonUtil.LoadFile(file));
-		} catch (Exception e) {
-			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			return false;
 		}
-		return true;
+		catch (Exception e) { LogWriter.error("Error loading: " + file.getAbsolutePath(), e); }
+		return false;
 	}
 
 	public boolean loadPotionScripts() {
 		potionScripts.clear();
 		File file = potionScriptsFile();
 		try {
-			if (!file.exists()) {
-				return false;
+			if (file.exists()) {
+				potionScripts.load(NBTJsonUtil.LoadFile(file));
+				return true;
 			}
-			potionScripts.readFromNBT(NBTJsonUtil.LoadFile(file));
-		} catch (Exception e) {
-			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			return false;
 		}
-		return true;
+		catch (Exception e) { LogWriter.error("Error loading: " + file.getAbsolutePath(), e); }
+		return false;
 	}
 
 	public boolean loadStoredData() {
 		compound = new NBTTagCompound();
 		File file = worldDataFile();
-		boolean isLoad = true;
 		try {
 			if (file.exists()) {
 				compound = NBTJsonUtil.LoadFile(file);
-				if (!compound.getKeySet().isEmpty() && !compound.hasKey("IsMap", 3)) {
-					NBTTagCompound oldData = compound.copy();
-					NBTTagCompound compound = new NBTTagCompound();
-					compound.setInteger("IsMap", 1);
-					NBTTagCompound content = new NBTTagCompound();
-					int i = 0;
-					for (String key : oldData.getKeySet()) {
-						NBTTagCompound nbt = new NBTTagCompound();
-						nbt.setTag("K", new NBTTagString(key));
-						nbt.setTag("V", oldData.getTag(key));
-						content.setTag("Slot_"+i, nbt);
-						i++;
-					}
-					compound.setTag("Content", content);
-					ScriptController.Instance.compound = compound;
-				}
 				WrapperNpcAPI.resetScriptControllerData(compound);
 				shouldSave = false;
-			} else {
-				isLoad = false;
+				return true;
 			}
-		} catch (Exception e) {
-			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			return false;
 		}
-		return isLoad;
+		catch (Exception var3) { LogWriter.error("Error loading: " + file.getAbsolutePath(), var3); }
+		return false;
 	}
 
 	public void loadDir(File dir, String name, String ext, boolean encrypt, boolean isClient) {
-		for (File file : Objects.requireNonNull(dir.listFiles())) {
-			String filename = name + file.getName().toLowerCase();
-			if (file.isDirectory()) {
-				loadDir(file, filename + "/", ext, encrypt, isClient);
-			} else if (filename.endsWith(ext)) {
-				if (encrypt) {
-					if (!isClient) { encrypts.put(filename, file); }
+		File[] files = dir.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				String filename = name + file.getName().toLowerCase();
+				if (file.isDirectory()) { loadDir(file, filename + "/", ext, encrypt, isClient); }
+				else if (filename.endsWith(ext)) {
+					if (encrypt) {
+						if (!isClient) { encrypts.put(filename, file); }
+					}
+					else {
+						String code = Util.instance.loadFile(file);
+						if (isClient) { clients.put(filename, code); } else { scripts.put(filename, code); }
+					}
+					if (isClient) { clientSizes.put(filename, file.length()); } else { sizes.put(filename, file.length()); }
 				}
-				else {
-					String code = Util.instance.loadFile(file);
-					if (isClient) { clients.put(filename, code); } else { scripts.put(filename, code); }
-				}
-				if (isClient) { clientSizes.put(filename, file.length()); } else { sizes.put(filename, file.length()); }
 			}
 		}
 	}
@@ -814,32 +791,60 @@ public class ScriptController {
 
 	@SubscribeEvent
 	public void saveWorld(WorldEvent.Save event) {
-		if (!shouldSave || event.getWorld().isRemote || event.getWorld() != Objects.requireNonNull(event.getWorld().getMinecraftServer()).worlds[0]) {
-			return;
-		}
-		try {
-			Util.instance.saveFile(worldDataFile(), compound.copy());
-		} catch (Exception e) {
-			LogWriter.except(e);
-		}
-		try {
-			Util.instance.saveFile(constantScriptsFile(), constants.copy());
-		} catch (Exception e) {
-			LogWriter.except(e);
-		}
+		if (!shouldSave || event.getWorld().isRemote || event.getWorld() != Objects.requireNonNull(event.getWorld().getMinecraftServer()).worlds[0]) { return; }
+		CustomNpcs.debugData.start("Mod");
+		try { NBTJsonUtil.SaveFile(worldDataFile(), compound.copy()); }
+		catch (Exception e) { LogWriter.except(e); }
+		try { NBTJsonUtil.SaveFile(constantScriptsFile(), constants.copy()); }
+		catch (Exception e) { LogWriter.except(e); }
 		shouldSave = false;
+		CustomNpcs.debugData.end("Mod");
 	}
 
 	public void sendClientTo(EntityPlayerMP player) {
+		if (!isLoad) { loadCategories(); }
 		NBTTagCompound compound = new NBTTagCompound();
-		clientScripts.writeToNBT(compound);
-		Server.sendData(player, EnumPacketClient.SCRIPT_CLIENT, compound);
+		clientScripts.save(compound);
+		compound.setTag("Languages", ScriptController.Instance.nbtLanguages(true));
+		compound.setString("DirPath", ScriptController.Instance.dir.getAbsolutePath());
+		// collect and clear scripts and consoles
+		Map<Integer, String> mapScripts = new TreeMap<>();
+		Map<Integer, Map<Long, String>> mapConsoles = new TreeMap<>();
+		NBTTagList scripts = compound.getTagList("Scripts", 10);
+		for (int i = 0; i < scripts.tagCount(); i++) {
+			mapScripts.put(i, scripts.getCompoundTagAt(i).getString("Script"));
+			scripts.getCompoundTagAt(i).setString("Script", "");
+			NBTTagList consoles = scripts.getCompoundTagAt(i).getTagList("Console", 10);
+			for (int j = 0; j < consoles.tagCount(); j++) {
+				if (!mapConsoles.containsKey(i)) { mapConsoles.put(i, new LinkedHashMap<>()); }
+				mapConsoles.get(i).put(consoles.getCompoundTagAt(j).getLong("Long"), consoles.getCompoundTagAt(j).getString("String"));
+				consoles.getCompoundTagAt(j).setString("String", "");
+			}
+		}
+		Packets.send(player, new PacketClientScripts(compound));
+		for (int tab : mapScripts.keySet()) {
+			List<String> scriptStrings = Util.instance.getStringData(mapScripts.get(tab));
+			int i = 0;
+			for (String part : scriptStrings) {
+				Packets.send(player, new PacketScriptText(tab, i++, scriptStrings.size(), part, true));
+			}
+		}
+		for (int tab : mapConsoles.keySet()) {
+			for (long time : mapConsoles.get(tab).keySet()) {
+				List<String> consoleStrings = Util.instance.getStringData(mapConsoles.get(tab).get(time));
+				int i = 0;
+				for (String part : consoleStrings) {
+					Packets.send(player, new PacketScriptConsole(tab, time, i++, consoleStrings.size(), part, true));
+				}
+			}
+		}
+
 		NBTTagList list = new NBTTagList();
 		for (String key : clients.keySet()) {
-			if (!CommonProxy.downloadableFiles.containsKey(key)) {
-				CommonProxy.downloadableFiles.put(key, new TempFile(key, 0, 1, clientSizes.get(key)));
+			if (!downloadableFiles.containsKey(key)) {
+				downloadableFiles.put(key, new TempFile(key, 0, 1, clientSizes.get(key)));
 			}
-			TempFile file = CommonProxy.downloadableFiles.get(key);
+			TempFile file = downloadableFiles.get(key);
 			if (!file.isLoad()) {
 				file.size = -1;
 				file.saveType = 1;
@@ -847,32 +852,24 @@ public class ScriptController {
 			}
 			list.appendTag(file.getTitle());
 		}
-		compound = new NBTTagCompound();
-		compound.setTag("FileList", list);
-		Server.sendData(player, EnumPacketClient.SEND_FILE_LIST, compound);
+		NBTTagCompound fileList = new NBTTagCompound();
+		fileList.setTag("FileList", list);
+		Packets.send(player, new PacketSendFileList(fileList));
 	}
 
-	public void setClientScripts(NBTTagCompound compound) {
-		clientScripts.readFromNBT(compound);
-		File file = clientScriptsFile();
-		try {
-			compound.removeTag("WorldName");
-			Util.instance.saveFile(file, compound);
-			clientScripts.lastInited = -1L;
-		} catch (Exception e) { LogWriter.error(e); }
-	}
+	public void setClientScripts(NBTTagCompound compound) { clientScripts.load(compound); }
 
 	public void setNPCsScripts(NBTTagCompound compound) {
-		npcsScripts.readFromNBT(compound);
+		npcsScripts.load(compound);
 		File file = npcsScriptsFile();
 		try {
-			Util.instance.saveFile(file, compound);
+			NBTJsonUtil.SaveFile(file, compound.copy());
 			npcsScripts.lastInited = -1L;
 		} catch (Exception e) { LogWriter.error(e); }
 	}
 	
 	public void setForgeScripts(NBTTagCompound compound) {
-		forgeScripts.readFromNBT(compound);
+		forgeScripts.load(compound);
 		File file = forgeScriptsFile();
 		try {
 			Util.instance.saveFile(file, compound);
@@ -881,12 +878,12 @@ public class ScriptController {
 	}
 
 	public void setPlayerScripts(NBTTagCompound compound) {
-		playerScripts.readFromNBT(compound);
+		playerScripts.load(compound);
 		if (CustomNpcs.Server != null) {
 			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
 				PlayerData data = PlayerData.get(player);
 				if (data != null) {
-					data.scriptData.readFromNBT(compound);
+					data.scriptData.load(compound);
 				}
 			}
 		}
@@ -897,7 +894,7 @@ public class ScriptController {
 	}
 
 	public void setPotionScripts(NBTTagCompound compound) {
-		potionScripts.readFromNBT(compound);
+		potionScripts.load(compound);
 		File file = potionScriptsFile();
 		try {
 			Util.instance.saveFile(file, compound);
@@ -905,6 +902,7 @@ public class ScriptController {
 		} catch (Exception e) { LogWriter.error(e); }
 	}
 
+	// New from Unofficial (BetaZavr)
 	private void loadAgreements() {
 		agreements.clear();
 		LogWriter.error("Load player script agreements");
@@ -968,27 +966,36 @@ public class ScriptController {
 		if (bo) { saveAgreements(); }
 	}
 
-	public void tryAddErrored(ScriptContainer scriptContainer) {
-		if (errors.contains(scriptContainer)) { return; }
-		errors.add(scriptContainer);
-		if (CustomNpcs.Server == null) { return; }
-		PlayerList pList = CustomNpcs.Server.getPlayerList();
-		ITextComponent message = new TextComponentTranslation("command.script.logs.view");
-		for (EntityPlayer entityplayer : pList.getPlayers()) {
-			if (!opPlayers.contains(entityplayer) && entityplayer.sendCommandFeedback() && pList.canSendCommands(entityplayer.getGameProfile())) {
-				entityplayer.sendMessage(message);
-				opPlayers.add(entityplayer);
+	public void tryAddErrored(ScriptContainer container) {
+		if (container != null && container.hasHandler() && !container.console.isEmpty() && !errors.contains(container)) {
+			boolean found = false;
+			for (ScriptContainer cont : errors) {
+				if (cont.getHandler().equals(container.getHandler())) { found = true; break; }
+			}
+			if (!found) {
+				errors.add(container);
+				if (CustomNpcs.Server != null) {
+					CommonUtil.NotifyOPs(Component.translatable("command.script.logs.view"), true);
+				}
 			}
 		}
 	}
 
-	public void tryRemoveErrored(ScriptContainer scriptContainer) {
-		errors.remove(scriptContainer);
+	public void tryRemoveErrored(ScriptContainer container) {
+		boolean found = false;
+		for (ScriptContainer cont : errors) {
+			if (cont.getHandler().equals(container.getHandler())) {
+				found = true;
+				errors.remove(cont);
+				break;
+			}
+		}
+		if (!found) { errors.remove(container); }
 	}
 
 	public List<ScriptContainer> getErrored() {
 		List<ScriptContainer> list = new ArrayList<>();
-		for (ScriptContainer container : new ArrayList<>(errors)) {
+		for (ScriptContainer container : errors) {
 			if (container == null ||
 					!container.hasHandler() ||
 					container.console.isEmpty()) { continue; }
@@ -1007,8 +1014,7 @@ public class ScriptController {
 		});
 	}
 
-	@SuppressWarnings("all")
-	public ITextComponent getElements(int type) {
+	public Component getElements(int type) {
 		if (!elements.containsKey(type)) { return null; }
 		List<String> list = new ArrayList<>();
 		List<Object> objs = new ArrayList<>(elements.get(type));
@@ -1054,7 +1060,9 @@ public class ScriptController {
 			if (i < list.size() - 1) { positions.append(", "); }
 			i++;
 		}
-		return new TextComponentString(positions.toString());
+		return Component.literal(positions.toString());
 	}
+
+	public static void reloadConstants() { ScriptContainer.Data.remove("dump"); }
 
 }

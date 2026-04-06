@@ -4,34 +4,24 @@ import net.minecraft.entity.ai.EntityAIBase;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.entity.EntityNPCInterface;
 
+import javax.annotation.Nonnull;
+
 public class EntityAIRole extends EntityAIBase {
 
-	private final EntityNPCInterface npc;
+	private final @Nonnull EntityNPCInterface npc;
 
-	public EntityAIRole(EntityNPCInterface npc) {
-		this.npc = npc;
-	}
+	public EntityAIRole(@Nonnull EntityNPCInterface npcIn) { npc = npcIn; }
 
-	public boolean shouldContinueExecuting() {
-		return !this.npc.isKilled() && this.npc.advanced.roleInterface != null
-				&& this.npc.advanced.roleInterface.aiContinueExecute();
-	}
+	@Override
+	public boolean shouldContinueExecuting() { return !npc.isKilled() && npc.role != null && npc.role.aiContinueExecute(); }
 
-	public boolean shouldExecute() {
-		return !this.npc.isKilled() && this.npc.advanced.roleInterface != null
-				&& this.npc.advanced.roleInterface.aiShouldExecute();
-	}
+	@Override
+	public boolean shouldExecute() { return !npc.isKilled() && npc.role != null && npc.role.aiShouldExecute(); }
 
-	public void startExecuting() {
-		this.npc.advanced.roleInterface.aiStartExecuting();
-	}
+	@Override
+	public void startExecuting() { npc.role.aiStartExecuting(); }
 
-	public void updateTask() {
-		CustomNpcs.debugData.start(npc);
-		if (this.npc.advanced.roleInterface != null) {
-			this.npc.advanced.roleInterface.aiUpdateTask();
-		}
-		CustomNpcs.debugData.end(npc);
-	}
+	@Override
+	public void updateTask() { if (npc.role != null) { npc.role.aiUpdateTask(); } }
 
 }

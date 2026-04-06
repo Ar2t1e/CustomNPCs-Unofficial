@@ -9,16 +9,14 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemScriptedWrapper;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
 import javax.annotation.Nonnull;
 
-public class ItemScripted extends Item implements IPermission {
+public class ItemScripted extends Item {
 
 	public static Map<Integer, String> Resources = new HashMap<>();
 
@@ -30,7 +28,7 @@ public class ItemScripted extends Item implements IPermission {
 		this.setRegistryName(CustomNpcs.MODID, "scripted_item");
 		this.setUnlocalizedName("scripted_item");
 		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 		this.setHasSubtypes(true);
 	}
 
@@ -64,10 +62,6 @@ public class ItemScripted extends Item implements IPermission {
 
 	public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull EntityLivingBase target, @Nonnull EntityLivingBase attacker) {
 		return true;
-	}
-
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.ScriptItemDataGet || e == EnumPacketServer.ScriptItemDataSave;
 	}
 
 	public boolean showDurabilityBar(@Nonnull ItemStack stack) {

@@ -1,5 +1,7 @@
 package noppes.npcs.api;
 
+import noppes.npcs.api.interfaces.ParamName;
+
 @SuppressWarnings("all")
 public interface IScoreboardTeam {
 

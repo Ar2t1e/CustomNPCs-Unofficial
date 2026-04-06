@@ -1,51 +1,53 @@
 package noppes.npcs.client.gui;
 
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.gui.util.*;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
-
-public class SubGuiNpcCommand extends SubGuiInterface implements ITextfieldListener {
+public class SubGuiNpcCommand extends GuiBasic implements ITextfieldListener {
 
 	public String command;
 
-	public SubGuiNpcCommand(String commandText) {
-		super(0);
+	public SubGuiNpcCommand(String commandIn) {
+		super();
+		command = commandIn;
 		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 216;
-		closeOnEsc = true;
 
-		command = commandText;
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.id == 66) { onClosed(); }
+		imageWidth = 256;
+		imageHeight = 216;
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
+		int x = guiLeft + 4;
+		int y = guiTop + 84;
 		// text
-		addTextField(new GuiNpcTextField(4, this, guiLeft + 4, guiTop + 84, 248, 20, command)
-				.setHoverText(new TextComponentTranslation("command.hover.text", ((char) 167) + "6" + Short.MAX_VALUE)));
-		getTextField(4).setMaxStringLength(Short.MAX_VALUE);
+		addTextField(4, x, y, 248, 20, command)
+				.setHoverTexts(Component.translatable("command.hover.text", ((char) 167) + "6" + Short.MAX_VALUE))
+				.setMaxStringLength(Short.MAX_VALUE);
 		// extra info
-		addLabel(new GuiNpcLabel(4, "advMode.command", guiLeft + 4, guiTop + 110));
-		addLabel(new GuiNpcLabel(5, "advMode.nearestPlayer", guiLeft + 4, guiTop + 125));
-		addLabel(new GuiNpcLabel(6, "advMode.randomPlayer", guiLeft + 4, guiTop + 140));
-		addLabel(new GuiNpcLabel(7, "advMode.allPlayers", guiLeft + 4, guiTop + 155));
-		addLabel(new GuiNpcLabel(8, "dialog.commandoptionplayer", guiLeft + 4, guiTop + 170));
+		addLabel(4, x, y += 26, "advMode.command").setSize(248, 10);
+		addLabel(5, x, y += 15, "advMode.nearestPlayer").setSize(248, 10);
+		addLabel(6, x, y += 15, "advMode.randomPlayer").setSize(248, 10);
+		addLabel(7, x, y += 15, "advMode.allPlayers").setSize(248, 10);
+		addLabel(8, x, y + 15, "dialog.commandoptionplayer").setSize(248, 10);
 		// exit
-		addButton(new GuiNpcButton(66, guiLeft + 82, guiTop + 190, 98, 20, "gui.done")
-				.setHoverText("hover.back"));
+		addButton(66, guiLeft + 82, guiTop + 190, "gui.done")
+				.setSize(98, 20)
+				.setHoverTexts("hover.back");
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		if (textfield.getID() == 4) { command = textfield.getText(); }
+	public void buttonEvent(GuiButtonNop button) {
+		if (button.id == 66) { onClose(); }
+	}
+
+	@Override
+	public void unFocused(GuiTextFieldNop textfield) {
+		if (textfield.id == 4) { command = textfield.getValue(); }
 	}
 
 }

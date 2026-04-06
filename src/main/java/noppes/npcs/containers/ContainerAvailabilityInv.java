@@ -5,7 +5,6 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.CommonProxy;
-import noppes.npcs.NpcMiscInventory;
 import noppes.npcs.controllers.data.Availability;
 
 import javax.annotation.Nonnull;

@@ -18,7 +18,7 @@ import noppes.npcs.constants.EnumParts;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.items.CustomArmor;
+import noppes.npcs.items.custom.CustomArmor;
 
 import javax.annotation.Nonnull;
 

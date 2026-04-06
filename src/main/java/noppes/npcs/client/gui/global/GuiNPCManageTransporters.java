@@ -5,98 +5,176 @@ import java.util.*;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.NoppesUtil;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.common.DimensionManager;
+import noppes.npcs.client.gui.SubGuiNpcTransportCategoryEdit;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketTeleportTo;
+import noppes.npcs.packets.server.SPacketTransportCategoriesGet;
+import noppes.npcs.packets.server.SPacketTransportCategoryRemove;
+import noppes.npcs.packets.server.SPacketTransportCategorySave;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.client.gui.SubGuiEditText;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.containers.ContainerNPCTransportSetup;
+import noppes.npcs.containers.ContainerNPCTransports;
 import noppes.npcs.controllers.TransportController;
 import noppes.npcs.controllers.data.TransportCategory;
 import noppes.npcs.controllers.data.TransportLocation;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.Util;
 
-import javax.annotation.Nonnull;
-
-public class GuiNPCManageTransporters extends GuiContainerNPCInterface2
+// Changed by Unofficial (BetaZavr)
+public class GuiNpcManageTransporters extends GuiContainerNPCInterface2<ContainerNPCTransports>
 		implements IGuiData, ICustomScrollListener, ITextfieldListener {
 
-	protected final ContainerNPCTransportSetup container;
-	protected final Map<String, Integer> dataCat = new TreeMap<>();
-	protected final Map<String, Integer> dataLoc = new TreeMap<>();
-	protected GuiCustomScroll categories, locations;
-	protected String catSel = "";
-	protected String locSel = "";
-	protected boolean wait = true;
+	protected final ContainerNPCTransports container;
+	protected final Map<Component, TransportCategory> dataCat = new LinkedHashMap<>();
+	protected final Map<Component, TransportLocation> dataLoc = new LinkedHashMap<>();
+	protected GuiCustomScrollNop categories;
+	protected GuiCustomScrollNop locations;
 
-	public GuiNPCManageTransporters(EntityNPCInterface npc, ContainerNPCTransportSetup containerIn) {
-		super(npc, containerIn);
+	public GuiNpcManageTransporters(EntityNPCInterface npc, ContainerNPCTransports containerIn) {
+		super(npc, containerIn, Component.empty());
 		setBackground("tradersetup.png");
-		closeOnEsc = true;
 		ySize = 200;
-		parentGui = EnumGuiType.MainMenuGlobal;
 
+		backGui = EnumGuiType.MainMenuGlobal;
 		container = containerIn;
-		Client.sendData(EnumPacketServer.TransportCategoriesGet);
-		if (TransportController.getInstance().categories.containsKey(container.catId)) {
-			TransportCategory category = TransportController.getInstance().categories.get(container.catId);
-			catSel = ((char) 167) + "7ID: " + container.catId + " \"" + ((char) 167) + "r" + (new TextComponentTranslation(category.title).getFormattedText()) + ((char) 167) + "7\"";
-			dataCat.put(catSel, container.catId);
+		Packets.sendServer(new SPacketTransportCategoriesGet());
+	}
+
+	@Override
+	public void initGui() {
+		super.initGui();
+		if (categories == null) { categories = addScroll(0).setSize(100, 78); }
+		int x = guiLeft + 5;
+		int y = guiTop + 14;
+		add(categories.setPos(x, y)
+				.setUnsortedList(new ArrayList<>(dataCat.keySet())));
+		for (Map.Entry<Component, TransportCategory> entry : dataCat.entrySet()) {
+			if (entry.getValue().id == container.location.category.id) { categories.setSelected(entry.getKey()); }
 		}
-		if (container.location.id > -1) {
-			locSel = ((char) 167) + "7ID: " + container.location.id + " \"" + ((char) 167) + "r" + (new TextComponentTranslation(container.location.name).getFormattedText()) + ((char) 167) + "7\"";
+
+		addLabel(0, guiLeft + 5, y - 10, "gui.categories");
+		y += categories.height + 24;
+		addButton(0, x, y, "gui.add")
+				.setSize(49, 16)
+				.setHoverTexts("manager.hover.transport.add");
+
+		addButton(1, x + 51, y, "gui.remove")
+				.setSize(49, 16)
+				.setIsEnabled(categories.hasSelected())
+				.setHoverTexts(Component.translatable("manager.hover.transport.del", "\"" + categories.getSelected() + "\""));
+
+		if (locations == null) { locations = addScroll(1).setSize(100, 78); }
+		x += 102;
+		y = guiTop + 14;
+		add(locations.setPos(x, y)
+				.setUnsortedList(new ArrayList<>(dataLoc.keySet())));
+		for (Map.Entry<Component, TransportLocation> entry : dataLoc.entrySet()) {
+			if (entry.getValue().id == container.location.id) { locations.setSelected(entry.getKey()); }
+		}
+		addLabel(1, guiLeft + 113, y - 10, "gui.location");
+		y += locations.height + 24;
+		addButton(2, x, y, "transporter.travel")
+				.setSize(100, 16)
+				.setIsEnabled(locations.hasSelected())
+				.setHoverTexts("hover.teleport");
+
+		if (categories.hasSelected()) {
+			y = guiTop + 192;
+			addLabel(2, guiLeft + 216, y - 11, Component.translatable("parameter.ikeysetting.catname").append(":"))
+					.setSize(200, 10);
+			addTextField(0, guiLeft + 214, y, 200, 18, container.location.category.title)
+					.setHoverTexts("manager.hover.transport.cat.name");
+			if (locations.hasSelected()) {
+				x = guiLeft + 214;
+				y = guiTop + 8;
+				addLabel(3, x + 2, y, "market.barter")
+						.setSize(53, 10);
+				addLabel(4, x + 2, (y += 81) - 11, "market.currency")
+						.setSize(53, 10);
+				addTextField(1, x, y, 54, 18, container.location.money)
+						.setMinMaxDefault(0, Integer.MAX_VALUE, (int) container.location.money)
+						.setHoverTexts("manager.hover.transport.money");
+				addLabel(5, x + 2, (y += 34) - 11, Component.translatable("parameter.ikeysetting.name").append(":"))
+						.setSize(200, 10);
+				addTextField(2, x, y, 200, 18, container.location.name)
+						.setHoverTexts("manager.hover.transport.loc.name");
+				addLabel(6, x + 2, (y += 34) - 11, Component.literal("UUID NPC").append(":"))
+						.setSize(200, 10);
+				addTextField(3, x, y, 200, 18, container.location.npc == null ? "" : container.location.npc.toString())
+						.setHoverTexts("parameter.entity.uuid");
+				x += 60;
+				y = guiTop + 20;
+				addLabel(7, x + 2, y - 12, Component.translatable("parameter.world").append(":"))
+						.setSize(107, 10);
+				addLabel(8, x + 2, y + 6, "ID:")
+						.setSize(20, 10);
+				addTextField(4, x + 17, y, 123, 18, container.location.dimension)
+						.setResourceLocationType(1)
+						.setHoverTexts("parameter.dimension.id");
+				addLabel(9, x + 2, (y += 34) - 11, Component.translatable("parameter.position").append(" (XYZ):"))
+						.setSize(137, 10);
+				String idt = "ID:" + container.location.id;
+				addLabel(10, guiLeft + xSize - font.getStringWidth(idt) - 4, guiTop + 8, idt)
+						.setSize(30, 10);
+				for (int i = 0; i < 3; i++) {
+					int v = i == 0 ? container.location.pos.getX()
+							: i == 1 ? container.location.pos.getY() : container.location.pos.getZ();
+					addTextField(5 + i, x + 1 + i * 48, y, 44, 18, v)
+							.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, v)
+							.setHoverTexts("parameter.pos" + (i == 0 ? "x" : i == 1 ? "y" : "z"));
+				}
+				y += 34;
+				addLabel(11, x + 2, y - 11, Component.translatable("gui.type").append(":"));
+				addButton(3, x, y, false, container.location.type, "transporter.discovered", "transporter.start", "transporter.interaction")
+						.setSize(140, 20)
+						.setHoverTexts("manager.hover.transport.type");
+			}
 		}
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		TransportCategory cat = null;
-		TransportLocation loc = container.location;
-		if (!catSel.isEmpty()) { cat = TransportController.getInstance().categories.get(dataCat.get(catSel)); }
-		switch (button.getID()) {
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 0: {
-				setSubGui(new SubGuiEditText(0, Util.instance.deleteColor(new TextComponentTranslation("gui.new").getFormattedText())));
+				setSubGui(new SubGuiEditText(0, Util.instance.deleteColor(Component.translatable("gui.new").getString())));
 				break;
 			} // add cat
-			case 1: { // del cat
-				if (cat == null) {
-					return;
-				}
-				Client.sendData(EnumPacketServer.TransportCategoryRemove, cat.id);
+			case 1: {
+				if (container.location.category != null) { Packets.sendServer(new SPacketTransportCategoryRemove(container.location.category.id)); }
 				break;
-			}
-			case 2: { // tp
-				transfer(loc);
+			} // del cat
+			case 2: {
+				transfer(container.location);
 				break;
-			}
+			} // tp
 			case 3: {
-				if (loc == null) {
-					return;
-				}
-				loc.type = button.getValue();
+				if (container.location != null) { container.location.type = button.getValue(); }
 				break;
-			}
+			} // location type
 		}
-
 	}
 
 	@Override
-	protected void drawGuiContainerBackgroundLayer(float f, int i, int j) {
-		super.drawGuiContainerBackgroundLayer(f, i, j);
-		if (!locSel.isEmpty()) {
+	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+		super.drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
+		if (locations != null && locations.hasSelected()) {
 			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+			mc.getTextureManager().bindTexture(GuiBasic.RESOURCE_SLOT);
 			for (int slotId = 0; slotId < 10; ++slotId) {
-				int x = guiLeft + container.getSlot(slotId).xPos;
-				int y = guiTop + container.getSlot(slotId).yPos;
-				mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-				drawTexturedModalRect(x - 1, y - 1, 0, 0, 18, 18);
+				drawTexturedModalRect(guiLeft + container.getSlot(slotId).xPos - 1, guiTop + container.getSlot(slotId).yPos - 1,
+						0, 0, 18, 18);
 			}
 		}
 	}
@@ -104,10 +182,10 @@ public class GuiNPCManageTransporters extends GuiContainerNPCInterface2
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
-		if (!wait && !catSel.isEmpty()) {
+		if (categories != null && categories.hasSelected()) {
 			drawHorizontalLine(guiLeft + 212, guiLeft + xSize - 3, guiTop + 178, 0x80000000);
 			drawVerticalLine(guiLeft + 211, guiTop + 4, guiTop + ySize + 12, 0x80000000);
-			if (!locSel.isEmpty()) {
+			if (locations.hasSelected()) {
 				drawVerticalLine(guiLeft + 271, guiTop + 4, guiTop + 111, 0x80000000);
 				drawHorizontalLine(guiLeft + 212, guiLeft + 270, guiTop + 110, 0x80000000);
 			}
@@ -116,249 +194,150 @@ public class GuiNPCManageTransporters extends GuiContainerNPCInterface2
 	}
 
 	@Override
-	public void initGui() {
-		if (wait) { super.initGui(); return; }
-		super.initGui();
-		if (categories == null) { categories = new GuiCustomScroll(this, 0).setSize(100, 96); }
-		int x = guiLeft + 5;
-		int y = guiTop + 14;
-		categories.guiLeft = x;
-		categories.guiTop = y;
-		addScroll(categories.setUnsortedList(new ArrayList<>(dataCat.keySet())));
-		if (!catSel.isEmpty()) { categories.setSelected(catSel); }
-		addLabel(new GuiNpcLabel(0, "gui.categories", guiLeft + 5, y - 10));
-		y += categories.height + 2;
-		GuiNpcButton button = new GuiNpcButton(0, x, y, 49, 20, "gui.add");
-		button.setHoverText("manager.hover.transport.add");
-		addButton(button);
-		button = new GuiNpcButton(1, x + 52, y, 49, 20, "gui.remove");
-		button.setIsEnable(!catSel.isEmpty());
-		button.setHoverText("manager.hover.transport.del", "\"" + catSel + "\"");
-		addButton(button);
-
-		if (locations == null) { locations = new GuiCustomScroll(this, 1).setSize(100, 96); }
-		x += 102;
-		y = guiTop + 14;
-		locations.guiLeft = x;
-		locations.guiTop = y;
-		addScroll(locations.setUnsortedList(new ArrayList<>(dataLoc.keySet())));
-		if (!locSel.isEmpty()) { locations.setSelected(locSel); }
-		addLabel(new GuiNpcLabel(1, "gui.location", guiLeft + 113, y - 10));
-		y += locations.height + 2;
-		button = new GuiNpcButton(2, x, y, 100, 20, "transporter.travel");
-		button.setIsEnable(!locSel.isEmpty());
-		button.setHoverText("hover.teleport");
-		addButton(button);
-
-		if (catSel.isEmpty()) { return; }
-		TransportCategory cat = TransportController.getInstance().categories.get(dataCat.get(catSel));
-		if (cat == null) { return; }
-		y = guiTop + 191;
-		addLabel(new GuiNpcLabel(2, "parameter.ikeysetting.catname", guiLeft + 216, y - 10));
-		GuiNpcTextField textField = new GuiNpcTextField(0, this, guiLeft + 214, y, 132, 20, cat.title);
-		textField.setHoverText("manager.hover.transport.cat.name");
-		addTextField(textField);
-
-		if (locSel.isEmpty()) {
-			return;
-		}
-		x = guiLeft + 214;
-		y = guiTop + 8;
-		addLabel(new GuiNpcLabel(3, "market.barter", x + 2, y));
-		y += 80;
-		addLabel(new GuiNpcLabel(4, "market.currency", x + 2, y - 10));
-		textField = new GuiNpcTextField(1, this, x, y, 50, 20, "" + container.location.money);
-		textField.setMinMaxDefault(0, Integer.MAX_VALUE, (int) container.location.money);
-		textField.setHoverText("manager.hover.transport.money");
-		addTextField(textField);
-
-		y += 34;
-		addLabel(new GuiNpcLabel(5, "parameter.ikeysetting.name", x + 2, y - 10));
-		textField = new GuiNpcTextField(2, this, x, y, 202, 20, container.location.name);
-		textField.setHoverText("manager.hover.transport.loc.name");
-		addTextField(textField);
-		y += 34;
-		addLabel(new GuiNpcLabel(6, "UUID NPC", x + 2, y - 11));
-		textField = new GuiNpcTextField(3, this, x, y, 202, 20, container.location.npc == null ? "" : container.location.npc.toString());
-		textField.setHoverText("parameter.entity.uuid");
-		addTextField(textField);
-
-		x += 60;
-		y = guiTop + 20;
-		addLabel(new GuiNpcLabel(7, "parameter.world", x + 2, y - 11));
-		addLabel(new GuiNpcLabel(8, "ID:", x + 2, y + 6));
-		textField = new GuiNpcTextField(4, this, x + 15, y, 42, 20, "" + container.location.dimension);
-		textField.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, container.location.dimension);
-		textField.setHoverText("parameter.dimension.id");
-		addTextField(textField);
-
-		y += 34;
-		addLabel(new GuiNpcLabel(9, "parameter.position", x + 2, y - 11));
-		String idt = "ID:" + container.location.id;
-		addLabel(new GuiNpcLabel(10, idt, guiLeft + xSize - fontRenderer.getStringWidth(idt) - 4,
-				guiTop + 8));
-		for (int i = 0; i < 3; i++) {
-			int v = i == 0 ? container.location.pos.getX()
-					: i == 1 ? container.location.pos.getY() : container.location.pos.getZ();
-			textField = new GuiNpcTextField(5 + i, this, x + 1 + i * 48, y, 44, 20, "" + v);
-			textField.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, v);
-			textField.setHoverText("parameter.pos" + (i == 0 ? "x" : i == 1 ? "y" : "z"));
-			addTextField(textField);
-		}
-		y += 34;
-		addLabel(new GuiNpcLabel(11, "gui.type", x + 2, y - 11));
-		button = new GuiNpcButton(3, x, y, 137, 20, new String[] { "transporter.discovered", "transporter.start", "transporter.interaction" }, container.location.type);
-		button.setHoverText("manager.hover.transport.type");
-		addButton(button);
-	}
-
-	@Override
 	public void save() {
-		GuiNpcTextField.unfocus();
-		if (catSel.isEmpty() || getTextField(0) == null) { return; }
-		TransportCategory cat = TransportController.getInstance().categories.get(dataCat.get(catSel));
-		if (cat == null) { return; }
-		cat.title = getTextField(0).getText();
-		if (locSel.isEmpty() || getTextField(1) == null) {
-			NBTTagCompound compound = new NBTTagCompound();
-			cat.writeNBT(compound);
-			Client.sendData(EnumPacketServer.TransportCategorySave, compound);
-			return;
+		GuiTextFieldNop.unfocus();
+		if (container.location.id > 0 && container.location.category != null) {
+			Packets.sendServer(new SPacketTransportCategorySave(container.saveTransport(container.location.category)));
 		}
-		container.location.money = getTextField(1).getInteger();
-		container.location.name = getTextField(2).getText();
-		container.location.dimension = getTextField(4).getInteger();
-		container.location.pos = new BlockPos(getTextField(5).getInteger(), getTextField(6).getInteger(), getTextField(7).getInteger());
-		try { container.location.npc = UUID.fromString(getTextField(3).getText()); } catch (Exception e) { LogWriter.error(e); }
-		container.location.type = getButton(3).getValue();
-		Client.sendData(EnumPacketServer.TransportCategorySave, container.saveTransport(cat));
 	}
 
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		switch (scroll.getID()) {
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		switch (scroll.id) {
 			case 0: {
-				if (catSel.equals(scroll.getSelected()) || !dataCat.containsKey(scroll.getSelected())) { return; }
 				save();
-				NoppesUtil.requestOpenGUI(EnumGuiType.ManageTransport, container.location.id, dataCat.get(scroll.getSelected()), 0);
-				wait = true;
-				initGui();
+				if (dataCat.containsKey(scroll.getNormalSelected())) {
+					container.location = new TransportLocation();
+					container.location.category = dataCat.get(scroll.getNormalSelected());
+					container.resetStacks();
+					setGuiData(null);
+					initGui();
+				}
 				break;
 			}
 			case 1: {
-				if (locSel.equals(scroll.getSelected()) || !dataLoc.containsKey(scroll.getSelected()) || !dataCat.containsKey(catSel)) { return; }
 				save();
-				NoppesUtil.requestOpenGUI(EnumGuiType.ManageTransport, dataLoc.get(scroll.getSelected()), dataCat.get(catSel), 0);
-				wait = true;
-				initGui();
+				if (dataLoc.containsKey(scroll.getNormalSelected()) &&
+						dataCat.containsKey(categories.getNormalSelected())) {
+					container.location = dataLoc.get(scroll.getNormalSelected());
+					container.resetStacks();
+					setGuiData(null);
+					initGui();
+				}
 				break;
 			}
 		}
-		setGuiData(null);
 	}
 
 	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) {
-		if (scroll.getID() == 1 && scroll.hasSelected()) { transfer(container.location); }
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+		if (scroll.id == 0 && container.location.category != null) { setSubGui(new SubGuiNpcTransportCategoryEdit(npc, container.location.category)); }
+		if (scroll.id == 1 && scroll.hasSelected()) { transfer(container.location); }
 	}
 
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
-		int selCatId = -1;
-		if (!catSel.isEmpty()) { selCatId = dataCat.get(catSel); }
 		dataCat.clear();
 		dataLoc.clear();
-		for (int catId : TransportController.getInstance().categories.keySet()) {
-			TransportCategory cat = TransportController.getInstance().categories.get(catId);
-			String catKey = ((char) 167) + "7ID: " + catId + " \"" + ((char) 167) + "r"
-					+ (new TextComponentTranslation(cat.title).getFormattedText()) + ((char) 167) + "7\"";
-			dataCat.put(catKey, catId);
-			if (catId == selCatId) {
-				for (int locId : cat.locations.keySet()) {
-					String locKey = ((char) 167) + "7ID: " + locId + " \"" + ((char) 167) + "r"
-							+ (new TextComponentTranslation(cat.locations.get(locId).name).getFormattedText())
-							+ ((char) 167) + "7\"";
-					dataLoc.put(locKey, locId);
+		for (TransportCategory category : TransportController.getInstance().getCategories()) {
+			Component catKey = Component.empty()
+					.append(Component.literal("ID: " + category.id + " \"").withStyle(TextFormatting.GRAY))
+					.append(Component.translatable(category.title).withStyle(TextFormatting.RESET))
+					.append(Component.literal("\"").withStyle(TextFormatting.GRAY));
+			dataCat.put(catKey, category);
+			if (category.id == container.location.category.id) {
+				for (TransportLocation loc : new ArrayList<>(category.locations.values())) {
+					Component locKey = Component.empty()
+							.append(Component.literal("ID: " + loc.id + " \"").withStyle(TextFormatting.GRAY))
+							.append(Component.translatable(loc.name).withStyle(TextFormatting.RESET))
+							.append(Component.literal("\"").withStyle(TextFormatting.GRAY));
+					dataLoc.put(locKey, loc);
 				}
 			}
 		}
-		if (!catSel.isEmpty() && !dataCat.containsKey(catSel)) { catSel = ""; }
-		if (!locSel.isEmpty() && !dataLoc.containsKey(locSel)) { locSel = ""; }
-		wait = false;
 		initGui();
 	}
 
 	@Override
 	public void subGuiClosed(GuiScreen subgui) {
-		if (!(subgui instanceof SubGuiEditText) || ((SubGuiEditText) subgui).text[0].isEmpty()) { return; }
-		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("CategoryId", -1);
-		compound.setString("CategoryTitle", ((SubGuiEditText) subgui).text[0]);
-		Client.sendData(EnumPacketServer.TransportCategorySave, compound);
-	}
-	private void transfer(TransportLocation loc) {
-		if (loc == null) { return; }
-		try { Client.sendData(EnumPacketServer.TeleportTo, loc.dimension, loc.pos.getX(), loc.pos.getY(), loc.pos.getZ()); } catch (Exception e) { LogWriter.error(e); }
+		if (subgui instanceof SubGuiEditText && !((SubGuiEditText) subgui).text[0].isEmpty()) {
+			NBTTagCompound compound = new NBTTagCompound();
+			compound.setInteger("CategoryId", -1);
+			compound.setString("CategoryTitle", ((SubGuiEditText) subgui).text[0]);
+			Packets.sendServer(new SPacketTransportCategorySave(compound));
+		}
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textField) {
-		TransportCategory cat = null;
-		TransportLocation loc = container.location;
-		if (!catSel.isEmpty()) { cat = TransportController.getInstance().categories.get(dataCat.get(catSel)); }
-		switch (textField.getID()) {
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
 			case 0: {
-				if (textField.getText().isEmpty() || cat == null) { return; }
-				cat.title = textField.getText();
+				if (!textField.getValue().isEmpty()) {
+					container.location.category.title = textField.getValue();
+				}
 				break;
 			} // cat name
 			case 1: {
-				if (textField.getText().isEmpty() || loc == null) { return; }
-				loc.money = textField.getInteger();
+				if (!textField.getValue().isEmpty()) {
+					container.location.money = textField.getInteger();
+				}
 				break;
 			} // money
 			case 2: {
-				if (textField.getText().isEmpty() || loc == null) { return; }
-				loc.name = textField.getText();
+				if (!textField.getValue().isEmpty()) {
+					Component sel = locations.getNormalSelected();
+					container.location.name = textField.getValue();
+					locations.replace(sel, Component.empty()
+							.append(Component.literal("ID: " + container.location.id + " \"").withStyle(TextFormatting.GRAY))
+							.append(Component.translatable(container.location.name).withStyle(TextFormatting.RESET))
+							.append(Component.literal("\"").withStyle(TextFormatting.GRAY)));
+				}
 				break;
 			} // loc name
 			case 3: {
-				if (textField.getText().isEmpty() || loc == null) { return; }
-				try { loc.npc = UUID.fromString(textField.getText()); } catch (Exception e) { textField.setText(loc.npc == null ? "" : loc.npc.toString()); }
+				if (!textField.getValue().isEmpty()) {
+					try { container.location.npc = UUID.fromString(textField.getValue()); }
+					catch (Exception e) { textField.setValue(container.location.npc == null ? "" : container.location.npc.toString()); }
+				}
 				break;
 			} // npc uuid
 			case 4: {
-				if (textField.getText().isEmpty() || loc == null) { return; }
-				int dimId = textField.getInteger();
-				if (!TransportController.getInstance().worldIDs.contains(dimId)) {
-					textField.setText("" + loc.dimension);
-					return;
+				if (!textField.getValue().isEmpty()) {
+					int dimId = textField.getInteger();
+					if (!DimensionManager.isDimensionRegistered(dimId)) { textField.setValue(container.location.dimension); }
+					else { container.location.dimension = dimId; }
 				}
-				loc.dimension = dimId;
 				break;
 			} // dim ID
 			case 5: {
-				if (textField.getText().isEmpty() || loc == null) { return; }
-				int y = loc.pos.getY();
-				int z = loc.pos.getZ();
-				loc.pos = new BlockPos(textField.getInteger(), y, z);
+				if (!textField.getValue().isEmpty()) {
+					int y = container.location.pos.getY();
+					int z = container.location.pos.getZ();
+					container.location.pos = new BlockPos(textField.getInteger(), y, z);
+				}
 				break;
 			} // X
 			case 6: {
-				if (textField.getText().isEmpty() || loc == null) { return; }
-				int x = loc.pos.getX();
-				int z = loc.pos.getZ();
-				loc.pos = new BlockPos(x, textField.getInteger(), z);
+				if (!textField.getValue().isEmpty()) {
+					int x = container.location.pos.getX();
+					int z = container.location.pos.getZ();
+					container.location.pos = new BlockPos(x, textField.getInteger(), z);
+				}
 				break;
 			} // Y
 			case 7: {
-				if (textField.getText().isEmpty() || loc == null) { return; }
-				int x = loc.pos.getX();
-				int y = loc.pos.getY();
-				loc.pos = new BlockPos(x, y, textField.getInteger());
+				if (!textField.getValue().isEmpty()) {
+					int x = container.location.pos.getX();
+					int y = container.location.pos.getY();
+					container.location.pos = new BlockPos(x, y, textField.getInteger());
+				}
 				break;
 			} // Z
 		}
+	}
+
+	private void transfer(TransportLocation loc) {
+		if (loc != null) { Packets.sendAll(new SPacketTeleportTo(loc.dimension, loc.pos)); }
 	}
 
 }

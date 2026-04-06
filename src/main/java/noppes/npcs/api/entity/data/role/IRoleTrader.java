@@ -1,6 +1,6 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.INPCRole;
 import noppes.npcs.api.handler.data.IMarcet;
 

@@ -23,12 +23,12 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.handler.capability.IWrapperEntityDataHandler;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityProjectile;
-import noppes.npcs.api.mixin.entity.IEntityMixin;
+import noppes.npcs.mixin.entity.IEntityMixin;
 
 import javax.annotation.Nonnull;
 
@@ -37,26 +37,28 @@ public class WrapperEntityData implements IWrapperEntityDataHandler, ICapability
 	@CapabilityInject(IWrapperEntityDataHandler.class)
 	public static Capability<IWrapperEntityDataHandler> WRAPPER_ENTITY_DATA_CAPABILITY = null;
 	private static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "entitydata");
+	private static final WrapperEntityData backup = new WrapperEntityData(null);
 
 	public static IEntity<?> get(Entity entity) {
 		if (entity == null || entity.world == null) {
 			return null;
 		}
+		if (entity instanceof EntityPlayer && entity.world.isRemote && PlayerWrapper.clientWrapperPlayerData != null) {
+			return PlayerWrapper.clientWrapperPlayerData.base;
+		}
 		WrapperEntityData data = (WrapperEntityData) entity.getCapability(WrapperEntityData.WRAPPER_ENTITY_DATA_CAPABILITY, null);
-		if (entity instanceof EntityPlayer) {
-			String k = (entity.world == null || entity.world.isRemote ? "client_" : "server_") + entity.getUniqueID();
-			if (data != null && !PlayerWrapper.map.containsKey(k)) {
-				PlayerWrapper.map.put(k, data);
-			}
-			if (PlayerWrapper.map.get(k) != null && !PlayerWrapper.map.get(k).equals(data)) {
-				WrapperEntityData.setTempData(PlayerWrapper.map.get(k), data);
-				PlayerWrapper.map.put(k, data);
-			}
+		if (data == null) { data = backup; }
+		if (data == backup) {
+			if (!entity.world.isRemote) { LogWriter.warn("Unable to get EntityData for " + entity); }
+			data = getData(entity);
+		}
+		if (data != null && entity instanceof EntityPlayer  && entity.world.isRemote && PlayerWrapper.clientWrapperPlayerData == null) {
+			PlayerWrapper.clientWrapperPlayerData = data;
 		}
 		if (data == null) {
 			LogWriter.warn("Unable to get EntityData for " + entity);
 			WrapperEntityData ret = WrapperEntityData.getData(entity);
-			CapabilityDispatcher capabilities = ((IEntityMixin) entity).npcs$getCapabilities();
+			CapabilityDispatcher capabilities = ((IEntityMixin) entity).getCapabilities();
 			if (capabilities != null) {
 				// "capabilities" does not want to be converted to the created mixin interface under any circumstances
 				Field fieldCaps = null;
@@ -82,7 +84,7 @@ public class WrapperEntityData implements IWrapperEntityDataHandler, ICapability
 			} else {
 				Map<ResourceLocation, ICapabilityProvider> m = new HashMap<>();
 				m.put(WrapperEntityData.key, ret);
-				((IEntityMixin) entity).npcs$setCapabilities(new CapabilityDispatcher(m, null));
+				((IEntityMixin) entity).setCapabilities(new CapabilityDispatcher(m, null));
 			}
 			return ret.base;
 		}

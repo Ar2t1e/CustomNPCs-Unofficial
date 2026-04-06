@@ -3,7 +3,7 @@ package noppes.npcs.api.handler.data;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.api.IContainer;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.ICustomDrop;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.entity.data.DropSet;

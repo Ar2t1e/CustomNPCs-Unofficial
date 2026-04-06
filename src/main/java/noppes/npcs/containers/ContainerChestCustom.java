@@ -6,7 +6,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.blocks.tiles.CustomTileEntityChest;
+import noppes.npcs.blocks.custom.tiles.CustomTileEntityChest;
 
 import javax.annotation.Nonnull;
 
@@ -15,15 +15,13 @@ public class ContainerChestCustom extends Container {
 	public BlockPos pos;
 	public int height;
 	public EntityPlayer player;
-	public CustomTileEntityChest customChest, trueChest;
+	public CustomTileEntityChest customChest;
 
-	public ContainerChestCustom(InventoryPlayer playerInventory, CustomTileEntityChest customChest,
-			EntityPlayer player) {
+	public ContainerChestCustom(InventoryPlayer playerInventory, CustomTileEntityChest customChest, EntityPlayer player) {
 		this.pos = customChest.getPos();
 		this.player = player;
 		this.customChest = customChest;
-		this.trueChest = customChest;
-		this.trueChest.openInventory(player);
+		this.customChest.openInventory(player);
 		if (player.world.isRemote) {
 			this.customChest = customChest.copy();
 		}
@@ -76,7 +74,7 @@ public class ContainerChestCustom extends Container {
 
 	public void onContainerClosed(@Nonnull EntityPlayer playerIn) {
 		super.onContainerClosed(playerIn);
-		this.trueChest.closeInventory(playerIn);
+		this.customChest.closeInventory(playerIn);
 	}
 
 	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer playerIn, int index) {
@@ -85,12 +83,12 @@ public class ContainerChestCustom extends Container {
 		if (slot != null && slot.getHasStack()) {
 			ItemStack itemstack1 = slot.getStack();
 			itemstack = itemstack1.copy();
-			if (index < this.customChest.inventory.size()) {
-				if (!this.mergeItemStack(itemstack1, this.customChest.inventory.size(), this.inventorySlots.size(),
+			if (index < this.customChest.items.size()) {
+				if (!this.mergeItemStack(itemstack1, this.customChest.items.size(), this.inventorySlots.size(),
 						true)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (!this.mergeItemStack(itemstack1, 0, this.customChest.inventory.size(), false)) {
+			} else if (!this.mergeItemStack(itemstack1, 0, this.customChest.items.size(), false)) {
 				return ItemStack.EMPTY;
 			}
 			if (itemstack1.isEmpty()) {

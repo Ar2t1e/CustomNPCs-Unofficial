@@ -1,6 +1,6 @@
 package noppes.npcs.api.item;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IItemBook extends IItemStack {
 

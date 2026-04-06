@@ -1,5 +1,6 @@
 package noppes.npcs.api.block;
 
+@SuppressWarnings("all")
 public interface IBlockFluidContainer extends IBlock {
 
 	String getFluidName();

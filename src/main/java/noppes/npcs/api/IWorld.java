@@ -6,6 +6,7 @@ import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.IData;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
 @SuppressWarnings("all")
@@ -17,9 +18,9 @@ public interface IWorld {
 
 	IEntity<?> createEntityFromNBT(@ParamName("nbt") INbt nbt);
 
-	IItemStack createItem(@ParamName("name") String name, @ParamName("damage") int damage, @ParamName("size") int size);
+	IItemStack createItem(@ParamName("name") String name, @ParamName("meta") int metadata, @ParamName("size") int size);
 
-	IItemStack createItemFromNbt(@ParamName("texture") INbt nbt);
+	IItemStack createItemFromNbt(@ParamName("nbt") INbt nbt);
 
 	void explode(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
 				 @ParamName("range") float range, @ParamName("fire") boolean fire, @ParamName("grief") boolean grief);
@@ -96,7 +97,7 @@ public interface IWorld {
 
 	@Deprecated
 	void setBlock(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z,
-				  @ParamName("name") String name, @ParamName("name") int meta);
+				  @ParamName("name") String name, @ParamName("meta") int meta);
 
 	void setBlock(@ParamName("pos") IPos pos, @ParamName("name") String name, @ParamName("meta") int meta);
 

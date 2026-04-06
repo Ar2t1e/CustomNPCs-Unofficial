@@ -14,9 +14,12 @@ import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.entity.data.INPCAi;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
+import noppes.npcs.constants.EnumNpcTactics;
+import noppes.npcs.constants.EnumSeeTarget;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.JobBuilder;
 import noppes.npcs.roles.JobFarmer;
+import noppes.npcs.util.ValueUtil;
 
 public class DataAI
 		implements INPCAi {
@@ -24,7 +27,6 @@ public class DataAI
 	protected final EntityNPCInterface npc;
 	protected List<int[]> movingPath = new ArrayList<>();
 	protected BlockPos startPos = null;
-	protected int maxHurtResistantTime = CustomNpcs.DefaultHurtResistantTime * 2;
 	protected int standingType = 0; // 0:NoRotation, 1:RotateBody, 2:Stalking, 3:HeadRotation, 4:EyeRotation
 	protected int movingType = 0; // 0:Standing, 1:Wandering, 2:MovingPath -> EntityAIMovingPath
 	protected int tacticalRadius = 8;
@@ -36,14 +38,11 @@ public class DataAI
 	public boolean canLeap = false; // can jump to target
 	public boolean canSprint = false;
 	public boolean canSwim = true;
-	public boolean directLOS = true;
 	public boolean movingPause = true; // -> EntityAIMovingPath
 	public boolean npcInteracting = true;
 	public boolean reactsToFire = false;
 	public boolean returnToStart = true;
 	public boolean stopAndInteract = true;
-	public boolean aiDisabled = false;
-	public boolean canBeCollide = true;
 
 	public int animationType = 0;
 	public int doorInteract = 2;
@@ -53,20 +52,28 @@ public class DataAI
 	public int movingPos = 0; // -> EntityAIMovingPath
 	public int onAttack = 0; // 0:Normal, 1:Panic, 2:Retreat, 3:Nothing
 	public int orientation = 0;
-	public int tacticalVariant = 0;
 	public int walkingRange = 10;
 
 	public float bodyOffsetX = 5.0f;
 	public float bodyOffsetY = 5.0f;
 	public float bodyOffsetZ = 5.0f;
+
+	// New from Unofficial (GoodBird)
+	public int activeRange = 32;
+	public boolean mountControl = false;
+
+	// New fields from Unofficial (BetaZavr)
+	public EnumNpcTactics tacticalVariant = EnumNpcTactics.RUSH;
+	public EnumSeeTarget directLOS = EnumSeeTarget.NORMAL; // old: true
+	protected int maxHurtResistantTime = CustomNpcs.DefaultHurtResistantTime * 2;
+	public boolean aiDisabled = false;
+	public boolean canBeCollide = true;
 	public float stepheight = 0.6f;
 
 	public DataAI(EntityNPCInterface npcIn) { npc = npcIn; }
 
-	@SuppressWarnings("all")
 	public void appendMovingPath(int[] pos) { movingPath.add(pos); }
 
-	@SuppressWarnings("all")
 	public void clearMovingPath() {
 		movingPath.clear();
 		movingPos = 0;
@@ -90,9 +97,6 @@ public class DataAI
 
 	@Override
 	public boolean getAttackInvisible() { return attackInvisible; }
-
-	@Override
-	public boolean getAttackLOS() { return directLOS; }
 
 	@Override
 	public boolean getAvoidsWater() { return avoidsWater; }
@@ -148,16 +152,13 @@ public class DataAI
 	@Override
 	public boolean getMovingPathPauses() { return movingPause; }
 
-	@SuppressWarnings("all")
 	public int[] getMovingPathPos(int m_pos) { return movingPath.get(m_pos); }
 
-	@SuppressWarnings("all")
 	public int getMovingPathSize() { return movingPath.size(); }
 
 	@Override
 	public int getMovingPathType() { return movingPattern; }
 
-	@SuppressWarnings("all")
 	public int getMovingPos() { return movingPos; }
 
 	/**
@@ -210,7 +211,7 @@ public class DataAI
 	public int getTacticalRange() { return tacticalRadius; }
 
 	@Override
-	public int getTacticalType() { return tacticalVariant; }
+	public int getTacticalType() { return tacticalVariant.ordinal(); }
 
 	@Override
 	public int getWalkingSpeed() { return moveSpeed; }
@@ -235,7 +236,7 @@ public class DataAI
 		}
 	}
 
-	public void readToNBT(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		canSwim = compound.getBoolean("CanSwim");
 		reactsToFire = compound.getBoolean("ReactsToFire");
 		setAvoidsWater(compound.getBoolean("AvoidsWater"));
@@ -244,11 +245,8 @@ public class DataAI
 		onAttack = compound.getInteger("OnAttack");
 		doorInteract = compound.getInteger("DoorInteract");
 		findShelter = compound.getInteger("FindShelter");
-		directLOS = compound.getBoolean("DirectLOS");
 		canLeap = compound.getBoolean("CanLeap");
-		aiDisabled = compound.getBoolean("AIDisabled");
 		canSprint = compound.getBoolean("CanSprint");
-		if (compound.hasKey("CanBeCollide", 1)) { canBeCollide = compound.getBoolean("CanBeCollide"); }
 		tacticalRadius = compound.getInteger("TacticalRadius");
 		movingPause = compound.getBoolean("MovingPause");
 		npcInteracting = compound.getBoolean("npcInteracting");
@@ -257,12 +255,10 @@ public class DataAI
 		animationType = compound.getInteger("MoveState");
 		standingType = compound.getInteger("StandingState");
 		movingType = compound.getInteger("MovingState");
-		tacticalVariant = compound.getInteger("TacticalVariant");
 		orientation = compound.getInteger("Orientation");
 		bodyOffsetY = compound.getFloat("PositionOffsetY");
 		bodyOffsetZ = compound.getFloat("PositionOffsetZ");
 		bodyOffsetX = compound.getFloat("PositionOffsetX");
-		stepheight = compound.getFloat("StepHeight");
 		walkingRange = compound.getInteger("WalkingRange");
 		setWalkingSpeed(compound.getInteger("MoveSpeed"));
 		setMovingPath(NBTTags.getIntegerArraySet(compound.getTagList("MovingPathNew", 10)));
@@ -273,13 +269,26 @@ public class DataAI
 			int[] pos = compound.getIntArray("StartPosNew");
 			startPos = new BlockPos(pos[0], pos[1], pos[2]);
 		}
-		npc.stepHeight = stepheight;
 		if (standingType != 0 && standingType != 2) {
 			npc.setRotationYawHead(orientation);
 		}
 
+		// New from Unofficial (GoodBird)
+		if (compound.hasKey("ActiveRange", 3)) { activeRange = compound.getInteger("ActiveRange"); }
+		mountControl = compound.getBoolean("MountControl");
+
+		// New fields from Unofficial (BetaZavr)
+		setTacticalType(compound.getInteger("TacticalVariant"));
+		if (compound.hasKey("CanBeCollide", 1)) { canBeCollide = compound.getBoolean("CanBeCollide"); }
+		if (compound.hasKey("StepHeight", 5)) { stepheight = compound.getFloat("StepHeight"); }
+		npc.stepHeight = stepheight;
 		if (compound.hasKey("MaxHurtResistantTime", 3)) { maxHurtResistantTime = compound.getInteger("MaxHurtResistantTime"); }
 		npc.maxHurtResistantTime = maxHurtResistantTime;
+		aiDisabled = compound.getBoolean("AIDisabled");
+		if (compound.hasKey("DirectLOS", 1)) {
+			directLOS = compound.getBoolean("DirectLOS") ? EnumSeeTarget.NORMAL : EnumSeeTarget.NONE;
+		} // OLD
+		else { directLOS = EnumSeeTarget.values()[ValueUtil.onlyPositiveInt(compound.getInteger("DirectLOS"), EnumSeeTarget.values().length - 1)]; }
 	}
 
 	@Override
@@ -287,12 +296,6 @@ public class DataAI
 
 	@Override
 	public void setAttackInvisible(boolean attack) { attackInvisible = attack; }
-
-	@Override
-	public void setAttackLOS(boolean enabled) {
-		directLOS = enabled;
-		npc.updateAI = true;
-	}
 
 	@Override
 	public void setAvoidsWater(boolean enabled) {
@@ -326,7 +329,6 @@ public class DataAI
 		}
 	}
 
-	@SuppressWarnings("all")
 	public void setMovingPathPos(int m_pos, int[] pos) {
 		if (m_pos < 0) { m_pos = 0; }
 		movingPath.set(m_pos, pos);
@@ -339,7 +341,6 @@ public class DataAI
 		movingPause = pauses;
 	}
 
-	@SuppressWarnings("all")
 	public void setMovingPos(int pos) { movingPos = pos; }
 
 	@Override
@@ -375,7 +376,10 @@ public class DataAI
 		npc.updateAI = true;
 	}
 
-	public void setStartPos(BlockPos pos) { startPos = pos; }
+	public void setStartPos(BlockPos pos) {
+		startPos = pos;
+		npc.setHomePosAndDistance(startPos, Math.max(npc.stats.aggroRange * 2, CustomNpcs.NpcNavRange * 2));
+	}
 
 	public void setStartPos(double x, double y, double z) {
 		startPos = new BlockPos(x, y, z);
@@ -393,7 +397,7 @@ public class DataAI
 
 	@Override
 	public void setTacticalType(int type) {
-		tacticalVariant = type;
+		tacticalVariant = EnumNpcTactics.values()[ValueUtil.onlyPositiveInt(type, EnumNpcTactics.values().length - 1)];
 		npc.updateAI = true;
 	}
 
@@ -419,8 +423,8 @@ public class DataAI
 	}
 
 	public boolean shouldReturnHome() {
-		return (!(npc.advanced.jobInterface instanceof JobBuilder) || !((JobBuilder) npc.advanced.jobInterface).isBuilding()) &&
-				(!(npc.advanced.jobInterface instanceof JobFarmer) || !((JobFarmer) npc.advanced.jobInterface).isPlucking()) &&
+		return (!(npc.job instanceof JobBuilder) || !((JobBuilder) npc.job).isBuilding()) &&
+				(!(npc.job instanceof JobFarmer) || !((JobFarmer) npc.job).isPlucking()) &&
 				returnToStart;
 	}
 
@@ -429,7 +433,7 @@ public class DataAI
 		return startPos;
 	}
 
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+	public NBTTagCompound save(NBTTagCompound compound) {
 		setAvoidsWater(avoidsWater);
 		compound.setBoolean("CanSwim", canSwim);
 		compound.setBoolean("ReactsToFire", reactsToFire);
@@ -439,9 +443,7 @@ public class DataAI
 		compound.setInteger("OnAttack", onAttack);
 		compound.setInteger("DoorInteract", doorInteract);
 		compound.setInteger("FindShelter", findShelter);
-		compound.setBoolean("DirectLOS", directLOS);
 		compound.setBoolean("CanLeap", canLeap);
-		compound.setBoolean("AIDisabled", aiDisabled);
 		compound.setBoolean("CanSprint", canSprint);
 		compound.setBoolean("CanBeCollide", canBeCollide);
 		compound.setInteger("TacticalRadius", tacticalRadius);
@@ -451,7 +453,7 @@ public class DataAI
 		compound.setInteger("MoveState", animationType);
 		compound.setInteger("StandingState", standingType);
 		compound.setInteger("MovingState", movingType);
-		compound.setInteger("TacticalVariant", tacticalVariant);
+		compound.setInteger("TacticalVariant", tacticalVariant.ordinal());
 		compound.setInteger("MovementType", movementType);
 		compound.setInteger("Orientation", orientation);
 		compound.setFloat("PositionOffsetX", bodyOffsetX);
@@ -465,7 +467,15 @@ public class DataAI
 		compound.setInteger("MovingPatern", movingPattern);
 		compound.setIntArray("StartPosNew", getStartArray());
 		compound.setBoolean("AttackInvisible", attackInvisible);
+
+		// New from Unofficial (GoodBird)
+		compound.setInteger("ActiveRange", activeRange);
+		compound.setBoolean("MountControl", mountControl);
+
+		// New fields from Unofficial (BetaZavr)
 		compound.setInteger("MaxHurtResistantTime", maxHurtResistantTime);
+		compound.setBoolean("AIDisabled", aiDisabled);
+		compound.setInteger("DirectLOS", directLOS.ordinal());
 		return compound;
 	}
 
@@ -476,9 +486,40 @@ public class DataAI
 	public void setIsAIDisabled(boolean bo) { aiDisabled = bo; }
 
 	@Override
+	public float getOffsetX() { return bodyOffsetX; }
+
+	@Override
+	public float getOffsetY() { return bodyOffsetY; }
+
+	@Override
+	public float getOffsetZ() { return bodyOffsetZ; }
+
+	@Override
+	public void setOffset(float x, float y, float z) {
+		bodyOffsetX = ValueUtil.correctFloat(x, 0.0f, 9.99f);
+		bodyOffsetY = ValueUtil.correctFloat(y, 0.0f, 9.99f);
+		bodyOffsetZ = ValueUtil.correctFloat(z, 0.0f, 9.99f);
+		npc.updateClient = true;
+	}
+
+	@Override
+	public EnumSeeTarget getAttackLOS() { return directLOS; }
+
+	@Override
+	public void setAttackLOS(int type) {
+		if (type < 0 || type >= EnumSeeTarget.values().length) { throw new CustomNPCsException("AttackLOS type mast be 0 to {}", EnumSeeTarget.values().length - 1); }
+		directLOS = EnumSeeTarget.values()[type];
+		npc.updateAI = true;
+	}
+
+	@Override
 	public boolean canBeCollide() { return canBeCollide; }
 
 	@Override
 	public void setCanBeCollide(boolean bo) { canBeCollide = bo; }
+
+	// New from Unofficial (GoodBird)
+	@Override
+	public void setMountControl(boolean enabled) { mountControl = enabled; }
 
 }

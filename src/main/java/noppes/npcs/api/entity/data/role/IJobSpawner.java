@@ -1,13 +1,55 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
-import noppes.npcs.api.entity.IEntityLivingBase;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.api.INbt;
+import noppes.npcs.api.entity.IEntity;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
+import javax.annotation.Nullable;
+import java.util.List;
+
 public interface IJobSpawner {
 
-	void removeAllSpawned();
+	void clear();
 
-	IEntityLivingBase<?> spawnEntity(@ParamName("pos") int pos, @ParamName("isDead") boolean isDead);
+	List<IEntity<?>> spawnEntity(@ParamName("slotId") int slotId, @ParamName("isDead") boolean isDead);
+
+	IJobSpawnerSettings get(@ParamName("isDead") boolean isDead);
+
+	interface IJobSpawnerSettings {
+
+		void clear();
+
+		@Nullable
+		IJobSpawnerData add(boolean isClone);
+
+		@Nullable IJobSpawnerData get(@ParamName("slotId") int slotId);
+
+		boolean up(@ParamName("slotId") int slotId);
+
+		boolean down(@ParamName("slotId") int slotId);
+
+		void setNbt(@ParamName("nbt") INbt nbt);
+
+		INbt getNbt();
+
+	}
+
+	interface IJobSpawnerData {
+
+		Component getTitle();
+
+		int getCount();
+
+		void setNbt(@ParamName("nbt") INbt nbt);
+
+		void setCount(int countIn);
+
+		INbt getNbt();
+
+		IEntity<?> getEntity();
+
+		boolean isValid();
+	}
 
 }

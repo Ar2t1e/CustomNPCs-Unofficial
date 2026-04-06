@@ -6,7 +6,7 @@ import java.util.List;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.util.ValueUtil;
 
@@ -19,12 +19,13 @@ public class MarcetSection {
 		NBTTagList list = compound.getTagList("Deals", 10);
         for (NBTBase nbt : list) {
             Deal deal = new Deal();
-            deal.readData((NBTTagCompound) nbt);
+            deal.loadData((NBTTagCompound) nbt);
             ms.deals.add(deal);
         }
 
         return ms;
 	}
+
 	protected final int id;
 	protected int iconId;
 	public String name = "market.default.section";
@@ -47,7 +48,7 @@ public class MarcetSection {
 
 	public void setIcon(int id) { iconId = ValueUtil.correctInt(id, 0, 29); }
 
-	public String getName() { return new TextComponentTranslation(name).getFormattedText(); }
+	public Component getName() { return Component.translatable(name); }
 
 	private boolean hadDeal(int dealId) {
 		for (Deal deal : deals) {
@@ -75,7 +76,7 @@ public class MarcetSection {
 
 		NBTTagList list = new NBTTagList();
 		for (Deal deal : deals) {
-			list.appendTag(deal.save());
+			list.appendTag(deal.saveData());
 		}
 		compound.setTag("Deals", list);
 

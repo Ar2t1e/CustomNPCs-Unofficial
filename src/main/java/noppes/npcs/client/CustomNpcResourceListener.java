@@ -3,7 +3,7 @@ package noppes.npcs.client;
 import net.minecraft.client.resources.*;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 

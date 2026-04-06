@@ -25,7 +25,6 @@ import noppes.npcs.api.block.ITextPlane;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.LayerModel;
 
 public class BlockScriptedWrapper
 		extends BlockWrapper
@@ -74,7 +73,7 @@ public class BlockScriptedWrapper
 	}
 
 	@Override
-	public boolean getIsPassable() {
+	public boolean getIsPassible() {
 		return this.tile.isPassable;
 	}
 

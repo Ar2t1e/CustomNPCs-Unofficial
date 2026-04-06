@@ -11,17 +11,18 @@ import net.minecraft.block.BlockVine;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketConfigFont;
+import noppes.npcs.packets.client.PacketDebug;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
 import noppes.npcs.controllers.ChunkController;
 import noppes.npcs.util.CustomNPCsScheduler;
 
@@ -54,7 +55,7 @@ public class CmdConfig extends CommandNoppesBase {
 			} catch (NumberFormatException ex) {
 				throw new CommandException("Didn't get a number");
 			}
-			CustomNpcs.Config.resetConfig();
+			CustomNpcs.Config.updateConfig();
 			int size = ChunkController.instance.size();
 			if (size > CustomNpcs.ChuckLoaders) {
 				ChunkController.instance.unload(size - CustomNpcs.ChuckLoaders);
@@ -74,8 +75,7 @@ public class CmdConfig extends CommandNoppesBase {
 	public void clear(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		CustomNpcs.debugData.clear();
 		if (sender instanceof EntityPlayerMP) {
-			Server.sendData((EntityPlayerMP) sender, EnumPacketClient.SYNC_REMOVE, EnumSync.Debug,
-					new NBTTagCompound());
+			Packets.send((EntityPlayerMP) sender, new PacketDebug(false));
 		}
 		sender.sendMessage(new TextComponentTranslation("command.debug.clear"));
 	}
@@ -89,16 +89,14 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 		if (sender instanceof EntityPlayerMP && (CustomNpcs.Server == null || !CustomNpcs.Server.isSinglePlayer())) {
 			sender.sendMessage(new TextComponentString("Client info:"));
-			Server.sendData((EntityPlayerMP) sender, EnumPacketClient.SYNC_ADD, EnumSync.Debug, new NBTTagCompound());
+			Packets.send((EntityPlayerMP) sender, new PacketDebug(true));
 		}
 		CustomNPCsScheduler.runTack(() -> sender.sendMessage(new TextComponentTranslation("command.debug.show")), 1000);
 	}
 
 	@SubCommand(desc = "Get/Set font", usage = "[type] [size]", permission = 2)
 	public void font(MinecraftServer server, ICommandSender sender, String[] args) {
-		if (!(sender instanceof EntityPlayerMP)) {
-			return;
-		}
+		if (!(sender instanceof EntityPlayerMP)) { return; }
 		int size = 18;
 		if (args.length > 1) {
 			try {
@@ -110,7 +108,7 @@ public class CmdConfig extends CommandNoppesBase {
         for (String arg : args) {
             font.append(" ").append(arg);
         }
-		Server.sendData((EntityPlayerMP) sender, EnumPacketClient.CONFIG_FONT, 0, font.toString().trim(), size);
+		Packets.send((EntityPlayerMP) sender, new PacketConfigFont(font.toString().trim(), size));
 	}
 
 	@SubCommand(desc = "Freezes/Unfreezes npcs", usage = "[true/false]", permission = 4)
@@ -129,7 +127,7 @@ public class CmdConfig extends CommandNoppesBase {
 			this.sendMessage(sender, "IceMelts: " + CustomNpcs.IceMeltsEnabled);
 		} else {
 			CustomNpcs.IceMeltsEnabled = Boolean.parseBoolean(args[0]);
-			CustomNpcs.Config.resetConfig();
+			CustomNpcs.Config.updateConfig();
 			Set<ResourceLocation> names = Block.REGISTRY.getKeys();
 			for (ResourceLocation name : names) {
 				Block block = Block.REGISTRY.getObject(name);
@@ -147,7 +145,7 @@ public class CmdConfig extends CommandNoppesBase {
 			this.sendMessage(sender, "LeavesDecay: " + CustomNpcs.LeavesDecayEnabled);
 		} else {
 			CustomNpcs.LeavesDecayEnabled = Boolean.parseBoolean(args[0]);
-			CustomNpcs.Config.resetConfig();
+			CustomNpcs.Config.updateConfig();
 			Set<ResourceLocation> names = Block.REGISTRY.getKeys();
 			for (ResourceLocation name : names) {
 				Block block = Block.REGISTRY.getObject(name);
@@ -165,7 +163,7 @@ public class CmdConfig extends CommandNoppesBase {
 			this.sendMessage(sender, "Scripting: " + CustomNpcs.EnableScripting);
 		} else {
 			CustomNpcs.EnableScripting = Boolean.parseBoolean(args[0]);
-			CustomNpcs.Config.resetConfig();
+			CustomNpcs.Config.updateConfig();
 			this.sendMessage(sender, "Scripting is now " + CustomNpcs.EnableScripting);
 		}
 	}
@@ -176,7 +174,7 @@ public class CmdConfig extends CommandNoppesBase {
 			this.sendMessage(sender, "VineGrowth: " + CustomNpcs.VineGrowthEnabled);
 		} else {
 			CustomNpcs.VineGrowthEnabled = Boolean.parseBoolean(args[0]);
-			CustomNpcs.Config.resetConfig();
+			CustomNpcs.Config.updateConfig();
 			Set<ResourceLocation> names = Block.REGISTRY.getKeys();
 			for (ResourceLocation name : names) {
 				Block block = Block.REGISTRY.getObject(name);
@@ -185,6 +183,20 @@ public class CmdConfig extends CommandNoppesBase {
 				}
 			}
 			this.sendMessage(sender, "VineGrowth is now " + CustomNpcs.VineGrowthEnabled);
+		}
+	}
+
+	@SubCommand(desc = "Enables/Disables invisible NPCs", usage = "[true/false]", permission = 4)
+	public void invisiblenpcs(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+		if (!(sender instanceof EntityPlayerMP) || !CustomNpcsPermissions.hasPermission((EntityPlayerMP) sender, CustomNpcsPermissions.NPC_DISPLAY)) {
+			throw new CommandException(Component.translatable("availability.permission").getString());
+		}
+		if (args.length == 0) {
+			sendMessage(sender, "Invisible NPCs: " + CustomNpcs.EnableInvisibleNpcs);
+		} else {
+			CustomNpcs.EnableInvisibleNpcs = Boolean.parseBoolean(args[0]);
+			CustomNpcs.Config.updateConfig();
+			this.sendMessage(sender, "Invisible NPCs is now " + CustomNpcs.EnableInvisibleNpcs);
 		}
 	}
 

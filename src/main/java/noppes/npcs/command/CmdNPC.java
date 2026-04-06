@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import org.apache.commons.lang3.ArrayUtils;
 
 import net.minecraft.command.CommandBase;

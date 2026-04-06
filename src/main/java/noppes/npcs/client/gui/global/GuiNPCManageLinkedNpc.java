@@ -1,59 +1,70 @@
 package noppes.npcs.client.gui.global;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 import net.minecraft.client.gui.GuiScreen;
-import noppes.npcs.client.Client;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.SubGuiEditText;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketLinkedAdd;
+import noppes.npcs.packets.server.SPacketLinkedGet;
+import noppes.npcs.packets.server.SPacketLinkedRemove;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
+import noppes.npcs.util.Util;
 
-import javax.annotation.Nonnull;
-
-public class GuiNPCManageLinkedNpc extends GuiNPCInterface2 implements IScrollData, ICustomScrollListener {
+public class GuiNpcManageLinkedNpc
+		extends GuiNPCInterface2
+		implements IScrollData {
 
 	protected final List<String> data = new ArrayList<>();
-	protected GuiCustomScroll scroll;
+	protected GuiCustomScrollNop scroll;
 
-	public GuiNPCManageLinkedNpc(EntityNPCInterface npc) {
+	public GuiNpcManageLinkedNpc(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuGlobal;
 
-		Client.sendData(EnumPacketServer.LinkedGetAll);
+		backGui = EnumGuiType.MainMenuGlobal;
+		Packets.sendServer(new SPacketLinkedGet());
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1: save(); setSubGui(new SubGuiEditText(0, "New")); break;
+	public void initGui() {
+		super.initGui();
+		addButton(1, guiLeft + 358, guiTop + 38, "gui.add")
+				.setSize(58, 20);
+		addButton(2, guiLeft + 358, guiTop + 61, "gui.remove")
+				.setSize(58, 20);
+		if (scroll == null) { scroll = addScroll(0).setSize(143, 208); }
+		add(scroll.setList(data)
+				.setPos(guiLeft + 214, guiTop + 4));
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 1: {
+				save();
+				setSubGui(new SubGuiEditText(Util.instance.deleteColor(Component.translatable("gui.new").getString())));
+				break;
+			}
 			case 2: {
-				if (scroll.hasSelected()) { Client.sendData(EnumPacketServer.LinkedRemove, scroll.getSelected()); }
+				if (scroll.hasSelected()) { Packets.sendServer(new SPacketLinkedRemove(scroll.getSelected())); }
 				break;
 			}
 		}
 	}
 
 	@Override
-	public void initGui() {
-		super.initGui();
-		addButton(new GuiNpcButton(1, guiLeft + 358, guiTop + 38, 58, 20, "gui.add"));
-		addButton(new GuiNpcButton(2, guiLeft + 358, guiTop + 61, 58, 20, "gui.remove"));
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(143, 208); }
-		scroll.guiLeft = guiLeft + 214;
-		scroll.guiTop = guiTop + 4;
-		scroll.setList(data);
-		addScroll(scroll);
+	public void subGuiClosed(GuiScreen subgui) {
+		if (!((SubGuiEditText)subgui).cancelled) { Packets.sendServer(new SPacketLinkedAdd(((SubGuiEditText)subgui).text[0])); }
 	}
 
 	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
+	public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
 		data.clear();
 		data.addAll(dataList);
 		initGui();
@@ -63,16 +74,6 @@ public class GuiNPCManageLinkedNpc extends GuiNPCInterface2 implements IScrollDa
 	public void setSelected(String selected) { }
 
 	@Override
-	public void subGuiClosed(GuiScreen subgui) {
-		if (!((SubGuiEditText) subgui).cancelled) {
-			Client.sendData(EnumPacketServer.LinkedAdd, ((SubGuiEditText) subgui).text[0]);
-		}
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { }
-
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
+	public void save() { }
 
 }

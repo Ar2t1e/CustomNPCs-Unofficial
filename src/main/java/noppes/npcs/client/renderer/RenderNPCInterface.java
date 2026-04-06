@@ -10,11 +10,13 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.texture.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.LogWriter;
+import noppes.npcs.CustomItems;
+import noppes.npcs.mixin.client.renderer.texture.ITextureManagerMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.gui.util.GuiNpcUtil;
 import noppes.npcs.client.util.ImageBufferDownloadAlt;
 import noppes.npcs.client.util.ImageDownloadAlt;
-import noppes.npcs.reflection.client.renderer.texture.TextureManagerReflection;
+import noppes.npcs.controllers.data.SkinData;
 import noppes.npcs.reflection.client.resources.SkinManagerReflection;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -32,12 +34,10 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.constants.EnumParts;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.controllers.PlayerSkinController;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -97,7 +97,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 		if (!npc.isKilled()) {
 			if (npc.display.getVisible() == 1 && npc.isInvisibleToPlayer(Minecraft.getMinecraft().player)) {
 				shadowOpaque = 0.0f;
-			} else if (npc.display.getVisible() == 2 && Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand) {
+			} else if (npc.display.getVisible() == 2 && Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand) {
 				shadowOpaque = 0.3f;
 			} else {
 				shadowOpaque = 1.0f;
@@ -121,10 +121,8 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 					if (npc.display.playerProfile == null) { npc.display.loadProfile(); }
 					if (npc.display.playerProfile != null) {
 						PlayerSkinController pData = PlayerSkinController.getInstance();
-						Map<Type, ResourceLocation> map = pData.getData(npc.display.playerProfile.getId());
-						if (map != null && map.containsKey(MinecraftProfileTexture.Type.SKIN)) {
-							npc.textureLocation = map.get(MinecraftProfileTexture.Type.SKIN);
-						}
+						SkinData data = pData.getData(npc.display.playerProfile.getId(), Type.SKIN);
+						if (data.getLocation() != null) { npc.textureLocation = data.getLocation(); }
 						else {
 							Minecraft minecraft = Minecraft.getMinecraft();
 							Map<Type, MinecraftProfileTexture> mapMC = minecraft.getSkinManager().loadSkinFromCache(npc.display.playerProfile);
@@ -154,10 +152,8 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 			if (npc.display.playerProfile == null) { npc.display.loadProfile(); }
 			if (npc.display.playerProfile != null) {
 				PlayerSkinController pData = PlayerSkinController.getInstance();
-				Map<Type, ResourceLocation> map = pData.getData(npc.display.playerProfile.getId());
-				if (map != null && map.containsKey(MinecraftProfileTexture.Type.SKIN)) {
-					npc.textureLocation = map.get(MinecraftProfileTexture.Type.SKIN);
-				}
+				SkinData data = pData.getData(npc.display.playerProfile.getId(), Type.SKIN);
+				if (data.getLocation() != null) { npc.textureLocation = data.getLocation(); }
 			}
 		}
 		return npc.textureLocation;
@@ -179,7 +175,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 
 	private static void loadSkin(File file, ResourceLocation resource, String url) {
 		TextureManager texturemanager = Minecraft.getMinecraft().getTextureManager();
-		Map<ResourceLocation, ITextureObject> mapTextureObjects = TextureManagerReflection.getMapTextureObjects(texturemanager);
+		Map<ResourceLocation, ITextureObject> mapTextureObjects = ((ITextureManagerMixin) texturemanager).getMapTextureObjects();
 		if (!mapTextureObjects.containsKey(resource)) {
 			ITextureObject object = new ImageDownloadAlt(file, url, DefaultPlayerSkin.getDefaultSkinLegacy(), new ImageBufferDownloadAlt());
 			texturemanager.loadTexture(resource, object);
@@ -245,7 +241,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 		if (npc.display.getVisible() == 1) {
 			isInvisible = npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player);
 		} else if (npc.display.getVisible() == 2) {
-			isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand;
+			isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand;
 		}
 
 		c = new Color(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, isInvisible ? 0.3f : 1.0f);
@@ -294,9 +290,9 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 	protected void renderModel(@Nonnull T npc, float par2, float par3, float par4, float par5, float par6, float par7) {
 		boolean isInvisible = false;
 		if (npc.display.getVisible() == 1) {
-			isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand && npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player);
+			isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand && npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player);
 		} else if (npc.display.getVisible() == 2) {
-			isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand;
+			isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand;
 		}
 		if (bindEntityTexture(npc)) {
 			if (isInvisible) {
@@ -358,7 +354,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 		if (npc.messages != null) {
 			float height = npc.baseHeight / 5.0f * npc.display.getSize();
 			float offset = npc.height * (1.2f + (npc.display.showName() ? (npc.display.getTitle().isEmpty() ? 0.15f : 0.25f) : 0.0f));
-			npc.messages.renderMessages(d, d1 + offset, d2, 0.666667f * height, npc.isInRange(renderManager.renderViewEntity, 4.0));
+			npc.messages.renderMessages(d, d1 + offset, d2, 0.666667f * height, npc.isInRange(renderManager.renderViewEntity, 4.0), false);
 		}
 		float scale = npc.baseHeight / 5.0f * npc.display.getSize();
 		if (npc.display.showName()) {

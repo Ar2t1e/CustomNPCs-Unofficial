@@ -17,10 +17,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomNpcsPermissions;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.*;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleCompanion;
@@ -33,7 +30,7 @@ public class ItemSoulstoneEmpty extends Item {
 	public ItemSoulstoneEmpty() {
 		this.setRegistryName(CustomNpcs.MODID, "npcsoulstoneempty");
 		this.setUnlocalizedName("npcsoulstoneempty");
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 		this.setMaxStackSize(64);
 	}
 
@@ -51,14 +48,14 @@ public class ItemSoulstoneEmpty extends Item {
 		}
 		if (entity instanceof EntityNPCInterface) {
 			EntityNPCInterface npc = (EntityNPCInterface) entity;
-			if (npc.advanced.roleInterface instanceof RoleCompanion) {
-				if (((RoleCompanion) npc.advanced.roleInterface).getOwner() == player) {
+			if (npc.role instanceof RoleCompanion) {
+				if (((RoleCompanion) npc.role).getOwner() == player) {
 					return true;
 				}
 			}
-			if (npc.advanced.roleInterface instanceof RoleFollower) {
-				if (((RoleFollower) npc.advanced.roleInterface).getOwner() == player) {
-					return !((RoleFollower) npc.advanced.roleInterface).refuseSoulStone;
+			if (npc.role instanceof RoleFollower) {
+				if (((RoleFollower) npc.role).getOwner() == player) {
+					return !((RoleFollower) npc.role).refuseSoulStone;
 				}
 			}
 			return CustomNpcs.SoulStoneNPCs;
@@ -70,7 +67,7 @@ public class ItemSoulstoneEmpty extends Item {
 		if (!this.hasPermission(entity, player) || entity instanceof EntityPlayer) {
 			return false;
 		}
-		ItemStack stone = new ItemStack(CustomRegisters.soulstoneFull);
+		ItemStack stone = new ItemStack(CustomItems.soulstoneFull);
 		NBTTagCompound compound = new NBTTagCompound();
 		if (!entity.writeToNBTAtomically(compound)) {
 			return false;
@@ -89,14 +86,14 @@ public class ItemSoulstoneEmpty extends Item {
 		if (entity instanceof EntityNPCInterface) {
 			EntityNPCInterface npc = (EntityNPCInterface) entity;
 			stone.setTagInfo("DisplayName", new NBTTagString(entity.getName()));
-			if (npc.advanced.roleInterface instanceof RoleCompanion) {
+			if (npc.role instanceof RoleCompanion) {
 				stone.setTagInfo("ExtraText", new NBTTagString(
-						"companion.stage,: ," + ((RoleCompanion) npc.advanced.roleInterface).stage.name));
+						"companion.stage,: ," + ((RoleCompanion) npc.role).stage.name));
 			}
 		} else if (entity instanceof EntityLiving && (entity).hasCustomName()) {
 			stone.setTagInfo("DisplayName", new NBTTagString((entity).getCustomNameTag()));
 		}
-		NoppesUtilServer.GivePlayerItem(player, player, stone);
+		NoppesUtilServer.givePlayerItem(player, player, stone);
 		if (!player.capabilities.isCreativeMode) {
 			stack.splitStack(1);
 			if (stack.getCount() <= 0) {

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -13,28 +14,22 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.handler.IBorderHandler;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.controllers.data.Zone3D;
 
 public class BorderController implements IBorderHandler {
 
-	private static BorderController instance;
-	public static BorderController getInstance() {
-		if (BorderController.instance == null) {
-			BorderController.instance = new BorderController();
-		}
-		return BorderController.instance;
-	}
+	protected static BorderController instance = new BorderController();
 	public final Map<Integer, Zone3D> regions = new TreeMap<>();
 
-	public BorderController() {
-		BorderController.instance = this;
-		load();
+	public static BorderController getInstance() {
+		if (instance == null) { instance = new BorderController(); }
+		return instance;
 	}
+
+	public BorderController() { loadRegions(); }
 
 	public Zone3D createNew(int dimensionID, BlockPos pos) {
 		Zone3D reg = new Zone3D(getUnusedId(), dimensionID, pos.getX(), pos.getY(), pos.getZ());
@@ -64,9 +59,18 @@ public class BorderController implements IBorderHandler {
 		return nbttagcompound;
 	}
 
+	public int getRegionID(int dimensionID, Entity entity) {
+		for (Zone3D reg : regions.values()) {
+			if (reg.dimension == dimensionID && reg.contains(entity.posX, entity.posY, entity.posZ, entity.height)) {
+				return reg.getId();
+			}
+		}
+		return -1;
+	}
+
 	public int getRegionID(int dimensionID, BlockPos pos) {
 		for (Zone3D reg : regions.values()) {
-			if (reg.contains(pos.getX(), pos.getY(), pos.getZ(), dimensionID)) {
+			if (reg.contains(pos.getX(), pos.getY(), pos.getZ(), 1.0d)) {
 				return reg.getId();
 			}
 		}
@@ -83,7 +87,7 @@ public class BorderController implements IBorderHandler {
 	public Zone3D[] getRegions(int dimensionId) {
 		List<Zone3D> regs = new ArrayList<>();
 		for (Zone3D reg : regions.values()) {
-			if (reg.dimensionID == dimensionId) {
+			if (reg.dimension == dimensionId) {
 				regs.add(reg);
 			}
 		}
@@ -93,7 +97,7 @@ public class BorderController implements IBorderHandler {
 	public List<Zone3D> getRegionsInWorld(int dimensionID) {
 		List<Zone3D> regs = new ArrayList<>();
 		for (Zone3D reg : regions.values()) {
-			if (reg.dimensionID == dimensionID) {
+			if (reg.dimension == dimensionID) {
 				regs.add(reg);
 			}
 		}
@@ -101,11 +105,11 @@ public class BorderController implements IBorderHandler {
 	}
 
 	@Override
-	public List<Zone3D> getNearestRegions(int dimensionId, double x, double y, double z, double distance) {
+	public List<Zone3D> getNearestRegions(int dimensionName, double x, double y, double z, double distance) {
 		AxisAlignedBB searchBox = new AxisAlignedBB(x - distance, 0.0d, z - distance, x + distance + 1.0d, 255.0d, z + distance + 1.0d);
 		List<Zone3D> regionsIn = new ArrayList<>();
 		for (Zone3D reg : regions.values()) {
-			if (reg.dimensionID != dimensionId) { continue; }
+			if (reg.dimension != dimensionName) { continue; }
 			if (searchBox.intersects(reg.getAxisAlignedBB())) { regionsIn.add(reg); }
 		}
 		return regionsIn;
@@ -132,7 +136,7 @@ public class BorderController implements IBorderHandler {
 		return regions.get(region.getId());
 	}
 
-	private void load() {
+	private void loadRegions() {
 		CustomNpcs.debugData.start(null);
 		File saveDir = CustomNpcs.getWorldSaveDirectory();
 		if (saveDir == null) {

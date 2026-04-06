@@ -25,20 +25,19 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.*;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.CustomNPCsScheduler;
-import noppes.npcs.util.IPermission;
 import noppes.npcs.util.Util;
 
-public class ItemNpcWand extends Item implements IPermission, INPCToolItem {
+public class ItemNpcWand extends Item implements INPCToolItem {
+
 	public ItemNpcWand() {
 		this.setRegistryName(CustomNpcs.MODID, "npcwand");
 		this.setUnlocalizedName("npcwand");
 		this.setFull3D();
 		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -50,13 +49,7 @@ public class ItemNpcWand extends Item implements IPermission, INPCToolItem {
 		}
 	}
 
-	public int getMaxItemUseDuration(@Nonnull ItemStack par1ItemStack) {
-		return 72000;
-	}
-
-	public boolean isAllowed(EnumPacketServer e) {
-		return true;
-	}
+	public int getMaxItemUseDuration(@Nonnull ItemStack par1ItemStack) { return 72000; }
 
 	public @Nonnull ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
 		ItemStack itemstack = player.getHeldItem(hand);

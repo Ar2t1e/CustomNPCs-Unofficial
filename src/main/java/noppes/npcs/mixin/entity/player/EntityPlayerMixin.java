@@ -31,8 +31,8 @@ public class EntityPlayerMixin implements IEntityPlayerMixin {
         }
     }
 
-    @Inject(method = "applyEntityAttributes", at = @At("TAIL"))
-    protected void npcs$applyEntityAttributes(CallbackInfo ci) {
+    @Inject(method = "entityInit", at = @At("TAIL"))
+    protected void npcs$entityInit(CallbackInfo ci) {
         if (npcs$animation == null) { npcs$animation = new DataAnimation((EntityPlayer) (Object) this); }
     }
 

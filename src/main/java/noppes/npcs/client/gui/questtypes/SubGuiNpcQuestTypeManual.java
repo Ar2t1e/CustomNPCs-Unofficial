@@ -4,73 +4,64 @@ import java.util.*;
 
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.gui.global.GuiNPCManageQuest;
-import noppes.npcs.client.gui.global.SubGuiQuestEdit;
-import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.api.gui.IDimensionGetter;
+import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.global.GuiNpcManageQuest;
+import noppes.npcs.client.gui.global.SubGuiQuestObjectiveSelect;
+import noppes.npcs.client.gui.select.SubGuiColorSelector;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.controllers.BorderController;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.quests.QuestObjective;
+import noppes.npcs.client.gui.util.quests.QuestObjective;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDimensionsGet;
+import noppes.npcs.packets.server.SPacketTeleportTo;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
+// Change from Unofficial (BetaZavr)
+public class SubGuiNpcQuestTypeManual
+		extends GuiNPCInterface
+		implements ITextfieldListener, IDimensionGetter {
 
-public class SubGuiNpcQuestTypeManual extends SubGuiInterface implements ITextfieldListener {
-
+	protected GuiScreen parent;
 	protected final QuestObjective task;
 	protected final Map<Integer, Integer> dataDimIDs = new HashMap<>();
 
-	public SubGuiNpcQuestTypeManual(EntityNPCInterface npc, QuestObjective taskObj, GuiScreen gui) {
-		super(0, npc);
+	public SubGuiNpcQuestTypeManual(EntityNPCInterface npcIn, QuestObjective taskObj, GuiScreen gui) {
+		super(npcIn);
 		setBackground("menubg.png");
+		title = Component.translatable("quest.title.manual");
+		imageWidth = 214;
+		imageHeight = 217;
 		closeOnEsc = true;
-		title = new TextComponentTranslation("quest.title.manual").getFormattedText();
-		xSize = 214;
-		ySize = 217;
 
 		parent = gui;
 		task = taskObj;
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0 || task == null) { return; }
-		switch (button.getID()) {
-			case 4: {
-				if (!dataDimIDs.containsKey(button.getValue())) { return; }
-				task.dimensionID = dataDimIDs.get(button.getValue());
-				button.setHoverText(new TextComponentTranslation("quest.hover.compass.dim", "" + task.dimensionID).appendSibling(new TextComponentTranslation("quest.hover.compass")).getFormattedText());
-				break;
-			}
-			case 5: task.setPointOnMiniMap(((GuiNpcCheckBox) button).isSelected()); break;
-			case 10: {
-				task.pos = new BlockPos(Math.floor(mc.player.posX), Math.floor(mc.player.posY), Math.floor(mc.player.posZ));
-				task.dimensionID = mc.player.world.provider.getDimension();
-				initGui();
-				break;
-			}
-			case 11: Client.sendData(EnumPacketServer.TeleportTo, task.dimensionID, task.pos.getX(), task.pos.getY(), task.pos.getZ()); break;
-			case 66: onClosed(); break;
-		}
+		Packets.sendServer(new SPacketDimensionsGet());
 	}
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		// Back
-		if (subgui == null) {
-			int u = guiLeft + xSize - 1;
-			int v = guiTop;
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-			mc.getTextureManager().bindTexture(background);
-			drawTexturedModalRect(u, v, 252, 0, 4, ySize);
-		}
 		super.drawScreen(mouseX, mouseY, partialTicks);
+		// Back
+		if (!hasSubGui()) {
+			int u = guiLeft + imageWidth - 1;
+			int v = guiTop;
+			GlStateManager.pushMatrix();
+			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+			minecraft.getTextureManager().bindTexture(background);
+			drawTexturedModalRect(u, v, 252, 0, 4, imageHeight);
+			GlStateManager.popMatrix();
+		}
 	}
 
 	@Override
@@ -79,116 +70,192 @@ public class SubGuiNpcQuestTypeManual extends SubGuiInterface implements ITextfi
 		int lId = 0;
 		int x = guiLeft + 6;
 		int y = guiTop + 50;
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("quest.manual.names").getFormattedText(), x, y));
+		addLabel(lId++,  x, y, "quest.manual.names")
+				.setSize(imageWidth - 12, 10);
 		// target
-		addTextField(new GuiNpcTextField(0, this, x, y += 12, 180, 20, task.getTargetName())
-				.setHoverText("quest.hover.edit.kill.name"));
+		addTextField(0, x, y += 12, 178, 20, task.getTargetName())
+				.setHoverTexts("quest.hover.edit.kill.name");
 		// max progress
-		addTextField(new GuiNpcTextField(1, this, x + 182, y, 24, 20, task.getMaxProgress() + "")
+		addTextField(1, x + 181, y, 24, 20, task.getMaxProgress())
 				.setMinMaxDefault(1, Integer.MAX_VALUE, 1)
-				.setHoverText("quest.hover.edit.kill.value", "" + Integer.MAX_VALUE));
+				.setHoverTexts("quest.hover.edit.kill.value", "" + Integer.MAX_VALUE);
 		// X
-		addLabel(new GuiNpcLabel(lId++, "quest.task.pos.set", x, y += 24));
-		addLabel(new GuiNpcLabel(lId++, "X:", x, (y += 12) + 2));
-		ITextComponent compass = new TextComponentTranslation("quest.hover.compass");
-		addTextField(new GuiNpcTextField(10, this, x + 8, y, 40, 14, "" + task.pos.getX())
+		addLabel(lId++, x, y += 24, "quest.task.pos.set")
+				.setSize(imageWidth - 12, 10);
+		addLabel(lId++, x, (y += 12) + 2, "X:")
+				.setSize(12, 10);
+		Component compass = Component.translatable("quest.hover.compass");
+		addTextField(10, x + 10, y, 40, 14, task.pos.getX())
 				.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, task.pos.getX())
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.pos", "X").appendSibling(compass).getFormattedText()));
+				.setHoverTexts(Component.translatable("quest.hover.compass.pos", "X").append(compass));
 		// Y
-		addLabel(new GuiNpcLabel(lId++, "Y:", x + 52, y + 2));
-		addTextField(new GuiNpcTextField(11, this, x + 60, y, 40, 14, "" + task.pos.getY())
+		addLabel(lId++, x + 52, y + 2, "Y:")
+				.setSize(12, 10);
+		addTextField(11, x + 62, y, 40, 14, task.pos.getY())
 				.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, task.pos.getY())
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.pos", "Y").appendSibling(compass).getFormattedText()));
+				.setHoverTexts(Component.translatable("quest.hover.compass.pos", "Y").append(compass));
 		// Z
-		addLabel(new GuiNpcLabel(lId++, "Z:", x + 104, y + 2));
-		addTextField(new GuiNpcTextField(12, this, x + 112, y, 40, 14, "" + task.pos.getZ())
+		addLabel(lId++, x + 104, y + 2, "Z:")
+				.setSize(12, 10);
+		addTextField(12, x + 114, y, 40, 14, task.pos.getZ())
 				.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, task.pos.getZ())
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.pos", "Z").appendSibling(compass).getFormattedText()));
+				.setHoverTexts(Component.translatable("quest.hover.compass.pos", "Z").append(compass));
 		// R
-		addLabel(new GuiNpcLabel(lId++, "R:", x + 156, y + 2));
-		addTextField(new GuiNpcTextField(14, this, x + 164, y, 41, 14, "" + task.rangeCompass)
+		addLabel(lId++, x + 156, y + 2, "R:")
+				.setSize(12, 10);
+		addTextField(14, x + 166, y, 39, 14, task.rangeCompass)
 				.setMinMaxDefault(0, 64, task.rangeCompass)
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.range").appendSibling(compass).getFormattedText()));
+				.setHoverTexts(Component.translatable("quest.hover.compass.range").append(compass));
 		// dim ID
-		addLabel(new GuiNpcLabel(lId++, "D:", x, (y += 20) + 2));
-		int p = 0, i = 0;
+		addLabel(lId++, x, (y += 18) + 2, "D:")
+				.setSize(12, 10);
+		int p = 0;
+		int i = 0;
 		List<Integer> ids = Arrays.asList(DimensionManager.getStaticDimensionIDs());
 		Collections.sort(ids);
-		String[] dimIDs = new String[ids.size()];
+		Object[] dimIDs = new Object[ids.size()];
+		dataDimIDs.clear();
 		for (int id : ids) {
 			dimIDs[i] = id + "";
 			dataDimIDs.put(i, id);
-			if (id == task.dimensionID) { p = i; }
+			if (id == task.dimension) { p = i; }
 			i++;
 		}
-		addButton(new GuiNpcButton(4, x + 8, y - 1, 30, 16, dimIDs, p)
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.dim").appendSibling(compass).getFormattedText()));
+		addButton(4, x + 9, y - 1, false, p, dimIDs)
+				.setSize(180, 16)
+				.setHoverTexts(Component.translatable("quest.hover.compass.dim", dimIDs[p]).append(compass));
 		// region ID
-		addLabel(new GuiNpcLabel(lId, "P:", x + 40, y + 2));
-		addTextField(new GuiNpcTextField(9, this, x + 47, y, 32, 14, "" + task.regionID)
+		addLabel(lId, x + 40, (y += 17) + 2, "P:")
+				.setSize(12, 10);
+		addTextField(9, x + 47, y, 32, 14, "" + task.regionID)
 				.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, task.regionID)
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.reg", task.regionID).appendSibling(compass).getFormattedText()));
+				.setHoverTexts(Component.translatable("quest.hover.compass.reg", task.regionID).append(compass));
 		// N
-		addLabel(new GuiNpcLabel(lId, "N:", x + 81, y + 2));
-		addTextField(new GuiNpcTextField(15, this, x + 89, y, 116, 14, task.entityName)
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.entity").appendSibling(compass).getFormattedText()));
-		// set player pos
-		addButton(new GuiNpcButton(10, x + 146, y += 19, 30, 20, "gui.set")
-				.setHoverText(new TextComponentTranslation("quest.hover.compass.set").appendSibling(compass).getFormattedText()));
-		// tp
-		addButton(new GuiNpcButton(11, x + 124, y, 20, 20, "TP")
-				.setHoverText("hover.teleport"));
+		addLabel(lId, x + 81, y + 2, "N:")
+				.setSize(12, 10);
+		addTextField(15, x + 89, y, 101, 14, task.entityName)
+				.setHoverTexts(Component.translatable("quest.hover.compass.entity").append(compass));
+		addButton(9, x + 192, y, "")
+				.setSize(14, 14)
+				.setIsAnim(true)
+				.setTexture(GuiBasic.ANIMATION_BUTTONS)
+				.setUV(220, 96, 36, 36)
+				.setHoverTexts("color.hover")
+				.layerColor = task.colorCompass | 0xFF000000;
 		// mini map point
-		addButton(new GuiNpcCheckBox(5, x, y, 121, 16, "quest.set.minimap.point", null, task.isSetPointOnMiniMap())
-				.setHoverText("quest.hover.set.minimap.point"));
+		addCheckBox(5, x, y += 17, "quest.set.minimap.point", null, task.isSetPointOnMiniMap())
+				.setSize(166, 16)
+				.setHoverTexts("quest.hover.set.minimap.point");
+		// tp
+		addButton(11, x + 168, y, "TP")
+				.setSize(20, 16)
+				.setHoverTexts("hover.teleport");
+		// set player pos
+		addButton(10, x + 190, y, "S")
+				.setSize(16, 16)
+				.setHoverTexts(Component.translatable("quest.hover.compass.set").append(compass));
 		// exit
-		addButton(new GuiNpcButton(66, x, guiTop + ySize - 25, 98, 20, "gui.back")
-				.setHoverText("hover.back"));
+		addButton(66, x, guiTop + imageHeight - 25, "gui.back")
+				.setSize(98, 20)
+				.setHoverTexts("hover.back");
 	}
 
-	@Override
-	public void save() {
-		task.setTargetName(getTextField(0).getText());
-		task.setMaxProgress(getTextField(1).getInteger());
-		for (QuestObjective taskObj : NoppesUtilServer.getEditingQuest(player).questInterface.tasks) {
-			if (taskObj == task || taskObj.getEnumType() != EnumQuestTask.MANUAL) { continue; }
-			if (taskObj.getTargetName().equals(task.getTargetName())) {
-				getTextField(0).setText("");
-				task.setTargetName("");
-				task.setMaxProgress(1);
+	public void buttonEvent(GuiButtonNop guiButton) {
+		if (task == null) { return; }
+		switch (guiButton.id) {
+			case 4: {
+				if (!dataDimIDs.containsKey(guiButton.getValue())) { return; }
+				task.dimension = dataDimIDs.get(guiButton.getValue());
+				guiButton.setHoverTexts(Component.translatable("quest.hover.compass.dim", "" + task.dimension).append(Component.translatable("quest.hover.compass")));
+				break;
+			} // dimension
+			case 5: task.setPointOnMiniMap(((GuiCheckBoxNop) guiButton).selected()); break;
+			case 9: {
+				setSubGui(new SubGuiColorSelector(task.colorCompass, new SubGuiColorSelector.ColorCallback() {
+					@Override
+					public void color(int colorIn) {
+						task.setCompassColor(colorIn);
+						initGui();
+					}
+					@Override
+					public void preColor(int colorIn) {
+						task.setCompassColor(colorIn);
+					}
+				}));
+				break;
+			} // TP
+			case 10: {
+				task.pos = player.getPosition();
+				task.dimension = player.world.provider.getDimension();
+				initGui();
+				break;
+			} // set player pos
+			case 11: {
+				Packets.sendAll(new SPacketTeleportTo(task.dimension, task.pos));
+				break;
+			}
+			case 66: {
+				onClose();
 				break;
 			}
 		}
-		if (task.getTargetName().isEmpty()) { NoppesUtilServer.getEditingQuest(player).questInterface.removeTask(task); }
-		else if (((GuiNPCManageQuest) GuiNPCManageQuest.Instance).subgui instanceof SubGuiQuestEdit) {
-			SubGuiQuestEdit subgui = (SubGuiQuestEdit) ((GuiNPCManageQuest) GuiNPCManageQuest.Instance).subgui;
-			subgui.setSubGui(null);
-			subgui.initGui();
-		}
 	}
 
-	@Override
-	public void unFocused(GuiNpcTextField textField) {
+	public void unFocused(GuiTextFieldNop textField) {
 		if (task == null) { return; }
-		switch (textField.getID()) {
-			case 0: task.setTargetName(textField.getText()); break;
+		switch (textField.id) {
+			case 0: task.setTargetName(textField.getValue()); break;
 			case 1: task.setMaxProgress(textField.getInteger()); break;
 			case 2: task.setAreaRange(textField.getInteger()); break;
 			case 9: {
 				if (!BorderController.getInstance().regions.containsKey(textField.getInteger())) {
-					textField.setText("" + textField.def);
+					textField.setValue("" + textField.def);
 					return;
 				}
 				task.regionID = textField.getInteger();
-				textField.setHoverText(new TextComponentTranslation("quest.hover.compass.reg", "" + task.regionID).appendSibling(new TextComponentTranslation("quest.hover.compass")).getFormattedText());
+				textField.setHoverTexts(Component.translatable("quest.hover.compass.reg", "" + task.regionID).append(Component.translatable("quest.hover.compass")));
 				break;
 			}
 			case 10: task.pos = new BlockPos(textField.getInteger(), task.pos.getY(), task.pos.getZ()); break;
 			case 11: task.pos = new BlockPos(task.pos.getX(), textField.getInteger(), task.pos.getZ()); break;
 			case 12: task.pos = new BlockPos(task.pos.getX(), task.pos.getY(), textField.getInteger()); break;
 			case 14: task.rangeCompass = textField.getInteger(); break;
-			case 15: task.entityName = textField.getText(); break;
+			case 15: task.entityName = textField.getValue(); break;
 		}
 	}
+
+	@Override
+	public void onClose() {
+		super.onClose();
+		if (task.getTargetName().isEmpty()) {
+			NoppesUtilServer.getEditingQuest(player).questInterface.removeTask(task);
+			NoppesUtil.openGUI(player, GuiNpcManageQuest.Instance);
+			return;
+		}
+		if (GuiNpcManageQuest.Instance.getSubGui() instanceof SubGuiQuestObjectiveSelect) {
+			((SubGuiQuestObjectiveSelect) GuiNpcManageQuest.Instance.getSubGui()).onClose();
+		}
+		setScreen(GuiNpcManageQuest.Instance);
+	}
+
+	@Override
+	public void save() {
+		task.setTargetName(getTextField(0).getValue());
+		task.setMaxProgress(getTextField(1).getInteger());
+		for (QuestObjective taskObj : NoppesUtilServer.getEditingQuest(player).questInterface.tasks) {
+			if (taskObj == task || taskObj.getEnumType() != EnumQuestTask.MANUAL) {
+				continue;
+			}
+			if (taskObj.getTargetName().equals(task.getTargetName())) {
+				getTextField(0).setValue("");
+				task.setTargetName("");
+				task.setMaxProgress(1);
+				break;
+			}
+		}
+	}
+
+	@Override
+	public void resetDimension() { initGui(); }
 
 }

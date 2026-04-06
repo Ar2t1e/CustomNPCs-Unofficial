@@ -12,10 +12,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.packets.server.SPacketDimensionTeleport;
 
 import javax.annotation.Nonnull;
 
@@ -138,7 +139,7 @@ public class CmdDimensions extends CommandNoppesBase {
 				z = dz;
 			} catch (NumberFormatException e) { LogWriter.error(e); }
 		}
-		NoppesUtilPlayer.teleportPlayer(player, x, y, z, id, player.rotationYaw, player.rotationPitch);
+		SPacketDimensionTeleport.teleportPlayer(player, x, y, z, id, player.rotationYaw, player.rotationPitch);
 	}
 
 }

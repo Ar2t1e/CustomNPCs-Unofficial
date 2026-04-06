@@ -1,5 +1,6 @@
 package noppes.npcs.api;
 
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
 @SuppressWarnings("all")
@@ -13,7 +14,7 @@ public interface ILayerModel {
 
 	float getOffset(@ParamName("axis") int axis);
 
-	int getPos();
+	int getId();
 
 	float getRotate(@ParamName("axis") int axis);
 

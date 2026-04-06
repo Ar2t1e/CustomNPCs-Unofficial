@@ -5,7 +5,7 @@ import net.minecraft.client.gui.recipebook.*;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.stats.RecipeBook;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.api.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.client.gui.player.GuiNpcCarpentryBench;
 import noppes.npcs.client.gui.recipebook.NpcGhostRecipe;
@@ -98,13 +98,13 @@ public class GuiRecipeBookMixin {
                 recipeTabs.add(new NpcGuiButtonRecipeTab(2, CreativeTabs.BUILDING_BLOCKS, true));
                 recipeTabs.add(new NpcGuiButtonRecipeTab(3, CreativeTabs.MISC, true));
                 recipeTabs.add(new NpcGuiButtonRecipeTab(4, CreativeTabs.REDSTONE, true));
-                recipeTabs.add(new NpcGuiButtonRecipeTab(5, CustomRegisters.tab, true));
+                recipeTabs.add(new NpcGuiButtonRecipeTab(5, CustomTabs.TOOLS, true));
             }
         } else {
             if (recipeTabs.size() != 2) {
                 recipeTabs.clear();
                 recipeTabs.add(new NpcGuiButtonRecipeTab(0, CreativeTabs.SEARCH, false));
-                recipeTabs.add(new NpcGuiButtonRecipeTab(1, CustomRegisters.tabItems, false));
+                recipeTabs.add(new NpcGuiButtonRecipeTab(1, CustomTabs.ITEMS, false));
             }
         }
 

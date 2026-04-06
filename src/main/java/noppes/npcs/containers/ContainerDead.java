@@ -1,7 +1,6 @@
 package noppes.npcs.containers;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
@@ -46,22 +45,16 @@ public class ContainerDead extends Container {
     @Override
     public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer player, int slotId) {
         ItemStack stack = ItemStack.EMPTY;
-        Slot slot = this.inventorySlots.get(slotId);
+        Slot slot = inventorySlots.get(slotId);
         if (slot != null && slot.getHasStack()) {
             ItemStack slotStack = slot.getStack();
             stack = slotStack.copy();
             if (slotId < size * 9) {
-                if (!this.mergeItemStack(slotStack, size * 9, this.inventorySlots.size(), true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else if (!this.mergeItemStack(slotStack, 0, size * 9, false)) {
-                return ItemStack.EMPTY;
+                if (!mergeItemStack(slotStack, size * 9, inventorySlots.size(), true)) { return ItemStack.EMPTY; }
             }
-            if (slotStack.getCount() == 0) {
-                slot.putStack(ItemStack.EMPTY);
-            } else {
-                slot.onSlotChanged();
-            }
+            else if (!mergeItemStack(slotStack, 0, size * 9, false)) { return ItemStack.EMPTY; }
+            if (slotStack.getCount() == 0) { slot.putStack(ItemStack.EMPTY); }
+            else { slot.onSlotChanged(); }
         }
         return stack;
     }

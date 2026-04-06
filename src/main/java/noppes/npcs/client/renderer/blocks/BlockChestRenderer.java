@@ -3,7 +3,7 @@ package noppes.npcs.client.renderer.blocks;
 import net.minecraft.client.model.ModelChest;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import noppes.npcs.blocks.tiles.CustomTileEntityChest;
+import noppes.npcs.blocks.custom.tiles.CustomTileEntityChest;
 
 import javax.annotation.Nullable;
 

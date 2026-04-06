@@ -3,11 +3,10 @@ package noppes.npcs.entity.data;
 import java.util.*;
 
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.Server;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.constants.AnimationKind;
@@ -17,14 +16,15 @@ import noppes.npcs.api.entity.data.INPCAnimation;
 import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.client.model.animation.*;
 import noppes.npcs.constants.*;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.*;
 
 public class DataAnimation implements INPCAnimation {
 
 	public final EntityLivingBase entity;
 
-	private final AnimationHandler animationHandler;
-	private final EmotionHandler emotionHandler;
+	private final CustomAnimationHandler animationHandler;
+	private final CustomEmotionHandler emotionHandler;
 
 	// Tools
 	public final Map<EnumParts, Boolean> showParts = new HashMap<>();
@@ -33,8 +33,8 @@ public class DataAnimation implements INPCAnimation {
 
 	public DataAnimation(EntityLivingBase main) {
 		entity = main;
-		animationHandler = new AnimationHandler(main);
-		emotionHandler = new EmotionHandler(main);
+		animationHandler = new CustomAnimationHandler(main);
+		emotionHandler = new CustomEmotionHandler(main);
 		showParts.put(EnumParts.HEAD, true);
 		showParts.put(EnumParts.BODY, true);
 		showParts.put(EnumParts.ARM_RIGHT, true);
@@ -75,8 +75,7 @@ public class DataAnimation implements INPCAnimation {
 		stopAnimation();
 		stopEmotion();
 		if (entity == null || !entity.isServerWorld()) { return; }
-		if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_SET, false, entity.world.provider.getDimension(), entity.getUniqueID(), save(new NBTTagCompound())); }
-		else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_SET, true, entity.world.provider.getDimension(), entity.getEntityId(), save(new NBTTagCompound())); }
+		Packets.sendAll(new PacketCustomAnimationSet(entity instanceof EntityPlayer, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), save(new NBTTagCompound())));
 	}
 
 	public void setRotationAnglesAnimation(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, float partialTicks) {
@@ -103,24 +102,23 @@ public class DataAnimation implements INPCAnimation {
 		if (animationHandler.activeAnimation != null) {
 			if (animationHandler.activeAnimation.hasEmotion()) { stopEmotion(); }
 			if (entity != null && entity.isServerWorld()) {
-				if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_STOP_ANIMATION, false, entity.world.provider.getDimension(), entity.getUniqueID()); }
-				else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_STOP_ANIMATION, true, entity.world.provider.getDimension(), entity.getEntityId()); }
+				Packets.sendAll(new PacketCustomAnimationStop(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID()));
 			}
 		}
 		if (!animationHandler.movementAnimation.isEmpty()) {
 			animationHandler.movementAnimation.clear();
 			Map<Integer, Integer> map = animationHandler.resetWalkAndStandAnimations();
 			if (map == null) { map = new HashMap<>(); }
-			if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_BASE_ANIMATIONS, false, entity.world.provider.getDimension(), entity.getUniqueID(), map); }
-			else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_BASE_ANIMATIONS, true, entity.world.provider.getDimension(), entity.getEntityId(), map); }
+			if (entity != null && entity.isServerWorld()) {
+				Packets.sendAll(new PacketCustomAnimationBaseSet(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), map));
+			}
 		}
 		animationHandler.stopAnimation();
 	}
 
 	public void stopEmotion() {
 		if (entity != null && entity.isServerWorld() && emotionHandler.activeEmotion != null) {
-			if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_STOP_EMOTION, false, entity.world.provider.getDimension(), entity.getUniqueID()); }
-			else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_STOP_EMOTION, true, entity.world.provider.getDimension(), entity.getEntityId()); }
+			Packets.sendAll(new PacketCustomEmotionStop(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID()));
 		}
 		emotionHandler.stopEmotion();
 	}
@@ -164,8 +162,7 @@ public class DataAnimation implements INPCAnimation {
 		if (entity == null || entity.world.getTotalWorldTime() % 20 != 0) { return; }
 		Map<Integer, Integer> map = animationHandler.resetWalkAndStandAnimations();
 		if (entity.isServerWorld() && map != null) {
-			if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_BASE_ANIMATIONS, false, entity.world.provider.getDimension(), entity.getUniqueID(), map); }
-			else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_BASE_ANIMATIONS, true, entity.world.provider.getDimension(), entity.getEntityId(), map); }
+			Packets.sendAll(new PacketCustomAnimationBaseSet(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), map));
 		}
 	}
 
@@ -187,12 +184,10 @@ public class DataAnimation implements INPCAnimation {
 		anim = animationHandler.tryRunAnimation(anim, type);
 		if (!entity.isServerWorld()) { return anim; }
 		if (anim == null) {
-			if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_STOP_ANIMATION, false, entity.world.provider.getDimension(), entity.getUniqueID()); }
-			else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_STOP_ANIMATION, true, entity.world.provider.getDimension(), entity.getEntityId()); }
+			Packets.sendAll(new PacketCustomAnimationStop(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID()));
 		}
 		else {
-			if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_RUN_ANIMATION, false, entity.world.provider.getDimension(), entity.getUniqueID(), anim.id, type.ordinal()); }
-			else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_RUN_ANIMATION, true, entity.world.provider.getDimension(), entity.getEntityId(), anim.id, type.ordinal()); }
+			Packets.sendAll(new PacketCustomAnimationRun(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), anim.id, type));
 		}
 		return anim;
 	}
@@ -215,7 +210,7 @@ public class DataAnimation implements INPCAnimation {
 
 	public Float[] getAnimationPartData(int partId) { return animationHandler.rotationAngles.get(partId); }
 
-	public void loadBaseAnimations(Map<Object, Object> map) { animationHandler.loadBaseAnimations(map); }
+	public void loadBaseAnimations(Map<Integer, Integer> map) { animationHandler.loadBaseAnimations(map); }
 
 	public AnimationFrameConfig getPreFrame() { return animationHandler.preFrame; }
 
@@ -265,12 +260,10 @@ public class DataAnimation implements INPCAnimation {
 		emotion = emotionHandler.tryRunEmotion(emotion);
 		if (!entity.isServerWorld()) { return; }
 		if (emotion == null) {
-			if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.EMOTION_DATA_STOP_ANIMATION, false, entity.world.provider.getDimension(), entity.getUniqueID()); }
-			else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.EMOTION_DATA_STOP_ANIMATION, true, entity.world.provider.getDimension(), entity.getEntityId()); }
+			Packets.sendAll(new PacketCustomEmotionStop(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID()));
 		}
 		else {
-			if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.EMOTION_DATA_RUN_ANIMATION, false, entity.world.provider.getDimension(), entity.getUniqueID(), emotion.id); }
-			else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.EMOTION_DATA_RUN_ANIMATION, true, entity.world.provider.getDimension(), entity.getEntityId(), emotion.id); }
+			Packets.sendAll(new PacketCustomEmotionRun(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), emotion.id));
 		}
 	}
 
@@ -314,8 +307,7 @@ public class DataAnimation implements INPCAnimation {
 	@Override
 	public void update() {
 		if (entity == null || !entity.isServerWorld()) { return; }
-		if (entity instanceof EntityPlayerMP) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_SET, false, entity.world.provider.getDimension(), entity.getUniqueID(), save(new NBTTagCompound())); }
-		else if (entity instanceof EntityNPCInterface) { Server.sendToAll(CustomNpcs.Server, EnumPacketClient.ANIMATION_DATA_SET, true, entity.world.provider.getDimension(), entity.getEntityId(), save(new NBTTagCompound())); }
+		Packets.sendAll(new PacketCustomAnimationSet(entity instanceof EntityPlayer, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), save(new NBTTagCompound())));
 	}
 
 	@Override

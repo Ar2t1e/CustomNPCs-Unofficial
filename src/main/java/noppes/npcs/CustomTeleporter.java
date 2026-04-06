@@ -8,10 +8,11 @@ import javax.annotation.Nonnull;
 
 public class CustomTeleporter extends Teleporter {
 
-	public CustomTeleporter(WorldServer worldServer) {
-		super(worldServer != null ? worldServer : CustomNpcs.Server.getWorld(0));
+	public CustomTeleporter(WorldServer world) {
+		super(world != null ? world : CustomNpcs.Server.getWorld(0));
 	}
 
+	@Override
 	public void placeInPortal(@Nonnull Entity entityIn, float rotationYaw) {}
 
 }

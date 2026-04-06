@@ -1,228 +1,82 @@
 package noppes.npcs.client.gui.custom;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.item.ItemStack;
-import noppes.npcs.client.gui.util.*;
-import org.lwjgl.input.Mouse;
+import net.minecraft.network.chat.Component;
+import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.entity.IPlayer;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketCustomGuiSubGuiClosed;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.GuiBasicContainer;
+import noppes.npcs.shared.client.gui.components.custom.IComponentCustomGui;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiTextField;
-import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.inventory.Slot;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
-import net.minecraft.util.ResourceLocation;
-import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.api.gui.ICustomGuiComponent;
-import noppes.npcs.api.gui.IItemSlot;
-import noppes.npcs.api.wrapper.gui.CustomGuiButtonWrapper;
-import noppes.npcs.api.wrapper.gui.CustomGuiComponentWrapper;
-import noppes.npcs.api.wrapper.gui.CustomGuiEntityWrapper;
-import noppes.npcs.api.wrapper.gui.CustomGuiLabelWrapper;
-import noppes.npcs.api.wrapper.gui.CustomGuiScrollWrapper;
-import noppes.npcs.api.wrapper.gui.CustomGuiTextFieldWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiTexturedRectWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiWrapper;
-import noppes.npcs.client.gui.custom.components.CustomGuiButton;
-import noppes.npcs.client.gui.custom.components.CustomGuiEntity;
-import noppes.npcs.client.gui.custom.components.CustomGuiLabel;
-import noppes.npcs.client.gui.custom.components.CustomGuiScrollComponent;
-import noppes.npcs.client.gui.custom.components.CustomGuiTextField;
-import noppes.npcs.client.gui.custom.components.CustomGuiTexturedRect;
-import noppes.npcs.client.gui.custom.interfaces.IClickListener;
-import noppes.npcs.client.gui.custom.interfaces.ICustomKeyListener;
-import noppes.npcs.client.gui.custom.interfaces.IDataHolder;
-import noppes.npcs.client.gui.custom.interfaces.IGuiComponent;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.containers.ContainerCustomGui;
 
 import javax.annotation.Nonnull;
 
-public class GuiCustom extends GuiContainer implements ICustomScrollListener, IGuiData {
+public class GuiCustom extends GuiBasicContainer<ContainerCustomGui> implements IGuiData {
 
-	public static int guiLeft;
-	public static int guiTop;
-	protected Map<Integer, IGuiComponent> components;
-	protected List<IClickListener> clickListeners;
-	protected List<ICustomKeyListener> keyListeners;
-	protected List<IDataHolder> dataHolders;
-	protected ResourceLocation background;
-	protected CustomGuiWrapper gui;
-	protected int xSize;
-	protected int ySize;
-	protected int stretched;
-	protected int bgW;
-	protected int bgH;
-	protected int bgTx;
-	protected int bgTy;
-	public String[] hoverText;
-	public ItemStack hoverStack;
-	public int mouseWheel;
+	protected GuiCustomComponents components = new GuiCustomComponents();
+	public GuiCustomScrollingPanel scrollingPanel = new GuiCustomScrollingPanel();
+	public noppes.npcs.shared.client.gui.components.custom.CustomGuiTexturedRect background;
+	public CustomGuiWrapper guiWrapper;
+	public GuiCustom subgui = null;
+	public GuiCustom parent = null;
+	public GuiCustom.InitCallback initCallback;
 
 	public GuiCustom(ContainerCustomGui container) {
-		super(container);
-		components = new HashMap<>();
-		clickListeners = new ArrayList<>();
-		keyListeners = new ArrayList<>();
-		dataHolders = new ArrayList<>();
-		stretched = 0;
-		bgW = 0;
-		bgH = 0;
-		bgTx = 256;
-		bgTy = 256;
+		super(container, Component.empty());
 	}
 
 	@Override
-	protected void actionPerformed(@Nonnull GuiButton button) throws IOException {
-		super.actionPerformed(button);
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.CustomGuiButton, updateGui().toNBT(), button.id);
+	public void initGui() {
+		super.initGui();
+		if (guiWrapper != null) {
+			scrollingPanel.setComponents(this, guiWrapper.getScrollingPanel());
+			components.setComponents(this, guiWrapper);
+			closeOnEsc = guiWrapper.getClosesOnEsc();
+		} else { closeOnEsc = true; }
+		if (initCallback != null) { initCallback.init(); }
+		if (subgui != null) { subgui.initGui(); }
 	}
 
-	public void addClickListener(IClickListener component) { clickListeners.add(component); }
-
-	private void addComponent(ICustomGuiComponent component) {
-		CustomGuiComponentWrapper c = (CustomGuiComponentWrapper) component;
-		switch (c.getType()) {
-			case 0: {
-				CustomGuiButton button = CustomGuiButton.fromComponent((CustomGuiButtonWrapper) component);
-				button.setParent(this);
-				components.put(button.getId(), button);
-				addClickListener(button);
-				break;
-			}
-			case 1: {
-				CustomGuiLabel lbl = CustomGuiLabel.fromComponent((CustomGuiLabelWrapper) component);
-				lbl.setParent(this);
-				components.put(lbl.getId(), lbl);
-				break;
-			}
-			case 3: {
-				CustomGuiTextField textField = CustomGuiTextField.fromComponent((CustomGuiTextFieldWrapper) component);
-				textField.setParent(this);
-				components.put(textField.id, textField);
-				addDataHolder(textField);
-				addClickListener(textField);
-				addKeyListener(textField);
-				break;
-			}
-			case 2: {
-				CustomGuiTexturedRect rect = CustomGuiTexturedRect.fromComponent((CustomGuiTexturedRectWrapper) component);
-				rect.setParent(this);
-				components.put(rect.getId(), rect);
-				break;
-			}
-			case 4: {
-				CustomGuiScrollComponent scroll = new CustomGuiScrollComponent(mc, this, component.getId(), (CustomGuiScrollWrapper) component);
-				scroll.fromComponent((CustomGuiScrollWrapper) component);
-				scroll.setParent(this);
-				components.put(scroll.getId(), scroll);
-				addDataHolder(scroll);
-				addClickListener(scroll);
-				break;
-			}
-			case 7: {
-				CustomGuiEntity entt = CustomGuiEntity.fromComponent((CustomGuiEntityWrapper) component);
-				entt.setParent(this);
-				components.put(entt.getId(), entt);
-				break;
-			}
+	@Override
+	public void updateScreen() {
+		if (subgui != null) { subgui.updateScreen(); }
+		else {
+			components.containerTick();
+			scrollingPanel.containerTick();
 		}
 	}
 
-	public void addDataHolder(IDataHolder component) { dataHolders.add(component);}
-
-	public void addKeyListener(ICustomKeyListener component) { keyListeners.add(component);}
-
-	public void buttonClick(CustomGuiButton button) { NoppesUtilPlayer.sendData(EnumPlayerPacket.CustomGuiButton, updateGui().toNBT(), button.id);}
-
 	@Override
-	public boolean doesGuiPauseGame() {
-		return gui == null || gui.getDoesPauseGame();
-	}
-
-	void drawBackgroundTexture() {
+	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+		hoverText.clear();
+		drawDefaultBackground();
 		GlStateManager.pushMatrix();
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		mc.getTextureManager().bindTexture(background);
-		GlStateManager.translate((float) guiLeft, (float) guiTop, 0.0f);
-		if (bgW > 0 && bgH > 0) {
-			if (stretched == 0) {
-				float scaleU = (float) xSize / (float) bgW;
-				float scaleV = (float) ySize / (float) bgH;
-				GlStateManager.scale(scaleU, scaleV, 1.0f);
-				drawTexturedModalRect(0, 0, bgTx, bgTy, bgW, bgH);
-			}
-			else {
-				int hS = ySize, h = 0;
-				int stepW = stretched == 2 ? xSize / (int) Math.ceil((double) xSize / (double) bgW) : bgW;
-				int stepH = stretched == 2 ? ySize / (int) Math.ceil((double) ySize / (double) bgH) : bgH;
-				if (stretched == 2) {
-					if (stepW >= xSize) { stepW = xSize / 2; }
-					if (stepH >= ySize) { stepH = ySize / 2; }
-				}
-				while (hS > 0) {
-					int height = Math.min(hS, stepH);
-					int startV = h * stepH;
-					int textureV = bgTy;
-					if (stretched == 2) {
-						if (hS <= stepH) { // last
-							if (h == 0) { // and first
-								height = ySize / 2;
-								hS = height + stepH;
-							} else {
-								startV = ySize - height;
-								textureV += bgH - hS;
-								height = stepH;
-							}
-						} else {
-							if (h != 0 && stepH != bgW) { textureV += (bgH - stepH) / 2; }
-						}
-					}
-					int wS = xSize, w = 0;
-					while (wS > 0) {
-						int width = Math.min(wS, stepW);
-						int startU = w * stepW;
-						int textureU = bgTx;
-						if (stretched == 2) {
-							if (wS <= stepW) { // last
-								if (w == 0) { // and first
-									width = xSize / 2;
-									wS = width + stepW;
-								} else {
-									textureU += bgW - wS;
-									width = stepW;
-								}
-							} else {
-								if (w != 0 && stepW != bgW) { textureU += (bgW - stepW) / 2; }
-							}
-						}
-						drawTexturedModalRect(startU, startV, textureU, textureV, width, height);
-						wS -= stepW;
-						w++;
-					}
-					hS -= stepH;
-					h++;
-				}
-			}
-		}
-		else { drawTexturedModalRect(0, 0, 0, 0, xSize, ySize); }
+			GlStateManager.pushMatrix();
+			GlStateManager.translate((float) getGuiLeft(), (float) getGuiTop(), 0.0F);
+			if (background != null) { background.render(mouseX, mouseY, partialTicks); }
+			components.render(mouseX - getGuiLeft(), mouseY - getGuiTop(), partialTicks);
+			scrollingPanel.render(mouseX - getGuiLeft(), mouseY - getGuiTop(), partialTicks);
+			if (!hoverText.isEmpty() && subgui == null) { drawHoveringText(toHoverText(), mouseX, mouseY); }
+			GlStateManager.popMatrix();
+		super.drawScreen(mouseX, mouseY, partialTicks);
+		if (subgui == null) { renderHoveredToolTip(mouseX, mouseY); }
 		GlStateManager.popMatrix();
-		if (gui.getShowPlayerSlots() && inventorySlots != null) {
-			mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-			for (int slotId = inventorySlots.inventorySlots.size() - 1, i = 0; i < 36; slotId--, i++) {
-				Slot slot = inventorySlots.getSlot(slotId);
-				drawTexturedModalRect(getGuiLeft() + slot.xPos - 1, getGuiTop() + slot.yPos - 1, 0, 0, 18, 18);
-			}
+		if (subgui != null) {
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(0.0F, 0.0F, 80.0F);
+			subgui.drawScreen(mouseX, mouseY, partialTicks);
+			GlStateManager.popMatrix();
 		}
 	}
 
@@ -230,132 +84,117 @@ public class GuiCustom extends GuiContainer implements ICustomScrollListener, IG
 	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) { }
 
 	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		mouseWheel = Mouse.getDWheel();
-		hoverText = null;
-		hoverStack = null;
-		drawDefaultBackground();
-		if (background != null) { drawBackgroundTexture(); }
-		for (IGuiComponent component : components.values()) { component.onRender(mc, mouseX, mouseY, mouseWheel, partialTicks); }
-		if (gui != null && gui.getSlots().length > 0) {
-			int cx = -41 + (256 - gui.getWidth()) / 2;
-			int cy = -46 + (256 - gui.getHeight()) / 2;
-			GlStateManager.pushMatrix();
-			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-			mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-			for (IItemSlot slot : gui.getSlots()) {
-				if (!slot.isShowBack()) { continue; }
-				drawTexturedModalRect(getGuiLeft() + slot.getPosX() + cx, getGuiTop() + slot.getPosY() + cy, 0, 0, 18, 18);
-			}
-			GlStateManager.popMatrix();
-		}
-		if (hoverStack != null) {
-			drawHoveringText(hoverStack.getTooltip(mc.player, mc.gameSettings.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL), mouseX, mouseY);
-		}
-		else if (hoverText != null) {
-			drawHoveringText(Arrays.asList(hoverText), mouseX, mouseY);
-		}
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		renderHoveredToolTip(mouseX, mouseY);
-	}
-
-	NBTTagCompound getScrollSelection(CustomGuiScrollComponent scroll) {
-		NBTTagList list = new NBTTagList();
-		if (scroll.component.isMultiSelect()) {
-			for (String s : scroll.getSelectedList()) {
-				list.appendTag(new NBTTagString(s));
-			}
-		} else {
-			list.appendTag(new NBTTagString(scroll.getSelected()));
-		}
-		NBTTagCompound selection = new NBTTagCompound();
-		selection.setTag("selection", list);
-		return selection;
+	public boolean keyPressed(char typedChar, int keyCode) {
+		if (subgui != null) { return subgui.keyPressed(typedChar, keyCode); }
+		if (components.keyPressed(typedChar, keyCode)) { return true; }
+		if (scrollingPanel.keyPressed(typedChar, keyCode)) { return true; }
+		return GuiBasic.isInventoryKey(keyCode) || super.keyPressed(typedChar, keyCode);
 	}
 
 	@Override
-	public void initGui() {
-		super.initGui();
-		if (gui != null) {
-			guiLeft = (width - xSize) / 2;
-			guiTop = (height - ySize) / 2;
-			components.clear();
-			clickListeners.clear();
-			keyListeners.clear();
-			dataHolders.clear();
-			for (ICustomGuiComponent c : gui.getComponents()) { addComponent(c); }
-		}
+	public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+		if (subgui != null) { return subgui.mouseClicked(mouseX, mouseY, mouseButton); }
+		boolean clicked = false;
+		clicked |= components.mouseClicked(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), mouseButton);
+		clicked |= scrollingPanel.mouseClicked(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), mouseButton);
+		return clicked | super.mouseClicked(mouseX, mouseY, mouseButton);
 	}
 
 	@Override
-	protected void keyTyped(char typedChar, int keyCode) throws IOException {
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.CustomGuiKeyPressed, keyCode);
-		for (ICustomKeyListener listener : keyListeners) { listener.keyTyped(typedChar, keyCode); }
-		if (keyCode == 1) {
-			if (gui != null) {
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.CustomGuiClose, updateGui().toNBT());
-				return;
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
+		if (subgui != null) { return subgui.mouseScrolled(mouseX, mouseY, scrolled); }
+		boolean isScrolled = false;
+		isScrolled |= components.mouseScrolled(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), scrolled);
+		isScrolled |= scrollingPanel.mouseScrolled(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), scrolled);
+		return isScrolled | super.mouseScrolled(mouseX, mouseY, scrolled);
+	}
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
+		if (subgui != null) { return subgui.mouseDragged(mouseX, mouseY, mouseButton, dx, dy); }
+		boolean clicked = false;
+		clicked |= components.mouseDragged(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), mouseButton, dx, dy);
+		clicked |= scrollingPanel.mouseDragged(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), mouseButton, dx, dy);
+		return clicked | super.mouseDragged(mouseX, mouseY, mouseButton, dx, dy);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+		if (subgui != null) { return subgui.mouseReleased(mouseX, mouseY, mouseButton); }
+		boolean released = false;
+		released |= components.mouseReleased(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), mouseButton);
+		released |= scrollingPanel.mouseReleased(mouseX - (double)getGuiLeft(), mouseY - (double)getGuiTop(), mouseButton);
+		return released | super.mouseReleased(mouseX, mouseY, mouseButton);
+	}
+
+	@Override
+	public boolean doesGuiPauseGame() { return guiWrapper == null || guiWrapper.getDoesPauseGame(); }
+
+	@Override
+	public void onClose() {
+		if (subgui == null) {
+			if (parent == null) { super.onClose(); }
+			else {
+				Packets.sendServer(new SPacketCustomGuiSubGuiClosed());
+				parent.subgui = null;
 			}
 		}
-		if (mc.gameSettings.keyBindInventory.isActiveAndMatches(keyCode)) { return; }
-		super.keyTyped(typedChar, keyCode);
-	}
-
-	@Override
-	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-		super.mouseClicked(mouseX, mouseY, mouseButton);
-		for (IClickListener listener : clickListeners) {
-			listener.mouseClicked(this, mouseX, mouseY, mouseButton);
-		}
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.CustomGuiScrollClick, updateGui().toNBT(), scroll.getID(), scroll.getSelect(), getScrollSelection((CustomGuiScrollComponent) scroll), false);
-	}
-
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) {
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.CustomGuiScrollClick, updateGui().toNBT(), scroll.getID(), scroll.getSelect(), getScrollSelection((CustomGuiScrollComponent) scroll), true);
+		else { subgui.onClose(); }
 	}
 
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
-		Minecraft mc = Minecraft.getMinecraft();
-		CustomGuiWrapper guiWrapper = (CustomGuiWrapper) new CustomGuiWrapper(mc.player).fromNBT(compound);
-		((ContainerCustomGui) inventorySlots).setGui(guiWrapper, mc.player);
-		gui = guiWrapper;
-		xSize = guiWrapper.getWidth();
-		ySize = guiWrapper.getHeight();
-		if (!guiWrapper.getBackgroundTexture().isEmpty()) {
-			background = new ResourceLocation(guiWrapper.getBackgroundTexture());
-			stretched = guiWrapper.stretched;
-			bgW = guiWrapper.bgW;
-			bgH = guiWrapper.bgH;
-			bgTx = guiWrapper.bgTx;
-			bgTy = guiWrapper.bgTy;
-		}
-		else {
-			stretched = 0;
-			bgW = 0;
-			bgH = 0;
-			bgTx = 256;
-			bgTy = 256;
-		}
+		setGuiWrapper((CustomGuiWrapper)(new CustomGuiWrapper((IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(mc.player))).of(compound));
 		initGui();
 	}
 
-	CustomGuiWrapper updateGui() {
-		for (IDataHolder component : dataHolders) { gui.updateComponent(component.toComponent()); }
-		return gui;
+	@Override
+	public void onResize(@Nonnull Minecraft minecraft, int width, int height) {
+		super.onResize(minecraft, width, height);
+		if (subgui != null) { subgui.onResize(minecraft, width, height); }
 	}
 
-	@Override
-	public void updateScreen() {
-		super.updateScreen();
-		for (IDataHolder component : dataHolders) {
-			if (component instanceof GuiTextField) { ((GuiTextField) component).updateCursorCounter(); }
+	public void setGuiWrapper(CustomGuiWrapper guiWrapperIn) {
+		guiWrapper = guiWrapperIn;
+		xSize = guiWrapperIn.getWidth();
+		ySize = guiWrapperIn.getHeight();
+		background = new noppes.npcs.shared.client.gui.components.custom.CustomGuiTexturedRect(this, (CustomGuiTexturedRectWrapper) guiWrapperIn.getBackgroundRect());
+		if (guiWrapperIn.getSubGuiWrapper() != null) {
+			if (subgui == null &&minecraft.player != null) {
+				subgui = new GuiCustom((ContainerCustomGui) inventorySlots);
+				subgui.setWorldAndResolution(minecraft, width, height);
+			}
+			if (subgui != null) {
+				subgui.parent = this;
+				subgui.setGuiWrapper(guiWrapperIn.getSubGuiWrapper());
+			}
+		} else {
+			((ContainerCustomGui) inventorySlots).setGui(guiWrapperIn, mc.player);
+			subgui = null;
+			if (parent == null) { initGui(); }
 		}
 	}
+
+	public int getTotalGuiLeft() { return parent != null ? parent.getTotalGuiLeft() + getGuiLeft() : getGuiLeft(); }
+
+	public int getTotalGuiTop() { return parent != null ? parent.getTotalGuiTop() + getGuiTop() : getGuiTop(); }
+
+	public void addPanel(IComponentGui component) { scrollingPanel.components.put(component.getId(), component); }
+
+	public IComponentGui getComponent(UUID id) {
+		Optional<IComponentGui> c = components.components.values()
+				.stream()
+				.filter((t) -> t instanceof IComponentCustomGui &&
+						((IComponentCustomGui) t).component() != null &&
+						((IComponentCustomGui) t).component().getUniqueID().equals(id))
+				.findFirst();
+		if (c.isPresent()) { return c.get(); }
+		c = scrollingPanel.components.values().stream().filter((t) -> t instanceof IComponentCustomGui &&
+				((IComponentCustomGui) t).component() != null &&
+				((IComponentCustomGui) t).component().getUniqueID().equals(id)).findFirst();
+		return c.orElseGet(() -> subgui != null ? subgui.getComponent(id) : null);
+	}
+
+	public interface InitCallback {  void init(); }
 
 }

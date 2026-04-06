@@ -7,8 +7,8 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.entity.EntityLivingBase;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.ModelPartData;
+import noppes.npcs.CustomItems;
+import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.model.part.ModelData;
@@ -88,7 +88,7 @@ implements LayerRenderer<T> {
 
 		boolean isInvisible = false;
 		if (npc.display.getVisible() == 1) { isInvisible = npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player); }
-		else if (npc.display.getVisible() == 2) { isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand; }
+		else if (npc.display.getVisible() == 2) { isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand; }
 		if (isInvisible) {
 			GlStateManager.color(red, green, blue, 0.15f);
 			GlStateManager.enableBlend();

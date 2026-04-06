@@ -1,30 +1,40 @@
 package noppes.npcs.client.gui.script;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
+import java.io.File;
 import java.util.*;
 
 import net.minecraft.client.gui.GuiConfirmOpenLink;
-import net.minecraft.client.gui.GuiYesNo;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagLongArray;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesStringUtils;
+import noppes.npcs.NBTTags;
+import noppes.npcs.client.gui.ConfirmScreen;
+import noppes.npcs.mixin.nbt.INBTTagLongArrayMixin;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.SPacketScriptConsole;
+import noppes.npcs.packets.server.SPacketSaveClientScripts;
+import noppes.npcs.packets.server.SPacketScriptEncrypt;
+import noppes.npcs.packets.server.SPacketScriptSave;
+import noppes.npcs.packets.server.SPacketScriptText;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiMenuTopButton;
+import noppes.npcs.shared.client.gui.components.GuiTextArea;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.controllers.IScriptHandler;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.ClientScriptData;
-import noppes.npcs.reflection.nbt.TagLongArrayReflection;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
+import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
-
-import javax.annotation.Nonnull;
 
 public class GuiScriptInterface extends GuiNPCInterface
 		implements IGuiData, ITextChangeListener, ICustomScrollListener {
@@ -32,130 +42,318 @@ public class GuiScriptInterface extends GuiNPCInterface
 	private static final String web_site = "http://www.kodevelopment.nl/minecraft/customnpcs/scripting";
 	private static final String api_doc_site = "https://github.com/BetaZavr/CustomNPCsAPI-Unofficial";
 	private static final String api_site = "https://github.com/BetaZavr/CustomNPCsAPI-Unofficial";
-	private static final String dis_site = "https://discord.gg/RGb4JqE6Qz";
-	protected int activeTab;
-	protected final Map<Integer, Long> dataLog = new HashMap<>();
-	protected Long selectLog = 0L;
+	private static final String dis_site = "https://discord.gg/RGb4JqE6Qz"; // https://github.com/Noppes/cnpcs-scripting-examples
+
+	protected int activeTab = 0;
 	public IScriptHandler handler;
+
+	// New from Unofficial (GoodBird)
+	public List<String> methods = new ArrayList<>();
+	public boolean showFunctions = false;
+
+	// New from Unofficial (BetaZavr)
+	protected final Map<Integer, Long> dataLog = new HashMap<>();
+	protected final int type;
+	protected Long selectLog = 0L;
 	public Map<String, Map<String, Long>> languages = new HashMap<>();
-	public String path, ext;
+	public String path;
+	public String ext;
 
-	protected boolean wait = true;
-
-	public GuiScriptInterface() {
+	public GuiScriptInterface(int typeIn) {
 		super();
 		drawDefaultBackground = true;
-		closeOnEsc = true;
+		imageWidth = 420;
 		setBackground("menubg.png");
-		activeTab = 0;
+
+		type = typeIn;
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0 || wait) { return; }
-		if (button.getID() >= 0 && button.getID() < CustomNpcs.ScriptMaxTabs) {
+	public void initGui() {
+		imageWidth = (int) (width * 0.88D);
+		imageHeight = (int) (height * 0.90D);
+		super.initGui();
+		guiTop += 10;
+		int y = guiTop + 5;
+		GuiMenuTopButton top = addTopButton(0, guiLeft + 4, guiTop - 17, "gui.settings");
+		for(int i = 0; i < handler.getScripts().size(); ++i) {
+			top = addTopButton(i + 1, top.getX() + top.getWidth(), top.getY(), "" + (i + 1));
+		}
+		if (handler.getScripts().size() < CustomNpcs.ScriptMaxTabs) {
+			addTopButton(41, top.getX() + top.getWidth(), top.getY(), "+");
+		}
+		top = getTopButton(activeTab);
+		if (top == null) {
+			activeTab = 0;
+			top = getTopButton(0);
+		}
+		top.active = true;
+		if (activeTab > 0) {
+			ScriptContainer container = handler.getScripts().get(activeTab - 1);
+			final GuiTextArea ta = new GuiTextArea(3, guiLeft + 5, y, imageWidth - 132, imageHeight - 10, container == null ? "" : container.script)
+					.enableCodeHighlighting()
+					.setListener(this);
+			add(ta);
+			int x = guiLeft + 7 + ta.width;
+
+			// New from Unofficial (GoodBird)
+			add(new GuiButtonNop(this, 99, showFunctions ? "script.hideFunctions" : "script.show.functions", x, y, (button) -> {
+				showFunctions = !showFunctions;
+				initGui();
+			}).setSize(121, 20));
+			if (!showFunctions) {
+				boolean hasCode = container != null && !container.script.isEmpty();
+				addButton(102, x, y += 22, "gui.clear")
+						.setSize(60, 20)
+						.setIsEnabled(hasCode);
+				addButton(101, x + 61, y, "gui.paste")
+						.setSize(60, 20)
+						.setIsEnabled(!NoppesStringUtils.getClipboardContents().isEmpty());
+				addButton(100, x, y + 21, "gui.copy")
+						.setSize(60, 20)
+						.setIsEnabled(hasCode);
+				addButton(105, x + 61, y + 21, "gui.remove")
+						.setSize(60, 20);
+				addButton(115, x, y + 43, "gui.remove.all")
+						.setSize(60, 20);
+				Map<String, Long> map = languages.get(noppes.npcs.util.Util.instance.deleteColor(handler.getLanguage()));
+				addButton(107, x + 61, y + 43, "script.loadscript")
+						.setSize(60, 20)
+						.setIsEnabled(map != null && !map.isEmpty());
+				GuiCustomScrollNop scroll = addScroll(0).setPos(x, y = guiTop + 93)
+						.setUnselectable()
+						.disabledSearch()
+						.setSize(120, imageHeight - 120);
+				if (container != null) { scroll.setList(container.scripts); }
+				addButton(118, x, y + 2 + scroll.height, "gui.encrypt")
+						.setSize(80, 20)
+						.setIsEnabled(!(this instanceof GuiScriptClient) && container != null && container.canEncryptCode())
+						.setHoverTexts("encrypt.hover.encrypt");
+			} // scripts
+			else {
+				int h = (imageHeight - 34) / 2;
+				addScroll(1).setPos(x, guiTop + 26)
+						.setSize(120, h).setList(methods);
+				addScroll(2).setPos(x, guiTop + 29 + h)
+						.setSize(120, h)
+						.setList(new ArrayList<>(ScriptContainer.Data.keySet()));
+			} // functions
+		} // scripts
+		else {
+			GuiTextArea ta = new GuiTextArea(3, guiLeft + 5, y, imageWidth - 175, imageHeight - 10, getConsoleText());
+			Map<Long, String> map = handler.getConsoleText();
+			if (map.size() > 1) {
+				ta.y += 24;
+				ta.height -= 24;
+			}
+			ta.enabled = false;
+			add(ta);
+			int x = guiLeft + 7 + ta.width;
+			addButton(100, x, guiTop + 125, map.size() < 2 ? Component.translatable("gui.copy") :
+					Component.translatable("gui.copy").append(" ").append(Component.translatable("gui.all")))
+					.setSize(80, 20)
+					.setHoverTexts("script.hover.log.copy.all");
+			addButton(102, x, guiTop + 146, map.size() < 2 ? Component.translatable("gui.clear") :
+					Component.translatable("gui.clear").append(" ").append(Component.translatable("gui.all")))
+					.setSize(80, 20)
+					.setHoverTexts("script.hover.log.clear.all");
+			if (map.size() > 1) {
+				List<String> selects = new ArrayList<>();
+				dataLog.clear();
+				int i = 0;
+				int pos = 0;
+				for(Long key : map.keySet()) {
+					dataLog.put(i, key);
+					if (Objects.equals(key, selectLog)) { pos = i; }
+					selects.add((i + 1) + "/" + map.size() + ": " + new Date(key));
+					i++;
+				}
+				addButton(119, guiLeft + 4, guiTop + 7, true, pos, selects)
+						.setSize(ta.width, 20);
+				getButton(100).setX(x + 82);
+				getButton(102).setX(x + 82);
+				addButton(120, x, guiTop + 125, "gui.copy")
+						.setSize(80, 20)
+						.setHoverTexts("script.hover.log.copy");
+				addButton(121, x, guiTop + 146, "gui.clear")
+						.setSize(80, 20)
+						.setHoverTexts("script.hover.log.clear");
+			}
+			addLabel(1, x, guiTop + 15, "script.language");
+			Object[] codeNames = languages.keySet().toArray(new Object[0]);
+			GuiButtonNop button = addButton(103, x + 60, guiTop + 10, languages.size() > 1, getScriptIndex(), codeNames)
+					.setIsEnabled(!languages.isEmpty())
+					.setSize(80, 20);
+			String[] data = getLanguageData(Util.instance.deleteColor(button.getMessage().getString()));
+			button.setHoverTexts(Component.translatable("script.hover.info." + data[0]).
+					append(Component.translatable("script.hover.info.dir", data[1], data[2])));
+			addLabel(3, x + 145, guiTop + 15, "[?]")
+					.setHoverTexts("script.hover.info");
+			addLabel(2, x, guiTop + 36, "gui.enabled");
+			addYesNo(104, x + 60, guiTop + 31, handler.getEnabled())
+					.setSize(50, 20);
+			if (player.getServer() != null) {
+				addButton(106, x, guiTop + 55, "script.openfolder")
+						.setSize(150, 20);
+			}
+			addButton(109, x, guiTop + 78, "gui.website")
+					.setSize(80, 20);
+			addButton(112, x + 82, guiTop + 78, "script.examples")
+					.setSize(80, 20);
+			addButton(110, x, guiTop + 99, "script.apidoc")
+					.setSize(80, 20);
+			addButton(111, x + 82, guiTop + 99, "script.apisrc")
+					.setSize(80, 20);
+		} // info
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		if (button.id >= 0 && button.id <= CustomNpcs.ScriptMaxTabs) {
 			setScript();
-			activeTab = button.getID();
+			activeTab = button.id;
 			initGui();
-			return;
 		}
-		if (button.getID() == CustomNpcs.ScriptMaxTabs + 1) {
-			if (handler.getScripts().size() >= CustomNpcs.ScriptMaxTabs) {
-				activeTab = CustomNpcs.ScriptMaxTabs;
-				initGui();
-				return;
+		else if (button.id >= CustomNpcs.ScriptMaxTabs + 1 && button.id < 100) {
+			if (handler.getScripts().size() >= CustomNpcs.ScriptMaxTabs) { activeTab = CustomNpcs.ScriptMaxTabs; }
+			else {
+				handler.getScripts().add(new ScriptContainer(handler));
+				activeTab = handler.getScripts().size();
 			}
-			handler.getScripts().add(new ScriptContainer(handler, true));
-			activeTab = handler.getScripts().size();
 			initGui();
-			return;
 		}
-		switch (button.getID()) {
-			case 100: {
-				if (activeTab == 0) { // copy all logs
-					Map<Long, String> map = handler.getConsoleText();
-					StringBuilder builder = new StringBuilder();
-					for (Map.Entry<Long, String> entry : map.entrySet()) { builder.insert(0, new Date(entry.getKey()) + entry.getValue() + "\n\n"); }
-					NoppesStringUtils.setClipboardContents(builder.toString());
-				}
-				else { NoppesStringUtils.setClipboardContents(((GuiTextArea) get(2, GuiTextArea.class)).getText()); }
-				break;
-			} // copy code or all logs
-			case 101: {
-				ScriptContainer container = handler.getScripts().get(activeTab - 1);
-				if (container != null) {
-					boolean sr = !(container.script == null || container.script.isEmpty());
-					if (sr) {
-						String tempScript = container.script.replace(" ", "").replace("" + ((char) 9), "").replace("" + ((char) 10), "");
-						sr = !tempScript.isEmpty();
+		else {
+			final ScriptContainer container = activeTab > 0 && activeTab <= handler.getScripts().size() ? handler.getScripts().get(activeTab - 1) : null;
+			switch (button.id) {
+				case 100: {
+					if (activeTab == 0) { // copy all logs
+						Map<Long, String> map = handler.getConsoleText();
+						StringBuilder builder = new StringBuilder();
+						for (Map.Entry<Long, String> entry : map.entrySet()) { builder.insert(0, new Date(entry.getKey()) + entry.getValue() + "\n\n"); }
+						NoppesStringUtils.setClipboardContents(builder.toString());
 					}
-					if (sr) {
-						displayGuiScreen(new GuiYesNo(this, "", new TextComponentTranslation("gui.replaceMessage").getFormattedText(), 6));
-						return;
+					else { NoppesStringUtils.setClipboardContents(get(3, GuiTextArea.class).getText()); } // copy code
+					break;
+				} // copy code or all logs
+				case 101: {
+					if (container != null) {
+						String code = container.script == null ? "" : container.script.replace(" ", "")
+								.replace("" + ((char) 9), "")
+								.replace("" + ((char) 10), "");
+						String pasteText = NoppesStringUtils.getClipboardContents().replace(" ", "")
+								.replace("" + ((char) 9), "")
+								.replace("" + ((char) 10), "");
+						if (!code.isEmpty() && !pasteText.isEmpty() && !code.equals(pasteText)) {
+							ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+								if (agree) {
+									get(3, GuiTextArea.class).setText(NoppesStringUtils.getClipboardContents());
+									setScript();
+								}
+								NoppesUtil.openGUI(player, this);
+							},
+									Component.empty(),
+									Component.translatable("message.delete"));
+							setScreen(guiYesNo);
+						}
+						else {
+							get(3, GuiTextArea.class).setText(NoppesStringUtils.getClipboardContents());
+							setScript();
+						}
 					}
-				}
-				getTextArea(2).setText(NoppesStringUtils.getClipboardContents());
-				break;
+					break;
+				} // paste
+				case 102: {
+					if (activeTab > 0) {
+						if (container != null) {
+							ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+								if (agree && activeTab > 0) { container.script = ""; }
+								NoppesUtil.openGUI(player, this);
+							}, Component.empty(), Component.translatable("message.delete"));
+							setScreen(guiYesNo);
+						}
+					}
+					else { handler.clearConsole(); }
+					initGui();
+					break;
+				} // clear code or all logs
+				case 103: {
+					String language = noppes.npcs.util.Util.instance.deleteColor(button.getMessage().getString());
+					handler.setLanguage(language);
+					String[] data = getLanguageData(language);
+					button.setHoverTexts(Component.translatable("script.hover.info." + data[0]).
+							append(Component.translatable("script.hover.info.dir", data[1], data[2])));
+					break;
+				} // languages
+				case 104: handler.setEnabled(button.getValue() == 1); break; // script enabled
+				case 105: {
+					if (container != null && container.scripts.isEmpty() && container.script.isEmpty()) {
+						handler.getScripts().remove(activeTab -= 1);
+						initGui();
+					}
+					else {
+						ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+							if (bo) { handler.getScripts().remove(activeTab -= 1); }
+							setScreen(this);
+						}, Component.empty(), Component.translatable("message.delete"));
+						setScreen(guiYesNo);
+					}
+					break;
+				} // remove tab
+				case 106: NoppesUtil.openFolder(ScriptController.Instance.dir); break; // script open folder
+				case 107: {
+					ScriptContainer cont = container;
+					if (cont == null) { handler.getScripts().add(cont = new ScriptContainer(handler)); }
+					setSubGui(new SubGuiScriptList(languages.get(noppes.npcs.util.Util.instance.deleteColor(handler.getLanguage())), cont));
+					break;
+				} // load scripts
+				case 108: {
+					if (container != null) { setScript(); }
+					break;
+				} // set script to tab
+				case 109: setScreen(new GuiConfirmOpenLink(this, web_site, 0, true)); break;
+				case 110: setScreen(new GuiConfirmOpenLink(this, api_doc_site, 1, true)); break;
+				case 111: setScreen(new GuiConfirmOpenLink(this, api_site, 2, true)); break;
+				case 112: setScreen(new GuiConfirmOpenLink(this, dis_site, 3, true)); break;
+				case 115: {
+					ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+						if (bo) {
+							handler.getScripts().clear();
+							activeTab = 0;
+						}
+						setScreen(this);
+					}, Component.translatable("gui.remove.all"), Component.translatable("message.delete"));
+					setScreen(guiYesNo);
+					break;
+				} // remove all codes
+				case 118: {
+					if (container != null) {
+						setScript();
+						setSubGui(new SubGuiScriptEncrypt(path, ext));
+					}
+					break;
+				} // encrypt
+				case 119: {
+					GuiTextArea area = get(3, GuiTextArea.class);
+					if (activeTab == 0 && area != null &&
+							dataLog.containsKey(button.getValue()) &&
+							handler.getConsoleText().containsKey(dataLog.get(button.getValue()))) {
+						selectLog = dataLog.get(button.getValue());
+						area.setText(new Date(selectLog) + handler.getConsoleText().get(selectLog));
+					}
+					break;
+				} // log tab
+				case 120: {
+					if (activeTab == 0) { NoppesStringUtils.setClipboardContents(get(3, GuiTextArea.class).getText()); }
+					break;
+				} // copy log
+				case 121: {
+					if (activeTab == 0) {
+						handler.clearConsoleText(selectLog);
+						initGui();
+					}
+					break;
+				} // clear log
 			}
-			case 102: {
-				if (activeTab > 0) { displayGuiScreen(new GuiYesNo(this, "", new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 5)); }
-				else { handler.clearConsole(); }
-				initGui();
-				break;
-			} // clear all logs
-			case 103: {
-				handler.setLanguage(button.displayString);
-				String[] data = getLanguageData(button.displayString);
-				button.setHoverText(new TextComponentTranslation("script.hover.info." + data[0]).
-						appendSibling(new TextComponentTranslation("script.hover.info.dir", data[1], data[2])).getFormattedText());
-				break;
-			}
-			case 104: handler.setEnabled(button.getValue() == 1); break;
-			case 105: displayGuiScreen(new GuiYesNo(this, "", new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 10)); break;
-			case 106: NoppesUtil.openFolder(ScriptController.Instance.dir); break;
-			case 107: {
-				ScriptContainer container = handler.getScripts().get(activeTab - 1);
-				if (container == null) { handler.getScripts().add(container = new ScriptContainer(handler, true)); }
-				setSubGui(new SubGuiScriptList(languages.get(Util.instance.deleteColor(handler.getLanguage())), container));
-				break;
-			}
-			case 108: {
-				ScriptContainer container = handler.getScripts().get(activeTab - 1);
-				if (container != null) { setScript(); }
-				break;
-			}
-			case 109: displayGuiScreen(new GuiConfirmOpenLink(this, web_site, 0, true)); break;
-			case 110: displayGuiScreen(new GuiConfirmOpenLink(this, api_doc_site, 1, true)); break;
-			case 111: displayGuiScreen(new GuiConfirmOpenLink(this, api_site, 2, true)); break;
-			case 112: displayGuiScreen(new GuiConfirmOpenLink(this, dis_site, 3, true)); break;
-			case 115: displayGuiScreen(new GuiYesNo(this, new TextComponentTranslation("gui.remove.all").getFormattedText(), new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 4)); break;
-			case 118: {
-				ScriptContainer container = handler.getScripts().get(activeTab - 1);
-				if (container != null) { setSubGui(new SubGuiScriptEncrypt(path, ext)); }
-				break;
-			}
-			case 119: {
-				if (activeTab > 0 ||
-						get(2, GuiTextArea.class) == null ||
-						!dataLog.containsKey(button.getValue()) ||
-						!handler.getConsoleText().containsKey(dataLog.get(button.getValue()))) {
-					return;
-				}
-				selectLog = dataLog.get(button.getValue());
-				((GuiTextArea) get(2, GuiTextArea.class)).setText(new Date(selectLog) + handler.getConsoleText().get(selectLog));
-				break;
-			}
-			case 120: {
-				if (activeTab > 0) { return; }
-				NoppesStringUtils.setClipboardContents(getTextArea(2).getText());
-				break;
-			} // copy log
-			case 121: {
-				if (activeTab > 0) { return; }
-				handler.clearConsoleText(selectLog);
-				initGui();
-				break;
-			} // clear log
 		}
 	}
 
@@ -167,74 +365,133 @@ public class GuiScriptInterface extends GuiNPCInterface
 				case 1: openLink(api_doc_site); break;
 				case 2: openLink(api_site); break;
 				case 3: openLink(dis_site); break;
-				case 4: {
-					handler.getScripts().clear();
-					activeTab = 0;
-					break;
-				}
-				case 5: {
-					ScriptContainer container = handler.getScripts().get(activeTab - 1);
-					container.script = "";
-					break;
-				}
-				case 6: getTextArea(2).setText(NoppesStringUtils.getClipboardContents()); break;
-				case 10: {
-					handler.getScripts().remove(activeTab - 1);
-					activeTab = 0;
-					break;
-				}
 			}
 		}
-		displayGuiScreen(this);
+		setScreen(this);
 	}
 
 	@Override
+	public void setGuiData(NBTTagCompound compound) {
+		NBTTagList data = compound.getTagList("Languages", 10);
+		Map<String, Map<String, Long>> newLanguages = new HashMap<>();
+		for (int i = 0; i < data.tagCount(); ++i) {
+			NBTTagCompound comp = data.getCompoundTagAt(i);
+			Map<String, Long> scripts = new TreeMap<>();
+			NBTTagList list = comp.getTagList("Scripts", 8);
+			long[] ld = new long[list.tagCount()];
+			if (comp.hasKey("sizes", 12)) { ld = ((INBTTagLongArrayMixin) comp.getTag("sizes")).getData(); }
+			if (ld != null) {
+				for (int j = 0; j < list.tagCount(); ++j) { scripts.put(list.getStringTagAt(j), ld[j]); }
+			}
+			newLanguages.put(comp.getString("Language"), scripts);
+			if (Util.instance.equalsDeleteColor(comp.getString("Language"), handler.getLanguage(), false)) { ext = comp.getString("FileSfx"); }
+		}
+		languages = newLanguages;
+		path = compound.getString("DirPath") + "/" + handler.getLanguage().toLowerCase();
+		methods = NBTTags.getStringList(compound.getTagList("Methods", 10));
+		initGui();
+	}
+
+	@Override
+	public void save() { setScript(); }
+
+	@Override
+	public void textUpdate(String text) {
+		ScriptContainer container = handler.getScripts().get(activeTab - 1);
+		if (container != null) { container.script = text; }
+	}
+
+	private int getScriptIndex() {
+		int i = 0;
+		for(Iterator<String> var2 = languages.keySet().iterator(); var2.hasNext(); ++i) {
+			String language = var2.next();
+			if (language.equalsIgnoreCase(handler.getLanguage())) { return i; }
+		}
+		return 0;
+	}
+
+	private void setScript() {
+		if (activeTab > 0) {
+			ScriptContainer container = handler.getScripts().get(activeTab - 1);
+			if (container == null) { handler.getScripts().add(container = new ScriptContainer(handler)); }
+			String text = get(3, GuiTextArea.class).getText();
+			text = text.replace("\r\n", "\n");
+			text = text.replace("\r", "\n");
+			container.script = text;
+		}
+	}
+
+	// New from Unofficial (GoodBird)
+	@Override
+	public void scrollClicked(GuiCustomScrollNop scroll) { }
+
+	@Override
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { get(3, GuiTextArea.class).addText(scroll.getSelected()); }
+
+	// New from Unofficial (BetaZavr)
+	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (mc.world.getTotalWorldTime() % 5 == 0) {
+		if (player.world.getTotalWorldTime() % 5 == 0) {
 			if (activeTab > 0) {
 				ScriptContainer container = handler.getScripts().get(activeTab - 1);
 				boolean e = container == null || container.script.isEmpty();
-				if (getButton(100) != null) { // copy
-					if (getButton(100).enabled && e) { getButton(100).setIsEnable(false); }
-					else if (!getButton(100).enabled && !e) { getButton(100).setIsEnable(true); }
-				}
-				if (getButton(102) != null) { // clear
-					if (getButton(102).enabled && e) { getButton(102).setIsEnable(false); }
-					else if (!getButton(102).enabled && !e) { getButton(102).setIsEnable(true); }
-				}
-				if (getButton(118) != null) { // encode
-					getButton(118).setIsEnable(container != null && container.hasNoEncryptScriptCode());
-				}
-				
-				if (getButton(107) != null) { // files
-					Map<String, Long> map = languages.get(Util.instance.deleteColor(handler.getLanguage()));
+				GuiButtonNop button = getButton(100);
+				if (button != null) {
+					if (button.isEnabled() && e) { button.setIsEnabled(false); }
+					else if (!button.isEnabled() && !e) { button.setIsEnabled(true); }
+				} // copy
+				button = getButton(102);
+				if (button != null) {
+					if (button.isEnabled() && e) { button.setIsEnabled(false); }
+					else if (!button.isEnabled() && !e) { button.setIsEnabled(true); }
+				} // clear
+				button = getButton(107);
+				if (button != null) {
+					Map<String, Long> map = languages.get(noppes.npcs.util.Util.instance.deleteColor(handler.getLanguage()));
 					e = map != null && !map.isEmpty();
-					if (getButton(107).enabled && !e) { getButton(107).setIsEnable(false); }
-					else if (!getButton(107).enabled && e) { getButton(107).setIsEnable(true); }
-				}
-				if (getButton(101) != null) { // paste
+					if (button.isEnabled() && !e) { button.setIsEnabled(false); }
+					else if (!button.isEnabled() && e) { button.setIsEnabled(true); }
+				} // files
+				button = getButton(101);
+				if (button != null) {
 					try {
-						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-						Transferable contents = clipboard.getContents(null);
-						e = contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor);
-						if (getButton(101).enabled && !e) { getButton(101).setIsEnable(false); }
-						else if (!getButton(101).enabled && e) { getButton(101).setIsEnable(true); }
+						e = !NoppesStringUtils.getClipboardContents().isEmpty();
+						if (button.isEnabled() && !e) { button.setIsEnabled(false); }
+						else if (!button.isEnabled() && e) { button.setIsEnabled(true); }
 					}
 					catch (Exception ee) { LogWriter.error(ee); }
-				}
-			} else {
+				} // paste
+			}
+			else {
 				boolean e = handler == null || handler.getConsoleText().isEmpty();
-				if (getButton(100) != null) { // copy
-					if (getButton(100).enabled && e) { getButton(100).setIsEnable(false); }
-					else if (!getButton(100).enabled && !e) { getButton(100).setIsEnable(true); }
-				}
-				if (getButton(102) != null) { // clear
-					if (getButton(102).enabled && e) { getButton(102).setIsEnable(false); }
-					else if (!getButton(102).enabled && !e) { getButton(102).setIsEnable(true); }
-				}
+				GuiButtonNop button = getButton(100);
+				if (button != null) {
+					if (button.isEnabled() && e) { button.setIsEnabled(false); }
+					else if (!button.isEnabled() && !e) { button.setIsEnabled(true); }
+				} // copy
+				button = getButton(102);
+				if (button != null) {
+					if (button.isEnabled() && e) { button.setIsEnabled(false); }
+					else if (!button.isEnabled() && !e) { button.setIsEnabled(true); }
+				} // clear
 			}
 		}
 		super.drawScreen(mouseX, mouseY, partialTicks);
+	}
+
+	@Override
+	public void subGuiClosed(GuiScreen subgui) {
+		if (subgui instanceof SubGuiScriptEncrypt && ((SubGuiScriptEncrypt) subgui).send) {
+			SubGuiScriptEncrypt gui = (SubGuiScriptEncrypt) subgui;
+			save();
+			NBTTagCompound nbt = new NBTTagCompound();
+			nbt.setString("Name", gui.getTextField(0).getValue() + gui.ext);
+			nbt.setString("Path", path.replaceAll("\\\\", "/") + "/" + nbt.getString("Name"));
+			nbt.setInteger("Tab", activeTab - 1);
+			nbt.setBoolean("OnlyTab", gui.onlyTab);
+			Packets.sendServer(new SPacketScriptEncrypt(type, nbt));
+			setScreen(null);
+		}
 	}
 
 	private static String[] getLanguageData(String name) {
@@ -249,206 +506,92 @@ public class GuiScriptInterface extends GuiNPCInterface
 		else if (name.toLowerCase().startsWith("rhino")) { key = "rhino"; }
 		String dir = "./(world_name)/customnpcs/scripts/" + name.toLowerCase();
 		if (CustomNpcs.Server != null) {
-			dir = CustomNpcs.getWorldSaveDirectory().getAbsolutePath().replace("\\", "/");
-			if (dir.lastIndexOf("/./") != -1) { dir = dir.substring(dir.lastIndexOf("/./") + 1); }
-			dir += "/scripts/" + name.toLowerCase();
+			File levelDir = CustomNpcs.getWorldSaveDirectory();
+			if (levelDir != null) {
+				dir = levelDir.getAbsolutePath().replace("\\", "/");
+				if (dir.lastIndexOf("/./") != -1) { dir = dir.substring(dir.lastIndexOf("/./") + 1); }
+				dir += "/scripts/" + name.toLowerCase();
+			}
 		}
 		return new String[] { key, dir, ext };
 	}
 
-	private int getScriptIndex() {
-		int i = 0;
-		for (String language : languages.keySet()) {
-			if (Util.instance.equalsDeleteColor(language, handler.getLanguage(), true)) { return i; }
-			++i;
+	private String getConsoleText() {
+		Map<Long, String> map = handler.getConsoleText();
+		if (!map.containsKey(selectLog)) {
+			for (long time : map.keySet()) { if (selectLog < time) { selectLog = time; } }
 		}
-		return 0;
+		return map.containsKey(selectLog) ? new Date(selectLog) + map.get(selectLog) : "";
 	}
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		wait = false;
-		xSize = (int) (width * 0.88);
-		ySize = (int) (height * 0.90);
-		super.initGui();
-		guiTop += 10;
-		int y = guiTop + 5;
-		GuiMenuTopButton top;
-		addTopButton(top = new GuiMenuTopButton(0, guiLeft + 4, guiTop - 17, "gui.settings"));
-		for (int i = 0; i < handler.getScripts().size(); ++i) {
-			addTopButton(top = new GuiMenuTopButton(i + 1, top, i + 1 + ""));
+	public void setTabScript(int tab, String script) {
+		ScriptContainer container = handler.getScripts().get(tab);
+		if (container != null) {
+			container.script = script;
+			initGui();
 		}
-		if (handler.getScripts().size() < CustomNpcs.ScriptMaxTabs && !(handler instanceof ClientScriptData)) {
-			addTopButton(new GuiMenuTopButton(CustomNpcs.ScriptMaxTabs + 1, top, "+"));
+	}
+
+	public void setTabConsole(int tab, long time, String log) {
+		ScriptContainer container = handler.getScripts().get(tab);
+		if (container != null) {
+			container.console.put(time, log);
+			initGui();
 		}
-		top = getTopButton(activeTab);
-		if (top == null) {
-			activeTab = 0;
-			top = getTopButton(0);
-		}
-		top.setIsActive(true);
-		if (activeTab > 0) {
-			ScriptContainer container = handler.getScripts().get(activeTab - 1);
-			GuiTextArea ta = new GuiTextArea(2, guiLeft + 5, y, xSize - 132, ySize - 10, (container == null) ? "" : container.script);
-			ta.enableCodeHighlighting();
-			ta.setListener(this);
-			add(ta);
-			int x = guiLeft + 7 + ta.width;
-			addButton(new GuiNpcButton(102, x, y, 60, 20, "gui.clear"));
-			addButton(new GuiNpcButton(101, x + 61, y, 60, 20, "gui.paste"));
-			addButton(new GuiNpcButton(100, x, y + 21, 60, 20, "gui.copy"));
-			addButton(new GuiNpcButton(105, x + 61, y + 21, 60, 20, "gui.remove"));
-			addButton(new GuiNpcButton(107, x, y + 66, 80, 20, "script.loadscript"));
-			addButton(new GuiNpcButton(115, x + 30, y + 43, 60, 20, "gui.remove.all"));
-			GuiCustomScroll scroll = new GuiCustomScroll(this, 0).setIsEnable(false);
-			scroll.setSize(120, ySize - 120);
-			scroll.guiLeft = x;
-			scroll.guiTop = (y = guiTop + 93);
-			if (container != null) { scroll.setList(container.scripts); }
-			addScroll(scroll);
-			addButton(new GuiNpcButton(118, x, y + 2 + scroll.height, 80, 20, "gui.encrypt")
-					.setIsEnable(!(this instanceof GuiScriptClient))
-					.setHoverText("" + (!(this instanceof GuiScriptClient))));
-		} // scripts
-		else {
-			NavigableMap<Long, String> map = handler.getConsoleText().descendingMap();
-			String log = "";
-			if (!map.isEmpty()) {
-				if (!map.containsKey(selectLog)) {
-					for (long time : map.keySet()) {
-						if (selectLog < time) { selectLog = time; }
-					}
+	}
+
+	protected void sendToServer(NBTTagCompound compound) {
+		// collect and clear scripts and consoles
+		Map<Integer, List<String>> mapScripts = new TreeMap<>();
+		Map<Integer, Map<Long, List<String>>> mapConsoles = new TreeMap<>();
+		NBTTagList scripts = compound.getTagList("Scripts", 10);
+		for (int i = 0; i < scripts.tagCount(); i++) {
+			NBTTagCompound scriptNbt = scripts.getCompoundTagAt(i);
+			// Script
+			if (scriptNbt.hasKey("Script", 8)) { mapScripts.put(i, noppes.npcs.util.Util.instance.getStringData(scriptNbt.getString("Script"))); }
+			else {
+				mapScripts.put(i, new ArrayList<>());
+				NBTTagList list = scriptNbt.getTagList("Script", 8);
+				for (int k = 0; k < list.tagCount(); k++) { mapScripts.get(i).add(list.getStringTagAt(k)); }
+			}
+			scriptNbt.setTag("Script", new NBTTagList());
+			// Console
+			NBTTagList consoles = scriptNbt.getTagList("Console", 10);
+			for (int j = 0; j < consoles.tagCount(); j++) {
+				if (!mapConsoles.containsKey(i)) { mapConsoles.put(i, new LinkedHashMap<>()); }
+				NBTTagCompound errorNbt = consoles.getCompoundTagAt(j);
+				long time = errorNbt.getLong("Long");
+				if (errorNbt.hasKey("String", 8)) {
+					mapConsoles.get(i).put(time, noppes.npcs.util.Util.instance.getStringData(errorNbt.getString("String")));
 				}
-				log = new Date(selectLog) + map.get(selectLog);
+				else {
+					mapConsoles.get(i).put(time, new ArrayList<>());
+					NBTTagList list = errorNbt.getTagList("String", 8);
+					for (int k = 0; k < list.tagCount(); k++) { mapConsoles.get(i).get(time).add(list.getStringTagAt(k)); }
+				}
+				errorNbt.setTag("String", new NBTTagList());
 			}
-			GuiTextArea ta = new GuiTextArea(2, guiLeft + 5, y, xSize - 175, ySize - 10, log);
-			if (!map.isEmpty()) {
-				ta.y += 24;
-				ta.height -= 24;
+		}
+		Packets.sendServer(new SPacketScriptSave(type, compound));
+		for (int tab : mapScripts.keySet()) {
+			List<String> scriptStrings = mapScripts.get(tab);
+			int i = 0;
+			for (String part : scriptStrings) {
+				Packets.sendServer(new SPacketScriptText(type, tab, i++, scriptStrings.size(), part));
 			}
-			ta.enabled = false;
-			add(ta);
-			int x = guiLeft + 7 + ta.width;
-			addButton(new GuiNpcButton(100, x, guiTop + 125, 60, 20,
-					map.size() < 2 ? "gui.copy" :
-							new TextComponentTranslation("gui.copy").getFormattedText() + " "
-							+ new TextComponentTranslation("gui.all").getFormattedText())
-					.setHoverText("script.hover.log.copy.all"));
-			addButton(new GuiNpcButton(102, x, guiTop + 146, 60, 20,
-					map.size() < 2 ? "gui.clear" :
-							new TextComponentTranslation("gui.clear").getFormattedText() + " "
-									+ new TextComponentTranslation("gui.all").getFormattedText())
-					.setHoverText("script.hover.log.clear.all"));
-			if (map.size() > 1) {
-				List<String> selects = new ArrayList<>();
-				dataLog.clear();
+		}
+		for (int tab : mapConsoles.keySet()) {
+			for (long time : mapConsoles.get(tab).keySet()) {
+				List<String> consoleStrings = mapConsoles.get(tab).get(time);
 				int i = 0;
-				int pos = 0;
-				for(Long key : map.keySet()) {
-					dataLog.put(i, key);
-					if (Objects.equals(key, selectLog)) { pos = i; }
-					selects.add((i + 1) + "/" + map.size() + ": "+new Date(key));
-					i++;
-				}
-				addButton(new GuiButtonBiDirectional(119, guiLeft + 4, guiTop + 7, ta.width, 20, selects.toArray(new String[0]), pos));
-				if (map.size() > 1) {
-					getButton(100).x = x + 62;
-					getButton(102).x = x + 62;
-					addButton(new GuiNpcButton(120, x, guiTop + 125, 60, 20, "gui.copy")
-							.setHoverText("script.hover.log.copy"));
-					addButton(new GuiNpcButton(121, x, guiTop + 146, 60, 20, "gui.clear")
-							.setHoverText("script.hover.log.clear"));
+				for (String part : consoleStrings) {
+					Packets.sendServer(new SPacketScriptConsole(type, tab, time, i++, consoleStrings.size(), part));
 				}
 			}
-
-			addLabel(new GuiNpcLabel(1, "script.language", x + 1, guiTop + 15));
-			String[] ls = languages.keySet().toArray(new String[0]);
-			if (ls.length < 1) { addButton(new GuiNpcButton(103, x + 60, guiTop + 10, 80, 20, ls, getScriptIndex())); }
-			else { addButton(new GuiButtonBiDirectional(103, x + 60, guiTop + 10, 80, 20, ls, getScriptIndex())); }
-			getButton(103).setIsEnable(!languages.isEmpty());
-			String[] data = getLanguageData(getButton(103).getDisplayString());
-			getButton(103).setHoverText(new TextComponentTranslation("script.hover.info." + data[0]).
-					appendSibling(new TextComponentTranslation("script.hover.info.dir", data[1], data[2])).getFormattedText());
-			addLabel(new GuiNpcLabel(3, "[?]", x + 145, guiTop + 15));
-			getLabel(3).setHoverText("script.hover.info");
-			addLabel(new GuiNpcLabel(2, "gui.enabled", x + 1, guiTop + 36));
-			addButton(new GuiNpcButton(104, x + 60, guiTop + 31, 50, 20, new String[] { "gui.no", "gui.yes" }, (handler.getEnabled() ? 1 : 0)));
-			if (player.getServer() != null) { addButton(new GuiNpcButton(106, x, guiTop + 55, 150, 20, "script.openfolder")); }
-			addButton(new GuiNpcButton(109, x, guiTop + 78, 80, 20, "gui.website"));
-			addButton(new GuiNpcButton(112, x + 81, guiTop + 78, 80, 20, "gui.forum"));
-			addButton(new GuiNpcButton(110, x, guiTop + 99, 80, 20, "script.apidoc"));
-			addButton(new GuiNpcButton(111, x + 81, guiTop + 99, 80, 20, "script.apisrc"));
-		} // info
-	}
-
-	@Override
-	public void save() { setScript(); }
-
-	@Override
-	public void setGuiData(NBTTagCompound compound) {
-		NBTTagList data = compound.getTagList("Languages", 10);
-		languages.clear();
-		for (int i = 0; i < data.tagCount(); ++i) {
-			NBTTagCompound comp = data.getCompoundTagAt(i);
-			Map<String, Long> scripts = new TreeMap<>();
-			NBTTagList list = comp.getTagList("Scripts", 8);
-			long[] ld = new long[list.tagCount()];
-			if (comp.hasKey("sizes", 12)) { ld = TagLongArrayReflection.getData((NBTTagLongArray) comp.getTag("sizes")); }
-			if (ld != null) {
-				for (int j = 0; j < list.tagCount(); ++j) { scripts.put(list.getStringTagAt(j), ld[j]); }
-			}
-			languages.put(comp.getString("Language"), scripts);
-			if (Util.instance.equalsDeleteColor(comp.getString("Language"), handler.getLanguage(), false)) { ext = comp.getString("FileSfx"); }
 		}
-		path = compound.getString("DirPath") + "/" + handler.getLanguage().toLowerCase();
-		initGui();
-	}
-
-	private void setScript() {
-		if (activeTab > 0) {
-			ScriptContainer container = handler.getScripts().get(activeTab - 1);
-			if (container == null) { handler.getScripts().add(container = new ScriptContainer(handler, true)); }
-			String text = getTextArea(2).getText();
-			text = text.replace("\r\n", "\n");
-			text = text.replace("\r", "\n");
-			container.script = text;
+		if (handler instanceof ClientScriptData) {
+			CustomNPCsScheduler.runTack(() -> Packets.sendServer(new SPacketSaveClientScripts()), 500);
 		}
 	}
-
-	@Override
-	public void textUpdate(String text) {
-		ScriptContainer container = handler.getScripts().get(activeTab - 1);
-		if (container != null) { container.script = text; }
-	}
-
-	public void addScript(int tab, String codePart) {
-		if (tab < 0) { return; }
-		List<ScriptContainer> scripts = handler.getScripts();
-		while (tab >= scripts.size()) { scripts.add(new ScriptContainer(handler, true)); }
-		ScriptContainer container = scripts.get(tab);
-		if (container.script == null || codePart.isEmpty()) {
-			container.script = "";
-			if (codePart.isEmpty()) { return; }
-		}
-		container.script += codePart;
-	}
-
-	public void addConsole(int tab, long time, String consolePart) {
-		if (tab < 0) { return; }
-		List<ScriptContainer> scripts = handler.getScripts();
-		while (tab >= scripts.size()) { scripts.add(new ScriptContainer(handler, true)); }
-		ScriptContainer container = scripts.get(tab);
-		if (container.console == null) { container.console = new TreeMap<>();}
-		if (!container.console.containsKey(time) || consolePart.isEmpty()) { container.console.put(time, ""); }
-		String consoleText = container.console.get(time) + consolePart;
-		container.console.put(time, consoleText);
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { }
-
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
 
 }

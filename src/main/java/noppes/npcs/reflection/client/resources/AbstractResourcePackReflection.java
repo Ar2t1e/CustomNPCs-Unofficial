@@ -3,7 +3,7 @@ package noppes.npcs.reflection.client.resources;
 import net.minecraft.client.resources.AbstractResourcePack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import java.io.File;
 import java.lang.reflect.Field;

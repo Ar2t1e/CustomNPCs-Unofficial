@@ -13,7 +13,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class MarkovDictionary {
 
@@ -27,6 +27,72 @@ public class MarkovDictionary {
 		sequenceLen = 3;
 		try { applyDictionary(dictionary, seqlen); } catch (Exception e) { LogWriter.error(e); }
 	}
+
+	public String getCapitalized(String str) {
+		if (str == null || str.isEmpty()) { return str; }
+		char[] chars = str.toCharArray();
+		chars[0] = Character.toUpperCase(chars[0]);
+		return new String(chars);
+	}
+
+	public void incrementSafe(String key_0, String key_1) {
+		if (occurrences.containsKeys(key_0, key_1)) {
+			int curr = occurrences.get(key_0, key_1);
+			occurrences.put(key_0, key_1, curr + 1);
+		}
+		else { occurrences.put(key_0, key_1, 1); }
+	}
+
+	public String generateWord() {
+		if (occurrences.mMap.isEmpty()) { return "Noppes"; }
+		int allEntries = 0;
+		for (Map.Entry<String, Map<String, Integer>> pair : occurrences.mMap.entrySet()) {
+			String k = pair.getKey();
+			if (k.startsWith("_[") && k.endsWith("_")) { allEntries += occurrences.get(k, "_TOTAL_"); }
+		}
+		int randomNumber = rnd.nextInt(allEntries);
+		Iterator<Map.Entry<String, Map<String, Integer>>> it = occurrences.mMap.entrySet().iterator();
+		StringBuilder sequence = new StringBuilder();
+		while(it.hasNext()) {
+			Map.Entry<String, Map<String, Integer>> pair = it.next();
+			String k = pair.getKey();
+			if (k.startsWith("_[") && k.endsWith("_")) {
+				int topLevelEntries = occurrences.get(k, "_TOTAL_");
+				if (randomNumber < topLevelEntries) {
+					sequence.append(k, 1, sequenceLen + 1);
+					break;
+				}
+				randomNumber -= topLevelEntries;
+			}
+		}
+		StringBuilder word = new StringBuilder();
+		word.append(sequence);
+		while(sequence.charAt(sequence.length() - 1) != ']') {
+			int subSize = 0;
+			Map.Entry<String, Integer> entry;
+			for(Iterator<Map.Entry<String, Integer>> j = occurrences.mMap.get(sequence.toString()).entrySet().iterator(); j.hasNext(); subSize += entry.getValue()) {
+				entry = j.next();
+			}
+			randomNumber = rnd.nextInt(subSize);
+			Iterator<Map.Entry<String, Integer>> k = occurrences.mMap.get(sequence.toString()).entrySet().iterator();
+			String chosen;
+			int occu;
+			for(chosen = ""; k.hasNext(); randomNumber -= occu) {
+				entry = k.next();
+				occu = occurrences.get(sequence.toString(), entry.getKey());
+				if (randomNumber < occu) {
+					chosen = entry.getKey();
+					break;
+				}
+			}
+			word.append(chosen);
+			sequence.delete(0, 1);
+			sequence.append(chosen);
+		}
+		return getPost(word.substring(1, word.length() - 1));
+	}
+
+	public String getPost(String str) { return getCapitalized(str); }
 
 	public void applyDictionary(String dictionaryFile, int seqLen) throws IOException {
 		StringBuilder input = new StringBuilder();
@@ -48,61 +114,6 @@ public class MarkovDictionary {
 		}
 	}
 
-	public String generateWord() {
-		int allEntries = 0;
-		for (Map.Entry<String, Map<String, Integer>> pair : occurrences.mMap.entrySet()) {
-			String k = pair.getKey();
-			if (k.startsWith("_[") && k.endsWith("_")) { allEntries += occurrences.get(k, "_TOTAL_"); }
-		}
-		if (allEntries == 0) { return "Noppes"; }
-		int randomNumber = rnd.nextInt(allEntries);
-		Iterator<Map.Entry<String, Map<String, Integer>>> it = occurrences.mMap.entrySet().iterator();
-		StringBuilder sequence = new StringBuilder();
-		while (it.hasNext()) {
-			Map.Entry<String, Map<String, Integer>> pair2 = it.next();
-			String j = pair2.getKey();
-			if (j.startsWith("_[") && j.endsWith("_")) {
-				int topLevelEntries = occurrences.get(j, "_TOTAL_");
-				if (randomNumber < topLevelEntries) {
-					sequence.append(j, 1, sequenceLen + 1);
-					break;
-				}
-				randomNumber -= topLevelEntries;
-			}
-		}
-		StringBuilder word = new StringBuilder();
-		word.append(sequence);
-		while (sequence.charAt(sequence.length() - 1) != ']') {
-			int subSize = 0;
-			for (Map.Entry<String, Integer> entry : occurrences.mMap.get(sequence.toString()).entrySet()) { subSize += entry.getValue(); }
-			randomNumber = rnd.nextInt(subSize);
-			Iterator<Map.Entry<String, Integer>> m = occurrences.mMap.get(sequence.toString()).entrySet().iterator();
-			String chosen = "";
-			while (m.hasNext()) {
-				Map.Entry<String, Integer> entry2 = m.next();
-				int occu = this.occurrences.get(sequence.toString(), entry2.getKey());
-				if (randomNumber < occu) {
-					chosen = entry2.getKey();
-					break;
-				}
-				randomNumber -= occu;
-			}
-			word.append(chosen);
-			sequence.delete(0, 1);
-			sequence.append(chosen);
-		}
-		return getPost(word.substring(1, word.length() - 1));
-	}
-
-	public String getCapitalized(String str) {
-		if (str == null || str.isEmpty()) { return str; }
-		char[] chars = str.toCharArray();
-		chars[0] = Character.toUpperCase(chars[0]);
-		return new String(chars);
-	}
-
-	public String getPost(String str) { return getCapitalized(str); }
-
 	private InputStream getResource(ResourceLocation resourceLocation) {
 		ModContainer container = Loader.instance().activeModContainer();
 		if (container == null) { throw new RuntimeException("Failed to find current mod while looking for resource " + resourceLocation); }
@@ -112,11 +123,6 @@ public class MarkovDictionary {
 		catch (Exception e) { LogWriter.error(e); }
 		if (resourceAsStream != null) { return resourceAsStream; }
 		throw new RuntimeException("Could not find resource " + resourceLocation);
-	}
-
-	public void incrementSafe(String str1, String str2) {
-		if (occurrences.containsKeys(str1, str2)) { occurrences.put(str1, str2, occurrences.get(str1, str2) + 1); }
-		else { occurrences.put(str1, str2, 1); }
 	}
 
 }

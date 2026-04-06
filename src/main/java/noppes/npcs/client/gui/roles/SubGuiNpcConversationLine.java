@@ -1,55 +1,79 @@
 package noppes.npcs.client.gui.roles;
 
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.ResourceLocation;
 import noppes.npcs.client.gui.select.SubGuiSoundSelection;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
-
-public class SubGuiNpcConversationLine extends SubGuiInterface implements ITextfieldListener {
+public class SubGuiNpcConversationLine extends GuiBasic implements ITextfieldListener {
 
 	public String line;
-	public String sound;
+	public ResourceLocation sound;
 
-	public SubGuiNpcConversationLine(String lineStr, String soundStr) {
-		super(0);
+	public SubGuiNpcConversationLine(String lineIn, String soundIn) {
+		super();
 		setBackground("menubg.png");
-		closeOnEsc = true;
-		xSize = 256;
-		ySize = 216;
+		imageWidth = 212;
+		imageHeight = 119;
 
-		line = lineStr;
-		sound = soundStr;
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1: setSubGui(new SubGuiSoundSelection(sound)); break;
-			case 2: sound = ""; initGui(); break;
-			case 66: onClosed(); break;
-		}
+		line = lineIn;
+		sound = new ResourceLocation(soundIn);
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		addLabel(new GuiNpcLabel(0, "Line", guiLeft + 4, guiTop + 10));
-		addTextField(new GuiNpcTextField(0, this, guiLeft + 4, guiTop + 22, 200, 20, line));
-		addButton(new GuiNpcButton(1, guiLeft + 4, guiTop + 55, 90, 20, "Select Sound"));
-		addButton(new GuiNpcButton(2, guiLeft + 96, guiTop + 55, 20, 20, "X"));
-		addLabel(new GuiNpcLabel(1, sound, guiLeft + 4, guiTop + 81));
-		addButton(new GuiNpcButton(66, guiLeft + 162, guiTop + 192, 90, 20, "gui.done"));
+		int x = guiLeft + 5;
+		int y = guiTop + 6;
+		// message
+		addLabel(0, x + 1, y, Component.translatable("conversation.line").append(":"));
+		addTextField(0, x + 1, y += 11, 200, 18, line);
+		// sound
+		addLabel(1, x + 1, y += 22, Component.translatable("stats.firesound").append(":"));
+		addTextField(1, x + 1, y += 11, 200, 18, sound)
+				.setResourceLocationType(1);
+		addButton(1, x, y += 22, "gui.selectSound")
+				.setSize(90, 20);
+		addButton(2, x + 96, y, "X")
+				.setSize(20, 20);
+		// exit
+		addButton(66, guiLeft + imageWidth - 96, y + 22, "gui.done")
+				.setSize(90, 20);
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 1: setSubGui(new SubGuiSoundSelection(this, 0, null, sound.toString())); break;
+			case 2: sound = null; initGui(); break;
+			case 66: onClose(); break;
+		}
 	}
 
 	@Override
 	public void subGuiClosed(GuiScreen subgui) {
-		SubGuiSoundSelection gss = (SubGuiSoundSelection) subgui;
-		if (gss.selectedResource != null) { sound = gss.selectedResource.toString(); }
+		if (subgui instanceof SubGuiSoundSelection && ((SubGuiSoundSelection) subgui).resource != null) {
+			sound = ((SubGuiSoundSelection) subgui).resource;
+		}
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textfield) { line = textfield.getText(); }
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
+			case 0: line = textField.getValue(); break;
+			case 1: {
+				if (textField.isEmpty() || textField.getValue().equals("minecraft:")) {
+					sound = null;
+					textField.setValue("");
+				}
+				else { sound = textField.getResourceLocation(null); }
+				break;
+			}
+		}
+	}
 
 }

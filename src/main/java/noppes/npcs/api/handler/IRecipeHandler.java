@@ -1,7 +1,7 @@
 package noppes.npcs.api.handler;
 
 import net.minecraft.item.ItemStack;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.INpcRecipe;
 
 @SuppressWarnings("all")

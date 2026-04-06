@@ -5,6 +5,8 @@ import java.util.TreeMap;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.entity.data.IEmotion;
 import noppes.npcs.api.entity.data.IEmotionPart;
@@ -34,43 +36,37 @@ implements IEmotion {
 	public float scaleMoveY = 1.0f;
 
 	public EmotionConfig() {
-		this.frames = new TreeMap<>();
-		this.frames.put(0, new EmotionFrame(0));
+		frames = new TreeMap<>();
+		frames.put(0, new EmotionFrame(0));
 	}
 
 	public void read(NBTTagCompound nbtEmotion) {
-		this.frames.clear();
+		frames.clear();
 		for (int i = 0; i < nbtEmotion.getTagList("FrameConfigs", 10).tagCount(); i++) {
 			EmotionFrame ef = new EmotionFrame(i);
 			ef.readFromNBT(nbtEmotion.getTagList("FrameConfigs", 10).getCompoundTagAt(i));
 			ef.id = i;
-			this.frames.put(i, ef);
+			frames.put(i, ef);
 		}
-		if (this.frames.isEmpty()) {
-			this.frames.put(0, new EmotionFrame(0));
-		}
-		this.id = nbtEmotion.getInteger("ID");
-		this.name = nbtEmotion.getString("Name");
-		this.repeatLast = nbtEmotion.getInteger("EmotionRepeat");
-		this.canBlink = nbtEmotion.getBoolean("CanBlink");
-		if (nbtEmotion.hasKey("ScaleMoveX", 5)) {
-			scaleMoveX = Math.max(0.05f, Math.min(1.25f, nbtEmotion.getFloat("ScaleMoveX")));
-		}
-		if (nbtEmotion.hasKey("ScaleMoveY", 5)) {
-			scaleMoveY = Math.max(0.05f, Math.min(1.25f, nbtEmotion.getFloat("ScaleMoveY")));
-		}
+		if (frames.isEmpty()) { frames.put(0, new EmotionFrame(0)); }
+		id = nbtEmotion.getInteger("ID");
+		name = nbtEmotion.getString("Name");
+		repeatLast = nbtEmotion.getInteger("EmotionRepeat");
+		canBlink = nbtEmotion.getBoolean("CanBlink");
+		if (nbtEmotion.hasKey("ScaleMoveX", 5)) { scaleMoveX = Math.max(0.05f, Math.min(1.25f, nbtEmotion.getFloat("ScaleMoveX"))); }
+		if (nbtEmotion.hasKey("ScaleMoveY", 5)) { scaleMoveY = Math.max(0.05f, Math.min(1.25f, nbtEmotion.getFloat("ScaleMoveY"))); }
 	}
 
 	public NBTTagCompound save() {
 		NBTTagCompound nbtEmotion = new NBTTagCompound();
 		NBTTagList list = new NBTTagList();
-		for (EmotionFrame ef : this.frames.values()) { list.appendTag(ef.writeToNBT()); }
+		for (EmotionFrame ef : frames.values()) { list.appendTag(ef.writeToNBT()); }
 		nbtEmotion.setTag("FrameConfigs", list);
-		nbtEmotion.setInteger("ID", this.id);
-		nbtEmotion.setString("Name", this.name);
-		nbtEmotion.setInteger("EmotionRepeat", this.repeatLast);
-		nbtEmotion.setBoolean("CanBlink", this.canBlink);
-		if (this.repeatLast < 0) { this.repeatLast = this.frames.size() - 1; }
+		nbtEmotion.setInteger("ID", id);
+		nbtEmotion.setString("Name", name);
+		nbtEmotion.setInteger("EmotionRepeat", repeatLast);
+		nbtEmotion.setBoolean("CanBlink", canBlink);
+		if (repeatLast < 0) { repeatLast = frames.size() - 1; }
 		nbtEmotion.setFloat("ScaleMoveX", scaleMoveX);
 		nbtEmotion.setFloat("ScaleMoveY", scaleMoveY);
 		return nbtEmotion;
@@ -85,13 +81,14 @@ implements IEmotion {
 		return ec;
 	}
 
-	public String getSettingName() {
-		String c = "" + ((char) 167);
-		return c + "7" + this.id + ": " + c + "r" + this.name;
+	public Component getSettingName() {
+		return Component.empty()
+				.append(Component.literal(id +": ").withStyle(TextFormatting.GRAY))
+				.append(Component.literal(name).withStyle(TextFormatting.RESET));
 	}
 
 	@Override
-	public int getId() { return this.id; }
+	public int getId() { return id; }
 
 	@Override
 	public boolean canBlink() { return canBlink; }
@@ -101,28 +98,26 @@ implements IEmotion {
 
 	@Override
 	public IEmotionPart addFrame() {
-		int f = this.frames.size();
-		this.frames.put(f, new EmotionFrame(f));
-		return this.frames.get(f);
+		int f = frames.size();
+		frames.put(f, new EmotionFrame(f));
+		return frames.get(f);
 	}
 
 	@Override
 	public IEmotionPart addFrame(IEmotionPart frame) {
-		if (frame == null) { return this.addFrame(); }
-		int f = this.frames.size();
-		this.frames.put(f, ((EmotionFrame) frame).copy());
-		this.frames.get(f).id = f;
-		return this.frames.get(f);
+		if (frame == null) { return addFrame(); }
+		int f = frames.size();
+		frames.put(f, ((EmotionFrame) frame).copy());
+		frames.get(f).id = f;
+		return frames.get(f);
 	}
 
 	@Override
 	public boolean removeFrame(IEmotionPart frame) {
-		if (frame == null || this.frames.size() <= 1) {
-			return false;
-		}
-		for (int f : this.frames.keySet()) {
-			if (this.frames.get(f).equals(frame)) {
-				this.removeFrame(f);
+		if (frame == null || frames.size() <= 1) { return false; }
+		for (int f : frames.keySet()) {
+			if (frames.get(f).equals(frame)) {
+				removeFrame(f);
 				return true;
 			}
 		}
@@ -131,30 +126,30 @@ implements IEmotion {
 
 	@Override
 	public boolean removeFrame(int frameId) {
-		if (this.frames.size() <= 1) {
+		if (frames.size() <= 1) {
 			return false;
 		}
-		if (!this.frames.containsKey(frameId)) {
+		if (!frames.containsKey(frameId)) {
 			throw new CustomNPCsException("Unknown frame ID:" + frameId);
 		}
 		Map<Integer, EmotionFrame> newData = new TreeMap<>();
 		int i = 0;
 		boolean isDel = false;
-		for (int f : this.frames.keySet()) {
+		for (int f : frames.keySet()) {
 			if (f == frameId) {
 				isDel = true;
 				continue;
 			}
-			newData.put(i, this.frames.get(f).copy());
+			newData.put(i, frames.get(f).copy());
 			newData.get(i).id = i;
 			i++;
 		}
 		if (isDel) {
-			this.frames.clear();
+			frames.clear();
 			if (newData.isEmpty()) {
 				newData.put(0, new EmotionFrame(0));
 			}
-			this.frames.putAll(newData);
+			frames.putAll(newData);
 		}
 		return isDel;
 	}
@@ -167,7 +162,7 @@ implements IEmotion {
 			endingFrameTicks.put(0, totalTicks);
 			return;
 		}
-		for (Integer id : this.frames.keySet()) {
+		for (Integer id : frames.keySet()) {
 			EmotionFrame frame = frames.get(id);
 			if (frame.speed < 1) { frame.speed = 1; }
 			totalTicks += frame.speed + frame.delay;

@@ -20,18 +20,15 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomItems;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileBorder;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
 import javax.annotation.Nonnull;
 
-public class BlockBorder
-extends BlockInterface
-implements IPermission {
+public class BlockBorder extends BlockInterface {
 
 	public static PropertyInteger ROTATION = PropertyInteger.create("rotation", 0, 3);
 
@@ -41,7 +38,7 @@ implements IPermission {
 		this.setSoundType(SoundType.STONE);
 		this.setHardness(5.0f);
 		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 		this.setBlockUnbreakable();
 	}
 
@@ -78,11 +75,6 @@ implements IPermission {
 		return null;
 	}
 
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.SaveTileEntity;
-	}
-
 	public boolean isFullCube(@Nonnull IBlockState state) {
 		return false;
 	}
@@ -93,7 +85,7 @@ implements IPermission {
 
 	public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (!world.isRemote && currentItem.getItem() == CustomRegisters.wand) {
+		if (!world.isRemote && currentItem.getItem() == CustomItems.wand) {
 			NoppesUtilServer.sendOpenGui(player, EnumGuiType.Border, null, pos.getX(), pos.getY(), pos.getZ());
 			return true;
 		}

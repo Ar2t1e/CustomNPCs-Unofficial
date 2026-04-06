@@ -38,13 +38,13 @@ public class EntityAIAnimation extends EntityAIBase {
 
 	public int tempAnimation;
 
-	public EntityAIAnimation(EntityNPCInterface npc) {
+	public EntityAIAnimation(EntityNPCInterface npcIn) {
+		npc = npcIn;
 		isAttacking = false;
 		isDead = false;
 		isAtStartPoint = false;
 		hasPath = false;
 		tempAnimation = 0;
-		this.npc = npc;
 	}
 
 	private boolean hasNavigation() {
@@ -58,15 +58,13 @@ public class EntityAIAnimation extends EntityAIBase {
 		npc.updateAnimationClient();
 	}
 
+	@Override
 	public boolean shouldExecute() {
-		CustomNpcs.debugData.start(npc);
 		isDead = !npc.isEntityAlive();
 		if (isDead) {
-			CustomNpcs.debugData.end(npc);
 			return npc.currentAnimation != 2;
 		}
 		if (npc.stats.ranged.getHasAimAnimation() && npc.isAttacking()) {
-			CustomNpcs.debugData.end(npc);
 			return npc.currentAnimation != 6;
 		}
 		hasPath = !npc.getNavigator().noPath();
@@ -74,35 +72,27 @@ public class EntityAIAnimation extends EntityAIBase {
 		isAtStartPoint = (npc.ais.shouldReturnHome() && this.npc.isVeryNearAssignedPlace());
 		if (tempAnimation != 0) {
 			if (!hasNavigation()) {
-				CustomNpcs.debugData.end(npc);
 				return npc.currentAnimation != tempAnimation;
 			}
 			tempAnimation = 0;
 		}
 		if (hasNavigation() && notWalkingAnimation(npc.currentAnimation)) {
-			CustomNpcs.debugData.end(npc);
 			return npc.currentAnimation != 0;
 		}
-		CustomNpcs.debugData.end(npc);
 		return npc.currentAnimation != npc.ais.animationType;
 	}
 
+	@Override
 	public void updateTask() {
-		CustomNpcs.debugData.start(npc);
 		int type = npc.ais.animationType;
-		if (isDead) {
-			type = 2;
-		} else if (notWalkingAnimation(npc.ais.animationType) && hasNavigation()) {
-			type = 0;
-		} else if (tempAnimation != 0) {
-			if (this.hasNavigation()) {
-				tempAnimation = 0;
-			} else {
-				type = tempAnimation;
-			}
+		if (isDead) { type = 2; }
+		else if (notWalkingAnimation(npc.ais.animationType) && hasNavigation()) { type = 0; }
+		else if (tempAnimation != 0) {
+			if (this.hasNavigation()) { tempAnimation = 0; }
+			else { type = tempAnimation; }
 		}
 		// if (this.npc.stats.ranged.getHasAimAnimation() && this.npc.isAttacking()) { type = 6; } // <- AI target
-		CustomNpcs.debugData.end(npc);
 		setAnimation(type);
 	}
+
 }

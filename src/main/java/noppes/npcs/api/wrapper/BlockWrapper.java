@@ -39,19 +39,23 @@ public class BlockWrapper implements IBlock {
 	 * When checking vision when an NPC is looking at a target
 	 * Mod events and scripts
 	 */
-	public static volatile ConcurrentHashMap<Long, BlockWrapper> blockCache = new ConcurrentHashMap<>(25000);
+	public static volatile ConcurrentHashMap<Long, BlockWrapper> blockCache = new ConcurrentHashMap<>(2500);
 
 	public static void clearCache() { blockCache.clear(); }
 
 	public static void checkClearCache() {
-		if (blockCache.size() > 25000) {
+		if (blockCache.size() > 2500) {
 			blockCache.keySet().stream()
-					.limit(blockCache.size() - 25000)
+					.limit(blockCache.size() - 2500)
 					.forEach(blockCache::remove);
 		}
 	}
 
-	/** Need convert to BlockState */
+	/**
+	 * @deprecated
+	 * Need convert to BlockState
+	 */
+	@Deprecated
 	public static IBlock createNew(World world, BlockPos pos, IBlockState state) {
 		CustomNpcs.debugData.start(BlockWrapper.class);
 		Long key = makeKey(world, state, pos);
@@ -65,7 +69,7 @@ public class BlockWrapper implements IBlock {
 	}
 
 	private static Long makeKey(World world, IBlockState state, BlockPos pos) {
-		return (pos.toLong() << 32) | (world == null ? 0 : world.provider.getDimension()) | (state.getBlock().getRegistryName() == null ? 0 : state.getBlock().getRegistryName().hashCode());
+        return pos.toLong() << 32 | (world == null ? 0 : world.provider.getDimension()) | state.getBlock().hashCode();
 	}
 
 	private static BlockWrapper createBlockWrapper(World world, IBlockState state, BlockPos pos) {

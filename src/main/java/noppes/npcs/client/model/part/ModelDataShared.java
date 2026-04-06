@@ -7,11 +7,11 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import noppes.npcs.LogWriter;
-import noppes.npcs.ModelPartConfig;
-import noppes.npcs.ModelPartData;
+import noppes.npcs.client.parts.ModelPartData;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.constants.EnumParts;
 
 import javax.annotation.Nonnull;
@@ -40,28 +40,28 @@ public class ModelDataShared {
 
 	public void clearEntity() { entity = null; }
 
-	public float getBodyX() { return (1.0f - Math.max(body.scale[0], body.scale[2])) * 0.75f + getLegsX(); }
+	public float getBodyX() { return (1.0f - Math.max(body.scaleX, body.scaleZ)) * 0.75f + getLegsX(); }
 
-	public float getBodyY() { return (1.0f - body.scale[1]) * 0.75f + getLegsY(); }
+	public float getBodyY() { return (1.0f - body.scaleY) * 0.75f + getLegsY(); }
 
 	public Class<? extends EntityLivingBase> getEntityClass() { return entityClass; }
 
 	public float getLegsX() {
 		ModelPartConfig legs = leg1;
 		if (leg2.notShared) {
-			float s0 = Math.max(leg1.scale[0], leg1.scale[2]);
-			float s1 = Math.max(leg2.scale[0], leg2.scale[2]);
+			float s0 = Math.max(leg1.scaleX, leg1.scaleZ);
+			float s1 = Math.max(leg2.scaleX, leg2.scaleZ);
 			if (s1 > s0) { legs = leg2; }
 		}
-		return (1.0f - Math.max(legs.scale[0], legs.scale[2])) * 0.75f;
+		return (1.0f - Math.max(legs.scaleX, legs.scaleZ)) * 0.75f;
 	}
 
 	public float getLegsY() {
 		ModelPartConfig legs = leg1;
-		if (leg2.notShared && leg2.scale[1] > leg1.scale[1]) {
+		if (leg2.notShared && leg2.scaleY > leg1.scaleY) {
 			legs = leg2;
 		}
-		return (1.0f - legs.scale[1]) * 0.75f;
+		return (1.0f - legs.scaleY) * 0.75f;
 	}
 
 	public ModelPartData getOrCreatePart(EnumParts type) {
@@ -82,8 +82,8 @@ public class ModelDataShared {
 			case LEG_RIGHT: return leg2;
 			case WRIST_LEFT: return arm3;
 			case WRIST_RIGHT: return arm4;
-			case FOOT_LEFT: return leg3;
-			case FOOT_RIGHT: return leg4;
+			case FEET_LEFT: return leg3;
+			case FEET_RIGHT: return leg4;
 			default: return null;
 		}
 	}
@@ -173,8 +173,8 @@ public class ModelDataShared {
 				}
 				case ARM_LEFT: {
 					ModelPartConfig body = getPartConfig(EnumParts.BODY);
-					float x = (1.0f - body.scale[0]) * 0.25f + (1.0f - config.scale[0]) * 0.075f;
-					float y = getBodyY() + (1.0f - config.scale[1]) * -0.1f;
+					float x = (1.0f - body.scaleX) * 0.25f + (1.0f - config.scaleX) * 0.075f;
+					float y = getBodyY() + (1.0f - config.scaleY) * -0.1f;
 					config.setTranslate(-x, y, 0.0f);
 					if (!config.notShared) {
 						ModelPartConfig arm = getPartConfig(EnumParts.ARM_RIGHT);
@@ -184,13 +184,13 @@ public class ModelDataShared {
 				}
 				case ARM_RIGHT: {
 					ModelPartConfig body = getPartConfig(EnumParts.BODY);
-					float x = (1.0f - body.scale[0]) * 0.25f + (1.0f - config.scale[0]) * 0.075f;
-					float y = getBodyY() + (1.0f - config.scale[1]) * -0.1f;
+					float x = (1.0f - body.scaleX) * 0.25f + (1.0f - config.scaleX) * 0.075f;
+					float y = getBodyY() + (1.0f - config.scaleY) * -0.1f;
 					config.setTranslate(x, y, 0.0f);
 					break;
 				}
 				case LEG_LEFT: {
-					config.setTranslate(config.scale[0] * 0.125f - 0.113f, getLegsY(), 0.0f);
+					config.setTranslate(config.scaleX * 0.125f - 0.113f, getLegsY(), 0.0f);
 					if (!config.notShared) {
 						ModelPartConfig leg = getPartConfig(EnumParts.LEG_RIGHT);
 						leg.copyValues(config);
@@ -198,7 +198,7 @@ public class ModelDataShared {
 					break;
 				}
 				case LEG_RIGHT: {
-					config.setTranslate((1.0f - config.scale[0]) * 0.125f, getLegsY(), 0.0f);
+					config.setTranslate((1.0f - config.scaleX) * 0.125f, getLegsY(), 0.0f);
 					break;
 				}
             }
@@ -262,21 +262,21 @@ public class ModelDataShared {
 		return slotID;
 	}
 
-	public @Nonnull List<String> getLayerKeys() {
-		List<String> list = new ArrayList<>();
+	public @Nonnull List<Component> getLayerKeys() {
+		List<Component> list = new ArrayList<>();
 		for (LayerModel lm: new ArrayList<>(layersData.values())) {
-			String key = (lm.slotID + 1) + ": ";
+			Component key = Component.literal((lm.slotID + 1) + ": ");
 			if (lm.getOBJ() != null) {
 				String k = lm.getOBJ().getResourcePath();
 				if (k.lastIndexOf("/") != -1) {
-					key += k.substring(k.lastIndexOf("/")+1);
+					key.append(k.substring(k.lastIndexOf("/")+1));
 				} else if (k.lastIndexOf(":") != -1) {
-					key += k.substring(k.lastIndexOf(":")+1);
+					key.append(k.substring(k.lastIndexOf(":") + 1));
 				} else {
-					key += k;
+					key.append(k);
 				}
 			}
-			else { key += lm.getStack().getDisplayName(); }
+			else { key.append(lm.getStack().getDisplayName()); }
 			list.add(key);
 		}
 		return list;

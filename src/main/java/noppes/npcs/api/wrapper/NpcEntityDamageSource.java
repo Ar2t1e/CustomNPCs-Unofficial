@@ -8,7 +8,9 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EntityDamageSource;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.IEntityDamageSource;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IEntity;
@@ -17,44 +19,38 @@ import java.util.Objects;
 
 public class NpcEntityDamageSource extends EntityDamageSource implements IEntityDamageSource {
 
-	public Entity damageSourceEntity;
 	public Entity indirectEntity;
 	public boolean projectile = false;
 	public boolean explosion = false;
-	public String damageType;
-	public String deadMessage;
+	public String deadMessage = "";
 
-	public NpcEntityDamageSource(String damageType, IEntity<?> damageSourceEntityIn) {
-		super(damageType, damageSourceEntityIn.getMCEntity());
-		if (damageType.isEmpty()) {
-			damageType = "npcCustomDamage";
-		}
-		this.damageType = damageType;
-		this.damageSourceEntity = damageSourceEntityIn.getMCEntity();
-		this.deadMessage = "";
+	public NpcEntityDamageSource(String damageTypeIn, IEntity<?> damageSourceEntityIn) {
+		super(damageTypeIn, damageSourceEntityIn.getMCEntity());
+		if (damageTypeIn.isEmpty()) { damageTypeIn = CustomNpcs.MODID + ":npc"; }
+		damageType = damageTypeIn;
 	}
 
 	@Override
-	public String getDeadMessage() {
-		return this.deadMessage;
-	}
+	public String getDeadMessage() { return deadMessage; }
 
 	@Nonnull
 	public ITextComponent getDeathMessage(@Nonnull EntityLivingBase entity) {
-		ITextComponent entitySourceName = this.indirectEntity == null ? this.damageSourceEntity.getDisplayName()
-				: this.indirectEntity.getDisplayName();
-		ItemStack stack = this.indirectEntity instanceof EntityLivingBase
-				? ((EntityLivingBase) this.indirectEntity).getHeldItemMainhand()
-				: this.damageSourceEntity instanceof EntityLivingBase
-						? ((EntityLivingBase) this.damageSourceEntity).getHeldItemMainhand()
-						: ItemStack.EMPTY;
-		if (!this.deadMessage.isEmpty()) {
-			return new TextComponentTranslation(this.deadMessage,
+		ITextComponent entitySourceName = new TextComponentString("Empty");
+		ItemStack stack = ItemStack.EMPTY;
+		if (indirectEntity instanceof EntityLivingBase) {
+			entitySourceName = indirectEntity.getDisplayName();
+			stack = ((EntityLivingBase) indirectEntity).getHeldItemMainhand();
+		} else if (damageSourceEntity instanceof EntityLivingBase) {
+			entitySourceName = damageSourceEntity.getDisplayName();
+			stack = ((EntityLivingBase) damageSourceEntity).getHeldItemMainhand();
+		}
+		if (!deadMessage.isEmpty()) {
+			return new TextComponentTranslation(deadMessage,
                     entity.getDisplayName(), entitySourceName,
-                    new TextComponentTranslation(this.damageType).getFormattedText(),
+                    new TextComponentTranslation(damageType).getFormattedText(),
                     stack.getTextComponent());
 		}
-		String s = "death.attack." + this.damageType;
+		String s = "death.attack." + damageType;
 		String s1 = s + ".item";
 		ITextComponent ts1 = new TextComponentTranslation(s1, entity.getDisplayName(), entitySourceName, stack.getTextComponent());
 		return !stack.isEmpty() && stack.hasDisplayName() && ts1.getFormattedText().equals(s1) ? ts1
@@ -67,9 +63,7 @@ public class NpcEntityDamageSource extends EntityDamageSource implements IEntity
 	}
 
 	@Nullable
-	public Entity getImmediateSource() {
-		return this.indirectEntity;
-	}
+	public Entity getImmediateSource() { return this.indirectEntity; }
 
 	@Override
 	public IEntity<?> getITrueSource() {
@@ -88,28 +82,24 @@ public class NpcEntityDamageSource extends EntityDamageSource implements IEntity
 
 	@Override
 	public void setDeadMessage(String message) {
-		if (message == null) {
-			message = "";
-		}
-		this.deadMessage = message;
+		if (message == null) { message = ""; }
+		deadMessage = message;
 	}
 
 	@Override
 	public void setImmediateSource(IEntity<?> entity) {
-		this.indirectEntity = entity == null ? null : entity.getMCEntity();
+		indirectEntity = entity == null ? null : entity.getMCEntity();
 	}
 
 	@Override
 	public void setTrueSource(IEntity<?> entity) {
-		this.damageSourceEntity = entity == null ? null : entity.getMCEntity();
+		damageSourceEntity = entity == null ? null : entity.getMCEntity();
 	}
 
 	@Override
-	public void setType(String damageType) {
-		if (damageType.isEmpty()) {
-			damageType = "npcCustomDamage";
-		}
-		this.damageType = damageType;
+	public void setType(String damageTypeIn) {
+		if (damageTypeIn == null || damageTypeIn.isEmpty()) { damageTypeIn = CustomNpcs.MODID + ":npc"; }
+		damageType = damageTypeIn;
 	}
 
 }

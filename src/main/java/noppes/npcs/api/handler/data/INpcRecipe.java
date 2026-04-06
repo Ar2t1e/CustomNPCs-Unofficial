@@ -1,8 +1,9 @@
 package noppes.npcs.api.handler.data;
 
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.WrapperRecipe;
 
@@ -19,7 +20,7 @@ public interface INpcRecipe {
 
 	int getHeightRecipe();
 
-	int getId();
+	ResourceLocation getId();
 
 	boolean getIgnoreDamage();
 

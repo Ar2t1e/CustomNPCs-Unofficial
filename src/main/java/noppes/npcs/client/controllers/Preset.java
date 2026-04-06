@@ -3,7 +3,7 @@ package noppes.npcs.client.controllers;
 import java.util.HashMap;
 
 import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.ModelPartData;
+import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.constants.EnumParts;
 

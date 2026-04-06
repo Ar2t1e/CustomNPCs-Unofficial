@@ -8,34 +8,32 @@ public class FactionOption {
 	public int factionId = -1;
 	public int factionPoints = 100;
 
-	public FactionOption(int factionId, int factionPoints, boolean take) {
-		this.factionId = factionId;
-		this.factionPoints = factionPoints;
-		this.decreaseFactionPoints = take;
+	public FactionOption(int factionIdIn, int factionPointsIn, boolean take) {
+		factionId = factionIdIn;
+		factionPoints = factionPointsIn;
+		decreaseFactionPoints = take;
 	}
 
-	public FactionOption(NBTTagCompound compound) {
-		this.readFromNBT(compound);
-	}
+	public FactionOption(NBTTagCompound compound) { load(compound); }
 
 	public void check() {
-		if (this.factionPoints < 0) {
-			this.factionPoints *= -1;
-            this.decreaseFactionPoints = !this.decreaseFactionPoints;
+		if (factionPoints < 0) {
+			factionPoints *= -1;
+            decreaseFactionPoints = !decreaseFactionPoints;
 		}
 	}
 
-	public void readFromNBT(NBTTagCompound compound) {
-		this.factionId = compound.getInteger("FactionID");
-		this.decreaseFactionPoints = compound.getBoolean("IsDecrease");
-		this.factionPoints = compound.getInteger("Points");
+	public void load(NBTTagCompound compound) {
+		factionId = compound.getInteger("FactionID");
+		decreaseFactionPoints = compound.getBoolean("IsDecrease");
+		factionPoints = compound.getInteger("Points");
 	}
 
-	public NBTTagCompound writeToNBT() {
+	public NBTTagCompound save() {
 		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("FactionID", this.factionId);
-		compound.setBoolean("IsDecrease", this.decreaseFactionPoints);
-		compound.setInteger("Points", this.factionPoints);
+		compound.setInteger("FactionID", factionId);
+		compound.setBoolean("IsDecrease", decreaseFactionPoints);
+		compound.setInteger("Points", factionPoints);
 		return compound;
 	}
 

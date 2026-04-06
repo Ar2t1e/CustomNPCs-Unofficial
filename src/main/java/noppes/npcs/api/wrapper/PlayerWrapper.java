@@ -21,18 +21,13 @@ import net.minecraft.world.WorldSettings;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.EventHooks;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesStringUtils;
-import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketCustomNBT;
+import noppes.npcs.packets.server.SPacketCustomNBT;
+import noppes.npcs.packets.server.SPacketDimensionTeleport;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.Server;
-import noppes.npcs.api.CustomNPCsException;
-import noppes.npcs.api.IContainer;
-import noppes.npcs.api.INbt;
-import noppes.npcs.api.IPos;
-import noppes.npcs.api.IRayTrace;
-import noppes.npcs.api.ITimers;
-import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.*;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.constants.EntityType;
 import noppes.npcs.api.entity.IEntity;
@@ -41,16 +36,14 @@ import noppes.npcs.api.entity.data.IPixelmonPlayerData;
 import noppes.npcs.api.entity.data.IPlayerMail;
 import noppes.npcs.api.entity.data.IPlayerMiniMap;
 import noppes.npcs.api.gui.ICustomGui;
-import noppes.npcs.api.gui.IOverlayHUD;
 import noppes.npcs.api.handler.data.IMarcet;
 import noppes.npcs.api.handler.data.IQuest;
 import noppes.npcs.api.handler.data.IQuestObjective;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.overlay.IOverlay;
 import noppes.npcs.api.wrapper.gui.CustomGuiWrapper;
 import noppes.npcs.client.EntityUtil;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.containers.ContainerCustomGui;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.Dialog;
@@ -62,7 +55,6 @@ import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.controllers.data.QuestData;
 import noppes.npcs.entity.EntityDialogNpc;
-import noppes.npcs.reflection.entity.player.EntityPlayerMPReflection;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.ValueUtil;
@@ -70,12 +62,14 @@ import noppes.npcs.util.ValueUtil;
 @SuppressWarnings("rawtypes")
 public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapper<T> implements IPlayer {
 
-	public static Map<String, WrapperEntityData> map = new HashMap<>();
 	private PlayerData data;
 	private IContainer inventory;
 	private Object pixelmonPartyStorage;
 
 	private Object pixelmonPCStorage;
+
+	// New from Unofficial (BetaZavr)
+	public static WrapperEntityData clientWrapperPlayerData;
 
 	public PlayerWrapper(T player) {
 		super(player);
@@ -111,12 +105,14 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 		if (type < 0 || type > 5) {
 			throw new CustomNPCsException("Type should be between 0 and 5 value. You have: " + type);
 		}
-		Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.PLAY_CAMERA_SHAKING, time, amplitude, type, isFading);
+		if (entity.world.isRemote) { ClientGuiEventHandler.crashes.set(time, amplitude, type, isFading); }
+		else { Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.PLAY_CAMERA_SHAKING, time, amplitude, type, isFading); }
 	}
 
 	@Override
 	public void cameraShakingStop() {
-		Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.STOP_CAMERA_SHAKING);
+		if (entity.world.isRemote) { ClientGuiEventHandler.crashes.isActive = false; }
+		else { Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.STOP_CAMERA_SHAKING); }
 	}
 
 	@Override
@@ -143,51 +139,39 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	@Override
 	public void completeQuest(int id) {
 		Quest quest = QuestController.instance.quests.get(id);
-		if (quest == null) {
-			return;
-		}
+		if (quest == null) { return; }
 		PlayerData data = this.getData();
 		data.questData.finishedQuests.put(id, System.currentTimeMillis());
         data.questData.activeQuests.remove(id);
 		if (this.entity instanceof EntityPlayerMP) {
-			Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.MESSAGE, "quest.completed", quest.getTitle(),
-					2);
-			Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.CHAT, "quest.completed", ": ",
-					quest.getTitle());
+			Server.sendData((EntityPlayerMP) entity, EnumPacketClient.MESSAGE, "quest.completed", quest.getTitle(), 2);
+			Server.sendData((EntityPlayerMP) entity, EnumPacketClient.CHAT, "quest.completed", ": ", quest.getTitle());
+			QuestData qData = new QuestData(quest);
+			if (data.questData.activeQuests.containsKey(id)) { qData = data.questData.activeQuests.get(id); }
+			quest.complete(entity, qData);
 		}
-		Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.QUEST_COMPLETION, id);
 	}
 
 	@Override
 	public int factionStatus(int factionId) {
 		Faction faction = FactionController.instance.getFaction(factionId);
-		if (faction == null) {
-			throw new CustomNPCsException("Unknown faction: " + factionId);
-		}
+		if (faction == null) { throw new CustomNPCsException("Unknown faction: " + factionId); }
 		return faction.playerStatus(this);
 	}
 
 	@Override
-	public boolean finishQuest(int id) {
+	public void finishQuest(int id) {
 		Quest quest = QuestController.instance.quests.get(id);
-		if (quest == null) {
-			return false;
-		}
-		PlayerData data = this.getData();
-		boolean hasFinishedQuest = data.questData.finishedQuests.containsKey(id);
-		data.questData.finishedQuests.put(id, System.currentTimeMillis());
-		if (data.questData.activeQuests.containsKey(id)) {
+		if (quest != null) {
 			data.questData.activeQuests.remove(id);
-			hasFinishedQuest = false;
+			data.questData.finishedQuests.put(id, System.currentTimeMillis());
+			data.updateClient = true;
+			if (entity instanceof EntityPlayerMP) {
+				Server.sendData((EntityPlayerMP) entity, EnumPacketClient.MESSAGE, "quest.completed", quest.getTitle(), 2);
+				Server.sendData((EntityPlayerMP) entity, EnumPacketClient.CHAT, "quest.completed", ": ", quest.getTitle());
+			}
+			data.updateClient = true;
 		}
-		if (!hasFinishedQuest && this.entity instanceof EntityPlayerMP) {
-			Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.MESSAGE, "quest.completed", quest.getTitle(),
-					2);
-			Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.CHAT, "quest.completed", ": ",
-					quest.getTitle());
-		}
-		data.updateClient = true;
-		return !hasFinishedQuest;
 	}
 
 	@Override
@@ -213,12 +197,12 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 					if (!m.isAccessible()) {
 						m.setAccessible(true);
 					}
-					invBubbles = new ContainerWrapper((IInventory) m.invoke(apiBubbles, this.entity));
+					invBubbles = new ContainerWrapper((IInventory) m.invoke(apiBubbles, entity));
 					break;
 				}
 			}
 		} catch (Exception e) {
-			LogWriter.warn("Mod \"Bubbles\" - not found");
+			throw new CustomNPCsException("Mod \"Bubbles\" - not found");
 		}
 		return invBubbles;
 	}
@@ -284,10 +268,8 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 
 	@Override
 	public IContainer getInventory() {
-		if (this.inventory == null) {
-			this.inventory = new ContainerWrapper(this.entity.inventory);
-		}
-		return this.inventory;
+		if (inventory == null) { inventory = new ContainerWrapper(entity.inventory); }
+		return inventory;
 	}
 
 	@Override
@@ -297,13 +279,12 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 
 	@Override
 	public int[] getKeyPressed() {
-		return this.getData().hud.getKeyPressed();
+		return this.getData().overlay.getKeyPressed();
 	}
 
 	@Override
 	public String getLanguage() {
-		if (!(this.entity instanceof EntityPlayerMP)) { return "en_en"; }
-		return EntityPlayerMPReflection.getLanguage((EntityPlayerMP) entity);
+		return CustomNpcs.proxy.getLanguage(entity);
 	}
 
 	@Override
@@ -318,7 +299,7 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 
 	@Override
 	public int[] getMousePressed() {
-		return this.getData().hud.getMousePressed();
+		return this.getData().overlay.getMousePressed();
 	}
 
 	@Override
@@ -329,11 +310,6 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	@Override
 	public IContainer getOpenContainer() {
 		return Objects.requireNonNull(NpcAPI.Instance()).getIContainer(this.entity.openContainer);
-	}
-
-	@Override
-	public IOverlayHUD getOverlayHUD() {
-		return this.getData().hud;
 	}
 
 	@Override
@@ -390,8 +366,8 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	}
 
 	@Override
-	public double[] getWindowSize() {
-		return this.data.hud.getWindowSize();
+	public IScreenSize getWindowSize() {
+		return this.data.overlay.getWindowSize();
 	}
 
 	@Override
@@ -442,12 +418,12 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 
 	@Override
 	public boolean hasMousePress(int key) {
-		return this.getData().hud.hasMousePress(key);
+		return this.getData().overlay.hasMousePress(key);
 	}
 
 	@Override
 	public boolean hasOrKeyPressed(int[] key) {
-		return this.getData().hud.hasOrKeysPressed(key);
+		return this.getData().overlay.hasOrKeysPressed(key);
 	}
 
 	@Override
@@ -512,7 +488,7 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 
 	@Override
 	public boolean isMoved() {
-		return this.getData().hud.isMoved;
+		return this.getData().overlay.isMoved;
 	}
 
 	@Override
@@ -622,7 +598,7 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 
 	@Override
 	public void sendMail(IPlayerMail mail) {
-		PlayerDataController.instance.addPlayerMessage(this.entity.world.getMinecraftServer(), this.entity.getName(), (PlayerMail) mail);
+		PlayerDataController.instance.addPlayerMessage(entity.getServer(), entity.getName(), (PlayerMail) mail);
 	}
 
 	@Override
@@ -639,11 +615,8 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	@Override
 	public void sendTo(INbt nbt) {
 		CustomNPCsScheduler.runTack(() -> {
-			if (this.entity instanceof EntityPlayerMP) {
-				Server.sendData((EntityPlayerMP) this.entity, EnumPacketClient.SCRIPT_PACKAGE, nbt.getMCNBT());
-			} else {
-				NoppesUtilPlayer.sendData(EnumPlayerPacket.ScriptPackage, nbt.getMCNBT());
-			}
+			if (entity instanceof EntityPlayerMP) { Packets.send((EntityPlayerMP) entity, new PacketCustomNBT(nbt.getMCNBT())); }
+			else { Packets.sendServer(new SPacketCustomNBT(nbt.getMCNBT())); }
 		}, 10);
 	}
 
@@ -676,19 +649,17 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	@Override
 	public void setPosition(double x, double y, double z) {
 		if (!(entity instanceof EntityPlayerMP)) { return; }
-		NoppesUtilPlayer.teleportPlayer((EntityPlayerMP) entity, x, y, z, entity.dimension, entity.rotationYaw, entity.rotationPitch);
+		SPacketDimensionTeleport.teleportPlayer((EntityPlayerMP) entity, entity.dimension, x, y, z, entity.rotationYaw, entity.rotationPitch);
 	}
 
 	@Override
-	public void setSkin(boolean isSmallArms, int body, int bodyColor, int hair, int hairColor, int face, int eyesColor,
-			int leg, int jacket, int shoes, int... peculiarities) {
-		PlayerSkinController.getInstance().set((EntityPlayerMP) entity, isSmallArms, body, bodyColor, hair, hairColor,
-				face, eyesColor, leg, jacket, shoes, peculiarities);
+	public void setSkin(int type, int gender, int body, int bodyColor, int hair, int hairColor, int face, int eyesColor, int leg, int jacket, int shoes, int... peculiarities) {
+		PlayerSkinController.getInstance().set(entity.getUniqueID().toString(), type, gender, body, bodyColor, hair, hairColor, face, eyesColor, leg, jacket, shoes, peculiarities);
 	}
 
 	@Override
-	public void setSkinType(String location, int type) {
-		PlayerSkinController.getInstance().set((EntityPlayerMP) entity, location, type);
+	public void setSkinType(int type, String location) {
+		PlayerSkinController.getInstance().set(entity.getUniqueID().toString(), location, type);
 	}
 
 	@Override
@@ -812,9 +783,38 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	@Override
 	public void showMarket(int marcetId) {
 		IMarcet market = MarcetController.getInstance().getMarcet(marcetId);
-		if (market != null) {
-			NoppesUtilServer.sendOpenGui(entity, EnumGuiType.PlayerTrader, null, marcetId, 0, -1);
+		if (market != null && entity instanceof EntityPlayerMP) {
+			NoppesUtilServer.openContainerGui((EntityPlayerMP) entity, EnumGuiType.PlayerTrader, (buffer) -> buffer.writeInt(marcetId));
 		}
+	}
+
+	// New from Unofficial (Goodbird)
+	@Override
+	public void showOverlay(IOverlay overlay) {
+		//Server.sendData((EntityPlayerMP) entity, new PacketOverlayShow(overlay.toNbt().getMCNBT()));
+	}
+
+	@Override
+	public void showSoundSelectionGUI() {
+		//Server.sendData((EntityPlayerMP) entity, new PacketSoundGUIOpen());
+	}
+
+	@Override
+	public void hideOverlay(int id) {
+		//Server.sendData((EntityPlayerMP) entity, new PacketOverlayHide(id));
+	}
+
+	@Override
+	public void hideAllOverlays() {
+		//Server.sendData((EntityPlayerMP) entity, new PacketHideAllOverlays(true));
+	}
+
+	@Override
+	public IPlayerSkin getSkin() { return PlayerSkinController.getInstance().getData(entity.getUniqueID(), 0); }
+
+	@Override
+	public IPlayerSkin getSkin(int type) {
+		return PlayerSkinController.getInstance().getData(entity.getUniqueID(), type);
 	}
 
 }

@@ -3,7 +3,7 @@ package net.minecraftforge.fml.common.network.internal;
 import java.lang.reflect.Method;
 
 import io.netty.buffer.ByteBuf;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class EntitySpawnMessageHelper {
 
@@ -19,15 +19,17 @@ public class EntitySpawnMessageHelper {
 		}
 	}
 
-	public static void spawn(ByteBuf buffer) {
-		FMLMessage.EntitySpawnMessage msg = new FMLMessage.EntitySpawnMessage();
-		msg.fromBytes(buffer);
+	public static void spawn(FMLMessage.EntitySpawnMessage msg) {
 		try { EntitySpawnMessageHelper.spawn.invoke(EntitySpawnMessageHelper.handler, msg); }
 		catch (Exception e) { LogWriter.error(e); }
 	}
 
-	public static void toBytes(FMLMessage.EntitySpawnMessage m, ByteBuf buf) {
-		m.toBytes(buf);
+	public static void toBytes(FMLMessage.EntitySpawnMessage m, ByteBuf buf) { m.toBytes(buf); }
+
+	public static FMLMessage.EntitySpawnMessage fromBytes(ByteBuf buffer) {
+		FMLMessage.EntitySpawnMessage msg = new FMLMessage.EntitySpawnMessage();
+		msg.fromBytes(buffer);
+		return msg;
 	}
 
 }

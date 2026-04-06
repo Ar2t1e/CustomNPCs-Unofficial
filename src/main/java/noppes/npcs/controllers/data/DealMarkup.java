@@ -39,7 +39,7 @@ public class DealMarkup {
 		for (ItemStack stack : baseItems.keySet()) {
 			int count = 0;
 			for (ItemStack s : inventory) {
-				if (NoppesUtilServer.IsItemStackNull(s)) { continue; }
+				if (NoppesUtilServer.isItemStackNull(s)) { continue; }
 				if (NoppesUtilPlayer.compareItems(stack, s, ignoreDamage, ignoreNBT)) { count += s.getCount(); }
 			}
 			baseHasPlayerItems.put(stack, count >= baseItems.get(stack));
@@ -107,7 +107,7 @@ public class DealMarkup {
 			if (iContainer != null) {
 				for (int slot = 0; slot < iContainer.getSizeInventory(); slot++) {
 					ItemStack stack = iContainer.getStackInSlot(slot);
-					if (NoppesUtilServer.IsItemStackNull(stack)) { continue; }
+					if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
 					boolean has = false;
 					for (ItemStack s : map.keySet()) {
 						if (NoppesUtilPlayer.compareItems(stack, s, ignoreDamage, ignoreNBT)) {

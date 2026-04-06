@@ -16,16 +16,13 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.blocks.BlockBorder;
 import noppes.npcs.controllers.data.Availability;
 
 import javax.annotation.Nonnull;
 
-@SuppressWarnings("rawtypes")
-public class TileBorder
-extends TileNpcEntity
-implements Predicate, ITickable {
+public class TileBorder extends TileNpcEntity implements Predicate<Entity>, ITickable {
 
 	public Availability availability = new Availability();
 	public boolean creative = false;
@@ -33,9 +30,8 @@ implements Predicate, ITickable {
 	public int rotation = 0;
 	public String message = "availability.areaNotAvailable";
 
-	public boolean apply(Object ob) {
-		return isEntityApplicable((Entity) ob);
-	}
+	@Override
+	public boolean apply(Entity entity) { return entity instanceof EntityPlayerMP || entity instanceof EntityEnderPearl; }
 
 	private boolean checkPlayer(EntityPlayer player, int startY) {
 		if ((player.capabilities.isCreativeMode && !creative) || availability.isAvailable(player)) {
@@ -63,10 +59,12 @@ implements Predicate, ITickable {
 		return true;
 	}
 
+	@Override
 	public SPacketUpdateTileEntity getUpdatePacket() {
 		return new SPacketUpdateTileEntity(pos, 0, getUpdateTag());
 	}
 
+	@Override
 	public @Nonnull NBTTagCompound getUpdateTag() {
 		NBTTagCompound compound = new NBTTagCompound();
 		compound.setInteger("x", pos.getX());
@@ -77,17 +75,15 @@ implements Predicate, ITickable {
 		return compound;
 	}
 
+	@Override
 	public void handleUpdateTag(@Nonnull NBTTagCompound compound) {
 		rotation = compound.getInteger("Rotation");
 		height = compound.getInteger("Height");
 	}
 
+	@Override
 	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
 		handleUpdateTag(pkt.getNbtCompound());
-	}
-
-	public boolean isEntityApplicable(Entity var1) {
-		return var1 instanceof EntityPlayerMP || var1 instanceof EntityEnderPearl;
 	}
 
 	public void readExtraNBT(NBTTagCompound compound) {
@@ -103,28 +99,24 @@ implements Predicate, ITickable {
 		super.readFromNBT(compound);
 		readExtraNBT(compound);
 		if (world != null) {
-			world.setBlockState(pos, CustomRegisters.border.getDefaultState().withProperty(BlockBorder.ROTATION, rotation));
+			world.setBlockState(pos, CustomBlocks.border.getDefaultState().withProperty(BlockBorder.ROTATION, rotation));
 		}
     }
-	@SuppressWarnings("unchecked")
+
+	@Override
 	public void update() {
-		if (world.isRemote) { return; }
-		for (int i = 1; i < height && i < 3; i++) {
-			if (world.getBlockState(pos.up(i)).getBlock() instanceof BlockBorder) {
-				return;
-			}
-		}
 		List<Entity> list = new ArrayList<>();
-		try { list = world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), (pos.getX() + 1), (pos.getY() + height + 1), (pos.getZ() + 1)), this); } catch (Exception ignored) { }
+		AxisAlignedBB box = new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), (pos.getX() + 1), (pos.getY() + height + 1), (pos.getZ() + 1));
+		try { list = world.getEntitiesWithinAABB(Entity.class, box, this); }
+		catch (Exception ignored) { }
 		for (Entity entity : list) {
 			if (entity instanceof EntityEnderPearl) {
 				EntityEnderPearl pearl = (EntityEnderPearl) entity;
 				if (pearl.getThrower() instanceof EntityPlayer) {
 					entity.isDead = checkPlayer((EntityPlayer) pearl.getThrower(), (int) (entity.posY + 0.5d));
 				}
-			} else if (entity instanceof EntityPlayer) {
-				checkPlayer((EntityPlayer) entity, (int) (entity.posY + 0.5d));
 			}
+			else if (entity instanceof EntityPlayer) { checkPlayer((EntityPlayer) entity, (int) (entity.posY + 0.5d)); }
 		}
 	}
 

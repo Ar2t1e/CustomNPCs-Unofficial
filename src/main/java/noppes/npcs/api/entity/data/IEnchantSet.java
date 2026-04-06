@@ -1,7 +1,7 @@
 package noppes.npcs.api.entity.data;
 
 import net.minecraft.enchantment.Enchantment;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 @SuppressWarnings("all")
 public interface IEnchantSet {

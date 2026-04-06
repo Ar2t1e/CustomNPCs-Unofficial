@@ -1,0 +1,59 @@
+package noppes.npcs.packets.server;
+
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomItems;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.controllers.ServerCloneController;
+import noppes.npcs.shared.common.PacketServerBasic;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiData;
+
+public class SPacketCloneNameCheck extends PacketServerBasic {
+
+   protected static int channelId;
+   private String name;
+   private int tab;
+
+   public SPacketCloneNameCheck() { }
+
+   public SPacketCloneNameCheck(String nameIn, int tabIn) {
+      name = nameIn;
+      tab = tabIn;
+   }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.cloner; }
+
+   @Override
+   public CustomNpcsPermissions.Permission getPermission() {
+      return CustomNpcsPermissions.NPC_CLONE;
+   }
+
+   @Override
+   public void encode(FriendlyByteBuf buf) {
+      buf.writeUtf(name);
+      buf.writeInt(tab);
+   }
+
+   @Override
+   public void decode(FriendlyByteBuf buf) {
+      name = buf.readUtf();
+      tab = buf.readInt();
+   }
+
+   @Override
+   public int getChannelId() { return channelId; }
+
+   @Override
+   protected void handle() {
+      CustomNpcs.debugData.start("Packets");
+      NBTTagCompound compound = new NBTTagCompound();
+      compound.setBoolean("NameExists", ServerCloneController.Instance.getCloneData(null, name, tab) != null);
+      Packets.send(player, new PacketGuiData(compound));
+      CustomNpcs.debugData.end("Packets");
+   }
+
+}

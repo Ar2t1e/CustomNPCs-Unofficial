@@ -1,5 +1,6 @@
 package noppes.npcs.command;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.command.CommandBase;
@@ -7,17 +8,13 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.TextComponentString;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import net.minecraft.util.math.BlockPos;
+import noppes.npcs.controllers.QuestController;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.api.handler.data.IQuestObjective;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.controllers.PlayerDataController;
-import noppes.npcs.controllers.PlayerQuestController;
-import noppes.npcs.controllers.QuestController;
-import noppes.npcs.controllers.SyncController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.util.ValueUtil;
@@ -30,7 +27,6 @@ public class CmdQuest extends CommandNoppesBase {
 		return 2;
 	}
 
-	@SuppressWarnings("all")
 	@SubCommand(desc = "Finish a quest", usage = "<player> <quest>", permission = 2)
 	public void finish(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
@@ -77,7 +73,6 @@ public class CmdQuest extends CommandNoppesBase {
 		return "quest";
 	}
 
-	@SuppressWarnings("all")
 	@SubCommand(desc = "get/set objectives for quests progress", usage = "<player> <quest> [objective] [value]", permission = 2)
 	public void objective(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		EntityPlayer player = CommandBase.getPlayer(server, sender, args[0]);
@@ -98,7 +93,7 @@ public class CmdQuest extends CommandNoppesBase {
 		IQuestObjective[] objectives = quest.questInterface.getObjectives(player);
 		if (args.length == 2) {
 			for (IQuestObjective ob : objectives) {
-				sender.sendMessage(new TextComponentString(ob.getText()));
+				sender.sendMessage(ob.getMCText());
 			}
 			return;
 		}
@@ -112,7 +107,7 @@ public class CmdQuest extends CommandNoppesBase {
 			throw new CommandException("Invalid objective number was given");
 		}
 		if (args.length == 3) {
-			sender.sendMessage(new TextComponentString(objectives[objective].getText()));
+			sender.sendMessage(objectives[objective].getMCText());
 			return;
 		}
 		IQuestObjective object = objectives[objective];
@@ -135,7 +130,6 @@ public class CmdQuest extends CommandNoppesBase {
 		SyncController.syncAllQuests(server);
 	}
 
-	@SuppressWarnings("all")
 	@SubCommand(desc = "Removes a quest from finished and active quests", usage = "<player> <quest>", permission = 2)
 	public void remove(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
@@ -160,7 +154,6 @@ public class CmdQuest extends CommandNoppesBase {
 		}
 	}
 
-	@SuppressWarnings("all")
 	@SubCommand(desc = "Start a quest", usage = "<player> <quest>", permission = 2)
 	public void start(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
@@ -168,14 +161,13 @@ public class CmdQuest extends CommandNoppesBase {
 		try { questId = Integer.parseInt(args[1]); }
 		catch (NumberFormatException ex) { throw new CommandException("QuestID must be an integer"); }
 		EntityPlayerMP player = CommandBase.getPlayer(server, sender, playername);
-		if (player == null) { throw new CommandException("Unknown player '%s'", playername); }
+		if (player == null) { throw new CommandException("Unknown player " + playername); }
 		Quest quest = QuestController.instance.quests.get(questId);
 		if (quest == null) { throw new CommandException("Unknown QuestID"); }
 		PlayerQuestController.addActiveQuest(quest, player, true);
 		sender.sendMessage(new TextComponentString("Player \"" + player.getName() + "\" started the quest ID: " + questId));
 	}
 
-	@SuppressWarnings("all")
 	@SubCommand(desc = "Stop a started quest", usage = "<player> <quest>", permission = 2)
 	public void stop(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
@@ -197,6 +189,19 @@ public class CmdQuest extends CommandNoppesBase {
 			playerdata.questData.activeQuests.remove(questId);
 			playerdata.save(true);
 		}
+	}
+
+	@Override
+	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender par1, @Nonnull String[] args, BlockPos pos) {
+		if (args.length == 2) {
+			List<String> list = new ArrayList<>();
+			for (Quest quest : QuestController.instance.quests.values()) {
+				list.add("" + quest.id);
+				list.add(quest.getName());
+			}
+			return list;
+		}
+		return new ArrayList<>();
 	}
 
 }

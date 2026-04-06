@@ -6,7 +6,7 @@ import java.util.List;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import noppes.npcs.constants.EnumQuestTask;
-import noppes.npcs.quests.QuestObjective;
+import noppes.npcs.client.gui.util.quests.QuestObjective;
 
 public class QuestData {
 

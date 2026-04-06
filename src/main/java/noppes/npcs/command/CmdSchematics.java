@@ -11,7 +11,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.schematics.SchematicWrapper;
@@ -19,6 +19,8 @@ import noppes.npcs.schematics.SchematicWrapper;
 import javax.annotation.Nonnull;
 
 public class CmdSchematics extends CommandNoppesBase {
+
+	public static final List<String> names = new ArrayList<>();
 
 	public int getRequiredPermissionLevel() {
 		return 2;

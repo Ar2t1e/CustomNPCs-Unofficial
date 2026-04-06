@@ -3,11 +3,13 @@ import java.time.LocalDateTime
 // DEV resources path
 buildscript {
     repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
+        mavenLocal()
+        flatDir { dirs 'libs' }
+        //maven { url = 'https://maven.minecraftforge.net/' }
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.+'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.14'
         classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7.38'
     }
 }
@@ -65,8 +67,10 @@ minecraft {
 
 // Add Maven repositories
 repositories {
-    mavenCentral()
+    mavenLocal()
     flatDir { dirs 'libs' }
+    //maven { url = 'https://maven.minecraftforge.net/' }
+    mavenCentral()
 }
 
 // Project dependencies (required libraries)

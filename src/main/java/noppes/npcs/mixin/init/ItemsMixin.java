@@ -2,11 +2,11 @@ package noppes.npcs.mixin.init;
 
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.items.CustomItemLingeringPotion;
-import noppes.npcs.items.CustomItemPotion;
-import noppes.npcs.items.CustomItemSplashPotion;
-import noppes.npcs.items.CustomItemTippedArrow;
+import noppes.npcs.CustomItems;
+import noppes.npcs.items.custom.CustomItemLingeringPotion;
+import noppes.npcs.items.custom.CustomItemPotion;
+import noppes.npcs.items.custom.CustomItemSplashPotion;
+import noppes.npcs.items.custom.CustomItemTippedArrow;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,31 +23,23 @@ public class ItemsMixin {
     private static void npcs$getRegisteredItem(String name, CallbackInfoReturnable<Item> cir) {
         switch (name) {
             case "tipped_arrow":
-                if (CustomRegisters.itemTippedArrow == null) {
-                    CustomRegisters.itemTippedArrow = new CustomItemTippedArrow();
-                }
-                cir.setReturnValue(CustomRegisters.itemTippedArrow);
+                if (CustomItems.itemTippedArrow == null) { CustomItems.itemTippedArrow = new CustomItemTippedArrow(); }
+                cir.setReturnValue(CustomItems.itemTippedArrow);
                 cir.cancel();
                 break;
             case "potion":
-                if (CustomRegisters.itemPotion == null) {
-                    CustomRegisters.itemPotion = new CustomItemPotion();
-                }
-                cir.setReturnValue(CustomRegisters.itemPotion);
+                if (CustomItems.itemPotion == null) { CustomItems.itemPotion = new CustomItemPotion(); }
+                cir.setReturnValue(CustomItems.itemPotion);
                 cir.cancel();
                 break;
             case "splash_potion":
-                if (CustomRegisters.itemSplashPotion == null) {
-                    CustomRegisters.itemSplashPotion = new CustomItemSplashPotion();
-                }
-                cir.setReturnValue(CustomRegisters.itemSplashPotion);
+                if (CustomItems.itemSplashPotion == null) { CustomItems.itemSplashPotion = new CustomItemSplashPotion(); }
+                cir.setReturnValue(CustomItems.itemSplashPotion);
                 cir.cancel();
                 break;
             case "lingering_potion":
-                if (CustomRegisters.itemLingeringPotion == null) {
-                    CustomRegisters.itemLingeringPotion = new CustomItemLingeringPotion();
-                }
-                cir.setReturnValue(CustomRegisters.itemLingeringPotion);
+                if (CustomItems.itemLingeringPotion == null) { CustomItems.itemLingeringPotion = new CustomItemLingeringPotion(); }
+                cir.setReturnValue(CustomItems.itemLingeringPotion);
                 cir.cancel();
                 break;
         }

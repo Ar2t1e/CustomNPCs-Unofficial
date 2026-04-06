@@ -83,7 +83,7 @@ public class CompanionFoodStats {
 		}
 	}
 
-	public void readNBT(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		if (compound.hasKey("foodLevel", 99)) {
 			this.foodLevel = compound.getInteger("foodLevel");
 			this.foodTimer = compound.getInteger("foodTickTimer");
@@ -102,7 +102,7 @@ public class CompanionFoodStats {
 		this.foodSaturationLevel = foodSaturationLevelIn;
 	}
 
-	public void writeNBT(NBTTagCompound compound) {
+	public void save(NBTTagCompound compound) {
 		compound.setInteger("foodLevel", this.foodLevel);
 		compound.setInteger("foodTickTimer", this.foodTimer);
 		compound.setFloat("foodSaturationLevel", this.foodSaturationLevel);

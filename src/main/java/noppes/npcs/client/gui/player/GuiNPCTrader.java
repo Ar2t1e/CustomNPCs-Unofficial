@@ -5,31 +5,32 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.util.ITooltipFlag.TooltipFlags;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.handler.data.IDeal;
 import noppes.npcs.client.ClientProxy;
-import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.client.renderer.ModelBuffer;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.containers.ContainerNPCTrader;
 import noppes.npcs.controllers.MarcetController;
-import noppes.npcs.controllers.data.Deal;
-import noppes.npcs.controllers.data.DealMarkup;
-import noppes.npcs.controllers.data.Marcet;
-import noppes.npcs.controllers.data.MarcetSection;
-import noppes.npcs.controllers.data.MarkupData;
+import noppes.npcs.controllers.data.*;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
@@ -104,7 +105,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 	protected int ceilList = -1;
 
 	public GuiNPCTrader(ContainerNPCTrader container) {
-		super(NoppesUtil.getLastNpc(), container);
+		super(NoppesUtilServer.getEditingNpc(Minecraft.getMinecraft().player), container, Component.empty());
 		drawDefaultBackground = false;
 		closeOnEsc = true;
 		hoverIsGame = true;
@@ -274,12 +275,13 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 				}
 			}
 		}
+		PlayerData playerData = CustomNpcs.proxy.getPlayerData(player);
 		// Market level
 		if (marcet.showXP) {
 			mc.getTextureManager().bindTexture(INV);
 			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 			drawTexturedModalRect(xSize - 100, invPosY - 24, 0, 118, 100, 24);
-			MarkupData md = ClientProxy.playerData.game.getMarkupData(marcet.getId());
+			MarkupData md = playerData.game.getMarkupData(marcet.getId());
 			MarkupData mm = marcet.markup.get(md.level);
 			if (md.xp > 0) {
 				double mXP = mm.xp;
@@ -304,7 +306,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 		if (marcet.getName().isEmpty()) { text = new TextComponentTranslation("role.trader").getFormattedText(); }
 		else { text = new TextComponentTranslation(marcet.getName()).getFormattedText(); }
 		w = ClientProxy.Font.width(text) / 2;
-		ClientProxy.Font.drawString(text, scrollWidth - w + 10, 2, CustomNpcs.MainColor.getRGB());
+		ClientProxy.Font.draw(text, scrollWidth - w + 10, 2, CustomNpcs.MainColor.getRGB());
 		// update
 		if (marcet.updateTime > 0) {
 			TextFormatting color = TextFormatting.RESET;
@@ -312,7 +314,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 			else if (marcet.nextTime <= 10000) { color = marcet.nextTime % 1000 < 500 ? TextFormatting.GOLD : TextFormatting.RED; }
 			text = new TextComponentTranslation("market.uptime", color + Util.instance.ticksToElapsedTime(marcet.nextTime / 50, false, false, false)).getFormattedText();
 			w = ClientProxy.Font.width(text);
-			ClientProxy.Font.drawString(text, invPosX + 3, 2, CustomNpcs.MainColor.getRGB());
+			ClientProxy.Font.draw(text, invPosX + 3, 2, CustomNpcs.MainColor.getRGB());
 			if (marcet.nextTime <= 0) { NoppesUtilPlayer.sendDataCheckDelay(EnumPlayerPacket.MarketTime, this, 2500, marcet.getId()); }
 			if (isMouseHover(mouseX, mouseY, invPosX, 0, w, 24)) {
 				putHoverText("market.hover.update");
@@ -321,7 +323,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 		// marcet money
 		text = Util.instance.getTextReducedNumber(marcet.money, true, true, false) + CustomNpcs.displayCurrencies;
 		w = ClientProxy.Font.width(text);
-		ClientProxy.Font.drawString(text, xSize - w - 15, 2, CustomNpcs.MainColor.getRGB());
+		ClientProxy.Font.draw(text, xSize - w - 15, 2, CustomNpcs.MainColor.getRGB());
 		if (isMouseHover(mouseX, mouseY, xSize - w - 14, 0, w, 24)) {
 			putHoverText("market.hover.currency.1", marcet.money, CustomNpcs.displayCurrencies);
 		}
@@ -335,8 +337,8 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 		// money
 		int x = invPosX + 4;
 		int y = invPosY + 9;
-		text = new TextComponentTranslation("questlog.rewardmoney", ClientProxy.playerData.game.getTextMoney(), CustomNpcs.displayCurrencies).getFormattedText();
-		ClientProxy.Font.drawString(text, x, y, CustomNpcs.MainColor.getRGB());
+		text = new TextComponentTranslation("questlog.rewardmoney", playerData.game.getTextMoney(), CustomNpcs.displayCurrencies).getFormattedText();
+		ClientProxy.Font.draw(text, x, y, CustomNpcs.MainColor.getRGB());
 		w = ClientProxy.Font.width(text);
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(x + w, y - 2.0f, 1.0f);
@@ -346,13 +348,13 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 		drawTexturedModalRect(0, 0, 0, 0, 256, 256);
 		GlStateManager.popMatrix();
 		if (isMouseHover(mouseX, mouseY, x, y, w + 16, 16)) {
-			putHoverText(new TextComponentTranslation("inventory.hover.currency").appendText(" " + ClientProxy.playerData.game.getMoney()).getFormattedText());
+			putHoverText(new TextComponentTranslation("inventory.hover.currency").appendText(" " + playerData.game.getMoney()).getFormattedText());
 		} // hover money
 		// donat
-		text = new TextComponentTranslation("questlog.rewarddonat", ClientProxy.playerData.game.getTextDonat(), CustomNpcs.displayDonation).getFormattedText();
+		text = new TextComponentTranslation("questlog.rewarddonat", playerData.game.getTextDonat(), CustomNpcs.displayDonation).getFormattedText();
 		w = ClientProxy.Font.width(text);
 		x = xSize - 18 - w;
-		ClientProxy.Font.drawString(text, x, y, CustomNpcs.MainColor.getRGB());
+		ClientProxy.Font.draw(text, x, y, CustomNpcs.MainColor.getRGB());
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(x + w, y - 2.0f, 1.0f);
 		GlStateManager.scale(0.0625f, 0.0625f, 0.0625f);
@@ -361,7 +363,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 		drawTexturedModalRect(0, 0, 0, 0, 256, 256);
 		GlStateManager.popMatrix();
 		if (isMouseHover(mouseX, mouseY, x, y, w + 16, 16)) {
-			putHoverText(new TextComponentTranslation("inventory.hover.donat").appendText(" " + ClientProxy.playerData.game.getDonat()).getFormattedText());
+			putHoverText(new TextComponentTranslation("inventory.hover.donat").appendText(" " + playerData.game.getDonat()).getFormattedText());
 		} // hover donat
 		// search icon
 		GlStateManager.pushMatrix();
@@ -540,7 +542,8 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 			}
 		}
 		// section deals
-		int level = ClientProxy.playerData.game.getMarcetLevel(marcet.getId());
+		PlayerData playerData = CustomNpcs.proxy.getPlayerData(player);
+		int level = playerData.game.getMarcetLevel(marcet.getId());
 		List<Deal> dealInTrade = new ArrayList<>();
 		List<Deal> caseInTrade = new ArrayList<>();
 		List<Deal> dealNotTrade = new ArrayList<>();
@@ -656,8 +659,8 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 			if (wait || selectDealData.deal.getType() == 1) { canBuy.add(1); }
 			if (selectDealData.deal.getAmount() <= 0 && selectDealData.deal.getMaxCount() <= 0) { canBuy.add(6); }
 			if (!selectDealData.deal.availability.isAvailable(player)) { canBuy.add(2); }
-			if (selectDealData.buyMoney > 0 && ClientProxy.playerData.game.getMoney() < selectDealData.buyMoney) { canBuy.add(3); }
-			if (selectDealData.buyDonat > 0 && ClientProxy.playerData.game.getDonat() < selectDealData.buyDonat) { canBuy.add(7); }
+			if (selectDealData.buyMoney > 0 && playerData.game.getMoney() < selectDealData.buyMoney) { canBuy.add(3); }
+			if (selectDealData.buyDonat > 0 && playerData.game.getDonat() < selectDealData.buyDonat) { canBuy.add(7); }
 			if (!Util.instance.canRemoveItems(player.inventory.mainInventory, selectDealData.buyItems, selectDealData.ignoreDamage, selectDealData.ignoreNBT)) { canBuy.add(4); }
 			if (!selectDealData.deal.isCase() && !Util.instance.canAddItemAfterRemoveItems(player.inventory.mainInventory, selectDealData.main, selectDealData.buyItems, selectDealData.ignoreDamage, selectDealData.ignoreNBT)) { canBuy.add(5); }
 			Map<ItemStack, Integer> mainItem = new LinkedHashMap<>();
@@ -733,7 +736,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 				.setHoverText("hover.sort", new TextComponentTranslation("market.deals").getFormattedText(), new TextComponentTranslation(isIdSort ? "type.id" : "gui.name").getFormattedText()));
 		addTextField(new MarcetTextField(this, 28, ySize - 19, scrollWidth - 31)
 				.setHoverText("market.hover.is.search"));
-		getTextField(0).setFocused(focus);
+		getTextField(0).setIsFocused(focus);
 		// hover item / case
 	}
 
@@ -1247,7 +1250,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface
 	}
 
 	@SideOnly(Side.CLIENT)
-	public static class MarcetTextField extends GuiNpcTextField {
+	public static class MarcetTextField extends GuiTextField implements IComponentGui {
 
 		public MarcetTextField(GuiNPCTrader gui, int x, int y, int widthIn) {
 			super(0, gui, x, y, widthIn, 18, GuiNPCTrader.search);

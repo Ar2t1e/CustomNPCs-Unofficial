@@ -19,23 +19,22 @@ public class CustomFluid extends Fluid {
 						"fluids/custom_fluid_" + nbtBlock.getString("RegistryName") + "_flow"),
 				new ResourceLocation(CustomNpcs.MODID,
 						"fluids/custom_fluid_" + nbtBlock.getString("RegistryName") + "_overlay"));
-		this.nbtData = nbtBlock;
-		this.mapColor = nbtBlock.hasKey("Color", 3) ? nbtBlock.getInteger("Color") : 0xFFFFFFFF;
-		this.setDensity(nbtBlock.hasKey("Density", 3) ? nbtBlock.getInteger("Density") : 1100);
-		this.setGaseous(nbtBlock.hasKey("IsGaseous", 1) && nbtBlock.getBoolean("IsGaseous"));
-		this.setLuminosity(nbtBlock.hasKey("Luminosity", 3) ? nbtBlock.getInteger("Luminosity") : 5);
-		this.setViscosity(nbtBlock.hasKey("Viscosity", 3) ? nbtBlock.getInteger("Viscosity") : 900);
-		this.setTemperature(nbtBlock.hasKey("Temperature", 3) ? nbtBlock.getInteger("Temperature") : 300);
-		this.setUnlocalizedName("custom_fluid_" + nbtBlock.getString("RegistryName"));
+		nbtData = nbtBlock;
+		mapColor = nbtBlock.hasKey("Color", 3) ? nbtBlock.getInteger("Color") : 0xFFFFFFFF;
+		setDensity(nbtBlock.hasKey("Density", 3) ? nbtBlock.getInteger("Density") : 1100);
+		setGaseous(nbtBlock.hasKey("IsGaseous", 1) && nbtBlock.getBoolean("IsGaseous"));
+		setLuminosity(nbtBlock.hasKey("Luminosity", 3) ? nbtBlock.getInteger("Luminosity") : 5);
+		setViscosity(nbtBlock.hasKey("Viscosity", 3) ? nbtBlock.getInteger("Viscosity") : 900);
+		setTemperature(nbtBlock.hasKey("Temperature", 3) ? nbtBlock.getInteger("Temperature") : 300);
+		setUnlocalizedName("custom_fluid_" + nbtBlock.getString("RegistryName"));
 	}
 
 	@Override
-	public int getColor() {
-		return this.mapColor;
-	}
+	public int getColor() { return mapColor; }
 
+	@Override
 	public Fluid setColor(int parColor) {
-		this.mapColor = parColor;
+		mapColor = parColor;
 		return this;
 	}
 

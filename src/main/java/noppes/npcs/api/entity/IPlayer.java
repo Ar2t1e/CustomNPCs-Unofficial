@@ -6,16 +6,17 @@ import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.data.IPlayerMail;
 import noppes.npcs.api.entity.data.IPlayerMiniMap;
 import noppes.npcs.api.gui.ICustomGui;
-import noppes.npcs.api.gui.IOverlayHUD;
 import noppes.npcs.api.handler.data.IQuest;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.overlay.IOverlay;
 
 @SuppressWarnings("all")
 public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
 
 	void addDialog(@ParamName("id") int id);
 
-	void addFactionPoints(@ParamName("faction") int faction, @ParamName("points") int points);
+	void addFactionPoints(@ParamName("id") int id, @ParamName("points") int points);
 
 	void addMoney(@ParamName("value") long value);
 
@@ -34,7 +35,7 @@ public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
 
 	int factionStatus(@ParamName("id") int id);
 
-	boolean finishQuest(@ParamName("id") int id);
+	void finishQuest(@ParamName("id") int id);
 
 	IQuest[] getActiveQuests();
 
@@ -72,8 +73,6 @@ public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
 
 	IContainer getOpenContainer();
 
-	IOverlayHUD getOverlayHUD();
-
 	Object getPixelmonData();
 
 	String getSkinType(@ParamName("type") int type);
@@ -82,7 +81,7 @@ public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
 
 	ITimers getTimers();
 
-	double[] getWindowSize();
+	IScreenSize getWindowSize();
 
 	boolean giveItem(@ParamName("item") IItemStack item);
 
@@ -149,14 +148,14 @@ public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
 
 	void setMoney(@ParamName("value") long value);
 
-	void setSkin(@ParamName("isSmallArms") boolean isSmallArms,
+	void setSkin(@ParamName("type") int type, @ParamName("gender") int gender,
 				 @ParamName("body") int body, @ParamName("bodyColor") int bodyColor,
 				 @ParamName("hair") int hair, @ParamName("hairColor") int hairColor,
 				 @ParamName("face") int face, @ParamName("eyesColor") int eyesColor,
 				 @ParamName("leg") int leg, @ParamName("jacket") int jacket,
 				 @ParamName("shoes") int shoes, @ParamName("peculiarities") int... peculiarities);
 
-	void setSkinType(@ParamName("location") String location, @ParamName("type") int type);
+	void setSkinType(@ParamName("type") int type, @ParamName("location") String location);
 
 	void setSpawnpoint(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
@@ -189,4 +188,16 @@ public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
 
 	void showMarket(@ParamName("marcetId") int marcetId);
 
+	// New from Unofficial (Goodbird)
+	void showOverlay(IOverlay overlay);
+
+	void showSoundSelectionGUI();
+
+	void hideOverlay(int id);
+
+	void hideAllOverlays();
+
+	IPlayerSkin getSkin();
+
+	IPlayerSkin getSkin(int type);
 }

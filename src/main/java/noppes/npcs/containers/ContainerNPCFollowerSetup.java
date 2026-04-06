@@ -26,10 +26,10 @@ public class ContainerNPCFollowerSetup extends Container {
 		}
 	}
 
-	public boolean canInteractWith(@Nonnull EntityPlayer entityplayer) {
-		return true;
-	}
+	@Override
+	public boolean canInteractWith(@Nonnull EntityPlayer entityplayer) { return true; }
 
+	@Override
 	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer player, int i) {
 		ItemStack itemstack = ItemStack.EMPTY;
 		Slot slot = this.inventorySlots.get(i);

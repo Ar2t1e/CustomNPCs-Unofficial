@@ -2,38 +2,46 @@ package noppes.npcs.client.gui.mainmenu;
 
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.ModelPartConfig;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.availability.SubGuiNpcAvailability;
 import noppes.npcs.client.gui.SubGuiNpcName;
 import noppes.npcs.client.gui.select.SubGuiTextureSelection;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.client.model.part.ModelData;
+import noppes.npcs.client.model.part.ModelPartConfig;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.constants.EnumMenuType;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataDisplay;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketMenuGet;
+import noppes.npcs.packets.server.SPacketMenuSave;
+import noppes.npcs.packets.server.SPacketNpRandomNameSet;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
 import java.awt.*;
 import java.text.DecimalFormat;
 
 public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListener, IGuiData {
 
-	protected final DecimalFormat df = new DecimalFormat("#.#");
 	protected final DataDisplay display;
-	protected boolean enableInvisibleNpcs;
+
+	// New from Unofficial (BetaZavr)
 	protected float baseHitBoxWidth;
 	protected float baseHitBoxHeight;
+	protected final DecimalFormat df = new DecimalFormat("#.#");
 	
 	public GuiNpcDisplay(EntityNPCInterface npc) {
 		super(npc, 1);
-		parentGui = EnumGuiType.MainMenuAdvanced;
+		backGui = null;
 
 		display = npc.display;
 		baseHitBoxWidth = npc.baseWidth;
@@ -43,13 +51,12 @@ public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListene
 			baseHitBoxWidth = modeldata.entity.width;
 			baseHitBoxHeight = modeldata.entity.height;
 		}
-		Client.sendData(EnumPacketServer.MainmenuDisplayGet);
+		Packets.sendServer(new SPacketMenuGet(EnumMenuType.DISPLAY));
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 0: display.setShowName(button.getValue()); break;
 			case 1: NoppesUtil.requestOpenGUI(EnumGuiType.CreationParts); break;
 			case 2: {
@@ -59,134 +66,184 @@ public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListene
 				initGui();
 				break;
 			}
-			case 3: setSubGui(new SubGuiTextureSelection(0, npc, npc.display.getSkinTexture(), "png", 0)); break;
+			case 3: setSubGui(new SubGuiTextureSelection(this, 0, npc, npc.display.getSkinTexture(), ".png", 0)); break;
 			case 4: display.setShadowType(button.getValue()); break;
 			case 5: display.setHasLivingAnimation(button.getValue() == 0); break;
-			case 7: {
-				display.setVisible(button.getValue());
-				initGui();
-				break;
-			}
-			case 8: setSubGui(new SubGuiTextureSelection(1, npc, npc.display.getCapeTexture(), "png", 1)); break;
-			case 9: setSubGui(new SubGuiTextureSelection(2, npc, npc.display.getOverlayTexture(), "png", 2)); break;
+			case 7: display.setVisible(button.getValue()); initGui(); break;
+			case 8: setSubGui(new SubGuiTextureSelection(this, 1, npc, npc.display.getCapeTexture(), ".png", 1)); break;
+			case 9: setSubGui(new SubGuiTextureSelection(this, 1, npc, npc.display.getOverlayTexture(), ".png", 2)); break;
 			case 10: display.setBossbar(button.getValue()); break;
-			case 12: display.setBossColor(button.getValue()); break;
+			case 12: { display.setBossColor(button.getValue()); break; }
 			case 13: display.setHitboxState((byte) button.getValue()); break;
-			case 14: {
-				String name = display.getRandomName();
-				display.setName(name);
-				getTextField(0).setText(name);
-				break;
-			}
+			case 14: Packets.sendServer(new SPacketNpRandomNameSet(display.getMarkovGeneratorId(), display.getMarkovGender())); break;
 			case 15: setSubGui(new SubGuiNpcName(display)); break;
 			case 16: setSubGui(new SubGuiNpcAvailability(display.getAvailability(), this)); break;
+			case 18: display.setOverlayGlowing(((GuiButtonYesNo) button).getBoolean()); break;
 		}
 	}
 
 	@Override
-	public void subGuiClosed(GuiScreen subgui) {
-		initGui();
-	}
+	public void subGuiClosed(GuiScreen subgui) { initGui(); }
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		int y = guiTop + 4;
 		int lID = 0;
-		addLabel(new GuiNpcLabel(lID++, "gui.name", guiLeft + 5, y + 5));
-		addTextField(new GuiNpcTextField(0, this, guiLeft + 50, y, 206, 20, display.getName())
-				.setHoverText("display.hover.name"));
-		addButton(new GuiNpcButton(0, guiLeft + 253 + 52, y, 110, 20, new String[] { "display.show", "display.hide", "display.showAttacking" }, display.getShowName())
-				.setHoverText("display.hover.show.name"));
-		addButton(new GuiNpcButton(14, guiLeft + 259, y, 20, 20, Character.toString((char) 0x21BB))
-				.setHoverText("display.hover.random.name"));
-		addButton(new GuiNpcButton(15, guiLeft + 259 + 22, y, 20, 20, Character.toString((char) 0x22EE))
-				.setHoverText("display.hover.group.name"));
-		addLabel(new GuiNpcLabel(lID++, "gui.title", guiLeft + 5, (y += 23) + 5));
-		addTextField(new GuiNpcTextField(11, this, guiLeft + 50, y, 186, 20, display.getTitle())
-				.setHoverText("display.hover.subname"));
-		addLabel(new GuiNpcLabel(lID++, "display.model", guiLeft + 5, (y += 23) + 5));
-		addButton(new GuiNpcButton(1, guiLeft + 50, y, 110, 20, "selectServer.edit")
-				.setHoverText("display.hover.set.model"));
-		addLabel(new GuiNpcLabel(lID++, "display.size", guiLeft + 175, y + 5));
-		addTextField(new GuiNpcTextField(2, this, guiLeft + 203, y, 40, 20, display.getSize() + "")
+		int x0 = guiLeft + 5;
+		int x1 = guiLeft + 50;
+		int x2 = guiLeft + 260;
+		int w = 43;
+		int y = guiTop + 4;
+		addLabel(lID++, x0, y + 5, "gui.name")
+				.setSize(w, 10);
+		addTextField(0, x1 + 1, y, 206, 20, display.getName())
+				.setHoverTexts("display.hover.name");
+		addButton(0, x2 + 46, y, false, display.getShowName(), "display.show", "display.hide", "display.showAttacking")
+				.setSize(110, 20)
+				.setHoverTexts("display.hover.show.name");
+		addButton(14, x2, y, "↻")
+				.setSize(20, 20)
+				.setHoverTexts("display.hover.random.name");
+		addButton(15, x2 + 22, y, "⋮")
+				.setSize(20, 20)
+				.setHoverTexts("display.hover.group.name");
+		y += 23;
+		addLabel(lID++, x0, y + 5, "gui.title")
+				.setSize(w, 10);
+		addTextField(11, x1 + 1, y, 206, 20, display.getTitle())
+				.setHoverTexts("display.hover.subname");
+		y += 23;
+		addLabel(lID++, x0, y + 5, "display.model")
+				.setSize(w, 10);
+		addButton(1, x1, y, "selectServer.edit")
+				.setSize(110, 20)
+				.setHoverTexts("display.hover.set.model");
+		int tw = font.getStringWidth(Component.translatable("display.size").getString());
+		int x3 = x2 - 2 - tw;
+		addLabel(lID++, x3, y + 5, "display.size")
+				.setSize(tw + 1, 10);
+		addTextField(2, x2 + 1, y, 40, 20, display.getSize())
 				.setMinMaxDefault(1, 30, 5)
-				.setHoverText("display.hover.size"));
-		addLabel(new GuiNpcLabel(lID++, "(1-30)", guiLeft + 246, y + 5));
-		addLabel(new GuiNpcLabel(lID++, "display.texture", guiLeft + 5, (y += 23) + 5));
-		addTextField(new GuiNpcTextField(3, this, guiLeft + 80, y, 200, 20, (display.skinType == 0) ? display.getSkinTexture() : display.getSkinUrl())
-				.setHoverText("display.hover.skin." + display.skinType));
-		if (display.skinType == 1 && !display.getSkinPlayer().isEmpty()) { getTextField(3).setText(display.getSkinPlayer()); }
-		addButton(new GuiNpcButton(3, guiLeft + 325, y, 38, 20, "mco.template.button.select")
-				.setIsEnable(display.skinType == 0)
-				.setHoverText("display.hover.texture.set"));
-		addButton(new GuiNpcButton(2, guiLeft + 283, y, 40, 20, new String[] { "display.texture", "display.player", "display.url" }, display.skinType)
-				.setHoverText("display.hover.texture.type." + display.skinType));
-		addLabel(new GuiNpcLabel(lID++, "display.cape", guiLeft + 5, (y += 23) + 5));
-		addTextField(new GuiNpcTextField(8, this, guiLeft + 80, y, 200, 20, display.getCapeTexture())
-				.setHoverText("display.hover.cloak"));
-		addButton(new GuiNpcButton(8, guiLeft + 283, y, 80, 20, "display.selectTexture")
-				.setHoverText("display.hover.texture.cloak"));
-		addLabel(new GuiNpcLabel(lID++, "display.overlay", guiLeft + 5, (y += 23) + 5));
-		addTextField(new GuiNpcTextField(9, this, guiLeft + 80, y, 200, 20, display.getOverlayTexture())
-				.setHoverText("display.hover.eyes"));
-		addButton(new GuiNpcButton(9, guiLeft + 283, y, 80, 20, "display.selectTexture")
-				.setHoverText("display.hover.texture.eyes"));
-		addLabel(new GuiNpcLabel(lID++, "display.livingAnimation", guiLeft + 5, (y += 23) + 5));
-		addButton(new GuiNpcButton(5, guiLeft + 120, y, 50, 20, new String[] { "gui.yes", "gui.no" }, (display.getHasLivingAnimation() ? 0 : 1))
-				.setHoverText("display.hover.animation"));
-		addLabel(new GuiNpcLabel(lID++, "display.tint", guiLeft + 180, y + 5));
+				.setHoverTexts("display.hover.size");
+		addLabel(lID++, x2 + 43, y + 5, "(1-30)")
+				.setSize(w, 10);
+		y += 23;
+		addLabel(lID++, x0, y + 5, "display.texture")
+				.setSize(w, 10);
+		addTextField(3, x1 + 1, y, 206, 20, display.skinType == 0 ? display.getSkinTexture() : display.skinType == 1 ? display.getSkinPlayer() : display.getSkinUrl())
+				.setHoverTexts("display.hover.skin." + display.skinType);
+		addButton(3, x2, y, "mco.template.button.select")
+				.setSize(60, 20)
+				.setIsEnabled(display.skinType == 0)
+				.setHoverTexts("display.hover.texture.set");
+		addButton(2, x2 + 62, y, false, display.skinType, "display.texture", "display.player", "display.url")
+				.setSize(60, 20)
+				.setHoverTexts("display.hover.texture.type." + display.skinType);
+		y += 23;
+		addLabel(lID++, x0, y + 5, "display.cape")
+				.setSize(w, 10);
+		addTextField(8, x1 + 1, y, 206, 20, display.getCapeTexture())
+				.setHoverTexts("display.hover.cloak");
+		addButton(8, x2, y, "display.selectTexture")
+				.setSize(60, 20)
+				.setHoverTexts("display.hover.texture.cloak");
+		y += 23;
+		addLabel(lID++, x0, y + 5, "display.overlay")
+				.setSize(w, 10);
+		addTextField(9, x1 + 1, y, 206, 20, display.getOverlayTexture())
+				.setHoverTexts("display.hover.eyes");
+		addButton(9, x2, y, "mco.template.button.select")
+				.setSize(60, 20)
+				.setHoverTexts("display.hover.texture.eyes");
+		addLabel(lID++, x2 + 63, y + 5, "display.isglowing")
+				.setSize(54, 10);
+		addYesNo(18, x2 + 116, y, display.isOverlayGlowing())
+				.setSize(40, 20)
+				.setHoverTexts("display.hover.glint");
+		y += 23;
+		addLabel(lID++, x0, y + 5, "display.livingAnimation")
+				.setSize(w, 10);
+		addYesNo(5, x1, y, display.getHasLivingAnimation())
+				.setSize(40, 20)
+				.setHoverTexts("display.hover.animation");
+		tw = font.getStringWidth(Component.translatable("display.tint").getString());
+		x3 = x2 - 2 - tw;
+		addLabel(lID++, x3, y + 5, "display.tint")
+				.setSize(tw + 1, 10);
 		StringBuilder color = new StringBuilder(Integer.toHexString(display.getTint()));
 		while (color.length() < 6) { color.insert(0, "0"); }
-		addTextField(new GuiNpcTextField(6, this, guiLeft + 220, y, 60, 20, color.toString())
-				.setHoverText("display.hover.color"));
-		getTextField(6).setTextColor(display.getTint());
-		addLabel(new GuiNpcLabel(lID++, "display.shadow", guiLeft + 285, y + 5));
-		addButton(new GuiNpcButton(4, guiLeft + 325, y, 50, 20, new String[] { "0%%", "50%%", "100%%", "150%%" }, display.getShadowType())
-				.setHoverText("display.hover.shadow"));
-		addLabel(new GuiNpcLabel(lID++, "display.visible", guiLeft + 5, (y += 23) + 5));
-		addButton(new GuiNpcButton(7, guiLeft + 40, y, 50, 20, new String[] { "gui.yes", "gui.no", "gui.partly" }, display.getVisible())
-				.setHoverText("display.hover.visible"));
-		addButton(new GuiNpcButton(16, guiLeft + 92, y, 78, 20, "availability.available")
-				.setHoverText("display.hover.visible." + (CustomNpcs.EnableInvisibleNpcs ? 1 : 0)));
-		getButton(16).setIsEnable(enableInvisibleNpcs && display.getVisible() == 1);
-		addLabel(new GuiNpcLabel(lID++, "display.interactable", guiLeft + 180, y + 5));
-		int x = guiLeft + 240;
-		addButton(new GuiNpcButton(13, x, y, 50, 20, new String[] { "gui.yes", "gui.no", "gui.solid"}, display.getHitboxState())
-				.setHoverText("display.hover.interactable"));
-		addLabel(new GuiNpcLabel(20, "W:", x += 54, y + 5));
+		addTextField(6, x2 + 1, y, 60, 20, color.toString())
+				.setColor(display.getTint())
+				.setHoverTexts("display.hover.color");
+		// New from Unofficial (BetaZavr)
+		addLabel(lID++, x2 + 63, y + 5, "display.shadow")
+				.setSize(w, 10);
+		addButton(4, x2 + 116, y, false, display.getShadowType(),
+				"0%", "50%", "100%", "150%")
+				.setSize(40, 20)
+				.setHoverTexts("display.hover.shadow");
+		// Next normal
+		y += 23;
+		addLabel(lID++, x0, y + 5, "display.visible")
+				.setSize(w, 10);
+		addButton(7, x1, y, false, display.getVisible(), "gui.yes", "gui.no", "gui.partly")
+				.setSize(60, 20)
+				.setHoverTexts("display.hover.visible");
+		addButton(16, x1 + 62, y,"availability.name")
+				.setSize(60, 20)
+				.setIsEnabled(CustomNpcs.EnableInvisibleNpcs && display.getVisible() == 1)
+				.setHoverTexts("display.hover.visible." + (CustomNpcs.EnableInvisibleNpcs ? 1 : 0));
+		tw = font.getStringWidth(Component.translatable("display.hitbox").getString());
+		x3 = x2 - 2 - tw;
+		addLabel(lID++, x3, y + 5, "display.hitbox")
+				.setSize(tw + 1, 10);
+		addButton(13, x2, y, true, display.getHitboxState(), "stats.normal", "gui.none", "hair.solid")
+				.setSize(70, 20)
+				.setHoverTexts("display.hover.interactable");
+		// New from Unofficial (BetaZavr)
+		addLabel(lID++, x2 + 72, y + 5, "W:")
+				.setSize(12, 10);
 		float hitBoxWidth = npc.width;
+		float hitBoxHeight = npc.height;
 		if (npc instanceof EntityCustomNpc) {
 			float scaleHead = 1.0f, scaleBody = 1.0f;
 			if (display.getModel() != null) {
 				ModelData modeldata = ((EntityCustomNpc) npc).modelData;
 				ModelPartConfig model = modeldata.getPartConfig(EnumParts.HEAD);
-				scaleHead = Math.max(model.scale[0], model.scale[2]);
+				scaleHead = Math.max(model.scaleX, model.scaleZ);
 				model = modeldata.getPartConfig(EnumParts.BODY);
-				scaleBody = Math.max(model.scale[0], model.scale[2]);
+				scaleBody = Math.max(model.scaleX, model.scaleZ);
 				hitBoxWidth = modeldata.entity.width;
+				hitBoxHeight = modeldata.entity.height;
 			}
 			hitBoxWidth *= Math.max(scaleHead, scaleBody);
 			hitBoxWidth = hitBoxWidth / 5.0f * display.getSize();
-		}
-		addTextField(new GuiNpcTextField(12, this, x += 8, y + 1, 50, 18, df.format(display.width))
-				.setMinMaxDoubleDefault(-1.0, 7.5, display.width)
-				.setHoverText("display.hover.hitbox.width", ("" + Math.round(baseHitBoxWidth * 1000.0) / 1000.0).replace(".", ","), ("" + Math.round(hitBoxWidth * 1000.0) / 1000.0).replace(".", ",")));
-		addLabel(new GuiNpcLabel(21, "H:", x += 54, y + 5));
-		float hitBoxHeight = npc.height;
-		if (npc instanceof EntityCustomNpc) {
-			if (display.getModel() != null) { hitBoxHeight = ((EntityCustomNpc) npc).modelData.entity.height; }
 			hitBoxHeight = hitBoxHeight / 5.0f * display.getSize();
 		}
-		addTextField(new GuiNpcTextField(13, this, x + 8, y + 1, 50, 18, df.format(display.height))
-				.setMinMaxDoubleDefault(-1.0, 15.0, display.height)
-				.setHoverText(new TextComponentTranslation("display.hover.hitbox.height", ("" + Math.round(baseHitBoxHeight * 1000.0) / 1000.0).replace(".", ","), ("" + Math.round(hitBoxHeight * 1000.0) / 1000.0).replace(".", ",")).getFormattedText()));
-		addLabel(new GuiNpcLabel(lID++, "display.bossbar", guiLeft + 5, (y += 23) + 5));
-		addButton(new GuiNpcButton(10, guiLeft + 60, y, 110, 20, new String[] { "display.hide", "display.show", "display.showAttacking" }, display.getBossbar())
-				.setHoverText("display.hover.boss.bar"));
-		addLabel(new GuiNpcLabel(lID, "gui.color", guiLeft + 180, y + 5));
-		addButton(new GuiNpcButton(12, guiLeft + 220, y, 110, 20, display.getBossColor(), "color.pink", "color.blue", "color.red", "color.green", "color.yellow", "color.purple", "color.white")
-				.setHoverText("display.hover.bar.color"));
+		addTextField(12, x2 + 81, y, 30, 20, df.format(display.width))
+				.setMinMaxDefault(-1.0d, 7.5d, display.width)
+				.setHoverTexts("display.hover.hitbox.width", ("" + Math.round(baseHitBoxWidth * 1000.0) / 1000.0).replace(".", ","), ("" + Math.round(hitBoxWidth * 1000.0) / 1000.0).replace(".", ","));
+		addLabel(lID++, x2 + 115, y + 5, "H:")
+				.setSize(12, 10);
+		addTextField(13, x2 + 125, y, 30, 20, df.format(display.height))
+				.setMinMaxDefault(-1.0d, 15.0d, display.height)
+				.setHoverTexts("display.hover.hitbox.height", ("" + Math.round(baseHitBoxHeight * 1000.0) / 1000.0).replace(".", ","), ("" + Math.round(hitBoxHeight * 1000.0) / 1000.0).replace(".", ","));
+		// Next normal
+		y += 23;
+		addLabel(lID++, x0, y + 5, "display.bossbar")
+				.setSize(w, 10);
+		addButton(10, x1, y, false, display.getBossbar(),
+				"display.hide", "display.show", "display.showAttacking")
+				.setHoverTexts("display.hover.boss.bar")
+				.setSize(110, 20);
+		tw = font.getStringWidth(Component.translatable("gui.color").getString());
+		x3 = x2 - 2 - tw;
+		addLabel(lID, x3, y + 5, "gui.color")
+				.setSize(tw + 1, 10);
+		addButton(12, x2, y, true, display.getBossColor(),
+				"color.pink", "color.blue", "color.red", "color.green", "color.yellow", "color.purple", "color.white")
+				.setSize(70, 20)
+				.setHoverTexts("display.hover.bar.color");
 	}
 
 	@Override
@@ -195,56 +252,55 @@ public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListene
 		npc.textureLocation = null;
 		mc.renderGlobal.onEntityRemoved(npc);
 		mc.renderGlobal.onEntityAdded(npc);
-		Client.sendData(EnumPacketServer.MainmenuDisplaySave, display.writeToNBT(new NBTTagCompound()));
+		Packets.sendServer(new SPacketMenuSave(EnumMenuType.DISPLAY, display.save(new NBTTagCompound())));
 	}
 
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
 		if (compound.hasKey("MarkovGeneratorId", 3)) {
-			display.readToNBT(compound);
+			display.load(compound);
 			baseHitBoxWidth = npc.baseWidth;
 			baseHitBoxHeight = npc.baseHeight;
-			enableInvisibleNpcs = compound.getBoolean("EnableInvisibleNpcs");
 			initGui();
 		}
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		switch (textfield.getID()) {
+	public void unFocused(GuiTextFieldNop textfield) {
+		switch (textfield.id) {
 			case 0: {
-				if (!textfield.isEmpty()) { display.setName(textfield.getText()); }
-				textfield.setText(display.getName());
+				if (!textfield.isEmpty()) { display.setName(textfield.getValue()); }
+				textfield.setValue(display.getName());
 				break;
 			}
 			case 2: display.setSize(textfield.getInteger()); break;
 			case 3: {
-				if (display.skinType == 2) { display.setSkinUrl(textfield.getText()); }
-				else if (display.skinType == 1) { display.setSkinPlayer(textfield.getText()); }
-				else { display.setSkinTexture(textfield.getText()); }
+				if (display.skinType == 2) { display.setSkinUrl(textfield.getValue()); }
+				else if (display.skinType == 1) { display.setSkinPlayer(textfield.getValue()); }
+				else { display.setSkinTexture(textfield.getValue()); }
 				break;
 			}
 			case 6: {
 				int color;
-				try { color = Integer.parseInt(textfield.getText(), 16); }
+				try { color = Integer.parseInt(textfield.getValue(), 16); }
 				catch (NumberFormatException e) { color = new Color(0xFFFFFF).getRGB(); }
 				display.setTint(color);
 				textfield.setTextColor(display.getTint());
 				break;
 			}
-			case 8: display.setCapeTexture(textfield.getText()); break;
-			case 9: display.setOverlayTexture(textfield.getText()); break;
-			case 11: display.setTitle(textfield.getText()); break;
+			case 8: display.setCapeTexture(textfield.getValue()); break;
+			case 9: display.setOverlayTexture(textfield.getValue()); break;
+			case 11: display.setTitle(textfield.getValue()); break;
 			case 12: {
 				float f = (float) textfield.getDouble();
 				display.width = f < 0.0f ? baseHitBoxWidth : f;
-				if (f < 0.0f) { textfield.setText(df.format(display.width)); }
+				if (f < 0.0f) { textfield.setValue(df.format(display.width)); }
 				break;
 			}
 			case 13: {
 				float f = (float) textfield.getDouble();
 				display.height = f < 0.0f ? baseHitBoxHeight : f;
-				if (f < 0.0f) { textfield.setText(df.format(display.height)); }
+				if (f < 0.0f) { textfield.setValue(df.format(display.height)); }
 				break;
 			}
 		}

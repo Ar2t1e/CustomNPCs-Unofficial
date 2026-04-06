@@ -9,6 +9,7 @@ import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.management.PlayerChunkMapEntry;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
@@ -22,9 +23,9 @@ import noppes.npcs.controllers.SpawnController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.SpawnData;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.reflection.world.biome.BiomeReflection;
+import noppes.npcs.mixin.world.biome.IBiomeMixin;
 import noppes.npcs.util.CustomNPCsScheduler;
-import noppes.npcs.util.Util;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 
@@ -41,7 +42,7 @@ public class NPCSpawning {
 			CustomNpcs.debugData.start(null);
 			pWGS = true;
 			Biome biome = world.getBiomeForCoordsBody(new BlockPos(x + 8, 0, z + 8));
-			SpawnData data = SpawnController.instance.getRandomSpawnData(BiomeReflection.getBiomeName(biome));
+			SpawnData data = SpawnController.instance.getRandomSpawnData(((IBiomeMixin) biome).getBiomeName());
 			if (data == null || data.group <= 0 || rand.nextFloat() > (float) data.itemWeight / 100.0f) {
 				pWGS = false;
 				CustomNpcs.debugData.end(null);
@@ -49,7 +50,7 @@ public class NPCSpawning {
 			}
 			// is living
 			Entity entity = null;
-			try { entity = EntityList.createEntityFromNBT(data.compoundEntity, world); } catch (Exception e) { LogWriter.error(e); }
+			try { entity = EntityList.createEntityFromNBT(data.getCompound(), world); } catch (Exception e) { LogWriter.error(e); }
 			if (!(entity instanceof EntityLiving)) {
 				pWGS = false;
 				CustomNpcs.debugData.end(null);
@@ -97,12 +98,12 @@ public class NPCSpawning {
 					int posX = chunkposition.getX() + world.rand.nextInt(range) - world.rand.nextInt(range);
 					int posZ = chunkposition.getZ() + world.rand.nextInt(range) - world.rand.nextInt(range);
 					BlockPos randomPos = new BlockPos(posX, chunkposition.getY(), posZ);
-					String name = BiomeReflection.getBiomeName(world.getBiomeForCoordsBody(randomPos));
+					String name = ((IBiomeMixin) world.getBiomeForCoordsBody(randomPos)).getBiomeName();
 					SpawnData data = SpawnController.instance.getRandomSpawnData(name);
 					if (data == null || data.group <= 0 || world.rand.nextFloat() > (float) data.itemWeight / 100.0f) { continue; }
 					// is living
 					Entity entity = null;
-					try { entity = EntityList.createEntityFromNBT(data.compoundEntity, world); } catch (Exception e) { LogWriter.error(e); }
+					try { entity = EntityList.createEntityFromNBT(data.getCompound(), world); } catch (Exception e) { LogWriter.error(e); }
 					if (!(entity instanceof EntityLiving)) { continue; }
 					trySummonToPos(1, data, world, randomPos, (EntityLiving) entity);
 				}
@@ -126,7 +127,7 @@ public class NPCSpawning {
 				boolean inSpawned = false;
 				for (int i = 0; i < data.group; i++) {
 					Entity e;
-					try { e = EntityList.createEntityFromNBT(data.compoundEntity, world); } catch (Exception ignored) { continue; }
+					try { e = EntityList.createEntityFromNBT(data.getCompound(), world); } catch (Exception ignored) { continue; }
 					if (!(e instanceof EntityLiving)) { continue; }
 					if (checkEntitySize(world, e, pos, data)) { spawnData((EntityLiving) e, world, pos); inSpawned = true; }
 				}
@@ -199,7 +200,9 @@ public class NPCSpawning {
 								break;
 							}
 							// range
-							List<EntityLiving> list = Util.instance.getEntitiesWithinDist(EntityLiving.class, world, checkPos, 160.0d);
+							List<EntityLiving> list = world.getEntitiesWithinAABB(EntityLiving.class,
+									new AxisAlignedBB(-160.0d, -160.0d, -160.0d, 160.0d, 160.0d, 160.0d).offset(checkPos),
+									(e) -> e.getDistance(checkPos.getX() + 0.5d, checkPos.getY() + 0.5d, checkPos.getZ() + 0.5d) < 160.0d);
 							int count = list.size();
 							if (entity instanceof EntityNPCInterface) {
 								count = 0;
@@ -226,7 +229,9 @@ public class NPCSpawning {
 
 	private static boolean checkEntitySize(WorldServer world, Entity entity, BlockPos pos, @Nonnull SpawnData data) {
 		// Range
-		List<? extends Entity> list = Util.instance.getEntitiesWithinDist(entity.getClass(), world, pos, data.range);
+		List<? extends Entity> list = world.getEntitiesWithinAABB(entity.getClass(),
+				new AxisAlignedBB(-data.range, -data.range, -data.range, data.range, data.range, data.range).offset(pos),
+				(e) -> e.getDistance(pos.getX() + 0.5d, pos.getY() + 0.5d, pos.getZ() + 0.5d) < data.range);
 		int count = list.size();
 		if (entity instanceof EntityNPCInterface) {
 			count = 0;

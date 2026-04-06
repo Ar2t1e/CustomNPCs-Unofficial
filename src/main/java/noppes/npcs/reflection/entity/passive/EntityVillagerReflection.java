@@ -1,7 +1,7 @@
 package noppes.npcs.reflection.entity.passive;
 
 import net.minecraft.entity.passive.EntityVillager;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import java.lang.reflect.Field;
 

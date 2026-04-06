@@ -1,6 +1,8 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
+
+import java.util.List;
 
 public interface IDialog {
 
@@ -16,7 +18,7 @@ public interface IDialog {
 
 	IDialogOption getOption(@ParamName("slot") int slot);
 
-	IDialogOption[] getOptions();
+	List<IDialogOption> getOptions();
 
 	IQuest getQuest();
 

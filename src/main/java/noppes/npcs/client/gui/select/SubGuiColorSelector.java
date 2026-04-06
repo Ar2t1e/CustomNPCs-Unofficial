@@ -5,23 +5,30 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiSliderNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.shared.client.gui.listeners.ISliderListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-public class SubGuiColorSelector extends SubGuiInterface implements ITextfieldListener, ISliderListener {
+public class SubGuiColorSelector
+		extends GuiBasic
+		implements ITextfieldListener, ISliderListener {
 
-	protected static final ResourceLocation resource = new ResourceLocation(CustomNpcs.MODID, "textures/gui/color.png");
+	protected static final ResourceLocation resource = new ResourceLocation(CustomNpcs.MODID , "textures/gui/color.png");
+
 	protected final BufferedImage bufferedimage;
 	protected int colorX;
 	protected int colorY;
-	protected GuiNpcTextField textfield;
+	protected GuiTextFieldNop textfield;
 	protected ColorCallback callback;
 	public int color;
 
@@ -30,16 +37,18 @@ public class SubGuiColorSelector extends SubGuiInterface implements ITextfieldLi
 	protected boolean hasAlpha = false;
 	protected float alpha = 1.0f;
 	protected int offsetX = 0;
-	protected GuiNpcSlider alphaSlider;
-	protected GuiNpcTextField alphaField;
+	protected int offsetY = 0;
+	protected GuiSliderNop alphaSlider;
+	protected GuiTextFieldNop alphaField;
+	public Object object;
 
-	public SubGuiColorSelector(int colorInt) {
-		super(0);
+	public SubGuiColorSelector(int colorIn) {
+		super();
+		imageWidth = 176;
+		imageHeight = 222;
+		color = colorIn;
 		setBackground("smallbg.png");
-		xSize = 176;
-		ySize = 222;
 
-		color = colorInt;
 		InputStream stream = null;
 		BufferedImage buffer = null;
 		try {
@@ -63,45 +72,21 @@ public class SubGuiColorSelector extends SubGuiInterface implements ITextfieldLi
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.id == 66) { onClosed(); }
-	}
-
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui == null) {
-			String prev = textfield.getText();
-			if (textfield.keyCnpcsPressed(typedChar, keyCode)) {
-				if (!textfield.getText().equals(prev)) {
-					try { setColor(Integer.parseInt(textfield.getText(), 16)); }
-					catch (NumberFormatException e) { textfield.setText(prev); }
-				}
-				return true;
-			}
-		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
-	}
-
-	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (subgui == null && bufferedimage != null && mouseX >= colorX && mouseX <= colorX + 117 && mouseY >= colorY && mouseY <= colorY + 117) {
-			setColor(bufferedimage.getRGB((mouseX - guiLeft - 30) * 4, (mouseY - guiTop - 50) * 4) & new Color(0x00FFFFFF).getRGB());return true;
-		}
-        return super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
+	public void buttonEvent(GuiButtonNop button) {
+		if (button.id == 66) { onClose(); }
 	}
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		// background
-		mc.getTextureManager().bindTexture(SubGuiColorSelector.resource);
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+		mc.getTextureManager().bindTexture(SubGuiColorSelector.resource);
 		drawTexturedModalRect(colorX, colorY, 0, 0, 120, 120);
 		hoverTexture = !(mouseX < (double) colorX) && !(mouseX > (double) (colorX + 117)) && !(mouseY < (double) colorY) && !(mouseY > (double) (colorY + 117));
 		if (textfield == null) { return; }
-		int x = textfield.x + textfield.width + 5;
-		int y = textfield.y;
+		int x = textfield.getX() + textfield.getWidth() + 4;
+		int y = textfield.getY();
 		int c = new Color(0xFF808080).getRGB();
 		drawRect(x - 1, y - 1, x + 41, y + 21, c);
 		c = color;
@@ -111,11 +96,11 @@ public class SubGuiColorSelector extends SubGuiInterface implements ITextfieldLi
 				StringBuilder str = new StringBuilder(Integer.toHexString(c));
 				while (str.length() < 6) { str.insert(0, "0"); }
 				while (str.length() > 6) { str.deleteCharAt(0); }
-				if (!textfield.isFocused()) { textfield.setText(str.toString()); }
+				if (!textfield.isFocused()) { textfield.setValue(str.toString()); }
 			}
 			catch (Exception ignored) { }
 		}
-		else if (!textfield.isFocused()) { textfield.setText(getColor()); }
+		else if (!textfield.isFocused()) { textfield.setValue(getColor()); }
 		if (callback != null) {
 			if (hasAlpha) { c = (int) (alpha * 255.0f) << 24 | c & 0x00FFFFFF; }
 			callback.preColor(c);
@@ -125,73 +110,105 @@ public class SubGuiColorSelector extends SubGuiInterface implements ITextfieldLi
 		drawRect(x, y, x + 40, y + 20, c);
 	}
 
-	public String getColor() {
-		StringBuilder str = new StringBuilder(Integer.toHexString(color));
-		while (str.length() < 6) { str.insert(0, "0"); }
-		return str.toString();
-	}
-
 	@Override
 	public void initGui() {
 		super.initGui();
 		guiLeft += offsetX;
+		guiTop += offsetY;
 		colorX = guiLeft + 30;
 		colorY = guiTop + 50;
-		addTextField(textfield = new GuiNpcTextField(0, this, guiLeft + 31, guiTop + 20, 70, 20, getColor())
-				.setHoverText("color.hover"));
-		textfield.setMaxStringLength(6);
-		addButton(new GuiNpcButton(66, guiLeft + 112, guiTop + 198, 60, 20, "gui.done")
-				.setHoverText("hover.back"));
+		textfield = addTextField(0, guiLeft + 31, guiTop + 20, 70, 20, getColor())
+				.setHoverTexts("color.hover")
+				.setColor(color)
+				.setIsFocused(true)
+				.setMaxStringLength(hasAlpha ? 8 : 6);
+		addButton(66, guiLeft + 112, guiTop + 198, "gui.done")
+				.setSize(60, 20)
+				.setHoverTexts("hover.back");
 		if (hasAlpha) {
 			alpha = (float)(color >> 24 & 255) / 255.0F;
-			addSlider(alphaSlider = new GuiNpcSlider(this, 0, guiLeft + 30, guiTop + 173, 84, 14, alpha)
-					.setHoverText("color.alpha"));
-			addTextField(alphaField = new GuiNpcTextField(1, this, guiLeft + 117, guiTop + 170, 30, 20, "" + ((int) (alpha * 255.0f)))
-					.setMinMaxDefault(0, 255, ((int) (alpha * 255.0f)))
-					.setHoverText("color.alpha"));
+			alphaSlider = addSlider(0, guiLeft + 30, guiTop + 173, alpha)
+					.setSize(84, 14)
+					.setHoverTexts("color.alpha");
+			alphaField = addTextField(1, guiLeft + 117, guiTop + 170, 30, 20, "" + ((int) (alpha * 255.0f)))
+					.setMinMaxDefault(0, 255, ((int) (alpha * 255.0f)));
+			alphaField.setHoverTexts("color.alpha");
 		}
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		if (textfield.getID() == 0) {
-			try { setColor(Integer.parseInt(textfield.getText(), 16)); }
-			catch (NumberFormatException e) { textfield.setText(getColor()); }
+	public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+		if (bufferedimage != null && hoverTexture) {
+			try {
+				setColor(bufferedimage.getRGB((int)(mouseX - (double)guiLeft - 30.0D) * 4, (int)(mouseY - (double)guiTop - 50.0D) * 4) & new Color(0xFFFFFF).getRGB());
+				return true;
+			}
+			catch (Exception ignored) { }
 		}
-		else if (textfield.getID() == 1) {
+		return super.mouseClicked(mouseX, mouseY, mouseButton);
+	}
+
+	@Override
+	public void unFocused(GuiTextFieldNop textfield) {
+		if (textfield.id == 0) {
+			try { setColor(Integer.parseInt(textfield.getValue(), 16)); }
+			catch (NumberFormatException e) { textfield.setValue(getColor()); }
+		}
+		else if (textfield.id == 1) {
 			alpha = textfield.getInteger() / 255.0f;
 			color = textfield.getInteger() << 24 | color & 0x00FFFFFF;
-			if (alphaSlider != null) { alphaSlider.setSliderValue(alpha); }
+			if (alphaSlider != null) { alphaSlider.sliderValue = alpha; }
 		}
+	}
+
+	public String getColor() {
+		StringBuilder str = new StringBuilder(Integer.toHexString(color));
+		while (str.length() < (hasAlpha ? 8 : 6)) { str.insert(0, "0"); }
+		while (str.length() > (hasAlpha ? 8 : 6)) { str.deleteCharAt(0); }
+		return str.toString();
 	}
 
 	private void setColor(int colorIn) {
 		color = colorIn;
-		textfield.setText(getColor());
+		if (hasAlpha) { color = (int) (alpha * 255.0f) << 24 | color & 0x00FFFFFF; }
+		textfield.setValue(getColor());
 		if (callback != null) { callback.color(color); }
 	}
 
+	// New from Unofficial Betazavr
 	public interface ColorCallback {
 		void color(int colorIn);
 		void preColor(int colorIn);
 	}
 
-	// New from Unofficial Betazavr
 	@Override
-	public void mouseDragged(GuiNpcSlider slider) {
+	public void mouseDragged(GuiSliderNop slider) {
 		alpha = slider.sliderValue;
 		color = (int) (alpha * 255.0f) << 24 | color & 0x00FFFFFF;
-		if (alphaField != null) { alphaField.setText("" + (int) (alpha * 255.0f)); }
+		if (alphaField != null) { alphaField.setValue("" + (int) (alpha * 255.0f)); }
 	}
 
 	@Override
-	public void mousePressed(GuiNpcSlider slider) { }
+	public void mousePressed(GuiSliderNop slider) { }
 
 	@Override
-	public void mouseReleased(GuiNpcSlider slider) { }
+	public void mouseReleased(GuiSliderNop slider) { }
 
-	public SubGuiColorSelector setOffsetX(int posX) { offsetX = posX; return this; }
+	public SubGuiColorSelector setOffsetX(int posX) {
+		offsetX = posX;
+		return this;
+	}
 
-	public SubGuiColorSelector setIsAlpha() { hasAlpha = true; return this; }
+	public SubGuiColorSelector setOffsetY(int posY) {
+		offsetY = posY;
+		return this;
+	}
+
+	public SubGuiColorSelector setIsAlpha() {
+		hasAlpha = true;
+		return this;
+	}
+
+	public Object getObject() { return object; }
 
 }

@@ -2,10 +2,12 @@ package noppes.npcs.api.wrapper;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import noppes.npcs.api.IPos;
 
 public class BlockPosWrapper implements IPos {
 
+	public static final BlockPosWrapper ORIGIN = new BlockPosWrapper(BlockPos.ORIGIN);
 	private final BlockPos blockPos;
 	private final double x;
 	private final double y;
@@ -114,5 +116,8 @@ public class BlockPosWrapper implements IPos {
 
 	@Override
 	public IPos west(double n) { return new BlockPosWrapper(x - n, y, z); }
+
+	@Override
+	public Vec3d getMCVec3() { return new Vec3d(x, y, z); }
 
 }

@@ -112,17 +112,17 @@ ai.swim=수영 가능
 ai.tacticalvariant=전투 전술 옵션
 ai.wandering=방랑자
 
-aitactics.commander=Commander
-aitactics.default=기본적으로
-aitactics.dodge=Dodge
-aitactics.hitandrun=치고 달리다
-aitactics.hitnrun=치고 달리다
-aitactics.none=아니요
-aitactics.orbit=둘러 싸다
-aitactics.rush=맹공격
-aitactics.stagger=Stagger
-aitactics.stalk=몰래
-aitactics.surround=둘러 싸다
+ai.tactic.commander=Commander
+ai.tactic.default=기본적으로
+ai.tactic.dodge=Dodge
+ai.tactic.hit_and_run=치고 달리다
+ai.tactic.hitnrun=치고 달리다
+ai.tactic.none=아니요
+ai.tactic.orbit=둘러 싸다
+ai.tactic.rush=맹공격
+ai.tactic.stagger=Stagger
+ai.tactic.stalk=몰래
+ai.tactic.surround=둘러 싸다
 
 animation.add.part.hover.location=모델에 사용되는 텍스처인 리소스 파일 형식 "§9.png§r"의 위치
 animation.add.part.hover.name=편의를 위한 신체 부위 이름<br>%s
@@ -1739,7 +1739,7 @@ message.dimensions.tp.isdelete=§2 CustomNPC §6: 원격 차원에서 이동되�
 message.mod.error=§sUps. Something has expressed a desire to filibuster. Contact the Developer with this problem: %s
 message.pather.add=추가된 위치 x :%s y :%s z :%s NPC "%s " 에 대한
 message.pather.home=홈 위치가 변경되었습니다. x :%s y :%s z :%s NPC "%s " 에 대한
-message.pather.reg="%s "을(를) %s 에 등록했습니다.
+message.pather.register="%s "을(를) %s 에 등록했습니다.
 message.pather.warn.add=§C의 설교 : 이전의 설교와 너무 멀리 새로운 입장.
 
 minimap.set.points.1=§f [§2Customnpcs §f] : §8 시스템은 미니 카드의 위치를 ​​업데이트했습니다 : %s

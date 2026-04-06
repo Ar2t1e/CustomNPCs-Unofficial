@@ -11,7 +11,7 @@ import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.ai.attributes.RangedAttribute;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.entity.data.IAttributeModifier;
 import noppes.npcs.api.entity.data.INpcAttribute;
 import noppes.npcs.reflection.entity.ai.attributes.ModifiableAttributeInstanceReflection;
@@ -27,7 +27,7 @@ public class AttributeWrapper implements INpcAttribute {
 		minValue = ValueUtil.min(minValue, maxValue);
 		maxValue = ValueUtil.max(minValue, maxValue);
 		RangedAttribute rangedAttribute = new RangedAttribute(null, attributeName, ValueUtil.correctDouble(baseValue, minValue, maxValue), minValue, maxValue);
-		rangedAttribute.setDescription(displayName);
+		if (displayName != null && !displayName.isEmpty()) { rangedAttribute.setDescription(displayName); }
 		try {
 			this.attribute = new ModifiableAttributeInstance(entity.getAttributeMap(), rangedAttribute);
 		} catch (Exception e) {

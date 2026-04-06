@@ -6,14 +6,14 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.SoundCategory;
 import noppes.npcs.NBTTags;
-import noppes.npcs.Server;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.entity.data.INPCAdvanced;
 import noppes.npcs.api.handler.data.IFaction;
-import noppes.npcs.constants.EnumPacketClient;
+import noppes.npcs.client.controllers.MusicController;
+import noppes.npcs.constants.EnumAnimationType;
 import noppes.npcs.controllers.FactionController;
 import noppes.npcs.controllers.data.Faction;
 import noppes.npcs.controllers.data.FactionOptions;
@@ -22,9 +22,8 @@ import noppes.npcs.controllers.data.Lines;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerFactionData;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.roles.JobInterface;
-import noppes.npcs.roles.RoleInterface;
-import noppes.npcs.roles.RoleTrader;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketPlaySound;
 import noppes.npcs.util.ValueUtil;
 
 public class DataAdvanced implements INPCAdvanced {
@@ -34,8 +33,6 @@ public class DataAdvanced implements INPCAdvanced {
 	public boolean disablePitch = false;
 	public boolean orderedLines = false;
 	public boolean throughWalls = true;
-	public JobInterface jobInterface;
-	public RoleInterface roleInterface;
 	private String angrySound = "";
 	private String deathSound = "minecraft:entity.player.hurt";
 	private String hurtSound = "minecraft:entity.player.hurt";
@@ -49,17 +46,87 @@ public class DataAdvanced implements INPCAdvanced {
 	public Lines killedLines = new Lines();
 	public Lines killLines = new Lines();
 	public FactionOptions factions = new FactionOptions();
-	public EntityNPCInterface spawner;
 	public DataScenes scenes;
 
+	// New from Unofficial (BetaZavr)
+	public EnumAnimationType animationType = EnumAnimationType.NONE;
 	public HashSet<Integer> attackFactions = new HashSet<>();
 	public HashSet<Integer> friendFactions = new HashSet<>();
+	public EntityNPCInterface spawner;
 
 	public DataAdvanced(EntityNPCInterface npcIn) {
 		npc = npcIn;
-		jobInterface = new JobInterface(npc);
-		roleInterface = new RoleInterface(npc);
-		scenes = new DataScenes(npc);
+		scenes = new DataScenes(npcIn);
+	}
+
+	public void load(NBTTagCompound compound) {
+		interactLines.load(compound.getCompoundTag("NpcInteractLines"));
+		worldLines.load(compound.getCompoundTag("NpcLines"));
+		attackLines.load(compound.getCompoundTag("NpcAttackLines"));
+		killedLines.load(compound.getCompoundTag("NpcKilledLines"));
+		killLines.load(compound.getCompoundTag("NpcKillLines"));
+		npcInteractLines.load(compound.getCompoundTag("NpcInteractNPCLines"));
+		orderedLines = compound.getBoolean("OrderedLines");
+		idleSound = compound.getString("NpcIdleSound");
+		angrySound = compound.getString("NpcAngrySound");
+		hurtSound = compound.getString("NpcHurtSound");
+		deathSound = compound.getString("NpcDeathSound");
+		stepSound = compound.getString("NpcStepSound");
+		npc.setFaction(compound.getInteger("FactionID"));
+		npc.faction = npc.getFaction();
+		attackOtherFactions = compound.getBoolean("AttackOtherFactions");
+		defendFaction = compound.getBoolean("DefendFaction");
+		disablePitch = compound.getBoolean("DisablePitch");
+		setRole(compound.getInteger("Role"));
+		setJob(compound.getInteger("NpcJob"));
+		factions.load(compound.getCompoundTag("FactionPoints"));
+		scenes.load(compound.getCompoundTag("NpcScenes"));
+		if (compound.hasKey("NPCDialogOptions", 11)) {
+			npc.dialogs = compound.getIntArray("NPCDialogOptions");
+		}
+		else if (compound.hasKey("NPCDialogOptions", 9)) {
+			NBTTagList list = compound.getTagList("NPCDialogOptions", 10);
+			npc.dialogs = new int[list.tagCount()];
+			for (int i = 0; i < list.tagCount(); ++i) {
+				npc.dialogs[i] = list.getCompoundTagAt(i).getCompoundTag("NPCDialog").getInteger("Dialog");
+			}
+		}
+		// New from Unofficial (BetaZavr)
+		if (compound.hasKey("AnimationType", 3)) { setAnimationType(compound.getInteger("AnimationType")); }
+		if (!compound.hasKey("ThroughWalls", 1)) { throughWalls = true; }
+		else { throughWalls = compound.getBoolean("ThroughWalls"); }
+		attackFactions = NBTTags.getIntegerSet(compound.getTagList("AttackFactions", 10));
+		friendFactions = NBTTags.getIntegerSet(compound.getTagList("FrendFactions", 10));
+	}
+
+	public NBTTagCompound save(NBTTagCompound compound) {
+		compound.setTag("NpcLines", worldLines.save());
+		compound.setTag("NpcKilledLines", killedLines.save());
+		compound.setTag("NpcInteractLines", interactLines.save());
+		compound.setTag("NpcAttackLines", attackLines.save());
+		compound.setTag("NpcKillLines", killLines.save());
+		compound.setTag("NpcInteractNPCLines", npcInteractLines.save());
+		compound.setBoolean("OrderedLines", orderedLines);
+		compound.setString("NpcIdleSound", idleSound);
+		compound.setString("NpcAngrySound", angrySound);
+		compound.setString("NpcHurtSound", hurtSound);
+		compound.setString("NpcDeathSound", deathSound);
+		compound.setString("NpcStepSound", stepSound);
+		compound.setInteger("FactionID", npc.getFaction().id);
+		compound.setBoolean("AttackOtherFactions", attackOtherFactions);
+		compound.setBoolean("DefendFaction", defendFaction);
+		compound.setBoolean("DisablePitch", disablePitch);
+		compound.setInteger("Role", npc.role.getType());
+		compound.setInteger("NpcJob", npc.job.getType());
+		compound.setTag("FactionPoints", factions.save(new NBTTagCompound()));
+		compound.setTag("NpcScenes", scenes.save(new NBTTagCompound()));
+		compound.setIntArray("NPCDialogOptions", npc.dialogs);
+		// New from Unofficial (BetaZavr)
+		compound.setInteger("AnimationType", animationType.ordinal());
+		compound.setBoolean("ThroughWalls", throughWalls);
+		compound.setTag("AttackFactions", NBTTags.nbtIntegerCollection(attackFactions));
+		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(friendFactions));
+		return compound;
 	}
 
 	public Line getAttackLine() {
@@ -198,71 +265,18 @@ public class DataAdvanced implements INPCAdvanced {
 
 	public void playSound(int type, float volume, float pitch) {
 		String sound = getSound(type);
-		if (sound == null) {
-			return;
-		}
-		BlockPos pos = npc.getPosition();
-		Server.sendRangedData(npc, 16, EnumPacketClient.PLAY_SOUND, sound, pos.getX(), pos.getY(), pos.getZ(), volume, pitch);
-	}
-
-	public void load(NBTTagCompound compound) {
-		if (!compound.hasKey("Role")) { return; }
-		worldLines.load(compound.getCompoundTag("NpcLines")); // 0
-		attackLines.load(compound.getCompoundTag("NpcAttackLines")); // 1
-		interactLines.load(compound.getCompoundTag("NpcInteractLines")); // 2
-		killedLines.load(compound.getCompoundTag("NpcKilledLines")); // 3
-		killLines.load(compound.getCompoundTag("NpcKillLines")); // 4
-		npcInteractLines.load(compound.getCompoundTag("NpcInteractNPCLines")); // 5
-		orderedLines = compound.getBoolean("OrderedLines");
-		idleSound = compound.getString("NpcIdleSound");
-		angrySound = compound.getString("NpcAngrySound");
-		hurtSound = compound.getString("NpcHurtSound");
-		deathSound = compound.getString("NpcDeathSound");
-		stepSound = compound.getString("NpcStepSound");
-		npc.setFaction(compound.getInteger("FactionID"));
-		npc.faction = npc.getFaction();
-		attackOtherFactions = compound.getBoolean("AttackOtherFactions");
-		defendFaction = compound.getBoolean("DefendFaction");
-		disablePitch = compound.getBoolean("DisablePitch");
-		factions.load(compound.getCompoundTag("FactionPoints"));
-		scenes.readFromNBT(compound.getCompoundTag("NpcScenes"));
-
-		if (!compound.hasKey("ThroughWalls", 1)) { throughWalls = true; }
-		else { throughWalls = compound.getBoolean("ThroughWalls"); }
-
-		if (compound.hasKey("Role", 3) && compound.hasKey("NpcJob", 3)) {
-			setRole(compound.getInteger("Role"));
-			setJob(compound.getInteger("NpcJob"));
-			roleInterface.load(compound);
-			jobInterface.load(compound);
-		}
-		if (compound.hasKey("Role", 10) && compound.hasKey("Job", 10)) {
-			setRole(compound.getCompoundTag("Role").getInteger("Type"));
-			setJob(compound.getCompoundTag("Job").getInteger("Type"));
-			roleInterface.load(compound.getCompoundTag("Role"));
-			jobInterface.load(compound.getCompoundTag("Job"));
-		}
-
-		if (roleInterface instanceof RoleTrader && compound.hasKey("MarketID", 3)) {
-			roleInterface.load(compound);
-		}
-		if (compound.hasKey("NPCDialogOptions", 11)) {
-			npc.dialogs = compound.getIntArray("NPCDialogOptions");
-		}
-		else if (compound.hasKey("NPCDialogOptions", 9)) {
-			NBTTagList list = compound.getTagList("NPCDialogOptions", 10);
-			npc.dialogs = new int[list.tagCount()];
-			for (int i = 0; i < list.tagCount(); ++i) {
-				npc.dialogs[i] = list.getCompoundTagAt(i).getCompoundTag("NPCDialog").getInteger("Dialog");
+		if (sound != null) {
+			if (!npc.world.isRemote) {
+				Packets.sendNearby(npc.world, npc.getPosition(), 16,
+						new PacketPlaySound(sound, SoundCategory.NEUTRAL, npc.posX, npc.posY, npc.posZ, volume, pitch));
 			}
+			else { MusicController.Instance.playSound(SoundCategory.VOICE, sound, npc.posX, npc.posY, npc.posZ, volume, pitch); }
 		}
-		attackFactions = NBTTags.getIntegerSet(compound.getTagList("AttackFactions", 10));
-		friendFactions = NBTTags.getIntegerSet(compound.getTagList("FrendFactions", 10));
 	}
 
 	public void setJob(int id) {
 		JobType.get(id).setToNpc(npc);
-		if (!npc.world.isRemote) { jobInterface.reset(); }
+		if (!npc.world.isRemote) { npc.job.reset(); }
 	}
 
 	@Override
@@ -320,38 +334,13 @@ public class DataAdvanced implements INPCAdvanced {
 		npc.onAttack(attacked);
 	}
 
-	public NBTTagCompound save(NBTTagCompound compound) {
-		compound.setTag("NpcLines", worldLines.save()); // 0
-		compound.setTag("NpcAttackLines", attackLines.save()); // 1
-		compound.setTag("NpcInteractLines", interactLines.save()); // 2
-		compound.setTag("NpcKilledLines", killedLines.save()); // 3
-		compound.setTag("NpcKillLines", killLines.save()); // 4
-		compound.setTag("NpcInteractNPCLines", npcInteractLines.save()); // 5
-		compound.setBoolean("OrderedLines", orderedLines);
-		compound.setString("NpcIdleSound", idleSound);
-		compound.setString("NpcAngrySound", angrySound);
-		compound.setString("NpcHurtSound", hurtSound);
-		compound.setString("NpcDeathSound", deathSound);
-		compound.setString("NpcStepSound", stepSound);
-		compound.setInteger("FactionID", npc.getFaction().id);
-		compound.setBoolean("AttackOtherFactions", attackOtherFactions);
-		compound.setBoolean("DefendFaction", defendFaction);
-		compound.setBoolean("ThroughWalls", throughWalls);
-		compound.setBoolean("DisablePitch", disablePitch);
-		compound.setTag("FactionPoints", factions.save(new NBTTagCompound()));
-		compound.setIntArray("NPCDialogOptions", npc.dialogs);
-		compound.setTag("NpcScenes", scenes.writeToNBT(new NBTTagCompound()));
+	@Override
+	public int getAnimationType() { return animationType.ordinal(); }
 
-		NBTTagCompound roleNbt = new NBTTagCompound();
-		NBTTagCompound jobNbt = new NBTTagCompound();
-		roleInterface.save(roleNbt);
-		jobInterface.save(jobNbt);
-		compound.setTag("Role", roleNbt);
-		compound.setTag("Job", jobNbt);
-		compound.setTag("AttackFactions", NBTTags.nbtIntegerCollection(attackFactions));
-		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(friendFactions));
-
-		return compound;
+	@Override
+	public void setAnimationType(int type) {
+		animationType = EnumAnimationType.values()[ValueUtil.onlyPositiveInt(type, EnumAnimationType.values().length - 1)];
+		npc.updateClient = true;
 	}
 
 }

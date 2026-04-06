@@ -1,11 +1,8 @@
 package noppes.npcs.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.event.ClickEvent;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
 
 public class VersionChecker extends Thread {
 

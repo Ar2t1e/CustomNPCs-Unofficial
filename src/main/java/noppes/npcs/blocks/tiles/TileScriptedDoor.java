@@ -103,7 +103,7 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 	}
 
 	public NBTTagCompound getNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.NBTScript(this.scripts));
+		compound.setTag("Scripts", NBTTags.nbtScript(this.scripts));
 		compound.setString("ScriptLanguage", this.scriptLanguage);
 		compound.setString("CloseSound", this.closeSound);
 		compound.setString("OpenSound", this.openSound);
@@ -199,7 +199,7 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 	}
 
 	public void setNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.GetScript(compound.getTagList("Scripts", 10), this, false);
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
 		this.scriptLanguage = compound.getString("ScriptLanguage");
 		this.closeSound = compound.getString("CloseSound");
 		this.openSound = compound.getString("OpenSound");

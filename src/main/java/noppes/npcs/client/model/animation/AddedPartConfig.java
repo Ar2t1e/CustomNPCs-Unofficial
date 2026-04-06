@@ -5,7 +5,7 @@ import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ValueUtil;
 
 public class AddedPartConfig {
@@ -26,7 +26,6 @@ public class AddedPartConfig {
 		clear();
 	}
 
-	@SuppressWarnings("all")
 	public AddedPartConfig(int parentPartId) {
 		parentPart = parentPartId;
 		clear();

@@ -11,22 +11,22 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomItems;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileCopy;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
 
 import javax.annotation.Nonnull;
 
-public class BlockCopy extends BlockInterface implements IPermission {
+public class BlockCopy extends BlockInterface {
+
 	public BlockCopy() {
 		super(Material.ROCK);
 		this.setName("npccopyblock");
 		this.setHardness(5.0f);
 		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 		this.setSoundType(SoundType.STONE);
 	}
 
@@ -34,27 +34,16 @@ public class BlockCopy extends BlockInterface implements IPermission {
 		return new TileCopy();
 	}
 
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.GetTileEntity || e == EnumPacketServer.SchematicStore
-				|| e == EnumPacketServer.SchematicsTile || e == EnumPacketServer.SchematicsTileSave
-				|| e == EnumPacketServer.SaveTileEntity;
-	}
+	public boolean isFullCube(@Nonnull IBlockState state) { return false; }
 
-	public boolean isFullCube(@Nonnull IBlockState state) {
-		return false;
-	}
-
-	public boolean isOpaqueCube(@Nonnull IBlockState state) {
-		return false;
-	}
+	public boolean isOpaqueCube(@Nonnull IBlockState state) { return false; }
 
 	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (par1World.isRemote) {
 			return true;
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (currentItem.getItem() == CustomRegisters.wand) {
+		if (currentItem.getItem() == CustomItems.wand) {
 			NoppesUtilServer.sendOpenGui(player, EnumGuiType.CopyBlock, null, pos.getX(), pos.getY(), pos.getZ());
 		}
 		return true;

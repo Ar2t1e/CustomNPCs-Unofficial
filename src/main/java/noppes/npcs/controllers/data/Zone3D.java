@@ -13,12 +13,13 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import noppes.npcs.EventHooks;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.NpcAPI;
@@ -29,58 +30,34 @@ import noppes.npcs.api.handler.data.IBorder;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
+import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.BorderController;
 import noppes.npcs.controllers.PlayerQuestController;
 import noppes.npcs.controllers.QuestController;
+import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
+import javax.annotation.Nonnull;
+
 public class Zone3D implements IBorder, Predicate<Entity> {
 
-	protected static class AntiLagTime {
-		private int count;
-		private long time;
-		private BlockPos pos;
-
-		public AntiLagTime(BlockPos blockPos) {
-			count = 0;
-			time = System.currentTimeMillis();
-			pos = blockPos;
-		}
-
-		public void clear(BlockPos blockPos) {
-			time = System.currentTimeMillis();
-			count = 0;
-			pos = blockPos;
-		}
-
-		public boolean isLag(BlockPos blockPos) {
-			if (!pos.equals(blockPos) || time + 3000L >= System.currentTimeMillis()) {
-				clear(blockPos);
-				return false;
-			}
-			count++;
-			return count > 50;
-		}
-	}
-
-	protected final Map<Entity, AntiLagTime> playerAntiLag = new HashMap<>();
 	protected final List<Entity> entitiesWithinRegion = new ArrayList<>();
 	protected final List<float[][]> triangleList = new ArrayList<>();
 	protected final List<float[]> contourLines = new ArrayList<>();
+	protected IPos homePos = BlockPosWrapper.ORIGIN;
 	protected int id = -1;
 
 	public final TreeMap<Integer, Point> points = new TreeMap<>();
 	public String name = "Default Region";
 	public int[] y = new int[] { 0, 255 };
-	public int dimensionID = 0;
+	public int dimension = 0;
 
 	public int color;
 	public Availability availability;
 	public String message; // kick message
 	public int questID;
 	public boolean questWhenEnter = true;
-	public IPos homePos;
 	public boolean keepOut;
 	public boolean showInClient;
 	public NBTTagCompound addData = new NBTTagCompound();
@@ -99,7 +76,7 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 	public Zone3D(int id, int dimID, int posX, int posY, int posZ) {
 		this();
 		this.id = id;
-		dimensionID = dimID;
+		dimension = dimID;
 		y[0] = ValueUtil.correctInt(posY - 1, 0, 255);
 		y[1] = ValueUtil.correctInt(posY + 4, 0, 255);
 		points.put(0, new Point(posX, posZ - 4));
@@ -223,7 +200,6 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 	public void clear() {
 		points.clear();
 		availability.clear();
-		playerAntiLag.clear();
 		entitiesWithinRegion.clear();
 		y[0] = 255;
 		y[1] = 0;
@@ -234,12 +210,12 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 	}
 
 	public boolean contains(Entity entity) {
-		return entity.world.provider.getDimension() == dimensionID && contains(entity.posX, entity.posY, entity.posZ, entity.height);
+		return entity.world.provider.getDimension() == dimension && contains(entity.posX, entity.posY, entity.posZ, entity.height);
 	}
 
 	@Override
 	public boolean contains(IEntity<?> entity) {
-		return entity.getWorld().getDimension().getId() == dimensionID && contains(entity.getX(), entity.getY(), entity.getZ(), entity.getHeight());
+		return entity.getWorld().getDimension().getId() == dimension && contains(entity.getX(), entity.getY(), entity.getZ(), entity.getHeight());
 	}
 
 	@Override
@@ -387,9 +363,9 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 		return fls;
 	}
 
-	public List<float[][]> getTriangleList() { return triangleList; }
+	public List<float[][]> getTriangleList() { return new ArrayList<>(triangleList); }
 
-	public List<float[]> getContourLines() { return contourLines; }
+	public List<float[]> getContourLines() { return new ArrayList<>(contourLines); }
 
 	@Override
 	public IAvailability getAvailability() {
@@ -459,14 +435,44 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 		return ps;
 	}
 
+	private @Nonnull Point[] getClosestWall(double x, double z) {
+		double minDistance = Double.MAX_VALUE;
+		Point[] closestEdge = new Point[2];
+		closestEdge[0] = points.containsKey(0) ? points.get(0) : new Point(0, 0);
+		closestEdge[1] = points.containsKey(1) ? points.get(1) : closestEdge[0];
+		for (int i = 0; i < points.size(); i++) {
+			Point a = points.get(i);
+			Point b = points.get(i < points.size() - 1 ? i + 1 : 0);
+			double distance = calculateDistanceToSegment(x, z, a, b);
+			if (distance < minDistance) {
+				minDistance = distance;
+				closestEdge[0] = a;
+				closestEdge[1] = b;
+			}
+		}
+		return closestEdge;
+	}
+
+	private double calculateDistanceToSegment(double x, double z, Point A, Point B) {
+		x *= 10.0d;
+		z *= 10.0d;
+		double x1 = A.getX() * 10 + 5;
+		double y1 = A.getY() * 10 + 5;
+		double x2 = B.getX() * 10 + 5;
+		double y2 = B.getY() * 10 + 5;
+		double numerator = Math.abs((y2 - y1) * x - (x2 - x1) * z + x2 * y1 - y2 * x1);
+		double denominator = Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
+		return numerator / denominator;
+	}
+
 	@Override
 	public int getColor() {
 		return color;
 	}
 
 	@Override
-	public int getDimensionId() {
-		return dimensionID;
+	public int getDimension() {
+		return dimension;
 	}
 
 	public int getHeight() {
@@ -475,7 +481,7 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 
 	@Override
 	public IPos getHomePos() {
-		if (homePos == null || keepOut != contains(homePos.getX() + 0.5d,
+		if (homePos == BlockPosWrapper.ORIGIN || keepOut != contains(homePos.getX() + 0.5d,
 				homePos.getY() + 0.5d, homePos.getZ() + 0.5d, 0.0d)) {
 			homePos = getCenter();
 			if (keepOut && !points.isEmpty()) {
@@ -741,7 +747,7 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 	public void load(NBTTagCompound nbtRegion) {
 		id = nbtRegion.getInteger("ID");
 		name = nbtRegion.getString("Name");
-		dimensionID = nbtRegion.getInteger("DimensionID");
+		dimension = nbtRegion.getInteger("DimensionID");
 		color = nbtRegion.getInteger("Color");
 
 		int[] sy = nbtRegion.getIntArray("AxisY");
@@ -859,8 +865,8 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 	}
 
 	@Override
-	public void setDimensionId(int dimensionId) {
-		dimensionID = dimensionId;
+	public void setDimensionId(int dimensionName) {
+		dimension = dimensionName;
 		update = true;
 	}
 
@@ -983,81 +989,95 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 	public void update(WorldServer world) {
 		if (update) {
 			entitiesWithinRegion.clear();
-			playerAntiLag.clear();
 			BorderController.getInstance().update(id);
 			update = false;
 		}
-		if (points.isEmpty() || dimensionID != world.provider.getDimension()) { return; }
-		List<Entity> entities = new ArrayList<>();
+		if (points.isEmpty() || dimension != world.provider.getDimension()) { return; }
+		List<Entity> entitiesInside = new ArrayList<>();
 		try {
-			entities = world.getEntitiesWithinAABB(Entity.class, getAxisAlignedBB().grow(1.0d), this);
+			entitiesInside = world.getEntitiesWithinAABB(Entity.class, getAxisAlignedBB().grow(1.0d), this);
 		}
 		catch (Exception ignored) { }
-		for (Entity entity : entities) {
+		for (Entity entity : entitiesInside) {
 			if (!entitiesWithinRegion.contains(entity)) {
-				if (tryEntityEnter(entity)) { continue; }
-				entitiesWithinRegion.add(entity);
-				MinecraftForge.EVENT_BUS.post(new ForgeEvent.EnterToRegion(entity, this));
-				if (questID > 0 && questWhenEnter && entity instanceof EntityPlayer) {
+				if (canEntityEnter(entity)) {
+					entitiesWithinRegion.add(entity);
+					if (questID > 0 && questWhenEnter && entity instanceof EntityPlayer) {
+						Quest quest = QuestController.instance.get(questID);
+						if (quest != null) { PlayerQuestController.addActiveQuest(quest, (EntityPlayer) entity, false); }
+					}
+				}
+			}
+		}
+		for (Entity entity : new ArrayList<>(entitiesWithinRegion)) {
+			if (!entitiesInside.contains(entity) && canEntityLeave(entity)) {
+				entitiesWithinRegion.remove(entity);
+				if (questID > 0 && !questWhenEnter && entity instanceof EntityPlayer) {
 					Quest quest = QuestController.instance.get(questID);
 					if (quest != null) { PlayerQuestController.addActiveQuest(quest, (EntityPlayer) entity, false); }
 				}
 			}
 		}
-		List<Entity> del = new ArrayList<>();
-		for (Entity entity : entitiesWithinRegion) {
-			if (tryEntityLeave(entity, contains(entity))) { del.add(entity); }
-		}
-		for (Entity entity : del) {
-			entitiesWithinRegion.remove(entity);
-			playerAntiLag.remove(entity);
-			MinecraftForge.EVENT_BUS.post(new ForgeEvent.LeaveRegion(entity, this));
-			if (questID > 0 && !questWhenEnter && entity instanceof EntityPlayer) {
-				Quest quest = QuestController.instance.get(questID);
-				if (quest != null) { PlayerQuestController.addActiveQuest(quest, (EntityPlayer) entity, false); }
-			}
-		}
 	}
 
-	private boolean tryEntityEnter(Entity entity) {
-		EntityPlayerMP player = convertToPlayer(entity);
-		if (player == null || availability.isAvailable(player) || player.capabilities.isCreativeMode) { return false; }
-		if (!keepOut) { return false; }
-		IPos center = getCenter();
-		motionPlayer(player, new Vec3d(player.posX, player.posY, player.posZ).subtract(new Vec3d(center.getX(), center.getY(), center.getZ())).normalize());
-		if (entity instanceof EntityEnderPearl) { entity.isDead = true; }
-		return true;
-	}
-
-	private boolean tryEntityLeave(Entity entity, boolean isContains) {
-		EntityPlayerMP player = convertToPlayer(entity);
-		if (player == null || availability.isAvailable(player) || player.capabilities.isCreativeMode) { return !isContains; }
-		if (!keepOut && isContains) { return false; }
-		IPos center = getCenter();
-		motionPlayer(player, new Vec3d(center.getX(), center.getY(), center.getZ()).subtract(new Vec3d(player.posX, player.posY, player.posZ)).normalize());
-		if (entity instanceof EntityEnderPearl) { entity.isDead = true; }
+	private boolean canEntityEnter(Entity entity) {
+		ForgeEvent.EnterToRegion event = new ForgeEvent.EnterToRegion(entity, this);
+		EventHooks.onEvent(ScriptController.Instance.playerScripts, EnumScriptType.REGION_ENTER, event);
+		if (entity.isDead) { return false; }
+		if (!MinecraftForge.EVENT_BUS.post(event) && !event.isCanceled()) {
+			EntityPlayerMP player = convertToPlayer(entity);
+			if (player == null || availability.isAvailable(player) || player.isCreative() || !keepOut) { return true; }
+			motionPlayer(player);
+			if (entity instanceof EntityEnderPearl) { entity.isDead = true; }
+		}
 		return false;
 	}
 
-	private void motionPlayer(EntityPlayerMP player, Vec3d vec) {
-		double corrector = 0.25d;
-		player.motionX = vec.x * corrector;
-		player.motionY = vec.y * corrector;
-		player.motionZ = vec.z * corrector;
-		player.velocityChanged = true;
-		if (!message.isEmpty()) { player.sendStatusMessage(new TextComponentTranslation(message), true); }
-		// if the player is stuck
-		if (!playerAntiLag.containsKey(player)) { playerAntiLag.put(player, new AntiLagTime(keepOut ? homePos.getMCBlockPos() : player.getPosition())); }
-		if (playerAntiLag.get(player).isLag(player.getPosition())) {
-			playerAntiLag.get(player).clear(player.getPosition());
-			player.setPositionAndUpdate(homePos.getX() + 0.5d, homePos.getY(), homePos.getZ() + 0.5d);
+	private boolean canEntityLeave(Entity entity) {
+		ForgeEvent.LeaveRegion event = new ForgeEvent.LeaveRegion(entity, this);
+		EventHooks.onEvent(ScriptController.Instance.playerScripts, EnumScriptType.REGION_LEAVE, event);
+		if (entity.isDead) { return true; }
+		if (!MinecraftForge.EVENT_BUS.post(event) && !event.isCanceled()) {
+			EntityPlayerMP player = convertToPlayer(entity);
+			if (player == null || availability.isAvailable(player) || player.isCreative() || keepOut) { return true; }
+			motionPlayer(player);
+			if (entity instanceof EntityEnderPearl) { entity.isDead = true; }
 		}
+		return false;
+	}
+
+	private void motionPlayer(EntityPlayerMP player) {
+		double impulse = Math.sqrt(Math.pow(player.motionX, 2.0d) + Math.pow(player.motionY, 2.0d) + Math.pow(player.motionZ, 2.0d));
+		Vec3d vec = null;
+		boolean isDown = player.posY < getMinY();
+		if (isDown) {
+			if (keepOut) { vec = new Vec3d(0.0d, -2.0d * impulse, 0.0d); }
+		}
+		else if (player.posY > getMaxY()) {
+			if (!keepOut) { vec = new Vec3d(0.0d, -2.0d * impulse, 0.0d); }
+		}
+		else {
+			Point[] pts = getClosestWall(player.posX, player.posZ);
+			Vec3d wallVectorXZ = new Vec3d(pts[1].getX(), 0, pts[1].getY()).subtract(new Vec3d(pts[0].getX(), 0, pts[0].getY()));
+			vec = new Vec3d(wallVectorXZ.z, 0, -wallVectorXZ.x);
+			boolean bo = contains(vec.x, getMinY(), vec.z, 0.0d);
+			if (bo == keepOut) { vec = vec.scale(-1.0d); }
+			vec = vec.normalize().scale(-impulse);
+		}
+		if (vec != null) {
+			player.motionX = vec.x;
+			player.motionY = vec.y;
+			player.motionZ = vec.z;
+			player.velocityChanged = true;
+		}
+		else { player.setPositionAndUpdate(getHomePos().getX() + 0.5d, getHomePos().getY(), getHomePos().getZ() + 0.5d); }
+		if (!message.isEmpty()) { player.sendMessage(Component.translatable(message)); }
 	}
 
 	public void save(NBTTagCompound nbtRegion) {
 		nbtRegion.setInteger("ID", id);
 		nbtRegion.setString("Name", name);
-		nbtRegion.setInteger("DimensionID", dimensionID);
+		nbtRegion.setInteger("DimensionID", dimension);
 		nbtRegion.setInteger("Color", color);
 		NBTTagList ps = new NBTTagList();
 		for (int pos : points.keySet()) {
