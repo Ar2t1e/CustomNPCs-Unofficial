@@ -1106,4 +1106,59 @@ public class Availability implements ICompatibilty, IAvailability {
       return list;
    }
 
+   @Override
+   public boolean equals(Object obj) {
+      if (obj == this) { return true; }
+      if (obj instanceof Availability avblt) {
+         if (dialogues.size() != avblt.dialogues.size() ||
+                 factions.size() != avblt.factions.size() ||
+                 moneys.size() != avblt.moneys.size() ||
+                 quests.size() != avblt.quests.size() ||
+                 scoreboards.size() != avblt.scoreboards.size() ||
+                 playerNames.size() != avblt.playerNames.size() ||
+                 regions.size() != avblt.regions.size() ||
+                 stacksData.size() != avblt.stacksData.size() ||
+                 storeddata.size() != avblt.storeddata.size()) { return false; }
+         for (Map.Entry<Integer, EnumAvailabilityDialog> entry : dialogues.entrySet()) {
+            if (entry.getValue() != avblt.dialogues.get(entry.getKey())) { return false; }
+         }
+         for (Map.Entry<Integer, AvailabilityFactionData> entry : factions.entrySet()) {
+            if (!avblt.factions.containsKey(entry.getKey()) ||
+                    !entry.getValue().equals(avblt.factions.get(entry.getKey()))) { return false; }
+         }
+         for (Map.Entry<EnumAvailabilityMoney, AvailabilityMoneyData> entry : moneys.entrySet()) {
+            if (!avblt.moneys.containsKey(entry.getKey()) ||
+                    !entry.getValue().equals(avblt.moneys.get(entry.getKey()))) { return false; }
+         }
+         for (Map.Entry<Integer, EnumAvailabilityQuest> entry : quests.entrySet()) {
+            if (entry.getValue() != avblt.quests.get(entry.getKey())) { return false; }
+         }
+         for (Map.Entry<String, AvailabilityScoreboardData> entry : scoreboards.entrySet()) {
+            if (!avblt.scoreboards.containsKey(entry.getKey()) ||
+                    !entry.getValue().equals(avblt.scoreboards.get(entry.getKey()))) { return false; }
+         }
+         for (Map.Entry<String, EnumAvailabilityPlayerName> entry : playerNames.entrySet()) {
+            if (!avblt.playerNames.containsKey(entry.getKey()) ||
+                    entry.getValue() != avblt.playerNames.get(entry.getKey())) { return false; }
+         }
+         for (Map.Entry<Integer, EnumAvailabilityRegion> entry : regions.entrySet()) {
+            if (entry.getValue() != avblt.regions.get(entry.getKey())) { return false; }
+         }
+         for (Map.Entry<Integer, AvailabilityStackData> entry : stacksData.entrySet()) {
+            if (!entry.getValue().equals(avblt.stacksData.get(entry.getKey()))) { return false; }
+         }
+         for (int i = 0; i < 9; i++) {
+            if (!ItemStack.isSameItemSameTags(stacks.getItem(i), avblt.stacks.getItem(i))) { return false; }
+         }
+         for (int i = 0; i < storeddata.size(); i++) {
+            if (i >= avblt.storeddata.size() ||
+                    !storeddata.get(i).equals(avblt.storeddata.get(i))) { return false; }
+         }
+         return daytime[0] == avblt.daytime[0] && daytime[1] == avblt.daytime[1] &&
+                 version == avblt.version && max == avblt.max && minPlayerLevel == avblt.minPlayerLevel &&
+                 health == avblt.health && healthType == avblt.healthType && onlyGM == avblt.onlyGM;
+      }
+      return false;
+   }
+
 }

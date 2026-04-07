@@ -11,12 +11,12 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.client.gui.GuiNpcDimension;
-import noppes.npcs.client.gui.global.GuiNpcManageDialogs;
 import noppes.npcs.client.gui.global.GuiNpcManageQuest;
 import noppes.npcs.client.gui.global.GuiPermissionsEdit;
 import noppes.npcs.config.ConfigLoader;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.common.PacketBasic;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.RecipeCarpentry;
@@ -118,7 +118,7 @@ public class PacketSync extends PacketBasic {
                DialogController.instance.dialogs.putAll(map);
                DialogController.instance.categoriesSync.clear();
             }
-            if (mc.screen instanceof GuiNpcManageDialogs gui) { gui.init(); }
+            if (mc.screen instanceof GuiBasic gui) { gui.init(); }
             break;
          } // dialogs
          case 6: {

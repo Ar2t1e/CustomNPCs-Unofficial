@@ -16,11 +16,12 @@ public class YDEController {
 
     protected static YDEController instance;
     protected static int alpha = 0xC0000000;
-    public static int backColor = new Color(0x222222).getRGB() | 0xC0000000;
-    public static int backHoverColor = new Color(0x333333).getRGB() | 0xC0000000;
-    public static int lineColor = new Color(0x4C4C4C).getRGB() | 0xC0000000;
-    public static int gridColor = new Color(0x8C8C74).getRGB() | 0xC0000000;
-    public static int gridColorEmpty = new Color(0xB66C6C).getRGB() | 0xC0000000;
+    public static int backColor = (new Color(0x222222).getRGB() & 0xFFFFFF) | alpha;
+    public static int backHoverColor = (new Color(0x333333).getRGB() & 0xFFFFFF) | alpha;
+    public static int textColor = (new Color(0xC0C0C0).getRGB() & 0xFFFFFF) | alpha;
+    public static int lineColor = (new Color(0x4C4C4C).getRGB() & 0xFFFFFF) | alpha;
+    public static int gridColor = (new Color(0x8C8C74).getRGB() & 0xFFFFFF) | alpha;
+    public static int gridColorEmpty = new Color(0xB66C6C).getRGB();
 
     /**
      * <world map name; <node ID, node>>
@@ -52,6 +53,9 @@ public class YDEController {
         if (compound.contains("BackHoverColor", 3)) {
             backHoverColor = (compound.getInt("BackHoverColor") & 0xFFFFFF) | alpha;
         }
+        if (compound.contains("TextColor", 3)) {
+            textColor = (compound.getInt("TextColor") & 0xFFFFFF) | alpha;
+        }
         if (compound.contains("LineColor", 3)) {
             lineColor = (compound.getInt("LineColor") & 0xFFFFFF) | alpha;
         }
@@ -76,6 +80,7 @@ public class YDEController {
         }
         compound.putInt("BackColor", backColor & 0xFFFFFF);
         compound.putInt("BackHoverColor", backHoverColor & 0xFFFFFF);
+        compound.putInt("TextColor", textColor & 0xFFFFFF);
         compound.putInt("LineColor", lineColor & 0xFFFFFF);
         compound.putInt("GridColor", gridColor & 0xFFFFFF);
         compound.putInt("GridColorEmpty", gridColorEmpty & 0xFFFFFF);

@@ -2,15 +2,19 @@ package noppes.npcs.shared.client.gui.components;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.client.ClientProxy;
+import noppes.npcs.mixin.client.gui.components.IEditBoxMixin;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
@@ -25,6 +29,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 
 public class GuiTextFieldNop extends EditBox implements IComponentGui {
 
@@ -228,7 +233,101 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
    public void renderWidget(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
       if (!visible) { return; }
       setTextColor(getTextColor());
-      super.renderWidget(graphics, mouseX, mouseY, partialTicks);
+      //super.renderWidget(graphics, mouseX, mouseY, partialTicks);
+
+      boolean bordered = ((IEditBoxMixin) this).getBordered();
+      boolean isEditable = ((IEditBoxMixin) this).getIsEditable();
+      int cursorPos = ((IEditBoxMixin) this).getCursorPos();
+      int textColor = ((IEditBoxMixin) this).getTextColor();
+      int textColorUneditable = ((IEditBoxMixin) this).getTextColorUneditable();
+      int displayPos = ((IEditBoxMixin) this).getDisplayPos();
+      int highlightPos = ((IEditBoxMixin) this).getHighlightPos();
+      int frame = ((IEditBoxMixin) this).getFrame();
+      int alpha = 0xFF000000;
+      Font font = ((IEditBoxMixin) this).getFont();
+      BiFunction<String, Integer, FormattedCharSequence> formatter = ((IEditBoxMixin) this).getFormatter();
+      Component hint = ((IEditBoxMixin) this).getHint();
+      String suggestion = ((IEditBoxMixin) this).getSuggestion();
+      String value = getValue();
+
+      if (bordered) {
+         int i = (isFocused() ? (new Color(0xFFFFFF).getRGB() & 0xFFFFFF) :
+                 (new Color(0xA0A0A0).getRGB() & 0xFFFFFF))  | alpha;
+         graphics.fill(getX() - 1, getY() - 1, getX() + width + 1, getY() + height + 1, i);
+         graphics.fill(getX(), getY(), getX() + width, getY() + height,
+                 (new Color(0x000000).getRGB() & 0xFFFFFF)  | alpha);
+      }
+
+      int color = isEditable ? textColor : textColorUneditable;
+      int j = cursorPos - displayPos;
+      int k = highlightPos - displayPos;
+      String subStrByWidth = font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
+      boolean flag = j >= 0 && j <= subStrByWidth.length();
+      boolean showLine = isFocused() && frame / 6 % 2 == 0 && flag;
+      int l = bordered ? getX() + 4 : getX();
+      int i1 = bordered ? getY() + (height - 8) / 2 : getY();
+      int j1 = l;
+      if (k > subStrByWidth.length()) {
+         k = subStrByWidth.length();
+      }
+
+      if (!subStrByWidth.isEmpty()) {
+         String s1 = flag ? subStrByWidth.substring(0, j) : subStrByWidth;
+         j1 = graphics.drawString(font, formatter.apply(s1, displayPos), l, i1, color);
+      }
+
+      boolean isEndPos = cursorPos < getValue().length() || value.length() >= ((IEditBoxMixin) this).invokeGetMaxLength();
+      int k1 = j1;
+      if (!flag) {
+         k1 = j > 0 ? l + width : l;
+      } else if (isEndPos) {
+         k1 = j1 - 1;
+         --j1;
+      }
+
+      if (!subStrByWidth.isEmpty() && flag && j < subStrByWidth.length()) {
+         graphics.drawString(font, formatter.apply(subStrByWidth.substring(j), cursorPos), j1, i1, color);
+      }
+
+      if (hint != null && subStrByWidth.isEmpty() && !isFocused()) {
+         graphics.drawString(font, hint, j1, i1, color);
+      }
+
+      if (!isEndPos && suggestion != null) {
+         graphics.drawString(font, suggestion, k1 - 1, i1,
+                 (new Color(0x808080).getRGB() & 0xFFFFFF)  | alpha);
+      }
+
+      if (showLine) {
+         if (isEndPos) {
+            graphics.fill(RenderType.guiOverlay(), k1, i1 - 1, k1 + 1, i1 + 1 + 9,
+                    (new Color(0xD0D0D0).getRGB() & 0xFFFFFF)  | alpha);
+         } else {
+            graphics.drawString(font, "_", k1, i1, color);
+         }
+      }
+
+      if (k != j) {
+         int l1 = l + font.width(subStrByWidth.substring(0, k));
+         renderHighlight(graphics, k1, i1 - 1, l1 - 1, i1 + 1 + 9);
+      }
+   }
+
+   protected void renderHighlight(GuiGraphics graphics, int left, int top, int right, int bottom) {
+      if (left < right) {
+         int i = left;
+         left = right;
+         right = i;
+      }
+      if (top < bottom) {
+         int j = top;
+         top = bottom;
+         bottom = j;
+      }
+      if (right > getX() + width) { right = getX() + width; }
+      if (left > getX() + width) { left = getX() + width; }
+      graphics.fill(RenderType.guiTextHighlight(), left, top, right, bottom,
+              (new Color(0x0000FF).getRGB() & 0xFFFFFF) | 0xFF000000);
    }
 
    public GuiTextFieldNop setMinMaxDefault(double minValue, double maxValue, double defaultValue) {

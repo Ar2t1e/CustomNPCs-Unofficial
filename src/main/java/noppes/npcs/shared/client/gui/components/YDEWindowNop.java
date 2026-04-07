@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.yellow_de.GuiYellowDialogEditor;
@@ -11,7 +12,9 @@ import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
 import noppes.npcs.client.gui.yellow_de.data.UtilYDE;
 import noppes.npcs.client.gui.yellow_de.data.YDELink;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
-import noppes.npcs.util.ValueUtil;
+import noppes.npcs.client.gui.yellow_de.data.nodes.YDEDialog;
+import noppes.npcs.controllers.DialogController;
+import noppes.npcs.controllers.data.Dialog;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
@@ -19,6 +22,7 @@ import javax.annotation.Nonnull;
 public class YDEWindowNop extends GuiCustomWindowNop {
 
     public final YDENode node;
+    public final GuiYellowDialogEditor listener;
     protected GuiButtonNop b0;
     protected GuiButtonNop b1;
     protected GuiButtonNop b2;
@@ -26,7 +30,6 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     protected double tempDx;
     protected double tempDy;
     protected long lastClicked = 0L;
-    public GuiYellowDialogEditor listener;
 
     public YDEWindowNop(GuiYellowDialogEditor gui, YDENode nodeIn) {
         super(gui, nodeIn.id, nodeIn.x, nodeIn.y, nodeIn.width, nodeIn.height, nodeIn.title);
@@ -52,7 +55,15 @@ public class YDEWindowNop extends GuiCustomWindowNop {
 
     @Override
     public void init() {
-        if (node.type == EnumYDEType.DIALOG) {
+        if (node instanceof YDEDialog yde_dialog) {
+            Dialog dialog = DialogController.instance.get(yde_dialog.dialogId);
+            if (dialog == null) {
+                dialog = new Dialog(DialogController.instance.getCategory(node.category));
+            }
+            addTextField(0, 3, 24, imageWidth - 6, UtilYDE.FONT.getHeight() + 2, dialog.title)
+                    .setColor(YDEController.textColor)
+                    .setCustomFont(UtilYDE.FONT);
+            // link buttons
             // -> options
             b0 = addButton(0, imageWidth - 4, imageHeight / 2 - 4, "")
                     .setSize(7, 7)
@@ -70,7 +81,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                     .setUV(0, 18, 14, 14)
                     .setHoverTexts("yed.hover.node.dialog.back.option");
             // -> npc
-            b2 = addButton(2, -4, (int) (imageHeight - 4.0f), "")
+            b2 = addButton(2, -4, (int) (imageHeight * 0.8f - 4.0f), "")
                     .setSize(7, 7)
                     .setTexture(INFO)
                     .setDefBack(false)
@@ -116,7 +127,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         }
         else if (node.type == EnumYDEType.NPC) {
             // <- back to dialog
-            b0 = addButton(0, imageWidth - 4, -4, "")
+            b0 = addButton(0, imageWidth - 4,  imageHeight / 2 - 4, "")
                     .setSize(7, 7)
                     .setTexture(INFO)
                     .setDefBack(false)
@@ -129,8 +140,11 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     @Override
     public void renderBackground(@Nonnull GuiGraphics graphics) {
         PoseStack matrixStack = graphics.pose();
+        // links
         if (!node.links.isEmpty()) {
             matrixStack.pushPose();
+            float zDepth = (float) id / 10000.0f;
+            matrixStack.translate(0, 0, zDepth - 0.001f);
             // link dots
             for (YDELink link : node.links) {
                 if (link.backNodeId == node.id) {
@@ -139,22 +153,23 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                         if (link.type == EnumYDEType.OPTION) {
                             UtilYDE.renderSpline(graphics, new float[] { getX() + imageWidth, getY() + imageHeight / 2.0f },
                                     new float[] { nextNode.getX(), nextNode.getY() + nextNode.imageHeight / 2.0f },
-                                    false, (getX() + imageWidth > nextNode.getX()), EnumYDEType.DIALOG.color);
+                                    false, (getX() + imageWidth > nextNode.getX()) ? 1 : 0,
+                                    EnumYDEType.DIALOG.color, zDepth - 0.001f);
                         }
                         else if (link.type == EnumYDEType.DIALOG) {
                             UtilYDE.renderSpline(graphics, new float[] { getX() + imageWidth, getY() + imageHeight / 2.0f },
                                     new float[] { nextNode.getX(), nextNode.getY() + nextNode.imageHeight / 2.0f },
-                                    false, (getX() + imageWidth > nextNode.getX()), EnumYDEType.OPTION.color);
+                                    false, (getX() + imageWidth > nextNode.getX()) ? 1 : 0, EnumYDEType.OPTION.color, zDepth - 0.001f);
                         }
                         else if (link.type == EnumYDEType.NPC) {
-                            UtilYDE.renderSpline(graphics, new float[] { getX(), getY() + imageHeight },
-                                    new float[] { nextNode.getX() + nextNode.imageWidth, nextNode.getY() },
-                                    false, false, EnumYDEType.NPC.color);
+                            UtilYDE.renderSpline(graphics, new float[] { getX(), getY() + imageHeight * 0.8f },
+                                    new float[] { nextNode.getX() + nextNode.imageWidth, nextNode.getY() + nextNode.imageHeight / 2.0f },
+                                    false, (getX() > nextNode.getX() + nextNode.imageWidth) ? 1 : 0, EnumYDEType.NPC.color, zDepth - 0.001f);
                         }
                         else if (link.type == EnumYDEType.QUEST) {
                             UtilYDE.renderSpline(graphics, new float[] { getX() + imageWidth / 2.0f, getY() + imageHeight },
                                     new float[] { nextNode.getX() + nextNode.imageWidth / 2.0f, nextNode.getY() },
-                                    false, false, EnumYDEType.QUEST.color);
+                                    false, (getY() + imageHeight < nextNode.getY()) ? 2 : 0, EnumYDEType.QUEST.color, zDepth - 0.001f);
                         }
                     }
                 }
@@ -215,8 +230,11 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         if (title != null && !title.getString().isEmpty()) {
             UtilYDE.FONT.draw(graphics, title, 3, 2, CustomNpcs.MainColor.getRGB() | 255 << 24);
         }
+        if (node.type == EnumYDEType.DIALOG) {
+            // name
+            UtilYDE.FONT.draw(graphics, Component.translatable("gui.name").append(":"), 3, 14, YDEController.textColor);
+        }
         matrixStack.translate(-2, -2, 0.0f);
-        if (listener.select == id) { renderSelectedBorder(graphics); }
         matrixStack.popPose();
     }
 
@@ -234,7 +252,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (isHovered) {
-            listener.setActive(this);
+            listener.setActive(node.id);
             if (lastClicked + 500L > System.currentTimeMillis()) { listener.doubleClicked(this); }
             else { lastClicked = System.currentTimeMillis(); }
         }
@@ -275,62 +293,6 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         super.moveTo(addX, addY);
         node.x = guiLeft;
         node.y = guiTop;
-    }
-
-    private void renderSelectedBorder(GuiGraphics graphics) {
-        VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.gui());
-        Matrix4f matrix = graphics.pose().last().pose();
-        int x = (int) ((System.currentTimeMillis() % 500L) / 50L) - 10;
-        int y = 0;
-        int s;
-        int e;
-        int w = imageWidth + 4;
-        int h = imageHeight + 4;
-        while (x < w) {
-            s = ValueUtil.correctInt(x, 0, w);
-            e = ValueUtil.correctInt(x + 5, 0, w);
-            consumer.vertex(matrix, s, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, s, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x += 10;
-        }
-        x -= w + 10;
-        y = w;
-        while (x < h) {
-            s = ValueUtil.correctInt(x, 0, h);
-            e = ValueUtil.correctInt(x + 5, 0, h + 1);
-            consumer.vertex(matrix, y, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x += 10;
-        }
-        x -= h + 6;
-        x *= -1;
-        x += w;
-        y = h;
-        while (x > -10) {
-            s = ValueUtil.correctInt(x, 0, w);
-            e = ValueUtil.correctInt(x + 5, 0, w);
-            consumer.vertex(matrix, s, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, s, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x -= 10;
-        }
-        x += w - 10;
-        y = 0;
-        while (x > -10) {
-            s = ValueUtil.correctInt(x, 0, h);
-            e = ValueUtil.correctInt(x + 5, 0, h + 1);
-            consumer.vertex(matrix, y, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x -= 10;
-        }
-        graphics.bufferSource().endBatch();
     }
 
 }

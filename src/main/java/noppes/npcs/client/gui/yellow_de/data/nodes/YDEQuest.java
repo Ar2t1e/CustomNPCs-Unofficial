@@ -1,6 +1,7 @@
 package noppes.npcs.client.gui.yellow_de.data.nodes;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
 
@@ -10,6 +11,8 @@ public class YDEQuest extends YDENode {
 
     public YDEQuest(int idIn, String categoryIn, int questIdIn) {
         type = EnumYDEType.QUEST;
+        title = Component.translatable("gui.quest", " ID: " + questIdIn);
+
         id = idIn;
         width = 90;
         height = 60;

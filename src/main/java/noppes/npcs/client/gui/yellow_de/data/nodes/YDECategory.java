@@ -13,6 +13,8 @@ public class YDECategory extends YDENode {
         type = EnumYDEType.CATEGORY;
         id = idIn;
         category = categoryIn;
+        width = 0;
+        height = 0;
     }
 
     @Override

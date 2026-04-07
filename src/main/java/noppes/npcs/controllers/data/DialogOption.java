@@ -36,7 +36,17 @@ public class DialogOption implements IDialogOption {
          return compound;
       }
 
+      @Override
       public String toString() { return "OptionDialogID: " + dialogId + "; " + availability.toString(); }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (obj == this) { return true; }
+         if (obj instanceof OptionDialogID option) {
+            return dialogId == option.dialogId && availability.equals(option.availability);
+         }
+         return false;
+      }
 
    }
 
@@ -197,6 +207,21 @@ public class DialogOption implements IDialogOption {
       DialogOption newDO = new DialogOption();
       newDO.load(save());
       return newDO;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (obj == this) { return true; }
+      if (obj instanceof DialogOption option) {
+         if (dialogs.size() != option.dialogs.size()) { return false; }
+         for (int i = 0; i < dialogs.size(); i++) {
+            if (!dialogs.get(i).equals(option.dialogs.get(i))) { return false; }
+         }
+         return title.equals(option.title) && command.equals(option.command) &&
+                 optionColor == option.optionColor && iconId == option.iconId &&
+                 optionType == option.optionType;
+      }
+      return false;
    }
 
 }

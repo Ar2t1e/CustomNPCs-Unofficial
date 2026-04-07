@@ -70,6 +70,7 @@
     "client.IKeyMappingMixin",
     "client.IMouseHandlerMixin",
     "client.RecipeBookCategoriesMixin",
+    "client.gui.components.IEditBoxMixin",
     "client.gui.components.MixinEditBox",
     "client.gui.multiplayer.JoinMultiplayerScreenMixin",
     "client.gui.screens.ConfirmScreenMixin",

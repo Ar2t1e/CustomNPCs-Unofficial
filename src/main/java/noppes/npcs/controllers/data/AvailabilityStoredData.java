@@ -36,4 +36,13 @@ public class AvailabilityStoredData {
         return nbt;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) { return true; }
+        if (obj instanceof AvailabilityStoredData sd) {
+            return key.equals(sd.key)  && value.equals(sd.value) && type == sd.type;
+        }
+        return false;
+    }
+
 }

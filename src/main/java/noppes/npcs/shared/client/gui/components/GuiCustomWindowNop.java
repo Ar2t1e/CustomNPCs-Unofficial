@@ -248,7 +248,9 @@ public class GuiCustomWindowNop extends GuiBasic
     public void moveTo(int addX, int addY) {
         guiLeft += addX;
         guiTop += addY;
-        for (IComponentGui component : new ArrayList<>(wrapper.components)) { component.moveTo(addX, addY); }
+        for (IComponentGui component : new ArrayList<>(wrapper.components)) {
+            component.moveTo(addX, addY);
+        }
     }
 
     public void transferTo(int newX, int newY) {

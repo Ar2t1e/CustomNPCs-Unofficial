@@ -27,4 +27,13 @@ public class AvailabilityStackData {
         return compound;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) { return true; }
+        if (obj instanceof AvailabilityStackData sd) {
+            return type == sd.type && ignoreNBT == sd.ignoreNBT && ignoreDamage == sd.ignoreDamage;
+        }
+        return false;
+    }
+
 }

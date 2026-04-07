@@ -111,6 +111,9 @@ public class GuiLabel extends AbstractWidget implements GuiEventListener, ICompo
       }
       isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
       drawBox(graphics);
+      if (getMessage().getString().contains("Имя:")) {
+         graphics.drawString(Minecraft.getInstance().font, getMessage(), getX(), getY(), textColor, showShadow);
+      }
       GuiButtonNop.renderString(graphics, getMessage(), getX(), getY(), getX() + width, getY() + height,
               textColor, showShadow, centered, customFont);
    }

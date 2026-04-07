@@ -121,7 +121,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
             float[] p0 = new float[] { buttonD.getX() + buttonD.getWidth(), buttonD.getY() + buttonD.getHeight() / 2.0f };
             UtilYDE.renderDot(graphics, p0, 0.5f, hovered, 0x184EB0);
             UtilYDE.renderDot(graphics, p1, 0.5f, hovered, 0x184EB0);
-            UtilYDE.renderSpline(graphics, p0, p1, hovered, false, 0x184EB0);
+            UtilYDE.renderSpline(graphics, p0, p1, hovered, 0, 0x184EB0, 0.0f);
          }
          // quests
          GuiButtonNop buttonQ = getButton(11);
@@ -130,7 +130,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
             float[] p0 = new float[] { buttonQ.getX() + buttonQ.getWidth(), buttonQ.getY() + buttonQ.getHeight() / 2.0f };
             UtilYDE.renderDot(graphics, p0, 0.5f, hovered, 0xAEB018);
             UtilYDE.renderDot(graphics, p1, 0.5f, hovered, 0xAEB018);
-            UtilYDE.renderSpline(graphics, p0, p1, hovered, false, 0xAEB018);
+            UtilYDE.renderSpline(graphics, p0, p1, hovered, 0, 0xAEB018, 0.0f);
          }
          matrixStack.popPose();
       }

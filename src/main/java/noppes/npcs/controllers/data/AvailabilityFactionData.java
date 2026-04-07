@@ -13,4 +13,13 @@ public class AvailabilityFactionData {
         factionStance = stance;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) { return true; }
+        if (obj instanceof AvailabilityFactionData fd) {
+            return factionAvailable == fd.factionAvailable && factionStance == fd.factionStance;
+        }
+        return false;
+    }
+
 }

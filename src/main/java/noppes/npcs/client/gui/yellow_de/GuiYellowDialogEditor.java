@@ -2,9 +2,11 @@ package noppes.npcs.client.gui.yellow_de;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor;
 import noppes.npcs.CustomNpcs;
@@ -16,18 +18,19 @@ import noppes.npcs.client.gui.yellow_de.data.YDEData;
 import noppes.npcs.client.gui.yellow_de.data.UtilYDE;
 import noppes.npcs.client.gui.yellow_de.data.YDELink;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
+import noppes.npcs.client.gui.yellow_de.data.nodes.YDEArea;
 import noppes.npcs.client.gui.yellow_de.data.nodes.YDECategory;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketDialogCategoryGet;
 import noppes.npcs.shared.client.gui.GuiBasic;
-import noppes.npcs.shared.client.gui.components.GuiButtonNop;
-import noppes.npcs.shared.client.gui.components.GuiCustomWindowNop;
-import noppes.npcs.shared.client.gui.components.YDEWindowNop;
+import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.ValueUtil;
+import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -60,7 +63,7 @@ public class GuiYellowDialogEditor extends GuiBasic {
     protected boolean hoverLeft = false;
     protected final @Nonnull GuiCustomWindowNop rightTab;
     protected boolean hoverRight = false;
-    public int select = -2;
+    protected int select = -2;
 
     public GuiYellowDialogEditor() {
         super();
@@ -101,6 +104,17 @@ public class GuiYellowDialogEditor extends GuiBasic {
         rightTab.exit.setCustomFont(UtilYDE.FONT);
         rightTab.exit.setX(rightTab.exit.getX() + 1);
         rightTab.exit.setY(rightTab.exit.getY() - 1);
+
+        if (FastColor.ARGB32.alpha(YDEController.backColor) != 192) {
+            int alpha = 0xC0000000;
+            YDEController.backColor = (YDEController.backColor & 0xFFFFFF) | alpha;
+            YDEController.backHoverColor = (YDEController.backHoverColor & 0xFFFFFF) | alpha;
+            YDEController.textColor = (YDEController.textColor & 0xFFFFFF) | alpha;
+            YDEController.lineColor = (YDEController.lineColor & 0xFFFFFF) | alpha;
+            YDEController.gridColor = (YDEController.gridColor & 0xFFFFFF) | alpha;
+        }
+
+        Packets.sendServer(new SPacketDialogCategoryGet());
     }
 
     @Override
@@ -115,20 +129,29 @@ public class GuiYellowDialogEditor extends GuiBasic {
         // this init
         leftTab.imageHeight = (int) (height * guiScale);
         rightTab.imageHeight = (int) (height * guiScale);
+        GuiCustomScrollNop scroll = leftTab.getScroll(0);
+        if (scroll == null) { scroll = leftTab.addScroll(0); }
+        scroll.setCustomFont(UtilYDE.FONT_HEADLINE);
+        scroll.setPos(leftTab.getX(), leftTab.getY() + 14);
+        scroll.width = leftTab.imageWidth - 4;
+        scroll.height = leftTab.imageHeight - 14;
         // category name
-        addLabel(0, (width - UtilYDE.FONT_HEADLINE.width(category.title))/ 2, 0, category.title)
+        GuiLabel label = addLabel(0, (width - UtilYDE.FONT_HEADLINE.width(category.title)) / 2, 0, category.title)
                 .setCustomFont(UtilYDE.FONT_HEADLINE)
                 .setColor(color);
+        GuiTextFieldNop textField = getTextField(0);
+        boolean bo = textField != null && textField.isVisible();
+        addTextField(0, label.getX(), label.getY(), label.getWidth(), 20, category.category)
+                .setIsVisible(bo);
+
         w = width * guiScale / 2.0f;
         h = height * guiScale / 2.0f;
         int sel = select;
         select = -2;
-        LogWriter.info("TEST: "+category.category +"; "+YDE_DATA.nodes.size());
         for (YDENode node : YDE_DATA.nodes.values()) {
-            //LogWriter.info("TEST: "+node.categoryId+" - "+node);
             if (!(node instanceof YDECategory) && node.category.equals(category.category)) {
-                YDEWindowNop windowNop = new YDEWindowNop(this, node);
-                add(windowNop);
+                if (node instanceof YDEArea area) { add(new YDEAreaNop(this, area)); }
+                else { add(new YDEWindowNop(this, node)); }
                 if (sel == node.id) { select = node.id; }
             }
         }
@@ -199,8 +222,9 @@ public class GuiYellowDialogEditor extends GuiBasic {
             j++;
         }
         graphics.bufferSource().endBatch();
+        IComponentGui sel = get(select);
+        if (sel != null) { renderSelectedBorder(graphics, sel); }
         matrixStack.popPose();
-
         // labels
         matrixStack.pushPose();
         matrixStack.translate(leftTab.getX() + leftTab.imageWidth + 8.0f, 0.0f, 200.0f);
@@ -233,6 +257,76 @@ public class GuiYellowDialogEditor extends GuiBasic {
             UtilYDE.FONT.draw(graphics, label, 0, 0, color);
             matrixStack.popPose();
         }
+
+    }
+
+    private void renderSelectedBorder(@Nonnull GuiGraphics graphics, @Nonnull IComponentGui sel) {
+        VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.gui());
+        Matrix4f matrix = graphics.pose().last().pose();
+        int x = (int) ((System.currentTimeMillis() % 500L) / 50L) - 10;
+        int y;
+        int w;
+        int h;
+        if (sel instanceof YDEWindowNop win) {
+            x += win.getX() - 2;
+            y = win.getY() - 2;
+            w = y + win.imageWidth + 4;
+            h = y + win.imageHeight + 4;
+        } else if (sel instanceof YDEAreaNop area) {
+            x += area.getX() - 2;
+            y = area.getY() - 2;
+            w = y + area.getWidth() + 4;
+            h = y + area.getHeight() + 4;
+        }
+        int s;
+        int e;
+        /*
+        while (x < w) {
+            s = ValueUtil.correctInt(x, 0, w);
+            e = ValueUtil.correctInt(x + 5, 0, w);
+            consumer.vertex(matrix, s, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, s, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            x += 10;
+        }
+        x -= w + 10;
+        y = w;
+        while (x < h) {
+            s = ValueUtil.correctInt(x, 0, h);
+            e = ValueUtil.correctInt(x + 5, 0, h + 1);
+            consumer.vertex(matrix, y, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, y, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, y + 1, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, y + 1, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            x += 10;
+        }
+        x -= h + 6;
+        x *= -1;
+        x += w;
+        y = h;
+        while (x > -10) {
+            s = ValueUtil.correctInt(x, 0, w);
+            e = ValueUtil.correctInt(x + 5, 0, w);
+            consumer.vertex(matrix, s, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, s, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            x -= 10;
+        }
+        x += w - 10;
+        y = 0;
+        while (x > -10) {
+            s = ValueUtil.correctInt(x, 0, h);
+            e = ValueUtil.correctInt(x + 5, 0, h + 1);
+            consumer.vertex(matrix, y, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, y, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, y + 1, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, y + 1, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            x -= 10;
+        }
+        /**/
+        graphics.bufferSource().endBatch();
     }
 
     @Override
@@ -342,9 +436,18 @@ public class GuiYellowDialogEditor extends GuiBasic {
                 rightTab.mouseScrolled(mouseX, mouseY, scrolled) ||
                 wrapper.mouseScrolled(xMouse, yMouse, scrolled);
         if (!bo) {
+            float oldScale = category.getScale();
             float f0 = category.getScale() * (scrolled < 0.0f ? 0.1f : -0.1f);
-            float f1 = ValueUtil.correctFloat(category.getScale() + f0, 0.1f, 1.0f);
-            if (f1 != category.getScale()) { category.setScale(f1); }
+            float newScale = ValueUtil.correctFloat(oldScale + f0, 0.1f, 1.0f);
+            if (newScale != oldScale) {
+                float mouseGridX = (xMouse - centerU) / oldScale;
+                float mouseGridY = (yMouse - centerV) / oldScale;
+                float newCenterU = xMouse - mouseGridX * newScale;
+                float newCenterV = yMouse - mouseGridY * newScale;
+                category.x = (int) (newCenterU - w / 2.0f);
+                category.y = (int) (newCenterV - h / 2.0f);
+                category.setScale(newScale);
+            }
             bo = true;
         }
         return bo;
@@ -448,8 +551,6 @@ public class GuiYellowDialogEditor extends GuiBasic {
         }
     }
 
-    public void setActive(@Nullable YDEWindowNop windowNop) {
-        if (windowNop != null) { select = windowNop.id; }
-    }
+    public void setActive(int id) { select = id; }
 
 }

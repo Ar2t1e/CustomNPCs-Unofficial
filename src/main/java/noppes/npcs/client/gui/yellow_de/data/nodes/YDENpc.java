@@ -1,6 +1,7 @@
 package noppes.npcs.client.gui.yellow_de.data.nodes;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
 import noppes.npcs.controllers.data.Dialog;
@@ -11,6 +12,8 @@ public class YDENpc extends YDENode {
 
     public YDENpc(int idIn, String categoryIn, Dialog.StartedNpcData npcDataIn) {
         type = EnumYDEType.NPC;
+        title = Component.literal("NPC: ");
+
         id = idIn;
         category = categoryIn;
         npcData = npcDataIn;
