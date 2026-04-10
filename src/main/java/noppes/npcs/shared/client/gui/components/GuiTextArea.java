@@ -6,6 +6,8 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,6 +30,7 @@ import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.client.gui.util.TrueTypeFont;
+import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 
@@ -35,7 +38,7 @@ public class GuiTextArea
         extends AbstractWidget
         implements IComponentGui, GuiEventListener {
 
-   protected static final TrueTypeFont font = new TrueTypeFont(new Font("Arial Unicode MS", Font.PLAIN, CustomNpcs.FontSize), 1.0F);
+   protected static @Nonnull TrueTypeFont font = new TrueTypeFont(new Font("Arial Unicode MS", Font.PLAIN, CustomNpcs.FontSize), 1.0F);
    protected static final char colorChar = '\uffff';
 
    protected IGuiInterface listener;
@@ -49,10 +52,6 @@ public class GuiTextArea
    protected int scrolledLine = 0;
 
    public int id;
-   public int x;
-   public int y;
-   public int width;
-   public int height;
    public String text = null;
    public boolean active = false;
    public boolean enabled = true;
@@ -66,12 +65,13 @@ public class GuiTextArea
 
    // New from Unofficial (BetaZavr)
    protected final List<Component> hoverText = new ArrayList<>();
+   public boolean isYDE = false;
 
    public GuiTextArea(int idIn, int xIn, int yIn, int widthIn, int heightIn, String text) {
       super(xIn, yIn, widthIn, heightIn, Component.literal(text));
       id = idIn;
-      x = xIn;
-      y = yIn;
+      setX(xIn);
+      setY(yIn);
       width = widthIn;
       height = heightIn;
       undoing = true;
@@ -85,8 +85,20 @@ public class GuiTextArea
       isHovered = false;
       if (!visible) { return; }
       isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
-      graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0xFFA0A0A0);
-      graphics.fill(x, y, x + width, y + height, 0xFF000000);
+      PoseStack matrixStack = graphics.pose();
+      // background
+      matrixStack.pushPose();
+      matrixStack.translate(getX() - 1, getY() - 1, 0.0f);
+      if (isYDE) {
+         matrixStack.scale(0.5f, 0.5f, 0.5f);
+         graphics.fill(0, 0, width * 2 + 2, height * 2 + 2, 0xFFA0A0A0);
+         graphics.fill(1, 1, width * 2 + 1, height * 2 + 1, 0xFF000000);
+      }
+      else {
+         graphics.fill(0, 0, width + 2, height + 2, 0xFFA0A0A0);
+         graphics.fill(0, 0, width + 1, height + 1, 0xFF000000);
+      }
+      matrixStack.popPose();
       container.visibleLines = height / container.lineHeight;
       int startBracket;
       if (clicked) {
@@ -104,7 +116,7 @@ public class GuiTextArea
       if (clickScrolling) {
          clickScrolling = ((IMouseHandlerMixin) Minecraft.getInstance().mouseHandler).getActiveButton() == 0;
          startBracket = container.linesCount - container.visibleLines;
-         scrolledLine = Math.min(Math.max((int)(1.0F * (float)startBracket * (float)(mouseY - y) / (float)height), 0), startBracket);
+         scrolledLine = Math.min(Math.max((int)(1.0F * (float)startBracket * (float)(mouseY - getY()) / (float)height), 0), startBracket);
       }
       startBracket = 0;
       int endBracket = 0;
@@ -137,14 +149,14 @@ public class GuiTextArea
             if (startBracket >= data.start && startBracket < data.end) {
                yPos = font.width(line.substring(0, startBracket - data.start));
                posX = font.width(line.substring(0, startBracket - data.start + 1)) + 1;
-               e = y + 1 + (i - scrolledLine) * container.lineHeight;
-               graphics.fill(x + 1 + yPos, e, x + 1 + posX, e + container.lineHeight + 1, 0x9900CC00);
+               e = getY() + 1 + (i - scrolledLine) * container.lineHeight;
+               graphics.fill(getX() + 1 + yPos, e, getX() + 1 + posX, e + container.lineHeight + 1, 0x9900CC00);
             }
             if (endBracket >= data.start && endBracket < data.end) {
                yPos = font.width(line.substring(0, endBracket - data.start));
                posX = font.width(line.substring(0, endBracket - data.start + 1)) + 1;
-               e = y + 1 + (i - scrolledLine) * container.lineHeight;
-               graphics.fill(x + 1 + yPos, e, x + 1 + posX, e + container.lineHeight + 1, 0x9900CC00);
+               e = getY() + 1 + (i - scrolledLine) * container.lineHeight;
+               graphics.fill(getX() + 1 + yPos, e, getX() + 1 + posX, e + container.lineHeight + 1, 0x9900CC00);
             }
          }
          if (i >= scrolledLine && i < scrolledLine + container.visibleLines) {
@@ -154,21 +166,21 @@ public class GuiTextArea
                   if (line.substring(m.start(), m.end()).equals(wordHeightLight)) {
                      posX = font.width(line.substring(0, m.start()));
                      e = font.width(line.substring(0, m.end())) + 1;
-                     int posY = y + 1 + (i - scrolledLine) * container.lineHeight;
-                     graphics.fill(x + 1 + posX, posY, x + 1 + e, posY + container.lineHeight + 1, 0x99004C00);
+                     int posY = getY() + 1 + (i - scrolledLine) * container.lineHeight;
+                     graphics.fill(getX() + 1 + posX, posY, getX() + 1 + e, posY + container.lineHeight + 1, 0x99004C00);
                   }
                }
             }
             if (startSelection != endSelection && endSelection > data.start && startSelection <= data.end && startSelection < data.end) {
                yPos = font.width(line.substring(0, Math.max(startSelection - data.start, 0)));
                posX = font.width(line.substring(0, Math.min(endSelection - data.start, w))) + 1;
-               e = y + 1 + (i - scrolledLine) * container.lineHeight;
-               graphics.fill(x + 1 + yPos, e, x + 1 + posX, e + container.lineHeight + 1, 0x990000FF);
+               e = getY() + 1 + (i - scrolledLine) * container.lineHeight;
+               graphics.fill(getX() + 1 + yPos, e, getX() + 1 + posX, e + container.lineHeight + 1, 0x990000FF);
             }
-            yPos = y + (i - scrolledLine) * container.lineHeight + 1;
-            font.draw(graphics.pose(), data.getFormattedString(container.makeup), (float)(x + 1), (float) yPos, 0xFFE0E0E0);
-            if (active && isEnabled() && cursorCounter / 6 % 2 == 0 && cursorPosition >= data.start && cursorPosition < data.end) {
-               posX = x + font.width(line.substring(0, cursorPosition - data.start));
+            yPos = getY() + (i - scrolledLine) * container.lineHeight + 1;
+            font.draw(graphics.pose(), data.getFormattedString(container.makeup), (float)(getX() + 1), (float) yPos, 0xFFE0E0E0);
+            if (active && isEnabled() && cursorCounter / 8 % 2 == 0 && cursorPosition >= data.start && cursorPosition < data.end) {
+               posX = getX() + font.width(line.substring(0, cursorPosition - data.start));
                graphics.fill(posX + 1, yPos, posX + 2, yPos + 1 + container.lineHeight, 0xFFD0D0D0);
             }
          }
@@ -178,10 +190,17 @@ public class GuiTextArea
          RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
          RenderSystem.setShaderTexture(0, GuiCustomScrollNop.resource);
          int sbSize = (int) Math.max((1.0f * container.visibleLines / container.linesCount * height), 2);
-         int posX2 = x + width - 6;
-         int posY3 = (int) ((y + 1.0f * scrolledLine / container.linesCount * (height - 4)) + 1);
+         int posX2 = getX() + width - 6;
+         int posY3 = (int) ((getY() + 1.0f * scrolledLine / container.linesCount * (height - 4)) + 1);
          graphics.fill(posX2, posY3, posX2 + 5, posY3 + sbSize, 0xFFE0E0E0);
       }
+      String tr = Component.translatable(text).getString();
+      if (isYDE && isHovered && !Util.instance.equalsDeleteColor(text, tr, false)) {
+         if (tr.length() > 200) { tr = tr.substring(0, 200) + "..."; }
+         hoverText.clear();
+         for (String line : tr.split("\n")) { hoverText.add(Component.literal(line)); }
+      }
+      if (listener != null && isHovered && !hoverText.isEmpty()) { listener.setHoverText(hoverText); }
    }
 
    @Override
@@ -231,8 +250,8 @@ public class GuiTextArea
    }
 
    private int getSelectionPos(double xMouse, double yMouse) {
-      xMouse -= x + 1;
-      yMouse -= y + 1;
+      xMouse -= getX() + 1;
+      yMouse -= getY() + 1;
       List<TextLineData> list = new ArrayList<>(container.lines);
       for(int i = 0; i < list.size(); ++i) {
          TextLineData data = list.get(i);
@@ -267,6 +286,10 @@ public class GuiTextArea
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       if (!visible || !enabled || !active || !isFocused()) { return false; }
+      if (active && GuiBasic.isEscKey(keyCode)) {
+         active = false;
+         return true;
+      }
       if (Screen.isSelectAll(keyCode)) {
          int n = 0;
          cursorPosition = n;
@@ -421,7 +444,8 @@ public class GuiTextArea
          TextLineData data = container.lines.get(i);
          if (cursorPosition >= data.start && cursorPosition < data.end) {
             if (i == 0) { return 0; }
-            return getSelectionPos(x + 1 + font.width(data.text.substring(0, cursorPosition - data.start)), y + 1 + (i - 1 - scrolledLine) * container.lineHeight);
+            return getSelectionPos(getX() + 1 + font.width(data.text.substring(0, cursorPosition - data.start)),
+                    getY() + 1 + (i - 1 - scrolledLine) * container.lineHeight);
          }
       }
       return 0;
@@ -431,7 +455,8 @@ public class GuiTextArea
       for(int i = 0; i < container.lines.size(); ++i) {
          TextLineData data = container.lines.get(i);
          if (cursorPosition >= data.start && cursorPosition < data.end) {
-            return getSelectionPos(x + 1 + font.width(data.text.substring(0, cursorPosition - data.start)), y + 1 + (i + 1 - scrolledLine) * container.lineHeight);
+            return getSelectionPos(getX() + 1 + font.width(data.text.substring(0, cursorPosition - data.start)),
+                    getY() + 1 + (i + 1 - scrolledLine) * container.lineHeight);
          }
       }
       return text.length();
@@ -452,14 +477,15 @@ public class GuiTextArea
 
    @Override
    public boolean mouseClicked(double xMouse, double yMouse, int mouseButton) {
-      active = xMouse >= (double)x && xMouse < (double)(x + width) && yMouse >= (double)y && yMouse < (double)(y + height);
+      active = xMouse >= (double)getX() && xMouse < (double)(getX() + width) && yMouse >= (double)getY() && yMouse < (double)(getY() + height);
       setFocused(active);
       if (active) {
+         GuiTextFieldNop.unfocus();
          startSelection = endSelection = cursorPosition = getSelectionPos(xMouse, yMouse);
          clicked = mouseButton == 0;
          doubleClicked = false;
          long time = System.currentTimeMillis();
-         if (clicked && container.linesCount * container.lineHeight > height && xMouse > (double)(x + width - 8)) {
+         if (clicked && container.linesCount * container.lineHeight > height && xMouse > (double)(getX() + width - 8)) {
             clicked = false;
             clickScrolling = true;
          } else if (time - lastClicked < 500L) {
@@ -542,12 +568,15 @@ public class GuiTextArea
    public GuiTextArea setHoverTexts(Object... components) {
       hoverText.clear();
       if (components == null) { return this; }
-      noppes.npcs.util.Util.instance.putHovers(hoverText, components);
+      Util.instance.putHovers(hoverText, components);
       return this;
    }
 
    @Override
-   public GuiTextArea setCustomFont(ClientProxy.FontContainer font) { return this; }
+   public GuiTextArea setCustomFont(ClientProxy.FontContainer fontIn) {
+      if (fontIn != null && fontIn.getFont() != null) { font = fontIn.getFont(); }
+      return this;
+   }
 
    @Override
    public GuiTextArea setIsEnabled(boolean isEnabled) {
@@ -589,4 +618,9 @@ public class GuiTextArea
       return false;
    }
 
+
+   public GuiTextArea setColor(int color) {
+      setFGColor(color);
+      return this;
+   }
 }

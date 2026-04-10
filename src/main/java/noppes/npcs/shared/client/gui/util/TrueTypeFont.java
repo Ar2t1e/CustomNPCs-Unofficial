@@ -15,7 +15,6 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -39,33 +38,34 @@ public class TrueTypeFont {
     private static final RandomSource random = RandomSource.create();
 
     private final List<Font> usedFonts = new ArrayList<>();
-    private final LinkedHashMap<String, TrueTypeFont.GlyphCache> textCache = new LRUHashMap<>(100);
+    private final LinkedHashMap<String, TrueTypeFont.GlyphCache> textCache = new LRUHashMap<>(2500); // text lines
     private final Map<Character, TrueTypeFont.Glyph> glyphCache = new HashMap<>();
     private final List<TrueTypeFont.TextureCache> textures = new ArrayList<>();
     private final Graphics2D globalG = (Graphics2D) (new BufferedImage(1, 1, 2)).getGraphics();
-    public float scale = 1.0F;
     private char specialChar = (char) 167;
+    public float scale = 1.0F;
 
     private Font font;
     private int lineHeight = 1;
+    private final float tabWidth;
 
     public TrueTypeFont(Font fontIn, float scaleIn) {
         font = fontIn;
         scale = scaleIn;
         globalG.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         lineHeight = globalG.getFontMetrics(font).getHeight();
+        tabWidth = getOrCreateGlyph('a').width * 3.0f;
     }
 
-    public TrueTypeFont(ResourceLocation resource, int fontSize, float scaleIn) {
-        Minecraft minecraft = Minecraft.getInstance();
-        Resource resourceTTF = minecraft.getResourceManager().getResource(resource).orElse(null);
+    public TrueTypeFont(ResourceLocation resource, float fontSize, float scaleIn) {
+        Resource resourceTTF = Minecraft.getInstance().getResourceManager().getResource(resource).orElse(null);
         if (resourceTTF != null) {
             try {
                 InputStream stream = resourceTTF.open();
                 GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
                 Font fontIn = Font.createFont(0, stream);
                 ge.registerFont(fontIn);
-                font = fontIn.deriveFont(Font.PLAIN, (float) fontSize);
+                font = fontIn.deriveFont(Font.PLAIN, fontSize);
                 scale = scaleIn;
                 globalG.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 lineHeight = globalG.getFontMetrics(font).getHeight();
@@ -73,11 +73,12 @@ public class TrueTypeFont {
             }
             catch (Exception e) { LogWriter.error("Error load font \"" + resource + "\"", e); }
         }
+        tabWidth = getOrCreateGlyph('a').width * 3.0f;
     }
 
     public void setSpecial(char c) { specialChar = c; }
 
-    public void draw(PoseStack posestack, String text, float x, float y, int color) {
+    public int draw(PoseStack posestack, String text, float x, float y, int color) {
         TrueTypeFont.GlyphCache cache = getOrCreateCache(text);
         int a = color >> 24 & 255;
         int r = color >> 16 & 255;
@@ -132,19 +133,20 @@ public class TrueTypeFont {
                     Glyph renderGlyph = obfuscated ? getObfuscatedGlyph(gl.originalChar, gl) : gl;
                     // ITALIC: Move the top of the character to the right
                     float italicOffset = italic ? glHeight * -0.3f : 0f;
+                    RenderSystem.setShaderTexture(0, renderGlyph.texture);
                     posestack.pushPose();
                     // Apply italic transformation to ONE character
                     if (italic) {
                         Matrix4f matrix = posestack.last().pose();
                         matrix.m10(matrix.m11() * -0.3f);
                     }
-                    RenderSystem.setShaderTexture(0, renderGlyph.texture);
-
-                    fillGradient(posestack.last().pose(),
-                            currentX + (italic ? -italicOffset : 0), 0.0F,
-                            (float) renderGlyph.x * textureScale(),
-                            (float) renderGlyph.y * textureScale(),
-                            glWidth, glHeight, rr, gg, bb);
+                    if (gl.originalChar != (char) 9) {
+                        fillGradient(posestack.last().pose(),
+                                currentX + (italic ? -italicOffset : 0), 0.0F,
+                                (float) renderGlyph.x * textureScale(),
+                                (float) renderGlyph.y * textureScale(),
+                                glWidth, glHeight, rr, gg, bb);
+                    }
 
                     posestack.popPose();
                     // BOLD: draw a second time with an offset of 0.5pxl
@@ -162,13 +164,14 @@ public class TrueTypeFont {
                         posestack.popPose();
                         currentX += 0.5F;
                     }
+                    float f0 = 0.5f;
                     if (strikethrough) {
                         float lineY = glHeight * 0.5f;
-                        fillColor(posestack, currentX, lineY, glWidth, 0.5F, rr, gg, bb);
+                        fillColor(posestack, currentX, lineY, glWidth, f0, rr, gg, bb);
                     }
                     if (underline) {
                         float lineY = glHeight - 1.0f;
-                        fillColor(posestack, currentX, lineY, glWidth, 0.5F, rr, gg, bb);
+                        fillColor(posestack, currentX, lineY, glWidth, f0, rr, gg, bb);
                     }
                     currentX += glWidth;
                 }
@@ -176,27 +179,28 @@ public class TrueTypeFont {
         }
         posestack.popPose();
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        return (int) (x + currentX * scale) + 1;
     }
 
     public void fillGradient(Matrix4f m, float x, float y, float textureX, float textureY, float width, float height, int r, int g, int b) {
         float f = 0.00390625F;
         float zLevel = 0.0f;
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        BufferBuilder tessellator = Tesselator.getInstance().getBuilder();
-        tessellator.begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        tessellator.vertex(m, x, y + height, zLevel)
+        BufferBuilder builder = Tesselator.getInstance().getBuilder();
+        builder.begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        builder.vertex(m, x, y + height, zLevel)
                 .uv(textureX * f, (textureY + height) * f)
                 .color(r, g, b, 255).endVertex();
-        tessellator.vertex(m, x + width, y + height, zLevel)
+        builder.vertex(m, x + width, y + height, zLevel)
                 .uv((textureX + width) * f, (textureY + height) * f)
                 .color(r, g, b, 255).endVertex();
-        tessellator.vertex(m, x + width, y, zLevel)
+        builder.vertex(m, x + width, y, zLevel)
                 .uv((textureX + width) * f, textureY * f)
                 .color(r, g, b, 255).endVertex();
-        tessellator.vertex(m, x, y, zLevel)
+        builder.vertex(m, x, y, zLevel)
                 .uv(textureX * f, textureY * f)
                 .color(r, g, b, 255).endVertex();
-        BufferUploader.drawWithShader(tessellator.end());
+        BufferUploader.drawWithShader(builder.end());
     }
 
     private void fillColor(PoseStack posestack, float x, float y, float w, float h, int r, int g, int b) {
@@ -229,6 +233,7 @@ public class TrueTypeFont {
         TrueTypeFont.GlyphCache cache = textCache.get(text);
         if (cache == null) {
             cache = new GlyphCache();
+            float currentLineWidth = 0;
             for (int i = 0; i < text.length(); ++i) {
                 char c = text.charAt(i);
                 if (c == specialChar && i + 1 < text.length()) {
@@ -259,9 +264,24 @@ public class TrueTypeFont {
                         continue;
                     } // has color code
                 }
+                if (c == '\t') {
+                    float tabPosition = (float) Math.floor((currentLineWidth + 1) / tabWidth) * tabWidth + tabWidth;
+                    float tabSize = tabPosition - currentLineWidth;
+
+                    Glyph g = new Glyph('\t');
+                    g.width = (int) Math.max(tabSize, tabWidth / 4);
+                    g.height = lineHeight;
+
+                    cache.glyphs.add(g);
+                    currentLineWidth += g.width;
+                    cache.width = (int) Math.max(cache.width, currentLineWidth);
+                    continue;
+                } // tab
+
                 Glyph g = getOrCreateGlyph(c);
                 cache.glyphs.add(g);
-                cache.width += g.width;
+                currentLineWidth += g.width;
+                cache.width = (int) Math.max(cache.width, currentLineWidth);
                 cache.height = Math.max(cache.height, g.height);
             }
             textCache.put(text, cache);
@@ -323,47 +343,38 @@ public class TrueTypeFont {
                 break;
             }
         }
-        if (cache == null) {
-            textures.add(cache = new TextureCache());
-        }
+        if (cache == null) { textures.add(cache = new TextureCache()); }
         return cache;
     }
 
     private Font getFontForChar(char c) {
-        if (font.canDisplay(c)) { return font; }
-        Iterator<Font> var2 = usedFonts.iterator();
-        Font f;
-        do {
-            if (!var2.hasNext()) {
-                Font fa = new Font("Arial Unicode MS", Font.PLAIN, font.getSize());
-                if (fa.canDisplay(c)) { return fa; }
-                Iterator<Font> var6 = allFonts.iterator();
-                do {
-                    if (!var6.hasNext()) {
-                        return font;
-                    }
-                    f = var6.next();
-                } while(!f.canDisplay(c));
-                usedFonts.add(f = f.deriveFont(Font.PLAIN, (float) font.getSize()));
-                return f;
+        if (!font.canDisplay(c)) {
+            for (Font fontU : new ArrayList<>(usedFonts)) {
+                if (fontU.canDisplay(c)) { return fontU; }
             }
-            f = var2.next();
-        } while(!f.canDisplay(c));
-        return f;
+            Font fontAUMS = new Font("Arial Unicode MS", Font.PLAIN, font.getSize());
+            if (fontAUMS.canDisplay(c)) { return fontAUMS; }
+            for (Font fontInAll : new ArrayList<>(TrueTypeFont.allFonts)) {
+                if (fontInAll.canDisplay(c)) {
+                    usedFonts.add(fontInAll = fontInAll.deriveFont(Font.PLAIN, font.getSize()));
+                    return fontInAll;
+                }
+            }
+        }
+        return font;
     }
 
     public int width(String text) {
         TrueTypeFont.GlyphCache cache = getOrCreateCache(text);
-        return (int)((float) cache.width * scale * textureScale());
+        return (int) ((float) cache.width * scale * textureScale());
     }
 
     public int height(String text) {
         if (text != null && !text.trim().isEmpty()) {
             TrueTypeFont.GlyphCache cache = getOrCreateCache(text);
-            return Math.max(1, (int)((float) cache.height * scale * textureScale()));
-        } else {
-            return (int)((float) lineHeight * scale * textureScale());
+            return Math.max(1, (int) ((float) cache.height * scale * textureScale()));
         }
+        return (int) ((float) lineHeight * scale * textureScale());
     }
 
     private float textureScale() { return 0.5F; }
@@ -376,6 +387,40 @@ public class TrueTypeFont {
     public String getFontName() { return font.getFontName(); }
 
     public boolean hasFont() { return font != null; }
+
+    public String plainSubstrByWidth(String str, int maxWidth) {
+        if (str == null || str.isEmpty()) { return ""; }
+        float scaledMaxWidth = maxWidth / (scale * textureScale());
+        int currentWidth = 0;
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == specialChar && i + 1 < str.length()) {
+                char next = str.charAt(i + 1);
+                if ("0123456789abcdefklmnor".indexOf(Character.toLowerCase(next)) >= 0) {
+                    result.append(c).append(next);
+                    i++;
+                    continue;
+                }
+            }
+            Glyph glyph = getOrCreateGlyph(c);
+            int charWidth = glyph.width;
+            if (currentWidth + charWidth > scaledMaxWidth) { break; }
+            currentWidth += charWidth;
+            result.append(c);
+        }
+        return result.toString();
+    }
+
+    public String plainSubstrByWidth(String str, int maxWidth, boolean withEllipsis) {
+        String result = plainSubstrByWidth(str, maxWidth);
+        if (withEllipsis && result.length() < str.length()) {
+            int ellipsisWidth = width("...");
+            String withoutEllipsis = plainSubstrByWidth(str, maxWidth - ellipsisWidth);
+            return withoutEllipsis + "...";
+        }
+        return result;
+    }
 
     static class GlyphCache {
         public int width;
@@ -402,15 +447,7 @@ public class TrueTypeFont {
     }
 
     enum GlyphType {
-        NORMAL,
-        COLOR,
-        RANDOM,
-        BOLD,
-        STRIKETHROUGH,
-        UNDERLINE,
-        ITALIC,
-        RESET,
-        OTHER
+        NORMAL, COLOR, RANDOM, BOLD, STRIKETHROUGH, UNDERLINE, ITALIC, RESET, OTHER
     }
 
     static class TextureCache {

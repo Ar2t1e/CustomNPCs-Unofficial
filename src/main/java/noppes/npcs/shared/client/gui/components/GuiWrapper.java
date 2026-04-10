@@ -42,13 +42,10 @@ public class GuiWrapper {
    public void tick() {
       if (subgui != null) { subgui.tick(); }
       else {
-         // first text_fields
          for (IComponentGui component : new ArrayList<>(components)) {
-            if (component instanceof EditBox box) { box.tick(); }
-         }
-         // then all the others
-         for (IComponentGui component : new ArrayList<>(components)) {
-            if (component instanceof GuiTextArea area) { area.tick(); }
+            if (component instanceof Screen screen) { screen.tick(); }
+            else if (component instanceof EditBox box) { box.tick(); }
+            else if (component instanceof GuiTextArea area) { area.tick(); }
          }
       }
    }

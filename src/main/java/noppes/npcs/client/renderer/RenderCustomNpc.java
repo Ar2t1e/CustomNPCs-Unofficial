@@ -188,7 +188,8 @@ public class RenderCustomNpc<T extends EntityCustomNpc, M extends HumanoidModel<
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public void render(@Nonnull T npcIn, float entityYaw, float partialTicksIn, @Nonnull PoseStack matrixStack, @Nonnull MultiBufferSource buffer, int packedLight) {
+	public void render(@Nullable T npcIn, float entityYaw, float partialTicksIn, @Nonnull PoseStack matrixStack, @Nonnull MultiBufferSource buffer, int packedLight) {
+		if (npcIn == null) { return; }
 		npc = npcIn;
 		if (CustomNpcs.EnableInvisibleNpcs && CustomNpcs.InvisibilityAlgorithm > 0) {
 			Player player = Minecraft.getInstance().player;
@@ -199,7 +200,7 @@ public class RenderCustomNpc<T extends EntityCustomNpc, M extends HumanoidModel<
 		}
 		partialTicks = partialTicksIn;
 		Entity prevEntity = entity;
-		entity = npcIn.modelData.getEntity(npc);
+		entity = npc.modelData.getEntity(npc);
 		if (prevEntity != null && entity == null) {
 			model = npcModel;
 			renderEntity = null;

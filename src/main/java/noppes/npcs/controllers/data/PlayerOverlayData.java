@@ -20,11 +20,11 @@ public class PlayerOverlayData implements IPlayerData {
     protected static final String dataName = "OverlayData";
     protected static final ResourceLocation ALL_ELEMENTS = new ResourceLocation("all");
 
-    protected Map<ResourceLocation, Boolean> showElementTypes = new HashMap<>();
-    protected Set<Integer> overlays = new HashSet<>();
-    public ScreenSize screenSize = new ScreenSize(0, 0);
-    public Set<Integer> keyPress = new HashSet<>();
-    public Set<Integer> mousePress = new HashSet<>();
+    protected final Map<ResourceLocation, Boolean> showElementTypes = new HashMap<>();
+    protected final Set<Integer> overlays = new HashSet<>();
+    public final ScreenSize screenSize = new ScreenSize(0, 0);
+    public final Set<Integer> keyPress = new HashSet<>();
+    public final Set<Integer> mousePress = new HashSet<>();
 
     public String currentGUI = "";
     public boolean isMoved;
@@ -204,8 +204,11 @@ public class PlayerOverlayData implements IPlayerData {
     public ScreenSize getWindowSize() { return screenSize; }
 
     public boolean isShowElementType(ResourceLocation id) {
-        if (!showElementTypes.get(ALL_ELEMENTS)) { return false; }
-        return showElementTypes.get(id);
+        Boolean value = showElementTypes.get(ALL_ELEMENTS);
+        if (value == null || !value) { return false; }
+        value = showElementTypes.get(id);
+        if (value == null) { value = showElementTypes.computeIfAbsent(id, k -> Boolean.TRUE); }
+        return value;
     }
 
     public boolean isMoved() { return isMoved; }

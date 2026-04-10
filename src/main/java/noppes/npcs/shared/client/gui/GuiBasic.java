@@ -17,7 +17,6 @@ import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -181,7 +180,16 @@ public class GuiBasic extends Screen implements IGuiInterface {
 
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-       return wrapper.mouseClicked(mouseX, mouseY, mouseButton) || super.mouseClicked(mouseX, mouseY, mouseButton);
+      boolean bo  = wrapper.mouseClicked(mouseX, mouseY, mouseButton) || super.mouseClicked(mouseX, mouseY, mouseButton);
+      if (GuiTextFieldNop.getActive() != null) {
+         for (IComponentGui component : wrapper.components) {
+            if (component instanceof GuiTextArea area) {
+               area.active = false;
+               area.setIsFocused(false);
+            }
+         }
+      }
+      return bo;
    }
 
    @Override
@@ -235,7 +243,10 @@ public class GuiBasic extends Screen implements IGuiInterface {
    }
 
    @Override
-   public void add(IComponentGui element) { wrapper.add(element); }
+   public void add(IComponentGui element) {
+      wrapper.add(element);
+      if (element instanceof GuiTextArea area) { area.setListener(this); }
+   }
 
    public <C extends IComponentGui> C get(int id, Class<C> clazz) {
       for (IComponentGui component : new ArrayList<>(wrapper.components)) {

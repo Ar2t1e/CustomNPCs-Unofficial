@@ -19,7 +19,7 @@ public class CmdScene {
                .then(Commands.literal("time").executes((context) -> {
                    context.getSource().sendSuccess(() -> Component.literal("Active scenes:"), false);
                    for (Entry<String, DataScenes.SceneState> entry : DataScenes.StartedScenes.entrySet()) {
-                      context.getSource().sendSuccess(() -> Component.translatable("Scene %s time is %s", entry.getKey(), entry.getValue().ticks), false);
+                      context.getSource().sendSuccess(() -> Component.translatable("scene.time.get", entry.getKey(), entry.getValue().ticks), false);
                    }
                    return 1;
                 }).then(Commands.argument("time", IntegerArgumentType.integer(0)).executes((context) -> {
@@ -34,26 +34,26 @@ public class CmdScene {
           String name = StringArgumentType.getString(context, "name");
           DataScenes.SceneState state = DataScenes.StartedScenes.get(name.toLowerCase());
           if (state == null) {
-             throw new CommandRuntimeException(Component.translatable("Unknown scene name %s", name));
+             throw new CommandRuntimeException(Component.translatable("scene.unknown", name));
           } else {
              state.ticks = IntegerArgumentType.getInteger(context, "time");
-             context.getSource().sendSuccess(() -> Component.translatable("Scene %s set to %s", name, state.ticks), false);
+             context.getSource().sendSuccess(() -> Component.translatable("scene.time.set", name, state.ticks), false);
              return 1;
           }
        })).then(Commands.literal("reset").executes((context) -> {
-          DataScenes.Reset(null);
+          DataScenes.Reset(null, null);
           return 1;
        })).then(Commands.argument("name", StringArgumentType.string()).executes((context) -> {
-          DataScenes.Reset(StringArgumentType.getString(context, "name"));
+          DataScenes.Reset(StringArgumentType.getString(context, "name"), null);
           return 1;
        })).then(Commands.literal("start").then(Commands.argument("name", StringArgumentType.string()).executes((context) -> {
-          DataScenes.Start(StringArgumentType.getString(context, "name"));
+          DataScenes.Start(StringArgumentType.getString(context, "name"), null);
           return 1;
        })).then(Commands.literal("pause").executes((context) -> {
-          DataScenes.Pause(null);
+          DataScenes.Pause(null, null);
           return 1;
        })).then(Commands.argument("name", StringArgumentType.string()).executes((context) -> {
-          DataScenes.Pause(StringArgumentType.getString(context, "name"));
+          DataScenes.Pause(StringArgumentType.getString(context, "name"), null);
           return 1;
        })))))));
    }

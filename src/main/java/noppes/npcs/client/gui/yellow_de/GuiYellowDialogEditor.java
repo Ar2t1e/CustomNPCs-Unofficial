@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -58,12 +59,12 @@ public class GuiYellowDialogEditor extends GuiBasic {
     protected double tempDy;
     // category
     public @Nonnull YDECategory category;
+    protected int select = -2;
     // tabs
     protected final @Nonnull GuiCustomWindowNop leftTab;
     protected boolean hoverLeft = false;
     protected final @Nonnull GuiCustomWindowNop rightTab;
     protected boolean hoverRight = false;
-    protected int select = -2;
 
     public GuiYellowDialogEditor() {
         super();
@@ -237,8 +238,13 @@ public class GuiYellowDialogEditor extends GuiBasic {
         // mouse pos hover
         mouseOnGrid = hovered == null &&
                 !leftTab.isHovered() && !hoverLeft &&
-                !rightTab.isHovered()  && !hoverRight &&
-                hoverText.isEmpty();
+                !rightTab.isHovered()  && !hoverRight;
+        for (IComponentGui component : new ArrayList<>(wrapper.components)) {
+            if (component instanceof AbstractWidget widget && widget.isHovered()) {
+                mouseOnGrid = false;
+                break;
+            }
+        }
         matrixStack.popPose();
         if (mouseOnGrid) {
             matrixStack.pushPose();
@@ -257,75 +263,90 @@ public class GuiYellowDialogEditor extends GuiBasic {
             UtilYDE.FONT.draw(graphics, label, 0, 0, color);
             matrixStack.popPose();
         }
-
     }
 
     private void renderSelectedBorder(@Nonnull GuiGraphics graphics, @Nonnull IComponentGui sel) {
         VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.gui());
         Matrix4f matrix = graphics.pose().last().pose();
-        int x = (int) ((System.currentTimeMillis() % 500L) / 50L) - 10;
+        int x;
         int y;
         int w;
         int h;
         if (sel instanceof YDEWindowNop win) {
-            x += win.getX() - 2;
-            y = win.getY() - 2;
-            w = y + win.imageWidth + 4;
-            h = y + win.imageHeight + 4;
-        } else if (sel instanceof YDEAreaNop area) {
-            x += area.getX() - 2;
-            y = area.getY() - 2;
-            w = y + area.getWidth() + 4;
-            h = y + area.getHeight() + 4;
+            x = win.getX();
+            y = win.getY();
+            w = win.imageWidth;
+            h = win.imageHeight;
         }
+        else if (sel instanceof YDEAreaNop area) {
+            x = area.getX();
+            y = area.getY();
+            w = area.getWidth();
+            h = area.getHeight();
+        }
+        else { return; }
+        x = (int) (x * category.getScale() + centerU - 1.0f);
+        y = (int) (y * category.getScale() + centerV - 1.0f);
+        w = (int) (w * category.getScale() + 2.25f);
+        h = (int) (h * category.getScale() + 1.75f);
         int s;
         int e;
-        /*
-        while (x < w) {
-            s = ValueUtil.correctInt(x, 0, w);
-            e = ValueUtil.correctInt(x + 5, 0, w);
-            consumer.vertex(matrix, s, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, s, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x += 10;
+        int step = 5;
+        int u = (int) ((System.currentTimeMillis() % (step * 100L)) / (step * 10L)) - step;
+        while (u < w) {
+            s = x + ValueUtil.correctInt(u, 0, w);
+            e = x + ValueUtil.correctInt(u + step, 0, w);
+            consumer.vertex(matrix, s, y, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, s, y + 0.5f, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e, y + 0.5f, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e, y, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            u += 2 * step;
         }
-        x -= w + 10;
-        y = w;
-        while (x < h) {
-            s = ValueUtil.correctInt(x, 0, h);
-            e = ValueUtil.correctInt(x + 5, 0, h + 1);
-            consumer.vertex(matrix, y, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x += 10;
-        }
-        x -= h + 6;
-        x *= -1;
+        u = u - w - 2 * step;
         x += w;
-        y = h;
-        while (x > -10) {
-            s = ValueUtil.correctInt(x, 0, w);
-            e = ValueUtil.correctInt(x + 5, 0, w);
-            consumer.vertex(matrix, s, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, s, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y + 1, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, e, y, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x -= 10;
+        while (u < h) {
+            s = y + ValueUtil.correctInt(u, 0, h);
+            e = y + ValueUtil.correctInt(u + step, 0, h + 1);
+            consumer.vertex(matrix, x, s, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, x, e, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, x + 0.5f, e, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, x + 0.5f, s, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            u += 2 * step;
         }
-        x += w - 10;
-        y = 0;
-        while (x > -10) {
-            s = ValueUtil.correctInt(x, 0, h);
-            e = ValueUtil.correctInt(x + 5, 0, h + 1);
-            consumer.vertex(matrix, y, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            consumer.vertex(matrix, y + 1, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
-            x -= 10;
+        u = -1 * (u - h) + step;
+        y += h + 1;
+        while (u > - w - step) {
+            s = x + ValueUtil.correctInt(u, -w, 0);
+            e = x + ValueUtil.correctInt(u + step, -w, 0);
+            consumer.vertex(matrix, s + 0.5f, y, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, s + 0.5f, y + 0.5f, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e + 0.5f, y + 0.5f, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, e + 0.5f, y, 0.0f)
+                    .color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            u -= 2 * step;
         }
-        /**/
+        u += w + 2 * step;
+        x -= w;
+        while (u > - h - step) {
+            s = y + ValueUtil.correctInt(u, - h, 0);
+            e = y + ValueUtil.correctInt(u + step, -h, 0);
+            consumer.vertex(matrix, x, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, x, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, x + 0.5f, e, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            consumer.vertex(matrix, x + 0.5f, s, 0.0f).color(1.0f, 1.0f, 1.0f, 1.0f).endVertex();
+            u -= 2 * step;
+        }
         graphics.bufferSource().endBatch();
     }
 
@@ -435,7 +456,7 @@ public class GuiYellowDialogEditor extends GuiBasic {
         boolean bo = leftTab.mouseScrolled(mouseX, mouseY, scrolled) ||
                 rightTab.mouseScrolled(mouseX, mouseY, scrolled) ||
                 wrapper.mouseScrolled(xMouse, yMouse, scrolled);
-        if (!bo) {
+        if (mouseOnGrid) {
             float oldScale = category.getScale();
             float f0 = category.getScale() * (scrolled < 0.0f ? 0.1f : -0.1f);
             float newScale = ValueUtil.correctFloat(oldScale + f0, 0.1f, 1.0f);
@@ -464,7 +485,7 @@ public class GuiYellowDialogEditor extends GuiBasic {
         }
         return leftTab.mouseClicked(mouseX, mouseY, mouseButton) ||
                 rightTab.mouseClicked(mouseX, mouseY, mouseButton) ||
-                wrapper.mouseClicked(xMouse, yMouse, mouseButton);
+                wrapper.mouseClicked(wrapper.mouseX, wrapper.mouseY, mouseButton);
     }
 
     @Override
@@ -472,7 +493,7 @@ public class GuiYellowDialogEditor extends GuiBasic {
         boolean bo = leftTab.mouseDragged(mouseX, mouseY, mouseButton, dx, dy) ||
                 rightTab.mouseDragged(mouseX, mouseY, mouseButton, dx, dy) ||
                 wrapper.mouseDragged(xMouse, yMouse, mouseButton, dx, dy);
-        if (mouseOnGrid || !bo) {
+        if (mouseOnGrid && !bo) {
             tempDx += dx;
             tempDy += dy;
             int x = (int) (Math.floor(tempDx) * guiScale / 2.0d);

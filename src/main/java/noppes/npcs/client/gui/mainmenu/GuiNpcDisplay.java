@@ -262,45 +262,45 @@ public class GuiNpcDisplay
    }
 
    @Override
-   public void unFocused(GuiTextFieldNop textfield) {
-      switch (textfield.id) {
+   public void unFocused(GuiTextFieldNop textField) {
+      switch (textField.id) {
          case 0: {
-            if (!textfield.isEmpty()) { display.setName(textfield.getValue()); }
-            textfield.setValue(display.getName());
+            if (!textField.isEmpty()) { display.setName(textField.getValue()); }
+            textField.setValue(display.getName());
             break;
          }
-         case 2: display.setSize(textfield.getInteger()); break;
+         case 2: display.setSize(textField.getInteger()); break;
          case 3: {
-            if (display.skinType == 2) { display.setSkinUrl(textfield.getValue()); }
-            else if (display.skinType == 1) { display.setSkinPlayer(textfield.getValue()); }
-            else { display.setSkinTexture(textfield.getValue()); }
+            if (display.skinType == 2) { display.setSkinUrl(textField.getValue()); }
+            else if (display.skinType == 1) { display.setSkinPlayer(textField.getValue()); }
+            else { display.setSkinTexture(textField.getValue()); }
             break;
          }
          case 6: {
             int color;
-            try { color = Integer.parseInt(textfield.getValue(), 16); }
+            try { color = Integer.parseInt(textField.getValue(), 16); }
             catch (NumberFormatException e) { color = new Color(0xFFFFFF).getRGB(); }
             display.setTint(color);
-            textfield.setTextColor(display.getTint());
+            textField.setTextColor(display.getTint());
             break;
          }
-         case 8: display.setCapeTexture(textfield.getValue()); break;
-         case 9: display.setOverlayTexture(textfield.getValue()); break;
-         case 11: display.setTitle(textfield.getValue()); break;
+         case 8: display.setCapeTexture(textField.getValue()); break;
+         case 9: display.setOverlayTexture(textField.getValue()); break;
+         case 11: display.setTitle(textField.getValue()); break;
          case 12: {
-            float f = textfield.getFloat();
+            float f = textField.getFloat();
             float[] displaySize = display.getDimensions();
             displaySize[0] = f < 0.0f ? baseSize.width : f;
             display.setDimensions(displaySize[0], displaySize[1]);
-            if (f < 0.0f) { textfield.setValue(df.format(displaySize[0])); }
+            if (f < 0.0f) { textField.setValue(df.format(displaySize[0])); }
             break;
          }
          case 13: {
-            float f = textfield.getFloat();
+            float f = textField.getFloat();
             float[] displaySize = display.getDimensions();
             displaySize[1] = f < 0.0f ? baseSize.height : f;
             display.setDimensions(displaySize[0], displaySize[1]);
-            if (f < 0.0f) { textfield.setValue(df.format(displaySize[1])); }
+            if (f < 0.0f) { textField.setValue(df.format(displaySize[1])); }
             break;
          }
       }

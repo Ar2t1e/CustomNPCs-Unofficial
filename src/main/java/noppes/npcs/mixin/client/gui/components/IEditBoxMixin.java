@@ -25,7 +25,11 @@ public interface IEditBoxMixin {
 
     @Accessor int getDisplayPos();
 
+    @Accessor void setDisplayPos(int newDisplayPos);
+
     @Accessor int getHighlightPos();
+
+    @Accessor("highlightPos") void setHighLPos(int newHighlightPos);
 
     @Accessor int getFrame();
 
@@ -39,5 +43,4 @@ public interface IEditBoxMixin {
 
     @Invoker
     int invokeGetMaxLength();
-
 }

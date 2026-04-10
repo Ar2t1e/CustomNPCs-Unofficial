@@ -861,12 +861,12 @@ public class ScriptPlayerEventHandler {
             java.io.File dir = new java.io.File("D:/1.20.1/customnpcs/src/main/java");
             //dir = new java.io.File("E:/Sources/1.20.1/minecraft 1.20.1/net");
             //dir = new java.io.File("E:/Sources/1.20.1/Mini Maps/VoxelMap/src/main/java");
-            dir = new java.io.File("E:/Sources/1.20.1/geckolib-1.20.1/CNPC-Gecko-Addon-1.20.1-1.0.0/com/goodbird/cnpcgeckoaddon");
+            //dir = new java.io.File("E:/Sources/1.20.1/geckolib-1.20.1/CNPC-Gecko-Addon-1.20.1-1.0.0/com/goodbird/cnpcgeckoaddon");
             LogWriter.info("Directory: "+dir.exists()+" - "+dir);
             String br = "" + ((char) 9) + ((char) 10) + " ()[]{}.,<>:;+-*\\/\"";
             java.util.Map<String, java.util.Map<String, java.util.List<Integer>>> found = new java.util.TreeMap<>();
             //found.put("TEST:", null);
-            found.put("SpriteSet", null);
+            found.put(" scene ", null);
 
             java.util.function.Function<java.io.File, String> getClss = (file) -> {
                Class<?> cl = null;

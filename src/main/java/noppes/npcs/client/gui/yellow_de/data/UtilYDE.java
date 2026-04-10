@@ -25,9 +25,9 @@ public class UtilYDE {
      * @param p0 - start point
      * @param p1 - end point
      * @param hovered - is hovered
-     * @param turnedType 0: not turned; 1: horizontal 2: vertical
+     * @param turned - is turned
      */
-    public static void renderSpline(GuiGraphics graphics, float[] p0, float[] p1, boolean hovered, int turnedType, int color, float zDepth) {
+    public static void renderSpline(GuiGraphics graphics, float[] p0, float[] p1, boolean hovered, boolean turned, int color, float zDepth) {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableDepthTest();
@@ -54,7 +54,7 @@ public class UtilYDE {
             float x3 = p0[0] + (p1[0] - p0[0]) / 2.0f;
             float y3 = (p1[1] - p0[1]) / 40.0f;
             List<float[]> points;
-            if (turnedType != 0) {
+            if (turned) {
                 float[] p2 = new float[]{ p0[0] + (p0[0] > p1[0] ? 5 : -5), p0[1] + (p0[1] > p1[1] ? -5 : 5)};
                 float[] p5 = new float[]{ p1[0] + (p0[0] > p1[0] ? -5 : 5), p1[1] + (p0[1] > p1[1] ? 5 : -5)};
                 IRayTraceRotate angles = Util.instance.getAngles3D(p0[0], 0, p0[1], p1[0], 0, p1[1]);
@@ -96,10 +96,10 @@ public class UtilYDE {
             // C(5,k) = 5! / (k! * (5-k)!)
             // k=0: 1, k=1: 5, k=2: 10, k=3: 10, k=4: 5, k=5: 1
             float c0 = (float) Math.pow(iT, 5.0f);                                  // (1-t)^5 * 1
-            float c1 = 5.2f * (float) Math.pow(iT, 4.0f) * t;                       // (1-t)^4 * t * 5
+            float c1 = 5.07f * (float) Math.pow(iT, 4.0f) * t;                       // (1-t)^4 * t * 5
             float c2 = 10 * (float) Math.pow(iT, 3.0f) * (float) Math.pow(t, 2.0f); // (1-t)^3 * t^2 * 10
             float c3 = 10 * (float) Math.pow(iT, 2.0f) * (float) Math.pow(t, 3.0f); // (1-t)^2 * t^3 * 10
-            float c4 = 4.8f * iT * (float) Math.pow(t, 4.0f);                       // (1-t) * t^4 * 5
+            float c4 = 4.93f * iT * (float) Math.pow(t, 4.0f);                       // (1-t) * t^4 * 5
             float c5 = (float) Math.pow(t, 5.0f);                                   // t^5 * 1
 
             float x = c0 * p0[0] + c1 * p1[0] + c2 * p2[0] + c3 * p3[0] + c4 * p4[0] + c5 * p5[0];

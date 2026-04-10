@@ -484,18 +484,18 @@ public class ClientProxy extends CommonProxy {
          return font;
       }
 
-      public void draw(PoseStack posestack, MultiBufferSource.BufferSource bufferSource, Object obj, float x, float y, int color) {
+      public int draw(PoseStack posestack, MultiBufferSource.BufferSource bufferSource, Object obj, float x, float y, int color) {
          String text = obj instanceof Component component ? Util.instance.getOldFormattedText(component) : String.valueOf(obj);
-         if (useCustomFont && textFont.hasFont()) { textFont.draw(posestack, text, x, y, color); }
+         if (useCustomFont && textFont.hasFont()) { return textFont.draw(posestack, text, x, y, color); }
          else {
             net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
-            font.drawInBatch(text, x, y, color, true, posestack.last().pose(), bufferSource,
+            return font.drawInBatch(text, x, y, color, true, posestack.last().pose(), bufferSource,
                     net.minecraft.client.gui.Font.DisplayMode.NORMAL, OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT, font.isBidirectional());
          }
       }
 
-      public void draw(@Nonnull GuiGraphics graphics, Object obj, float x, float y, int color) {
-         draw(graphics.pose(), graphics.bufferSource(), obj, x, y, color);
+      public int draw(@Nonnull GuiGraphics graphics, Object obj, float x, float y, int color) {
+         return draw(graphics.pose(), graphics.bufferSource(), obj, x, y, color);
       }
 
       public String getName() {
@@ -507,6 +507,9 @@ public class ClientProxy extends CommonProxy {
       }
 
       public int getHeight() { return height("|"); }
+
+      public TrueTypeFont getFont() { return textFont; }
+
    }
 
    // New from Unofficial (BetaZavr)

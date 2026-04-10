@@ -1,5 +1,6 @@
 package noppes.npcs.shared.client.gui.components;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -10,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.GuiComponentType;
@@ -232,8 +234,8 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
    @Override
    public void renderWidget(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
       if (!visible) { return; }
+      if (isFocused() && activeTextfield != this) { setFocused(false); }
       setTextColor(getTextColor());
-      //super.renderWidget(graphics, mouseX, mouseY, partialTicks);
 
       boolean bordered = ((IEditBoxMixin) this).getBordered();
       boolean isEditable = ((IEditBoxMixin) this).getIsEditable();
@@ -249,66 +251,76 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
       Component hint = ((IEditBoxMixin) this).getHint();
       String suggestion = ((IEditBoxMixin) this).getSuggestion();
       String value = getValue();
-
-      if (bordered) {
-         int i = (isFocused() ? (new Color(0xFFFFFF).getRGB() & 0xFFFFFF) :
+      int color;
+      PoseStack matrixStack = graphics.pose();
+      if (customFont != null) {
+         matrixStack.pushPose();
+         matrixStack.translate(getX(), getY(), 0.0f);
+         matrixStack.scale(0.5f, 0.5f, 0.5f);
+         if (bordered) {
+            color = (isFocused() ? (new Color(0xFFFFFF).getRGB() & 0xFFFFFF) :
+                    (new Color(0xA0A0A0).getRGB() & 0xFFFFFF))  | alpha;
+            graphics.fill(0, 0, width * 2, height * 2, color);
+            graphics.fill(1, 1, width * 2 - 1, height * 2 - 1,
+                    (new Color(0x000000).getRGB() & 0xFFFFFF)  | alpha);
+         }
+         matrixStack.popPose();
+      }
+      else if (bordered) {
+         color = (isFocused() ? (new Color(0xFFFFFF).getRGB() & 0xFFFFFF) :
                  (new Color(0xA0A0A0).getRGB() & 0xFFFFFF))  | alpha;
-         graphics.fill(getX() - 1, getY() - 1, getX() + width + 1, getY() + height + 1, i);
+         graphics.fill(getX() - 1, getY() - 1, getX() + width + 1, getY() + height + 1, color);
          graphics.fill(getX(), getY(), getX() + width, getY() + height,
                  (new Color(0x000000).getRGB() & 0xFFFFFF)  | alpha);
       }
-
-      int color = isEditable ? textColor : textColorUneditable;
+      color = isEditable ? textColor : textColorUneditable;
       int j = cursorPos - displayPos;
-      int k = highlightPos - displayPos;
-      String subStrByWidth = font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
+      String subStrByWidth = customFont != null ? customFont.getFont().plainSubstrByWidth(value.substring(displayPos), getInnerWidth()) :
+              font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
       boolean flag = j >= 0 && j <= subStrByWidth.length();
-      boolean showLine = isFocused() && frame / 6 % 2 == 0 && flag;
-      int l = bordered ? getX() + 4 : getX();
+      boolean showLine = isFocused() && frame / 8 % 2 == 0 && flag;
+      int l = getX() + (customFont != null ? 2 : 4);
       int i1 = bordered ? getY() + (height - 8) / 2 : getY();
       int j1 = l;
-      if (k > subStrByWidth.length()) {
-         k = subStrByWidth.length();
-      }
-
+      int k = ValueUtil.correctInt(highlightPos - displayPos, 0, subStrByWidth.length());
       if (!subStrByWidth.isEmpty()) {
          String s1 = flag ? subStrByWidth.substring(0, j) : subStrByWidth;
-         j1 = graphics.drawString(font, formatter.apply(s1, displayPos), l, i1, color);
+         if (customFont != null) { j1 = customFont.draw(graphics, s1, l, i1, color); }
+         else { j1 = graphics.drawString(font, formatter.apply(s1, displayPos), l, i1, color); }
       }
-
-      boolean isEndPos = cursorPos < getValue().length() || value.length() >= ((IEditBoxMixin) this).invokeGetMaxLength();
+      boolean isMaxEndPos = cursorPos < getValue().length() || value.length() >= ((IEditBoxMixin) this).invokeGetMaxLength();
       int k1 = j1;
-      if (!flag) {
-         k1 = j > 0 ? l + width : l;
-      } else if (isEndPos) {
+      if (!flag) { k1 = j > 0 ? l + width : l; }
+      else if (isMaxEndPos) {
          k1 = j1 - 1;
          --j1;
       }
-
       if (!subStrByWidth.isEmpty() && flag && j < subStrByWidth.length()) {
-         graphics.drawString(font, formatter.apply(subStrByWidth.substring(j), cursorPos), j1, i1, color);
+         if (customFont != null) { customFont.draw(graphics, subStrByWidth.substring(j), j1, i1, color); }
+         else { graphics.drawString(font, formatter.apply(subStrByWidth.substring(j), cursorPos), j1, i1, color); }
       }
-
       if (hint != null && subStrByWidth.isEmpty() && !isFocused()) {
-         graphics.drawString(font, hint, j1, i1, color);
+         if (customFont != null) { customFont.draw(graphics, hint, j1, i1, color); }
+         else { graphics.drawString(font, hint, j1, i1, color); }
       }
-
-      if (!isEndPos && suggestion != null) {
-         graphics.drawString(font, suggestion, k1 - 1, i1,
-                 (new Color(0x808080).getRGB() & 0xFFFFFF)  | alpha);
+      if (!isMaxEndPos && suggestion != null) {
+         int c = (new Color(0x808080).getRGB() & 0xFFFFFF)  | alpha;
+         if (customFont != null) { customFont.draw(graphics, suggestion, k1 - 1, i1, c); }
+         else { graphics.drawString(font, suggestion, k1 - 1, i1, c); }
       }
-
       if (showLine) {
-         if (isEndPos) {
+         if (isMaxEndPos) {
             graphics.fill(RenderType.guiOverlay(), k1, i1 - 1, k1 + 1, i1 + 1 + 9,
                     (new Color(0xD0D0D0).getRGB() & 0xFFFFFF)  | alpha);
          } else {
-            graphics.drawString(font, "_", k1, i1, color);
+            if (customFont != null) { customFont.draw(graphics, "_", k1, i1, color); }
+            else { graphics.drawString(font, "_", k1, i1, color); }
          }
       }
-
       if (k != j) {
-         int l1 = l + font.width(subStrByWidth.substring(0, k));
+         String str = subStrByWidth.substring(0, k);
+         int l1;
+         if (customFont != null) { l1 = l + customFont.width(str); } else { l1 = l + font.width(str); }
          renderHighlight(graphics, k1, i1 - 1, l1 - 1, i1 + 1 + 9);
       }
    }
@@ -328,6 +340,51 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
       if (left > getX() + width) { left = getX() + width; }
       graphics.fill(RenderType.guiTextHighlight(), left, top, right, bottom,
               (new Color(0x0000FF).getRGB() & 0xFFFFFF) | 0xFF000000);
+   }
+
+   @Override
+   public void setHighlightPos(int pos) {
+      String value = getValue();
+      int size = value.length();
+      int highlightPos = Mth.clamp(pos, 0, size);
+      int displayPos = ((IEditBoxMixin) this).getDisplayPos();
+      Font font = ((IEditBoxMixin) this).getFont();
+      if (customFont != null || font != null) {
+         if (displayPos > size) { displayPos = size; }
+         int j = getInnerWidth();
+         String s = customFont != null ? customFont.getFont().plainSubstrByWidth(value.substring(displayPos), j) :
+                 font.plainSubstrByWidth(value.substring(displayPos), j);
+         int k = s.length() + displayPos;
+         if (highlightPos == displayPos) {
+            displayPos -= customFont != null ? customFont.getFont().plainSubstrByWidth(value, j, true).length() :
+                    font.plainSubstrByWidth(value, j, true).length();
+         }
+         if (highlightPos > k) { displayPos += highlightPos - k; }
+         else if (highlightPos <= displayPos) { displayPos -= displayPos - highlightPos; }
+         ((IEditBoxMixin) this).setDisplayPos(Mth.clamp(displayPos, 0, size));
+      }
+      ((IEditBoxMixin) this).setHighLPos(highlightPos);
+   }
+
+   @Override
+   public void onClick(double mouseX, double mouseY) {
+      int i = Mth.floor(mouseX) - getX();
+      if (((IEditBoxMixin) this).getBordered()) { i -= (customFont != null ? 2 : 4); }
+      Font font = ((IEditBoxMixin) this).getFont();
+      int displayPos = ((IEditBoxMixin) this).getDisplayPos();
+      String value = getValue();
+      String s = customFont != null ? customFont.getFont().plainSubstrByWidth(value.substring(displayPos), getInnerWidth()) :
+              font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
+
+      moveCursorTo((customFont != null ? customFont.getFont().plainSubstrByWidth(s, i) :
+              font.plainSubstrByWidth(s, i)).length() + displayPos);
+   }
+
+   @Override
+   public int getScreenX(int pos) {
+      String value = getValue();
+      return pos > value.length() ? getX() : getX() + (customFont != null ? customFont.width(value.substring(0, pos)) :
+              ((IEditBoxMixin) this).getFont().width(value.substring(0, pos)));
    }
 
    public GuiTextFieldNop setMinMaxDefault(double minValue, double maxValue, double defaultValue) {
@@ -416,7 +473,8 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
          unFocused();
          return true;
       }
-      return super.keyPressed(keyCode, scanCode, modifiers) || activeTextfield != null;
+      boolean bo = super.keyPressed(keyCode, scanCode, modifiers);
+      return bo || activeTextfield == this;
    }
 
    @Override

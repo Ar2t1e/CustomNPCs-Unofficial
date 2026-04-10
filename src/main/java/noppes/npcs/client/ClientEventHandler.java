@@ -1424,6 +1424,7 @@ public class ClientEventHandler {
     /** HUD Bar Interface Canceled */
     @SubscribeEvent
     public void cnpcRenderGameOverlayPre(RenderGuiOverlayEvent.Pre event) {
+        mc = Minecraft.getInstance();
         event.setCanceled(mc.screen instanceof GuiOpenCase || mc.screen instanceof GuiYellowDialogEditor ||
                 !CustomNpcs.proxy.getPlayerData(null).overlay.isShowElementType(event.getOverlay().id()));
     }

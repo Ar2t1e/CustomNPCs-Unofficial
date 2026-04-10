@@ -92,7 +92,7 @@ public class GuiScriptInterface
                  .enableCodeHighlighting()
                  .setListener(this);
          add(ta);
-         int x = guiLeft + 7 + ta.width;
+         int x = guiLeft + 7 + ta.getWidth();
          add(new GuiButtonNop(this, 99, showFunctions ? "script.hideFunctions" : "script.show.functions", x, y, (button) -> {
             showFunctions = !showFunctions;
             init();
@@ -139,12 +139,12 @@ public class GuiScriptInterface
          GuiTextArea ta = new GuiTextArea(3, guiLeft + 5, y, imageWidth - 175, imageHeight - 10, getConsoleText());
          Map<Long, String> map = handler.getConsoleText();
          if (map.size() > 1) {
-            ta.y += 24;
-            ta.height -= 24;
+            ta.setY(ta.getY() + 24);
+            ta.setHeight(ta.getHeight() - 24);
          }
          ta.enabled = false;
          add(ta);
-         int x = guiLeft + 7 + ta.width;
+         int x = guiLeft + 7 + ta.getWidth();
          addButton(100, x, guiTop + 125, map.size() < 2 ? Component.translatable("gui.copy") :
                  Component.translatable("gui.copy").append(" ").append(Component.translatable("gui.all")))
                  .setSize(80, 20)
@@ -165,7 +165,7 @@ public class GuiScriptInterface
                i++;
             }
             addButton(119, guiLeft + 4, guiTop + 7, true, pos, selects)
-                    .setSize(ta.width, 20);
+                    .setSize(ta.getWidth(), 20);
             getButton(100).setX(x + 82);
             getButton(102).setX(x + 82);
             addButton(120, x, guiTop + 125, "gui.copy")

@@ -91,7 +91,16 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
 
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-      return wrapper.mouseClicked(mouseX, mouseY, mouseButton) || super.mouseClicked(mouseX, mouseY, mouseButton);
+      boolean bo  = wrapper.mouseClicked(mouseX, mouseY, mouseButton) || super.mouseClicked(mouseX, mouseY, mouseButton);
+      if (GuiTextFieldNop.getActive() != null) {
+         for (IComponentGui component : wrapper.components) {
+            if (component instanceof GuiTextArea area) {
+               area.active = false;
+               area.setIsFocused(false);
+            }
+         }
+      }
+      return bo;
    }
 
    @Override
@@ -158,7 +167,10 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
    }
 
    @Override
-   public void add(IComponentGui element) { wrapper.add(element); }
+   public void add(IComponentGui element) {
+      wrapper.add(element);
+      if (element instanceof GuiTextArea area) { area.setListener(this); }
+   }
 
    public IComponentGui get(int id, Class<?> type) {
       for (IComponentGui component : new ArrayList<>(wrapper.components)) {

@@ -3,15 +3,18 @@ package noppes.npcs.entity.data;
 import java.util.*;
 
 import com.mojang.brigadier.StringReader;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.selector.EntitySelector;
 import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,16 +38,19 @@ import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.util.ValueUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public class DataScenes {
 
-   private final EntityNPCInterface npc;
+   private final @Nonnull EntityNPCInterface npc;
    public List<DataScenes.SceneContainer> scenes = new ArrayList<>();
    public static Map<String, DataScenes.SceneState> StartedScenes = new HashMap<>();
    public static List<DataScenes.SceneContainer> ScenesToRun = new ArrayList<>();
    private LivingEntity owner = null;
    private String ownerScene = null;
 
-   public DataScenes(EntityNPCInterface npcIn) { npc = npcIn; }
+   public DataScenes(@Nonnull EntityNPCInterface npcIn) { npc = npcIn; }
 
    public CompoundTag save(CompoundTag compound) {
       ListTag list = new ListTag();
@@ -65,59 +71,74 @@ public class DataScenes {
       }
    }
 
-   public LivingEntity getOwner() {
-      return owner;
+   private static Component getNPCEvent(EntityNPCInterface npc) {
+      if (npc == null) { return Component.translatable("scene.in.command").withStyle(ChatFormatting.DARK_GRAY); }
+      MutableComponent posClick = Component.literal(npc.getName().getString());
+      posClick.setStyle(posClick.getStyle().withColor(ChatFormatting.BLUE)
+              .withUnderlined(true)
+              .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " +
+                      npc.level().dimension().location() +
+                      " " + npc.getX() +
+                      " " + (npc.getY() + 0.25d) +
+                      " " + npc.getZ()))
+              .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp"))));
+      return Component.empty()
+              .append(Component.literal(" (NPC: ").withStyle(ChatFormatting.DARK_GRAY))
+              .append(posClick)
+              .append(Component.literal(")").withStyle(ChatFormatting.DARK_GRAY));
    }
 
-   public static void Toggle(String id) {
+   public LivingEntity getOwner() { return owner; }
+
+   public static void Toggle(String id, @Nullable EntityNPCInterface npc) {
       DataScenes.SceneState state = StartedScenes.get(id.toLowerCase());
       if (state != null && !state.paused) {
          state.paused = true;
-         CommonUtil.NotifyOPs("Paused scene %s at %s", id, state.ticks);
+         CommonUtil.NotifyOPs(Component.translatable("scene.paused", id, state.ticks).append(getNPCEvent(npc)), false);
       }
-      else { Start(id); }
+      else { Start(id, npc); }
    }
 
-   public static void Start(String id) {
+   public static void Start(String id, @Nullable EntityNPCInterface npc) {
       DataScenes.SceneState state = StartedScenes.get(id.toLowerCase());
       if (state == null) {
-         CommonUtil.NotifyOPs("Started scene %s", id);
+         CommonUtil.NotifyOPs(Component.translatable("scene.started", id).append(getNPCEvent(npc)), false);
          StartedScenes.put(id.toLowerCase(), new DataScenes.SceneState());
       } else if (state.paused) {
          state.paused = false;
-         CommonUtil.NotifyOPs("Started scene %s from %s", id, state.ticks);
+         CommonUtil.NotifyOPs(Component.translatable("scene.started.from", id, state.ticks).append(getNPCEvent(npc)), false);
       }
    }
 
-   public static void Pause(String id) {
+   public static void Pause(String id, @Nullable EntityNPCInterface npc) {
       if (id == null) {
          DataScenes.SceneState state;
          for(Iterator<SceneState> var2 = StartedScenes.values().iterator(); var2.hasNext(); state.paused = true) {
             state = var2.next();
          }
-         CommonUtil.NotifyOPs("Paused all scenes");
+         CommonUtil.NotifyOPs(Component.translatable("scene.paused.all").append(getNPCEvent(npc)), false);
       } else {
          DataScenes.SceneState state = StartedScenes.get(id.toLowerCase());
          if (state == null) {
-            CommonUtil.NotifyOPs("Unknown scene ID: %s", id);
+            CommonUtil.NotifyOPs(Component.translatable("scene.unknown", id).append(getNPCEvent(npc)), false);
          } else {
             state.paused = true;
-            CommonUtil.NotifyOPs("Paused scene %s at %s", id, state.ticks);
+            CommonUtil.NotifyOPs(Component.translatable("scene.paused", id, state.ticks).append(getNPCEvent(npc)), false);
          }
       }
    }
 
-   public static void Reset(String id) {
+   public static void Reset(String id, @Nullable EntityNPCInterface npc) {
       if (id == null) {
          if (StartedScenes.isEmpty()) {
             return;
          }
          StartedScenes = new HashMap<>();
-         CommonUtil.NotifyOPs("Reset all scene");
+         CommonUtil.NotifyOPs(Component.translatable("scene.reset.all").append(getNPCEvent(npc)), false);
       } else if (StartedScenes.remove(id.toLowerCase()) == null) {
-         CommonUtil.NotifyOPs("Unknown scene ID: %s", id);
+         CommonUtil.NotifyOPs(Component.translatable("scene.unknown", id).append(getNPCEvent(npc)), false);
       } else {
-         CommonUtil.NotifyOPs("Reset scene %s", id);
+         CommonUtil.NotifyOPs(Component.translatable("scene.reset", id).append(getNPCEvent(npc)), false);
       }
    }
 
@@ -232,12 +253,11 @@ public class DataScenes {
             @Override
             public void sendFailure(@NotNull Component textIn) {
                super.sendFailure(textIn);
-               CommonUtil.NotifyOPs(textIn, false);
+               CommonUtil.NotifyOPs((textIn instanceof MutableComponent mutableComponent ? mutableComponent.append(getNPCEvent(npc)) : textIn), false);
             }
          };
       }
 
-      @SuppressWarnings("all")
       private BlockPos parseBlockPos(BlockPos blockpos, String[] args, int startIndex, boolean centerBlock) throws Exception {
          return new BlockPos((int)this.parseDouble(blockpos.getX(), args[startIndex], -30000000, 30000000, centerBlock), (int)this.parseDouble(blockpos.getY(), args[startIndex + 1], -64, 319, false), (int)this.parseDouble(blockpos.getZ(), args[startIndex + 2], -30000000, 30000000, centerBlock));
       }
@@ -400,10 +420,10 @@ public class DataScenes {
                   } else if (type.equals("size")) {
                      npc.display.setSize(ValueUtil.correctInt(Integer.parseInt(value), 1, 30));
                   } else {
-                     CommonUtil.NotifyOPs("Unknown scene stat: " + type);
+                     CommonUtil.NotifyOPs(Component.translatable("scene.unknown.stat", type).append(getNPCEvent(npc)), false);
                   }
                } catch (NumberFormatException var8) {
-                  CommonUtil.NotifyOPs("Unknown scene stat " + type + " value: " + value);
+                  CommonUtil.NotifyOPs(Component.translatable("scene.unknown.stat.value", type, value).append(getNPCEvent(npc)), false);
                }
             } else if (event.type == DataScenes.SceneType.FACTION) {
                npc.setFaction(Integer.parseInt(event.param));
