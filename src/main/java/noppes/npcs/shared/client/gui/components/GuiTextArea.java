@@ -16,7 +16,7 @@ import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
-import noppes.npcs.config.TrueTypeFont;
+import noppes.npcs.shared.client.gui.util.TrueTypeFont;
 import noppes.npcs.shared.client.gui.util.AreaUndoData;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.util.TextContainer;

@@ -20,6 +20,8 @@ public class OverlayController {
 
     public void clear() { overlays.clear(); }
 
+    public Overlay get(int id) { return overlays.get(id); }
+
     public List<Overlay> getOverlays() { return new ArrayList<>(overlays.values()); }
 
 }

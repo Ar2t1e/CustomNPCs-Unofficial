@@ -29,7 +29,7 @@ public class SPacketSceneReset extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      if (CustomNpcs.SceneButtonsEnabled) { DataScenes.Reset(player, null); }
+      if (CustomNpcs.SceneButtonsEnabled) { DataScenes.Reset(null, npc); }
       CustomNpcs.debugData.end("Packets");
    }
 

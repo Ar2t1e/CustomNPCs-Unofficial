@@ -34,7 +34,7 @@ public class SPacketSceneStart extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      if (CustomNpcs.SceneButtonsEnabled) { DataScenes.Toggle(scene + "btn"); }
+      if (CustomNpcs.SceneButtonsEnabled) { DataScenes.Toggle(scene + "btn", npc); }
       CustomNpcs.debugData.end("Packets");
    }
 

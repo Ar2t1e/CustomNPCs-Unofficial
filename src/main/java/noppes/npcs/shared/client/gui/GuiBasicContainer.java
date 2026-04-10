@@ -117,9 +117,17 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (wrapper.mouseClicked(mouseX, mouseY, mouseButton)) { return true; }
+        boolean bo = wrapper.mouseClicked(mouseX, mouseY, mouseButton);
         try { super.mouseClicked((int) mouseX, (int) mouseY, mouseButton); } catch (IOException ignored) { }
-        return false;
+        if (GuiTextFieldNop.getActive() != null) {
+            for (IComponentGui component : wrapper.components) {
+                if (component instanceof GuiTextArea) {
+                    ((GuiTextArea) component).active = false;
+                    ((GuiTextArea) component).setIsFocused(false);
+                }
+            }
+        }
+        return bo;
     }
 
     @Override
@@ -210,7 +218,10 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     }
 
     @Override
-    public void add(IComponentGui element) { wrapper.add(element); }
+    public void add(IComponentGui element) {
+        wrapper.add(element);
+        if (element instanceof GuiTextArea) { ((GuiTextArea) element).setListener(this); }
+    }
 
     @Override
     public void buttonEvent(GuiButtonNop button) { }

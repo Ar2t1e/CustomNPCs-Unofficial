@@ -3,8 +3,12 @@ package noppes.npcs.controllers.data;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.fml.relauncher.Side;
 import noppes.npcs.api.handler.data.IPlayerData;
 import noppes.npcs.api.wrapper.ScreenSize;
+import noppes.npcs.client.controllers.OverlayController;
+import noppes.npcs.client.overlay.Overlay;
+import noppes.npcs.util.Util;
 
 import java.util.*;
 
@@ -12,12 +16,15 @@ public class PlayerOverlayData implements IPlayerData {
 
     protected static final String dataName = "OverlayData";
 
-    protected Map<RenderGameOverlayEvent.ElementType, Boolean> showElementTypes = new HashMap<>();
-    public ScreenSize screenSize = new ScreenSize(0, 0);
-    public Set<Integer> keyPress = new HashSet<>();
-    public Set<Integer> mousePress = new HashSet<>();
-    public boolean isMoved;
+    protected final Map<RenderGameOverlayEvent.ElementType, Boolean> showElementTypes = new HashMap<>();
+    protected final Set<Integer> overlays = new HashSet<>();
+    public final ScreenSize screenSize = new ScreenSize(0, 0);
+    public final Set<Integer> keyPress = new HashSet<>();
+    public final Set<Integer> mousePress = new HashSet<>();
+
     public String currentGUI;
+    public boolean isMoved;
+
     public boolean updateClient; // ServerTickHandler.cnpcPlayerTick()
 
     public PlayerOverlayData() {
@@ -44,6 +51,25 @@ public class PlayerOverlayData implements IPlayerData {
         overlayNBT.setDouble("ScreenWidth", screenSize.getWidth());
         overlayNBT.setDouble("ScreenHeight", screenSize.getHeight());
         compound.setTag(dataName, overlayNBT);
+
+        if (Util.instance.getSide() == Side.SERVER) {
+            OverlayController qData = OverlayController.getInstance();
+            List<Integer> lIDs = new ArrayList<>();
+            list = new NBTTagList();
+            for (int id : overlays) {
+                Overlay overlay = qData.get(id);
+                if (overlay != null) {
+                    lIDs.add(id);
+                    list.appendTag(overlay.getNBT());
+                }
+            }
+            int[] data = new int[lIDs.size()];
+            int i = 0;
+            for (int id : lIDs) { data[i++] = id; }
+            overlayNBT.setIntArray("OverlayIDs", data);
+            overlayNBT.setTag("Overlays", list);
+        }
+        else { overlayNBT.setIntArray("OverlayIDs", overlays.stream().mapToInt(Integer::intValue).toArray()); }
         return compound;
     }
 
@@ -115,8 +141,11 @@ public class PlayerOverlayData implements IPlayerData {
     public ScreenSize getWindowSize() { return screenSize; }
 
     public boolean isShowElementType(RenderGameOverlayEvent.ElementType type) {
-        if (!showElementTypes.get(RenderGameOverlayEvent.ElementType.ALL)) { return false; }
-        return showElementTypes.get(type);
+        Boolean value = showElementTypes.get(RenderGameOverlayEvent.ElementType.ALL);
+        if (value == null || !value) { return false; }
+        value = showElementTypes.get(type);
+        if (value == null) { value = showElementTypes.computeIfAbsent(type, k -> Boolean.TRUE); }
+        return value;
     }
 
 }

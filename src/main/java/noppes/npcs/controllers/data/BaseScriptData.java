@@ -111,10 +111,10 @@ implements IScriptHandler {
 
 	// New from Unofficial (BetaZavr)
 	@Override
-	public ITextComponent noticeString(String type, Object event) {
+	public Component noticeString(String type, Object event) {
 		Component message = Component.empty().withStyle(TextFormatting.DARK_GRAY);
 		String pos = "";
-		String dimID = "overworld";
+		String dimID = "0";
 		double x = 0.0d, y = 0.0d, z = 0.0d, tpY = 0.0d;
 		if (type != null) {
 			message.append(Component.literal(" hook \"").withStyle(TextFormatting.DARK_GRAY))

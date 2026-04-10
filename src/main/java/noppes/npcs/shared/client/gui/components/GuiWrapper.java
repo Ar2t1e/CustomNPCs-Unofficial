@@ -37,14 +37,7 @@ public class GuiWrapper {
     public void tick() {
         if (subgui != null) { subgui.updateScreen(); }
         else {
-            // first text_fields
-            for (IComponentGui component : new ArrayList<>(components)) {
-                if (component instanceof GuiTextFieldNop) { component.tick(); }
-            }
-            // then all the others
-            for (IComponentGui component : new ArrayList<>(components)) {
-                if (component instanceof GuiTextArea) { component.tick(); }
-            }
+            for (IComponentGui component : new ArrayList<>(components)) { component.tick(); }
         }
     }
 

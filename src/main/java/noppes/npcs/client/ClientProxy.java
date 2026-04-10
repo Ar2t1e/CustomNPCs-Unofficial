@@ -110,7 +110,7 @@ import noppes.npcs.client.renderer.RenderNpcDragon;
 import noppes.npcs.client.renderer.RenderNpcSlime;
 import noppes.npcs.client.renderer.RenderProjectile;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
-import noppes.npcs.config.TrueTypeFont;
+import noppes.npcs.shared.client.gui.util.TrueTypeFont;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.containers.*;

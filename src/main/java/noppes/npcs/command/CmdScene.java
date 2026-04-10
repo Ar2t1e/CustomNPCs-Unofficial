@@ -27,17 +27,17 @@ public class CmdScene extends CommandNoppesBase {
 
 	@SubCommand(desc = "Pause scene", usage = "[name]", permission = 2)
 	public void pause(String[] args) {
-		DataScenes.Pause((args.length == 0) ? null : args[0]);
+		DataScenes.Pause((args.length == 0) ? null : args[0], null);
 	}
 
 	@SubCommand(desc = "Reset scene", usage = "[name]", permission = 2)
 	public void reset(ICommandSender sender, String[] args) {
-		DataScenes.Reset(sender, (args.length == 0) ? null : args[0]);
+		DataScenes.Reset((args.length == 0) ? null : args[0], null);
 	}
 
 	@SubCommand(desc = "Start scene", usage = "<name>", permission = 2)
 	public void start(ICommandSender sender, String[] args) {
-		DataScenes.Start(args[0]);
+		DataScenes.Start(args[0], null);
 	}
 
 	@SuppressWarnings("all")

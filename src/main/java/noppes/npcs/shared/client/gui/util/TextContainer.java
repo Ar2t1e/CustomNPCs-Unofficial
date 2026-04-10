@@ -4,8 +4,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import noppes.npcs.config.TrueTypeFont;
-
 public class TextContainer {
 
 	public static boolean colored = true;

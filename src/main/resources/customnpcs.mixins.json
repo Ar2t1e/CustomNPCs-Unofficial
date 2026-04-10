@@ -43,6 +43,7 @@
     "util.EnumParticleTypesMixin",
     "util.ISoundEventMixin",
     "util.ServerRecipeBookHelperMixin",
+    "util.text.ITextFormattingMixin",
     "util.text.StyleMixin",
     "util.text.translation.LanguageMapMixin",
     "world.IWorldMixin",

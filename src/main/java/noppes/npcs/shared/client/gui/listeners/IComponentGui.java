@@ -48,4 +48,5 @@ public interface IComponentGui {
     boolean keyPressed(char typedChar, int keyCode);
 
     void tick();
+
 }
