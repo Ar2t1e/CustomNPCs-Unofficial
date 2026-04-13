@@ -1,6 +1,7 @@
 package noppes.npcs.shared.client.gui.components;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -111,11 +112,26 @@ public class GuiLabel extends AbstractWidget implements GuiEventListener, ICompo
       }
       isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
       drawBox(graphics);
-      if (getMessage().getString().contains("Имя:")) {
-         graphics.drawString(Minecraft.getInstance().font, getMessage(), getX(), getY(), textColor, showShadow);
+
+      Font font = Minecraft.getInstance().font;
+      Component message = getMessage();
+      int textWidth = customFont != null ? customFont.width(message) : font.width(message);
+      if (customFont != null) { textWidth++; }
+      if (textWidth > width) {
+         GuiButtonNop.renderString(graphics, getMessage(), getX(), getY(), getX() + width, getY() + height,
+                 textColor, showShadow, centered, customFont);
       }
-      GuiButtonNop.renderString(graphics, getMessage(), getX(), getY(), getX() + width, getY() + height,
-              textColor, showShadow, centered, customFont);
+      else {
+         if (centered) {
+            if (customFont != null) { customFont.draw(graphics, message, (width - textWidth) / 2.0f, getY(), textColor); }
+            else { graphics.drawString(font, message, (width - textWidth) / 2, getY(), textColor, showShadow); }
+         }
+         else {
+            if (customFont != null) { customFont.draw(graphics, message, getX(), getY(), textColor); }
+            else { graphics.drawString(font, message, getX(), getY(), textColor, showShadow); }
+         }
+      }
+
    }
 
    @Override

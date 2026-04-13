@@ -10,6 +10,7 @@ import java.util.List;
 
 public abstract class YDENode {
 
+    protected final YDEData parent;
     public EnumYDEType type = EnumYDEType.DIALOG;
     public String category = "";
     public int id = -1;
@@ -20,6 +21,8 @@ public abstract class YDENode {
     public boolean isLock = false;
     public Component title = Component.empty();
     public final List<YDELink> links = new ArrayList<>();
+
+    public YDENode(YDEData parentIn) { parent = parentIn; }
 
     public void load(CompoundTag compound) {
         type = EnumYDEType.values()[ValueUtil.onlyPositiveInt(compound.getInt("Type"), EnumYDEType.values().length)];

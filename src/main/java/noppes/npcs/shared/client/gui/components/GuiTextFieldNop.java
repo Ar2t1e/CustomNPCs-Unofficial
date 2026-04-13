@@ -499,14 +499,14 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
    public void insertText(@Nonnull String text) {
       String oldText = getValue();
       super.insertText(text);
-      if (listener instanceof ITextChangeListener gui && !oldText.equals(getValue())) { gui.textUpdate(getValue()); }
+      if (listener instanceof ITextChangeListener gui && !oldText.equals(getValue())) { gui.textUpdate(this, getValue()); }
    }
 
    @Override
    public void deleteChars(int pos) {
       String oldText = getValue();
       super.deleteChars(pos);
-      if (listener instanceof ITextChangeListener gui && !oldText.equals(getValue())) { gui.textUpdate(getValue()); }
+      if (listener instanceof ITextChangeListener gui && !oldText.equals(getValue())) { gui.textUpdate(this, getValue()); }
    }
 
    public void setValue(@Nonnull Object object) {
@@ -519,7 +519,7 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
    public void setValue(@Nonnull String text) {
       String oldText = getValue();
       super.setValue(text);
-      if (listener instanceof ITextChangeListener gui && !oldText.equals(getValue())) { gui.textUpdate(getValue()); }
+      if (listener instanceof ITextChangeListener gui && !oldText.equals(getValue())) { gui.textUpdate(this, getValue()); }
    }
 
    @Override

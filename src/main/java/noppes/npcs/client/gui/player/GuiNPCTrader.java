@@ -38,6 +38,7 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
@@ -791,7 +792,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
    public void unFocused(GuiTextFieldNop textField) { }
 
    @Override
-   public void textUpdate(String text) {
+   public void textUpdate(IComponentGui component, String text) {
       search = Component.literal(text);
       init();
    }

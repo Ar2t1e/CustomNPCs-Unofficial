@@ -7,9 +7,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiLabel;
 import noppes.npcs.shared.client.gui.components.GuiTextArea;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
 @OnlyIn(Dist.CLIENT)
@@ -92,7 +92,7 @@ public class GuiTextAreaScreen extends GuiBasic implements ITextChangeListener {
    }
 
    @Override
-   public void textUpdate(String textIn) { text = textIn; }
+   public void textUpdate(IComponentGui component, String textIn) { text = textIn; }
 
    public GuiTextAreaScreen enableHighlighting() {
       highlighting = true;

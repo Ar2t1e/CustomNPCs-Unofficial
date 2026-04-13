@@ -2,6 +2,6 @@ package noppes.npcs.shared.client.gui.listeners;
 
 public interface ITextChangeListener {
 
-   void textUpdate(String text);
+   void textUpdate(IComponentGui component, String text);
 
 }

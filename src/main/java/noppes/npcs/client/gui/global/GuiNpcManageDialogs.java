@@ -225,7 +225,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
                     Component.translatable("message.delete"));
             setScreen(guiYesNo);
             break;
-         } // del cat
+         } // remove dialog category
          case 3: {
             if (!dialogData.containsKey(selectedDialog)) { return; }
             setSubGui(new SubGuiEditText(3, categoryData.get(selectedCategory).title));
@@ -369,9 +369,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
                init();
             }
          }
-         if (subgui instanceof SubGuiDialogEdit) {
-            init();
-         }
+         if (subgui instanceof SubGuiDialogEdit) { init(); }
       }
    }
 

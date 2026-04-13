@@ -37,10 +37,7 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNextPage;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiLabel;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
-import noppes.npcs.shared.client.gui.listeners.IGuiClose;
-import noppes.npcs.shared.client.gui.listeners.IGuiError;
-import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
-import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.shared.client.gui.listeners.*;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
@@ -432,7 +429,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
       int textHeight = minecraft.font.wordWrapHeight(totalText + ChatFormatting.BLACK + "_", 152);
       if (totalText.length() < 1024 && textHeight <= 108) {
          setText(totalText);
-         textUpdate(totalText);
+         textUpdate(null, totalText);
       }
    }
 
@@ -1536,6 +1533,6 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
    }
 
    @Override
-   public void textUpdate(String text) {}
+   public void textUpdate(IComponentGui component, String text) {}
 
 }

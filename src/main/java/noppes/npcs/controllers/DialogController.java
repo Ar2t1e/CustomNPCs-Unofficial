@@ -354,9 +354,7 @@ public class DialogController implements IDialogHandler {
       return new File(CustomNpcs.getLevelSaveDirectory(), "dialogs");
    }
 
-   public boolean hasDialog(int dialogId) {
-      return dialogs.containsKey(dialogId);
-   }
+   public boolean hasDialog(int dialogId) { return dialogs.containsKey(dialogId); }
 
    @Override
    public List<IDialogCategory> categories() {

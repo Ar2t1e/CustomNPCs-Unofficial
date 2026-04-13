@@ -173,9 +173,26 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       }
 
       // background
-      if (border != 0xFF000000) { graphics.fillGradient(x - 1, y - 1, width + x + 1, height + y + 1, border, border); }
+      PoseStack matrixStack = graphics.pose();
+      if (border != 0xFF000000) {
+         matrixStack.pushPose();
+         int w = width + 1;
+         int h = height + 1;
+         float step = customFont != null ? 0.5f : 1.0f;
+         matrixStack.translate(x - step, y - step, 0.0f);
+         if (customFont != null) {
+            matrixStack.scale(0.5f, 0.5f, 0.5f);
+            w *= 2;
+            h *= 2;
+         }
+         graphics.hLine(0, w, 0, border);
+         graphics.hLine(0, w, h, border);
+         graphics.vLine(0, 0, h, border);
+         graphics.vLine(w, 0, h, border);
+         matrixStack.popPose();
+      }
       if ((colorBackS >> 24 & 255) > 0 || (colorBackE >> 24 & 255) > 0) {
-         graphics.fillGradient(x, y, width + x, height + y, colorBackS, colorBackE);
+         graphics.fill(x, y, width + x, height + y, colorBackS);
       }
 
       // draw scrolling
@@ -188,7 +205,6 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       }
 
       // positions:
-      PoseStack matrixStack = graphics.pose();
       matrixStack.pushPose();
       if (selectable) { hover = getMouseOver(mouseX, mouseY); }
       drawItems(graphics);
@@ -256,6 +272,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       int xOffset = listHeight < height - 2 ? 0 : 10;
       int displayIndex = 0;
       int alpha = 255 << 24;
+      PoseStack matrixStack = graphics.pose();
       for(int i = 0; i < list.size(); ++i) {
          if (!isSearched(list.get(i).getString())) { continue; }
          int left = x + 3;
@@ -277,20 +294,33 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
             graphics.drawString(font, suffixes.get(i), right, top, (i == hover ? CustomNpcs.HoverColor.getRGB() : CustomNpcs.MainColor.getRGB()));
          }
          if (multipleSelection && selectedList.contains(i) || !multipleSelection && selected == i) {
-            graphics.vLine(left - 2, top - 4, top + 10, -1);
-            graphics.vLine(r, top - 4, top + 10, -1);
-            graphics.hLine(left - 2, r, top - 3, -1);
-            graphics.hLine(left - 2, r, top + 10, -1);
-            //graphics.drawString(font, text, left, top, color);
-            GuiButtonNop.renderString(graphics, displayString, left, top, right, top + 10,
+            matrixStack.pushPose();
+            matrixStack.translate(left - 2.0f, top - 3.0f, 0.0f);
+            if (customFont != null) {
+               int c = border != 0xFF000000 ? border : -1;
+               matrixStack.scale(0.5f, 0.5f, 0.5f);
+               graphics.vLine(0, 1, 29, c);
+               graphics.vLine((r - 2) * 2, 1, 29, c);
+               graphics.hLine(1, (r - 2) * 2, 2, c);
+               graphics.hLine(1, (r - 2) * 2, 28, c);
+               graphics.fill(2, 4, (r - 2) * 2 - 1, 27, (c & 0xFFFFFF) | 0x60000000);
+            }
+            else {
+               graphics.vLine(0, 0, 15, -1);
+               graphics.vLine(r - left + 2, 0, 15, -1);
+               graphics.hLine(1, r - left + 2, 1, -1);
+               graphics.hLine(1, r - left + 2, 14, -1);
+            }
+            matrixStack.popPose();
+            GuiButtonNop.renderString(graphics, displayString, left, top + 1, right, top + 10,
                     CustomNpcs.MainColor.getRGB() | alpha, true, false, customFont);
          }
          else if (i == hover) {
-            GuiButtonNop.renderString(graphics, displayString, left, top, right, top + 10,
+            GuiButtonNop.renderString(graphics, displayString, left, top + 1, right, top + 10,
                     CustomNpcs.HoverColor.getRGB() | alpha, true, false, customFont);
          }
          else {
-            GuiButtonNop.renderString(graphics, displayString, left, top, right, top + 10,
+            GuiButtonNop.renderString(graphics, displayString, left, top + 1, right, top + 10,
                     CustomNpcs.MainColor.getRGB() | alpha, true, false, customFont);
          }
       }
@@ -520,29 +550,21 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
    public GuiCustomScrollNop setSelected(String line) {
       int i = 0;
       selected = -1;
-      for (Component l : list) {
-         if (Util.instance.equalsDeleteColor(l.getString(), line, false)) {
-            selected = i;
-            break;
-         }
-         i++;
-      }
-      return this;
-   }
-
-   public GuiCustomScrollNop setSelected(Component line) {
-      if (list.contains(line)) { selected = list.indexOf(line); }
-      else {
-         selected = -1;
-         int i = 0;
+      if (line != null && !line.isEmpty()) {
          for (Component l : list) {
-            if (line.getString().equals(l.getString())) {
+            if (Util.instance.equalsDeleteColor(l.getString(), line, false)) {
                selected = i;
                break;
             }
             i++;
          }
       }
+      return this;
+   }
+
+   public GuiCustomScrollNop setSelected(Component line) {
+      if (list.contains(line)) { selected = list.indexOf(line); }
+      else { setSelected(line == null ? "" : line.getString()); }
       return this;
    }
 
@@ -775,11 +797,15 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
    @Override
    public GuiCustomScrollNop setCustomFont(ClientProxy.FontContainer font) {
       customFont = font;
+      textField.setCustomFont(font);
       return this;
    }
 
    @Override
    public GuiComponentType getElementType() { return GuiComponentType.SCROLL; }
+
+   @Override
+   public void tick() { textField.tick(); }
 
    public GuiCustomScrollNop setPos(int xIn, int yIn) {
       x = xIn;

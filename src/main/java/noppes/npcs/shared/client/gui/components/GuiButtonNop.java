@@ -94,6 +94,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
       int width = right - left;
       FormattedCharSequence format = message.getVisualOrderText();
       graphics.enableScissor(left, top, right, bottom);
+
       if (textWidth > width) { // moved
          int centerX = textWidth - width;
          double d0 = (double) Util.getMillis() / 1000.0;
@@ -108,7 +109,6 @@ public class GuiButtonNop extends Button implements IComponentGui {
             width = (left + right) / 2;
             if (customFont != null) { customFont.draw(graphics, message, width - textWidth / 2.0f, height, color); }
             else { graphics.drawString(font, format, width - textWidth / 2, height, color, showShadow); }
-
          }
          else {
             if (customFont != null) { customFont.draw(graphics, message, left, height, color); }

@@ -254,18 +254,21 @@ public class Dialog implements ICompatibilty, IDialog {
    // New from Unofficial (BetaZavr)
    public static class StartedNpcData {
 
+      public final @Nonnull String name;
       public final @Nonnull UUID uuid;
       public final @Nonnull ResourceKey<Level> dim;
       public int slot;
 
       public StartedNpcData(int slotIn, @Nonnull EntityNPCInterface npc) {
          slot = slotIn;
+         name = npc.getName().getString();
          uuid = npc.getUUID();
          dim = npc.level().dimension();
       }
 
       public StartedNpcData(@Nonnull CompoundTag compound) {
          slot = compound.getInt("Slot");
+         name = compound.getString("NpcName");
          uuid = compound.getUUID("UUID");
          dim = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("Dimension")));
       }
@@ -273,6 +276,7 @@ public class Dialog implements ICompatibilty, IDialog {
       public CompoundTag save() {
          CompoundTag compound = new CompoundTag();
          compound.putInt("Slot", slot);
+         compound.putString("NpcName", name);
          compound.putUUID("UUID", uuid);
          compound.putString("Dimension", dim.location().toString());
          return compound;

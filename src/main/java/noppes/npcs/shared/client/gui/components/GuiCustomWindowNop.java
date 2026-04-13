@@ -16,7 +16,6 @@ import noppes.npcs.client.gui.GuiBoundarySetting;
 import noppes.npcs.client.gui.util.GuiTooltipUtils;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.*;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.joml.Matrix4f;
@@ -91,19 +90,16 @@ public class GuiCustomWindowNop extends GuiBasic
     @Override
     public void buttonEvent(GuiButtonNop button) {
         if (isHovered && visible) {
-            if (customFont == null) {
-                if (button.equals(exit)) { visible = false; }
-                else if (button == lock) {
-                    isLock = !isLock;
-                    if (isLock) {
-                        button.txrX += button.txrW;
-                        lock.layerColor = new Color(0xFFA0A000).getRGB();
-                    }
-                    else {
-                        button.txrX -= button.txrW;
-                        lock.layerColor = new Color(0xFFFFFF00).getRGB();
-                    }
-                    LogWriter.info("TEST: "+isLock+"; "+button.txrX+"; "+button.txrY+"; "+button.txrW+"; "+button.txrH);
+            if (button.equals(exit)) { visible = false; }
+            else if (button == lock) {
+                isLock = !isLock;
+                if (isLock) {
+                    button.txrX += button.txrW;
+                    lock.layerColor = new Color(0xFFA0A000).getRGB();
+                }
+                else {
+                    button.txrX -= button.txrW;
+                    lock.layerColor = new Color(0xFFFFFF00).getRGB();
                 }
             }
             listener.buttonEvent(button);
@@ -354,8 +350,8 @@ public class GuiCustomWindowNop extends GuiBasic
     }
 
     @Override
-    public void textUpdate(String text) {
-        if (listener instanceof ITextChangeListener) { ((ITextChangeListener) listener).textUpdate(text); }
+    public void textUpdate(IComponentGui component, String text) {
+        if (listener instanceof ITextChangeListener) { ((ITextChangeListener) listener).textUpdate(component, text); }
     }
 
     @Override

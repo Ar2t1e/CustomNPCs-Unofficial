@@ -507,17 +507,18 @@ public class GuiTextArea
    public void tick() { ++cursorCounter; }
 
    public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
-      if (scrolled != 0.0D) {
+      if (active && scrolled != 0.0D) {
          scrolledLine += scrolled > 0.0D ? -1 : 1;
          scrolledLine = Math.max(Math.min(scrolledLine, container.linesCount - height / container.lineHeight), 0);
+         return true;
       }
-      return true;
+      return false;
    }
 
    public void setText(String textIn) {
       textIn = textIn.replace("\r", "");
       if (text == null || !text.equals(textIn)) {
-         if (listener instanceof ITextChangeListener textChanger) { textChanger.textUpdate(text); }
+         if (listener instanceof ITextChangeListener textChanger) { textChanger.textUpdate(this, text); }
          if (!undoing) {
             undoList.add(new AreaUndoData(text, cursorPosition, startSelection, endSelection, scrolledLine));
             redoList.clear();

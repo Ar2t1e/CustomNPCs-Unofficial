@@ -37,7 +37,7 @@ import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
 @OnlyIn(Dist.CLIENT)
-public class GuiBasic extends Screen implements IGuiInterface {
+public abstract class GuiBasic extends Screen implements IGuiInterface {
 
    protected static long altHTime = System.currentTimeMillis();
    public static Function<Integer, Integer> getPosX = (pos) -> switch (pos) {
@@ -548,6 +548,8 @@ public class GuiBasic extends Screen implements IGuiInterface {
 
    @Override
    public int getHeight() { return imageHeight; }
+
+   public void doubleClicked(IComponentGui component) { }
 
    public void openLink(String link) {
       try {

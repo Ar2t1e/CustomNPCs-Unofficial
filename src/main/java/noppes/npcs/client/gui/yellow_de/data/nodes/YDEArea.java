@@ -2,11 +2,13 @@ package noppes.npcs.client.gui.yellow_de.data.nodes;
 
 import net.minecraft.nbt.CompoundTag;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
+import noppes.npcs.client.gui.yellow_de.data.YDEData;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
 
 public class YDEArea extends YDENode {
 
-    public YDEArea(String categoryIn) {
+    public YDEArea(YDEData parent, String categoryIn) {
+        super(parent);
         type = EnumYDEType.AREA;
         category = categoryIn;
     }

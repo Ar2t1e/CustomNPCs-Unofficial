@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
@@ -15,6 +16,7 @@ import noppes.npcs.client.gui.yellow_de.data.UtilYDE;
 import noppes.npcs.client.gui.yellow_de.data.YDELink;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
 import noppes.npcs.client.gui.yellow_de.data.nodes.YDEDialog;
+import noppes.npcs.client.gui.yellow_de.data.nodes.YDEOption;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
@@ -29,6 +31,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
 
     public final YDENode node;
     public final GuiYellowDialogEditor listener;
+    public Object object;
     protected GuiButtonNop b0;
     protected GuiButtonNop b1;
     protected GuiButtonNop b2;
@@ -65,16 +68,13 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         int w = imageWidth - 6;
         int h0 = UtilYDE.FONT.getHeight() + 2;
         if (node instanceof YDEDialog yde_dialog) {
-            Dialog dialog = DialogController.instance.get(yde_dialog.dialogId);
-            if (dialog == null) {
-                dialog = new Dialog(DialogController.instance.getCategory(node.category));
-            }
-            addTextField(0, 3, 21, w, h0, dialog.title)
+            if (yde_dialog.dialog == null) { yde_dialog.dialog = new Dialog(DialogController.instance.getCategory(node.category)); }
+            addTextField(0, 3, 21, w, h0, yde_dialog.dialog.title)
                     .setColor(YDEController.textColor)
                     .setCustomFont(UtilYDE.FONT);
             y = 32 + h0;
             GuiTextArea compArea;
-            add(compArea = new GuiTextArea(0, guiLeft + 4, guiTop + y, w - 2, imageHeight - y - 4, dialog.text)
+            add(compArea = new GuiTextArea(0, guiLeft + 4, guiTop + y, w - 2, imageHeight - y - 4, yde_dialog.dialog.text)
                     .setColor(YDEController.textColor)
                     .setCustomFont(AREA_FONT));
             compArea.isYDE = true;
@@ -112,7 +112,8 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                     .setUV(0, 18, 14, 14)
                     .setHoverTexts("yde.hover.node.dialog.quest");
         }
-        else if (node.type == EnumYDEType.OPTION) {
+        else if (node instanceof YDEOption yde_option) {
+            if (yde_option.dialog == null) { yde_option.dialog = new Dialog(DialogController.instance.getCategory(node.category)); }
             // -> options
             b0 = addButton(0, imageWidth - 4, imageHeight / 2 - 4, "")
                     .setSize(7, 7)
@@ -149,6 +150,16 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                     .setIsAnim(true)
                     .setUV(0, 18, 14, 14)
                     .setHoverTexts("yde.hover.node.npc.back.dialog");
+        }
+    }
+
+    @Override
+    public void buttonEvent(GuiButtonNop button) { }
+
+    @Override
+    public void mouseButtonEvent(GuiButtonNop button, int mouseButton) {
+        if (isHovered && visible) {
+            listener.mouseButtonEvent(this, button, mouseButton);
         }
     }
 
@@ -200,7 +211,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         int h = imageHeight * 2;
         int color = isEnabled() && (isHovered || focused) ? YDEController.backHoverColor : YDEController.backColor;
         graphics.fill(0, 0, w, h, color);
-        color = isEnabled() && (isHovered || isFocused()) ? YDEController.backColor : YDEController.lineColor;
+        color = isEnabled() && (isHovered || isFocused()) ? YDEController.backColor : YDEController.windowLineColor;
         graphics.hLine(1, w - 2, 1, color);
         graphics.vLine(1, 1, h - 2, color);
         graphics.vLine(w - 2, 1, h - 2, color);
@@ -269,7 +280,10 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (isHovered) {
-            listener.setActive(node.id);
+            if (Screen.hasControlDown()) {
+                if (listener.hasSelect(node.id)) { listener.removeSelect(node.id); } else { listener.addSelect(node.id); }
+            }
+            else { listener.setActive(node.id); }
             if (lastClicked + 500L > System.currentTimeMillis()) { listener.doubleClicked(this); }
             else { lastClicked = System.currentTimeMillis(); }
         }
@@ -303,7 +317,23 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                 tempDy += dy;
                 int x = (int) (Math.floor(tempDx) * listener.guiScale / listener.category.getScale() / 2.0d);
                 int y = (int) (Math.floor(tempDy) * listener.guiScale / listener.category.getScale() / 2.0d);
+                int stepX = 1;
+                int stepY = 1;
+                if (Screen.hasShiftDown()) {
+                    if (getX() % 10 != 0) { x = -(getX() % 10); }
+                    else {
+                        stepX = 10;
+                        x = (int) (Math.floor((float) x / 10.0f));
+                    }
+                    if (getY() % 10 != 0) { y = -(getY() % 10); }
+                    else {
+                        stepY = 10;
+                        y = (int) (Math.floor((float) y / 10.0f));
+                    }
+                }
                 if (x != 0 || y != 0) {
+                    x *= stepX;
+                    y *= stepY;
                     if (x != 0) { tempDx -= x / listener.guiScale * listener.category.getScale() * 2.0d; }
                     if (y != 0) { tempDy -= y / listener.guiScale * listener.category.getScale() * 2.0d; }
                     listener.movedSelectNodes(x, y);
@@ -319,6 +349,16 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         super.moveTo(addX, addY);
         node.x = guiLeft;
         node.y = guiTop;
+    }
+
+    @Override
+    public void unFocused(GuiTextFieldNop textField) {
+        listener.unFocused(this, textField);
+    }
+
+    @Override
+    public void textUpdate(IComponentGui component, String text) {
+        listener.textUpdate(this, component, text);
     }
 
 }

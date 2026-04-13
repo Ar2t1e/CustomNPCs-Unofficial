@@ -501,6 +501,8 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
    @Override
    public int getHeight() { return height; }
 
+   public void doubleClicked(IComponentGui component) { }
+
    @Override
    public Screen getParent() { return wrapper.getParent(); }
 

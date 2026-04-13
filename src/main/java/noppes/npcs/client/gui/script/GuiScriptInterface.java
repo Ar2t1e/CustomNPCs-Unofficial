@@ -27,6 +27,7 @@ import noppes.npcs.packets.server.SPacketScriptEncrypt;
 import noppes.npcs.packets.server.SPacketScriptSave;
 import noppes.npcs.packets.server.SPacketScriptText;
 import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
@@ -403,7 +404,7 @@ public class GuiScriptInterface
    public void save() { setScript(); }
 
    @Override
-   public void textUpdate(String text) {
+   public void textUpdate(IComponentGui component, String text) {
       ScriptContainer container = handler.getScripts().get(activeTab - 1);
       if (container != null) { container.script = text; }
    }

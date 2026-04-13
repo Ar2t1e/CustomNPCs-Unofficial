@@ -21,6 +21,7 @@ import noppes.npcs.shared.client.gui.GuiBasicContainer;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.BuilderData;
@@ -239,7 +240,7 @@ public class GuiBuilderTools extends GuiBasicContainer<ContainerBuilderSettings>
     }
 
     @Override
-    public void textUpdate(String text) {
+    public void textUpdate(IComponentGui component, String text) {
         int type = builder.getType();
         double[] vs = new double[10];
         double total = 0;

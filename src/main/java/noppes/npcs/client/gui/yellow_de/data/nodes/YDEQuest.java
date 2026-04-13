@@ -3,13 +3,17 @@ package noppes.npcs.client.gui.yellow_de.data.nodes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
+import noppes.npcs.client.gui.yellow_de.data.YDEData;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
+import noppes.npcs.controllers.data.Dialog;
 
 public class YDEQuest extends YDENode {
 
     public int questId;
+    public Dialog dialog;
 
-    public YDEQuest(int idIn, String categoryIn, int questIdIn) {
+    public YDEQuest(YDEData parent, int idIn, String categoryIn, int questIdIn) {
+        super(parent);
         type = EnumYDEType.QUEST;
         title = Component.translatable("gui.quest", " ID: " + questIdIn);
 
