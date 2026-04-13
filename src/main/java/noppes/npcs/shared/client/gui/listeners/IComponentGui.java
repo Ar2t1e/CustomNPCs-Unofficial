@@ -2,6 +2,7 @@ package noppes.npcs.shared.client.gui.listeners;
 
 import net.minecraft.network.chat.Component;
 import noppes.npcs.api.constants.GuiComponentType;
+import noppes.npcs.client.ClientProxy;
 
 import java.util.List;
 
@@ -31,6 +32,8 @@ public interface IComponentGui {
     IComponentGui setSize(int width, int height);
 
     GuiComponentType getElementType();
+
+    IComponentGui setCustomFont(ClientProxy.FontContainer font);
 
     // for 1.12.2
     void render(int mouseX, int mouseY, float partialTicks);

@@ -5,7 +5,7 @@ buildscript {
     repositories {
         mavenLocal()
         flatDir { dirs 'libs' }
-        maven { url = 'https://maven.minecraftforge.net/' }
+        //maven { url = 'https://maven.minecraftforge.net/' }
         mavenCentral()
     }
     dependencies {

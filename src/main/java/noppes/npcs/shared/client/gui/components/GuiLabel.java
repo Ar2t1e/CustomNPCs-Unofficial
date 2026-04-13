@@ -1,12 +1,14 @@
 package noppes.npcs.shared.client.gui.components;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.api.constants.GuiComponentType;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
@@ -30,6 +32,7 @@ public class GuiLabel extends Gui implements IComponentGui {
 
     // New from Unofficial (BetaZavr)
     protected List<Component> hoverText = new ArrayList<>();
+    protected ClientProxy.FontContainer customFont = null;
     protected int backColor = 0;
     protected int borderColor = 0;
     public IGuiInterface listener;
@@ -110,17 +113,35 @@ public class GuiLabel extends Gui implements IComponentGui {
             mouseX -= offsetHoverX;
             mouseY -= offsetHoverY;
         }
-        isHovered = visible && mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
-        if (visible) {
-            GlStateManager.pushMatrix();
-            GlStateManager.enableDepth();
-            GlStateManager.enableBlend();
-            drawBox();
-            GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + width, getY() + height, textColor, showShadow, centered);
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            GlStateManager.popMatrix();
-            GlStateManager.disableDepth();
+        isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
+
+        GlStateManager.pushMatrix();
+        GlStateManager.enableDepth();
+        GlStateManager.enableBlend();
+        drawBox();
+
+        FontRenderer font = Minecraft.getMinecraft().fontRenderer;
+        Component message = getMessage();
+        int textWidth = customFont != null ? customFont.width(message) : font.getStringWidth(message.getString());
+        if (customFont != null) { textWidth++; }
+        if (textWidth > width) {
+            GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + width, getY() + height,
+                    textColor, showShadow, centered, customFont);
         }
+        else {
+            if (centered) {
+                if (customFont != null) { customFont.draw(message, (width - textWidth) / 2.0f, height, textColor); }
+                else { font.drawString(message.getString(), (width - textWidth) / 2.0f, height, textColor, showShadow); }
+            }
+            else {
+                if (customFont != null) { customFont.draw(message, getX(), height, textColor); }
+                else { font.drawString(message.getString(), getX(), height, textColor, showShadow); }
+            }
+        }
+
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.popMatrix();
+        GlStateManager.disableDepth();
     }
 
     @Override
@@ -208,6 +229,12 @@ public class GuiLabel extends Gui implements IComponentGui {
 
     @Override
     public void tick() { }
+
+    @Override
+    public GuiLabel setCustomFont(ClientProxy.FontContainer font) {
+        customFont = font;
+        return this;
+    }
 
     public int getX() { return x; }
 

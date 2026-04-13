@@ -16,6 +16,7 @@ import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.GuiComponentType;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
@@ -62,6 +63,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     private static GuiTextFieldNop activeTextfield = null;
     protected final String defaultValue;
     protected final List<Component> hoverText = new ArrayList<>();
+    protected ClientProxy.FontContainer customFont = null;
     protected final int[] allowedSpecialKeyIDs = new int[] { 14, 211, 203, 205 };
     protected boolean isFileName = false;
     protected boolean latinAlphabetOnly = false;
@@ -742,6 +744,11 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     public void moveTo(int addX, int addY) {
         x += addX;
         y += addY;
+    }
+    @Override
+    public GuiTextFieldNop setCustomFont(ClientProxy.FontContainer font) {
+        customFont = font;
+        return this;
     }
 
     @Override

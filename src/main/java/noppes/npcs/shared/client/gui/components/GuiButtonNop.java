@@ -101,7 +101,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                                     int left, int top, int right, int bottom, int color, boolean showShadow,
                                     boolean centered, ClientProxy.FontContainer customFont) {
         Minecraft mc = Minecraft.getMinecraft();
-        int textWidth = customFont != null ? customFont.width(message) : mc.fontRenderer.getStringWidth(Component.getString(message));
+        int textWidth = customFont != null ? customFont.width(message) : mc.fontRenderer.getStringWidth(message.getString());
         int height = (top + bottom - 9) / 2 + 1;
         if (customFont != null) {
             textWidth++;

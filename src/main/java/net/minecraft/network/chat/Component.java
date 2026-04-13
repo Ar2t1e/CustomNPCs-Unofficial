@@ -3,7 +3,6 @@ package net.minecraft.network.chat;
 import net.minecraft.util.text.*;
 import noppes.npcs.api.interfaces.IgnoreForAPI;
 import noppes.npcs.api.mixin.util.text.IStyleMixin;
-import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 import java.util.Iterator;
@@ -21,10 +20,6 @@ public class Component implements ICustomTextComponent {
     public static Component translatable(String localisationKey) { return new Component(localisationKey, false); }
 
     public static Component translatable(String localisationKey, Object... objects) { return new Component(localisationKey, objects); }
-
-    public static String getString(ITextComponent parent) { return getString(parent.getFormattedText()); }
-
-    public static String getString(String parent) { return Util.instance.deleteColor(parent); }
 
     public Component copy() {
         return new Component(ITextComponent.Serializer.jsonToComponent(ITextComponent.Serializer.componentToJson(parent)));
