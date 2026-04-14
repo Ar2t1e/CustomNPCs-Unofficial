@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,7 +24,6 @@ import noppes.npcs.roles.JobGuard;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
-import noppes.npcs.shared.common.util.LogWriter;
 
 public class GuiNpcGuard extends GuiNPCInterface2 implements ICustomScrollListener {
 
@@ -93,13 +91,13 @@ public class GuiNpcGuard extends GuiNPCInterface2 implements ICustomScrollListen
       y += 34;
       if (scrollAllEntities == null) { scrollAllEntities = addScroll(0).setSize(175, 174); }
       scrollAllEntities.setNormalList(allNames);
-      if (!select.getString().isEmpty()) { scrollAllEntities.setSelected(select); }
+      if (!select.getString().isEmpty()) { scrollAllEntities.setSelectedIndex(select); }
       add(scrollAllEntities.setPos(x, y));
       addLabel(11, x + 1, y - 10, "guard.availableTargets");
       if (scrollSelected == null) { scrollSelected = addScroll(1).setSize(175, 174); }
       x = guiLeft + 183;
       scrollSelected.setNormalList(selected);
-      if (!select.getString().isEmpty()) { scrollSelected.setSelected(select); }
+      if (!select.getString().isEmpty()) { scrollSelected.setSelectedIndex(select); }
       add(scrollSelected.setPos(x + 58, y));
       addLabel(12, x + 59, y - 10, "guard.currentTargets");
       addButton(11, x, y += 22, ">")

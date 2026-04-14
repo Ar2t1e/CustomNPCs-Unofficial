@@ -95,7 +95,7 @@ public class GuiNPCMarks
          case 4: {
             if (!scroll.hasSelected()) { return; }
             data.marks.remove(selectedMark);
-            scroll.setSelect(-1);
+            scroll.setSelectedIndex(-1);
             selMark = Component.empty();
             selectedMark = null;
             init();
@@ -125,7 +125,7 @@ public class GuiNPCMarks
       if (scroll == null) { scroll = addScroll(0).setSize(130, 174); }
       scroll.setList(new ArrayList<>())
               .setUnsortedList(ds);
-      if (selectedMark != null && !selMark.getString().isEmpty()) { scroll.setSelected(selMark); }
+      if (selectedMark != null && !selMark.getString().isEmpty()) { scroll.setSelectedIndex(selMark); }
       add(scroll.setPos(guiLeft + 5, guiTop + 14));
       if (selectedMark == null) { selectedMark = data.getNewMark(); }
       // type

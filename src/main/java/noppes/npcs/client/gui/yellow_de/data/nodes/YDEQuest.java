@@ -38,4 +38,7 @@ public class YDEQuest extends YDENode {
         return compound;
     }
 
+    @Override
+    public void refresh() { }
+
 }

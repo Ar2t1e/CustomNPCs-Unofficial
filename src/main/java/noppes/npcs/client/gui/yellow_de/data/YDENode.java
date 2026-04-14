@@ -61,4 +61,6 @@ public abstract class YDENode {
         return compound;
     }
 
+    public abstract void refresh();
+
 }

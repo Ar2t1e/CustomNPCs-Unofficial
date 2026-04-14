@@ -36,6 +36,11 @@ public class YDECategory extends YDENode {
         return compound;
     }
 
+    @Override
+    public void refresh() {
+
+    }
+
     public float getScale() { return scale; }
 
     public void setScale(float scaleIn) { scale = ValueUtil.correctFloat(scaleIn, 0.1f, 1.0f); }

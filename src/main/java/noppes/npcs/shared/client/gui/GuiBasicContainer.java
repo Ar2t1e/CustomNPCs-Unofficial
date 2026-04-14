@@ -27,6 +27,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.event.ClientEvent;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.gui.util.GuiTooltipUtils;
 import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
@@ -51,6 +52,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
    public float bgScale = 1.0F;
    public ResourceLocation background = null;
    protected final List<Component> hoverText = new ArrayList<>();
+   protected ClientProxy.FontContainer hoverFont = null;
    public int widthTexture = 0;
    public int heightTexture = 0;
    public int borderTexture = 4;
@@ -443,9 +445,10 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
          ItemStack itemstack = hoveredSlot.getItem();
          GuiTooltipUtils.renderTooltip(graphics, font, getTooltipFromContainerItem(itemstack), itemstack.getTooltipImage(), itemstack, mouseX, mouseY);
       }
-      else if (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText) && !hoverText.isEmpty()) {
+      else if ((hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText)) && !hoverText.isEmpty()) {
          if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
-         GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, ValueUtil.correctInt(mouseY, 16, height));
+         if (hoverFont == null) { GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, ValueUtil.correctInt(mouseY, 16, height)); }
+         else { GuiBasic.renderTooltipInternal(graphics, mouseX, ValueUtil.correctInt(mouseY, 16, height), hoverFont, hoverText, bgScale); }
          hoverText.clear();
       }
    }
@@ -501,7 +504,8 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
    @Override
    public int getHeight() { return height; }
 
-   public void doubleClicked(IComponentGui component) { }
+   @Override
+   public boolean doubleClicked(IComponentGui component) { return false; }
 
    @Override
    public Screen getParent() { return wrapper.getParent(); }

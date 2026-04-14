@@ -273,7 +273,7 @@ public class GuiNpcManageFactions
       if (!scroll.hasSelected() && faction.id > -1 && data.containsValue(faction.id)) {
          for (Component name : data.keySet()) {
             if (data.get(name) == faction.id) {
-               scroll.setSelected(name);
+               scroll.setSelectedIndex(name);
                break;
             }
          }
@@ -325,7 +325,7 @@ public class GuiNpcManageFactions
       }
       if (scroll != null) {
          scroll.setUnsortedList(new ArrayList<>(data.keySet()));
-         scroll.setSelected(select);
+         scroll.setSelectedIndex(select);
       }
    }
 
@@ -352,7 +352,7 @@ public class GuiNpcManageFactions
    public void setSelected(String selected) {
       for (Component key : scroll.getNormalList()) {
          if (Util.instance.equalsDeleteColor(key.getString(), selected, false) && data.containsKey(key)) {
-            scroll.setSelected(key);
+            scroll.setSelectedIndex(key);
             return;
          }
       }

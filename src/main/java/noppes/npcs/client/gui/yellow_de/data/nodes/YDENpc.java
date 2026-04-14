@@ -38,4 +38,7 @@ public class YDENpc extends YDENode {
         return compound;
     }
 
+    @Override
+    public void refresh() { }
+
 }

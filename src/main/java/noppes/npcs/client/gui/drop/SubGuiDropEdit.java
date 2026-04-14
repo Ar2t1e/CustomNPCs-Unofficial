@@ -222,7 +222,7 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
         if (scrollEnchants == null) { scrollEnchants = addScroll(0).setSize(133, 115); }
         scrollEnchants.setNormalList(new ArrayList<>(enchantData.keySet()))
                 .disabledSearch();
-        if (enchant != null) { scrollEnchants.setSelected(enchant.getKey()); }
+        if (enchant != null) { scrollEnchants.setSelectedIndex(enchant.getKey()); }
         add(scrollEnchants.setPos(guiLeft + 4, guiTop + 16));
         // enchant add
         addButton(1, guiLeft + 4, guiTop + 112, "gui.add")
@@ -249,7 +249,7 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
         if (scrollAttributes == null) { scrollAttributes = addScroll(1).setSize(133, 115); }
         scrollAttributes.setNormalList(new ArrayList<>(attributesData.keySet()))
                 .disabledSearch();
-        if (attribute != null) { scrollAttributes.setSelected(attribute.getKey()); }
+        if (attribute != null) { scrollAttributes.setSelectedIndex(attribute.getKey()); }
         add(scrollAttributes.setPos(guiLeft + 143, guiTop + 16));
         // attribute add
         addButton(4, guiLeft + 143, guiTop + 112, "gui.add")
@@ -276,7 +276,7 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
         if (scrollTags == null) { scrollTags = addScroll(2).setSize(133, 115); }
         scrollTags.setNormalList(new ArrayList<>(tagsData.keySet()))
                 .disabledSearch();
-        if (tag != null) { scrollTags.setSelected(tag.getKey()); }
+        if (tag != null) { scrollTags.setSelectedIndex(tag.getKey()); }
         add(scrollTags.setPos(guiLeft + 283, guiTop + 16));
         // tag add
         addButton(7, guiLeft + 283, guiTop + 112, "gui.add")

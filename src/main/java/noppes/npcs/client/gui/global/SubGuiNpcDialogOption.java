@@ -109,7 +109,7 @@ public class SubGuiNpcDialogOption
          if (scroll == null) { scroll = addScroll(0).setSize(141, 116); }
          scroll.setList(new ArrayList<>())
                  .setUnsortedList(keys);
-         if (!select.getString().isEmpty()) { scroll.setSelected(select); }
+         if (!select.getString().isEmpty()) { scroll.setSelectedIndex(select); }
          add(scroll.setPos(x0, guiTop + 96));
          addButton(3, x2, guiTop + 96, "gui.add")
                  .setSize(50, 20)

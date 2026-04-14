@@ -121,20 +121,22 @@ public class GuiCustomWindowNop extends GuiBasic
             int bottom = imageHeight;
             if (customFont != null) {
                 right *= 2;
-                matrixStack.pushPose();
-                matrixStack.scale(0.5f * bgScale, 0.5f * bgScale, 0.5f * bgScale);
-                graphics.fill(0, 0, right, bottom, 0xC0101010);
-                graphics.hLine(1, right - 2, 1, 0xC0F0F0F0);
-                graphics.vLine(1, 1, bottom - 2, 0xC0F0F0F0);
-                graphics.vLine(right - 2, 1, bottom - 2, 0xC0F0F0F0);
-                graphics.hLine(1, right - 2, bottom - 2, 0xC0F0F0F0);
-                if (title != null && !title.getString().isEmpty()) {
-                    matrixStack.translate(3.0f, 3.0f, 0.0f);
-                    drawTopRect(graphics, right - 1);
-                }
+                    matrixStack.pushPose();
+                    matrixStack.scale(0.5f * bgScale, 0.5f * bgScale, 0.5f * bgScale);
+                    graphics.fill(0, 0, right, bottom, 0xC0101010);
+                    graphics.hLine(1, right - 2, 1, 0xC0F0F0F0);
+                    graphics.vLine(1, 1, bottom - 2, 0xC0F0F0F0);
+                    graphics.vLine(right - 2, 1, bottom - 2, 0xC0F0F0F0);
+                    graphics.hLine(1, right - 2, bottom - 2, 0xC0F0F0F0);
+                    if (title != null && !title.getString().isEmpty()) {
+                        matrixStack.translate(3.0f, 3.0f, 0.0f);
+                        drawTopRect(graphics, right - 1);
+                    }
+                    matrixStack.popPose();
                 matrixStack.popPose();
+
                 if (title != null && !title.getString().isEmpty()) {
-                    GuiButtonNop.renderString(graphics, title, guiLeft + 3, guiTop,
+                    GuiButtonNop.renderString(graphics, title, guiLeft + 3, guiTop + 1,
                             guiLeft + imageWidth - 10, guiTop + 11,
                             CustomNpcs.MainColor.getRGB() | 255 << 24, false, false, customFont);
                 }
@@ -174,12 +176,13 @@ public class GuiCustomWindowNop extends GuiBasic
                 }
                 matrixStack.translate(3.0f, 3.0f, 0.0f);
                 drawTopRect(graphics, right - 3);
+                matrixStack.popPose();
                 if (title != null && !title.getString().isEmpty()) {
-                    GuiButtonNop.renderString(graphics, title, 4, 1, imageWidth - 20, 11,
+                    GuiButtonNop.renderString(graphics, title, guiLeft + 4, guiTop + 2,
+                            guiLeft + imageWidth - 20, guiTop + 11,
                             CustomNpcs.MainColor.getRGB() | 255 << 24, false, false, null);
                 }
             }
-            matrixStack.popPose();
         }
     }
 
@@ -412,6 +415,12 @@ public class GuiCustomWindowNop extends GuiBasic
     @Override
     public boolean isFocused() { return focused; }
 
+    @Override
+    public int getX() { return guiLeft; }
+
+    @Override
+    public int getY() { return guiTop; }
+
     public void drawTopRect(GuiGraphics graphics, int width) {
         float r = (colorLine >> 16) / 255.0f;
         float g = (colorLine >> 8) / 255.0f;
@@ -431,17 +440,13 @@ public class GuiCustomWindowNop extends GuiBasic
 
     public int getColorLine() { return colorLine; }
 
-    public boolean isHovered() { return isHovered; }
+    public boolean isHovered() { return visible && isHovered; }
+
+    public boolean isHeadHovered() { return isHeadHovered; }
 
     public GuiCustomWindowNop addClose(OnClose onCloseIn) {
         onClose = onCloseIn;
         return this;
     }
-
-    @Override
-    public int getX() { return guiLeft; }
-
-    @Override
-    public int getY() { return guiTop; }
 
 }

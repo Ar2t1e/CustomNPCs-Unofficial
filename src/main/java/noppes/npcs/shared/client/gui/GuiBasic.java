@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -16,6 +17,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.tooltip.*;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -28,6 +30,8 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.event.ClientEvent;
+import noppes.npcs.client.ClientProxy;
+import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.util.GuiTooltipUtils;
 import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
@@ -35,6 +39,7 @@ import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
+import org.joml.Vector2ic;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class GuiBasic extends Screen implements IGuiInterface {
@@ -94,6 +99,7 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
    }
 
    protected final List<Component> hoverText = new ArrayList<>();
+   protected ClientProxy.FontContainer hoverFont = null;
    public int widthTexture = 0;
    public int heightTexture = 0;
    public int borderTexture = 4;
@@ -498,12 +504,57 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
          wrapper.subgui.render(graphics, mouseX, mouseY, partialTicks);
          matrixStack.translate(0.0F, 0.0F, -60.0F);
       }
-      else if (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText) && !hoverText.isEmpty()) {
+      else if ((hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText)) && !hoverText.isEmpty()) {
          if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
          RenderSystem.disableDepthTest();
-         GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, ValueUtil.correctInt(mouseY, 16, height));
+         if (hoverFont == null) { GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, ValueUtil.correctInt(mouseY, 16, height)); }
+         else { renderTooltipInternal(graphics, mouseX, ValueUtil.correctInt(mouseY, 16, height), hoverFont, hoverText, bgScale); }
          hoverText.clear();
       }
+   }
+
+   public static void renderTooltipInternal(GuiGraphics graphics, int mouseX, int mouseY, ClientProxy.FontContainer font, List<Component> collections, float scale) {
+      if (font != null && !collections.isEmpty()) {
+         int toolWidht = 0;
+         int toolHeight = (collections.size() == 1 ? -2 : 0);
+         for (Component c : new ArrayList<>(collections)) {
+            int k = font.width(c);
+            if (k > toolWidht) { toolWidht = k; }
+         }
+         Vector2ic vector2ic = DefaultTooltipPositioner.INSTANCE.positionTooltip(graphics.guiWidth(), graphics.guiHeight(), mouseX, mouseY,
+                 (int) (toolWidht * scale), (int) (toolHeight * scale));
+         int x = vector2ic.x();
+         int y = vector2ic.y();
+         PoseStack matrixStack = graphics.pose();
+         matrixStack.pushPose();
+         matrixStack.translate(x, y, 3600.0F);
+         matrixStack.scale(scale, scale, scale);
+         toolHeight = collections.size() * font.getHeight() + 1;
+
+         matrixStack.pushPose();
+         matrixStack.translate(- 1, - 1, 0.0F);
+         matrixStack.scale(0.5f, 0.5f, 0.5f);
+         int r = (toolWidht + 1) * 2;
+         int b = (toolHeight + 4) * 2;
+         graphics.fill(-1, -1, r + 3, b + 1, YDEController.backColor);
+         graphics.hLine(1, r, 0, YDEController.windowLineColor);
+         graphics.hLine(1, r, b - 1, YDEController.windowLineColor);
+         graphics.vLine(0, 0, b - 1, YDEController.windowLineColor);
+         graphics.vLine(r + 1, 0, b - 1, YDEController.windowLineColor);
+         matrixStack.popPose();
+
+         matrixStack.translate(0.0F, 0.0F, 400.0F);
+         int k1 = 0;
+         int k2;
+         Component c;
+         for(k2 = 0; k2 < collections.size(); ++k2) {
+            c = collections.get(k2);
+            font.draw(graphics, c, 0, k1, 0xFFFFFF);
+            k1 += font.getHeight() + (k2 == 0 ? 2 : 0);
+         }
+         matrixStack.popPose();
+      }
+
    }
 
    public Font getFontRenderer() { return font; }
@@ -549,7 +600,8 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
    @Override
    public int getHeight() { return imageHeight; }
 
-   public void doubleClicked(IComponentGui component) { }
+   @Override
+   public boolean doubleClicked(IComponentGui component) { return false; }
 
    public void openLink(String link) {
       try {

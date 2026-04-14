@@ -49,12 +49,12 @@ public class SubGuiQuestSelection extends GuiBasic implements ICustomScrollListe
       }
       if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, 200); }
       scrollCategories.setList(Lists.newArrayList(categoryData.keySet()));
-      if (selectedCategory != null) { scrollCategories.setSelected(selectedCategory.title); }
+      if (selectedCategory != null) { scrollCategories.setSelectedIndex(selectedCategory.title); }
       add(scrollCategories.setPos(guiLeft + 4, guiTop + 14));
 
       if (scrollQuests == null) { scrollQuests = addScroll(1).setSize(170, 200); }
       scrollQuests.setList(Lists.newArrayList(questData.keySet()));
-      if (selectedQuest != null) { scrollQuests.setSelected(selectedQuest.title); }
+      if (selectedQuest != null) { scrollQuests.setSelectedIndex(selectedQuest.title); }
       add(scrollQuests.setPos(guiLeft + 175, guiTop + 14));
    }
 

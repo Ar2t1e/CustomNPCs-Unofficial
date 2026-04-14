@@ -169,7 +169,7 @@ public class GuiCreationParts extends GuiCreationScreenInterface implements ICus
         super.init();
         if (scroll == null) { scroll = addScroll(0); }
         add(scroll.setUnsortedList(partData)
-                .setSelected(selectedPart)
+                .setSelectedIndex(selectedPart)
                 .setPos(guiLeft, guiTop + 46)
                 .setSize(120, imageHeight - 50)
                 .disabledSearch());

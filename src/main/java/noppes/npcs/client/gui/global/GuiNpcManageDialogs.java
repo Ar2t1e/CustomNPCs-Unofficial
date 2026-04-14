@@ -195,11 +195,11 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
               .setHoverTexts("manager.hover.category.add");
       if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, imageHeight - 3); }
       scrollCategories.setNormalList(new ArrayList<>(categoryData.keySet()));
-      if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelected(selectedCategory); }
+      if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelectedIndex(selectedCategory); }
       add(scrollCategories.setPos(guiLeft + 4, guiTop + 15));
       if (scrollDialogs == null) { scrollDialogs = addScroll(1).setSize(170, imageHeight - 3); }
       scrollDialogs.setUnsortedList(new ArrayList<>(dialogData.keySet()));
-      if (!selectedDialog.getString().isEmpty()) { scrollDialogs.setSelected(selectedDialog); }
+      if (!selectedDialog.getString().isEmpty()) { scrollDialogs.setSelectedIndex(selectedDialog); }
       scrollDialogs.setHoverTexts(hts);
       add(scrollDialogs.setPos(guiLeft + 176, guiTop + 15));
    }
@@ -210,7 +210,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
          case 1: {
             setSubGui(new SubGuiEditText(1, Component.translatable("gui.new").getString()));
             break;
-         } // create cat
+         } // create dialog category
          case 2: {
             if (!categoryData.containsKey(selectedCategory)) { return; }
             ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
@@ -230,7 +230,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
             if (!dialogData.containsKey(selectedDialog)) { return; }
             setSubGui(new SubGuiEditText(3, categoryData.get(selectedCategory).title));
             break;
-         } // rename cat
+         } // rename dialog category
          case 9: {
             if (copyDialog == null || !categoryData.containsKey(selectedCategory)) { return; }
             Dialog dialog = copyDialog.copy(null);

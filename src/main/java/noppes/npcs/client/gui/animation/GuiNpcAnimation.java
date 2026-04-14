@@ -240,7 +240,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
                 }
             }
         }
-        scrollType.setSelected(selType);
+        scrollType.setSelectedIndex(selType);
         addLabel(0, x + 1, y - 10, Component.translatable("animation.type", ""))
                 .setSize(120, 10);
         x += 123;
@@ -291,7 +291,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
             }
         }
         if (!selAnim.getString().isEmpty()) {
-            scrollAnimations.setSelected(selAnim);
+            scrollAnimations.setSelectedIndex(selAnim);
             if (!scrollAnimations.hasSelected()) { selAnim = Component.empty(); }
             else { selAnim = scrollAnimations.getNormalSelected(); }
         }
@@ -303,7 +303,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
         add(scrollAllAnimations.setPos(x, y + 88)
                 .setUnsortedList(allAnimations)
                 .setHoverTexts(hts));
-        if (!selBaseAnim.getString().isEmpty()) { scrollAllAnimations.setSelected(selBaseAnim); }
+        if (!selBaseAnim.getString().isEmpty()) { scrollAllAnimations.setSelectedIndex(selBaseAnim); }
         AnimationConfig anim = getAnim();
         addLabel(1, x + 1, y - 10, Component.translatable("movement.animation").append(":"))
                 .setSize(120, 10);
@@ -344,7 +344,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
         else if (scroll.id == 1) {
             if (selAnim.getString().equals(scroll.getSelected())) { return; }
             selAnim = scroll.getNormalSelected();
-            scrollAllAnimations.setSelected(selAnim);
+            scrollAllAnimations.setSelectedIndex(selAnim);
             selBaseAnim = scrollAllAnimations.getNormalSelected();
             isChanged = true;
         } // animation in type
@@ -352,7 +352,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
             if (selBaseAnim.getString().equals(scroll.getSelected())) { return; }
             selBaseAnim = scroll.getNormalSelected();
             if (selBaseAnim.getString().equals(scrollAnimations.getSelected())) {
-                scrollAnimations.setSelected(selBaseAnim);
+                scrollAnimations.setSelectedIndex(selBaseAnim);
                 selAnim = scrollAnimations.getNormalSelected();
             }
             isChanged = true;

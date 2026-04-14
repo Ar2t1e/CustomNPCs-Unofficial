@@ -83,7 +83,7 @@ public class SubGuiNpcAvailabilityDialog
          }
       }
       scroll.setNormalList(new ArrayList<>(dataIDs.keySet()));
-      if (isSelect) { scroll.setSelected(select); }
+      if (isSelect) { scroll.setSelectedIndex(select); }
       add(scroll.setPos(guiLeft + 6, guiTop + 14));
       int p = 0;
       if (isSelect) { p = dataEnum.get(select).ordinal(); }

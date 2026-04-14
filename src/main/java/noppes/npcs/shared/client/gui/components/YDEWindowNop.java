@@ -20,6 +20,7 @@ import noppes.npcs.client.gui.yellow_de.data.nodes.YDEOption;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
+import noppes.npcs.shared.common.util.LogWriter;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
@@ -158,6 +159,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
 
     @Override
     public void mouseButtonEvent(GuiButtonNop button, int mouseButton) {
+        LogWriter.info("TEST: buttonID: "+button.id+"; mouseButton: "+mouseButton);
         if (isHovered && visible) {
             listener.mouseButtonEvent(this, button, mouseButton);
         }
@@ -279,15 +281,22 @@ public class YDEWindowNop extends GuiCustomWindowNop {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (isHovered) {
-            if (Screen.hasControlDown()) {
-                if (listener.hasSelect(node.id)) { listener.removeSelect(node.id); } else { listener.addSelect(node.id); }
+        boolean bo = super.mouseClicked(mouseX, mouseY, mouseButton);
+        if (isHovered && visible) {
+            if (mouseButton == 0) {
+                if (Screen.hasControlDown()) {
+                    if (listener.hasSelect(node.id)) { listener.removeSelect(node.id); } else { listener.addSelect(node.id); }
+                }
+                else { listener.setActive(node.id); }
+                if (lastClicked + 500L > System.currentTimeMillis()) {
+                    lastClicked = 0L;
+                    return listener.doubleClicked(this);
+                }
+                else { lastClicked = System.currentTimeMillis(); }
             }
-            else { listener.setActive(node.id); }
-            if (lastClicked + 500L > System.currentTimeMillis()) { listener.doubleClicked(this); }
-            else { lastClicked = System.currentTimeMillis(); }
+            else if (!bo) { bo = listener.mouseButtonEvent(this, null, mouseButton); }
         }
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return bo;
     }
 
     @Override
@@ -315,8 +324,10 @@ public class YDEWindowNop extends GuiCustomWindowNop {
             if (!isLock) {
                 tempDx += dx;
                 tempDy += dy;
-                int x = (int) (Math.floor(tempDx) * listener.guiScale / listener.category.getScale() / 2.0d);
-                int y = (int) (Math.floor(tempDy) * listener.guiScale / listener.category.getScale() / 2.0d);
+                int x = (int) (Math.floor(tempDx) * listener.guiScale /
+                        (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) / 2.0d);
+                int y = (int) (Math.floor(tempDy) * listener.guiScale /
+                        (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f)/ 2.0d);
                 int stepX = 1;
                 int stepY = 1;
                 if (Screen.hasShiftDown()) {
@@ -334,8 +345,10 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                 if (x != 0 || y != 0) {
                     x *= stepX;
                     y *= stepY;
-                    if (x != 0) { tempDx -= x / listener.guiScale * listener.category.getScale() * 2.0d; }
-                    if (y != 0) { tempDy -= y / listener.guiScale * listener.category.getScale() * 2.0d; }
+                    if (x != 0) { tempDx -= x / listener.guiScale *
+                            (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) * 2.0d; }
+                    if (y != 0) { tempDy -= y / listener.guiScale *
+                            (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) * 2.0d; }
                     listener.movedSelectNodes(x, y);
                 }
             }

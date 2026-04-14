@@ -21,7 +21,6 @@ import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
-import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 
@@ -90,7 +89,7 @@ public class GuiNpcTransporter extends GuiNPCInterface2
       add(scroll.setPos(x, y)
               .setUnsortedList(list)
               .setHoverTexts(hts)
-              .setSelected(select));
+              .setSelectedIndex(select));
       addLabel(0, x + 2, y - 11, Component.translatable("gui.categories").append(":"));
       x += 147;
       addLabel(1, x, y - 11, Component.translatable("gui.name").append(":"))

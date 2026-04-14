@@ -60,6 +60,7 @@ public class YDEData {
     }
 
     public YDEData check() {
+        for (YDENode node : nodes.values()) { node.refresh(); }
         // process categories
         for (DialogCategory category : DialogController.instance.categories.values()) {
             YDECategory yde_category = null;
@@ -82,7 +83,7 @@ public class YDEData {
         // process dialogues
         for (DialogCategory category : DialogController.instance.categories.values()) {
             for (Dialog dialog : category.dialogs.values()) {
-                YDEDialog yde_dialog = getDialog(dialog.id);
+                YDEDialog yde_dialog = getDialog(dialog);
                 if (yde_dialog == null) {
                     yde_dialog = new YDEDialog(this, getEmptyNodeId(), category.title, dialog.id);
                     nodes.put(yde_dialog.id, yde_dialog);
@@ -274,11 +275,31 @@ public class YDEData {
         return null;
     }
 
-    public YDEDialog getDialog(int dialogId) {
+    public YDEDialog getDialog(@Nonnull Dialog dialog) {
         for (YDENode node : nodes.values()) {
-            if (node.type == EnumYDEType.DIALOG && node instanceof YDEDialog dialog && dialog.dialogId == dialogId) { return dialog; }
+            if (node.type == EnumYDEType.DIALOG && node instanceof YDEDialog yde_dialog &&
+                    (dialog.equals(yde_dialog.dialog) || (yde_dialog.dialog != null && yde_dialog.dialog.id == dialog.id) || yde_dialog.dialogId == dialog.id)) { return yde_dialog; }
         }
         return null;
+    }
+
+    public YDEDialog getDialog(int dialogId) {
+        Dialog dialog = DialogController.instance.get(dialogId);
+        for (YDENode node : nodes.values()) {
+            if (node.type == EnumYDEType.DIALOG && node instanceof YDEDialog yde_dialog &&
+                    (dialog != null && dialog.equals(yde_dialog.dialog) || yde_dialog.dialogId == dialogId)) { return yde_dialog; }
+        }
+        return null;
+    }
+
+    public YDEDialog createDialog(@Nonnull Dialog dialog) {
+        YDEDialog yde_dialog = getDialog(dialog);
+        if (yde_dialog == null) {
+            yde_dialog = new YDEDialog(this, getEmptyNodeId(), dialog.category.title, dialog.id);
+            yde_dialog.dialog = dialog;
+            nodes.put(yde_dialog.id, yde_dialog);
+        }
+        return yde_dialog;
     }
 
     public @Nonnull YDECategory getCategory(String categoryTitle) {

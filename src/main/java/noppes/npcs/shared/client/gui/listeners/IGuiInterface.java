@@ -81,4 +81,6 @@ public interface IGuiInterface {
 
     int getY();
 
+    boolean doubleClicked(IComponentGui component);
+
 }

@@ -279,7 +279,7 @@ public class GuiNpcInv extends GuiContainerNPCInterface2<ContainerNPCInv>
                  .setList(new ArrayList<>(DropController.getInstance().templates.keySet())));
          if (DropController.getInstance().templates.containsKey(inventory.saveDropsName)) {
             temp = DropController.getInstance().templates.get(inventory.saveDropsName);
-            scrollTemplate.setSelected(inventory.saveDropsName);
+            scrollTemplate.setSelectedIndex(inventory.saveDropsName);
             if (temp.groups.containsKey(groupId)) {
                int i = 0;
                for (DropSet ds : temp.groups.get(groupId).values()) {
@@ -370,7 +370,7 @@ public class GuiNpcInv extends GuiContainerNPCInterface2<ContainerNPCInv>
                  .setList(new ArrayList<>(DropController.getInstance().templates.keySet())));
          if (DropController.getInstance().templates.containsKey(inventory.saveDropsName)) {
             temp = DropController.getInstance().templates.get(inventory.saveDropsName);
-            scrollTemplate.setSelected(inventory.saveDropsName);
+            scrollTemplate.setSelectedIndex(inventory.saveDropsName);
          }
          else { groupId = 0; }
          if (scrollDrops == null) { scrollDrops = addScroll(1).setSize(140, 157); }

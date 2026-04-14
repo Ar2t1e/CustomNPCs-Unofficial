@@ -118,7 +118,7 @@ public class GuiCreationNewParts
       listener.add(entity);
       listener.add(slider);
       List<MpmPart> list = MpmPartReader.PARTS.values().stream().sorted(Comparator.comparing((t) -> t.id)).filter((t) -> t.menu.equals(active) && t.parentId == null).toList();
-      scroll.setSelected(active);
+      scroll.setSelectedIndex(active);
       entity.setEntity(npc);
       int i;
       int column;

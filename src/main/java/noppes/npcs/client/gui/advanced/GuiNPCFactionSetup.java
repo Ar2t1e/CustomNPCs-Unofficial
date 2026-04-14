@@ -132,7 +132,7 @@ public class GuiNPCFactionSetup extends GuiNPCInterface2
    }
 
    @Override
-   public void setSelected(String selected) { scrollFactions.setSelected(selected); }
+   public void setSelected(String selected) { scrollFactions.setSelectedIndex(selected); }
 
    @Override
    public void scrollClicked(GuiCustomScrollNop guiCustomScroll) {

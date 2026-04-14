@@ -70,11 +70,11 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
       for (Component key : names) { suffixes.add(mapSfx.get(key)); }
 
       if (scroll == null) { scroll = addScroll(0).setSize(248, 176); }
-      add(scroll.setSelected(npc.linkedName)
+      add(scroll.setSelectedIndex(npc.linkedName)
               .setPos(guiLeft + 4, guiTop + 4)
               .setUnsortedList(names)
               .setSuffixes(suffixes)
-              .setSelected(select)
+              .setSelectedIndex(select)
               .setHoverTexts(hts));
 
       int y = guiTop + imageHeight - 34;

@@ -14,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FastColor;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
@@ -34,7 +33,7 @@ import java.util.*;
 public class GuiButtonNop extends Button implements IComponentGui {
 
    protected static final OnPress clicked = (button) -> {
-      GuiButtonNop b = (GuiButtonNop)button;
+      GuiButtonNop b = (GuiButtonNop) button;
       b.listener.buttonEvent(b);
    };
 
@@ -92,30 +91,28 @@ public class GuiButtonNop extends Button implements IComponentGui {
          height--;
       }
       int width = right - left;
-      FormattedCharSequence format = message.getVisualOrderText();
-      graphics.enableScissor(left, top, right, bottom);
-
       if (textWidth > width) { // moved
+         graphics.enableScissor(left, top, right, bottom);
          int centerX = textWidth - width;
          double d0 = (double) Util.getMillis() / 1000.0;
          double d1 = Math.max((double) centerX * 0.5, 3.0);
          double d2 = Math.sin(Math.PI / 2.0d * Math.cos(Math.PI * 2.0d * d0 / d1)) / 2.0 + 0.5;
          double d3 = Mth.lerp(d2, 0.0, centerX);
          if (customFont != null) { customFont.draw(graphics, message, left - (int) d3, height, color); }
-         else { graphics.drawString(font, format, left - (int) d3, height, color, showShadow); }
+         else { graphics.drawString(font, message, left - (int) d3, height, color, showShadow); }
+         graphics.disableScissor();
       }
       else {
          if (centered) {
             width = (left + right) / 2;
             if (customFont != null) { customFont.draw(graphics, message, width - textWidth / 2.0f, height, color); }
-            else { graphics.drawString(font, format, width - textWidth / 2, height, color, showShadow); }
+            else { graphics.drawString(font, message, width - textWidth / 2, height, color, showShadow); }
          }
          else {
             if (customFont != null) { customFont.draw(graphics, message, left, height, color); }
-            else { graphics.drawString(font, format, left, height, color, showShadow); }
+            else { graphics.drawString(font, message, left, height, color, showShadow); }
          }
       }
-      graphics.disableScissor();
    }
 
    public GuiButtonNop(IGuiInterface gui, int buttonId, Object label, int x, int y, OnPress onPress) {

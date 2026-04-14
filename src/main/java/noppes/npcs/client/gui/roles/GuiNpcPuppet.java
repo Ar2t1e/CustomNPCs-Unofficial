@@ -103,7 +103,7 @@ public class GuiNpcPuppet extends GuiNPCInterface implements ISliderListener, IC
       add(scroll.setPos(guiLeft + 10, y)
               .setNormalList(new ArrayList<>(dataIn.keySet())));
       if (selected != null) {
-         scroll.setSelected(selected);
+         scroll.setSelectedIndex(selected);
          if (scroll.hasSelected()) { addPartComponents(y, dataIn.get(selected)); }
       }
       addButton(66, guiLeft + imageWidth - 22, guiTop, "X")

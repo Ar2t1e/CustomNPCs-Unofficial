@@ -10,7 +10,6 @@ import net.minecraft.world.inventory.Slot;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
-import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.containers.ContainerDead;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketDeadLootsGet;
@@ -109,7 +108,7 @@ public class GuiNPCDeadInventory extends GuiContainerNPCInterface<ContainerDead>
     @Override
     public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
         scroll.setList(dataList);
-        scroll.setSelected(menu.playerParent);
+        scroll.setSelectedIndex(menu.playerParent);
     }
 
     @Override

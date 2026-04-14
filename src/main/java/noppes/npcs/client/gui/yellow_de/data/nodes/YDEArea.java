@@ -19,4 +19,9 @@ public class YDEArea extends YDENode {
         type = EnumYDEType.AREA;
     }
 
+    @Override
+    public void refresh() {
+
+    }
+
 }

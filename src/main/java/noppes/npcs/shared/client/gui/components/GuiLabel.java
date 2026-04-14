@@ -1,7 +1,6 @@
 package noppes.npcs.shared.client.gui.components;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -39,6 +38,7 @@ public class GuiLabel extends AbstractWidget implements GuiEventListener, ICompo
    protected ClientProxy.FontContainer customFont = null;
    protected int backColor = 0;
    protected int borderColor = 0;
+   protected long lastClicked = 0L;
    public IGuiInterface listener;
    public boolean showShadow = false;
    public int offsetHoverX = 0;
@@ -113,25 +113,8 @@ public class GuiLabel extends AbstractWidget implements GuiEventListener, ICompo
       isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
       drawBox(graphics);
 
-      Font font = Minecraft.getInstance().font;
-      Component message = getMessage();
-      int textWidth = customFont != null ? customFont.width(message) : font.width(message);
-      if (customFont != null) { textWidth++; }
-      if (textWidth > width) {
-         GuiButtonNop.renderString(graphics, getMessage(), getX(), getY(), getX() + width, getY() + height,
-                 textColor, showShadow, centered, customFont);
-      }
-      else {
-         if (centered) {
-            if (customFont != null) { customFont.draw(graphics, message, (width - textWidth) / 2.0f, getY(), textColor); }
-            else { graphics.drawString(font, message, (width - textWidth) / 2, getY(), textColor, showShadow); }
-         }
-         else {
-            if (customFont != null) { customFont.draw(graphics, message, getX(), getY(), textColor); }
-            else { graphics.drawString(font, message, getX(), getY(), textColor, showShadow); }
-         }
-      }
-
+      GuiButtonNop.renderString(graphics, getMessage(), getX(), getY(), getX() + width, getY() + height,
+              textColor, showShadow, centered, customFont);
    }
 
    @Override
@@ -223,8 +206,14 @@ public class GuiLabel extends AbstractWidget implements GuiEventListener, ICompo
 
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-      super.mouseClicked(mouseX, mouseY, mouseButton);
-      return false;
+      if (isHovered && visible) {
+         if (lastClicked + 500L > System.currentTimeMillis()) {
+            lastClicked = 0L;
+            return listener.doubleClicked(this);
+         }
+         else { lastClicked = System.currentTimeMillis(); }
+      }
+      return super.mouseClicked(mouseX, mouseY, mouseButton);
    }
 
    @Override

@@ -139,7 +139,7 @@ public class SubGuiNpcMobSpawnerSelector extends GuiBasic
       for (int i = 0; i < nbtList.size(); ++i) { list.add(nbtList.getString(i)); }
       scroll.setList(list);
       if (spawnData != null) {
-         scroll.setSelected(Util.instance.deleteColor(spawnData.getTitle().getString()));
+         scroll.setSelectedIndex(Util.instance.deleteColor(spawnData.getTitle().getString()));
          resetEntity();
       }
    }

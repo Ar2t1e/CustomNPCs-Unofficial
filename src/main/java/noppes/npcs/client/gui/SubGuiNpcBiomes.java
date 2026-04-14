@@ -112,12 +112,12 @@ public class SubGuiNpcBiomes extends GuiBasic implements ICustomScrollListener {
       if (scroll.hasSelected()) {
          if (scroll.id == 1) {
             data.biomes.add(ResourceLocation.tryParse(scroll.getSelected()));
-            scroll.setSelect(-1);
+            scroll.setSelectedIndex(-1);
             init();
          }
          if (scroll.id == 2) {
             data.biomes.remove(ResourceLocation.tryParse(scroll.getSelected()));
-            scroll.setSelect(-1);
+            scroll.setSelectedIndex(-1);
             init();
          }
       }

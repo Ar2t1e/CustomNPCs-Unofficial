@@ -46,4 +46,7 @@ public class YDEOption extends YDENode {
         return compound;
     }
 
+    @Override
+    public void refresh() { }
+
 }

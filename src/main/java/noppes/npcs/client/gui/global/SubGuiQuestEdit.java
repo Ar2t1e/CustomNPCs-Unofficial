@@ -144,10 +144,10 @@ public class SubGuiQuestEdit
       int pos = -1;
       if (!selectTask.getString().isEmpty()) {
          if (!tasksData.containsKey(selectTask)) {
-            scrollTasks.setSelect(-1);
+            scrollTasks.setSelectedIndex(-1);
             selectTask = Component.empty(); }
          else {
-            scrollTasks.setSelected(selectTask);
+            scrollTasks.setSelectedIndex(selectTask);
             pos = quest.questInterface.getPos(tasksData.get(selectTask));
          }
       }

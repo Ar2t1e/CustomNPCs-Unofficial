@@ -3,7 +3,6 @@ package noppes.npcs.shared.client.gui.listeners;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.client.ClientProxy;
-import noppes.npcs.shared.client.gui.components.GuiLabel;
 
 import java.util.List;
 
@@ -35,5 +34,4 @@ public interface IComponentGui {
    IComponentGui setSize(int width, int height);
 
    GuiComponentType getElementType();
-
 }

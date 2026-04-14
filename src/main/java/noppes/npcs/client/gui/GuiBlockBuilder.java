@@ -173,7 +173,7 @@ public class GuiBlockBuilder extends GuiNPCInterface
       if (compound.contains("Width")) {
          wrapper = SchematicController.Instance.load(compound.getString("SchematicName"));
          wrapper.rotation = tile.rotation;
-         scroll.setSelected(wrapper.schema.getName());
+         scroll.setSelectedIndex(wrapper.schema.getName());
          if (getButton(3) != null) { tile.setDrawSchematic(wrapper, ((GuiButtonYesNo) getButton(3)).getBoolean()); }
          else { tile.setDrawSchematic(wrapper, tile.getShow()); }
       }
@@ -192,7 +192,7 @@ public class GuiBlockBuilder extends GuiNPCInterface
    @Override
    public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
       scroll.setList(dataList);
-      if (wrapper != null) { scroll.setSelected(wrapper.schema.getName()); }
+      if (wrapper != null) { scroll.setSelectedIndex(wrapper.schema.getName()); }
       init();
    }
 

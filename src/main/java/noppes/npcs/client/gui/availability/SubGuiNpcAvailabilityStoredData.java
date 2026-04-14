@@ -160,8 +160,8 @@ public class SubGuiNpcAvailabilityStoredData
         if (select != null && selKey.getString().isEmpty()) { select = null; }
         if (scroll == null) { scroll = addScroll(0).setSize(imageWidth - 12, imageHeight - 64); }
         scroll.setNormalList(new ArrayList<>(data.keySet()));
-        if (!selKey.getString().isEmpty()) { scroll.setSelected(selKey); }
-        else { scroll.setSelect(-1); }
+        if (!selKey.getString().isEmpty()) { scroll.setSelectedIndex(selKey); }
+        else { scroll.setSelectedIndex(-1); }
         add(scroll.setPos(guiLeft + 6, guiTop + 14));
         // type
         Object[] enumNames = new Object[EnumAvailabilityStoredData.values().length];

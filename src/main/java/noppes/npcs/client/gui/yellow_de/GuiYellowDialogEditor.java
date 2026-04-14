@@ -1,24 +1,27 @@
 package noppes.npcs.client.gui.yellow_de;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FastColor;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.handler.data.IDialogCategory;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.SubGuiEditText;
-import noppes.npcs.client.gui.global.SubGuiDialogEdit;
 import noppes.npcs.client.gui.util.GuiTooltipUtils;
 import noppes.npcs.client.gui.yellow_de.data.*;
 import noppes.npcs.client.gui.yellow_de.data.nodes.*;
@@ -33,8 +36,10 @@ import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.CustomNPCsScheduler;
+import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.joml.Matrix4f;
 
@@ -44,10 +49,12 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollListener {
+public class GuiYellowDialogEditor extends GuiBasic
+        implements ICustomScrollListener, ITextfieldListener {
 
     public static YDEData YDE_DATA = YDEController.getInstance().getLevelData(ScriptController.getLevelKey());
     // window
+    protected final List<IComponentGui> notScaledComponents = new ArrayList<>();
     protected float xMouse;
     protected float yMouse;
     protected float w;
@@ -56,6 +63,8 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     protected float centerV;
     public float guiScale;
     // back
+    protected int space = 30;
+    protected final int[] pos = new int[2];
     public int color = 0xFFF0F0F0;
     // grid
     public YDEWindowNop hovered = null;
@@ -63,18 +72,20 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     protected double tempDx;
     protected double tempDy;
     // category
-    public YDECategory category;
+    public static @Nullable YDECategory category;
     protected Set<Integer> selects = new LinkedHashSet<>();
     // tabs
     protected final @Nonnull GuiCustomWindowNop leftTab;
-    protected boolean hoverLeft = false;
     protected final @Nonnull GuiCustomWindowNop rightTab;
+    protected boolean hoverLeft = false;
     protected boolean hoverRight = false;
+    protected GuiCustomScrollNop helper;
 
     public GuiYellowDialogEditor() {
         super();
         if (minecraft == null) { minecraft = Minecraft.getInstance(); }
         hoverIsGame = true;
+        hoverFont = UtilYDE.FONT;
 
         YDE_DATA = YDEController.getInstance().getLevelData(ScriptController.getLevelKey());
 
@@ -92,7 +103,7 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
         leftTab.exit.setX(leftTab.exit.getX() + 1);
         leftTab.exit.setY(leftTab.exit.getY() - 1);
 
-        rightTab = new GuiCustomWindowNop(this, 1, width, 0, tabW, height, Component.literal("TEST, test, next text"));
+        rightTab = new GuiCustomWindowNop(this, 1, width, 0, tabW, height, Component.translatable("type.help"));
         rightTab.setCustomFont(UtilYDE.FONT);
         rightTab.isLock = false;
         rightTab.colorLine = 0x5A8A8C;
@@ -128,6 +139,7 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
         renderables.clear();
         children().clear();
         wrapper.init(minecraft, width, height);
+        notScaledComponents.clear();
         // this init
         if (category == null) {
             String name = "";
@@ -152,7 +164,7 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
                 .setPos(leftTab.getX() + 2, leftTab.getY() + 14)
                 .setSize(leftTab.imageWidth - 4, leftTab.imageHeight / 2 - 34)
                 .setNormalList(categories)
-                .setSelected(selectedCategory);
+                .setSelectedIndex(selectedCategory);
         scroll.border = YDEController.windowLineColor;
         leftTab.addButton(0, 4, leftTab.imageHeight / 2 - 18, "gui.add")
                 .setCustomFont(UtilYDE.FONT)
@@ -177,16 +189,28 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
                 .setColor(CustomNpcs.LableColor.getRGB())
                 .setSize(70, 16)
                 .setIsEnabled(scroll.hasSelected());
+        if (helper == null) { helper = addScroll(25).setIsVisible(false); }
+        helper.setCustomFont(UtilYDE.FONT)
+                .setIsSimpleSelect(true)
+                .setHoverScale(guiScale, 1.0f)
+                .disabledSearch();
+        helper.border = YDEController.windowLineColor;
+        add(helper);
         // category name
         YDE_DATA.check();
+        // not scaled components
         GuiLabel label = addLabel(0, (int) (((width - UtilYDE.FONT_HEADLINE.width(category.title)) * guiScale) / 4.0f), 0, category.title)
                 .setCustomFont(UtilYDE.FONT_HEADLINE)
                 .setColor(color);
+        notScaledComponents.add(label);
         GuiTextFieldNop textField = getTextField(0);
         boolean bo = textField != null && textField.isVisible();
-        addTextField(0, label.getX(), label.getY(), label.getWidth(), 20, category.category)
+        textField = addTextField(0, label.getX(), label.getY(), label.getWidth(), 20, category.category)
                 .setIsVisible(bo);
-
+        notScaledComponents.add(textField);
+        notScaledComponents.add(leftTab);
+        notScaledComponents.add(rightTab);
+        notScaledComponents.add(helper);
         w = width * guiScale / 2.0f;
         h = height * guiScale / 2.0f;
         List<Integer> sls = new ArrayList<>(selects);
@@ -205,53 +229,50 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
         if (!hasSubGui()) { mouseButtonEvent(null, button, mouseButton); }
     }
 
-    public void mouseButtonEvent(YDEWindowNop window, GuiButtonNop button, int mouseButton) {
-        LogWriter.info("TEST: buttonID: "+button.id+"; mouseButton: "+mouseButton+"; window "+window);
-        switch (button.id) {
-            case 0: {
-                setSubGui(new SubGuiEditText(0, Component.translatable("gui.new").getString()));
-                break;
-            } // add dialog category
-            case 1: {
-                ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
-                    if (agree) {
-                        int catId = category.categoryId;
-                        YDE_DATA.nodes.remove(category.id);
-                        category = null;
-                        leftTab.getScroll(0).setSelected("");
-                        Packets.sendServer(new SPacketDialogCategoryRemove(catId));
-                    }
-                    NoppesUtil.openGUI(player, this);
-                },
-                        category.title,
-                        Component.translatable("message.delete"));
-                setScreen(guiYesNo);
-                break;
-            } // remove dialog category
-            case 2: {
-                scrollDoubleClicked(leftTab.getScroll(0));
-                break;
-            } // edit dialog category
-            case 2500: {
-                if (mouseButton == 0) {
+    public boolean mouseButtonEvent(YDEWindowNop window, @Nullable GuiButtonNop button, int mouseButton) {
+        LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouseButton: "+mouseButton+"; window "+window);
+        if (mouseButton == 0 && button != null) {
+            switch (button.id) {
+                case 0: {
+                    setSubGui(new SubGuiEditText(0, Component.translatable("gui.new").getString()));
+                    return true;
+                } // create dialog category
+                case 1: {
+                    ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+                        if (agree) {
+                            int catId = category.categoryId;
+                            YDE_DATA.nodes.remove(category.id);
+                            category = null;
+                            leftTab.getScroll(0).setSelectedIndex("");
+                            Packets.sendServer(new SPacketDialogCategoryRemove(catId));
+                        }
+                        NoppesUtil.openGUI(player, this);
+                    },
+                            category.title,
+                            Component.translatable("message.delete"));
+                    setScreen(guiYesNo);
+                    return true;
+                } // remove dialog category
+                case 2: {
+                    scrollDoubleClicked(leftTab.getScroll(0));
+                    return true;
+                } // rename dialog category
+                case 2500: {
                     if (window == null) {
                         if (button.equals(leftTab.exit)) { leftTab.isYDEShow = !leftTab.isYDEShow; }
                         else { rightTab.isYDEShow = !rightTab.isYDEShow; }
                     } // show / hide tabs
                     else {
                         ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
-                            if (agree) {
-                                if (window.node instanceof YDEDialog yde_dialog) {
-                                    for (YDELink link : yde_dialog.links) {
-                                        if (thereAreNoOthersBesides(yde_dialog, link)) { YDE_DATA.nodes.remove(link.nextNodId); }
-                                    }
-                                    YDE_DATA.nodes.remove(yde_dialog.id);
-                                    Packets.sendServer(new SPacketDialogRemove(yde_dialog.dialogId));
-                                }
-                                selects.clear();
-                                init();
-                            }
                             NoppesUtil.openGUI(player, this);
+                            if (agree) {
+                                for (YDELink link : window.node.links) {
+                                    if (thereAreNoOthersBesides(window.node, link)) { YDE_DATA.nodes.remove(link.nextNodId); }
+                                }
+                                YDE_DATA.nodes.remove(window.node.id);
+                                if (window.node instanceof YDEDialog yde_dialog) { Packets.sendServer(new SPacketDialogRemove(yde_dialog.dialogId)); }
+                                selects.clear();
+                            }
                         },
                                 switch (window.node.type) {
                                     case CATEGORY -> Component.translatable("yde.delete.category", window.node.id, window.node.category);
@@ -264,21 +285,23 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
                                 Component.translatable("message.delete"));
                         setScreen(guiYesNo);
                     } // remove node / exit window
-                }
-                break;
-            } // exit
-            case 2501: {
-                window.isLock = !window.isLock;
-                if (window.isLock) {
-                    button.txrX += button.txrW;
-                    window.lock.layerColor = new Color(0xFFA0A000).getRGB();
-                }
-                else {
-                    button.txrX -= button.txrW;
-                    window.lock.layerColor = new Color(0xFFFFFF00).getRGB();
-                }
-            } // lock node / window
+                    return true;
+                } // exit
+                case 2501: {
+                    window.isLock = !window.isLock;
+                    if (window.isLock) {
+                        button.txrX += button.txrW;
+                        window.lock.layerColor = new Color(0xFFA0A000).getRGB();
+                    }
+                    else {
+                        button.txrX -= button.txrW;
+                        window.lock.layerColor = new Color(0xFFFFFF00).getRGB();
+                    }
+                    return true;
+                } // lock node / window
+            }
         }
+        return false;
     }
 
     private static boolean thereAreNoOthersBesides(YDENode node, YDELink link) {
@@ -354,13 +377,15 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
         label = "x" + df2.format(category.getScale());
         UtilYDE.FONT.draw(graphics, label, 0.0f, UtilYDE.FONT.getHeight(), color);
         // mouse pos hover
-        mouseOnGrid = hovered == null &&
-                !leftTab.isHovered() && !hoverLeft &&
-                !rightTab.isHovered()  && !hoverRight;
-        for (IComponentGui component : new ArrayList<>(wrapper.components)) {
-            if (component instanceof AbstractWidget widget && widget.isHovered()) {
-                mouseOnGrid = false;
-                break;
+        mouseOnGrid = hovered == null && !hoverLeft && !hoverRight;
+        if (mouseOnGrid) {
+            for (IComponentGui component : new ArrayList<>(wrapper.components)) {
+                if ((component instanceof AbstractWidget element && element.isHovered()) ||
+                        (component instanceof GuiCustomScrollNop scroll && scroll.isHovered()) ||
+                        (component instanceof GuiCustomWindowNop window && window.isHovered())) {
+                    mouseOnGrid = false;
+                    break;
+                }
             }
         }
         matrixStack.popPose();
@@ -475,15 +500,16 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     @Override
     public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         if (minecraft == null) { minecraft = Minecraft.getInstance(); }
-        xMouse = mouseX * guiScale / 2.0f;
-        yMouse = mouseY * guiScale / 2.0f;
+        float scale = 2.0f / guiScale;
+        xMouse = mouseX / scale;
+        yMouse = mouseY / scale;
         RenderSystem.enableBlend();
         // tabs
         PoseStack matrixStack = graphics.pose();
         int tabHeight = leftTab.imageHeight / 2;
         int arrowHeight = (int) (25.0f * guiScale);
         matrixStack.pushPose();
-        matrixStack.scale(2.0f / guiScale, 2.0f / guiScale, 2.0f / guiScale);
+        matrixStack.scale(scale, scale, scale);
         // main
         wrapper.graphics = graphics;
         wrapper.mouseX = (int) (((hasSubGui() ? 0.0f : xMouse) - centerU) / category.getScale());
@@ -492,103 +518,160 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
         // super
 
         hovered = null;
-        matrixStack.pushPose();
-        GuiLabel label = getLabel(0);
-        if (label != null) { label.render(graphics, mouseX, mouseY, partialTicks); }
-        GuiTextFieldNop textField = getTextField(0);
-        if (textField != null) { textField.render(graphics, mouseX, mouseY, partialTicks); }
-        matrixStack.translate(centerU, centerV, 0.0f);
-        matrixStack.scale(category.getScale(), category.getScale(), category.getScale());
-        for (IComponentGui component : new ArrayList<>(wrapper.components)) {
-            if (component instanceof Renderable renderable && component != label && component != textField) {
-                renderable.render(graphics, wrapper.mouseX, wrapper.mouseY, partialTicks);
+            matrixStack.pushPose();
+            GuiLabel label = getLabel(0);
+            if (label != null) { label.render(graphics, mouseX, mouseY, partialTicks); }
+            GuiTextFieldNop textField = getTextField(0);
+            if (textField != null) { textField.render(graphics, mouseX, mouseY, partialTicks); }
+            matrixStack.translate(centerU, centerV, 0.0f);
+            matrixStack.scale(category.getScale(), category.getScale(), category.getScale());
+            for (IComponentGui component : new ArrayList<>(wrapper.components)) {
+                if (component instanceof Renderable renderable && !notScaledComponents.contains(component)) {
+                    renderable.render(graphics, wrapper.mouseX, wrapper.mouseY, partialTicks);
+                }
             }
-        }
+            matrixStack.popPose();
+
+            matrixStack.pushPose();
+            if (hasSubGui()) {
+                matrixStack.translate(0.0F, 0.0F, 60.0F);
+                wrapper.subgui.render(graphics, mouseX, mouseY, partialTicks);
+                matrixStack.translate(0.0F, 0.0F, -60.0F);
+            }
+            else {
+                matrixStack.pushPose();
+                matrixStack.translate(0.0f, 0.0f, 0.0f);
+                // left arrow
+                if (leftTab.isYDEShow) {
+                    hoverLeft = xMouse >= leftTab.getX() + leftTab.imageWidth && xMouse < leftTab.getX() + leftTab.imageWidth + 7;
+                    leftTab.transferTo(0, 0);
+                }
+                else {
+                    hoverLeft = xMouse < 7.0f;
+                    leftTab.transferTo((int) (-leftTab.imageWidth + (hoverLeft ? -xMouse + 7.0f : 0.0f)), 0);
+                }
+                if (leftTab.visible) {
+                    matrixStack.pushPose();
+                    int c = hoverLeft ? YDEController.backHoverColor : YDEController.backColor;
+                    matrixStack.translate(leftTab.getX() + leftTab.getWidth(), 0.0f, 1.0f);
+                    graphics.fill(0, 0, 6, tabHeight, 0xF0000000 | (c & 0xFFFFFF));
+                    matrixStack.translate(0.0f, (tabHeight - arrowHeight / 2.0f) / 2.0f, 0.0f);
+                    matrixStack.scale(0.5f, 0.5f, 0.5f);
+                    c = hoverLeft ? YDEController.backColor : YDEController.backHoverColor;
+                    graphics.hLine(-1, 10, 1, c);
+                    graphics.vLine(10, 1, arrowHeight, c);
+                    graphics.hLine(-1, 10, arrowHeight, c);
+                    matrixStack.popPose();
+
+                    matrixStack.pushPose();
+                    matrixStack.translate(leftTab.getX() + leftTab.getWidth() + 1.0f, (tabHeight - UtilYDE.FONT.getHeight()) / 2.0f, 1.5f);
+                    UtilYDE.FONT.draw(graphics, leftTab.isYDEShow ? "<" : ">", 0.0f, 0.0f, color);
+                    matrixStack.popPose();
+                }
+                // right arrow
+                if (rightTab.isYDEShow) {
+                    hoverRight = xMouse >= rightTab.getX() - 6.0f && xMouse < rightTab.getX();
+                    rightTab.transferTo((int) (w - leftTab.imageWidth), 0);
+                }
+                else {
+                    hoverRight = xMouse > w - 8.0f;
+                    rightTab.transferTo((int) (w + (hoverRight ? -1.0f * (xMouse - w + 8.0f): 0.0f)), 0);
+                }
+                if (rightTab.visible) {
+                    matrixStack.pushPose();
+                    int c = hoverRight ? YDEController.backHoverColor : YDEController.backColor;
+                    matrixStack.translate(rightTab.getX() - 6.0f, 0.0f, 1.0f);
+                    graphics.fill(0, 0, 6, tabHeight, 0xF0000000 | (c & 0xFFFFFF));
+                    matrixStack.translate(0.0f, (tabHeight - arrowHeight / 2.0f) / 2.0f, 0.0f);
+                    matrixStack.scale(0.5f, 0.5f, 0.5f);
+                    c = hoverRight ? YDEController.backColor : YDEController.backHoverColor;
+                    graphics.hLine(1, 12, 1, c);
+                    graphics.vLine(1, 1, arrowHeight, c);
+                    graphics.hLine(1, 12, arrowHeight, c);
+                    matrixStack.popPose();
+
+                    matrixStack.pushPose();
+                    matrixStack.translate(rightTab.getX() - 4.5f, (tabHeight - UtilYDE.FONT.getHeight()) / 2.0f, 1.5f);
+                    UtilYDE.FONT.draw(graphics, rightTab.isYDEShow ? ">" : "<", 0.0f, 0.0f, color);
+                    matrixStack.popPose();
+                }
+                matrixStack.popPose();
+            }
+            matrixStack.popPose();
+
+            matrixStack.translate(0.0f, 0.0f, 500.0f);
+            for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
+                if (component instanceof Renderable renderable) {
+                    if (component == helper) { matrixStack.translate(0.0f, 0.0f, 1.0f); }
+                    renderable.render(graphics, (int) xMouse, (int) yMouse, partialTicks);
+                    if (component == helper) { matrixStack.translate(0.0f, 0.0f, -1.0f); }
+                }
+            }
+
         matrixStack.popPose();
 
-        matrixStack.pushPose();
-        if (hasSubGui()) {
-            matrixStack.translate(0.0F, 0.0F, 60.0F);
-            wrapper.subgui.render(graphics, mouseX, mouseY, partialTicks);
-            matrixStack.translate(0.0F, 0.0F, -60.0F);
+        if ((hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText)) && !hoverText.isEmpty()) {
+            if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
+            RenderSystem.disableDepthTest();
+            if (hoverFont == null) { GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, ValueUtil.correctInt(mouseY, 16, height)); }
+            else { renderTooltipInternal(graphics, mouseX, ValueUtil.correctInt(mouseY, 16, height), hoverFont, hoverText, -0.25f * guiScale + 1.5f); }
+            hoverText.clear();
+        }
+
+        if (rightTab.isHeadHovered() && rightTab.isYDEShow) {
+            if (!helper.isVisible() || helper.type != 1) {
+                helper.type = 1;
+                Component h0 = Component.translatable("yde.help.multiple");
+                Component h1 = Component.translatable("yde.help.sel.next");
+                Component h2 = Component.translatable("yde.help.step.offset");
+                Component h3 = Component.translatable("yde.help.hover.info.0");
+                Component h4 = Component.translatable("yde.help.hover.info.1");
+                Component h5 = Component.translatable("yde.help.extra");
+
+                Component s0 = Component.literal("Ctrl").withStyle(ChatFormatting.AQUA)
+                        .append(Component.literal("+").withStyle(ChatFormatting.WHITE))
+                        .append(Component.translatable("yde.lmb").withStyle(ChatFormatting.YELLOW));
+                Component s1 = Component.translatable("yde.help.double").append(" ")
+                        .append(Component.translatable("yde.lmb").withStyle(ChatFormatting.YELLOW));
+                Component s2 = Component.translatable("yde.help.hold").append(" ")
+                        .append(Component.literal("Shift").withStyle(ChatFormatting.AQUA));
+                Component s3 = Component.translatable("yde.rmb").withStyle(ChatFormatting.YELLOW);
+
+                int w = ValueUtil.max(UtilYDE.FONT.width(h0) + UtilYDE.FONT.width(s0) + space,
+                        UtilYDE.FONT.width(h1) + UtilYDE.FONT.width(s1) + space,
+                        UtilYDE.FONT.width(h2) + UtilYDE.FONT.width(s2) + space,
+                        UtilYDE.FONT.width(h5) + UtilYDE.FONT.width(s3) + space,
+                        UtilYDE.FONT.width(h3), UtilYDE.FONT.width(h4));
+                StringBuilder ig = new StringBuilder("―");
+                while (UtilYDE.FONT.width(ig.toString()) < w) { ig.append("―"); }
+                w = UtilYDE.FONT.width(ig.toString());
+                Component ignore = Component.literal(ig.toString()).withStyle(ChatFormatting.GRAY);
+                List<Component> list = Lists.newArrayList(h0, h1, h2, h5, ignore, h3, h4);
+                helper.setPos((int) (xMouse - w - 5), (int) (yMouse + 5))
+                        .setSize(w + 2, (UtilYDE.FONT.getHeight() + 4) * list.size() + 4)
+                        .setIsEnabled(false)
+                        .setIsVisible(true)
+                        .setUnsortedList(list)
+                        .setSuffixes(Lists.newArrayList(s0, s1, s2, s3, Component.empty(),
+                                Component.empty(), Component.empty()))
+                        .setSelectedIndex(-1);
+            }
         }
         else {
-            matrixStack.pushPose();
-            matrixStack.translate(0.0f, 0.0f, 0.0f);
-            // left arrow
-            if (leftTab.isYDEShow) {
-                hoverLeft = xMouse >= leftTab.getX() + leftTab.imageWidth && xMouse < leftTab.getX() + leftTab.imageWidth + 7;
-                leftTab.transferTo(0, 0);
-            }
-            else {
-                hoverLeft = xMouse < 7.0f;
-                leftTab.transferTo((int) (-leftTab.imageWidth + (hoverLeft ? -xMouse + 7.0f : 0.0f)), 0);
-            }
-            if (leftTab.visible) {
-                matrixStack.pushPose();
-                int c = hoverLeft ? YDEController.backHoverColor : YDEController.backColor;
-                matrixStack.translate(leftTab.getX() + leftTab.getWidth(), 0.0f, 1.0f);
-                graphics.fill(0, 0, 6, tabHeight, 0xF0000000 | (c & 0xFFFFFF));
-                matrixStack.translate(0.0f, (tabHeight - arrowHeight / 2.0f) / 2.0f, 0.0f);
-                matrixStack.scale(0.5f, 0.5f, 0.5f);
-                c = hoverLeft ? YDEController.backColor : YDEController.backHoverColor;
-                graphics.hLine(-1, 10, 1, c);
-                graphics.vLine(10, 1, arrowHeight, c);
-                graphics.hLine(-1, 10, arrowHeight, c);
-                matrixStack.popPose();
-
-                matrixStack.pushPose();
-                matrixStack.translate(leftTab.getX() + leftTab.getWidth() + 1.0f, (tabHeight - UtilYDE.FONT.getHeight()) / 2.0f, 1.5f);
-                UtilYDE.FONT.draw(graphics, leftTab.isYDEShow ? "<" : ">", 0.0f, 0.0f, color);
-                matrixStack.popPose();
-            }
-            // right arrow
-            if (rightTab.isYDEShow) {
-                hoverRight = xMouse >= rightTab.getX() - 6.0f && xMouse < rightTab.getX();
-                rightTab.transferTo((int) (w - leftTab.imageWidth), 0);
-            }
-            else {
-                hoverRight = xMouse > w - 8.0f;
-                rightTab.transferTo((int) (w + (hoverRight ? -1.0f * (xMouse - w + 8.0f): 0.0f)), 0);
-            }
-            if (rightTab.visible) {
-                matrixStack.pushPose();
-                int c = hoverRight ? YDEController.backHoverColor : YDEController.backColor;
-                matrixStack.translate(rightTab.getX() - 6.0f, 0.0f, 1.0f);
-                graphics.fill(0, 0, 6, tabHeight, 0xF0000000 | (c & 0xFFFFFF));
-                matrixStack.translate(0.0f, (tabHeight - arrowHeight / 2.0f) / 2.0f, 0.0f);
-                matrixStack.scale(0.5f, 0.5f, 0.5f);
-                c = hoverRight ? YDEController.backColor : YDEController.backHoverColor;
-                graphics.hLine(1, 12, 1, c);
-                graphics.vLine(1, 1, arrowHeight, c);
-                graphics.hLine(1, 12, arrowHeight, c);
-                matrixStack.popPose();
-
-                matrixStack.pushPose();
-                matrixStack.translate(rightTab.getX() - 4.5f, (tabHeight - UtilYDE.FONT.getHeight()) / 2.0f, 1.5f);
-                UtilYDE.FONT.draw(graphics, rightTab.isYDEShow ? ">" : "<", 0.0f, 0.0f, color);
-                matrixStack.popPose();
-            }
-            leftTab.render(graphics, (int) xMouse, (int) yMouse, partialTicks);
-            rightTab.render(graphics, (int) xMouse, (int) yMouse, partialTicks);
-            matrixStack.popPose();
-            if (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText) && !hoverText.isEmpty()) {
-                if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
-                RenderSystem.disableDepthTest();
-                GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, ValueUtil.correctInt(mouseY, 16, height));
-                hoverText.clear();
-            }
+            helper.setIsVisible(helper.isVisible() &&
+                    xMouse >= helper.getX() - 10 && xMouse <= helper.getX() + helper.getWidth() + 10 &&
+                    yMouse >= helper.getY() - 10 && yMouse <= helper.getY() + helper.getHeight() + 10);
         }
-        matrixStack.popPose();
-        matrixStack.popPose();
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
         if (!hasSubGui()) {
-            boolean bo = leftTab.mouseScrolled(mouseX, mouseY, scrolled) ||
-                    rightTab.mouseScrolled(mouseX, mouseY, scrolled) ||
-                    wrapper.mouseScrolled(xMouse, yMouse, scrolled);
+            boolean bo = false;
+            for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
+                if (component instanceof GuiEventListener element && element.mouseScrolled(mouseX, mouseY, scrolled)) { bo = true; }
+            }
+            if (!bo) { bo = wrapper.mouseScrolled(xMouse, yMouse, scrolled); }
             if (!bo) {
                 float oldScale = category.getScale();
                 float f0 = category.getScale() * (scrolled < 0.0f ? 0.1f : -0.1f);
@@ -612,6 +695,7 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (!hasSubGui()) {
+            if (mouseButton == 1 && mouseOnGrid) { showExtraMenu(); }
             if (hoverLeft) {
                 mouseButtonEvent(leftTab.exit, 0);
                 return true;
@@ -619,9 +703,11 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
                 mouseButtonEvent(rightTab.exit, 0);
                 return true;
             }
-            return leftTab.mouseClicked(mouseX, mouseY, mouseButton) ||
-                    rightTab.mouseClicked(mouseX, mouseY, mouseButton) ||
-                    wrapper.mouseClicked(wrapper.mouseX, wrapper.mouseY, mouseButton);
+            boolean bo = false;
+            for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
+                if (component instanceof GuiEventListener element && element.mouseClicked(mouseX, mouseY, mouseButton)) { bo = true; }
+            }
+            return bo || wrapper.mouseClicked(wrapper.mouseX, wrapper.mouseY, mouseButton);
         }
         return super.mouseClicked(mouseX, mouseY, mouseButton);
     }
@@ -629,9 +715,11 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
         if (!hasSubGui()) {
-            boolean bo = leftTab.mouseDragged(mouseX, mouseY, mouseButton, dx, dy) ||
-                    rightTab.mouseDragged(mouseX, mouseY, mouseButton, dx, dy) ||
-                    wrapper.mouseDragged(xMouse, yMouse, mouseButton, dx, dy);
+            boolean bo = false;
+            for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
+                if (component instanceof GuiEventListener element && element.mouseDragged(mouseX, mouseY, mouseButton, dx, dy)) { bo = true; }
+            }
+            if (!bo) { bo =  wrapper.mouseDragged(xMouse, yMouse, mouseButton, dx, dy); }
             if (mouseOnGrid && !bo) {
                 tempDx += dx;
                 tempDy += dy;
@@ -656,9 +744,11 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
         if (!hasSubGui()) {
-            return leftTab.mouseReleased(mouseX, mouseY, mouseButton) ||
-                    rightTab.mouseReleased(mouseX, mouseY, mouseButton) ||
-                    wrapper.mouseReleased(xMouse, yMouse, mouseButton);
+            boolean bo = false;
+            for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
+                if (component instanceof GuiEventListener element && element.mouseReleased(mouseX, mouseY, mouseButton)) { bo = true; }
+            }
+            return bo || wrapper.mouseReleased(xMouse, yMouse, mouseButton);
         }
         return super.mouseReleased(mouseX, mouseY, mouseButton);
     }
@@ -666,23 +756,19 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!hasSubGui() && !GuiBasic.isEscKey(keyCode)) {
-            return leftTab.keyPressed(keyCode, scanCode, modifiers) ||
-                    rightTab.keyPressed(keyCode, scanCode, modifiers);
+            for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
+                if (component instanceof GuiEventListener element && element.keyPressed(keyCode, scanCode, modifiers)) { return true; }
+            }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-
     @Override
     public boolean charTyped(char c, int keyId) {
-        return leftTab.charTyped(c, keyId) || rightTab.charTyped(c, keyId) || super.charTyped(c, keyId);
-    }
-
-    @Override
-    public void tick() {
-        leftTab.tick();
-        rightTab.tick();
-        super.tick();
+        for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
+            if (component instanceof GuiEventListener element && element.charTyped(c, keyId)) { return true; }
+        }
+        return super.charTyped(c, keyId);
     }
 
     @Override
@@ -708,22 +794,73 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
 
     @Override
     public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
-        //LogWriter.info("TEST: scroll id: "+scroll.id);
-
+        if (scroll.id == 0) {
+            setSubGui(new SubGuiEditText(1, category.category));
+        } // rename dialog category
+        if (scroll == helper) {
+            helper.setIsVisible(false);
+            switch (helper.getSelectedIndex()) {
+                case 0: {
+                    DialogCategory cat = DialogController.instance.getCategory(category.category);
+                    if (cat != null) {
+                        Dialog dialog = new Dialog(cat);
+                        StringBuilder t = new StringBuilder(Component.translatable("gui.new").getString());
+                        boolean has = true;
+                        while (has) {
+                            has = false;
+                            for (Dialog dia : dialog.category.dialogs.values()) {
+                                if (dia.id != dialog.id && dia.title.equalsIgnoreCase(t.toString())) {
+                                    has = true;
+                                    break;
+                                }
+                            }
+                            if (has) { t.append("_"); }
+                        }
+                        dialog.title = t.toString();
+                        YDEDialog yde_dialog = YDE_DATA.createDialog(dialog);
+                        yde_dialog.x = pos[0];
+                        yde_dialog.y = pos[1];
+                        setActive(yde_dialog.id);
+                        Packets.sendServer(new SPacketDialogSave(category.categoryId, dialog.save(new CompoundTag())));
+                    }
+                    break;
+                } // add new dialog
+                default: break;
+            }
+        }
     }
 
     @Override
     public void subGuiClosed(Screen subgui) {
-        if (!(subgui instanceof SubGuiEditText) || !((SubGuiEditText)subgui).cancelled) {
-            if (subgui instanceof SubGuiEditText gui) {
-                if (gui.id == 0) {
-                    DialogCategory cat = new DialogCategory();
+        if (subgui instanceof SubGuiEditText gui && !gui.cancelled) {
+            if (gui.id == 0) {
+                DialogCategory cat = new DialogCategory();
+                StringBuilder t = new StringBuilder(gui.text[0]);
+                boolean has = true;
+                while (has) {
+                    has = false;
+                    for (DialogCategory c : DialogController.instance.categories.values()) {
+                        if (category.categoryId != c.id && c.title.equalsIgnoreCase(t.toString())) {
+                            has = true;
+                            break;
+                        }
+                    }
+                    if (has) { t.append("_"); }
+                }
+                cat.title = t.toString();
+                category = YDE_DATA.getCategory(cat.title);
+                Packets.sendServer(new SPacketDialogCategorySave(cat.save(new CompoundTag())));
+            } // create dialog category
+            if (gui.id == 1) {
+                DialogCategory cat = DialogController.instance.getCategory(category.category);
+                if (cat != null && !cat.title.equals(gui.text[0])) {
+                    cat.title = gui.text[0];
                     StringBuilder t = new StringBuilder(gui.text[0]);
                     boolean has = true;
                     while (has) {
                         has = false;
                         for (DialogCategory c : DialogController.instance.categories.values()) {
-                            if (category.categoryId != c.id && c.title.equalsIgnoreCase(t.toString())) {
+                            if (category.id != c.id && c.title.equalsIgnoreCase(t.toString())) {
                                 has = true;
                                 break;
                             }
@@ -731,13 +868,17 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
                         if (has) { t.append("_"); }
                     }
                     cat.title = t.toString();
-                    category = YDE_DATA.getCategory(cat.title);
+                    category.category = cat.title;
+                    category.title = Component.empty();
+                    if (category.id > -1) {
+                        ((MutableComponent) category.title).append(Component.translatable("drop.category").withStyle(ChatFormatting.GRAY))
+                                .append(Component.literal(" ID:" + cat.id + " ").withStyle(ChatFormatting.GRAY))
+                                .append(Component.translatable(cat.title).withStyle(ChatFormatting.RESET));
+                    }
                     Packets.sendServer(new SPacketDialogCategorySave(cat.save(new CompoundTag())));
-                } // new dialog category
-            }
-            if (subgui instanceof SubGuiDialogEdit) {
-                init();
-            }
+                    init();
+                }
+            } // rename dialog category
         }
     }
 
@@ -751,12 +892,117 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
     }
 
     @Override
-    public void doubleClicked(IComponentGui component) {
+    public boolean doubleClicked(IComponentGui component) {
         if (component instanceof YDEWindowNop windowNop) {
             for (IComponentGui c : wrapper.components) {
                 if (c instanceof YDEWindowNop wNop) { wNop.setIsFocused(false); }
             }
             CustomNPCsScheduler.runTack(() -> selectLinks(windowNop), 100);
+            return true;
+        }
+        if (component instanceof GuiLabel label && label.id == 0) {
+            GuiTextFieldNop textField = getTextField(0);
+            if (textField != null) {
+                label.setIsVisible(false);
+                textField.setIsVisible(true)
+                        .setIsFocused(true);
+                CustomNPCsScheduler.runTack(() ->
+                        textField.mouseClicked(textField.getX() + 1, textField.getY() + 1, 0),
+                        100);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void unFocused(GuiTextFieldNop textField) {
+        if (textField.id == 0) {
+            if (!textField.getValue().isEmpty()) {
+                DialogCategory cat = DialogController.instance.getCategory(category.category);
+                if (cat != null && !cat.title.equals(textField.getValue())) {
+                    cat.title = textField.getValue();
+                    StringBuilder t = new StringBuilder(textField.getValue());
+                    boolean has = true;
+                    while (has) {
+                        has = false;
+                        for (DialogCategory c : DialogController.instance.categories.values()) {
+                            if (cat.id != c.id && c.title.equalsIgnoreCase(t.toString())) {
+                                has = true;
+                                break;
+                            }
+                        }
+                        if (has) { t.append("_"); }
+                    }
+                    cat.title = t.toString();
+                    category.category = cat.title;
+                    category.title = Component.empty();
+                    if (category.id > -1) {
+                        ((MutableComponent) category.title).append(Component.translatable("drop.category").withStyle(ChatFormatting.GRAY))
+                                .append(Component.literal(" ID:" + cat.id + " ").withStyle(ChatFormatting.GRAY))
+                                .append(Component.translatable(cat.title).withStyle(ChatFormatting.RESET));
+                    }
+                    Packets.sendServer(new SPacketDialogCategorySave(cat.save(new CompoundTag())));
+                    init();
+                }
+            }
+        }
+    }
+
+    private void showExtraMenu() {
+        if (!helper.isVisible() || helper.type != 2) {
+            helper.type = 2;
+            Component h0 = Component.translatable("yde.extra.add.dialog");
+            Component h1 = Component.translatable("yde.extra.add.option");
+            Component h2 = Component.translatable("yde.extra.reset.grid");
+
+            Component s0 = Component.literal("Shift").withStyle(ChatFormatting.AQUA)
+                    .append(Component.literal("+").withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal("D").withStyle(ChatFormatting.GOLD)));
+            Component s1 = Component.literal("Shift").withStyle(ChatFormatting.AQUA)
+                    .append(Component.literal("+").withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal("E").withStyle(ChatFormatting.GOLD)));
+            Component s2 = Component.literal("Shift").withStyle(ChatFormatting.AQUA)
+                    .append(Component.literal("+").withStyle(ChatFormatting.WHITE)
+                            .append(Component.literal("R").withStyle(ChatFormatting.GOLD)));
+
+            int w0 = ValueUtil.max(UtilYDE.FONT.width(h0) + UtilYDE.FONT.width(s0) + space,
+                    UtilYDE.FONT.width(h1) + UtilYDE.FONT.width(s1) + space,
+                    UtilYDE.FONT.width(h2) + UtilYDE.FONT.width(s2) + space);
+            StringBuilder ig = new StringBuilder("―");
+            while (UtilYDE.FONT.width(ig.toString()) < w0) { ig.append("―"); }
+            w0 = UtilYDE.FONT.width(ig.toString());
+            Component ignore = Component.literal(ig.toString()).withStyle(ChatFormatting.GRAY);
+            int x = (int) (xMouse); // (int) (xMouse * 2.0f / guiScale);
+            int y = (int) (yMouse); // (int) (yMouse * 2.0f / guiScale);
+
+            if (x + w0 > (width * guiScale / 2.0f)) { x = (int) xMouse - w0 - 2; }
+            pos[0] = (int) ((xMouse - w / 2.0f - category.x) / category.getScale());
+            pos[1] = (int) ((yMouse - h / 2.0f - category.y) / category.getScale());
+
+            LinkedHashMap<Integer, List<Component>> htm = new LinkedHashMap<>();
+            Component posC = Component.translatable("yde.hover.extra.pos");
+            List<Component> l0 = new ArrayList<>();
+            Util.instance.putHovers(l0, Component.translatable("yde.hover.extra.add.dialog"), posC);
+            htm.put(0, l0);
+            List<Component> l1 = new ArrayList<>();
+            Util.instance.putHovers(l1, Component.translatable("yde.hover.extra.add.option"), posC);
+            htm.put(1, l1);
+            htm.put(2, new ArrayList<>());
+            List<Component> l3 = new ArrayList<>();
+            Util.instance.putHovers(l3, Component.translatable("yde.hover.extra.reset.grid"));
+            htm.put(3, l3);
+
+            List<Component> list = Lists.newArrayList(h0, h1, ignore, h2);
+            helper.setPos(x, y)
+                    .setSize(w0 + 2, (UtilYDE.FONT.getHeight() + 4) * list.size() + 4)
+                    .setIsEnabled(true)
+                    .setIsVisible(true)
+                    .setUnsortedList(list)
+                    .setSuffixes(Lists.newArrayList(s0, s1, Component.empty(), s2))
+                    .setHoverTexts(htm)
+                    .setIgnoreSelected(Lists.newArrayList(ignore))
+                    .setSelectedIndex(-1);
         }
     }
 
@@ -806,14 +1052,12 @@ public class GuiYellowDialogEditor extends GuiBasic implements ICustomScrollList
 
     public void unFocused(YDEWindowNop window, GuiTextFieldNop textField) {
         if (window.node instanceof YDEDialog yde_dialog) {
-            LogWriter.info("TEST: dialog: "+yde_dialog.dialog.id);
             yde_dialog.dialog.title = textField.getValue();
         }
     }
 
     public void textUpdate(YDEWindowNop window, IComponentGui component, String text) {
         if (window.node instanceof YDEDialog yde_dialog) {
-            LogWriter.info("TEST: dialog: "+yde_dialog.dialog.id+"; component "+component);
             if (component instanceof GuiTextFieldNop) { yde_dialog.dialog.title = text; } // name
             if (component instanceof GuiTextArea) { yde_dialog.dialog.text = text; } // text
         }

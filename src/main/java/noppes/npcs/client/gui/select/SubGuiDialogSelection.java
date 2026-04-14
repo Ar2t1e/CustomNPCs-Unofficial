@@ -66,11 +66,11 @@ public class SubGuiDialogSelection extends GuiBasic implements ICustomScrollList
       y += 10;
       if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(w, imageHeight - 23); }
       scrollCategories.setList(new ArrayList<>(categoryData.keySet()));
-      if (selectedCategory != null) { scrollCategories.setSelected(selectedCategory.title); }
+      if (selectedCategory != null) { scrollCategories.setSelectedIndex(selectedCategory.title); }
       add(scrollCategories.setPos(x0, y));
       if (scrollDialogs == null) { scrollDialogs = addScroll(1).setSize(w, imageHeight - 23); }
       scrollDialogs.setList(new ArrayList<>(dialogData.keySet()));
-      if (selectedDialog != null) { scrollDialogs.setSelected(selectedDialog.title); }
+      if (selectedDialog != null) { scrollDialogs.setSelectedIndex(selectedDialog.title); }
       add(scrollDialogs.setPos(x1, y));
    }
 

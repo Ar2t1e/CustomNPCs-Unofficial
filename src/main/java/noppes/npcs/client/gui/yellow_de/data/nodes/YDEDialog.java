@@ -8,6 +8,8 @@ import noppes.npcs.client.gui.yellow_de.data.YDENode;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
 
+import java.util.ArrayList;
+
 public class YDEDialog extends YDENode {
 
     public int dialogId;
@@ -37,6 +39,21 @@ public class YDEDialog extends YDENode {
         CompoundTag compound = super.save();
         compound.putInt("DialogID", dialogId);
         return compound;
+    }
+
+    @Override
+    public void refresh() {
+        if (dialog == null && dialogId > -1) { dialog = DialogController.instance.get(dialogId); }
+        else if (dialog != null && dialog.id == -1) {
+            for (Dialog d : new ArrayList<>(DialogController.instance.dialogs.values())) {
+                if (d.title.equals(dialog.title)) {
+                    dialog = d;
+                    break;
+                }
+            }
+        }
+        dialogId = dialog != null ? dialog.id : -1;
+        title = Component.translatable("dialog.dialog").append(Component.literal("ID: " + dialogId));
     }
 
 }

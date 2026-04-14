@@ -163,12 +163,12 @@ public class GuiBuilderSchematic extends GuiBasic implements ICustomScrollListen
                 if (key.endsWith(".schematic")) { fName = key.substring(0, key.lastIndexOf(".schematic")); }
                 else if (key.endsWith(".blueprint")) { fName = key.substring(0, key.lastIndexOf(".blueprint")); }
                 if (fName.equals(builder.schematicName)) {
-                    schematics.setSelect(i);
+                    schematics.setSelectedIndex(i);
                     break;
                 }
                 i++;
             }
-            if (i == schematics.getList().size()) { schematics.setSelect(-1); }
+            if (i == schematics.getList().size()) { schematics.setSelectedIndex(-1); }
         }
         add(schematics.setPos(guiLeft + 5, guiTop + 14));
         addLabel(6, guiLeft + 120, guiTop + 40, net.minecraft.network.chat.Component.translatable("gui.name").append(":"));

@@ -7,7 +7,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketBanksGet;
@@ -62,7 +61,7 @@ public class GuiNpcBankSetup extends GuiNPCInterface2 implements IScrollData, IC
       }
       data.putAll(map);
       scroll.setNormalList(new ArrayList<>(data.keySet()));
-      if (!name.getString().isEmpty()) { scroll.setSelected(name); }
+      if (!name.getString().isEmpty()) { scroll.setSelectedIndex(name); }
       init();
    }
 

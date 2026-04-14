@@ -131,7 +131,7 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
         }
         scrollMarkets.setUnsortedList(new ArrayList<>(dataMarkets.keySet()))
                 .setHoverTexts(htsM);
-        if (selectedMarcet != null) { scrollMarkets.setSelected(selectedMarcet.getSettingName()); }
+        if (selectedMarcet != null) { scrollMarkets.setSelectedIndex(selectedMarcet.getSettingName()); }
         // Deals:
         if (!dataDeals.isEmpty()) {
             List<Component> allDeals = new ArrayList<>(dataDeals.keySet());
@@ -296,8 +296,8 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
                     .setPrefixes(marcetPrefixes);
         }
         if (selectedDeal != null) {
-            scrollAllDeals.setSelected(selectedDeal.getSettingName());
-            scrollDeals.setSelected(selectedDeal.getSettingName());
+            scrollAllDeals.setSelectedIndex(selectedDeal.getSettingName());
+            scrollDeals.setSelectedIndex(selectedDeal.getSettingName());
         }
         add(scrollMarkets.setPos(x0, y));
         add(scrollDeals.setPos(x1, y));

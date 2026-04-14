@@ -55,7 +55,7 @@ public class CustomGuiScroll
       setUnsortedList(list);
       if (component.getDefaultSelection() >= 0) {
          int defaultSelect = component.getDefaultSelection();
-         if (defaultSelect < getList().size()) { setSelected(list.get(defaultSelect)); }
+         if (defaultSelect < getList().size()) { setSelectedIndex(list.get(defaultSelect)); }
       }
       enabled = component.getEnabled();
       visible = component.getVisible();
