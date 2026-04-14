@@ -67,12 +67,14 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
 
     // New from Unofficial (BetaZavr)
     protected final Map<Integer, List<Component>> hoversTexts = new TreeMap<>();
+    protected final List<Component> ignoreSelected = new ArrayList<>();
     protected ClientProxy.FontContainer customFont = null;
     protected List<Component> hoverText = new ArrayList<>();
     protected List<Component> suffixes;
     protected List<ResourceData> prefixes;
     protected List<ItemStack> stacks = null;
     protected boolean isScrolling = false;
+    public int lineHeight = Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT + 4;
     public int colorBackS = 0xC0101010;
     public int colorBackE = 0xE0101010;
     public int border = 0xFF000000;
@@ -95,7 +97,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         textField.width = x - 2;
         height = y - textFieldHeight();
         width = x;
-        listHeight = 14 * listSize;
+        listHeight = lineHeight * listSize;
         if (listHeight > 0) { scrollHeight = (int)((double)(height - 2) / (double)listHeight * (double)(height - 2)); }
         else { scrollHeight = Integer.MAX_VALUE; }
         maxScrollY = listHeight - (height - 2) - 1;
@@ -215,7 +217,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double mouseScrolled) {
         if (visible && isHovered() && mouseScrolled != 0.0D && mouseInList) {
-            scrollY += mouseScrolled > 0 ? -14 : 14;
+            scrollY += mouseScrolled > 0 ? -lineHeight : lineHeight;
             if (scrollY > maxScrollY) { scrollY = maxScrollY; }
             if (scrollY < 0) { scrollY = 0; }
             return true;
@@ -234,7 +236,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
 
     public void mouseForcedScrolled(double mouseScrolled) {
         if (visible && mouseScrolled != 0.0d && mouseInList) {
-            scrollY += mouseScrolled > 0.0d ? -14 : 14;
+            scrollY += mouseScrolled > 0.0d ? -lineHeight : lineHeight;
             if (scrollY > maxScrollY) { scrollY = maxScrollY; }
             if (scrollY < 0) { scrollY = 0; }
         }
@@ -243,7 +245,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     public boolean mouseInOption(int mouseX, int mouseY, int displayIndex) {
         int xOffset = scrollHeight < height - 2 ? 10 : 0;
         int posX = 4;
-        int posY = 14 * displayIndex + 4 - scrollY;
+        int posY = lineHeight * displayIndex + 4 - scrollY;
         return mouseX >= posX - 1 && mouseX < width - 2 - xOffset && mouseY >= posY - 1 && mouseY < posY + 8;
     }
 
@@ -255,7 +257,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         for(int i = 0; i < list.size(); ++i) {
             if (!isSearched(list.get(i).getString())) { continue; }
             int left = x + 3;
-            int top = 14 * displayIndex + 4 - scrollY;
+            int top = lineHeight * displayIndex + 4 - scrollY;
             ++displayIndex;
             if (top < 4 || top + 10 >= height) { continue; }
             top += y;
@@ -269,8 +271,10 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
             int right = r - 1;
             // add bz
             if (suffixes != null && i < suffixes.size() && suffixes.get(i) != null && !suffixes.get(i).getString().isEmpty()) {
-                right -= 1 + font.getStringWidth(suffixes.get(i).getFormattedText());
-                drawString(font, suffixes.get(i).getFormattedText(), right, top, (i == hover ? CustomNpcs.HoverColor.getRGB() : CustomNpcs.MainColor.getRGB()));
+                int w = 1 + (customFont != null ? customFont.width(suffixes.get(i).getString()) : font.getStringWidth(suffixes.get(i).getString()));
+                right -= w;
+                GuiButtonNop.renderString(suffixes.get(i), right, top, right + w, top + 10,
+                        (i == hover ? CustomNpcs.HoverColor.getRGB() : CustomNpcs.MainColor.getRGB()), true, false, customFont);
             }
             if (multipleSelection && selectedList.contains(i) || !multipleSelection && selected == i) {
                 GlStateManager.pushMatrix();
@@ -278,28 +282,26 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
                 if (customFont != null) {
                     int c = border != 0xFF000000 ? border : -1;
                     GlStateManager.scale(0.5f, 0.5f, 0.5f);
-                    drawVerticalLine(0, 1, 29, c);
-                    drawVerticalLine((r - 2) * 2, 1, 29, c);
+                    drawVerticalLine(0, 1, lineHeight * 2 + 1, c);
+                    drawVerticalLine((r - 2) * 2, 1, lineHeight * 2 + 1, c);
                     drawHorizontalLine(1, (r - 2) * 2, 2, c);
-                    drawHorizontalLine(1, (r - 2) * 2, 28, c);
-                    drawRect(2, 4, (r - 2) * 2 - 1, 27, (c & 0xFFFFFF) | 0x60000000);
+                    drawHorizontalLine(1, (r - 2) * 2, lineHeight * 2, c);
+                    drawRect(2, 4, (r - 2) * 2 - 1, lineHeight * 2 - 1, (c & 0xFFFFFF) | 0x60000000);
                 }
                 else {
-                    drawVerticalLine(0, 0, 15, -1);
-                    drawVerticalLine(r - left + 2, 0, 15, -1);
+                    drawVerticalLine(0, 0, lineHeight + 1, -1);
+                    drawVerticalLine(r - left + 2, 0, lineHeight + 1, -1);
                     drawHorizontalLine(1, r - left + 2, 1, -1);
-                    drawHorizontalLine(1, r - left + 2, 14, -1);
+                    drawHorizontalLine(1, r - left + 2, lineHeight, -1);
                 }
                 GlStateManager.popMatrix();
                 GuiButtonNop.renderString(displayString, left, top, right, top + 10, CustomNpcs.MainColor.getRGB() | alpha, true, false, customFont);
             }
             else if (i == hover) {
                 GuiButtonNop.renderString(displayString, left, top, right, top + 10, CustomNpcs.HoverColor.getRGB() | alpha, true, false, customFont);
-                //graphics.drawString(font, displayString, left, top, 0x00FF00 | alpha);
             }
             else {
                 GuiButtonNop.renderString(displayString, left, top, right, top + 10, CustomNpcs.MainColor.getRGB() | alpha, true, false, customFont);
-                //graphics.drawString(font, displayString, left, top, color);
             }
         }
     }
@@ -318,8 +320,18 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         if (mouseX >= 4 && mouseX < width - 4 && mouseY >= 1 && mouseY < height - 2) {
             int displayIndex = 0;
             for(int index = 0; index < list.size(); ++index) {
-                if (!isSearched(list.get(index).getString())) { continue; }
-                if (mouseInOption(mouseX, mouseY, displayIndex)) { return index; }
+                String line = list.get(index).getString();
+                if (!isSearched(line)) { continue; }
+                if (mouseInOption(mouseX, mouseY, displayIndex)) {
+                    boolean isIgnore = false;
+                    for (Component ignore : ignoreSelected) {
+                        if (Util.instance.equalsDeleteColor(ignore.getString(), line, false)) {
+                            isIgnore = true;
+                            break;
+                        }
+                    }
+                    if (!isIgnore) { return index; }
+                }
                 ++displayIndex;
             }
         }
@@ -366,7 +378,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         }
         if (canPressed) {
             if (keyCode == Keyboard.KEY_UP  || keyCode == minecraft.gameSettings.keyBindForward.getKeyCode()) { // up
-                if (multipleSelection) { scrollY = ValueUtil.correctInt(scrollY - 14, 0, maxScrollY); }
+                if (multipleSelection) { scrollY = ValueUtil.correctInt(scrollY - lineHeight, 0, maxScrollY); }
                 else {
                     if (selected < 1) { return false; }
                     selected--;
@@ -376,7 +388,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
                 return true;
             }
             else if (keyCode == Keyboard.KEY_DOWN || keyCode == minecraft.gameSettings.keyBindBack.getKeyCode()) { // down
-                if (multipleSelection) { scrollY = ValueUtil.correctInt(scrollY + 14, 0, maxScrollY); }
+                if (multipleSelection) { scrollY = ValueUtil.correctInt(scrollY + lineHeight, 0, maxScrollY); }
                 else {
                     if (selected >= getList().size() - 1) { return false; }
                     selected++;
@@ -620,7 +632,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         int pos = (int)((float) selected / (float) list.size() * (float) listHeight);
         if (pos < scrollY) { scrollY = pos; }
         else {
-            while (pos >= scrollY + height - 14) { scrollY += 14; }
+            while (pos >= scrollY + height - lineHeight) { scrollY += lineHeight; }
             if (scrollY > maxScrollY) { scrollY = maxScrollY; }
         }
     }
@@ -663,7 +675,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         int displayIndex = 0;
         for (int i = 0; i < list.size() && i < stacks.size(); ++i) {
             if (!isSearched(list.get(i).getString())) { continue; }
-            int k = 14 * displayIndex + 4 - scrollY;
+            int k = lineHeight * displayIndex + 4 - scrollY;
             displayIndex++;
             if (k < 4 || k + 10 > height) { continue; }
             GlStateManager.pushMatrix();
@@ -682,7 +694,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         for (int i = 0; i < list.size() && i < prefixes.size(); ++i) {
             if (!isSearched(list.get(i).getString())) { continue; }
             ResourceData rd = prefixes.get(i);
-            int k = 14 * displayIndex + 4 - scrollY;
+            int k = lineHeight * displayIndex + 4 - scrollY;
             displayIndex++;
             if (rd == null || rd.resource == null || rd.width <= 0 || rd.height <= 0) { continue; }
             if (k < 4 || k + 12 >= height) { continue; }
@@ -754,6 +766,8 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     public GuiCustomScrollNop setCustomFont(ClientProxy.FontContainer font) {
         customFont = font;
         textField.setCustomFont(font);
+        lineHeight = font != null ? font.getHeight() + 4 : Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT + 4;
+        reset();
         return this;
     }
 
@@ -770,5 +784,11 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     public String getSearchValue() { return textField.getValue(); }
 
     public void setSearchValue(String text) { textField.setValue(text); }
+
+    public GuiCustomScrollNop setIgnoreSelected(ArrayList<Component> list) {
+        ignoreSelected.clear();
+        if (list != null) { ignoreSelected.addAll(list); }
+        return this;
+    }
 
 }

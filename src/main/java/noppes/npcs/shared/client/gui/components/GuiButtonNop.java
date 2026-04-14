@@ -109,19 +109,10 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         }
         int width = right - left;
         GlStateManager.pushMatrix();
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        ScaledResolution sw = new ScaledResolution(Minecraft.getMinecraft());
-        double d4 = sw.getScaledWidth() < mc.displayWidth
-                ? (int) Math.round((double) mc.displayWidth / (double) sw.getScaledWidth())
-                : 1;
-        GL11.glScissor((int) ((double) left * d4),
-                (int) ((double) mc.displayHeight - (double) bottom * d4),
-                Math.max(0, (int) ((double) (right - left) * d4)),
-                Math.max(0, (int) ((double) (bottom - top) * d4)));
         int c = ((IStyleMixin) message.getStyle()).npcs$getColor();
         if (c != 0) {
             int alpha = color >>> 24;
-            if (color == 0 || (color & 0x00ffffff) == 0xffffff) { color = (alpha << 24) | (c & 0x00ffffff); }
+            if (color == 0 || (color & 0xFFFFFF) == 0xFFFFFF) { color = (alpha << 24) | (c & 0xFFFFFF); }
             else {
                 int r1 = (color >> 16) & 0xff;
                 int g1 = (color >> 8) & 0xff;
@@ -133,6 +124,16 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             }
         }
         if (textWidth > width) {
+            GL11.glEnable(GL11.GL_SCISSOR_TEST);
+            ScaledResolution sw = new ScaledResolution(Minecraft.getMinecraft());
+            double d4 = sw.getScaledWidth() < mc.displayWidth
+                    ? (int) Math.round((double) mc.displayWidth / (double) sw.getScaledWidth())
+                    : 1;
+            GL11.glScissor((int) ((double) left * d4),
+                    (int) ((double) mc.displayHeight - (double) bottom * d4),
+                    Math.max(0, (int) ((double) (right - left) * d4)),
+                    Math.max(0, (int) ((double) (bottom - top) * d4)));
+
             int centerX = textWidth - width;
             double d0 = (double) System.currentTimeMillis() / 1000.0;
             double d1 = Math.max((double) centerX * 0.5, 3.0);
@@ -140,16 +141,19 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             double d3 = ValueUtil.lerp(d2, 0.0, centerX);
             if (customFont != null) { customFont.draw(message, left - (int) d3, height, color); }
             else { mc.fontRenderer.drawString(message.getString(), left - (int) d3, height, color, showShadow); }
-            mc.fontRenderer.drawString(message.getString(), left - (int) d3, height, color, showShadow);
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);
         } // moved
         else {
             if (centered) {
                 width = (left + right) / 2;
-                mc.fontRenderer.drawString(message.getString(), width - (float) textWidth / 2.0f, height, color, showShadow);
+                if (customFont != null) { customFont.draw(message, width - (float) textWidth / 2.0f, height, color); }
+                else { mc.fontRenderer.drawString(message.getString(), width - (float) textWidth / 2.0f, height, color, showShadow); }
             }
-            else { mc.fontRenderer.drawString(message.getString(), left, height, color, showShadow); }
+            else {
+                if (customFont != null) { customFont.draw(message, left, height, color); }
+                else { mc.fontRenderer.drawString(message.getString(), left, height, color, showShadow); }
+            }
         } // in round
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
         GlStateManager.popMatrix();
     }
 
@@ -537,6 +541,13 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     @Override
     public GuiComponentType getElementType() { return GuiComponentType.BUTTON; }
+
+
+    @Override
+    public GuiButtonNop setCustomFont(ClientProxy.FontContainer font) {
+        customFont = font;
+        return this;
+    }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) { return false; }

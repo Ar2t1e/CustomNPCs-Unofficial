@@ -1,7 +1,6 @@
 package noppes.npcs.shared.client.gui.components;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.network.chat.Component;
@@ -119,26 +118,8 @@ public class GuiLabel extends Gui implements IComponentGui {
         GlStateManager.enableDepth();
         GlStateManager.enableBlend();
         drawBox();
-
-        FontRenderer font = Minecraft.getMinecraft().fontRenderer;
-        Component message = getMessage();
-        int textWidth = customFont != null ? customFont.width(message) : font.getStringWidth(message.getString());
-        if (customFont != null) { textWidth++; }
-        if (textWidth > width) {
-            GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + width, getY() + height,
-                    textColor, showShadow, centered, customFont);
-        }
-        else {
-            if (centered) {
-                if (customFont != null) { customFont.draw(message, (width - textWidth) / 2.0f, height, textColor); }
-                else { font.drawString(message.getString(), (width - textWidth) / 2.0f, height, textColor, showShadow); }
-            }
-            else {
-                if (customFont != null) { customFont.draw(message, getX(), height, textColor); }
-                else { font.drawString(message.getString(), getX(), height, textColor, showShadow); }
-            }
-        }
-
+        GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + width, getY() + height,
+                textColor, showShadow, centered, customFont);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.popMatrix();
         GlStateManager.disableDepth();
