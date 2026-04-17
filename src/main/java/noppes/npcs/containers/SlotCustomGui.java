@@ -14,6 +14,8 @@ import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiItemSlotWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiWrapper;
 
+import javax.annotation.Nonnull;
+
 public class SlotCustomGui extends Slot {
 
     protected final CustomGuiWrapper gui;

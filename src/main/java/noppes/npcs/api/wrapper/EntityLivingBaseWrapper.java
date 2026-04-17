@@ -34,8 +34,7 @@ import noppes.npcs.api.wrapper.data.AttributeWrapper;
 import noppes.npcs.controllers.data.MarkData;
 import noppes.npcs.reflection.entity.ai.attributes.AbstractAttributeMapReflection;
 
-@SuppressWarnings("rawtypes")
-public class EntityLivingBaseWrapper<T extends EntityLivingBase> extends EntityWrapper<T> implements IEntityLivingBase {
+public class EntityLivingBaseWrapper<T extends EntityLivingBase> extends EntityWrapper<T> implements IEntityLivingBase<T> {
 
 	public EntityLivingBaseWrapper(T entity) {
 		super(entity);
@@ -106,7 +105,7 @@ public class EntityLivingBaseWrapper<T extends EntityLivingBase> extends EntityW
 	}
 
 	@Override
-	public boolean canSeeEntity(IEntity entity) {
+	public boolean canSeeEntity(IEntity<?> entity) {
 		return this.entity.canEntityBeSeen(entity.getMCEntity());
 	}
 
@@ -136,8 +135,8 @@ public class EntityLivingBaseWrapper<T extends EntityLivingBase> extends EntityW
 	}
 
 	@Override
-	public IEntityLivingBase getAttackTarget() {
-		return (IEntityLivingBase) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.getRevengeTarget());
+	public IEntityLivingBase<?> getAttackTarget() {
+		return (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.getRevengeTarget());
 	}
 
 	@Override
@@ -169,8 +168,8 @@ public class EntityLivingBaseWrapper<T extends EntityLivingBase> extends EntityW
 	}
 
 	@Override
-	public IEntityLivingBase getLastAttacked() {
-		return (IEntityLivingBase) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.getLastAttackedEntity());
+	public IEntityLivingBase<?> getLastAttacked() {
+		return (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.getLastAttackedEntity());
 	}
 
 	@Override
@@ -329,7 +328,7 @@ public class EntityLivingBaseWrapper<T extends EntityLivingBase> extends EntityW
 	}
 
 	@Override
-	public void setAttackTarget(IEntityLivingBase living) {
+	public void setAttackTarget(IEntityLivingBase<?> living) {
 		if (living == null) {
 			this.entity.setRevengeTarget(null);
 		} else {

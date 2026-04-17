@@ -6,11 +6,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ITickable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
@@ -133,33 +130,27 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 		return this.enabled && ScriptController.HasStart && !this.world.isRemote;
 	}
 
-	public ITextComponent noticeString(String type, Object event) {
-		ITextComponent message = new TextComponentString("");
-		message.getStyle().setColor(TextFormatting.DARK_GRAY);
+	public Component noticeString(String type, Object event) {
+		Component message = Component.literal("Scripted Door")
+				.withStyle(TextFormatting.DARK_GRAY);
 		if (type != null) {
-			ITextComponent hook = new TextComponentString("Hook \"");
-			hook.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent hookType = new TextComponentString(type);
-			hookType.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent hookEnd = new TextComponentString("\"; ");
-			hookEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(hook).appendSibling(hookType).appendSibling(hookEnd);
+			message.append(Component.literal(" hook \"").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal(type).withStyle(TextFormatting.GRAY))
+					.append(Component.literal("\"; ").withStyle(TextFormatting.DARK_GRAY));
 		}
-		BlockPos pos = getPos();
-		ITextComponent mesDoor = new TextComponentString("Scripted Door in ");
-		mesDoor.getStyle().setColor(TextFormatting.DARK_GRAY);
-		int x = pos.getX();
-		int y = pos.getY();
-		int z = pos.getZ();
+		else { message.append(Component.literal("; ").withStyle(TextFormatting.DARK_GRAY)); }
 		int dimID = world == null ? 0 : world.provider.getDimension();
-		ITextComponent posClick = new TextComponentString("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
+		double x = Math.round(pos.getX() * 100.0d) / 100.0d;
+		double y = Math.round(pos.getY() * 100.0d) / 100.0d;
+		double z = Math.round(pos.getZ() * 100.0d) / 100.0d;
+		Component posClick = Component.literal("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
 		posClick.getStyle().setColor(TextFormatting.BLUE)
 				.setUnderlined(true)
 				.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + (y + 1) + " "+z))
-				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("script.hover.error.pos.tp")));
-		ITextComponent side = new TextComponentString("; Side: " + (isClient() ? "Client" : "Server"));
-		side.getStyle().setColor(TextFormatting.DARK_GRAY);
-		return message.appendSibling(mesDoor).appendSibling(posClick).appendSibling(side);
+				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+		message.append(Component.literal("in ").withStyle(TextFormatting.DARK_GRAY))
+				.append(posClick);
+		return message.append(Component.literal("; Side: " + (isClient() ? "Client" : "Server")).withStyle(TextFormatting.DARK_GRAY));
 	}
 
 	@Override
@@ -198,8 +189,11 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 		this.lastInited = timeMC;
 	}
 
+	@Override
+	public void init() { lastInited = -1; }
+
 	public void setNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this);
 		this.scriptLanguage = compound.getString("ScriptLanguage");
 		this.closeSound = compound.getString("CloseSound");
 		this.openSound = compound.getString("OpenSound");

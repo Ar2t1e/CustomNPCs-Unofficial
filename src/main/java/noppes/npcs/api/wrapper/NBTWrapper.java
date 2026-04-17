@@ -24,6 +24,9 @@ public class NBTWrapper implements INbt {
 	}
 
 	@Override
+	public boolean isEmpty() { return compound.hasNoTags(); }
+
+	@Override
 	public boolean getBoolean(String key) {
 		return this.compound.getBoolean(key);
 	}

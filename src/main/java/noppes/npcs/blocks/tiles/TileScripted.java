@@ -11,15 +11,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.NetworkManager;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
@@ -27,7 +24,7 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.*;
-import noppes.npcs.api.ILayerModel;
+import noppes.npcs.api.ILayerBlockModel;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.block.ITextPlane;
 import noppes.npcs.api.wrapper.BlockScriptedWrapper;
@@ -247,7 +244,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 	private short ticksExisted = 0;
 	public DataTimers timers;
 
-	public ILayerModel[] layers = new ILayerModel[0];
+	public ILayerBlockModel[] layers = new ILayerBlockModel[0];
 
 	public TileScripted() { timers = new DataTimers(this); }
 
@@ -311,7 +308,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 		compound.setTag("Text6", this.text6.getNBT());
 		compound.setInteger("ModelMeta", this.metaModel);
 		NBTTagList l = new NBTTagList();
-        for (ILayerModel layer : this.layers) {
+        for (ILayerBlockModel layer : this.layers) {
             l.appendTag(layer.getNbt().getMCNBT());
         }
 		compound.setTag("Layers", l);
@@ -405,33 +402,27 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 		return this.enabled && ScriptController.HasStart && !this.scripts.isEmpty();
 	}
 
-	public ITextComponent noticeString(String type, Object event) {
-		ITextComponent message = new TextComponentString("");
-		message.getStyle().setColor(TextFormatting.DARK_GRAY);
+	public Component noticeString(String type, Object event) {
+		Component message = Component.literal("Scripted Block")
+				.withStyle(TextFormatting.DARK_GRAY);
 		if (type != null) {
-			ITextComponent hook = new TextComponentString("Hook \"");
-			hook.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent hookType = new TextComponentString(type);
-			hookType.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent hookEnd = new TextComponentString("\"; ");
-			hookEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(hook).appendSibling(hookType).appendSibling(hookEnd);
+			message.append(Component.literal(" hook \"").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal(type).withStyle(TextFormatting.GRAY))
+					.append(Component.literal("\"; ").withStyle(TextFormatting.DARK_GRAY));
 		}
-		BlockPos pos = getPos();
-		ITextComponent mesBlock = new TextComponentString("Scripted Block in ");
-		mesBlock.getStyle().setColor(TextFormatting.DARK_GRAY);
-		int x = pos.getX();
-		int y = pos.getY();
-		int z = pos.getZ();
+		else { message.append(Component.literal("; ").withStyle(TextFormatting.DARK_GRAY)); }
 		int dimID = world == null ? 0 : world.provider.getDimension();
-		ITextComponent posClick = new TextComponentString("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
+		double x = 0.5d + Math.round(pos.getX() * 100.0d) / 100.0d;
+		double y = 0.5d + Math.round(pos.getY() * 100.0d) / 100.0d;
+		double z = 0.5d + Math.round(pos.getZ() * 100.0d) / 100.0d;
+		Component posClick = Component.literal("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
 		posClick.getStyle().setColor(TextFormatting.BLUE)
 				.setUnderlined(true)
 				.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + (y + 1) + " "+z))
-				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("script.hover.error.pos.tp")));
-		ITextComponent side = new TextComponentString("; Side: " + (isClient() ? "Client" : "Server"));
-		side.getStyle().setColor(TextFormatting.DARK_GRAY);
-		return message.appendSibling(mesBlock).appendSibling(posClick).appendSibling(side);
+				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+		message.append(Component.literal("in ").withStyle(TextFormatting.DARK_GRAY))
+				.append(posClick);
+		return message.append(Component.literal("; Side: " + (isClient() ? "Client" : "Server")).withStyle(TextFormatting.DARK_GRAY));
 	}
 
 	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
@@ -492,7 +483,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 			this.text6.setNBT(compound.getCompoundTag("Text6"));
 		}
 		this.metaModel = compound.getInteger("ModelMeta");
-		this.layers = new ILayerModel[compound.getTagList("Layers", 10).tagCount()];
+		this.layers = new ILayerBlockModel[compound.getTagList("Layers", 10).tagCount()];
 		for (int i = 0; i < compound.getTagList("Layers", 10).tagCount(); i++) {
 			this.layers[i] = new LayerModel(compound.getTagList("Layers", 10).getCompoundTagAt(i));
 		}
@@ -528,6 +519,9 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 	public void setLastInited(long timeMC) {
 		this.lastInited = timeMC;
 	}
+
+	@Override
+	public void init() { lastInited = -1; }
 
 	public void setLightValue(int value) {
 		if (value == this.lightValue) {
@@ -598,7 +592,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 	}
 
 	public void setNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this);
 		this.scriptLanguage = compound.getString("ScriptLanguage");
 		this.enabled = compound.getBoolean("ScriptEnabled");
 		int pw = compound.getInteger("BlockPowering");

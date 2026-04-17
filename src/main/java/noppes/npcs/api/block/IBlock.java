@@ -7,7 +7,6 @@ import noppes.npcs.api.*;
 import noppes.npcs.api.entity.data.IData;
 import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface IBlock {
 
 	void blockEvent(@ParamName("type") int type, @ParamName("data") int data);

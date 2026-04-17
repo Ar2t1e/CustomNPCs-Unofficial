@@ -85,7 +85,8 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 				compound.getBoolean("Global"),
 				NBTTags.getIngredientList(compound.getTagList("Materials", 10)),
 				new ItemStack(compound.getCompoundTag("Item")));
-		recipe.id = compound.getInteger("ID");
+		recipe.id = null;
+		if (compound.hasKey("ID", 8)) { recipe.id = new ResourceLocation(compound.getString("ID")); }
 		recipe.availability.load(compound.getCompoundTag("Availability"));
 		recipe.ignoreDamage = compound.getBoolean("IgnoreDamage");
 		recipe.ignoreNBT = compound.getBoolean("IgnoreNBT");
@@ -107,7 +108,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 	public boolean isSimple;
 	public Availability availability;
 	private boolean global;
-	public int id;
+	public ResourceLocation id;
 	public boolean ignoreDamage;
 	public boolean ignoreNBT;
 	public boolean known;
@@ -131,7 +132,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 		for (Ingredient i : ingredients)
 			simple &= i.isSimple();
 		this.isSimple = simple;
-		this.id = -1;
+		this.id = null;
 		this.name = Util.instance.getResourceName(name);
 		this.availability = new Availability();
 		this.global = isGlobal;
@@ -247,7 +248,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 	}
 
 	@Override
-	public int getId() {
+	public ResourceLocation getId() {
 		return this.id;
 	}
 
@@ -269,7 +270,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 	@Override
 	public INbt getNbt() {
 		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("ID", this.id);
+		if (id != null) { compound.setString("ID", id.toString()); }
 		compound.setInteger("Width", this.recipeWidth);
 		compound.setInteger("Height", this.recipeHeight);
 		if (this.recipeOutput != null) {

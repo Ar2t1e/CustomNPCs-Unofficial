@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
+import noppes.npcs.shared.client.util.GuiNpcPngAnimation;
 import org.lwjgl.opengl.GL11;
 
 import java.io.InputStreamReader;

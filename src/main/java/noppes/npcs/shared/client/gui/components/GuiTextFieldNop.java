@@ -484,7 +484,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
         }
     }
 
-    private int getTextColor() {
+    public int getTextColor() {
         if (numbersOnly || doublesOnly) {
             if (numbersOnly && (!isLong() || getLong() < min || getLong() > max)) { return new Color(0xFC0345).getRGB(); }
             if (doublesOnly && (!isDouble() || getDouble() < minD || getDouble() > maxD)) { return new Color(0xFC0345).getRGB(); }

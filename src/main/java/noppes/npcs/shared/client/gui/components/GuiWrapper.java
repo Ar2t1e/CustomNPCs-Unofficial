@@ -156,8 +156,8 @@ public class GuiWrapper {
         return false;
     }
 
-    public void drawNpc(Entity entity, int x, int y, float zoomed, int rotation, int vertical, int followCursor, int guiLeft, int guiTop) {
-        CustomGuiEntityDisplay.drawEntity(entity, x, y, zoomed, rotation, vertical, mouseX, mouseY, (float) guiLeft, (float) guiTop, followCursor);
+    public void drawNpc(Entity entity, int x, int y, float zoomed, int yaw, int pitch, int followCursor, int guiLeft, int guiTop) {
+        CustomGuiEntityDisplay.drawEntity(entity, x, y, zoomed, yaw, pitch, mouseX, mouseY, (float) guiLeft, (float) guiTop, followCursor);
     }
 
     private void setFocus(IComponentGui focused) {

@@ -5,8 +5,8 @@ import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
-import noppes.npcs.ModelPartConfig;
 import noppes.npcs.client.model.ModelNpcAlt;
+import noppes.npcs.client.model.part.ModelPartConfig;
 import noppes.npcs.constants.EnumParts;
 
 public class LayerNpcCloak<T extends EntityLivingBase> extends LayerInterface<T> {
@@ -34,7 +34,7 @@ public class LayerNpcCloak<T extends EntityLivingBase> extends LayerInterface<T>
 		if (this.npc.isSneaking()) {
 			GlStateManager.translate(0.0f, 0.2f, 0.0f);
 		}
-		GlStateManager.translate(config.offset[0], config.offset[1], config.offset[2]);
+		GlStateManager.translate(config.transX, config.transY, config.transZ);
 		GlStateManager.translate(0.0f, 0.0f, 0.125f);
 		double d = this.npc.prevChasingPosX + (this.npc.chasingPosX - this.npc.prevChasingPosX) * par7 - (this.npc.prevPosX + (this.npc.posX - this.npc.prevPosX) * par7);
 		double d3 = this.npc.prevChasingPosZ + (this.npc.chasingPosZ - this.npc.prevChasingPosZ) * par7 - (this.npc.prevPosZ + (this.npc.posZ - this.npc.prevPosZ) * par7);

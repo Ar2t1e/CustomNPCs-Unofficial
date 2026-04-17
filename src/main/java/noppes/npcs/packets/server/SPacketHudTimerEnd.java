@@ -13,6 +13,8 @@ public class SPacketHudTimerEnd extends PacketServerBasic {
     private int orientationType;
     private int timerId;
 
+    public SPacketHudTimerEnd() { }
+
     public SPacketHudTimerEnd(int orientationIn, int timerIn) {
         orientationType = orientationIn;
         timerId = timerIn;
@@ -41,8 +43,6 @@ public class SPacketHudTimerEnd extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         PlayerData data = PlayerData.get(player);
         EventHooks.onPlayerTimer(data, timerId);
-        data.overlay.removeComponent(orientationType, timerId);
-        data.overlay.update();
         CustomNpcs.debugData.end("Packets");
     }
 

@@ -16,7 +16,7 @@ import net.minecraftforge.common.util.FakePlayer;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.CustomNPCsException;
-import noppes.npcs.api.ILayerModel;
+import noppes.npcs.api.ILayerBlockModel;
 import noppes.npcs.api.ITimers;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.block.IBlock;
@@ -38,8 +38,8 @@ public class BlockScriptedWrapper
 	}
 
 	@Override
-	public ILayerModel createLayerModel() {
-		ILayerModel[] ls = new ILayerModel[this.tile.layers.length + 1];
+	public ILayerBlockModel createLayerModel() {
+		ILayerBlockModel[] ls = new ILayerBlockModel[this.tile.layers.length + 1];
 		int i;
 		for (i = 0; i < this.tile.layers.length; i++) {
 			((LayerModel) this.tile.layers[i]).pos = i;
@@ -78,7 +78,7 @@ public class BlockScriptedWrapper
 	}
 
 	@Override
-	public ILayerModel[] getLayerModels() {
+	public ILayerBlockModel[] getLayerModels() {
 		for (int i = 0; i < this.tile.layers.length; i++) {
 			((LayerModel) this.tile.layers[i]).pos = i;
 		}
@@ -171,8 +171,8 @@ public class BlockScriptedWrapper
 	}
 
 	@Override
-	public boolean removeLayerModel(ILayerModel layer) {
-		List<ILayerModel> newLM = new ArrayList<>();
+	public boolean removeLayerModel(ILayerBlockModel layer) {
+		List<ILayerBlockModel> newLM = new ArrayList<>();
 		boolean found = false;
 		for (int i = 0; i < this.tile.layers.length; i++) {
 			if (this.tile.layers[i] == null) {
@@ -185,7 +185,7 @@ public class BlockScriptedWrapper
 			}
 		}
 		if (found) {
-			this.tile.layers = newLM.toArray(new ILayerModel[0]);
+			this.tile.layers = newLM.toArray(new ILayerBlockModel[0]);
 		}
 		return found;
 	}
@@ -195,7 +195,7 @@ public class BlockScriptedWrapper
 		if (id < 0 || id >= this.tile.layers.length) {
 			return false;
 		}
-		List<ILayerModel> newLM = new ArrayList<>();
+		List<ILayerBlockModel> newLM = new ArrayList<>();
 		for (int i = 0; i < this.tile.layers.length; i++) {
 			if (this.tile.layers[i] == null) {
 				continue;
@@ -204,7 +204,7 @@ public class BlockScriptedWrapper
 				newLM.add(this.tile.layers[i]);
 			}
 		}
-		this.tile.layers = newLM.toArray(new ILayerModel[0]);
+		this.tile.layers = newLM.toArray(new ILayerBlockModel[0]);
 		return true;
 	}
 

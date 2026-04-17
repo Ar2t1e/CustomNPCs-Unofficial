@@ -35,8 +35,10 @@ public interface IRenderSystem {
 	void draw(@ParamName("left") double left, @ParamName("top") double top, @ParamName("width") double width, @ParamName("height") double height,
 			  @ParamName("red") float red, @ParamName("green") float green, @ParamName("blue") float blue, @ParamName("alpha") float alpha);
 	void renderEntity(@ParamName("entity") Entity entity,
-					  @ParamName("x") int x, @ParamName("y") int y, @ParamName("scale") float scale,
-					  @ParamName("yaw") int yaw, @ParamName("pitch") int pitch, @ParamName("followCursor") int followCursor);
+					  @ParamName("x") int x, @ParamName("y") int y, @ParamName("zoomed") float scale,
+					  @ParamName("yaw") int yaw, @ParamName("pitch") int pitch,
+					  @ParamName("guiLeft") float guiLeft, @ParamName("guiTop") float guiTop,
+					  @ParamName("followCursor") int followCursor);
 	void drawOBJ(@ParamName("resourceLocation") String resourceLocation,
 				 @ParamName("visibleMeshes") List<String> visibleMeshes, @ParamName("materialTextures") Map<String, String> materialTextures);
 	

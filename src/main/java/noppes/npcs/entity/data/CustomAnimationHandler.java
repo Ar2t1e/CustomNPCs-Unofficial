@@ -108,7 +108,7 @@ public class CustomAnimationHandler {
                 startEvent(new AnimationEvent.StopEvent(entity, activeAnimation, animationFrame, ticks - startFrameTime, stage));
             } else { return; }
         }
-        if (animationSound != null && !entity.isServerWorld()) { MusicController.Instance.stopSound(animationSound.toString(), SoundCategory.AMBIENT); }
+        if (animationSound != null && !entity.isServerWorld()) { MusicController.Instance.stopSound(animationSound, SoundCategory.AMBIENT); }
         animationSound = null;
         startAnimationTime = 0;
         completeAnimation = false;

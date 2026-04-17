@@ -16,7 +16,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
-import noppes.npcs.api.ILayerModel;
+import noppes.npcs.api.ILayerBlockModel;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.client.TextBlockClient;
 import noppes.npcs.client.renderer.ModelBuffer;
@@ -123,7 +123,7 @@ public class BlockScriptedRenderer<T extends TileEntity> extends TileEntitySpeci
 			}
 		}
 		GlStateManager.popMatrix();
-        for (ILayerModel il : tile.layers) {
+        for (ILayerBlockModel il : tile.layers) {
             LayerModel l = (LayerModel) il;
             Block block = l.model.isEmpty() ? null : Block.getBlockFromItem(l.model.getItem());
             if (l.model.isEmpty() && l.objModel == null) {

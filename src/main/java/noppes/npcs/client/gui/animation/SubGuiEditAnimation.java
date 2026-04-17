@@ -2903,7 +2903,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			getButton(53).setIsVisible(onlyCurrentPart);
 			if (onlyCurrentPart) {
 				int s = npcPart.animation.getAnimationSpeedTicks();
-				Component[] ticks = new Component[s];
+				Object[] ticks = new Component[s];
 				for (int i = 0; i <= s; i++) { ticks[i] = Component.literal(i + "/" + s); }
 				getButton(53).setVariants(ticks);
 			}

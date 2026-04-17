@@ -15,6 +15,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.stats.RecipeBook;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
@@ -227,5 +228,9 @@ public class CommonProxy implements IGuiHandler {
 		if (customElement instanceof Block) { NoppesUtilServer.createBlockFiles(customElement); }
 		if (customElement instanceof Item) { NoppesUtilServer.createItemFiles(customElement); }
 	}
+
+	public void playSound(SoundCategory category, String sound, double x, double y, double z, float volume, float pitch, boolean streaming, boolean looping) {  }
+
+	public void stopSound(int category, String sound) { }
 
 }

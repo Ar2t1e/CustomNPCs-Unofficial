@@ -35,4 +35,8 @@ public class PlayerTransportData {
 		}
 		compound.setTag("TransportData", list);
 	}
+
+	public void clear() {
+
+	}
 }

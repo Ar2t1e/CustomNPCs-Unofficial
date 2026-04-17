@@ -4,9 +4,7 @@ import java.util.*;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
@@ -174,45 +172,35 @@ public class ItemScriptedWrapper extends ItemStackWrapper implements IItemScript
 	}
 
 	@Override
-	public ITextComponent noticeString(String type, Object event) {
-		ITextComponent message = new TextComponentString("Scripted Item Script");
-		message.getStyle().setColor(TextFormatting.DARK_GRAY);
+	public Component noticeString(String type, Object event) {
+		Component message = Component.literal("Scripted Item")
+				.withStyle(TextFormatting.DARK_GRAY);
 		if (type != null) {
-			ITextComponent hook = new TextComponentString(" hook \"");
-			hook.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent hookType = new TextComponentString(type);
-			hookType.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent hookEnd = new TextComponentString("\"; ");
-			hookEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(hook).appendSibling(hookType).appendSibling(hookEnd);
+			message.append(Component.literal(" hook \"").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal(type).withStyle(TextFormatting.GRAY))
+					.append(Component.literal("\"; ").withStyle(TextFormatting.DARK_GRAY));
 		}
+		else { message.append(Component.literal("; ").withStyle(TextFormatting.DARK_GRAY)); }
+
 		IPlayer<?> iPlayer = getIPlayer(event);
 		if (iPlayer != null) {
-			ITextComponent mesPlayer = new TextComponentString("Player \"");
-			mesPlayer.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent name = new TextComponentString(iPlayer.getName());
-			name.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesUUID = new TextComponentString("\"; UUID: \"");
-			mesUUID.getStyle().setColor(TextFormatting.DARK_GRAY);
-			ITextComponent uuid = new TextComponentString(iPlayer.getUUID());
-			uuid.getStyle().setColor(TextFormatting.GRAY);
-			ITextComponent mesEnd = new TextComponentString("\" in ");
-			mesEnd.getStyle().setColor(TextFormatting.DARK_GRAY);
-			message = message.appendSibling(mesPlayer).appendSibling(name).appendSibling(mesUUID).appendSibling(uuid).appendSibling(mesEnd);
 			int dimID = iPlayer.getWorld().getMCWorld() == null ? 0 : iPlayer.getWorld().getMCWorld().provider.getDimension();
 			double x = Math.round(iPlayer.getPos().getX() * 100.0d) / 100.0d;
 			double y = Math.round(iPlayer.getPos().getX() * 100.0d) / 100.0d;
 			double z = Math.round(iPlayer.getPos().getX() * 100.0d) / 100.0d;
-			ITextComponent posClick = new TextComponentString("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
+			Component posClick = Component.literal("dimension ID:" + dimID + "; X:" + x + "; Y:" + y + "; Z:" + z);
 			posClick.getStyle().setColor(TextFormatting.BLUE)
 					.setUnderlined(true)
 					.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + y + " "+z))
-					.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentTranslation("script.hover.error.pos.tp")));
-			message = message.appendSibling(posClick);
+					.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+			message.append(Component.literal("Player: \"").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal(iPlayer.getName()).withStyle(TextFormatting.GRAY))
+					.append(Component.literal("\"; UUID: \"").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal(iPlayer.getUUID()).withStyle(TextFormatting.GRAY))
+					.append(Component.literal("\" in ").withStyle(TextFormatting.DARK_GRAY))
+					.append(posClick);
 		}
-		ITextComponent side = new TextComponentString("; Side: " + (isClient() ? "Client" : "Server"));
-		side.getStyle().setColor(TextFormatting.DARK_GRAY);
-		return message.appendSibling(side);
+		return message.append(Component.literal((iPlayer != null ? "; " : "") + "Side: " + (isClient() ? "Client" : "Server")).withStyle(TextFormatting.DARK_GRAY));
 	}
 
 	private static IPlayer<?> getIPlayer(Object event) {
@@ -300,6 +288,9 @@ public class ItemScriptedWrapper extends ItemStackWrapper implements IItemScript
 	}
 
 	@Override
+	public void init() { lastInited = -1; }
+
+	@Override
 	public void setMaxStackSize(int size) {
 		if (size < 1 || size > 64) {
 			throw new CustomNPCsException("Stacksize has to be between 1 and 64");
@@ -324,21 +315,18 @@ public class ItemScriptedWrapper extends ItemStackWrapper implements IItemScript
 		if (!compound.hasKey("Scripts")) {
 			return;
 		}
-		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this, false);
+		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this);
 		this.scriptLanguage = compound.getString("ScriptLanguage");
 		this.enabled = compound.getBoolean("ScriptEnabled");
 	}
 
 	@Override
 	public void setTexture(int damage, String texture) {
-		if (damage == 0) {
-			throw new CustomNPCsException("Can't set texture for 0");
-		}
+		if (damage == 0) { throw new CustomNPCsException("Can't set texture for 0"); }
 		String old = ItemScripted.Resources.get(damage);
-		if (Objects.equals(old, texture)) {
-			return;
+		if (!Objects.equals(old, texture)) {
+			ItemScripted.Resources.put(damage, texture);
+			SyncController.syncScriptItemsEverybody();
 		}
-		ItemScripted.Resources.put(damage, texture);
-		SyncController.syncScriptItemsEverybody();
 	}
 }

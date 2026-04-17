@@ -4,11 +4,13 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
+import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.constants.EnumGuiType;
@@ -24,7 +26,9 @@ public class InventoryTabFactions extends AbstractTab {
 	}
 
 	private static void run() {
-		CustomNpcs.proxy.openGui(1, 0, 0, EnumGuiType.QuestLog, Minecraft.getMinecraft().player);
+		FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+		buf.writeInt(1);
+		CustomNpcs.proxy.openGui(null, EnumGuiType.QuestLog, buf);
 	}
 
 	@Override

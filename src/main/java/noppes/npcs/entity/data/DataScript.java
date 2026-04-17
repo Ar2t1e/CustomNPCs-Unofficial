@@ -25,7 +25,7 @@ public class DataScript extends BaseScriptData {
 	}
 
 	@Override
-	public ITextComponent noticeString(String type, Object event) {
+	public Component noticeString(String type, Object event) {
 		Component message = Component.literal("NPC Script").withStyle(TextFormatting.DARK_GRAY);
 		if (type != null) {
 			message.append(Component.literal(" hook \"").withStyle(TextFormatting.DARK_GRAY))

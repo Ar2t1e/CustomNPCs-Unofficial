@@ -40,8 +40,7 @@ import noppes.npcs.api.wrapper.data.Data;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.util.Util;
 
-@SuppressWarnings("rawtypes")
-public class EntityWrapper<T extends Entity> implements IEntity {
+public class EntityWrapper<T extends Entity> implements IEntity<T> {
 
 	public static List<Entity> findEntityOnPath(Entity entity, double distance, Vec3d vec3d, Vec3d vec3d1) {
 		List<Entity> result = new ArrayList<>();
@@ -64,7 +63,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 		return result;
 	}
 
-	public static IEntity[] findIEntityOnPath(Entity entity, double distance, Vec3d vec3d, Vec3d vec3d1) {
+	public static IEntity<?>[] findIEntityOnPath(Entity entity, double distance, Vec3d vec3d, Vec3d vec3d1) {
 		List<IEntity<?>> result = new ArrayList<>();
 		for (Entity e : findEntityOnPath(entity, distance, vec3d, vec3d1)) { result.add(Objects.requireNonNull(NpcAPI.Instance()).getIEntity(e)); }
 		return result.toArray(new IEntity[0]);
@@ -98,7 +97,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	}
 
 	@Override
-	public void addRider(IEntity entityIn) {
+	public void addRider(IEntity<?> entityIn) {
 		if (entityIn != null) { entityIn.getMCEntity().startRiding(entity, true); }
 	}
 
@@ -112,7 +111,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public void damage(float amount) { entity.attackEntityFrom(DamageSource.GENERIC, amount); }
 
 	@Override
-	public void damage(float amount, IEntity source) {
+	public void damage(float amount, IEntity<?> source) {
 		if (source == null) {
 			damage(amount);
 			return;
@@ -141,7 +140,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public void despawn() { entity.isDead = true; }
 
 	@Override
-	public IEntityItem dropItem(IItemStack item) { return (IEntityItem) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.entityDropItem(item.getMCItemStack(), 0.0f)); }
+	public IEntityItem<?> dropItem(IItemStack item) { return (IEntityItem<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.entityDropItem(item.getMCItemStack(), 0.0f)); }
 
 	@Override
 	public void extinguish() { entity.extinguish(); }
@@ -157,9 +156,9 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public long getAge() { return entity.ticksExisted; }
 
 	@Override
-	public IEntity[] getAllRiders() {
+	public IEntity<?>[] getAllRiders() {
 		List<Entity> list = new ArrayList<>(entity.getRecursivePassengers());
-		IEntity[] riders = new IEntity[list.size()];
+		IEntity<?>[] riders = new IEntity[list.size()];
 		for (int i = 0; i < list.size(); ++i) { riders[i] = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(list.get(i)); }
 		return riders;
 	}
@@ -209,7 +208,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public double getMotionZ() { return entity.motionZ; }
 
 	@Override
-	public IEntity getMount() { return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.getRidingEntity()); }
+	public IEntity<?> getMount() { return Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.getRidingEntity()); }
 
 	@Override
 	public String getName() { return entity.getName(); }
@@ -224,9 +223,9 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	public IPos getPos() { return new BlockPosWrapper(entity.posX, entity.posY, entity.posZ); }
 
 	@Override
-	public IEntity[] getRiders() {
+	public IEntity<?>[] getRiders() {
 		List<Entity> list = entity.getPassengers();
-		IEntity[] riders = new IEntity[list.size()];
+		IEntity<?>[] riders = new IEntity[list.size()];
 		for (int i = 0; i < list.size(); ++i) { riders[i] = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(list.get(i)); }
 		return riders;
 	}
@@ -338,7 +337,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	}
 
 	@Override
-	public IEntity[] rayTraceEntities(double distance, boolean stopOnLiquid, boolean ignoreBlockWithoutBoundingBox) {
+	public IEntity<?>[] rayTraceEntities(double distance, boolean stopOnLiquid, boolean ignoreBlockWithoutBoundingBox) {
 		Vec3d vec3d = entity.getPositionEyes(1.0f);
 		Vec3d vec3d2 = entity.getLook(1.0f);
 		Vec3d vec3d3 = vec3d.addVector(vec3d2.x * distance, vec3d2.y * distance, vec3d2.z * distance);
@@ -378,7 +377,7 @@ public class EntityWrapper<T extends Entity> implements IEntity {
 	}
 
 	@Override
-	public void setMount(IEntity entityIn) {
+	public void setMount(IEntity<?> entityIn) {
 		if (entityIn == null) { entity.dismountRidingEntity(); }
 		else { entity.startRiding(entityIn.getMCEntity(), true); }
 	}

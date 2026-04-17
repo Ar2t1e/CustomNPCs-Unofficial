@@ -30,9 +30,11 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketDetectHeldItem;
 import noppes.npcs.packets.server.SPacketRecipeRemove;
 import noppes.npcs.packets.server.SPacketRecipeRemoveGroup;
+import noppes.npcs.packets.server.SPacketRecipeSave;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.shared.client.gui.listeners.IScrollData;
@@ -63,7 +65,7 @@ public class GuiNpcManageRecipes
 
 		backGui = EnumGuiType.MainMenuGlobal;
 		container = containerIn;
-		recipe.domen = Component.literal(CustomNpcs.MODID);
+		recipe.domen = CustomNpcs.MODID;
 	}
 
 	@Override
@@ -71,24 +73,24 @@ public class GuiNpcManageRecipes
 		super.initGui();
 		wait = false;
 		data.clear();
-		if (onlyMod && !recipe.domen.getString().equals(CustomNpcs.MODID)) { recipe.clear(); }
+		if (onlyMod && !recipe.domen.equals(CustomNpcs.MODID)) { recipe.clear(); }
 		for (ResourceLocation loc : CraftingManager.REGISTRY.getKeys()) {
 			IRecipe r = CraftingManager.REGISTRY.getObject(loc);
 			if (r instanceof INpcRecipe || r instanceof IShapedRecipe || r instanceof ShapelessRecipes) {
 				if (onlyMod && !(r instanceof INpcRecipe)) { continue; }
 				WrapperRecipe wrapper = new WrapperRecipe();
-				wrapper.copyFrom(r, CraftingManager.REGISTRY.getIDForObject(r));
+				wrapper.copyFrom(r, CraftingManager.REGISTRY.getNameForObject(r));
 				if (!data.containsKey(wrapper.global)) { data.put(wrapper.global, new LinkedHashMap<>()); }
 				if (!data.get(wrapper.global).containsKey(wrapper.group)) { data.get(wrapper.global).put(wrapper.group, new ArrayList<>()); }
 				data.get(wrapper.global).get(wrapper.group).add(wrapper);
 			}
 		}
 		data.forEach((k0, v0) -> v0.forEach((k1, v1) -> v1.sort(Comparator.comparing(WrapperRecipe::getName))));
-		if (recipe.group.getString().isEmpty() && !data.get(recipe.global).isEmpty()) {
+		if (recipe.group.isEmpty() && !data.get(recipe.global).isEmpty()) {
 			recipe.clear();
 			recipe.group = data.get(recipe.global).values().iterator().next().get(0).group;
 		}
-		if (!recipe.name.getString().isEmpty()) {
+		if (!recipe.name.isEmpty()) {
 			boolean found = false;
 			if (data.get(recipe.global).containsKey(recipe.group) && !data.get(recipe.global).get(recipe.group).isEmpty()) {
 				for (WrapperRecipe wr : data.get(recipe.global).get(recipe.group)) {
@@ -99,9 +101,9 @@ public class GuiNpcManageRecipes
 					}
 				}
 			}
-			if (!found) { recipe.name = Component.empty(); }
+			if (!found) { recipe.name = ""; }
 		}
-		if (recipe.name.getString().isEmpty() && data.get(recipe.global).containsKey(recipe.group) &&
+		if (recipe.name.isEmpty() && data.get(recipe.global).containsKey(recipe.group) &&
 				!data.get(recipe.global).get(recipe.group).isEmpty()) { recipe.copyFrom(data.get(recipe.global).get(recipe.group).get(0)); }
 		addLabel(0, guiLeft + 172, guiTop + 8, "gui.recipe.groups")
 				.setHoverTexts("recipe.hover.info.groups");
@@ -635,8 +637,10 @@ public class GuiNpcManageRecipes
 
 	@Override
 	public void save() {
+		GuiTextFieldNop.unfocus();
 		if (recipe.isValid() && recipe.parent instanceof INpcRecipe && recipe.domen.getString().equals(CustomNpcs.MODID)) {
-			Client.sendData(EnumPacketServer.RecipeSave, recipe.getNbt());
+			container.saveRecipe();
+			Packets.sendServer(new SPacketRecipeSave(container.recipe.writeNBT()));
 			wait = true;
 		}
 	}

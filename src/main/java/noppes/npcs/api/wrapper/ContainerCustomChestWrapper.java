@@ -5,33 +5,26 @@ import net.minecraft.inventory.Container;
 import noppes.npcs.api.IContainerCustomChest;
 import noppes.npcs.containers.ContainerNpcInterface;
 import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketCustomChestName;
 
 public class ContainerCustomChestWrapper extends ContainerWrapper implements IContainerCustomChest {
 
-	public String name;
-	public ScriptContainer script;
+	public String name = "";
+	public ScriptContainer script = null;
 
-	public ContainerCustomChestWrapper(Container container) {
-		super(container);
-		this.script = null;
-		this.name = "";
-	}
+	public ContainerCustomChestWrapper(Container container) { super(container); }
 
 	@Override
-	public String getName() {
-		return this.name;
-	}
+	public String getName() { return name; }
 
 	@Override
-	public void setName(String name) {
-		if (name == null) {
-			name = "";
+	public void setName(String nameIn) {
+		if (nameIn == null) { nameIn = ""; }
+		if (!name.equals(nameIn)) {
+			name = nameIn;
+			Packets.sendDelayed((EntityPlayerMP) ((ContainerNpcInterface) getMCContainer()).player, new PacketCustomChestName(name), 10);
 		}
-		if (this.name.equals(name)) {
-			return;
-		}
-		this.name = name;
-		Server.sendDataDelayed((EntityPlayerMP) ((ContainerNpcInterface) this.getMCContainer()).player,
-				EnumPacketClient.CHEST_NAME, 10, name);
 	}
+
 }

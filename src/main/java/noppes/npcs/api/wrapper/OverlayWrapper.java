@@ -1,147 +1,124 @@
 package noppes.npcs.api.wrapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import java.util.Collection;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.gui.ICustomGuiComponent;
-import noppes.npcs.api.gui.IGuiTimer;
-import noppes.npcs.api.gui.IItemSlot;
-import noppes.npcs.api.gui.ILabel;
-import noppes.npcs.api.gui.ITexturedRect;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.overlay.IOverlayLabel;
 import noppes.npcs.api.overlay.IOverlay;
-import noppes.npcs.api.wrapper.gui.*;
+import noppes.npcs.api.overlay.IOverlayComponent;
+import noppes.npcs.api.overlay.IRenderItemOverlay;
+import noppes.npcs.api.overlay.IOverlayTexturedRect;
 
 public class OverlayWrapper implements IOverlay {
 
-	Map<Integer, ICustomGuiComponent> components = new TreeMap<>();
+	private final Int2ObjectOpenHashMap<IOverlayComponent> components = new Int2ObjectOpenHashMap<>();
 	private int id;
+	private int linkSide = 5;
 
 	public OverlayWrapper(int idIn) { id = idIn; }
 
 	@Override
-	public void load(INbt compound) {
-		if (compound == null) { return; }
-		id = compound.getInteger("id");
-		Map<Integer, ICustomGuiComponent> newComponents = new TreeMap<>();
-		NBTTagList list = compound.getMCNBT().getTagList("components", 10);
-		for (int i = 0; i < list.tagCount(); i++) {
-			ICustomGuiComponent component = CustomGuiComponentWrapper.createFromNBT(list.getCompoundTagAt(i));
-			if (component != null) { newComponents.put(component.getId(), component); }
-		}
-		components = newComponents;
-	}
+	public Collection<IOverlayComponent> getComponents() { return components.values(); }
 
 	@Override
-	public int getId() { return id; }
-
-	@Override
-	public INbt save() {
-		INbt compound = new NBTWrapper(new NBTTagCompound());
-		compound.setInteger("id", id);
-		NBTTagList list = new NBTTagList();
-		for (Map.Entry<Integer, ICustomGuiComponent> entry : components.entrySet()) { list.appendTag(entry.getValue().save()); }
-		compound.mcSetTag("components", list);
-		return compound;
-	}
-
-	@Override
-	public IItemSlot addItemSlot(int id, int orientationType, int x, int y) { return addItemSlot(id, orientationType, x, y, ItemScriptedWrapper.AIR); }
-
-	@Override
-	public IItemSlot addItemSlot(int id, int orientationType, int x, int y, IItemStack stack) {
-		CustomGuiItemSlotWrapper slot = new CustomGuiItemSlotWrapper(x, y, stack);
-		slot.setOrientationType(orientationType);
-		components.put(components.size(), slot);
-		return slot;
-	}
-
-	@Override
-	public ILabel addLabel(int id, int orientationType, String title, int x, int y, int width, int height) {
-		if (width <= 0 || height <= 0) {
-			throw new CustomNPCsException("Invalid component width or height: [" + width + ", " + height + "]");
-		}
-		CustomGuiLabelWrapper label = new CustomGuiLabelWrapper(id, title, x, y, width, height);
+	public IOverlayLabel addLabel(int id, String text, int x, int y) {
+		IOverlayLabel label = new OverlayLabelWrapper(id, x, y, text);
 		components.put(id, label);
 		return label;
 	}
 
 	@Override
-	public ILabel addLabel(int id, int orientationType, String title, int x, int y, int width, int height, int color) {
-		if (width <= 0 || height <= 0) {
-			throw new CustomNPCsException("Invalid component width or height: [" + width + ", " + height + "]");
-		}
-		CustomGuiLabelWrapper label = new CustomGuiLabelWrapper(id, title, x, y, width, height, color);
-		components.put(id, label);
-		return label;
+	public IOverlayTexturedRect addTexturedRect(int id, String texture, int x, int y, int width, int height) {
+		IOverlayTexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height);
+		components.put(id, rect);
+		return rect;
 	}
 
 	@Override
-	public ITexturedRect addTexturedRect(int id, int orientationType, String texture, int x, int y, int width, int height) {
-		if (width <= 0 || height <= 0) {
-			throw new CustomNPCsException("Invalid component width or height: [" + width + ", " + height + "]");
-		}
-		CustomGuiTexturedRectWrapper txtr = new CustomGuiTexturedRectWrapper(id, texture, x, y, width, height);
-		components.put(id, txtr);
-		return txtr;
+	public IOverlayTexturedRect addTexturedRectCrop(int id, String texture, int x, int y, int width, int height, int textureX, int textureY) {
+		IOverlayTexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height, textureX, textureY);
+		components.put(id, rect);
+		return rect;
 	}
 
 	@Override
-	public ITexturedRect addTexturedRect(int id, int orientationType, String texture, int x, int y, int width, int height, int textureX, int textureY) {
-		if (width <= 0 || height <= 0) {
-			throw new CustomNPCsException("Invalid component width or height: [" + width + ", " + height + "]");
-		}
-		CustomGuiTexturedRectWrapper txtr = new CustomGuiTexturedRectWrapper(id, texture, x, y, width, height, textureX, textureY);
-		components.put(id, txtr);
-		return txtr;
+	public IOverlayTexturedRect addTexturedRectCrop(int id, String texture, int x, int y, int width, int height, int textureX, int textureY, int textureMaxX, int textureMaxY) {
+		IOverlayTexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height, textureX, textureY, textureMaxX, textureMaxY);
+		components.put(id, rect);
+		return rect;
 	}
 
 	@Override
-	public IGuiTimer addTimer(int id, int orientationType, long start, long end, int x, int y, int width, int height) {
-		if (width == 0 || height == 0) {
-			throw new CustomNPCsException("Invalid component width or height: [" + width + ", " + height + "]");
-		}
-		CustomGuiTimerWrapper timer = new CustomGuiTimerWrapper(id, start, end, x, y, width, height);
-		components.put(id, timer);
-		return timer;
+	public IOverlayComponent getComponent(int id) { return components.get(id); }
+
+	@Override
+	public IRenderItemOverlay addRenderItem(int id, int x, int y, IItemStack item) {
+		IRenderItemOverlay itemOverlay = new OverlayRenderItemWrapper(id, x, y, item);
+		components.put(id, itemOverlay);
+		return itemOverlay;
 	}
 
 	@Override
-	public IGuiTimer addTimer(int id, int orientationType, long start, long end, int x, int y, int width, int height, int color) {
-		if (width == 0 || height == 0) {
-			throw new CustomNPCsException("Invalid component width or height: [" + width + ", " + height + "]");
-		}
-		CustomGuiTimerWrapper timer = new CustomGuiTimerWrapper(id, start, end, x, y, width, height, color);
-		components.put(id, timer);
-		return timer;
-	}
+	public void removeComponent(int id) { components.remove(id); }
 
 	@Override
 	public void clear() { components.clear(); }
 
 	@Override
-	public ICustomGuiComponent getComponent(int componentId) { return components.get(componentId); }
+	public int getId() { return id; }
 
 	@Override
-	public List<ICustomGuiComponent> getComponents() { return new ArrayList<>(components.values()); }
+	public void setLinkSide(int side) { linkSide = Math.min(9, Math.max(1, side)); }
 
 	@Override
-	public List<ICustomGuiComponent> getComponents(int orientationType) {
-		List<ICustomGuiComponent> list = new ArrayList<>();
-		for (ICustomGuiComponent component : components.values()) {
-			if (component.getOrientationType() == orientationType) { list.add(component); }
+	public int getLinkSide() { return linkSide; }
+
+	@Override
+	public void load(INbt iNbt) {
+		id = iNbt.getInteger("id");
+		linkSide = iNbt.getInteger("linkSide");
+		components.clear();
+		NBTTagList list = iNbt.getMCNBT().getTagList("components", 10);
+		for(int i = 0; i < list.tagCount(); ++i) {
+			NBTTagCompound compound = list.getCompoundTagAt(i);
+			int type = compound.getInteger("type");
+			IOverlayComponent component;
+			switch(type) {
+				case 0:
+					component = new OverlayLabelWrapper(0, 0, 0, "");
+					break;
+				case 1:
+					component = new OverlayTexturedRectWrapper(0, 0, 0, "", 0, 0);
+					break;
+				case 2:
+					component = new OverlayRenderItemWrapper(0, 0, 0, null);
+					break;
+				default:
+					continue;
+			}
+
+			component.fromNbt(iNbt);
+			components.put(component.getId(), component);
 		}
-		return list;
+
 	}
 
 	@Override
-	public boolean removeComponent(int componentId) { return components.remove(componentId) != null; }
-
+	public INbt save() {
+		INbt compound = new NBTWrapper(new NBTTagCompound());
+		compound.setInteger("id", id);
+		compound.setInteger("linkSide", linkSide);
+		NBTTagList list = new NBTTagList();
+		for (IOverlayComponent component : components.values()) {
+			INbt iNbt = new NBTWrapper(new NBTTagCompound());
+			component.toNbt(iNbt);
+			list.appendTag(iNbt.getMCNBT());
+		}
+		compound.mcSetTag("components", list);
+		return compound;
+	}
 
 }

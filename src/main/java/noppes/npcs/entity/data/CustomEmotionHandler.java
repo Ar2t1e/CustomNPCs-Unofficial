@@ -233,7 +233,7 @@ public class CustomEmotionHandler {
         return activeEmotion;
     }
 
-    public void tryRunEmotion(int emotionId) { tryRunEmotion(AnimationController.instance.getEmotion(emotionId)); }
+    public void tryRunEmotion(int emotionId) { tryRunEmotion(AnimationController.getInstance().getEmotion(emotionId)); }
 
     public void stopEmotion() {
         currentFrame = EmotionFrame.EMPTY;
@@ -247,7 +247,7 @@ public class CustomEmotionHandler {
 
     public void load(NBTTagCompound compound) {
         baseEmotionId = compound.getInteger("BaseEmotionId");
-        if (!AnimationController.instance.hasEmotion(baseEmotionId)) {
+        if (!AnimationController.getInstance().hasEmotion(baseEmotionId)) {
             baseEmotionId = -1;
         }
     }
@@ -257,7 +257,7 @@ public class CustomEmotionHandler {
     }
 
     public boolean isAnimated() {
-        return ((activeEmotion != null && stage != EnumAnimationStages.Waiting) || AnimationController.instance.hasEmotion(baseEmotionId)) && entity.getHealth() > 0.0f;
+        return ((activeEmotion != null && stage != EnumAnimationStages.Waiting) || AnimationController.getInstance().hasEmotion(baseEmotionId)) && entity.getHealth() > 0.0f;
     }
 
     public void updateTime() {
@@ -270,7 +270,7 @@ public class CustomEmotionHandler {
             timeTicks = -1;
             return;
         }
-        if (!AnimationController.instance.hasEmotion(activeEmotion.id) && stage != EnumAnimationStages.Ending && stage != EnumAnimationStages.Waiting) {
+        if (!AnimationController.getInstance().hasEmotion(activeEmotion.id) && stage != EnumAnimationStages.Ending && stage != EnumAnimationStages.Waiting) {
             stage = EnumAnimationStages.Ending;
             startEmotionTime = entity.world.getTotalWorldTime() + 1;
             return;
@@ -328,7 +328,7 @@ public class CustomEmotionHandler {
     }
 
     public void setRotationAngles(float ignoredLimbSwing, float ignoredLimbSwingAmount, float ignoredAgeInTicks, float ignoredNetHeadYaw, float ignoredHeadPitch, float ignoredScaleFactor, float partialTicks) {
-        if (activeEmotion == null && !AnimationController.instance.hasEmotion(baseEmotionId)) { return; }
+        if (activeEmotion == null && !AnimationController.getInstance().hasEmotion(baseEmotionId)) { return; }
         if (activeEmotion == null) { tryRunEmotion(baseEmotionId); }
         else { calculationEmotionData(partialTicks); }
     }

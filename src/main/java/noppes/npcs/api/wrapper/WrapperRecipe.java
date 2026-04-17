@@ -7,9 +7,9 @@ import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.crafting.IShapedRecipe;
 import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.controllers.data.Availability;
@@ -25,12 +25,12 @@ public class WrapperRecipe {
     public boolean ignoreNBT = false;
     public boolean isShaped = true;
     public boolean main = false;
-    public int id = -1;
+    public ResourceLocation id = null;
     public int width = 3;
     public int height = 3;
-    public Component group = Component.empty();
-    public Component name = Component.empty();
-    public Component domen = Component.literal("minecraft");
+    public String group = "";
+    public String name = "";
+    public String domen = "minecraft";
     // recipeItems -> ItemStack[].length == 0 ... 16 max (not null)
     public final Map<Integer, ItemStack[]> recipeItems = new TreeMap<>();
     public ItemStack product = new ItemStack(Blocks.COBBLESTONE);
@@ -47,7 +47,7 @@ public class WrapperRecipe {
         ignoreDamage = false;
         ignoreNBT = false;
         isShaped = true;
-        id = -1;
+        id = null;
         width = 3;
         height = 3;
         group = "";
@@ -61,7 +61,7 @@ public class WrapperRecipe {
 
     public NBTTagCompound getNbt() {
         NBTTagCompound compound = new NBTTagCompound();
-        compound.setInteger("ID", id);
+        if (id != null) { compound.setString("ID", id.toString()); }
         compound.setInteger("Width", width);
         compound.setInteger("Height", height);
         if (product != null) { compound.setTag("Item", product.writeToNBT(new NBTTagCompound())); }
@@ -128,7 +128,7 @@ public class WrapperRecipe {
         parent = wrapper.parent;
     }
 
-    public void copyFrom(IRecipe recipe, int recipeId) {
+    public void copyFrom(IRecipe recipe, ResourceLocation recipeId) {
         if (recipe instanceof INpcRecipe) {
             copyFrom(((INpcRecipe) recipe).getWrapperRecipe());
             id = recipeId;
@@ -180,8 +180,8 @@ public class WrapperRecipe {
         }
         width = 3;
         height = 3;
-        group = ((char) 167) + "7" + recipe.getGroup();
-        name = ((char) 167) + "7" + location.getResourcePath();
+        group = TextFormatting.GRAY + recipe.getGroup();
+        name = TextFormatting.GRAY + location.getResourcePath();
         product = recipe.getRecipeOutput();
         availability.clear();
         if (product != null && !product.isEmpty() && product.getItem().getRegistryName() != null) {

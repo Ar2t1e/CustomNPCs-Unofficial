@@ -99,27 +99,27 @@ public class MusicController {
 		playingMusic = null;
 	}
 
-	public void playStreaming(ResourceLocation sound, Entity entity) {
+	public void playStreaming(ResourceLocation sound, Entity entity, boolean looping) {
 		if (!isPlaying(sound)) {
 			stopSounds();
 			song = sound;
 			if (song != null) {
 				songBard = entity;
 				Minecraft.getMinecraft().getSoundHandler().playSound(playingMusic = new PositionedSoundRecord(sound, SoundCategory.RECORDS,
-						4.0f, 1.0f, false, 0, ISound.AttenuationType.NONE,
+						4.0f, 1.0f, looping, 0, ISound.AttenuationType.NONE,
 						(float) entity.posX, (float) entity.posY, (float) entity.posZ));
 			}
 		}
 	}
 
-	public void playMusic(ResourceLocation sound, Entity entity) {
+	public void playMusic(ResourceLocation sound, Entity entity, boolean isLooping) {
 		if (!isPlaying(sound)) {
 			stopMusics();
 			music = sound;
 			if (music != null) {
 				musicBard = entity;
 				Minecraft.getMinecraft().getSoundHandler().playSound(playingMusic = new PositionedSoundRecord(music, SoundCategory.MUSIC,
-						1.0f, 1.0f, false, 0, ISound.AttenuationType.NONE,
+						1.0f, 1.0f, isLooping, 0, ISound.AttenuationType.NONE,
 						0, 0, 0));
 			}
 		}

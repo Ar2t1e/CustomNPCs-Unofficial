@@ -19,8 +19,8 @@ public class EntityAIOwnerHurtByTarget extends EntityAITarget {
 
 	public boolean shouldExecute() {
 		CustomNpcs.debugData.start(npc);
-		if (!this.npc.isFollower() || this.npc.advanced.roleInterface == null
-				|| this.npc.advanced.roleInterface.defendOwner()) {
+		if (!this.npc.isFollower() || this.npc.role == null
+				|| this.npc.role.defendOwner()) {
 			CustomNpcs.debugData.end(npc);
 			return false;
 		}

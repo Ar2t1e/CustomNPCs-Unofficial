@@ -6,11 +6,9 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 
+import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import micdoodle8.mods.galacticraft.api.client.tabs.InventoryTabFactions;
-import micdoodle8.mods.galacticraft.api.client.tabs.InventoryTabQuests;
-import micdoodle8.mods.galacticraft.api.client.tabs.InventoryTabVanilla;
-import micdoodle8.mods.galacticraft.api.client.tabs.TabRegistry;
+import micdoodle8.mods.galacticraft.api.client.tabs.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -44,6 +42,7 @@ import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.stats.RecipeBook;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
@@ -147,6 +146,9 @@ import noppes.npcs.reflection.client.ItemModelMesherForgeReflection;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.TempFile;
+import noppes.npcs.util.ValueUtil;
+
+import javax.annotation.Nullable;
 
 public class ClientProxy extends CommonProxy {
 
@@ -236,7 +238,6 @@ public class ClientProxy extends CommonProxy {
 	public static FontContainer LogFont;
 
 	public static final Map<String, TempFile> loadFiles = new TreeMap<>();
-	public static Map<String, Map<String, TreeMap<ResourceLocation, Long>>> texturesData = new HashMap<>();
     private final static List<ResourceLocation> notLoadTextures = new ArrayList<>();
 	public static IMinecraft mcWrapper = null;
 
@@ -676,11 +677,13 @@ public class ClientProxy extends CommonProxy {
 	}
 
 	@Override
-	public void openGui(EntityNPCInterface npc, EnumGuiType gui, FriendlyByteBuf buffer) {
-		Minecraft mc = Minecraft.getMinecraft();
-		if (mc.player != null && mc.player.world.isRemote) {
-			GuiScreen guiscreen = getGui(gui, null, buffer);
-			if (guiscreen != null) { mc.displayGuiScreen(guiscreen); }
+	public void openGui(EntityNPCInterface npc, EnumGuiType gui, @Nullable FriendlyByteBuf buffer) {
+		Minecraft minecraft = Minecraft.getMinecraft();
+		if (minecraft.player != null && minecraft.player.world.isRemote) {
+			GuiScreen guiscreen = getGui(gui,
+					npc != null ? npc : NoppesUtilServer.getEditingNpc(minecraft.player),
+					buffer != null ? buffer : new FriendlyByteBuf(Unpooled.buffer()));
+			if (guiscreen != null) { minecraft.displayGuiScreen(guiscreen); }
 		}
 	}
 
@@ -932,6 +935,24 @@ public class ClientProxy extends CommonProxy {
 		else if (customElement instanceof Item) { NoppesUtil.createItemFiles(customElement); }
 		else if (customElement instanceof CustomParticleSettings) { NoppesUtil.createParticleFiles((CustomParticleSettings) customElement); }
 		else if (customElement instanceof PotionData) { NoppesUtil.createAllPotionFiles((PotionData) customElement); }
+	}
+
+	@Override
+	public void playSound(SoundCategory category, String sound, double x, double y, double z, float volume, float pitch, boolean streaming, boolean looping) {
+		if (category != SoundCategory.MUSIC) {
+			if (streaming) { MusicController.Instance.playStreaming(new ResourceLocation(sound), getPlayer(), looping); }
+			else { MusicController.Instance.playMusic(new ResourceLocation(sound), getPlayer(), looping); }
+		}
+		else {
+			MusicController.Instance.playSound(category, sound, x, y, z, volume, pitch);
+		}
+	}
+
+	@Override
+	public void stopSound(int category, String sound) {
+		SoundCategory source = SoundCategory.values()[ValueUtil.onlyPositiveInt(category, SoundCategory.values().length)];
+		if (sound == null || sound.isEmpty()) { Minecraft.getMinecraft().getSoundHandler().stop("", source); }
+		else { MusicController.Instance.stopSound(new ResourceLocation(NoppesUtilServer.validLocation(sound)), source); }
 	}
 
 }

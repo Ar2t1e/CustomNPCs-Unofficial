@@ -3,7 +3,8 @@ package noppes.npcs.api.wrapper.client;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.client.gui.util.GuiNPCInterface;
+import noppes.npcs.client.renderer.obj.ParameterizedModel;
+import noppes.npcs.shared.client.gui.components.custom.CustomGuiEntityDisplay;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -16,6 +17,7 @@ import net.minecraft.util.ResourceLocation;
 import noppes.npcs.api.client.IRenderSystem;
 import noppes.npcs.client.renderer.ModelBuffer;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +26,7 @@ public class WrapperGlStateManager
 implements IRenderSystem {
 
 	private final Minecraft minecraft;
+	private static final Map<String, ParameterizedModel> cache = new HashMap<>();
 	
 	public WrapperGlStateManager(Minecraft mc) { this.minecraft = mc; }
 
@@ -126,18 +129,27 @@ implements IRenderSystem {
 	}
 
 	@Override
-	public void renderEntity(Entity entity, int x, int y, float scale, int yaw, int pitch, int followCursor) {
-		GuiNPCInterface.renderEntity(entity, x, y, scale, yaw, pitch, followCursor, Mouse.getX(), Mouse.getY());
+	public void renderEntity(Entity entity, int x, int y, float zoomed, int yaw, int pitch, float guiLeft, float guiTop, int followCursor) {
+		CustomGuiEntityDisplay.drawEntity(entity, x, y, zoomed, yaw, pitch, Mouse.getX(), Mouse.getY(), guiLeft, guiTop, followCursor);
 	}
 	
 	@Override
 	public void drawOBJ(String resourceLocation, List<String> visibleMeshes, Map<String, String> materialTextures) {
 		if (resourceLocation == null || !resourceLocation.isEmpty()) { return; }
-		int displayList = ModelBuffer.getDisplayList(new ResourceLocation(resourceLocation), visibleMeshes, materialTextures);
-		if (displayList > 0) {
-			GL11.glEnable(GL11.GL_DEPTH_TEST);
-			GlStateManager.callList(displayList);
+		Map<String, ResourceLocation> map = null;
+		if (materialTextures != null) {
+			map = new HashMap<>();
+			for (Map.Entry<String, String> entry : materialTextures.entrySet()) {
+				map.put(entry.getKey(), new ResourceLocation(entry.getValue()));
+			}
 		}
+		String key = resourceLocation + visibleMeshes + materialTextures;
+		if (cache.containsKey(key)) {
+			cache.put(key,
+					ModelBuffer.getParameterizedModel(new ResourceLocation(resourceLocation), visibleMeshes, map,
+							false, 0, false));
+		}
+		ModelBuffer.render(cache.get(key));
 	}
 
 }

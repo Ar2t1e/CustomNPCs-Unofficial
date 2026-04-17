@@ -5,11 +5,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.api.entity.data.role.IJobSpawner;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.roles.JobSpawner;
-import noppes.npcs.roles.data.SpawnerNPCData;
+import noppes.npcs.roles.data.JobSpawnerCloneData;
+import noppes.npcs.roles.data.JobSpawnerNbtData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 public class SPacketGetServerCloneEntity extends PacketServerBasic {
@@ -58,17 +60,12 @@ public class SPacketGetServerCloneEntity extends PacketServerBasic {
     public void handle() {
         CustomNpcs.debugData.start("Packets");
         NBTTagCompound npcNbt = null;
-        if (inJob) {
-            if (npc.job instanceof JobSpawner) {
-                SpawnerNPCData sd = ((JobSpawner) npc.job).get(isDead).dataEntitys.get(tab);
-                if (sd != null && sd.compound != null) {
-                    npcNbt = sd.compound;
-                    if (sd.typeClones == 2) {
-                        npcNbt = ServerCloneController.Instance.getCloneData(player,
-                                sd.compound.getString("ClonedName"), sd.compound.getInteger("ClonedTab"));
-                    }
-                }
+        if (inJob && npc.job instanceof JobSpawner) {
+            IJobSpawner.IJobSpawnerData sd = ((JobSpawner) npc.job).get(isDead).dataEntitys.get(tab);
+            if (sd instanceof JobSpawnerCloneData) {
+                npcNbt = ServerCloneController.Instance.getCloneData(null, ((JobSpawnerCloneData) sd).getName(), ((JobSpawnerCloneData) sd).getTab());
             }
+            else if (sd instanceof JobSpawnerNbtData) { npcNbt = ((JobSpawnerNbtData) sd).save(); }
         }
         else { npcNbt = ServerCloneController.Instance.getCloneData(player, name, tab); }
         if (npcNbt != null) {

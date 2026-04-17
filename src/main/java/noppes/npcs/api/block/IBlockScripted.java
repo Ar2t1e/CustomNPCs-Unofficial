@@ -1,6 +1,6 @@
 package noppes.npcs.api.block;
 
-import noppes.npcs.api.ILayerModel;
+import noppes.npcs.api.ILayerBlockModel;
 import noppes.npcs.api.ITimers;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
@@ -8,7 +8,7 @@ import noppes.npcs.api.item.IItemStack;
 @SuppressWarnings("all")
 public interface IBlockScripted extends IBlock {
 
-	ILayerModel createLayerModel();
+	ILayerBlockModel createLayerModel();
 
 	String executeCommand(@ParamName("command") String command);
 
@@ -18,7 +18,7 @@ public interface IBlockScripted extends IBlock {
 
 	boolean getIsPassible();
 
-	ILayerModel[] getLayerModels();
+	ILayerBlockModel[] getLayerModels();
 
 	int getLight();
 
@@ -54,7 +54,7 @@ public interface IBlockScripted extends IBlock {
 
 	ITimers getTimers();
 
-	boolean removeLayerModel(@ParamName("layer") ILayerModel layer);
+	boolean removeLayerModel(@ParamName("layer") ILayerBlockModel layer);
 
 	boolean removeLayerModel(@ParamName("id") int id);
 

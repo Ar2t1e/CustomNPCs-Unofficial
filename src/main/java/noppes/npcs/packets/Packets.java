@@ -134,6 +134,7 @@ public class Packets {
         register(PacketCustomEmotionRun.class);
         register(PacketNpcInitData.class);
         register(PacketNpcLookPos.class);
+        register(PacketCustomChestName.class);
 
         // Client -> Server
         register(SPacketBankGet.class);

@@ -148,4 +148,10 @@ public class PlayerOverlayData implements IPlayerData {
         return value;
     }
 
+    public void add(int overlayId) { overlays.add(overlayId); updateClient = true; }
+
+    public void remove(int overlayId) { overlays.remove(overlayId); updateClient = true; }
+
+    public void clearOverlays() { overlays.clear(); updateClient = true; }
+
 }

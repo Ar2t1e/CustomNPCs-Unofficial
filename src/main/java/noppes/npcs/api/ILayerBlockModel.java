@@ -3,8 +3,7 @@ package noppes.npcs.api;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
-public interface ILayerModel {
+public interface ILayerBlockModel {
 
 	IItemStack getModel();
 

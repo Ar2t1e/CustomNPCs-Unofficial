@@ -9,9 +9,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -639,44 +636,6 @@ public class Deal implements IDeal, IDropSetData {
 			}
 			line.append(Component.literal(";").withStyle(TextFormatting.GRAY));
 			hovers.add(line);
-		}
-
-
-		ITextComponent line, temp;
-		for (int pos: caseItems.keySet()) {
-			DropSet dropSet = caseItems.get(pos);
-			line = new TextComponentString(TextFormatting.GRAY + (type == ITooltipFlag.TooltipFlags.ADVANCED ? pos + ": \"" : "- \""));
-			line.appendText(TextFormatting.RESET + dropSet.item.getDisplayName());
-			line.appendText(TextFormatting.GRAY + "\" x");
-			if (dropSet.amount[0] == dropSet.amount[1]) { line.appendText(TextFormatting.GOLD + "" + dropSet.amount[0]); }
-			else {
-				line.appendText(TextFormatting.GRAY + "[")
-						.appendText(TextFormatting.GOLD + "" + dropSet.amount[0])
-						.appendText(TextFormatting.GRAY + "...")
-						.appendText(TextFormatting.GOLD + "" + dropSet.amount[1])
-						.appendText(TextFormatting.GRAY + "]");
-			}
-			if (type == ITooltipFlag.TooltipFlags.ADVANCED) {
-				double ch = Math.round(dropSet.chance * 10.0d) / 10.d;
-				String chance = String.valueOf(ch).replace(".", ",");
-				if (ch == (int) ch) { chance = String.valueOf((int) ch); }
-				chance += "%";
-				temp = new TextComponentTranslation("drop.chance").appendText(": " + chance);
-				temp.getStyle().setColor(TextFormatting.GRAY);
-				line.appendText(TextFormatting.GRAY + "; ")
-						.appendSibling(temp);
-				if (!dropSet.enchants.isEmpty()) {
-					line.appendText(TextFormatting.GRAY + " |" + TextFormatting.AQUA + "E");
-				}
-				if (!dropSet.attributes.isEmpty()) {
-					line.appendText(TextFormatting.GRAY + " |" + TextFormatting.GREEN + "A");
-				}
-				if (!dropSet.tags.isEmpty()) {
-					line.appendText(TextFormatting.GRAY + " |" + TextFormatting.RED + "T");
-				}
-			}
-			line.appendText(TextFormatting.GRAY + ";");
-			hovers.add(line.getFormattedText());
 		}
 	}
 

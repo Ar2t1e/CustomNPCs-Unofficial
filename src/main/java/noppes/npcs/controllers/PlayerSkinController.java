@@ -1,6 +1,7 @@
 package noppes.npcs.controllers;
 
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -212,7 +213,7 @@ public class PlayerSkinController {
 		update(sd);
 	}
 
-	public String get(EntityPlayerMP player, int type) {
+	public String get(EntityPlayer player, int type) {
 		SkinData sd = getData(player.getUniqueID(), type);
 		return sd.isUrl() ? sd.getUrl() : sd.getLocation().toString();
 	}
