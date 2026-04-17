@@ -67,7 +67,7 @@ public class GuiNpcPather
       List<Component> list = new ArrayList<>();
       for (int[] arr : ai.getMovingPath()) { list.add(Component.literal("x:" + arr[0] + " y:" + arr[1] + " z:" + arr[2])); }
       if (scroll == null) { scroll = addScroll(0).setSize(160, 177); }
-      add(scroll.setUnsortedList(list).setPos(guiLeft + 7, guiTop + 16).setSelectedIndex(sel));
+      add(scroll.setUnsortedList(list).setPos(guiLeft + 7, guiTop + 16).setSelected(sel));
       int y = guiTop + 40 + scroll.height;
       addButton(0, guiLeft + 7, y, "gui.down")
               .setSize(52, 20);
@@ -91,7 +91,7 @@ public class GuiNpcPather
                list.set(selected + 1, a);
                ai.setMovingPath(list);
                init();
-               scroll.setSelectedIndex(selected + 1);
+               scroll.setSelected(selected + 1);
                break;
             } // down
             case 1 : {
@@ -104,14 +104,14 @@ public class GuiNpcPather
                list.set(selected - 1, a);
                ai.setMovingPath(list);
                init();
-               scroll.setSelectedIndex(selected - 1);
+               scroll.setSelected(selected - 1);
                break;
             } // up
             case 2 : {
                List<int[]> list = ai.getMovingPath();
                if (list.size() <= 1) { return; }
                list.remove(scroll.getSelectedIndex());
-               scroll.setSelectedIndex(scroll.getSelectedIndex() - 1);
+               scroll.setSelected(scroll.getSelectedIndex() - 1);
                ai.setMovingPath(list);
                init();
                break;

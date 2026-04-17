@@ -21,9 +21,7 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.eventbus.api.BusBuilder;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.server.permission.PermissionAPI;
-import net.minecraftforge.server.permission.handler.DefaultPermissionHandler;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
-import net.minecraftforge.server.permission.nodes.PermissionTypes;
 import nikedemos.markovnames.generators.MarkovGenerator;
 import noppes.npcs.*;
 import noppes.npcs.api.*;
@@ -51,7 +49,6 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.world.entity.IEntityMixin;
 import noppes.npcs.shared.client.gui.util.ResourceData;
 import noppes.npcs.shared.common.util.LRUHashMap;
-import noppes.npcs.util.CustomPermissionHandler;
 import noppes.npcs.util.NBTJsonUtil;
 import noppes.npcs.util.Util;
 

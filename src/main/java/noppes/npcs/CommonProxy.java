@@ -3,6 +3,7 @@ package noppes.npcs;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -53,13 +54,17 @@ public class CommonProxy {
       return "en_en";
    }
 
-    public void updateKeys() { }
+   public void updateKeys() { }
 
-    public void loadAnimationModel(AnimationConfig animationConfig) { }
+   public void loadAnimationModel(AnimationConfig animationConfig) { }
 
-    public void createAllFiles(ICustomElement customElement) {
-       if (customElement instanceof Block) { NoppesUtilServer.createAllBlockFiles(customElement); }
-       if (customElement instanceof Item) { NoppesUtilServer.createAllItemFiles(customElement); }
-    }
+   public void createAllFiles(ICustomElement customElement) {
+      if (customElement instanceof Block) { NoppesUtilServer.createAllBlockFiles(customElement); }
+      if (customElement instanceof Item) { NoppesUtilServer.createAllItemFiles(customElement); }
+   }
+
+   public void playSound(SoundSource category, String sound, double x, double y, double z, float volume, float pitch, boolean streaming, boolean looping) {  }
+
+   public void stopSound(int category, String sound) { }
 
 }

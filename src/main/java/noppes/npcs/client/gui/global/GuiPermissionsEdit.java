@@ -130,7 +130,7 @@ public class GuiPermissionsEdit extends GuiBasic implements ICustomScrollListene
 
     @Override
     public void scrollClicked(GuiCustomScrollNop scroll) {
-        if (scroll.id == 0) { names.setSelectedIndex(-1); }
+        if (scroll.id == 0) { names.setSelected(-1); }
         init();
     }
 

@@ -18,7 +18,6 @@ import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.events.PermissionGatherEvent.Nodes;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import net.minecraftforge.server.permission.nodes.PermissionTypes;
-import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiClose;
 import noppes.npcs.packets.client.PacketSync;
@@ -175,6 +174,18 @@ public class CustomNpcsPermissions {
    public static boolean hasPermission(String permission) {
       for (PermissionNode<Boolean> node : permissions.keySet()) {
          if (node.getNodeName().equals(permission)) { return true; }
+      }
+      return false;
+   }
+
+   public static boolean hasPermission(ServerPlayer player, String permission) {
+      for (PermissionNode<?> node : PermissionAPI.getRegisteredNodes()) {
+         if (node.getNodeName().equals(permission)) {
+            try {
+               return CustomNpcsPermissions.hasPermission(player, (PermissionNode<Boolean>) node);
+            }
+            catch (Throwable ignored) { break; }
+         }
       }
       return false;
    }

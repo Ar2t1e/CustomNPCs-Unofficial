@@ -43,7 +43,7 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
       if (scroll == null) {
          List<String> list = new ArrayList<>(data.keySet());
          scroll = addScroll(0).setList(list);
-         if (!list.isEmpty()) { scroll.setSelectedIndex(list.get(0)); }
+         if (!list.isEmpty()) { scroll.setSelected(list.get(0)); }
       }
       selected = data.get(scroll.getSelected());
       if (selected != null) {
@@ -247,7 +247,7 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
                  .setPos(guiLeft + 120, guiTop + 20)
                  .setSize(120, 200)
                  .setList(PixelmonHelper.getPixelmonList())
-                 .setSelectedIndex(PixelmonHelper.getName(entity));
+                 .setSelected(PixelmonHelper.getName(entity));
       }
 
       @Override
@@ -270,7 +270,7 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
                  .setSize(120, 200)
                  .setList(CobblemonHelper.getTypes());
          ResourceLocation rt = CobblemonHelper.getType(entity);
-         if (rt != null) { scrollIn.setSelectedIndex(rt.toString()); }
+         if (rt != null) { scrollIn.setSelected(rt.toString()); }
       }
 
       @Override

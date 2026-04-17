@@ -3,7 +3,7 @@ package noppes.npcs.client.overlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import noppes.npcs.api.overlay.ILabel;
+import noppes.npcs.api.overlay.IOverlayLabel;
 
 import java.awt.*;
 
@@ -15,7 +15,7 @@ public class OverlayLabelComponent implements IOverlayRenderComponent {
    private final int id;
    private final float scale;
 
-   public OverlayLabelComponent(ILabel label) {
+   public OverlayLabelComponent(IOverlayLabel label) {
       String textIn = label.getText();
       x = label.getPosX();
       y = label.getPosY();

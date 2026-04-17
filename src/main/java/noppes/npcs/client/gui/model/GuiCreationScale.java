@@ -46,7 +46,7 @@ public class GuiCreationScale extends GuiCreationScreenInterface implements ISli
       }
       add(scroll.setPos(guiLeft, guiTop + 46)
               .setUnsortedList(list)
-              .setSelectedIndex(Component.translatable("part." + selected.name).toString())
+              .setSelected(Component.translatable("part." + selected.name).toString())
               .setSize(120, imageHeight - 50)
               .disabledSearch());
       ModelPartConfig config = playerdata.getPartConfig(selected);

@@ -44,7 +44,6 @@ import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
@@ -119,7 +118,6 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
       drawDefaultBackground = true;
       closeOnEsc = true;
       hoverIsGame = true;
-      title = Component.empty();
 
       if (minecraft == null) { minecraft = Minecraft.getInstance(); }
       imageWidth = minecraft.getWindow().getGuiScaledWidth();
@@ -186,7 +184,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
    }
 
    @Override
-   public void renderBg(@NotNull GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
+   public void renderBg(@Nonnull GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
       super.renderBg(graphics, partialTicks, mouseX, mouseY);
       RenderSystem.enableBlend();
       PoseStack matrixStack = graphics.pose();
@@ -367,7 +365,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
    }
 
    @Override
-   public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+   public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
       if (marcet == null) { onClose(); return; }
       if (minecraft == null) { minecraft = Minecraft.getInstance(); }
       super.render(graphics, mouseX, mouseY, partialTicks);
@@ -574,7 +572,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
          if (selectDealData.deal.isCase()) {
             materialTextures.put("#material", selectDealData.deal.getCaseTexture());
             if (selectDealData.deal.showInCase() || player.isCreative())
-            { selectDealData.deal.putHoverCaseItems(temp, player.isCreative() ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL); }
+            { selectDealData.deal.putHoverCaseItems(temp, minecraft.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL); }
             CHEST_FULL = ModelBuffer.getParameterizedModel(selectDealData.deal.getCaseObjModel(), null, materialTextures, true, 0);
          }
          else if (!selectDealData.deal.getProduct().isEmpty()) {
@@ -836,8 +834,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
             hoverMain.add(Component.translatable("market.hover.case"));
             hoverMain.add(Component.translatable("market.deal.case.count", deal.getCaseCount()));
             if (!deal.showInCase()) { hoverMain.add(Component.translatable("market.case.show.false").withStyle(ChatFormatting.RED)); }
-            if (deal.showInCase() ||
-                    (Minecraft.getInstance().player != null && Minecraft.getInstance().player.isCreative()))
+            if (deal.showInCase() || (mc.player != null && mc.player.isCreative()))
             { deal.putHoverCaseItems(hoverMain, TooltipFlag.NORMAL); }
          }
          else {
@@ -888,25 +885,25 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
       }
 
       @Override
-      public void renderWidget(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      public void renderWidget(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
          if (!visible) { return; }
          RenderSystem.enableBlend();
-         int y = getY() + ((GuiNPCTrader) listener).scrollY;
-         isHovered = mouseY > 14 && mouseY < ((GuiNPCTrader) listener).imageHeight - 47 && mouseX >= getX() && mouseY >= y && mouseX < getX() + width && mouseY < y + height;
+         GuiNPCTrader parent = (GuiNPCTrader) listener;
+         int y = getY() + parent.scrollY;
+         isHovered = mouseY > 14 && mouseY < parent.imageHeight - 47 && mouseX >= getX() && mouseY >= y && mouseX < getX() + width && mouseY < y + height;
          if (isHovered) {
             hoverText.clear();
             hoverText.addAll(hoverMain);
          }
          int x = getX();
-         GuiNPCTrader parent = (GuiNPCTrader) listener;
          if (y + height < 15 || y > parent.imageHeight - 48) { return; }
          y = getY();
 
-         graphics.enableScissor(4, 15, ((GuiNPCTrader) listener).scrollWidth * 2, ((GuiNPCTrader) listener).imageHeight - 47);
+         graphics.enableScissor(4, 15, parent.scrollWidth * 2, parent.imageHeight - 47);
 
          PoseStack matrixStack = graphics.pose();
          matrixStack.pushPose();
-         matrixStack.translate(0, ((GuiNPCTrader) listener).scrollY, 0);
+         matrixStack.translate(0, parent.scrollY, 0);
 
          matrixStack.pushPose();
          boolean isPrefabricated = txrW == 0;
@@ -923,7 +920,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
          if (deal.isCase() && objCase != null) {
             matrixStack.pushPose();
             matrixStack.translate(x + 16.0f, y + 8.5f, 16.0f);
-            if ((System.currentTimeMillis() + rncd) % 10000 < 2000 || isHovered && isMouseHover(mouseX, mouseY, x + 1, y + ((GuiNPCTrader) listener).scrollY + 2, 32, 22)) {
+            if ((System.currentTimeMillis() + rncd) % 10000 < 2000 || isHovered && isMouseHover(mouseX, mouseY, x + 1, y + parent.scrollY + 2, 32, 22)) {
                float i = (float) ((System.currentTimeMillis() + rncd) % 2000);
                if (!start) {
                   matrixStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
@@ -973,7 +970,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
             graphics.renderItem(renderStack, x + 10, y + 6);
             graphics.renderItemDecorations(mc.font, renderStack, x + 10, y + 6, null);
             if (!inTrade) { RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F); }
-            if (isHovered && isMouseHover(mouseX, mouseY, x + 6, y + ((GuiNPCTrader) listener).scrollY + 3, 22, 22)) {
+            if (isHovered && isMouseHover(mouseX, mouseY, x + 6, y + parent.scrollY + 3, 22, 22)) {
                hoverText.clear();
                hoverText.addAll(renderStack.getTooltipLines(mc.player, mc.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL));
             }
@@ -1023,7 +1020,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
                matrixStack.scale(0.0625f, 0.0625f, 0.0625f);
                graphics.blit(mt == 1 ? GuiBasic.MONEY : GuiBasic.DONAT, 0, 0, 0, 0, 256, 256);
                matrixStack.popPose();
-               if (isHovered && isMouseHover(mouseX, mouseY, x, y + ((GuiNPCTrader) listener).scrollY, mw + 14, 10)) {
+               if (isHovered && isMouseHover(mouseX, mouseY, x, y + parent.scrollY, mw + 14, 10)) {
                   hoverText.clear();
                   hoverText.addAll(hoverPrise);
                }
@@ -1062,7 +1059,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
                   graphics.drawString(mc.font, sCount, -mc.font.width(sCount), -7.5f, CustomNpcs.MainColor.getRGB(), true);
                   matrixStack.popPose();
 
-                  if (isHovered && isMouseHover(mouseX, mouseY, x + (i * 18) * s, y + ((GuiNPCTrader) listener).scrollY, 16.0f * s, 16.0f * s)) {
+                  if (isHovered && isMouseHover(mouseX, mouseY, x + (i * 18) * s, y + parent.scrollY, 16.0f * s, 16.0f * s)) {
                      hoverText.clear();
                      hovers = stack.getTooltipLines(mc.player, mc.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL);
                      if (hovers.get(0) instanceof Component) {
@@ -1080,8 +1077,8 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 
          matrixStack.pushPose();
          x = getX() + 36;
-         y = getY() + 2 + ((GuiNPCTrader) listener).scrollY;
-         GuiButtonNop.renderString(graphics, getMessage(), x, y, x + width - 39 - mw, y + 10,
+         y = getY() + 2 + parent.scrollY;
+         renderString(graphics, getMessage(), x, y, x + width - 39 - mw, y + 10,
                  CustomNpcs.MainColor.getRGB() | 0xFF000000, true, false, customFont);
          matrixStack.popPose();
 
@@ -1096,7 +1093,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
             }
             catch (Exception ignored) { }
             if (isHovered && !listener.hasSubGui()) {
-               return ((IMouseHandlerMixin) Minecraft.getInstance().mouseHandler).getActiveButton() == 0 ? 2 : 1;
+               return ((IMouseHandlerMixin) mc.mouseHandler).getActiveButton() == 0 ? 2 : 1;
             }
          }
          return 0;
@@ -1109,7 +1106,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
       @Override
       public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
          if (active && visible && isValidClickButton(mouseButton) && isHovered) {
-            playDownSound(Minecraft.getInstance().getSoundManager());
+            playDownSound(mc.getSoundManager());
             onClick(mouseX, mouseY);
             return true;
          }
@@ -1136,7 +1133,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
       }
 
       @Override
-      public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
          if (!visible) { return; }
          isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
          int state = 0;
@@ -1177,15 +1174,14 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
       }
 
       @Override
-      public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
          if (!visible) { return; }
          isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
          hoverL = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + 20 && mouseY < getY() + height;
          hoverR = !hoverL && mouseX >= getX() + width - 19 && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
-         Minecraft mc = Minecraft.getInstance();
          PoseStack matrixStack = graphics.pose();
 
-         boolean lmb = ((IMouseHandlerMixin) mc.mouseHandler).getActiveButton() == 0;
+         boolean lmb = ((IMouseHandlerMixin) Minecraft.getInstance().mouseHandler).getActiveButton() == 0;
          int stateL = !active ? 40 : hoverL ? (display.length > 1 ? lmb ? 40 : 20 : 0) : 0;
          int stateR = !active ? 40 : hoverR ? (display.length > 1 ? lmb ? 40 : 20 : 0) : 0;
          int state = !active ? 40 : isHovered && display.length > 1 ? 20 : 0;
@@ -1222,7 +1218,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
       }
 
       @Override
-      public void renderWidget(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      public void renderWidget(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
          if (!enabled || !visible) { return; }
          setTextColor(getTextColor());
          int x = getX() - 3;

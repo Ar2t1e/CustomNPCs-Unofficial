@@ -39,7 +39,7 @@ public class GuiLabel extends AbstractWidget implements GuiEventListener, ICompo
    protected int backColor = 0;
    protected int borderColor = 0;
    protected long lastClicked = 0L;
-   public IGuiInterface listener;
+   public final IGuiInterface listener;
    public boolean showShadow = false;
    public int offsetHoverX = 0;
    public int offsetHoverY = 0;
@@ -55,7 +55,7 @@ public class GuiLabel extends AbstractWidget implements GuiEventListener, ICompo
    public GuiLabel setSize(int widthIn, int ignoredHeight) {
       if (widthIn < 0) { widthIn *= -1; }
       setWidth(widthIn);
-      setHeight(Minecraft.getInstance().font.lineHeight + 1);
+      setHeight((customFont != null ? customFont.getHeight() : Minecraft.getInstance().font.lineHeight) + 2);
       return this;
    }
 

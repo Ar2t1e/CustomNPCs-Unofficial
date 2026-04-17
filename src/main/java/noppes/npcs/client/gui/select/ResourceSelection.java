@@ -186,7 +186,7 @@ public abstract class ResourceSelection
             }
             list.add(0, back);
             scroll.setUnsortedList(list).setSuffixes(suffixes);
-            if (scroll.getHover() != pos) { scroll.setSelectedIndex(pos); }
+            if (scroll.getHover() != pos) { scroll.setSelected(pos); }
             domain = Component.empty().append(Component.literal(selectDir.getNamespace() + "/" + path));
             while (minecraft.font.width(domain) > 250 && path.contains("/")) {
                 path = path.substring(path.indexOf("/") + 1);

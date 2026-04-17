@@ -184,11 +184,11 @@ public class GuiNpcManageRecipes
       scroll.setNormalList(new ArrayList<>(data.keySet()));
       if (getTextField(0) != null) { getTextField(0).setIsEnabled(!name.getString().isEmpty()); }
       if (getButton(5) != null) { getButton(5).setIsEnabled(!name.getString().isEmpty()); }
-      scroll.setSelectedIndex(name);
+      scroll.setSelected(name);
    }
 
    @Override
-   public void setSelected(String selectedIn) { scroll.setSelectedIndex(selectedIn); }
+   public void setSelected(String selectedIn) { scroll.setSelected(selectedIn); }
 
    @Override
    public void scrollClicked(GuiCustomScrollNop scroll) {

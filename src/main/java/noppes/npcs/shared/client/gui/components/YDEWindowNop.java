@@ -7,9 +7,9 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.controllers.YDEController;
+import noppes.npcs.client.gui.global.SubGuiNpcDialogOption;
 import noppes.npcs.client.gui.yellow_de.GuiYellowDialogEditor;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
 import noppes.npcs.client.gui.yellow_de.data.UtilYDE;
@@ -19,8 +19,8 @@ import noppes.npcs.client.gui.yellow_de.data.nodes.YDEDialog;
 import noppes.npcs.client.gui.yellow_de.data.nodes.YDEOption;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
+import noppes.npcs.controllers.data.DialogOption;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
-import noppes.npcs.shared.common.util.LogWriter;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
@@ -49,33 +49,35 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         exit.setX(exit.getX() - 2);
         exit.setY(exit.getY() - 1);
         exit.setCustomFont(UtilYDE.FONT)
-                .setColor(gui.color)
+                .setColor(YDEController.textColor)
                 .setHoverTexts("yde.node.exit");
         exit.isScissor = false;
 
         lock.setX(lock.getX() - 2);
         lock.setY(lock.getY() - 1);
         lock.setCustomFont(UtilYDE.FONT)
-                .setColor(gui.color)
+                .setColor(YDEController.textColor)
                 .setHoverTexts("yde.node.lock");
         lock.isScissor = false;
+
+        hoverFont = UtilYDE.FONT;
 
         init();
     }
 
     @Override
     public void init() {
-        int y;
+        super.init();
         int w = imageWidth - 6;
         int h0 = UtilYDE.FONT.getHeight() + 2;
+        int y = h0;
         if (node instanceof YDEDialog yde_dialog) {
             if (yde_dialog.dialog == null) { yde_dialog.dialog = new Dialog(DialogController.instance.getCategory(node.category)); }
-            addTextField(0, 3, 21, w, h0, yde_dialog.dialog.title)
+            addTextField(0, 3, 21, w, y, yde_dialog.dialog.title)
                     .setColor(YDEController.textColor)
                     .setCustomFont(UtilYDE.FONT);
-            y = 32 + h0;
             GuiTextArea compArea;
-            add(compArea = new GuiTextArea(0, guiLeft + 4, guiTop + y, w - 2, imageHeight - y - 4, yde_dialog.dialog.text)
+            add(compArea = new GuiTextArea(0, guiLeft + 4, guiTop + (y += 32), w - 2, imageHeight - y - 4, yde_dialog.dialog.text)
                     .setColor(YDEController.textColor)
                     .setCustomFont(AREA_FONT));
             compArea.isYDE = true;
@@ -114,7 +116,65 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                     .setHoverTexts("yde.hover.node.dialog.quest");
         }
         else if (node instanceof YDEOption yde_option) {
-            if (yde_option.dialog == null) { yde_option.dialog = new Dialog(DialogController.instance.getCategory(node.category)); }
+            yde_option.refresh();
+            // name
+            addTextField(0, 3, y += 10, w, h0, yde_option.option.title)
+                    .setColor(YDEController.textColor)
+                    .setCustomFont(UtilYDE.FONT)
+                    .setHoverTexts("dialog.option.hover.name");
+            // color
+            StringBuilder color = new StringBuilder(Integer.toHexString(yde_option.option.optionColor));
+            while (color.length() < 6) { color.insert(0, 0); }
+            int wB = (imageWidth - 8) / 3;
+            addButton(4, 2, y += h0 * 2, color)
+                    .setSize(wB, 12)
+                    .setTexture(YDE_BUTTONS)
+                    .setDefBack(false)
+                    .setIsAnim(true)
+                    .setUV(0, 0, 200, 20)
+                    .setCustomFont(UtilYDE.FONT)
+                    .setColor(yde_option.option.optionColor)
+                    .setHoverTexts("color.hover");
+            // type
+            addButton(5, 4 + wB, y, false, yde_option.option.optionType.get(), SubGuiNpcDialogOption.options)
+                    .setSize(wB, 12)
+                    .setTexture(YDE_BUTTONS)
+                    .setDefBack(false)
+                    .setIsAnim(true)
+                    .setUV(0, 0, 200, 20)
+                    .setCustomFont(UtilYDE.FONT)
+                    .setHoverTexts("dialog.option.hover.type." + yde_option.option.optionType.get());
+            switch (yde_option.option.optionType) {
+                case DIALOG_OPTION: {
+                    if (yde_option.option.dialogs.size() == 1) {
+                        DialogOption.OptionDialogID subOption = yde_option.option.dialogs.get(0);
+                        addTextField(1, 3, y + h0 * 2, wB, h0, subOption.dialogId)
+                                .setColor(YDEController.textColor)
+                                .setMinMaxDefault(0, Integer.MAX_VALUE, subOption.dialogId)
+                                .setCustomFont(UtilYDE.FONT)
+                                .setHoverTexts("dialog.option.hover.dialog");
+                    }
+                    if (yde_option.option.dialogs.size() > 1) {
+                        StringBuilder ids = new StringBuilder();
+                        for (DialogOption.OptionDialogID subOption : yde_option.option.dialogs) {
+                            if (!ids.isEmpty()) { ids.append(", "); }
+                            ids.append(subOption.dialogId);
+                        }
+                        addLabel(1, 5 + wB, y + h0 * 2, ids.toString())
+                                .setSize(w, 10)
+                                .setCustomFont(UtilYDE.FONT)
+                                .setHoverTexts("dialog.option.hover.dialogs");
+                    }
+                    break;
+                }
+                case COMMAND_BLOCK: {
+                    addTextField(2, 3, y + h0 * 2, w, h0, yde_option.option.command)
+                            .setColor(YDEController.textColor)
+                            .setCustomFont(UtilYDE.FONT)
+                            .setHoverTexts("dialog.option.hover.command");
+                    break;
+                }
+            }
             // -> options
             b0 = addButton(0, imageWidth - 4, imageHeight / 2 - 4, "")
                     .setSize(7, 7)
@@ -155,14 +215,14 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     }
 
     @Override
-    public void buttonEvent(GuiButtonNop button) { }
+    public void buttonEvent(GuiButtonNop button) {
+        if (isHovered && visible) { listener.mouseButtonEvent(this, button, 0); }
+    }
 
     @Override
-    public void mouseButtonEvent(GuiButtonNop button, int mouseButton) {
-        LogWriter.info("TEST: buttonID: "+button.id+"; mouseButton: "+mouseButton);
-        if (isHovered && visible) {
-            listener.mouseButtonEvent(this, button, mouseButton);
-        }
+    public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) {
+        if (isHovered && visible) { return listener.mouseButtonEvent(this, button, mouseButton); }
+        return false;
     }
 
     @Override
@@ -174,7 +234,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
             float zDepth = (float) id / 10000.0f;
             matrixStack.translate(0, 0, zDepth - 0.001f);
             // link dots
-            for (YDELink link : node.links) {
+            for (YDELink link : new ArrayList<>(node.links)) {
                 if (link.backNodeId == node.id) {
                     YDEWindowNop nextNode = listener.get(link.nextNodId, YDEWindowNop.class);
                     if (nextNode != null) {
@@ -200,6 +260,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                                     false, getY() + imageHeight < nextNode.getY(), EnumYDEType.QUEST.color, zDepth - 0.001f);
                         }
                     }
+                    else { node.links.remove(link); }
                 }
             }
             matrixStack.popPose();
@@ -255,14 +316,37 @@ public class YDEWindowNop extends GuiCustomWindowNop {
         graphics.bufferSource().endBatch();
         matrixStack.popPose();
         // title
-        if (title != null && !title.getString().isEmpty()) {
-            UtilYDE.FONT.draw(graphics, title, 3, 2, CustomNpcs.MainColor.getRGB() | 255 << 24);
-        }
+        if (title != null && !title.getString().isEmpty()) { UtilYDE.FONT.draw(graphics, title, 3, 2, YDEController.textColor); }
+        int h0 = UtilYDE.FONT.getHeight() + 2;
+        float y = 11.5f;
         if (node.type == EnumYDEType.DIALOG) {
             // name
-            UtilYDE.FONT.draw(graphics, Component.translatable("gui.name").append(":"), 3, 12, YDEController.textColor);
+            UtilYDE.FONT.draw(graphics, Component.translatable("gui.name").append(":"), 3, y, YDEController.textColor);
             // text
-            UtilYDE.FONT.draw(graphics, Component.translatable("gui.text").append(":"), 3, UtilYDE.FONT.getHeight() + 24, YDEController.textColor);
+            UtilYDE.FONT.draw(graphics, Component.translatable("gui.text").append(":"), 3, y + h0 * 2, YDEController.textColor);
+        }
+        else if (node instanceof YDEOption yde_option) {
+            // name
+            UtilYDE.FONT.draw(graphics, Component.translatable("gui.answer").append(":"), 3, y, YDEController.textColor);
+            // color
+            UtilYDE.FONT.draw(graphics, Component.translatable("gui.color").append(":"), 3, y += h0 * 2, YDEController.textColor);
+            int wB = (imageWidth - 8) / 3;
+            // type
+            UtilYDE.FONT.draw(graphics, Component.translatable("gui.type").append(":"), 5 + wB, y, YDEController.textColor);
+            // extra
+            y += h0 * 2;
+            switch (yde_option.option.optionType) {
+                case DIALOG_OPTION: {
+                    if (!yde_option.option.dialogs.isEmpty()) {
+                        UtilYDE.FONT.draw(graphics, Component.literal("ID" + (yde_option.option.dialogs.size() > 1 ? "s" : "") + ":"), 3, y, YDEController.textColor);
+                    }
+                    break;
+                }
+                case COMMAND_BLOCK: {
+                    UtilYDE.FONT.draw(graphics, Component.translatable("block.minecraft.command_block").append(":"), 3, y, YDEController.textColor);
+                    break;
+                }
+            }
         }
         matrixStack.translate(-2, -2, 0.0f);
         matrixStack.popPose();
@@ -282,7 +366,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         boolean bo = super.mouseClicked(mouseX, mouseY, mouseButton);
-        if (isHovered && visible) {
+        if (isHovered) {
             if (mouseButton == 0) {
                 if (Screen.hasControlDown()) {
                     if (listener.hasSelect(node.id)) { listener.removeSelect(node.id); } else { listener.addSelect(node.id); }
@@ -365,13 +449,11 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     }
 
     @Override
-    public void unFocused(GuiTextFieldNop textField) {
-        listener.unFocused(this, textField);
-    }
+    public void unFocused(GuiTextFieldNop textField) { listener.unFocused(this, textField); }
 
     @Override
-    public void textUpdate(IComponentGui component, String text) {
-        listener.textUpdate(this, component, text);
+    public void textUpdate(IComponentGui textEditor, String text) {
+        listener.textUpdate(this, textEditor, text);
     }
 
 }

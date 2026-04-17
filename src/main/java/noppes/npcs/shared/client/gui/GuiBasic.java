@@ -82,13 +82,16 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
    public static final DecimalFormat df4 = new DecimalFormat("#.####");
    public static final ResourceLocation MONEY = new ResourceLocation(CustomNpcs.MODID, "textures/item/coin_gold.png");
    public static final ResourceLocation DONAT = new ResourceLocation(CustomNpcs.MODID, "textures/item/coin_donat.png");
-   public static final ResourceLocation INFO = new ResourceLocation(CustomNpcs.MODID, "textures/gui/info.png");
-   public static final ResourceLocation RESOURCE_SLOT = new ResourceLocation(CustomNpcs.MODID, "textures/gui/slot.png");
-   public static final ResourceLocation MENU_BUTTON = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menubutton.png");
-   public static final ResourceLocation MENU_SIDE_BUTTON = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menusidebutton.png");
-   public static final ResourceLocation MENU_TOP_BUTTON = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menutopbutton.png");
-   public static final ResourceLocation ANIMATION_BUTTONS = new ResourceLocation(CustomNpcs.MODID, "textures/gui/animation/buttons.png");
-   public static final ResourceLocation ANIMATION_BUTTONS_SLOTS = new ResourceLocation(CustomNpcs.MODID, "textures/gui/animation/button_slots.png");
+   public static final ResourceLocation INFO = getResource("info.png");
+   public static final ResourceLocation RESOURCE_SLOT = getResource("slot.png");
+   public static final ResourceLocation MENU_BUTTON = getResource("menubutton.png");
+   public static final ResourceLocation MENU_SIDE_BUTTON = getResource("menusidebutton.png");
+   public static final ResourceLocation MENU_TOP_BUTTON = getResource("menutopbutton.png");
+   public static final ResourceLocation ANIMATION_BUTTONS = getResource("animation/buttons.png");
+   public static final ResourceLocation ANIMATION_BUTTONS_SLOTS = getResource("animation/button_slots.png");
+   public static final ResourceLocation YDE_BUTTONS = getResource("animation/yde_buttons.png");
+   public static final ResourceLocation YDE_VERT_BUTTONS = getResource("animation/yde_vertical_buttons.png");
+
    // 3D compass
    public static final Map<String, ResourceLocation> TEXTURES_COMPASS = new HashMap<>();
    public static final ResourceLocation RESOURCE_COMPASS = new ResourceLocation(CustomNpcs.MODID + ":models/util/compass.obj");
@@ -177,7 +180,7 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
    public void buttonEvent(GuiButtonNop button) { }
 
    @Override
-   public void mouseButtonEvent(GuiButtonNop button, int mouseButton) { }
+   public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) { return false; }
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
@@ -186,7 +189,7 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
 
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-      boolean bo  = wrapper.mouseClicked(mouseX, mouseY, mouseButton) || super.mouseClicked(mouseX, mouseY, mouseButton);
+      boolean bo = wrapper.mouseClicked(mouseX, mouseY, mouseButton) || super.mouseClicked(mouseX, mouseY, mouseButton);
       if (GuiTextFieldNop.getActive() != null) {
          for (IComponentGui component : wrapper.components) {
             if (component instanceof GuiTextArea area) {
@@ -536,11 +539,13 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
          matrixStack.scale(0.5f, 0.5f, 0.5f);
          int r = (toolWidht + 1) * 2;
          int b = (toolHeight + 4) * 2;
-         graphics.fill(-1, -1, r + 3, b + 1, YDEController.backColor);
-         graphics.hLine(1, r, 0, YDEController.windowLineColor);
-         graphics.hLine(1, r, b - 1, YDEController.windowLineColor);
-         graphics.vLine(0, 0, b - 1, YDEController.windowLineColor);
-         graphics.vLine(r + 1, 0, b - 1, YDEController.windowLineColor);
+         int color = YDEController.backColor & 0xFFFFFF | 0xE0000000;
+         graphics.fill(-1, -1, r + 3, b + 1, color);
+         color = YDEController.windowLineColor & 0xFFFFFF | 0xE0000000;
+         graphics.hLine(1, r, 0, color);
+         graphics.hLine(1, r, b - 1, color);
+         graphics.vLine(0, 0, b - 1, color);
+         graphics.vLine(r + 1, 0, b - 1, color);
          matrixStack.popPose();
 
          matrixStack.translate(0.0F, 0.0F, 400.0F);

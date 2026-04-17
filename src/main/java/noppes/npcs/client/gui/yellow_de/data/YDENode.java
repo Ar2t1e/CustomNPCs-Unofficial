@@ -3,6 +3,7 @@ package noppes.npcs.client.gui.yellow_de.data;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ValueUtil;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public abstract class YDENode {
         for (int i = 0; i < listLinks.size(); i++) {
             YDELink link = new YDELink(0, 0, EnumYDEType.DIALOG);
             link.load(listLinks.getCompound(i));
+LogWriter.info("TEST: "+link);
             links.add(link);
         }
     }

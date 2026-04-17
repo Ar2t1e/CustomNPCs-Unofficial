@@ -70,7 +70,7 @@ public class SubGuiNpcMarketSettings extends GuiNPCInterface
                 ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
                     if (agree && data.containsKey(scroll.getNormalSelected()) && marcet.sections.size() > 1) {
                         marcet.sections.remove(data.get(scroll.getNormalSelected()));
-                        scroll.setSelectedIndex(scroll.getSelectedIndex() - 1);
+                        scroll.setSelected(scroll.getSelectedIndex() - 1);
                         init();
                     }
                     NoppesUtil.openGUI(player, this);
@@ -154,7 +154,7 @@ public class SubGuiNpcMarketSettings extends GuiNPCInterface
         add(scroll.setPos(x + 175, y)
                 .setUnsortedList(list)
                 .setHoverTexts(hts));
-        if (!scroll.hasSelected()) { scroll.setSelectedIndex(0); }
+        if (!scroll.hasSelected()) { scroll.setSelected(0); }
         // update message
         addButton(1, x, y += 22, "lines.title")
                 .setSize(170, 20)

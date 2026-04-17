@@ -87,7 +87,7 @@ public class GuiNpcConversation extends GuiNPCInterface2
       }
       add(scroll.setPos(x0, y)
               .setUnsortedList(new ArrayList<>(data.keySet()))
-              .setSelectedIndex(select));
+              .setSelected(select));
       if (scroll.hasSelected() && data.containsKey(scroll.getNormalSelected())) {
          JobConversation.ConversationLine line = job.getLine(data.get(scroll.getNormalSelected()));
          int x1 = x0 + sW + 2;

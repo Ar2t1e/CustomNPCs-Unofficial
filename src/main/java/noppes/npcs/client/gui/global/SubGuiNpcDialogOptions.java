@@ -165,7 +165,7 @@ public class SubGuiNpcDialogOptions
             option.slot = dialog.options.size();
             dialog.options.put(option.slot, option);
             option.optionColor = SubGuiNpcDialogOption.LastColor;
-            scroll.setSelectedIndex(option.slot);
+            scroll.setSelected(option.slot);
             setSubGui(new SubGuiNpcDialogOption(option, parent));
             break;
          } // add new
@@ -194,14 +194,14 @@ public class SubGuiNpcDialogOptions
          case 3: {
             if (!data.containsKey(scroll.getNormalSelected())) { return; }
             dialog.upPos(data.get(scroll.getNormalSelected()));
-            scroll.setSelectedIndex(scroll.getSelectedIndex() - 1);
+            scroll.setSelected(scroll.getSelectedIndex() - 1);
             init();
             break;
          } // up dialog
          case 4: { // down dialog
             if (!data.containsKey(scroll.getNormalSelected())) { return; }
             dialog.downPos(data.get(scroll.getNormalSelected()));
-            scroll.setSelectedIndex(scroll.getSelectedIndex() + 1);
+            scroll.setSelected(scroll.getSelectedIndex() + 1);
             init();
             break;
          }
@@ -216,7 +216,7 @@ public class SubGuiNpcDialogOptions
    @Override
    public void scrollClicked(GuiCustomScrollNop scroll) {
       if (!data.containsKey(scroll.getNormalSelected())) {
-         scroll.setSelectedIndex(-1);
+         scroll.setSelected(-1);
          return;
       }
       init();

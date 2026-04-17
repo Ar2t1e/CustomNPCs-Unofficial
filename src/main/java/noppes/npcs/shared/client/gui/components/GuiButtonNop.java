@@ -291,7 +291,9 @@ public class GuiButtonNop extends Button implements IComponentGui {
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double mouseScrolled) {
       if (display != null && display.length != 0 && isHovered) {
+         if (listener != null && listener.hasSubGui()) { return false; }
          setDisplay((displayValue + (mouseScrolled > 0 ? -1 : 1)) % display.length);
+         if (listener != null) { listener.buttonEvent(this); }
          return true;
       }
       return false;
@@ -421,21 +423,21 @@ public class GuiButtonNop extends Button implements IComponentGui {
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
       if (active && visible) {
-         if (isValidClickButton(mouseButton)) {
-            boolean flag = clicked(mouseX, mouseY);
-            if (flag) {
+         if (clicked(mouseX, mouseY)) {
+            if (isValidClickButton(mouseButton)) {
                playDownSound(Minecraft.getInstance().getSoundManager());
                onClick(mouseX, mouseY);
-               if (listener != null) { listener.mouseButtonEvent(this, mouseButton); }
+            }
+            else if (listener != null && !listener.hasSubGui() && listener.mouseButtonEvent(this, mouseButton) ) {
+               playDownSound(Minecraft.getInstance().getSoundManager());
+               if (display != null) { setDisplay((displayValue + 1) % display.length); }
                return true;
             }
+            return true;
          }
       }
       return false;
    }
-
-   @Override
-   protected boolean isValidClickButton(int mouseButton) { return true; }
 
    @Override
    public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {

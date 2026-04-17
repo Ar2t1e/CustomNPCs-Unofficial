@@ -55,24 +55,24 @@ public class GuiNpcSpawner extends GuiNPCInterface2
       super.init();
       if (aliveScroll == null) { aliveScroll = addScroll(1).setSize(172, 101); }
       if (!isDead) {
-         if (slot >= 0 && slot < aliveScroll.getList().size()) { aliveScroll.setSelectedIndex(slot); }
+         if (slot >= 0 && slot < aliveScroll.getList().size()) { aliveScroll.setSelected(slot); }
          else {
             slot = -1;
-            aliveScroll.setSelectedIndex(-1);
+            aliveScroll.setSelected(-1);
             select = null;
          }
       }
-      else { aliveScroll.setSelectedIndex(-1); }
+      else { aliveScroll.setSelected(-1); }
       add(aliveScroll.setPos(guiLeft + 5, guiTop + 14));
       if (deadScroll == null) { deadScroll = addScroll(0).setSize(172, 101); }
       if (isDead) {
-         if (slot >= 0 && slot < deadScroll.getList().size()) { deadScroll.setSelectedIndex(slot); }
+         if (slot >= 0 && slot < deadScroll.getList().size()) { deadScroll.setSelected(slot); }
          else {
             slot = -1;
-            deadScroll.setSelectedIndex(-1);
+            deadScroll.setSelected(-1);
             select = null;
          }
-      } else { deadScroll.setSelectedIndex(-1); }
+      } else { deadScroll.setSelected(-1); }
       add(deadScroll.setPos(guiLeft + 180, guiTop + 14));
       addLabel(1, guiLeft + 6, guiTop + 4, "spawner.list.0")
               .setHoverTexts(Component.translatable("spawner.hover.list.0")
@@ -361,7 +361,7 @@ public class GuiNpcSpawner extends GuiNPCInterface2
    public void scrollClicked(GuiCustomScrollNop scroll) {
       slot = scroll.getSelectedIndex();
       isDead = scroll.id == 0;
-      (isDead ? aliveScroll : deadScroll).setSelectedIndex(-1);
+      (isDead ? aliveScroll : deadScroll).setSelected(-1);
       init();
    }
 
@@ -401,11 +401,11 @@ public class GuiNpcSpawner extends GuiNPCInterface2
       if (compound.contains("SetDead", 1)) {
          isDead = compound.getBoolean("SetDead");
          slot = -1;
-         (isDead ? deadScroll : aliveScroll).setSelectedIndex(slot);
+         (isDead ? deadScroll : aliveScroll).setSelected(slot);
       }
       if (compound.contains("SetPos", 3)) {
          slot = compound.getInt("SetPos");
-         (isDead ? deadScroll : aliveScroll).setSelectedIndex(slot);
+         (isDead ? deadScroll : aliveScroll).setSelected(slot);
       }
       init();
    }

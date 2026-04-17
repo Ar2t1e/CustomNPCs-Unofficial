@@ -61,16 +61,16 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
       guiTop += 10;
       if (scroll == null) { scroll = addScroll(0).setSize(165, 210); }
       else { scroll.clear();}
-      add(scroll.setPos(guiLeft + 4, guiTop + 4).setSelectedIndex(sel));
+      add(scroll.setPos(guiLeft + 4, guiTop + 4).setSelected(sel));
       // clones
       GuiMenuTopButton button = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones")
-              .setIsEnabled(showingClones == 0);
+              .setIsFocused(showingClones == 0);
       // entities
       button = addTopButton(4, button.getX() + button.getWidth(), button.getY(), "spawner.entities")
-              .setIsEnabled(showingClones == 1);
+              .setIsFocused(showingClones == 1);
       // server
       addTopButton(5, button.getX() + button.getWidth(), button.getY(), "gui.server")
-              .setIsEnabled(showingClones == 2);
+              .setIsFocused(showingClones == 2);
       int x = guiLeft + 171;
       int y = guiTop + 6;
       addButton(1, x, y, "gui.spawn").setSize(82, 20);
@@ -164,7 +164,7 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
       list.clear();
       if (minecraft == null) { minecraft = Minecraft.getInstance();}
       list.addAll(EntityUtil.getAllEntities(minecraft.level, false).keySet());
-      scroll.setList(list).setSelectedIndex(sel);
+      scroll.setList(list).setSelected(sel);
    }
 
    private void showClones() {
@@ -173,7 +173,7 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
       } else {
          list.clear();
          list.addAll(ClientCloneController.Instance.getClones(activeTab));
-         scroll.setList(list).setSelectedIndex(sel);
+         scroll.setList(list).setSelected(sel);
          resetEntity();
       }
    }

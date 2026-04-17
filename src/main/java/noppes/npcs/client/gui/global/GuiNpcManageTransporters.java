@@ -67,7 +67,7 @@ public class GuiNpcManageTransporters extends GuiContainerNPCInterface2<Containe
         add(categories.setPos(x, y)
                 .setUnsortedList(new ArrayList<>(dataCat.keySet())));
         for (Map.Entry<Component, TransportCategory> entry : dataCat.entrySet()) {
-            if (entry.getValue().id == container.location.category.id) { categories.setSelectedIndex(entry.getKey()); }
+            if (entry.getValue().id == container.location.category.id) { categories.setSelected(entry.getKey()); }
         }
 
         addLabel(0, guiLeft + 5, y - 10, "gui.categories");
@@ -87,7 +87,7 @@ public class GuiNpcManageTransporters extends GuiContainerNPCInterface2<Containe
         add(locations.setPos(x, y)
                 .setUnsortedList(new ArrayList<>(dataLoc.keySet())));
         for (Map.Entry<Component, TransportLocation> entry : dataLoc.entrySet()) {
-            if (entry.getValue().id == container.location.id) { locations.setSelectedIndex(entry.getKey()); }
+            if (entry.getValue().id == container.location.id) { locations.setSelected(entry.getKey()); }
         }
         addLabel(1, guiLeft + 113, y - 10, "gui.location");
         y += locations.height + 24;

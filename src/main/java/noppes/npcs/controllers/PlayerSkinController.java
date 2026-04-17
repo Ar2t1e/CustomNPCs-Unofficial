@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.data.SkinData;
 import noppes.npcs.packets.Packets;
@@ -206,7 +207,7 @@ public class PlayerSkinController {
         update(sd);
     }
 
-    public String get(ServerPlayer player, int type) {
+    public String get(Player player, int type) {
         SkinData sd = getData(player.getUUID(), type);
         return sd.isUrl() ? sd.getUrl() : sd.getLocation().toString();
     }

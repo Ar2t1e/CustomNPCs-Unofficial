@@ -408,7 +408,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
         }
         if (regions == null) { regions = addScroll(0).setSize(110, 130); }
         regions.setUnsortedList(new ArrayList<>(dataRegions.values()));
-        if (!selectReg.getString().isEmpty()) { regions.setSelectedIndex(selectReg); }
+        if (!selectReg.getString().isEmpty()) { regions.setSelected(selectReg); }
         add(regions.setPos(guiLeft + 5, guiTop + 14));
         // regions
         addLabel(lId++, guiLeft + 6, guiTop + 4, "gui.regions")
@@ -416,7 +416,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
                 .setHoverTexts(Component.translatable("region.hover.regions.list", Component.translatable("item.customnpcs.npcboundary").getString()));
         if (points == null) { points = addScroll(1).setSize(imageWidth - side - 124, side / 2); }
         points.setUnsortedList(new ArrayList<>(dataPoints.values()));
-        if (!selectP.getString().isEmpty()) { points.setSelectedIndex(selectP); }
+        if (!selectP.getString().isEmpty()) { points.setSelected(selectP); }
         add(points.setPos(r1, guiTop + 14));
         // points
         addLabel(lId++, r1, guiTop + 4, "gui.points")

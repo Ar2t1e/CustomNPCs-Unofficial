@@ -400,7 +400,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
    public void buttonEvent(GuiButtonNop button) { }
 
    @Override
-   public void mouseButtonEvent(GuiButtonNop button, int mouseButton) { }
+   public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) { return false; }
 
    @Override
    public void save() { }

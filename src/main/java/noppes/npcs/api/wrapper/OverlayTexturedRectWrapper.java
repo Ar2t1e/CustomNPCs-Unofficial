@@ -1,180 +1,193 @@
 package noppes.npcs.api.wrapper;
 
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.overlay.ITexturedRect;
+import noppes.npcs.api.overlay.IOverlayTexturedRect;
+import noppes.npcs.util.ValueUtil;
 
-public class OverlayTexturedRectWrapper extends OverlayComponentWrapper implements ITexturedRect {
+public class OverlayTexturedRectWrapper extends OverlayComponentWrapper implements IOverlayTexturedRect {
 
+   private final float[] uv = new float[] { 0.0f, 0.0f, 1.0f, 1.0f };
    private String texture;
    private int width;
    private int height;
-   private float[] uv;
-   private float[] rgb;
+   private int color = 0xFFFFFFFF;
    int textureX;
    int textureY = -1;
    int textureMaxX;
    int textureMaxY = -1;
 
-   public OverlayTexturedRectWrapper(int id, int x, int y, String texture, int width, int height) {
+   public OverlayTexturedRectWrapper(int id, int x, int y, String textureIn, int widthIn, int heightIn) {
       super(id, x, y);
-      this.texture = texture;
-      this.width = width;
-      this.height = height;
+      texture = textureIn;
+      width = widthIn;
+      height = heightIn;
    }
 
-   public OverlayTexturedRectWrapper(int id, int x, int y, String texture, int width, int height, int textureX, int textureY) {
+   public OverlayTexturedRectWrapper(int id, int x, int y, String textureIn, int widthIn, int heightIn, int textureX, int textureY) {
       super(id, x, y);
-      this.texture = texture;
-      this.width = width;
-      this.height = height;
-      this.setTextureOffset(textureX, textureY);
+      texture = textureIn;
+      width = widthIn;
+      height = heightIn;
+      setTextureOffset(textureX, textureY);
    }
 
-   public OverlayTexturedRectWrapper(int id, int x, int y, String texture, int width, int height, int textureX, int textureY, int textureMaxX, int textureMaxY) {
+   public OverlayTexturedRectWrapper(int id, int x, int y, String textureIn, int widthIn, int heightIn, int textureX, int textureY, int textureMaxX, int textureMaxY) {
       super(id, x, y);
-      this.texture = texture;
-      this.width = width;
-      this.height = height;
-      this.setTextureOffset(textureX, textureY);
-      this.setTextureMaxSize(textureMaxX, textureMaxY);
+      texture = textureIn;
+      width = widthIn;
+      height = heightIn;
+      setTextureOffset(textureX, textureY);
+      setTextureMaxSize(textureMaxX, textureMaxY);
    }
 
-   public int getTextureX() {
-      return this.textureX;
-   }
+   @Override
+   public int getTextureX() { return textureX; }
 
-   public int getTextureY() {
-      return this.textureY;
-   }
+   @Override
+   public int getTextureY() { return textureY; }
 
-   public int getTextureMaxX() {
-      return this.textureMaxX;
-   }
+   @Override
+   public int getTextureMaxX() { return textureMaxX; }
 
-   public int getTextureMaxY() {
-      return this.textureMaxY;
-   }
+   @Override
+   public int getTextureMaxY() { return textureMaxY; }
 
-   public ITexturedRect setTextureOffset(int offsetX, int offsetY) {
-      this.textureX = offsetX;
-      this.textureY = offsetY;
+   @Override
+   public IOverlayTexturedRect setTextureOffset(int offsetX, int offsetY) {
+      textureX = offsetX;
+      textureY = offsetY;
       return this;
    }
 
-   public ITexturedRect setTextureMaxSize(int textureMaxX, int textureMaxY) {
-      this.textureMaxX = textureMaxX;
-      this.textureMaxY = textureMaxY;
+   @Override
+   public IOverlayTexturedRect setTextureMaxSize(int textureMaxXIn, int textureMaxYIn) {
+      textureMaxX = textureMaxXIn;
+      textureMaxY = textureMaxYIn;
       return this;
    }
 
-   public String getTexture() {
-      return this.texture;
-   }
+   @Override
+   public String getTexture() { return texture; }
 
-   public ITexturedRect setTexture(String texture) {
-      this.texture = texture;
+   @Override
+   public IOverlayTexturedRect setTexture(String textureIn) {
+      texture = textureIn;
       return this;
    }
 
-   public int getWidth() {
-      return this.width;
-   }
+   @Override
+   public int getWidth() { return width; }
 
-   public ITexturedRect setWidth(int width) {
-      this.width = width;
+   @Override
+   public IOverlayTexturedRect setWidth(int widthIn) {
+      width = widthIn;
       return this;
    }
 
-   public int getHeight() {
-      return this.height;
-   }
+   @Override
+   public int getHeight() { return height; }
 
-   public ITexturedRect setHeight(int height) {
-      this.height = height;
+   @Override
+   public IOverlayTexturedRect setHeight(int heightIn) {
+      height = heightIn;
       return this;
    }
 
-   public int getType() {
-      return 1;
-   }
+   @Override
+   public int getType() { return 1; }
 
-   public ITexturedRect setUV(float x1, float y1, float x2, float y2) {
-      this.uv = new float[] {x1, y1, x2, y2};
+   @Override
+   public IOverlayTexturedRect setUV(float u0, float v0, float u1, float v1) {
+      uv[0] = u0;
+      uv[1] = v0;
+      uv[2] = u1;
+      uv[3] = v1;
       return this;
    }
 
-   public ITexturedRect setRGB(float r, float g, float b, float a) {
-      this.rgb = new float[]{r, g, b, a};
+   @Deprecated
+   public IOverlayTexturedRect setRGB(float red, float green, float blue, float alpha) {
+      setColor(red, green, blue, alpha);
       return this;
    }
 
+   @Override
+   public IOverlayTexturedRect setColor(float red, float green, float blue, float alpha) {
+      setColor((int) (ValueUtil.correctFloat(alpha, 0.0f, 1.0f) * 255.0f) << 24,
+              (int) (ValueUtil.correctFloat(red, 0.0f, 1.0f) * 255.0f) << 16,
+              (int) (ValueUtil.correctFloat(green, 0.0f, 1.0f) * 255.0f) << 8,
+              (int) (ValueUtil.correctFloat(blue, 0.0f, 1.0f) * 255.0f));
+      return this;
+   }
+
+   @Override
+   public IOverlayTexturedRect setColor(int red, int green, int blue, int alpha) {
+      color = ValueUtil.correctInt(alpha, 0, 255) |
+              ValueUtil.correctInt(red, 0, 255) |
+              ValueUtil.correctInt(green, 0, 255) |
+              ValueUtil.correctInt(blue, 0, 255);
+      return this;
+   }
+
+   @Override
+   public IOverlayTexturedRect setColor(int colorIn) {
+      color = colorIn;
+      return this;
+   }
+
+   @Override
    public float[] getRGB() {
-      return this.rgb;
+      float[] rgba = new float[4];
+      rgba[0] = ((color >> 16) & 255) / 255.0f;
+      rgba[1] = ((color >> 8) & 255) / 255.0f;
+      rgba[2] = (color & 255) / 255.0f;
+      rgba[3] = ((color >> 24) & 255) / 255.0f;
+      return rgba;
    }
 
-   public float[] getUV() {
-      return this.uv;
-   }
+   @Override
+   public int getColor() { return color; }
 
+   @Override
+   public float[] getUV() { return uv; }
+
+   @Override
    public void toNbt(INbt iNbt) {
       super.toNbt(iNbt);
-      iNbt.setString("texture", this.texture);
-      iNbt.setInteger("width", this.width);
-      iNbt.setInteger("height", this.height);
-      int r;
-      int g;
-      int b;
-      int a;
-      int rgb;
-      if (this.uv != null) {
-         r = (int)(this.uv[0] * 255.0F);
-         g = (int)(this.uv[1] * 255.0F);
-         b = (int)(this.uv[2] * 255.0F);
-         a = (int)(this.uv[3] * 255.0F);
-         rgb = (r << 24) + (g << 16) + (b << 8) + a;
-         iNbt.setInteger("u", rgb);
-      }
-
-      if (this.rgb != null) {
-         r = (int)(this.rgb[0] * 255.0F);
-         g = (int)(this.rgb[1] * 255.0F);
-         b = (int)(this.rgb[2] * 255.0F);
-         a = (int)(this.rgb[3] * 255.0F);
-         rgb = (r << 24) + (g << 16) + (b << 8) + a;
-         iNbt.setInteger("c", rgb);
-      }
-      if (this.textureX >= 0 && this.textureY >= 0) {
-         iNbt.setIntegerArray("texPos", new int[] {this.textureX, this.textureY});
-      }
-      if (this.textureMaxX >= 0 && this.textureMaxY >= 0) {
-         iNbt.setIntegerArray("texPosMax", new int[] {this.textureMaxX, this.textureMaxY});
-      }
+      iNbt.setString("texture", texture);
+      iNbt.setInteger("width", width);
+      iNbt.setInteger("height", height);
+      ListTag list = new ListTag();
+      list.add(FloatTag.valueOf(uv[0]));
+      list.add(FloatTag.valueOf(uv[1]));
+      list.add(FloatTag.valueOf(uv[2]));
+      list.add(FloatTag.valueOf(uv[3]));
+      iNbt.mcSetTag("u", list);
+      iNbt.setInteger("c", color);
+      if (textureX >= 0 && textureY >= 0) { iNbt.setIntegerArray("texPos", new int[] { textureX, textureY }); }
+      if (textureMaxX >= 0 && textureMaxY >= 0) { iNbt.setIntegerArray("texPosMax", new int[] { textureMaxX, textureMaxY }); }
    }
 
+   @Override
    public void fromNbt(INbt iNbt) {
       super.fromNbt(iNbt);
-      this.texture = iNbt.getString("texture");
-      this.width = iNbt.getInteger("width");
-      this.height = iNbt.getInteger("height");
-      int uv;
-      if (iNbt.has("c", 3)) {
-         uv = iNbt.getInteger("c");
-         this.setRGB((float)(uv >> 24 & 255) / 255.0F, (float)(uv >> 16 & 255) / 255.0F, (float)(uv >> 8 & 255) / 255.0F, (float)(uv & 255) / 255.0F);
-      } else {
-         this.setRGB(1.0F, 1.0F, 1.0F, 1.0F);
+      texture = iNbt.getString("texture");
+      width = iNbt.getInteger("width");
+      height = iNbt.getInteger("height");
+      if (iNbt.has("c", 3)) { setColor(iNbt.getInteger("c")); } else { setColor(0xFFFFFFFF); }
+      if (iNbt.has("u", 9) && iNbt.mcGetTag("u") instanceof ListTag list && list.getElementType() == Tag.TAG_FLOAT) {
+         for (int i = 0; i < 4; i++) { uv[i] = i < list.size() ? list.getFloat(i) : 1.0f; }
       }
-      if (iNbt.has("u", 3)) {
-         uv = iNbt.getInteger("u");
-         this.setUV((float)(uv >> 24 & 255) / 255.0F, (float)(uv >> 16 & 255) / 255.0F, (float)(uv >> 8 & 255) / 255.0F, (float)(uv & 255) / 255.0F);
-      } else {
-         this.setUV(0.0F, 0.0F, 1.0F, 1.0F);
-      }
-      if (iNbt.has("texPos", 11)) {
-         this.setTextureOffset(iNbt.getIntegerArray("texPos")[0], iNbt.getIntegerArray("texPos")[1]);
-      }
-      if (iNbt.has("texPosMax", 11)) {
-         this.setTextureMaxSize(iNbt.getIntegerArray("texPosMax")[0], iNbt.getIntegerArray("texPosMax")[1]);
-      }
+      else if (iNbt.has("u", 3)) {
+         int uvInt = iNbt.getInteger("u");
+         setUV((float)(uvInt >> 24 & 255) / 255.0F, (float)(uvInt >> 16 & 255) / 255.0F, (float)(uvInt >> 8 & 255) / 255.0F, (float)(uvInt & 255) / 255.0F);
+      } // OLD
+      else { setUV(0.0F, 0.0F, 1.0F, 1.0F); }
+      if (iNbt.has("texPos", 11)) { setTextureOffset(iNbt.getIntegerArray("texPos")[0], iNbt.getIntegerArray("texPos")[1]); }
+      if (iNbt.has("texPosMax", 11)) { setTextureMaxSize(iNbt.getIntegerArray("texPosMax")[0], iNbt.getIntegerArray("texPosMax")[1]); }
    }
 
 }

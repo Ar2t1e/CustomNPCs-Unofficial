@@ -148,7 +148,7 @@ public class SubGuiNpcAvailabilityItemStacks
         scroll.setUnsortedList(list)
                 .setStacks(stacks)
                 .setSuffixes(suffixes);
-        if (!select.getString().isEmpty()) { scroll.setSelectedIndex(select); }
+        if (!select.getString().isEmpty()) { scroll.setSelected(select); }
         add(scroll.setPos(guiLeft + 70, guiTop + 4));
         // ignore damage
         AvailabilityStackData aData = availability.stacksData.get(cont.slot.getSlotIndex());
@@ -206,7 +206,7 @@ public class SubGuiNpcAvailabilityItemStacks
     public void scrollClicked(GuiCustomScrollNop scroll) {
         if (!dataIDs.containsKey(scroll.getNormalSelected())) { return; }
         cont.slot.setSlotIndex(dataIDs.get(scroll.getNormalSelected()), true);
-        scroll.setSelectedIndex(cont.slot.getSlotIndex());
+        scroll.setSelected(cont.slot.getSlotIndex());
         Packets.sendServer(new SPacketSetSlotIndex(cont.slot.getSlotIndex()));
         init();
     }

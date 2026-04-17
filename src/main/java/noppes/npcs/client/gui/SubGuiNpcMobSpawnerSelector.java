@@ -69,11 +69,11 @@ public class SubGuiNpcMobSpawnerSelector extends GuiBasic
       else { scroll.clear(); }
       add(scroll.setPos(guiLeft + 4, guiTop + 26));
       GuiMenuTopButton tab = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones")
-              .setIsEnabled(showingClones == 0);
+              .setIsFocused(showingClones == 0);
       tab = addTopButton(4, tab.getX() + tab.getWidth(), tab.getY(), "spawner.entities")
-              .setIsEnabled(showingClones == 1);
+              .setIsFocused(showingClones == 1);
       addTopButton(5, tab.getX() + tab.getWidth(), tab.getY(), "gui.server")
-              .setIsEnabled(showingClones == 2);
+              .setIsFocused(showingClones == 2);
       if (showingClones == 0 || showingClones == 2) {
          for (int id = 1; id < 10; id++) {
             addSideButton(21 + id, guiLeft, guiTop + 4 + (id - 1) * 21, Component.translatable("gui.tab").append(" " + id))
@@ -139,7 +139,7 @@ public class SubGuiNpcMobSpawnerSelector extends GuiBasic
       for (int i = 0; i < nbtList.size(); ++i) { list.add(nbtList.getString(i)); }
       scroll.setList(list);
       if (spawnData != null) {
-         scroll.setSelectedIndex(Util.instance.deleteColor(spawnData.getTitle().getString()));
+         scroll.setSelected(Util.instance.deleteColor(spawnData.getTitle().getString()));
          resetEntity();
       }
    }

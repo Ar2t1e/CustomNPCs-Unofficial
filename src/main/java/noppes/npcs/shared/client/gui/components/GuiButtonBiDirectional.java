@@ -82,12 +82,4 @@ public class GuiButtonBiDirectional extends GuiButtonNop {
       return super.mouseClicked(mouseX, mouseY, button);
    }
 
-   @Override
-   protected boolean isValidClickButton(int mouseButton) { return mouseButton == 0; }
-
-   @Override
-   public void onClick(double x, double y) {
-      if (!listener.hasSubGui()) { listener.buttonEvent(this); }
-   }
-
 }

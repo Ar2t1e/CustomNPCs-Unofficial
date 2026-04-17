@@ -86,7 +86,7 @@ public class GuiScriptInterface
          activeTab = 0;
          top = getTopButton(0);
       }
-      top.active = true;
+      top.setIsFocused(true);
       if (activeTab > 0) {
          ScriptContainer container = handler.getScripts().get(activeTab - 1);
          final GuiTextArea ta = new GuiTextArea(3, guiLeft + 5, y, imageWidth - 132, imageHeight - 10, container == null ? "" : container.script)

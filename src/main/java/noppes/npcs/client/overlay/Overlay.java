@@ -5,14 +5,11 @@ import java.util.Comparator;
 import java.util.Queue;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.overlay.ILabel;
+import noppes.npcs.api.overlay.IOverlayLabel;
 import noppes.npcs.api.overlay.IOverlay;
 import noppes.npcs.api.overlay.IOverlayComponent;
 import noppes.npcs.api.overlay.IRenderItemOverlay;
-import noppes.npcs.api.overlay.ITexturedRect;
-import noppes.npcs.shared.client.gui.listeners.custom.IComponentCustomGui;
+import noppes.npcs.api.overlay.IOverlayTexturedRect;
 
 public class Overlay {
 
@@ -24,9 +21,9 @@ public class Overlay {
       linkSide = overlay.getLinkSide();
       nbt = overlay.save().getMCNBT();
       for (IOverlayComponent component : overlay.getComponents().stream().sorted(Comparator.comparingInt(IOverlayComponent::getId)).toList()) {
-         if (component instanceof ILabel) { components.add(new OverlayLabelComponent((ILabel) component)); }
+         if (component instanceof IOverlayLabel) { components.add(new OverlayLabelComponent((IOverlayLabel) component)); }
          else if (component instanceof IRenderItemOverlay) { components.add(new OverlayRenderItemComponent((IRenderItemOverlay) component)); }
-         else if (component instanceof ITexturedRect) { components.add(new OverlayTexturedRectComponent((ITexturedRect) component)); }
+         else if (component instanceof IOverlayTexturedRect) { components.add(new OverlayTexturedRectComponent((IOverlayTexturedRect) component)); }
       }
    }
 

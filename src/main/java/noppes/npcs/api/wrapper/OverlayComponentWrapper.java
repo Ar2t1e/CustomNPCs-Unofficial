@@ -9,41 +9,41 @@ public abstract class OverlayComponentWrapper implements IOverlayComponent {
    private int x;
    private int y;
 
-   public OverlayComponentWrapper(int id, int x, int y) {
-      this.x = x;
-      this.y = y;
-      this.id = id;
+   public OverlayComponentWrapper(int idIn, int xIn, int yIn) {
+      x = xIn;
+      y = yIn;
+      id = idIn;
    }
 
-   public int getId() {
-      return this.id;
-   }
+   @Override
+   public int getId() { return id; }
 
-   public int getPosX() {
-      return this.x;
-   }
+   @Override
+   public int getPosX() { return x; }
 
-   public int getPosY() {
-      return this.y;
-   }
+   @Override
+   public int getPosY() { return y; }
 
-   public IOverlayComponent setPos(int x, int y) {
-      this.x = x;
-      this.y = y;
+   @Override
+   public IOverlayComponent setPos(int xIn, int yIn) {
+      x = xIn;
+      y = yIn;
       return this;
    }
 
+   @Override
    public void toNbt(INbt iNbt) {
-      iNbt.setInteger("id", this.id);
-      iNbt.setInteger("type", this.getType());
-      iNbt.setIntegerArray("pos", new int[]{this.x, this.y});
+      iNbt.setInteger("id", id);
+      iNbt.setInteger("type", getType());
+      iNbt.setIntegerArray("pos", new int[]{ x, y });
    }
 
+   @Override
    public void fromNbt(INbt iNbt) {
       int[] pos = iNbt.getIntegerArray("pos");
-      this.x = pos[0];
-      this.y = pos[1];
-      this.id = iNbt.getInteger("id");
+      x = pos[0];
+      y = pos[1];
+      id = iNbt.getInteger("id");
    }
 
 }

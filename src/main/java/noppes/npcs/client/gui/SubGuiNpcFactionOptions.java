@@ -115,7 +115,7 @@ public class SubGuiNpcFactionOptions
       }
       scroll.setUnsortedList(new ArrayList<>(newList.values()));
       scroll.setHoverTexts(hts);
-      if (name != null) { scroll.setSelectedIndex(name); }
+      if (name != null) { scroll.setSelected(name); }
       init();
    }
 

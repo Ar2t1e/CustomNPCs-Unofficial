@@ -44,7 +44,7 @@ public class GuiNpcDimension extends GuiNPCInterface
       if (!scroll.hasSelected()) {
          for (Component key : data.keySet()) {
             if (data.get(key).equals(minecraft.player != null ?
-                    minecraft.player.level().dimension().location() : Level.OVERWORLD.location())) { scroll.setSelectedIndex(key); }
+                    minecraft.player.level().dimension().location() : Level.OVERWORLD.location())) { scroll.setSelected(key); }
          }
       }
       add(scroll.setPos(guiLeft + 4, guiTop + 4));

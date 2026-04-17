@@ -28,13 +28,14 @@ public class QuestData {
             extraData.getList("Targets", 10).add(nbt);
          }
          else if (task.getEnumType() == EnumQuestTask.CRAFT) {
-            if (task.getItem().isEmpty()) { continue; }
-            if (extraData.contains("Crafts", 9)) { extraData.put("Crafts", new ListTag()); }
-            CompoundTag nbt = new CompoundTag();
-            nbt.put("Item", task.getItemStack().save(new CompoundTag()));
-            nbt.putInt("Value", 0);
-            nbt.putInt("ObjectPos", pos);
-            extraData.getList("Crafts", 10).add(nbt);
+            if (!task.getItem().isEmpty()) {
+               if (extraData.contains("Crafts", 9)) { extraData.put("Crafts", new ListTag()); }
+               CompoundTag nbt = new CompoundTag();
+               nbt.put("Item", task.getItemStack().save(new CompoundTag()));
+               nbt.putInt("Value", 0);
+               nbt.putInt("ObjectPos", pos);
+               extraData.getList("Crafts", 10).add(nbt);
+            }
          }
          else if (task.getEnumType() == EnumQuestTask.LOCATION) {
             if (extraData.contains("Locations", 9)) { extraData.put("Locations", new ListTag()); }

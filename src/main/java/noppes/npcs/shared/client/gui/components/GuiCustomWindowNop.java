@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.client.ClientProxy;
+import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.GuiBoundarySetting;
 import noppes.npcs.client.gui.util.GuiTooltipUtils;
 import noppes.npcs.shared.client.gui.GuiBasic;
@@ -28,6 +29,7 @@ import java.util.Optional;
 
 public class GuiCustomWindowNop extends GuiBasic
         implements IComponentGui, ICustomScrollListener, ISliderListener, ITextfieldListener, ITextChangeListener {
+
 
     @OnlyIn(Dist.CLIENT)
     public interface OnClose {
@@ -58,6 +60,7 @@ public class GuiCustomWindowNop extends GuiBasic
     protected ClientProxy.FontContainer customFont = null;
     public boolean isLock = false;
     public boolean isYDEShow = false;
+    public YDEScrollNop yde_scroll;
 
     public int id;
 
@@ -107,8 +110,9 @@ public class GuiCustomWindowNop extends GuiBasic
     }
 
     @Override
-    public void mouseButtonEvent(GuiButtonNop button, int mouseButton) {
-        if (isHovered && visible) { listener.mouseButtonEvent(button, mouseButton); }
+    public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) {
+        if (isHovered && visible) { return listener.mouseButtonEvent(button, mouseButton); }
+        return false;
     }
 
     @Override
@@ -123,11 +127,12 @@ public class GuiCustomWindowNop extends GuiBasic
                 right *= 2;
                     matrixStack.pushPose();
                     matrixStack.scale(0.5f * bgScale, 0.5f * bgScale, 0.5f * bgScale);
-                    graphics.fill(0, 0, right, bottom, 0xC0101010);
-                    graphics.hLine(1, right - 2, 1, 0xC0F0F0F0);
-                    graphics.vLine(1, 1, bottom - 2, 0xC0F0F0F0);
-                    graphics.vLine(right - 2, 1, bottom - 2, 0xC0F0F0F0);
-                    graphics.hLine(1, right - 2, bottom - 2, 0xC0F0F0F0);
+                    graphics.fill(0, 0, right, bottom, YDEController.backColor);
+                    int color = (isHovered ? YDEController.hoverLineColor : YDEController.componentLineColor) & 0xFFFFFF | 0xC0000000;
+                    graphics.hLine(1, right - 2, 1, color);
+                    graphics.vLine(1, 1, bottom - 2, color);
+                    graphics.vLine(right - 2, 1, bottom - 2, color);
+                    graphics.hLine(1, right - 2, bottom - 2, color);
                     if (title != null && !title.getString().isEmpty()) {
                         matrixStack.translate(3.0f, 3.0f, 0.0f);
                         drawTopRect(graphics, right - 1);
@@ -138,7 +143,7 @@ public class GuiCustomWindowNop extends GuiBasic
                 if (title != null && !title.getString().isEmpty()) {
                     GuiButtonNop.renderString(graphics, title, guiLeft + 3, guiTop + 1,
                             guiLeft + imageWidth - 10, guiTop + 11,
-                            CustomNpcs.MainColor.getRGB() | 255 << 24, false, false, customFont);
+                            YDEController.textColor, false, false, customFont);
                 }
             }
             else {
@@ -221,7 +226,11 @@ public class GuiCustomWindowNop extends GuiBasic
                 }
                 if (!hoverText.isEmpty() && (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText))) {
                     if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
-                    GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, mouseY);
+                    if (listener != null) { listener.setHoverText(hoverText); }
+                    else {
+                        if (hoverFont == null) { GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, ValueUtil.correctInt(mouseY, 16, height)); }
+                        else { renderTooltipInternal(graphics, mouseX, ValueUtil.correctInt(mouseY, 16, height), hoverFont, hoverText, bgScale); }
+                    }
                     hoverText.clear();
                 }
             }

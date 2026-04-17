@@ -131,7 +131,7 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
         }
         scrollMarkets.setUnsortedList(new ArrayList<>(dataMarkets.keySet()))
                 .setHoverTexts(htsM);
-        if (selectedMarcet != null) { scrollMarkets.setSelectedIndex(selectedMarcet.getSettingName()); }
+        if (selectedMarcet != null) { scrollMarkets.setSelected(selectedMarcet.getSettingName()); }
         // Deals:
         if (!dataDeals.isEmpty()) {
             List<Component> allDeals = new ArrayList<>(dataDeals.keySet());
@@ -296,8 +296,8 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
                     .setPrefixes(marcetPrefixes);
         }
         if (selectedDeal != null) {
-            scrollAllDeals.setSelectedIndex(selectedDeal.getSettingName());
-            scrollDeals.setSelectedIndex(selectedDeal.getSettingName());
+            scrollAllDeals.setSelected(selectedDeal.getSettingName());
+            scrollDeals.setSelected(selectedDeal.getSettingName());
         }
         add(scrollMarkets.setPos(x0, y));
         add(scrollDeals.setPos(x1, y));
@@ -450,8 +450,8 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
                 int tab = selectedMarcet.getSection(selectedDeal.getId());
                 if (tab == tabSelect) { return; }
                 selectedMarcet.sections.get(tabSelect).addDeal(selectedDeal.getId());
-                scrollAllDeals.setSelectedIndex(-1);
-                scrollDeals.setSelectedIndex(-1);
+                scrollAllDeals.setSelected(-1);
+                scrollDeals.setSelected(-1);
                 setGuiData(null);
                 break;
             } // <
@@ -459,24 +459,24 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
                 if (!dataDeals.containsKey(scrollDeals.getNormalSelected())) { return; }
                 int id = dataDeals.get(scrollDeals.getNormalSelected());
                 selectedMarcet.sections.get(tabSelect).removeDeal(id);
-                scrollAllDeals.setSelectedIndex(-1);
-                scrollDeals.setSelectedIndex(-1);
+                scrollAllDeals.setSelected(-1);
+                scrollDeals.setSelected(-1);
                 setGuiData(null);
                 break;
             } // >
             case 9: {
                 if (dataDeals.isEmpty()) { return; }
                 for (int id : dataDeals.values()) { selectedMarcet.sections.get(tabSelect).addDeal(id); }
-                scrollAllDeals.setSelectedIndex(-1);
-                scrollDeals.setSelectedIndex(-1);
+                scrollAllDeals.setSelected(-1);
+                scrollDeals.setSelected(-1);
                 setGuiData(null);
                 break;
             } // <<
             case 10: {
                 if (scrollDeals.getList().isEmpty()) { return; }
                 selectedMarcet.sections.get(tabSelect).removeAllDeals();
-                scrollAllDeals.setSelectedIndex(-1);
-                scrollDeals.setSelectedIndex(-1);
+                scrollAllDeals.setSelected(-1);
+                scrollDeals.setSelected(-1);
                 setGuiData(null);
                 break;
             } // >>
@@ -484,7 +484,7 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
                 if (selectedMarcet == null || !dataDeals.containsKey(scrollDeals.getNormalSelected())) { return; }
                 int pos = scrollDeals.getSelectedIndex();
                 Collections.swap(selectedMarcet.sections.get(tabSelect).deals, pos, pos - 1);
-                scrollDeals.setSelectedIndex(pos - 1);
+                scrollDeals.setSelected(pos - 1);
                 setGuiData(null);
                 break;
             } // up
@@ -492,7 +492,7 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
                 if (selectedMarcet == null || !dataDeals.containsKey(scrollDeals.getNormalSelected())) { return; }
                 int pos = scrollDeals.getSelectedIndex();
                 Collections.swap(selectedMarcet.sections.get(tabSelect).deals, pos, pos + 1);
-                scrollDeals.setSelectedIndex(pos + 1);
+                scrollDeals.setSelected(pos + 1);
                 setGuiData(null);
                 break;
             } // down
@@ -536,8 +536,8 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
                     if (!dataDeals.containsKey(scroll.getNormalSelected())) { return; }
                     selectedDeal = mData.getDeal(dataDeals.get(scroll.getNormalSelected()));
                     if (selectedDeal != null) { dealId = selectedDeal.getId(); }
-                    if (scroll.id == 1) { scrollAllDeals.setSelectedIndex(-1); }
-                    else { scrollDeals.setSelectedIndex(-1); }
+                    if (scroll.id == 1) { scrollAllDeals.setSelected(-1); }
+                    else { scrollDeals.setSelected(-1); }
                     init();
                     break;
                 } // All Deals

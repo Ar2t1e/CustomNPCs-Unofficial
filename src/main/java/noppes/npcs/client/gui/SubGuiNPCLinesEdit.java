@@ -55,7 +55,7 @@ public class SubGuiNPCLinesEdit extends GuiNPCInterface
             case 1: {
                 if (!data.containsKey(select)) { return; }
                 lines.remove(data.get(select));
-                if (scroll != null && scroll.hasSelected()) { scroll.setSelectedIndex(scroll.getSelectedIndex() - 1); }
+                if (scroll != null && scroll.hasSelected()) { scroll.setSelected(scroll.getSelectedIndex() - 1); }
                 init();
                 break;
             } // remove
@@ -115,7 +115,7 @@ public class SubGuiNPCLinesEdit extends GuiNPCInterface
                 if (Util.instance.deleteColor(c.getString()).equals(Util.instance.deleteColor(select.getString()))) {
                     select = c;
                     line = lines.lines.get(data.get(select));
-                    scroll.setSelectedIndex(select);
+                    scroll.setSelected(select);
                     hasInList = true;
                 }
             }

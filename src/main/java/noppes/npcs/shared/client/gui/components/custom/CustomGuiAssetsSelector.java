@@ -92,7 +92,7 @@ public class CustomGuiAssetsSelector
          folders.setList(new ArrayList<>(domains.keySet()));
          if (selectedResource != null) {
             selectedDomain = selectedResource.getNamespace();
-            folders.setSelectedIndex(selectedDomain);
+            folders.setSelected(selectedDomain);
          }
       }
       else {
@@ -106,7 +106,7 @@ public class CustomGuiAssetsSelector
                   folders.clearSelection();
                   folders.setList(list);
                   if (selectedResource != null && selectedResource.getPath().startsWith(location) && !location.equals(path)) {
-                     folders.setSelectedIndex(path.substring(location.length(), path.length() - 1));
+                     folders.setSelected(path.substring(location.length(), path.length() - 1));
                      folders.scrollTo(folders.getSelected());
                   }
                   return;
@@ -154,7 +154,7 @@ public class CustomGuiAssetsSelector
          if (selectedResource != null) {
             int i = selectedResource.getPath().lastIndexOf(47);
             if (selectedResource.getPath().substring(0, i + 1).equals(path)) {
-               items.setSelectedIndex(selectedResource.getPath().substring(i + 1));
+               items.setSelected(selectedResource.getPath().substring(i + 1));
             }
          }
       }

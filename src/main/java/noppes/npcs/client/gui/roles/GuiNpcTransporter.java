@@ -89,7 +89,7 @@ public class GuiNpcTransporter extends GuiNPCInterface2
       add(scroll.setPos(x, y)
               .setUnsortedList(list)
               .setHoverTexts(hts)
-              .setSelectedIndex(select));
+              .setSelected(select));
       addLabel(0, x + 2, y - 11, Component.translatable("gui.categories").append(":"));
       x += 147;
       addLabel(1, x, y - 11, Component.translatable("gui.name").append(":"))

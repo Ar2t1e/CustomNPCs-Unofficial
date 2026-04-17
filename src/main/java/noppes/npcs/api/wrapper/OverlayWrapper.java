@@ -6,11 +6,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.api.overlay.ILabel;
+import noppes.npcs.api.overlay.IOverlayLabel;
 import noppes.npcs.api.overlay.IOverlay;
 import noppes.npcs.api.overlay.IOverlayComponent;
 import noppes.npcs.api.overlay.IRenderItemOverlay;
-import noppes.npcs.api.overlay.ITexturedRect;
+import noppes.npcs.api.overlay.IOverlayTexturedRect;
 
 public class OverlayWrapper implements IOverlay {
 
@@ -24,29 +24,29 @@ public class OverlayWrapper implements IOverlay {
    public Collection<IOverlayComponent> getComponents() { return components.values(); }
 
    @Override
-   public ILabel addLabel(int id, String text, int x, int y) {
-      ILabel label = new OverlayLabelWrapper(id, x, y, text);
+   public IOverlayLabel addLabel(int id, String text, int x, int y) {
+      IOverlayLabel label = new OverlayLabelWrapper(id, x, y, text);
       components.put(id, label);
       return label;
    }
 
    @Override
-   public ITexturedRect addTexturedRect(int id, String texture, int x, int y, int width, int height) {
-      ITexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height);
+   public IOverlayTexturedRect addTexturedRect(int id, String texture, int x, int y, int width, int height) {
+      IOverlayTexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height);
       components.put(id, rect);
       return rect;
    }
 
    @Override
-   public ITexturedRect addTexturedRectCrop(int id, String texture, int x, int y, int width, int height, int textureX, int textureY) {
-      ITexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height, textureX, textureY);
+   public IOverlayTexturedRect addTexturedRectCrop(int id, String texture, int x, int y, int width, int height, int textureX, int textureY) {
+      IOverlayTexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height, textureX, textureY);
       components.put(id, rect);
       return rect;
    }
 
    @Override
-   public ITexturedRect addTexturedRectCrop(int id, String texture, int x, int y, int width, int height, int textureX, int textureY, int textureMaxX, int textureMaxY) {
-      ITexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height, textureX, textureY, textureMaxX, textureMaxY);
+   public IOverlayTexturedRect addTexturedRectCrop(int id, String texture, int x, int y, int width, int height, int textureX, int textureY, int textureMaxX, int textureMaxY) {
+      IOverlayTexturedRect rect = new OverlayTexturedRectWrapper(id, x, y, texture, width, height, textureX, textureY, textureMaxX, textureMaxY);
       components.put(id, rect);
       return rect;
    }

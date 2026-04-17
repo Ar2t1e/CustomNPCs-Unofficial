@@ -81,6 +81,9 @@ public class GuiWrapper {
          subgui.mouseClicked(mouseX, mouseY, mouseButton);
          return true;
       }
+      if (GuiTextArea.getActive() != null && GuiTextArea.getActive().mouseClicked(mouseX, mouseY, mouseButton)) {
+         return true;
+      }
       // first text_fields
       for (IComponentGui component : new ArrayList<>(components)) {
          if ((component.getElementType() == GuiComponentType.TEXT_FIELD || component.getElementType() == GuiComponentType.TEXT_AREA) &&

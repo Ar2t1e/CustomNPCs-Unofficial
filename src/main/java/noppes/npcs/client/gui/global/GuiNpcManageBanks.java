@@ -73,7 +73,7 @@ public class GuiNpcManageBanks
       int x = guiLeft + 255;
       int y = guiTop + 5;
       add(scroll.setPos(x, y));
-      scroll.setSelectedIndex(selected);
+      scroll.setSelected(selected);
       selected = scroll.getNormalSelected();
       for (int slotId = 0; slotId < 2; slotId++) {
          ((ISlotMixin) container.getSlot(slotId)).setX(selected.getString().isEmpty() ? -5000 : 180);
@@ -344,7 +344,7 @@ public class GuiNpcManageBanks
       }
       data.putAll(map);
       scroll.setNormalList(new ArrayList<>(data.keySet()))
-              .setSelectedIndex(selected);
+              .setSelected(selected);
       selected = scroll.getNormalSelected();
       if (data.containsKey(selected)) {
          Bank b = BankController.getInstance().getBank(data.get(selected));

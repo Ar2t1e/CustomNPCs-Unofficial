@@ -38,13 +38,13 @@ public class GuiNpcMobSpawnerMounter extends GuiNPCInterface implements IGuiData
       add(scroll.setPos(guiLeft + 4, guiTop + 4));
       // clones
       GuiMenuTopButton button = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones")
-              .setIsEnabled(showingClones == 0);
+              .setIsFocused(showingClones == 0);
       // entities
       button = addTopButton(4, button.getX() + button.getWidth(), button.getY(), "spawner.entities")
-              .setIsEnabled(showingClones == 1);
+              .setIsFocused(showingClones == 1);
       // server
       addTopButton(5, button.getX() + button.getWidth(), button.getY(), "gui.server")
-              .setIsEnabled(showingClones == 2);
+              .setIsFocused(showingClones == 2);
       // mount
       int x = guiLeft + 171;
       int y = guiTop + 6;

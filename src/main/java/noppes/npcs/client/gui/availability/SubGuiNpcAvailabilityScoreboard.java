@@ -77,7 +77,7 @@ public class SubGuiNpcAvailabilityScoreboard
          }
       }
       scroll.setNormalList(new ArrayList<>(dataNames.keySet()));
-      if (isSelect) { scroll.setSelectedIndex(select); }
+      if (isSelect) { scroll.setSelected(select); }
       add(scroll.setPos(guiLeft + 6, guiTop + 14));
       // type
       int p = 0;

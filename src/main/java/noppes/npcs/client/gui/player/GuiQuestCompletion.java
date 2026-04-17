@@ -1,17 +1,16 @@
 package noppes.npcs.client.gui.player;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.handler.data.IQuest;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.TextBlockClient;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.controllers.QuestController;
+import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketQuestCompletionCheck;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
@@ -19,8 +18,15 @@ import noppes.npcs.shared.client.gui.listeners.ITopButtonListener;
 
 public class GuiQuestCompletion extends GuiNPCInterface implements ITopButtonListener {
 
-   protected final IQuest quest;
-   protected final ResourceLocation resource = new ResourceLocation(CustomNpcs.MODID, "textures/gui/smallbg.png");
+   protected static final ResourceLocation resource = getResource("smallbg.png");
+   protected final Quest quest;
+
+   // New from Unofficial (BetaZavr)
+   protected static final ResourceLocation bookGuiTextures = new ResourceLocation("textures/gui/book.png");
+   protected TextBlockClient textBlockClient;
+   protected int maxLine;
+   protected int currentPage = 0;
+   protected int hover;
 
    public GuiQuestCompletion(int questId) {
       super();
@@ -35,32 +41,19 @@ public class GuiQuestCompletion extends GuiNPCInterface implements ITopButtonLis
    @Override
    public void init() {
       super.init();
-      int left = (imageWidth - font.width(Component.translatable(quest.getName()))) / 2;
+      Component questTitle = Component.translatable("questlog.completed").append(Component.translatable(quest.getName()));
+      int left = (imageWidth - font.width(questTitle)) / 2;
       addLabel(0, guiLeft + left, guiTop + 4, Component.translatable(quest.getName()));
-      addButton(0, guiLeft + 38, guiTop + imageHeight - 24, "quest.complete")
-              .setSize(100, 20);
-   }
-
-   @Override
-   public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-      renderBackground(graphics);
-      RenderSystem.setShader(GameRenderer::getPositionTexShader);
-      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-      RenderSystem.setShaderTexture(0, resource);
-      graphics.blit(resource, guiLeft, guiTop, 0, 0, imageWidth, imageHeight);
-      graphics.hLine(guiLeft + 4, guiLeft + 170, guiTop + 13, -16777216 + CustomNpcResourceListener.DefaultTextColor);
-      drawQuestText(graphics);
-      super.render(graphics, mouseX, mouseY, partialTicks);
-   }
-
-   private void drawQuestText(GuiGraphics graphics) {
-      int x = guiLeft + 4;
-      TextBlockClient block = new TextBlockClient(Component.translatable(quest.getCompleteText()).getString(), 172, true, player);
-      for(int i = 0; i < block.lines.size(); ++i) {
-         String text = block.lines.get(i).getString();
-         graphics.drawString(font, text, x, guiTop + 16 + i * 9, CustomNpcResourceListener.DefaultTextColor, false);
+      textBlockClient = new TextBlockClient(Component.translatable(quest.getCompleteText()).getString(), 170, true, npc, player);
+      maxLine = 180 / font.lineHeight;
+      if (textBlockClient.lines.size() > maxLine) {
+         addButton(0, guiLeft + 28, guiTop + imageHeight - 24, "quest.complete")
+                 .setSize(80, 20);
       }
-
+      else {
+         addButton(0, guiLeft + 48, guiTop + imageHeight - 24, "quest.complete")
+                 .setSize(80, 20);
+      }
    }
 
    @Override
@@ -68,6 +61,56 @@ public class GuiQuestCompletion extends GuiNPCInterface implements ITopButtonLis
       if (guiButton.id == 0) {
          Packets.sendServer(new SPacketQuestCompletionCheck(quest.getId(), ItemStack.EMPTY));
          onClose();
+      }
+   }
+
+   @Override
+   public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+      renderBackground(graphics);
+      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+      graphics.blit(resource, guiLeft, guiTop, 0, 0, imageWidth, imageHeight);
+      graphics.hLine(guiLeft + 4, guiLeft + 170, guiTop + 13, CustomNpcResourceListener.DefaultTextColor | 0xFF000000);
+      drawQuestText(graphics);
+      hover = -1;
+      if (textBlockClient.lines.size() * font.lineHeight > maxLine) {
+         String page = (currentPage + 1) + "/" + ((int) Math.ceil((double) textBlockClient.lines.size() / (double) maxLine));
+         graphics.drawString(font, page, guiLeft + 150 - font.width(page), guiTop + imageHeight - 20, CustomNpcResourceListener.DefaultTextColor);
+         PoseStack matrixStack = graphics.pose();
+         if (currentPage > 0) {
+            matrixStack.pushPose();
+            matrixStack.translate(guiLeft + 6, guiTop + imageHeight - 20, 0.0f);
+            if (isMouseHover(mouseX, mouseY, guiLeft + 6, guiTop + imageHeight - 20, 18, 10)) { hover = 0; }
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            graphics.blit(bookGuiTextures, 0, 0, hover == 0 ? 26 : 3, 207, 18, 10);
+            matrixStack.popPose();
+         }
+         if ((currentPage + 1) * maxLine < textBlockClient.lines.size()) {
+            matrixStack.pushPose();
+            matrixStack.translate(guiLeft + imageWidth - 24, guiTop + imageHeight - 20, 0.0f);
+            if (isMouseHover(mouseX, mouseY, guiLeft + imageWidth - 24, guiTop + imageHeight - 20, 18, 10)) { hover = 1; }
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            graphics.blit(bookGuiTextures, 0, 0, hover == 1 ? 26 : 3, 194, 18, 10);
+            matrixStack.popPose();
+         }
+      }
+      super.render(graphics, mouseX, mouseY, partialTicks);
+   }
+
+   // New from Unofficial (BetaZavr)
+   @Override
+   public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+      if (!hasSubGui() && hover != -1) {
+         if (hover == 1) { currentPage++; }
+         else { currentPage--; }
+         return true;
+      }
+      return super.mouseClicked(mouseX, mouseY, mouseButton);
+   }
+
+   private void drawQuestText(GuiGraphics graphics) {
+      for (int i = currentPage * maxLine, j = 0; j < maxLine && i < textBlockClient.lines.size(); ++i, ++j) {
+         graphics.drawString(font, textBlockClient.lines.get(i),
+                 guiLeft + 4, guiTop + 16 + j * font.lineHeight, CustomNpcResourceListener.DefaultTextColor);
       }
    }
 

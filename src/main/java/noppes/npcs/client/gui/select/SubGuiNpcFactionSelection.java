@@ -52,7 +52,7 @@ public class SubGuiNpcFactionSelection extends GuiNPCInterface implements ICusto
       if (scroll == null) { scroll = addScroll(0).setSize(168, 180); }
       add(scroll.setPos(guiLeft + 4, guiTop + 15)
               .setUnsortedList(list)
-              .setSelectedIndex(selected));
+              .setSelected(selected));
       addButton(0, guiLeft + 89, guiTop + scroll.height + 39, "mco.template.button.select")
               .setSize(83, 20)
               .setIsEnabled(scroll.hasSelected());

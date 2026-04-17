@@ -33,7 +33,7 @@ public class GuiNPCAdvancedLinkedNpc extends GuiNPCInterface2
       super.init();
       int x = guiLeft + 137;
       if (scroll == null) { scroll = addScroll(0).setSize(143, 208); }
-      add(scroll.setSelectedIndex(npc.linkedName)
+      add(scroll.setSelected(npc.linkedName)
               .setPos(x, guiTop + 5)
               .setList(data));
       // clear
@@ -50,7 +50,7 @@ public class GuiNPCAdvancedLinkedNpc extends GuiNPCInterface2
    public void buttonEvent(GuiButtonNop button) {
       if (button.id == 1) {
          Packets.sendServer(new SPacketLinkedSet(""));
-         scroll.setSelectedIndex("");
+         scroll.setSelected("");
       }
    }
 
@@ -62,7 +62,7 @@ public class GuiNPCAdvancedLinkedNpc extends GuiNPCInterface2
    }
 
    @Override
-   public void setSelected(String selected) { scroll.setSelectedIndex(selected); }
+   public void setSelected(String selected) { scroll.setSelected(selected); }
 
    @Override
    public void save() { }

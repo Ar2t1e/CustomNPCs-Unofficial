@@ -13,20 +13,19 @@ import javax.annotation.Nonnull;
 
 public class YDEOption extends YDENode {
 
-    public final @Nonnull DialogOption option;
+    public @Nonnull DialogOption option;
     public int dialogId;
     public Dialog dialog;
 
     public YDEOption(YDEData parent, int idIn, String categoryIn, int dialogIdIn, @Nonnull DialogOption optionIn) {
         super(parent);
         type = EnumYDEType.OPTION;
-        title = Component.translatable("gui.answer").append(" # " + optionIn.slot);
 
         id = idIn;
         dialogId = dialogIdIn;
-        dialog = DialogController.instance.get(dialogId);
         category = categoryIn;
         option = optionIn;
+        refresh();
     }
 
     @Override
@@ -34,8 +33,8 @@ public class YDEOption extends YDENode {
         super.load(compound);
         type = EnumYDEType.OPTION;
         dialogId = compound.getInt("DialogId");
-        dialog = DialogController.instance.get(dialogId);
         option.load(compound.getCompound("Option"));
+        refresh();
     }
 
     @Override
@@ -47,6 +46,17 @@ public class YDEOption extends YDENode {
     }
 
     @Override
-    public void refresh() { }
+    public void refresh() {
+        if (dialog == null) { dialog = DialogController.instance.get(dialogId); }
+        if (dialog == null) {
+            dialog = new Dialog(DialogController.instance.getCategory(category));
+            if (option.slot < 0) { option.slot = 0; }
+            dialog.options.put(option.slot, option);
+        }
+        else if (option.slot > -1 && dialog.options.containsKey(option.slot)) {
+            option = dialog.options.get(option.slot);
+        }
+        title = Component.translatable("gui.answer").append(" # " + option.slot);
+    }
 
 }

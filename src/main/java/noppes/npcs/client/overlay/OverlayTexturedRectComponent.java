@@ -4,7 +4,7 @@ import java.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
-import noppes.npcs.api.overlay.ITexturedRect;
+import noppes.npcs.api.overlay.IOverlayTexturedRect;
 
 public class OverlayTexturedRectComponent implements IOverlayRenderComponent {
 
@@ -19,7 +19,7 @@ public class OverlayTexturedRectComponent implements IOverlayRenderComponent {
    private final int textureMaxY;
    private final int id;
 
-   public OverlayTexturedRectComponent(ITexturedRect component) {
+   public OverlayTexturedRectComponent(IOverlayTexturedRect component) {
       x = component.getPosX();
       y = component.getPosY();
       id = component.getId();

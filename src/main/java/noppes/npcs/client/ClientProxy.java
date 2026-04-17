@@ -31,6 +31,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.entity.LivingEntity;
@@ -106,6 +107,7 @@ import noppes.npcs.shared.client.gui.util.TrueTypeFont;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.TempFile;
 import noppes.npcs.util.Util;
+import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -561,7 +563,6 @@ public class ClientProxy extends CommonProxy {
       ModelNpcAlt.loadAnimationModel(animation);
    }
 
-
    @Override
    public void createAllFiles(ICustomElement customElement) {
       super.createAllFiles(customElement);
@@ -569,6 +570,24 @@ public class ClientProxy extends CommonProxy {
       else if (customElement instanceof Item) { NoppesUtil.createAllItemFiles(customElement); }
       else if (customElement instanceof CustomParticleType particle) { NoppesUtil.createAllParticleFiles(particle); }
       else if (customElement instanceof PotionData potionData) { NoppesUtil.createAllPotionFiles(potionData); }
+   }
+
+   @Override
+   public void playSound(SoundSource category, String sound, double x, double y, double z, float volume, float pitch, boolean streaming, boolean looping) {
+      if (category != SoundSource.MUSIC) {
+         if (streaming) { MusicController.Instance.playStreaming(new ResourceLocation(sound), getPlayer(), looping); }
+         else { MusicController.Instance.playMusic(new ResourceLocation(sound), getPlayer(), looping); }
+      }
+      else {
+         MusicController.Instance.playSound(category, sound, x, y, z, volume, pitch);
+      }
+   }
+
+   @Override
+   public void stopSound(int category, String sound) {
+      SoundSource source = SoundSource.values()[ValueUtil.onlyPositiveInt(category, SoundSource.values().length)];
+      if (sound == null || sound.isEmpty()) { Minecraft.getInstance().getSoundManager().stop(null, source); }
+      else { MusicController.Instance.stopSound(new ResourceLocation(NoppesUtilServer.validLocation(sound)), source); }
    }
 
 }

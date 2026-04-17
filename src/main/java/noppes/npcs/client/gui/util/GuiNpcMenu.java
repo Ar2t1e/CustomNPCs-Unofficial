@@ -207,7 +207,7 @@ public class GuiNpcMenu {
          };
          delete.setX(close.getX() - delete.getWidth());
          topButtons = new GuiMenuTopButton[] { display, stats, ai, inv, advanced, global, close, delete };
-         for (GuiMenuTopButton button : topButtons) { button.active = button.id == activeMenu; }
+         for (GuiMenuTopButton button : topButtons) { button.setIsFocused(button.id == activeMenu); }
       }
       else {
          GuiMenuTopButton close = new GuiMenuTopButton(parent, 0, "X", guiLeft + width - 22, guiTop - 17) {

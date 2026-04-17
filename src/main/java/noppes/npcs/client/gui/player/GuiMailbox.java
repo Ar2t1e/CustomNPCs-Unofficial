@@ -338,7 +338,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
                      }
                      Packets.sendServer(new SPacketPlayerMailOpen(false, false, selected.timeWhenReceived, selected.sender));
                      selected = null;
-                     scroll.setSelectedIndex(-1);
+                     scroll.setSelected(-1);
                   }
                   matrixStack.popPose();
                   onClose();
@@ -446,7 +446,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
       scroll.setUnsortedList(list).setPrefixes(prefixes);
       scroll.colorBackS = 0x00000000;
       scroll.colorBackE = 0x00000000;
-      if (!select.isEmpty()) { scroll.setSelectedIndex(select); }
+      if (!select.isEmpty()) { scroll.setSelected(select); }
       add(scroll.setPos(guiLeft + 9, guiTop + 45));
       Component title = Component.translatable("mailbox.name");
       int x = (imageWidth - font.width(title)) / 2;

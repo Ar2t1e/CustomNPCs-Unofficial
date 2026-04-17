@@ -49,12 +49,12 @@ public class SubGuiNpcTransportSelection extends GuiBasic implements ICustomScro
         }
         if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, 200); }
         scrollCategories.setList(Lists.newArrayList(categoryData.keySet()));
-        if (selectedCategory != null) { scrollCategories.setSelectedIndex(selectedCategory.title); }
+        if (selectedCategory != null) { scrollCategories.setSelected(selectedCategory.title); }
         add(scrollCategories.setPos(guiLeft + 4, guiTop + 14));
 
         if (scrollTransports == null) { scrollTransports = addScroll(1).setSize(170, 200); }
         scrollTransports.setList(Lists.newArrayList(transportData.keySet()));
-        if (selectedTransport != null) { scrollTransports.setSelectedIndex(selectedTransport.name); }
+        if (selectedTransport != null) { scrollTransports.setSelected(selectedTransport.name); }
         add(scrollTransports.setPos(guiLeft + 175, guiTop + 14));
     }
 

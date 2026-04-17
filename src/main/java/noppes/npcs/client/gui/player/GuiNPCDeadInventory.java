@@ -108,7 +108,7 @@ public class GuiNPCDeadInventory extends GuiContainerNPCInterface<ContainerDead>
     @Override
     public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
         scroll.setList(dataList);
-        scroll.setSelectedIndex(menu.playerParent);
+        scroll.setSelected(menu.playerParent);
     }
 
     @Override

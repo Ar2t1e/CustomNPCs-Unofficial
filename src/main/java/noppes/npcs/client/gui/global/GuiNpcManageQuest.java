@@ -138,13 +138,13 @@ public class GuiNpcManageQuest
               .setHoverTexts("manager.hover.category.add");
 
       if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, 198); }
-      if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelectedIndex(selectedCategory); }
+      if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelected(selectedCategory); }
       scrollCategories.setNormalList(new ArrayList<>(categoryData.keySet()))
               .setPos( guiLeft + 4, guiTop + 15);
       add(scrollCategories);
 
       if (scrollQuests == null) { scrollQuests = addScroll(1).setSize(170, 198); }
-      if (!selectedQuest.getString().isEmpty()) { scrollQuests.setSelectedIndex(selectedQuest); }
+      if (!selectedQuest.getString().isEmpty()) { scrollQuests.setSelected(selectedQuest); }
       scrollQuests.setUnsortedList(new ArrayList<>(questData.keySet()))
               .setHoverTexts(hts)
               .setPos(guiLeft + 176, guiTop + 15);

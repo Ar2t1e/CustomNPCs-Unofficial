@@ -195,11 +195,11 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
               .setHoverTexts("manager.hover.category.add");
       if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, imageHeight - 3); }
       scrollCategories.setNormalList(new ArrayList<>(categoryData.keySet()));
-      if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelectedIndex(selectedCategory); }
+      if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelected(selectedCategory); }
       add(scrollCategories.setPos(guiLeft + 4, guiTop + 15));
       if (scrollDialogs == null) { scrollDialogs = addScroll(1).setSize(170, imageHeight - 3); }
       scrollDialogs.setUnsortedList(new ArrayList<>(dialogData.keySet()));
-      if (!selectedDialog.getString().isEmpty()) { scrollDialogs.setSelectedIndex(selectedDialog); }
+      if (!selectedDialog.getString().isEmpty()) { scrollDialogs.setSelected(selectedDialog); }
       scrollDialogs.setHoverTexts(hts);
       add(scrollDialogs.setPos(guiLeft + 176, guiTop + 15));
    }

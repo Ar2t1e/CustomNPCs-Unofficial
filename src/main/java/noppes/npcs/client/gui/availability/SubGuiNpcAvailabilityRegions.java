@@ -146,7 +146,7 @@ public class SubGuiNpcAvailabilityRegions
         scroll.setUnsortedList(list)
                 .setSuffixes(suffixes)
                 .setHoverTexts(hts);
-        if (isSelect) { scroll.setSelectedIndex(select); }
+        if (isSelect) { scroll.setSelected(select); }
         add(scroll.setPos(guiLeft + 4, guiTop + 14));
         EnumAvailabilityRegion aData = null;
         if (isSelect && data.containsKey(select) && availability.regions.containsKey(data.get(scroll.getNormalSelected()))) { aData = availability.regions.get(data.get(scroll.getNormalSelected())); }

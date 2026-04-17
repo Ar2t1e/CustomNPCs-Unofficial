@@ -53,7 +53,6 @@ public class GuiTextArea
 
    public int id;
    public String text = null;
-   public boolean active = false;
    public boolean enabled = true;
    public boolean visible = true;
    public boolean clicked = false;
@@ -64,6 +63,12 @@ public class GuiTextArea
    public boolean undoing;
 
    // New from Unofficial (BetaZavr)
+   private static GuiTextArea activeArea = null;
+   public static void unfocus() {
+      GuiTextArea prev = activeArea;
+      activeArea = null;
+      if (prev instanceof ITextChangeListener textChanger) { textChanger.textUpdate(prev, prev.text); }
+   }
    protected final List<Component> hoverText = new ArrayList<>();
    public boolean isYDE = false;
 
@@ -79,6 +84,8 @@ public class GuiTextArea
       undoing = false;
       font.setSpecial(colorChar);
    }
+
+   public static GuiTextArea getActive() { return activeArea; }
 
    @Override
    public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
@@ -179,7 +186,7 @@ public class GuiTextArea
             }
             yPos = getY() + (i - scrolledLine) * container.lineHeight + 1;
             font.draw(graphics.pose(), data.getFormattedString(container.makeup), (float)(getX() + 1), (float) yPos, 0xFFE0E0E0);
-            if (active && isEnabled() && cursorCounter / 8 % 2 == 0 && cursorPosition >= data.start && cursorPosition < data.end) {
+            if (activeArea == this && isEnabled() && cursorCounter / 8 % 2 == 0 && cursorPosition >= data.start && cursorPosition < data.end) {
                posX = getX() + font.width(line.substring(0, cursorPosition - data.start));
                graphics.fill(posX + 1, yPos, posX + 2, yPos + 1 + container.lineHeight, 0xFFD0D0D0);
             }
@@ -277,7 +284,7 @@ public class GuiTextArea
 
    @Override
    public boolean charTyped(char c, int i) {
-      if (!active) { return false; }
+      if (activeArea != this) { return false; }
       if (!isEnabled()) { return false; }
       if (SharedConstants.isAllowedChatCharacter(c)) { addText(Character.toString(c)); }
       return true;
@@ -285,9 +292,9 @@ public class GuiTextArea
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-      if (!visible || !enabled || !active || !isFocused()) { return false; }
-      if (active && GuiBasic.isEscKey(keyCode)) {
-         active = false;
+      if (!visible || !enabled || activeArea != this || !isFocused()) { return false; }
+      if (activeArea == this && GuiBasic.isEscKey(keyCode)) {
+         unfocus();
          return true;
       }
       if (Screen.isSelectAll(keyCode)) {
@@ -477,10 +484,12 @@ public class GuiTextArea
 
    @Override
    public boolean mouseClicked(double xMouse, double yMouse, int mouseButton) {
-      active = xMouse >= (double)getX() && xMouse < (double)(getX() + width) && yMouse >= (double)getY() && yMouse < (double)(getY() + height);
-      setFocused(active);
-      if (active) {
+      isHovered = xMouse >= (double)getX() && xMouse < (double)(getX() + width) && yMouse >= (double)getY() && yMouse < (double)(getY() + height);
+      setFocused(isHovered);
+      if (isHovered) {
          GuiTextFieldNop.unfocus();
+         if (activeArea != null && activeArea != this) { unfocus(); }
+         activeArea = this;
          startSelection = endSelection = cursorPosition = getSelectionPos(xMouse, yMouse);
          clicked = mouseButton == 0;
          doubleClicked = false;
@@ -501,13 +510,14 @@ public class GuiTextArea
          }
          lastClicked = time;
       }
-      return active;
+      else if (activeArea == this) { unfocus(); }
+      return isHovered;
    }
 
    public void tick() { ++cursorCounter; }
 
    public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
-      if (active && scrolled != 0.0D) {
+      if (activeArea == this && scrolled != 0.0D) {
          scrolledLine += scrolled > 0.0D ? -1 : 1;
          scrolledLine = Math.max(Math.min(scrolledLine, container.linesCount - height / container.lineHeight), 0);
          return true;
@@ -560,7 +570,7 @@ public class GuiTextArea
       return this;
    }
 
-   public boolean isActive() { return active; }
+   public boolean isActive() { return activeArea == this; }
 
    protected void updateWidgetNarration(@Nonnull NarrationElementOutput narrationElementOutput) { }
 

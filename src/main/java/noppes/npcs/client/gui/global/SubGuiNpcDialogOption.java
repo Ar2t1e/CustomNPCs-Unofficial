@@ -16,6 +16,7 @@ import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.util.Util;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class SubGuiNpcDialogOption
    public static int LastColor = new Color(0xE0E0E0).getRGB();
 
    // New from Unofficial (BetaZavr)
-   private static final Object[] options = new Object[] { "gui.close", "dialog.dialog", "gui.disabled", "menu.role", "block.minecraft.command_block" };
+   public static final Object[] options = new Object[] { "gui.close", "dialog.dialog", "gui.disabled", "menu.role", "block.minecraft.command_block" };
    public final Screen parent;
    private final Map<Component, DialogOption.OptionDialogID> data = new HashMap<>(); // {scrollTitle, dialogID}
    private GuiCustomScrollNop scroll;
@@ -53,11 +54,12 @@ public class SubGuiNpcDialogOption
       int x1 = x0 + 58;
       int x2 = x0 + 145;
       int x3 = x2 + 52;
-      addLabel(66, guiLeft, guiTop + 4, "dialog.editoption");
-      getLabel(66).setCenter(imageWidth);
+      addLabel(66, guiLeft, guiTop + 4, "dialog.editoption")
+              .setCenter(imageWidth);
 
-      addLabel(0, x0, guiTop + 20, "gui.title");
-      addTextField(0, x0 + 10, guiTop + 15, 196, 20, option.title)
+      addLabel(0, x0, guiTop + 20, "gui.text")
+              .setSize(58, 10);
+      addTextField(0, x1, guiTop + 15, 188, 20, option.title)
               .setHoverTexts("dialog.option.hover.name");
       StringBuilder color = new StringBuilder(Integer.toHexString(option.optionColor));
       while (color.length() < 6) { color.insert(0, 0); }
@@ -77,12 +79,12 @@ public class SubGuiNpcDialogOption
               .setTexture(GuiDialogInteract.icons.get(option.iconId))
               .setDefBack(true)
               .setUV(0, 0, 256, 256)
-              .setHoverTexts("dialog.option.hover.name");
+              .setHoverTexts("dialog.option.hover.icon");
       addLabel(1, x0, guiTop + 67, "dialog.optiontype");
       addButton(1, x1, guiTop + 62, false, option.optionType.get(), options)
               .setSize(92, 20)
               .setHoverTexts("dialog.option.hover.type." + option.optionType.get());
-      if (option.optionType == OptionType.DIALOG_OPTION) { // next dialog
+      if (option.optionType == OptionType.DIALOG_OPTION) {
          data.clear();
          DialogController dData = DialogController.instance;
          List<Component> keys = new ArrayList<>();
@@ -106,46 +108,48 @@ public class SubGuiNpcDialogOption
          if (del != null) { option.dialogs.remove(del); }
          if (!data.containsKey(select)) { select = Component.empty(); }
          addLabel(4, x0, guiTop + 84, "gui.options");
+
          if (scroll == null) { scroll = addScroll(0).setSize(141, 116); }
          scroll.setList(new ArrayList<>())
                  .setUnsortedList(keys);
-         if (!select.getString().isEmpty()) { scroll.setSelectedIndex(select); }
+         if (!select.getString().isEmpty()) { scroll.setSelected(select); }
          add(scroll.setPos(x0, guiTop + 96));
          addButton(3, x2, guiTop + 96, "gui.add")
                  .setSize(50, 20)
                  .setHoverTexts("dialog.option.hover.add");
          addButton(4, x3, guiTop + 96, "gui.remove")
                  .setSize(50, 20)
-                 .setIsEnabled(!select.getString().isEmpty())
+                 .setIsEnabled(scroll.hasSelected())
                  .setHoverTexts("dialog.option.hover.del");
          addButton(5, x2, guiTop + 118, "gui.edit")
                  .setSize(80, 20)
+                 .setIsEnabled(scroll.hasSelected())
                  .setHoverTexts("dialog.option.hover.edit");
          addButton(6, x2, guiTop + 140, "type.up")
                  .setSize(50, 20)
-                 .setIsEnabled(!select.getString().isEmpty() && pos != 0)
+                 .setIsEnabled(scroll.hasSelected() && pos != 0)
                  .setHoverTexts("dialog.option.hover.up");
          addButton(7, x3, guiTop + 140, "type.down")
                  .setSize(50, 20)
-                 .setIsEnabled(!select.getString().isEmpty() && pos > -1 && pos < data.size() - 1)
+                 .setIsEnabled(scroll.hasSelected() && pos > -1 && pos < data.size() - 1)
                  .setHoverTexts("dialog.option.hover.down");
          addButton(8, x2, guiTop + 162, "availability.available")
                  .setSize(80, 20)
-                 .setHoverTexts("dialog.option.hover.availability", select);
-      } else {
+                 .setIsEnabled(scroll.hasSelected())
+                 .setHoverTexts(Component.translatable("dialog.option.hover.availability",
+                         Util.instance.getOldFormattedText(select)));
+      } // next dialog
+      else {
          addButton(8, x1, guiTop + 192, "availability.available")
                  .setSize(80, 20)
-                 .setHoverTexts("dialog.option.hover.availability", select);
+                 .setIsEnabled(scroll.hasSelected())
+                 .setHoverTexts(Component.translatable("dialog.option.hover.availability",
+                         Util.instance.getOldFormattedText(select)));
       }
       if (option.optionType == OptionType.COMMAND_BLOCK) { // command
          addTextField(4, x0, guiTop + 84, 248, 20, option.command)
-                 .setHoverTexts("dialog.option.hover.command")
-                 .setMaxStringLength(Short.MAX_VALUE);
-         addLabel(4, x0, guiTop + 110, "advMode.command");
-         addLabel(5, x0, guiTop + 125, "advMode.nearestPlayer");
-         addLabel(6, x0, guiTop + 140, "advMode.randomPlayer");
-         addLabel(7, x0, guiTop + 155, "advMode.allPlayers");
-         addLabel(8, x0, guiTop + 170, "dialog.commandoptionplayer");
+                 .setMaxStringLength(Short.MAX_VALUE)
+                 .setHoverTexts(Component.translatable("command.hover.text", Short.MAX_VALUE));
       }
       addButton(66, guiLeft + 149, guiTop + 192, "gui.done")
               .setSize(80, 20)
@@ -199,8 +203,9 @@ public class SubGuiNpcDialogOption
             break;
          } // down dialog
          case 8: {
-            if (select.getString().isEmpty() || !data.containsKey(select)) { return; }
-            setSubGui(new SubGuiNpcAvailability(data.get(select).availability, parent));
+            if (!select.getString().isEmpty() && data.containsKey(select)) {
+               setSubGui(new SubGuiNpcAvailability(data.get(select).availability, parent));
+            }
             break;
          } // availability
          case 9: {

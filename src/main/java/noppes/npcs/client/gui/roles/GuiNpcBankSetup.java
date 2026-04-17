@@ -24,9 +24,10 @@ public class GuiNpcBankSetup extends GuiNPCInterface2 implements IScrollData, IC
 
    public GuiNpcBankSetup(EntityNPCInterface npc) {
       super(npc);
+
       role = (RoleBank) npc.role;
-      Packets.sendServer(new SPacketBanksGet());
       backGui = EnumGuiType.MainMenuAdvanced;
+      Packets.sendServer(new SPacketBanksGet());
    }
 
    @Override
@@ -61,7 +62,7 @@ public class GuiNpcBankSetup extends GuiNPCInterface2 implements IScrollData, IC
       }
       data.putAll(map);
       scroll.setNormalList(new ArrayList<>(data.keySet()));
-      if (!name.getString().isEmpty()) { scroll.setSelectedIndex(name); }
+      if (!name.getString().isEmpty()) { scroll.setSelected(name); }
       init();
    }
 

@@ -318,7 +318,7 @@ public class GuiNpcNaturalSpawns
          data.put(Component.translatable(entry.getKey()), entry.getValue());
       }
       scroll.setNormalList(new ArrayList<>(data.keySet()));
-      scroll.setSelectedIndex(name);
+      scroll.setSelected(name);
       init();
    }
 

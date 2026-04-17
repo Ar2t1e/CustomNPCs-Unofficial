@@ -1,63 +1,60 @@
 package noppes.npcs.api.wrapper;
 
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.overlay.ILabel;
+import noppes.npcs.api.overlay.IOverlayLabel;
 
-public class OverlayLabelWrapper extends OverlayComponentWrapper implements ILabel {
+public class OverlayLabelWrapper extends OverlayComponentWrapper implements IOverlayLabel {
 
    private String text;
    private boolean isCenter = false;
    private float scale = 1.0F;
 
-   public OverlayLabelWrapper(int id, int x, int y, String text) {
+   public OverlayLabelWrapper(int id, int x, int y, String textIn) {
       super(id, x, y);
-      this.text = text;
+      text = textIn;
    }
 
-   public String getText() {
-      return this.text;
-   }
+   @Override
+   public String getText() { return text; }
 
-   public ILabel setText(String text) {
-      this.text = text;
+   @Override
+   public IOverlayLabel setText(String textIn) {
+      text = textIn;
       return this;
    }
 
-   public float getScale() {
-      return this.scale;
-   }
+   @Override
+   public float getScale() { return scale; }
 
-   public void setScale(float scale) {
-      this.scale = scale;
-   }
+   @Override
+   public void setScale(float scaleIn) { scale = scaleIn; }
 
-   public ILabel setCentered(boolean centered) {
-      this.isCenter = centered;
+   @Override
+   public IOverlayLabel setCentered(boolean centered) {
+      isCenter = centered;
       return this;
    }
 
-   public boolean isCentered() {
-      return this.isCenter;
-   }
+   @Override
+   public boolean isCentered() { return isCenter; }
 
-   public int getType() {
-      return 0;
-   }
+   @Override
+   public int getType() { return 0; }
 
+   @Override
    public void toNbt(INbt iNbt) {
       super.toNbt(iNbt);
-      iNbt.setString("text", this.text);
-      iNbt.setFloat("scale", this.scale);
-      if (this.isCenter) {
-         iNbt.setBoolean("centered", true);
-      }
+      iNbt.setString("text", text);
+      iNbt.setFloat("scale", scale);
+      iNbt.setBoolean("centered", isCenter);
    }
 
+   @Override
    public void fromNbt(INbt iNbt) {
       super.fromNbt(iNbt);
-      this.text = iNbt.getString("text");
-      this.scale = iNbt.getFloat("scale");
-      this.isCenter = iNbt.getBoolean("centered");
+      text = iNbt.getString("text");
+      scale = iNbt.getFloat("scale");
+      isCenter = iNbt.getBoolean("centered");
    }
 
 }

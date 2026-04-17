@@ -12,37 +12,33 @@ public class OverlayRenderItemWrapper extends OverlayComponentWrapper implements
 
    private ItemStack item;
 
-   public OverlayRenderItemWrapper(int id, int x, int y, IItemStack item) {
+   public OverlayRenderItemWrapper(int id, int x, int y, IItemStack itemIn) {
       super(id, x, y);
-      if (item == null) {
-         this.item = ItemStack.EMPTY;
-      } else {
-         this.item = item.getMCItemStack();
-      }
-
+      item = itemIn == null ? ItemStack.EMPTY : itemIn.getMCItemStack();
    }
 
-   public IItemStack getItem() {
-      return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(this.item);
-   }
+   @Override
+   public IItemStack getItem() { return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(item); }
 
-   public IRenderItemOverlay setItem(IItemStack item) {
-      this.item = item.getMCItemStack();
+   @Override
+   public IRenderItemOverlay setItem(IItemStack itemIn) {
+      item = itemIn == null ? ItemStack.EMPTY : itemIn.getMCItemStack();
       return this;
    }
 
-   public int getType() {
-      return 2;
-   }
+   @Override
+   public int getType() { return 2; }
 
+   @Override
    public void toNbt(INbt iNbt) {
       super.toNbt(iNbt);
       iNbt.mcSetTag("item", item.serializeNBT());
    }
 
+   @Override
    public void fromNbt(INbt iNbt) {
       super.fromNbt(iNbt);
-      this.item = ItemStack.of(iNbt.getCompound("item").getMCNBT());
+      item = ItemStack.of(iNbt.getCompound("item").getMCNBT());
    }
 
 }

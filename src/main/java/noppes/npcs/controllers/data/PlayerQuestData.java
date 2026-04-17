@@ -23,6 +23,8 @@ import noppes.npcs.client.gui.util.quests.QuestInterface;
 
 public class PlayerQuestData implements IPlayerData {
 
+   protected static final String dataName = "QuestData";
+
    public final HashMap<Integer, QuestData> activeQuests = new HashMap<>();
    protected final HashMap<Integer, Long> finishedQuests = new HashMap<>();
    public long overworldTime = 0L;
@@ -34,7 +36,7 @@ public class PlayerQuestData implements IPlayerData {
    public void load(CompoundTag mainCompound) {
       CompoundTag compound;
       if (mainCompound == null) { return; }
-      if (mainCompound.contains("QuestData", 10)) { compound = mainCompound.getCompound("QuestData"); }
+      if (mainCompound.contains(dataName, 10)) { compound = mainCompound.getCompound(dataName); }
       else if (mainCompound.contains("CompletedQuests", 9) || mainCompound.contains("ActiveQuests", 9)) { compound = mainCompound; }
       else { return; }
       ListTag list = compound.getList("ActiveQuests", 10);
@@ -77,7 +79,7 @@ public class PlayerQuestData implements IPlayerData {
       }
       compound.put("ActiveQuests", listActiveQuests);
 
-      mainCompound.put("QuestData", compound);
+      mainCompound.put(dataName, compound);
       return compound;
    }
 

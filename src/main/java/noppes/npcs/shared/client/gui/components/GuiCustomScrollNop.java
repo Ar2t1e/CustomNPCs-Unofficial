@@ -104,10 +104,10 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       multipleSelection = isMultipleSelection;
    }
 
-   public GuiCustomScrollNop setSize(int x, int y) {
-      textField.setWidth(x - 2);
-      height = y - textFieldHeight();
-      width = x;
+   public GuiCustomScrollNop setSize(int widthIn, int heightIn) {
+      textField.setWidth(widthIn - 2);
+      height = heightIn - textFieldHeight();
+      width = widthIn;
       listHeight = lineHeight * listSize;
       if (listHeight > 0) { scrollHeight = (int)((double)(height - 2) / (double)listHeight * (double)(height - 2)); }
       else { scrollHeight = Integer.MAX_VALUE; }
@@ -206,8 +206,8 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       if (scrollHeight < height - 2) {
          double xPos = mouseX - x;
          double yPos = mouseY - y;
-         float color = isScrolling ? 0.5f : xPos >= width - 10 && xPos < width - 1 && yPos >= 1 && yPos < height - 2 ? 0.75f : 1.0f;
-         drawScrollBar(graphics, color);
+         float gray = isScrolling ? 0.5f : xPos >= width - 10 && xPos < width - 1 && yPos >= 1 && yPos < height - 2 ? 0.75f : 1.0f;
+         drawScrollBar(graphics, gray);
       }
 
       // positions:
@@ -222,9 +222,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
          if (isScrolling) {
             isScrolling = ((IMouseHandlerMixin) minecraft.mouseHandler).getActiveButton() == 0;
             if (isScrolling) {
-               scrollY = (mouseY - 2) * listHeight / (height - 2) - scrollHeight;
-               if (scrollY < 0) { scrollY = 0; }
-               if (scrollY > maxScrollY) { scrollY = maxScrollY; }
+               scrollY = ValueUtil.correctInt((mouseY - 2) * listHeight / (height - 2) - scrollHeight, 0, maxScrollY);
             }
          }
       }
@@ -248,20 +246,16 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double mouseScrolled) {
-      if (visible && isHovered() && mouseScrolled != 0.0D && mouseInList) {
-         scrollY += mouseScrolled > 0.0D ? -lineHeight : lineHeight;
-         if (scrollY > maxScrollY) { scrollY = maxScrollY; }
-         if (scrollY < 0) { scrollY = 0; }
+      if (isHovered() && mouseScrolled != 0.0D && scrollHeight < height - 2) {
+         scrollY = ValueUtil.correctInt(scrollY + (mouseScrolled > 0.0D ? -lineHeight : lineHeight), 0, maxScrollY);
          return true;
       }
       return false;
    }
 
    public void mouseForcedScrolled(double mouseScrolled) {
-      if (visible && mouseScrolled != 0.0D && mouseInList) {
-         scrollY += mouseScrolled > 0 ? -lineHeight : lineHeight;
-         if (scrollY > maxScrollY) { scrollY = maxScrollY; }
-         if (scrollY < 0) { scrollY = 0; }
+      if (visible && mouseScrolled != 0.0D && scrollHeight < height - 2) {
+         scrollY = ValueUtil.correctInt(scrollY + (mouseScrolled > 0 ? -lineHeight : lineHeight), 0, maxScrollY);
       }
    }
 
@@ -486,11 +480,10 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
 
    @Override
    public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
-      super.mouseDragged(mouseX, mouseY, mouseButton, dx, dy);
-      return scrollHeight < height - 2 && mouseInList;
+      return isScrolling && mouseInList;
    }
 
-   private void drawScrollBar(GuiGraphics graphics, float color) {
+   private void drawScrollBar(GuiGraphics graphics, float gray) {
       RenderSystem.setShaderTexture(0, resource);
       PoseStack matrixStack = graphics.pose();
       matrixStack.pushPose();
@@ -506,7 +499,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       h1 = scrollHeight - h0;
       matrixStack.pushPose();
       matrixStack.translate(x + width - 9.0f, y + (int) ((float) scrollY / (float) listHeight * (float)(height - 2)) + 1.0f, 0.0f);
-      RenderSystem.setShaderColor(color, color, color, 1.0F);
+      RenderSystem.setShaderColor(gray, gray, gray, 1.0F);
       graphics.blit(resource, 0, 0, 10, 0, 8, h0);
       graphics.blit(resource, 0, h0, 10, 256 - h1, 8, h1);
       matrixStack.popPose();
@@ -573,7 +566,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
 
    public void replace(String old, String newLine) { replace(Component.literal(old), Component.literal(newLine)); }
 
-   public GuiCustomScrollNop setSelectedIndex(String line) {
+   public GuiCustomScrollNop setSelected(String line) {
       int i = 0;
       selected = -1;
       if (line != null && !line.isEmpty()) {
@@ -588,9 +581,9 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       return this;
    }
 
-   public GuiCustomScrollNop setSelectedIndex(Component line) {
+   public GuiCustomScrollNop setSelected(Component line) {
       if (list.contains(line)) { selected = list.indexOf(line); }
-      else { setSelectedIndex(line == null ? "" : line.getString()); }
+      else { setSelected(line == null ? "" : line.getString()); }
       return this;
    }
 
@@ -698,7 +691,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
    public int getSelectedIndex() { return selected; }
 
    // New fields from Unofficial (BetaZavr)
-   public GuiCustomScrollNop setSelectedIndex(int index) {
+   public GuiCustomScrollNop setSelected(int index) {
       selected = index < 0 ? -1 : index >= list.size() ? list.size() - 1 : index;
       return this;
    }
@@ -780,7 +773,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       }
    }
 
-    public int getHover() { return hover; }
+   public int getHover() { return hover; }
 
    public List<Component> getNormalList() { return list; }
 

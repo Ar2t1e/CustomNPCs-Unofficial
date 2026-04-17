@@ -4,13 +4,13 @@ import net.minecraft.world.entity.player.Player;
 import noppes.npcs.api.*;
 import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.entity.data.IPlayerMail;
+import noppes.npcs.api.entity.data.IPlayerMiniMap;
 import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.handler.data.IQuest;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.overlay.IOverlay;
 
-@SuppressWarnings("all")
 public interface IPlayer<T extends Player> extends IEntityLiving<T> {
 
    String getDisplayName();
@@ -213,4 +213,5 @@ public interface IPlayer<T extends Player> extends IEntityLiving<T> {
 
    void showBank(@ParamName("bankId") int bankId);
 
+   IPlayerMiniMap getMiniMapData();
 }

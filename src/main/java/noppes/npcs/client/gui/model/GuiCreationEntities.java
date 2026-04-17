@@ -74,8 +74,8 @@ public class GuiCreationEntities extends GuiCreationScreenInterface implements I
             }
          }
       }
-      if (index >= 0) { scroll.setSelectedIndex(index); }
-      else { scroll.setSelectedIndex("entity." + CustomNpcs.MODID + ".customnpc"); }
+      if (index >= 0) { scroll.setSelected(index); }
+      else { scroll.setSelected("entity." + CustomNpcs.MODID + ".customnpc"); }
       if (resetToSelected) {
          scroll.scrollTo(scroll.getSelected());
          resetToSelected = false;

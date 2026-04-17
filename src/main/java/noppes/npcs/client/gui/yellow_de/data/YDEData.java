@@ -13,6 +13,7 @@ import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class YDEData {
@@ -81,6 +82,15 @@ public class YDEData {
             nodes.put(yde_category.id, yde_category);
         }
         // process dialogues
+        Set<Integer> sets = new HashSet<>();
+        for (YDENode node : new ArrayList<>(nodes.values())) {
+            if (node instanceof YDEDialog yde_dialog) {
+                if (yde_dialog.dialogId > -1 &&
+                        DialogController.instance.get(yde_dialog.dialogId) == null || sets.contains(yde_dialog.dialogId)) {
+                    nodes.remove(node.id);
+                } else { sets.add(yde_dialog.dialogId); }
+            }
+        }
         for (DialogCategory category : DialogController.instance.categories.values()) {
             for (Dialog dialog : category.dialogs.values()) {
                 YDEDialog yde_dialog = getDialog(dialog);
@@ -93,24 +103,9 @@ public class YDEData {
         }
         for (YDENode node : new ArrayList<>(nodes.values())) {
             if (node instanceof YDEOption yde_option) {
-                boolean hasParent = false;
-                for (YDENode n : new ArrayList<>(nodes.values())) {
-                    if (n != yde_option) {
-                        for (YDELink link : n.links) {
-                            if (link.nextNodId == yde_option.id) {
-                                if (!hasParent) {
-                                    yde_option.title = Component.translatable("gui.answer").append(" # " + yde_option.option.slot);
-                                    hasParent = true;
-                                }
-                                else {
-                                    yde_option.title = Component.translatable("gui.answer").append(" # ").append(Component.translatable("gui.several"));
-                                    break;
-                                }
-                            }
-                        }
-
-                    }
-                }
+                List<YDENode> list = getToLinks(yde_option.id);
+                if (list.size() <= 1) { yde_option.title = Component.translatable("gui.answer").append(" # " + yde_option.option.slot); }
+                else { yde_option.title = Component.translatable("gui.answer").append(" # ").append(Component.translatable("gui.several")); }
             }
         }
         return this;
@@ -259,6 +254,19 @@ public class YDEData {
         return null;
     }
 
+    public YDEOption createOption(@Nonnull String categoryTitle, @Nonnull DialogOption dialogOption, @Nullable Dialog dialog) {
+        YDEOption yde_option = new YDEOption(this, getEmptyNodeId(), categoryTitle, dialog == null ? -1 : dialog.id, dialogOption);
+        yde_option.dialog = dialog;
+        nodes.put(yde_option.id, yde_option);
+        if (dialog != null) {
+            YDEDialog yde_dialog = getDialog(dialog);
+            if (yde_dialog != null) {
+                yde_dialog.links.add(new YDELink(yde_dialog.id, yde_option.id, EnumYDEType.OPTION));
+            }
+        }
+        return yde_option;
+    }
+
     public YDENpc getNpc(String category, Dialog.StartedNpcData npcData) {
         for (YDENode node : nodes.values()) {
             if (node.type == EnumYDEType.NPC && node instanceof YDENpc npc &&
@@ -315,13 +323,43 @@ public class YDEData {
         return empty;
     }
 
+    public List<YDENode> getToLinks(int nodeId) {
+        List<YDENode> list = new ArrayList<>();
+        for (YDENode node : new ArrayList<>(nodes.values())) {
+            if (node.id != nodeId) {
+                for (YDELink link : node.links) {
+                    if (link.nextNodId == nodeId) {
+                        list.add(node);
+                        break;
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+    public List<YDENode> getFromLinks(int nodeId) {
+        List<YDENode> list = new ArrayList<>();
+        for (YDENode node : new ArrayList<>(nodes.values())) {
+            if (node.id != nodeId) {
+                for (YDELink link : node.links) {
+                    if (link.backNodeId == nodeId) {
+                        list.add(node);
+                        break;
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
     public ListTag save() {
         ListTag listNodes = new ListTag();
         for (YDENode node : nodes.values()) { listNodes.add(node.save()); }
         return listNodes;
     }
 
-    public YDECategory checkCategory(YDECategory yde_category) {
+    public @Nonnull YDECategory checkCategory(@Nonnull YDECategory yde_category) {
         yde_category = getCategory(yde_category.category);
         DialogCategory cat = DialogController.instance.getCategory(yde_category.category);
         if (cat == null) { yde_category.title = Component.empty(); }
