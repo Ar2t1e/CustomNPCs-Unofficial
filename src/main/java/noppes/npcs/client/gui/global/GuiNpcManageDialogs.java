@@ -51,8 +51,10 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
       dialogData.clear();
       DialogController dData = DialogController.instance;
       // category's
-      for (DialogCategory category : dData.categories.values()) {
-         Component key = Component.translatable(category.title);
+      for (DialogCategory category : new ArrayList<>(dData.categories.values())) {
+         Component key = Component.empty()
+                 .append(Component.literal("ID:" + category.id + " ").withStyle(ChatFormatting.GRAY))
+                 .append(Component.translatable(category.title));
          categoryData.put(key, category);
          if (selectedCategory.getString().isEmpty()) { selectedCategory = key; }
       }
@@ -61,7 +63,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
       if (!selectedCategory.getString().isEmpty()) {
          if (categoryData.containsKey(selectedCategory)) {
             Map<Component, Dialog> map = new LinkedHashMap<>();
-            for (Dialog dialog : categoryData.get(selectedCategory).dialogs.values()) {
+            for (Dialog dialog : new ArrayList<>(categoryData.get(selectedCategory).dialogs.values())) {
                boolean b = !dialog.text.isEmpty();
                Component key = Component.empty()
                        .append(Component.literal("ID:" + dialog.id + " \"").withStyle(ChatFormatting.GRAY))
@@ -80,28 +82,27 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
             if (!dialogData.isEmpty()) {
                int pos = 0;
                Map<String, Integer> nextDialogIDs = new TreeMap<>();
-               for (Dialog dialog : dialogData.values()) {
+               for (Dialog dialog : new ArrayList<>(dialogData.values())) {
                   List<Component> hovers = new ArrayList<>();
                   List<Component> activationDialogs = new ArrayList<>();
                   List<Component> nextDialogs = new ArrayList<>();
                   hovers.add(Component.translatable(dialog.title).append(Component.literal(":")));
-                  for (DialogOption option : dialog.options.values()) {
+                  for (DialogOption option : new ArrayList<>(dialog.options.values())) {
                      if (option.optionType != OptionType.DIALOG_OPTION || option.dialogs.isEmpty()) { continue; }
                      int i = 0;
-                     for (DialogOption.OptionDialogID od : option.dialogs) {
+                     for (DialogOption.OptionDialogID od : new ArrayList<>(option.dialogs)) {
                         nextDialogIDs.put(option.slot + "." + i, od.dialogId);
                         i++;
                      }
                   }
                   try {
-                     Set<Integer> dSet = dData.dialogs.keySet();
-                     for (int dialogId : dSet) {
+                     for (int dialogId : new ArrayList<>(dData.dialogs.keySet())) {
                         if (!dData.hasDialog(dialogId)) { continue; }
                         Dialog d = dData.get(dialogId);
-                        for (DialogOption option : d.options.values()) {
+                        for (DialogOption option : new ArrayList<>(d.options.values())) {
                            if (option.optionType != OptionType.DIALOG_OPTION || option.dialogs.isEmpty()) { continue; }
                            int i = 0;
-                           for (DialogOption.OptionDialogID od : option.dialogs) {
+                           for (DialogOption.OptionDialogID od : new ArrayList<>(option.dialogs)) {
                               if (od.dialogId != dialog.id) { continue; }
                               activationDialogs.add(Component.empty()
                                       .append(Component.literal("ID:" + d.id).withStyle(ChatFormatting.GRAY))
@@ -240,7 +241,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
             boolean has = true;
             while (has) {
                has = false;
-               for (Dialog dia : dialog.category.dialogs.values()) {
+               for (Dialog dia : new ArrayList<>(dialog.category.dialogs.values())) {
                   if (dia.id != dialog.id && dia.title.equalsIgnoreCase(t.toString())) {
                      has = true;
                      break;
@@ -308,7 +309,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
                boolean has = true;
                while (has) {
                   has = false;
-                  for (DialogCategory cat : DialogController.instance.categories.values()) {
+                  for (DialogCategory cat : new ArrayList<>(DialogController.instance.categories.values())) {
                      if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
                         has = true;
                         break;
@@ -348,7 +349,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
                boolean has = true;
                while (has) {
                   has = false;
-                  for (Dialog dia : dialog.category.dialogs.values()) {
+                  for (Dialog dia : new ArrayList<>(dialog.category.dialogs.values())) {
                      if (dia.id != dialog.id && dia.title.equalsIgnoreCase(t.toString())) {
                         has = true;
                         break;

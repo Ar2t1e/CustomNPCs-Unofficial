@@ -175,7 +175,6 @@ public class GuiButtonNop extends Button implements IComponentGui {
    @Override
    public void onClick(double mouseX, double mouseY) {
       if (active && (listener == null || !listener.hasSubGui())) {
-         if (display != null) { setDisplay((displayValue + 1) % display.length); }
          super.onPress();
       }
    }
@@ -424,14 +423,14 @@ public class GuiButtonNop extends Button implements IComponentGui {
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
       if (active && visible) {
          if (clicked(mouseX, mouseY)) {
+            if (isValidClickButton(mouseButton) && display != null) { setDisplay((displayValue + 1) % display.length); }
+            if (listener != null && !listener.hasSubGui() && listener.mouseButtonEvent(this, mouseButton) ) {
+               playDownSound(Minecraft.getInstance().getSoundManager());
+               return true;
+            }
             if (isValidClickButton(mouseButton)) {
                playDownSound(Minecraft.getInstance().getSoundManager());
                onClick(mouseX, mouseY);
-            }
-            else if (listener != null && !listener.hasSubGui() && listener.mouseButtonEvent(this, mouseButton) ) {
-               playDownSound(Minecraft.getInstance().getSoundManager());
-               if (display != null) { setDisplay((displayValue + 1) % display.length); }
-               return true;
             }
             return true;
          }

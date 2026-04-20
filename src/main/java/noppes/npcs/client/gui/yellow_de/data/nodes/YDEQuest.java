@@ -5,18 +5,14 @@ import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
 import noppes.npcs.client.gui.yellow_de.data.YDEData;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
-import noppes.npcs.controllers.data.Dialog;
 
 public class YDEQuest extends YDENode {
 
     public int questId;
-    public Dialog dialog;
 
     public YDEQuest(YDEData parent, int idIn, String categoryIn, int questIdIn) {
         super(parent);
         type = EnumYDEType.QUEST;
-        title = Component.translatable("gui.quest", " ID: " + questIdIn);
-
         id = idIn;
         width = 90;
         height = 60;
@@ -39,6 +35,6 @@ public class YDEQuest extends YDENode {
     }
 
     @Override
-    public void refresh() { }
+    public Component getTitle() { return Component.translatable("gui.quest", " ID: " + questId); }
 
 }

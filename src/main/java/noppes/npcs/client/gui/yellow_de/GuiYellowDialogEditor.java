@@ -62,6 +62,7 @@ public class GuiYellowDialogEditor extends GuiBasic
 
     public static YDEData YDE_DATA = YDEController.getInstance().getLevelData(ScriptController.getLevelKey());
     // window
+    public YDELink selectLink;
     protected final List<IComponentGui> notScaledComponents = new ArrayList<>();
     protected float xMouse;
     protected float yMouse;
@@ -73,12 +74,14 @@ public class GuiYellowDialogEditor extends GuiBasic
     // back
     protected int space = 30;
     protected final int[] pos = new int[2];
+    protected List<YDELink> links;
     // grid
     public YDEWindowNop hovered = null;
     protected boolean mouseOnGrid;
     protected double tempDx;
     protected double tempDy;
     // category
+    protected Map<Component, DialogCategory> categoryData = new LinkedHashMap<>();
     public static @Nullable YDECategory category;
     protected Set<Integer> selects = new LinkedHashSet<>();
     protected boolean gridIsMoved;
@@ -100,7 +103,7 @@ public class GuiYellowDialogEditor extends GuiBasic
 
         YDE_DATA = YDEController.getInstance().getLevelData(ScriptController.getLevelKey());
 
-        leftTab = new GuiCustomWindowNop(this, 0, -tabW, 0, tabW, height, Component.translatable("yde.categories"));
+        leftTab = new GuiCustomWindowNop(this, -1, -tabW, 0, tabW, height, Component.translatable("yde.categories"));
         leftTab.setCustomFont(UtilYDE.FONT);
         leftTab.colorLine = YDEController.leftTabColor;
         leftTab.isLock = false;
@@ -114,7 +117,7 @@ public class GuiYellowDialogEditor extends GuiBasic
         leftTab.exit.setX(leftTab.exit.getX() + 1);
         leftTab.exit.setY(leftTab.exit.getY() - 1);
 
-        rightTab = new GuiCustomWindowNop(this, 1, width, 0, tabW, height, Component.translatable("type.help"));
+        rightTab = new GuiCustomWindowNop(this, -2, width, 0, tabW, height, Component.translatable("type.help"));
         rightTab.setCustomFont(UtilYDE.FONT);
         rightTab.isLock = false;
         rightTab.colorLine = YDEController.rightTabColor;
@@ -164,8 +167,8 @@ public class GuiYellowDialogEditor extends GuiBasic
             }
             category = YDE_DATA.getCategory(YDEController.getInstance().lastCategory);
         }
-        category = YDE_DATA.checkCategory(category);
         YDEController.getInstance().lastCategory = category.category;
+        links = YDE_DATA.getLinks(category.category);
 
         leftTab.imageHeight = (int) (height * guiScale);
         rightTab.imageHeight = (int) (height * guiScale);
@@ -180,9 +183,13 @@ public class GuiYellowDialogEditor extends GuiBasic
         Component selectedCategory = null;
         if (scroll == null) { scroll = leftTab.addScroll(0); }
         List<Component> categories = new ArrayList<>();
+        categoryData.clear();
         for (DialogCategory c : DialogController.instance.categories.values()) {
-            Component key = Component.translatable(c.title);
+            Component key = Component.empty()
+                    .append(Component.literal("ID:" + c.id + " ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.translatable(c.title));
             categories.add(key);
+            categoryData.put(key, c);
             if (c.title.equals(category.category)) { selectedCategory = key; }
         }
         scroll.setCustomFont(UtilYDE.FONT)
@@ -227,7 +234,8 @@ public class GuiYellowDialogEditor extends GuiBasic
         // category name
         YDE_DATA.check();
         // not scaled components
-        GuiLabel label = addLabel(0, (int) (((width - UtilYDE.FONT_HEADLINE.width(category.title)) * guiScale) / 4.0f), 0, category.title)
+        Component t = category.getTitle();
+        GuiLabel label = addLabel(0, (int) (((width - UtilYDE.FONT_HEADLINE.width(t)) * guiScale) / 4.0f), 0, t)
                 .setCustomFont(UtilYDE.FONT_HEADLINE)
                 .setColor(YDEController.textColor);
         notScaledComponents.add(label);
@@ -247,18 +255,19 @@ public class GuiYellowDialogEditor extends GuiBasic
             if (!(node instanceof YDECategory) && node.category.equals(category.category)) {
                 if (node instanceof YDEArea area) { add(new YDEAreaNop(this, area)); }
                 else { add(new YDEWindowNop(this, node)); }
-                if (sls.contains(node.id)) { addSelect(node.id); }
+                if (sls.contains(node.id)) { selects.add(node.id); }
             }
         }
-        int lastNode = YDEController.getInstance().lastNode;
+        int lastNode = YDEController.getInstance().lastNode.getOrDefault(category.category, -1);
         if (lastNode > -1) {
             sls = new ArrayList<>(selects);
             selects.clear();
             selects.add(lastNode);
             for (int id : sls) {
-                if (id != lastNode) { selects.add(lastNode); }
+                if (id != lastNode) { selects.add(id); }
             }
         }
+        setSelectNode(rightTab.yde_scroll.tabId);
     }
 
     @Override
@@ -320,6 +329,77 @@ public class GuiYellowDialogEditor extends GuiBasic
         graphics.bufferSource().endBatch();
         renderSelectedBorder(graphics);
         matrixStack.popPose();
+
+
+        // links
+        if (!links.isEmpty()) {
+            matrixStack.pushPose();
+            matrixStack.translate(0, 0, -0.5f);
+            // link dots
+            for (YDELink link : links) {
+                YDEWindowNop baskNode = get(link.back, YDEWindowNop.class);
+                YDEWindowNop nextNode = get(link.next, YDEWindowNop.class);
+                if (baskNode != null && nextNode != null) {
+                    float[] point0 = null;
+                    float[] point1 = null;
+                    boolean turned = false;
+                    int color = 0;
+                    if (link.type == EnumYDEType.OPTION) {
+                        point0 = new float[] { baskNode.getX() + baskNode.imageWidth, baskNode.getY() + baskNode.imageHeight / 2.0f };
+                        point1 = new float[] { nextNode.getX(), nextNode.getY() + nextNode.imageHeight / 2.0f };
+                        turned = baskNode.getX() + baskNode.imageWidth > nextNode.getX();
+                        color = selectLink != link ? EnumYDEType.OPTION.color : 0xFFFFFFFF;
+                    }
+                    else if (link.type == EnumYDEType.DIALOG) {
+                        point0 = new float[] { baskNode.getX() + baskNode.imageWidth, baskNode.getY() + baskNode.imageHeight / 2.0f };
+                        point1 = new float[] { nextNode.getX(), nextNode.getY() + nextNode.imageHeight / 2.0f };
+                        turned = baskNode.getX() + baskNode.imageWidth > nextNode.getX();
+                        color = selectLink != link ? EnumYDEType.DIALOG.color : 0xFFFFFFFF;
+                    }
+                    else if (link.type == EnumYDEType.NPC) {
+                        point0 = new float[] { baskNode.getX(), baskNode.getY() + baskNode.imageHeight * 0.8f };
+                        point1 = new float[] { nextNode.getX() + nextNode.imageWidth, nextNode.getY() + nextNode.imageHeight / 2.0f };
+                        turned = baskNode.getX() > nextNode.getX() + nextNode.imageWidth;
+                        color = selectLink != link ? EnumYDEType.NPC.color : 0xFFFFFFFF;
+                    }
+                    else if (link.type == EnumYDEType.QUEST) {
+                        point0 = new float[] { baskNode.getX() + baskNode.imageWidth / 2.0f, baskNode.getY() + baskNode.imageHeight };
+                        point1 = new float[] { nextNode.getX() + nextNode.imageWidth / 2.0f, nextNode.getY() };
+                        turned = baskNode.getY() + baskNode.imageHeight < nextNode.getY();
+                        color = selectLink != link ? EnumYDEType.QUEST.color : 0xFFFFFFFF;
+                    }
+                    if (point0 != null) {
+                        matrixStack.pushPose();
+                        float catScale = category != null ? category.getScale() : 1.0f;
+                        matrixStack.translate(centerU, centerV, 0.0f);
+                        matrixStack.scale(catScale, catScale, catScale);
+                        UtilYDE.renderSpline(graphics, point0, point1, baskNode.isHovered() || nextNode.isHovered(), turned, color, 0.0f);
+                        matrixStack.popPose();
+                    }
+                }
+                else {
+                    if (YDE_DATA.nodes.get(link.back) == null || YDE_DATA.nodes.get(link.next) == null) { YDE_DATA.removeLink(link); } // not found
+                    else {
+
+                    } // another category
+                }
+            }
+            matrixStack.popPose();
+        }
+        if (selectLink != null) {
+            if (((IMouseHandlerMixin) minecraft.mouseHandler).getActiveButton() == 0) {
+                matrixStack.pushPose();
+
+                matrixStack.popPose();
+            }
+            else {
+                if (selectLink.parent != null) {
+                    LogWriter.info("TEST: "+selectLink.parent);
+                }
+                selectLink = null;
+            }
+        }
+
         // labels
         matrixStack.pushPose();
         matrixStack.translate(leftTab.getX() + leftTab.imageWidth + 8.0f, 0.0f, 0.0f);
@@ -337,29 +417,31 @@ public class GuiYellowDialogEditor extends GuiBasic
             for (IComponentGui component : new ArrayList<>(wrapper.components)) {
                 if ((component instanceof AbstractWidget element && element.isHovered()) ||
                         (component instanceof GuiCustomScrollNop scroll && scroll.isHovered()) ||
-                        (component instanceof GuiCustomWindowNop window && window.isHovered())) {
+                        (component instanceof YDEWindowNop window && window.isHovered())) {
                     mouseOnGrid = false;
                     break;
                 }
             }
         }
         matrixStack.popPose();
-        if (category != null && mouseOnGrid) {
-            matrixStack.pushPose();
-            float xm = xMouse + 2.0f;
-            float ym = yMouse + 11.0f;
+        if (category != null) {
             pos[0] = (int) ((xMouse - w / 2.0f - category.x) / category.getScale());
             pos[1] = (int) ((yMouse - h / 2.0f - category.y) / category.getScale());
-            String label = pos[0] + "; " + pos[1];
-            float f = 4 + UtilYDE.FONT.width(label);
-            if (xm + f > rightTab.getX() - 5.0f) { xm -= xm - rightTab.getX() + 5.0f + f; }
-            f = 4 + UtilYDE.FONT.getHeight();
-            if (ym + f > h) { ym -= 19.0f; }
-            matrixStack.translate(xm, ym, 1.0f);
-            graphics.fill(-2, -1,
-                    UtilYDE.FONT.width(label) + 2, UtilYDE.FONT.getHeight() + 1, YDEController.backColor);
-            UtilYDE.FONT.draw(graphics, label, 0, 0, YDEController.textColor);
-            matrixStack.popPose();
+            if (mouseOnGrid) {
+                matrixStack.pushPose();
+                float xm = xMouse + 2.0f;
+                float ym = yMouse + 11.0f;
+                String label = pos[0] + "; " + pos[1];
+                float f = 4 + UtilYDE.FONT.width(label);
+                if (xm + f > rightTab.getX() - 5.0f) { xm -= xm - rightTab.getX() + 5.0f + f; }
+                f = 4 + UtilYDE.FONT.getHeight();
+                if (ym + f > h) { ym -= 19.0f; }
+                matrixStack.translate(xm, ym, 1.0f);
+                graphics.fill(-2, -1,
+                        UtilYDE.FONT.width(label) + 2, UtilYDE.FONT.getHeight() + 1, YDEController.backColor);
+                UtilYDE.FONT.draw(graphics, label, 0, 0, YDEController.textColor);
+                matrixStack.popPose();
+            }
         }
     }
 
@@ -391,7 +473,7 @@ public class GuiYellowDialogEditor extends GuiBasic
             GuiTextFieldNop textField = getTextField(0);
             if (textField != null) { textField.render(graphics, mouseX, mouseY, partialTicks); }
             matrixStack.translate(centerU, centerV, 0.0f);
-            matrixStack.scale(catScale, catScale, category.getScale());
+            matrixStack.scale(catScale, catScale, catScale);
             for (IComponentGui component : new ArrayList<>(wrapper.components)) {
                 if (component instanceof Renderable renderable && !notScaledComponents.contains(component)) {
                     renderable.render(graphics, wrapper.mouseX, wrapper.mouseY, partialTicks);
@@ -476,7 +558,6 @@ public class GuiYellowDialogEditor extends GuiBasic
             }
 
         matrixStack.popPose();
-
         if ((hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText)) && !hoverText.isEmpty()) {
             if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
             RenderSystem.disableDepthTest();
@@ -488,7 +569,6 @@ public class GuiYellowDialogEditor extends GuiBasic
             }
             hoverText.clear();
         }
-
         if (rightTab.isHeadHovered() && rightTab.isYDEShow) {
             if (!helper.isVisible() || helper.type != 1) {
                 helper.type = 1;
@@ -533,10 +613,25 @@ public class GuiYellowDialogEditor extends GuiBasic
                     xMouse >= helper.getX() - 10 && xMouse <= helper.getX() + helper.getWidth() + 10 &&
                     yMouse >= helper.getY() - 10 && yMouse <= helper.getY() + helper.getHeight() + 10);
         }
+        // LMB select
         if (lmbIsSelect) {
             if (((IMouseHandlerMixin) minecraft.mouseHandler).getActiveButton() != 0) {
-
                 lmbIsSelect = false;
+                List<YDEWindowNop> tempSelect = getAreaSelect(pos[0], pos[1], lmbSelect[0], lmbSelect[1]);
+                if (!tempSelect.isEmpty()) {
+                    IComponentGui sel = getSelect();
+                    if (sel != null) { unFocused(sel); }
+                    selects.clear();
+                    boolean isSelect = true;
+                    for (YDEWindowNop win : tempSelect) {
+                        if (isSelect) {
+                            YDEController.getInstance().lastNode.put(category.category, win.id);
+                            isSelect = false;
+                        }
+                        selects.add(win.id);
+                    }
+                    setSelectNode(0);
+                }
             }
             else {
                 int x = (int) (Math.min(lmbSelect[0], pos[0]) * category.getScale() + centerU - 1.0f);
@@ -544,6 +639,15 @@ public class GuiYellowDialogEditor extends GuiBasic
                 int w = (int) ((Math.max(lmbSelect[0], pos[0]) - Math.min(lmbSelect[0], pos[0])) * category.getScale() + 2.75f);
                 int h = (int) ((Math.max(lmbSelect[1], pos[1]) - Math.min(lmbSelect[1], pos[1])) * category.getScale() + 1.75f);
                 renderBorder(graphics, x, y, w, h, YDEController.componentLineColor);
+                boolean isSelect = true;
+                for (YDEWindowNop win : getAreaSelect(pos[0], pos[1], lmbSelect[0], lmbSelect[1])) {
+                    x = (int) (win.node.x * category.getScale() + centerU - 1.0f);
+                    y = (int) (win.node.y * category.getScale() + centerV - 1.0f);
+                    w = (int) (win.node.width * category.getScale() + 2.75f);
+                    h = (int) (win.node.height * category.getScale() + 1.75f);
+                    renderBorder(graphics, x, y, w, h, isSelect ? YDEController.selectLineColor : YDEController.hoverLineColor);
+                    if (isSelect) { isSelect = false; }
+                }
             }
         }
     }
@@ -604,6 +708,7 @@ public class GuiYellowDialogEditor extends GuiBasic
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
         if (!hasSubGui()) {
+            if (lmbIsSelect) { return true; }
             boolean bo = false;
             for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
                 if (component instanceof GuiEventListener element && element.mouseDragged(mouseX, mouseY, mouseButton, dx, dy)) { bo = true; }
@@ -667,7 +772,10 @@ public class GuiYellowDialogEditor extends GuiBasic
                     }
                 }
                 if (keyCode == InputConstants.KEY_DELETE || keyCode == InputConstants.KEY_NUMPADCOMMA) {
-                    if (getSelect() instanceof YDEWindowNop window) { removeNode(window); }
+                    if (selectLink != null) {
+                        YDE_DATA.removeLink(selectLink);
+                    }
+                    else if (getSelect() instanceof YDEWindowNop window) { removeNode(window); }
                 } // remove node
             } // hot keys
             for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
@@ -694,19 +802,16 @@ public class GuiYellowDialogEditor extends GuiBasic
     }
 
     @Override
-    public void save() {
-        IComponentGui select = getSelect();
-        YDEController.getInstance().lastCategory = category == null ? "" : category.category;
-        YDEController.getInstance().lastNode = select == null ? -1 : select.getId();
-        YDEController.getInstance().save();
-    }
+    public void save() { YDEController.getInstance().save(); }
 
     @Override
     public void scrollClicked(GuiCustomScrollNop scroll) {
-        LogWriter.info("TEST: scroll: "+scroll.id);
+//LogWriter.info("TEST: scroll: "+scroll.id);
         if (scroll.id == 0) {
-            if (category != null && !category.category.equals(scroll.getSelected())) {
-                category = YDE_DATA.getCategory(scroll.getSelected());
+            if (category != null && !category.category.equals(scroll.getSelected()) &&
+                    categoryData.containsKey(scroll.getNormalSelected())) {
+                category = YDE_DATA.getCategory(categoryData.get(scroll.getNormalSelected()).title);
+                YDEController.getInstance().lastCategory = category == null ? "" : category.category;
                 init();
             }
         } // select dialog category
@@ -784,12 +889,6 @@ public class GuiYellowDialogEditor extends GuiBasic
                     }
                     cat.title = t.toString();
                     category.category = cat.title;
-                    category.title = Component.empty();
-                    if (category.id > -1) {
-                        ((MutableComponent) category.title).append(Component.translatable("drop.category").withStyle(ChatFormatting.GRAY))
-                                .append(Component.literal(" ID:" + cat.id + " ").withStyle(ChatFormatting.GRAY))
-                                .append(Component.translatable(cat.title).withStyle(ChatFormatting.RESET));
-                    }
                     Packets.sendServer(new SPacketDialogCategorySave(cat.save(new CompoundTag())));
                     init();
                 }
@@ -843,12 +942,6 @@ public class GuiYellowDialogEditor extends GuiBasic
                         }
                         cat.title = t.toString();
                         category.category = cat.title;
-                        category.title = Component.empty();
-                        if (category.id > -1) {
-                            ((MutableComponent) category.title).append(Component.translatable("drop.category").withStyle(ChatFormatting.GRAY))
-                                    .append(Component.literal(" ID:" + cat.id + " ").withStyle(ChatFormatting.GRAY))
-                                    .append(Component.translatable(cat.title).withStyle(ChatFormatting.RESET));
-                        }
                         Packets.sendServer(new SPacketDialogCategorySave(cat.save(new CompoundTag())));
                         init();
                     }
@@ -858,15 +951,19 @@ public class GuiYellowDialogEditor extends GuiBasic
     }
 
     public boolean mouseButtonEvent(IComponentGui component, @Nullable GuiButtonNop button, int mouseButton) {
-LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouseButton: "+mouseButton+"; component "+component);
+//LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouseButton: "+mouseButton+"; component "+component);
         if (mouseButton == 0 && button != null) {
             switch (button.id) {
                 case 0: {
                     if (component == null) {
                         setSubGui(new SubGuiEditText(0, Component.translatable("gui.new").getString()));
+                        return true;
                     } // create dialog category
-                    else if (component instanceof YDEScrollNop) { setSelectNode(button.id); }
-                    return true;
+                    else if (component instanceof YDEScrollNop) {
+                        setSelectNode(button.id);
+                        return true;
+                    }
+                    break;
                 }
                 case 1: {
                     if (component == null) {
@@ -881,22 +978,34 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                                 }
                                 NoppesUtil.openGUI(player, this);
                             },
-                                    category.title,
+                                    category.getTitle(),
                                     Component.translatable("message.delete"));
                             setScreen(guiYesNo);
+                            return true;
                         } // remove dialog category
                     }
-                    else if (component instanceof YDEScrollNop) { setSelectNode(button.id); }
-                    return true;
+                    else if (component instanceof YDEScrollNop) {
+                        setSelectNode(button.id);
+                        return true;
+                    }
+                    break;
                 }
                 case 2: {
-                    if (component == null) { scrollDoubleClicked(leftTab.getScroll(0)); } // rename dialog category
-                    else if (component instanceof YDEScrollNop) { setSelectNode(button.id); }
-                    return true;
+                    if (component == null) {
+                        scrollDoubleClicked(leftTab.getScroll(0));
+                        return true;
+                    } // rename dialog category
+                    else if (component instanceof YDEScrollNop) {
+                        setSelectNode(button.id);
+                        return true;
+                    }
+                    break;
                 }
                 case 3: {
-                    //if (component instanceof YDEScrollNop) { }
-                    return true;
+                    if (component instanceof YDEScrollNop) {
+                        return true;
+                    }
+                    break;
                 }
                 case 4: {
                     if (component instanceof YDEWindowNop window && window.node instanceof YDEOption yde_option) {
@@ -907,6 +1016,7 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                             @Override
                             public void preColor(int colorIn) {  }
                         }));
+                        return true;
                     } // option color in node
                     else if (component instanceof YDEScrollNop yde_scroll) {
                         if (yde_scroll.select instanceof YDEWindowNop window) {
@@ -918,6 +1028,7 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                                     @Override
                                     public void preColor(int colorIn) {  }
                                 }));
+                                return true;
                             } // option color
                         }
                     } // in right settings
@@ -927,12 +1038,14 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                     if (component instanceof YDEWindowNop window && window.node instanceof YDEOption yde_option) {
                         yde_option.option.optionType = OptionType.get(button.getValue());
                         init();
+                        return true;
                     } // option type
                     else if (component instanceof YDEScrollNop yde_scroll) {
                         if (yde_scroll.select instanceof YDEWindowNop window) {
                             if (window.node instanceof YDEOption yde_option) {
                                 yde_option.option.optionType = OptionType.get(button.getValue());
                                 init();
+                                return true;
                             }
                         }
                     }
@@ -942,9 +1055,13 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                     if (component == null) {
                         if (button.equals(leftTab.exit)) { leftTab.isYDEShow = !leftTab.isYDEShow; }
                         else { rightTab.isYDEShow = !rightTab.isYDEShow; }
+                        return true;
                     } // show / hide tabs
-                    else if (component instanceof YDEWindowNop window) { removeNode(window); } // remove node / exit window
-                    return true;
+                    else if (component instanceof YDEWindowNop window) {
+                        removeNode(window);
+                        return true;
+                    } // remove node / exit window
+                    break;
                 } // exit node / window
                 case 2501: {
                     if (component instanceof YDEWindowNop window) {
@@ -957,8 +1074,9 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                             button.txrX -= button.txrW;
                             window.lock.layerColor = new Color(0xFFFFFF00).getRGB();
                         }
+                        return true;
                     }
-                    return true;
+                    break;
                 } // lock node / window
             }
         }
@@ -978,15 +1096,17 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                     }
                 }
                 YDE_DATA.nodes.remove(window.node.id);
-
                 if (category != null) {
                     if (window.node instanceof YDEDialog yde_dialog) { Packets.sendServer(new SPacketDialogRemove(yde_dialog.dialogId)); }
-                    else if (window.node instanceof YDEOption yde_option && yde_option.dialog != null) {
-                        DialogOption option = yde_option.dialog.options.get(yde_option.option.slot);
-                        if (option != null) {
-                            yde_option.dialog.options.remove(option.slot);
-                            if (yde_option.dialog.id > -1) {
-                                Packets.sendServer(new SPacketDialogSave(category.categoryId, yde_option.dialog.save(new CompoundTag())));
+                    else if (window.node instanceof YDEOption yde_option) {
+                        Dialog dialog = DialogController.instance.get(yde_option.dialogId);
+                        if (dialog != null) {
+                            DialogOption option = dialog.options.get(yde_option.option.slot);
+                            if (option != null) {
+                                dialog.options.remove(option.slot);
+                                if (dialog.id > -1) {
+                                    Packets.sendServer(new SPacketDialogSave(category.categoryId, dialog.save(new CompoundTag())));
+                                }
                             }
                         }
                     }
@@ -1000,14 +1120,14 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                     case NPC -> Component.translatable("yde.delete.npc", ((YDENpc) window.node).npcData.name, Component.translatable("menu.advanced").getString());
                     case OPTION -> Component.translatable("yde.delete.option", ((YDEOption) window.node).option.slot);
                     case QUEST -> Component.translatable("yde.delete.quest", ((YDEQuest) window.node).questId);
-                    case AREA -> Component.translatable("yde.delete.area", window.node.title.getString());
+                    case AREA -> Component.translatable("yde.delete.area", window.node.getTitle().getString());
                 },
                 Component.translatable("message.delete"));
         setScreen(guiYesNo);
     }
 
     private void renderSelectedBorder(@Nonnull GuiGraphics graphics) {
-        if (category == null) { return; }
+        if (category == null || lmbIsSelect) { return; }
         int x;
         int y;
         int w;
@@ -1130,13 +1250,13 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                 IComponentGui component = getSelect();
 
                 YDEDialog yde_dialog = YDE_DATA.createDialog(dialog);
-                yde_dialog.x = pos[0];
-                yde_dialog.y = pos[1];
+                yde_dialog.x = (int) (Math.floor(pos[0] / 10.0f)) * 10;
+                yde_dialog.y = (int) (Math.floor(pos[1] / 10.0f)) * 10;
                 setActive(yde_dialog.id);
                 if (component instanceof YDEWindowNop window &&
                         window.node instanceof YDEOption yde_option &&
                         yde_option.option.optionType == OptionType.DIALOG_OPTION) {
-                    yde_option.links.add(new YDELink(yde_option.id, yde_dialog.id, EnumYDEType.OPTION));
+                    YDE_DATA.links.add(new YDELink(yde_option.id, yde_dialog.id, EnumYDEType.OPTION));
                 }
                 init();
             }
@@ -1166,10 +1286,9 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                 }
             }
             if (yde_option == null) { yde_option = YDE_DATA.createOption(category.category, option, null); }
-            yde_option.x = pos[0];
-            yde_option.y = pos[1];
+            yde_option.x = (int) (Math.floor(pos[0] / 10.0f)) * 10;
+            yde_option.y = (int) (Math.floor(pos[1] / 10.0f)) * 10;
             setActive(yde_option.id);
-            yde_option.refresh();
             init();
         }
     }
@@ -1252,14 +1371,14 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
         }
     }
 
-    public void selectLinks(@Nullable YDEWindowNop windowNop) {
-        if (windowNop != null) {
-            windowNop.setIsFocused(true);
-            for (YDELink link : windowNop.node.links) {
-                YDEWindowNop window = get(link.nextNodId, YDEWindowNop.class);
-                if (window != null) {
+    public void selectLinks(@Nullable YDEWindowNop window) {
+        if (window != null) {
+            window.setIsFocused(true);
+            for (YDENode node : YDE_DATA.getFromLinks(window.id)) {
+                YDEWindowNop nextWindow = get(node.id, YDEWindowNop.class);
+                if (nextWindow != null) {
                     addSelect(window.id);
-                    selectLinks(window);
+                    selectLinks(nextWindow);
                 }
             }
         }
@@ -1273,24 +1392,63 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
         return null;
     }
 
+    private List<YDEWindowNop> getAreaSelect(int x0, int y0, int x1, int y1) {
+        int u0 = Math.min(x0, x1);
+        int v0 = Math.min(y0, y1);
+        int u1 = Math.max(x0, x1);
+        int v1 = Math.max(y0, y1);
+        List<YDEWindowNop> tempSelect = new ArrayList<>();
+        for (IComponentGui component : wrapper.components) {
+            if (component instanceof YDEWindowNop window) {
+                if (window.node.x < u1 && (window.node.x + window.node.width) > u0 &&
+                        window.node.y < v1 && (window.node.y + window.node.height) > v0) {
+                    tempSelect.add(window);
+                }
+            }
+        }
+        tempSelect.sort((w1, w2) -> {
+            double d1 = distanceSqToRect(x1, y1, w1);
+            double d2 = distanceSqToRect(x1, y1, w2);
+            return Double.compare(d1, d2);
+        });
+        return tempSelect;
+    }
+
+    private double distanceSqToRect(int x, int y, YDEWindowNop window) {
+        int closestX = clamp(x, window.node.x, window.node.x + window.node.width);
+        int closestY = clamp(y, window.node.y, window.node.y + window.node.height);
+        int dx = x - closestX;
+        int dy = y - closestY;
+        return (double) dx * dx + (double) dy * dy;
+    }
+
+    private int clamp(int val, int min, int max) {
+        return Math.max(min, Math.min(max, val));
+    }
+
     public void setActive(int id) {
-        IComponentGui sel = getSelect();
-        if (sel != null && sel.getId() != id) { unFocused(sel); }
-        selects.clear();
-        addSelect(id);
+        if (category != null) {
+            IComponentGui sel = getSelect();
+            if (sel != null && sel.getId() != id) { unFocused(sel); }
+            selects.clear();
+            YDEController.getInstance().lastNode.put(category.category, id);
+            addSelect(id);
+        }
     }
 
     public void addSelect(int id) {
+        boolean setNewRightSelect = selects.isEmpty();
         selects.add(id);
-        setSelectNode(0);
+        if (setNewRightSelect) { setSelectNode(0); }
     }
 
     private void setSelectNode(int tabId) {
         IComponentGui select = getSelect();
         rightTab.yde_scroll.init();
-        LogWriter.info("TEST: "+tabId+"; "+select);
-        if (select instanceof YDEWindowNop window) {
+        if (category != null && select instanceof YDEWindowNop window) {
+            //LogWriter.info("TEST: t: "+tabId+"; w: "+window.id);
             int h0 = UtilYDE.FONT.getHeight() + 4;
+            MutableComponent hover;
             if (window.node instanceof YDEDialog yde_dialog) {
                 rightTab.yde_scroll.availability = yde_dialog.dialog.availability;
                 rightTab.yde_scroll.addTopButton(0, 0, 0, "dialog.dialog")
@@ -1357,7 +1515,7 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                 if (tabId == 0) {
                     // title
                     rightTab.yde_scroll.addLabel(lId++, 1, y, Component.translatable("dialog.dialog")
-                                    .append(" ID:" + yde_option.dialogId + "; ").append(yde_option.title).append(":"))
+                                    .append(" ID:" + yde_option.dialogId + "; ").append(yde_option.getTitle()).append(":"))
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
@@ -1366,10 +1524,15 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
+                    hover = Component.translatable("dialog.option.hover.name");
+                    Component c = Component.translatable(yde_option.option.title);
+                    if (!Util.instance.equalsDeleteColor(yde_option.option.title, c.getString(), false)) {
+                        hover.append("<br>").append(c);
+                    }
                     rightTab.yde_scroll.addTextField(0, 1, y += lH, w, lH, yde_option.option.title)
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
-                            .setHoverTexts("dialog.option.hover.name");
+                            .setHoverTexts(hover);
                     // color
                     StringBuilder color = new StringBuilder(Integer.toHexString(yde_option.option.optionColor));
                     while (color.length() < 6) { color.insert(0, 0); }
@@ -1552,7 +1715,7 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
                 else {
                     // title
                     rightTab.yde_scroll.addLabel(lId, 1, y, Component.translatable("dialog.dialog")
-                                    .append(" ID:" + yde_option.dialogId + "; ").append(yde_option.title).append(":"))
+                                    .append(" ID:" + yde_option.dialogId + "; ").append(yde_option.getTitle()).append(":"))
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
@@ -1579,7 +1742,7 @@ LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouse
         if (component instanceof YDEWindowNop window) {
             Dialog dialog = null;
             if (window.node instanceof YDEDialog yde_dialog && dData.hasDialog(yde_dialog.dialog.id)) { dialog = yde_dialog.dialog; }
-            if (window.node instanceof YDEOption yde_option && dData.hasDialog(yde_option.dialog.id)) { dialog = yde_option.dialog; }
+            if (window.node instanceof YDEOption yde_option && dData.hasDialog(yde_option.dialogId)) { dialog = dData.get(yde_option.dialogId); }
             if (dialog != null) { Packets.sendServer(new SPacketDialogSave(dialog.category.id, dialog.save(new CompoundTag()))); }
         }
     }

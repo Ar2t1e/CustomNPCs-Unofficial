@@ -31,6 +31,7 @@ public class UtilYDE {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableDepthTest();
+        RenderSystem.enableDepthTest();
         int r = FastColor.ARGB32.red(color);
         int g = FastColor.ARGB32.green(color);
         int b = FastColor.ARGB32.blue(color);
@@ -96,10 +97,10 @@ public class UtilYDE {
             // C(5,k) = 5! / (k! * (5-k)!)
             // k=0: 1, k=1: 5, k=2: 10, k=3: 10, k=4: 5, k=5: 1
             float c0 = (float) Math.pow(iT, 5.0f);                                  // (1-t)^5 * 1
-            float c1 = 5.07f * (float) Math.pow(iT, 4.0f) * t;                       // (1-t)^4 * t * 5
+            float c1 = 5.2f * (float) Math.pow(iT, 4.0f) * t;                       // (1-t)^4 * t * 5
             float c2 = 10 * (float) Math.pow(iT, 3.0f) * (float) Math.pow(t, 2.0f); // (1-t)^3 * t^2 * 10
             float c3 = 10 * (float) Math.pow(iT, 2.0f) * (float) Math.pow(t, 3.0f); // (1-t)^2 * t^3 * 10
-            float c4 = 4.93f * iT * (float) Math.pow(t, 4.0f);                       // (1-t) * t^4 * 5
+            float c4 = 4.8f * iT * (float) Math.pow(t, 4.0f);                       // (1-t) * t^4 * 5
             float c5 = (float) Math.pow(t, 5.0f);                                   // t^5 * 1
 
             float x = c0 * p0[0] + c1 * p1[0] + c2 * p2[0] + c3 * p3[0] + c4 * p4[0] + c5 * p5[0];

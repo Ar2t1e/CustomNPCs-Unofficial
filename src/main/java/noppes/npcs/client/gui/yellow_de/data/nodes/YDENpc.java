@@ -10,12 +10,10 @@ import noppes.npcs.controllers.data.Dialog;
 public class YDENpc extends YDENode {
 
     public Dialog.StartedNpcData npcData;
-    public Dialog dialog;
 
     public YDENpc(YDEData parent, int idIn, String categoryIn, Dialog.StartedNpcData npcDataIn) {
         super(parent);
         type = EnumYDEType.NPC;
-        title = Component.literal("NPC: ");
 
         id = idIn;
         category = categoryIn;
@@ -39,6 +37,6 @@ public class YDENpc extends YDENode {
     }
 
     @Override
-    public void refresh() { }
+    public Component getTitle() { return Component.literal("NPC: "); }
 
 }

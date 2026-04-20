@@ -24,7 +24,7 @@ public class YDEAreaNop extends AbstractWidget implements IComponentGui {
     protected List<Component> hoverText = new ArrayList<>();
 
     public YDEAreaNop(@Nonnull GuiYellowDialogEditor gui, @Nonnull YDEArea areaIn) {
-        super(areaIn.x, areaIn.y, areaIn.width, areaIn.height, areaIn.title);
+        super(areaIn.x, areaIn.y, areaIn.width, areaIn.height, areaIn.getTitle());
         listener = gui;
         area = areaIn;
         font = new ClientProxy.FontContainer("JetBrainsMono", area.height / 6);

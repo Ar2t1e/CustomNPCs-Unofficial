@@ -18,7 +18,6 @@ public class YDEDialog extends YDENode {
     public YDEDialog(YDEData parent, int idIn, String categoryIn, int dialogIdIn) {
         super(parent);
         type = EnumYDEType.DIALOG;
-        title = Component.translatable("dialog.dialog").append(Component.literal("ID: " + dialogIdIn));
 
         id = idIn;
         dialog = DialogController.instance.get(dialogId);
@@ -42,7 +41,7 @@ public class YDEDialog extends YDENode {
     }
 
     @Override
-    public void refresh() {
+    public Component getTitle() {
         if (dialog == null && dialogId > -1) { dialog = DialogController.instance.get(dialogId); }
         else if (dialog != null && dialog.id == -1) {
             for (Dialog d : new ArrayList<>(DialogController.instance.dialogs.values())) {
@@ -52,8 +51,13 @@ public class YDEDialog extends YDENode {
                 }
             }
         }
+        if (id < 0) {
+            parent.nodes.remove(-1);
+            id = parent.getEmptyNodeId();
+            parent.nodes.put(id, this);
+        }
         dialogId = dialog != null ? dialog.id : -1;
-        title = Component.translatable("dialog.dialog").append(Component.literal("ID: " + dialogId));
+        return Component.translatable("dialog.dialog").append(Component.literal("ID: " + dialogId));
     }
 
 }

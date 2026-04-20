@@ -13,7 +13,6 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.mixin.client.IMouseHandlerMixin;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
-import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 
@@ -122,10 +121,7 @@ public class GuiMenuTopButton extends GuiButtonNop {
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
       boolean bo = !isFocused() && visible && isHovered && active;
-      if (isHovered) {
-         LogWriter.info("TEST: "+listener);
-      }
-      if (bo) {
+      if (isHovered && bo) {
          if (listener != null && listener.mouseButtonEvent(this, mouseButton)) { return true; }
          if (mouseButton == 0) { onClick(mouseX, mouseY); }
       }

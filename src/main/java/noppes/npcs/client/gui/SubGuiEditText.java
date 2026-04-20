@@ -75,11 +75,11 @@ public class SubGuiEditText extends GuiBasic implements ITextfieldListener {
 
    @Override
    public void buttonEvent(GuiButtonNop button) {
-      if (button.id == 0) {
-         cancelled = false;
+      cancelled = button.id != 0;
+      if (!cancelled) {
          for (int i = 0; i < text.length; i++) { text[i] = getTextField(i).getValue(); }
-         onClose();
       }
+      onClose();
    }
 
    @Override

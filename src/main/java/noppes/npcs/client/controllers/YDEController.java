@@ -1,6 +1,7 @@
 package noppes.npcs.client.controllers;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.gui.yellow_de.data.YDEData;
@@ -36,7 +37,7 @@ public class YDEController {
      */
     protected final Map<String, YDEData> levels = new HashMap<>();
     public String lastCategory = "";
-    public int lastNode = -1;
+    public Map<String, Integer> lastNode = new HashMap<>();
 
     public static YDEController getInstance() {
         if (instance == null) { instance = new YDEController(); }
@@ -52,9 +53,9 @@ public class YDEController {
             catch (Exception e) { LogWriter.error(e); }
         }
         else { save(); }
-        for (String worldName : compound.getAllKeys()) {
+        for (String worldName : compound.getCompound("levels").getAllKeys()) {
             if (worldName.contains("_") || worldName.contains(";")) {
-                levels.put(worldName, new YDEData(compound.getList(worldName, 10)));
+                levels.put(worldName, new YDEData(compound.getCompound(worldName)));
             }
         }
         if (compound.contains("BackColor", 3)) { backColor = (compound.getInt("BackColor") & 0xFFFFFF) | alpha; }
@@ -72,7 +73,11 @@ public class YDEController {
         if (compound.contains("RightTabColor", 3)) { rightTabColor = compound.getInt("RightTabColor"); }
 
         lastCategory = compound.getString("LastCategory");
-        if (compound.contains("LastNode", 3)) { lastNode = compound.getInt("LastNode"); }
+        lastNode.clear();
+        for (int i = 0; i < compound.getList("LastNode", 10).size(); i++) {
+            CompoundTag nbt = compound.getList("LastNode", 10).getCompound(i);
+            lastNode.put(nbt.getString("K"), nbt.getInt("V"));
+        }
     }
 
     public @Nonnull YDEData getLevelData(String levelKey) {
@@ -83,9 +88,12 @@ public class YDEController {
 
     public void save() {
         CompoundTag compound = new CompoundTag();
+        CompoundTag data = new CompoundTag();
         for (Map.Entry<String, YDEData> entry : levels.entrySet()) {
-            compound.put(entry.getKey(), entry.getValue().save());
+            data.put(entry.getKey(), entry.getValue().save());
         }
+        compound.put("levels", data);
+
         compound.putInt("BackColor", backColor & 0xFFFFFF);
         compound.putInt("BackHoverColor", backHoverColor & 0xFFFFFF);
         compound.putInt("TextColor", textColor & 0xFFFFFF);
@@ -101,7 +109,14 @@ public class YDEController {
         compound.putInt("RightTabColor", rightTabColor & 0xFFFFFF);
 
         compound.putString("LastCategory", lastCategory);
-        compound.putInt("LastNode", lastNode);
+        ListTag list = new ListTag();
+        for (Map.Entry<String, Integer> entry : lastNode.entrySet()) {
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("K", entry.getKey());
+            nbt.putInt("V", entry.getValue());
+            list.add(nbt);
+        }
+        compound.put("LastNode", list);
 
         try {
             NbtIo.writeCompressed(compound, new File(CustomNpcs.Dir, "yde_data.dat"));

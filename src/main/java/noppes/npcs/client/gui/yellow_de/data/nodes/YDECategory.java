@@ -1,9 +1,13 @@
 package noppes.npcs.client.gui.yellow_de.data.nodes;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
 import noppes.npcs.client.gui.yellow_de.data.YDEData;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
+import noppes.npcs.controllers.DialogController;
+import noppes.npcs.controllers.data.DialogCategory;
 import noppes.npcs.util.ValueUtil;
 
 public class YDECategory extends YDENode {
@@ -37,8 +41,19 @@ public class YDECategory extends YDENode {
     }
 
     @Override
-    public void refresh() {
-
+    public Component getTitle() {
+        DialogCategory cat = DialogController.instance.getCategory(category);
+        if (cat == null) { return Component.empty(); }
+        categoryId = cat.id;
+        if (id < 0) {
+            parent.nodes.remove(-1);
+            id =  parent.getEmptyNodeId();
+            parent.nodes.put(id, this);
+        }
+        return Component.empty()
+                .append(Component.translatable("drop.category").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" ID:" + cat.id + " ").withStyle(ChatFormatting.GRAY))
+                .append(Component.translatable(cat.title).withStyle(ChatFormatting.RESET));
     }
 
     public float getScale() { return scale; }

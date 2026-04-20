@@ -73,7 +73,8 @@ public class YDEScrollNop extends GuiBasic
         setFocused(null);
         renderables.clear();
         children().clear();
-        wrapper.init(minecraft, width, height);
+        wrapper.onlyScroll = null;
+        wrapper.components.clear();
     }
 
     @Override

@@ -3,6 +3,7 @@ package noppes.npcs.shared.client.gui.components;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -196,6 +197,15 @@ public class GuiCustomWindowNop extends GuiBasic
         width = imageWidth;
         height = imageHeight;
         isHovered = visible && isMouseHover(mouseX, mouseY, getX(), guiTop, imageWidth, imageHeight);
+        if (!isHovered) {
+            for (IComponentGui c : wrapper.components) {
+                if ((c instanceof AbstractWidget widget && widget.isHovered()) ||
+                        (c instanceof GuiCustomScrollNop scroll && scroll.isHovered())) {
+                    isHovered = true;
+                    break;
+                }
+            }
+        }
         isHeadHovered = isHovered && isMouseHover(mouseX, mouseY, getX() + 3, guiTop + 3, imageWidth - 3, 8);
         if (visible) {
             wrapper.mouseX = mouseX;

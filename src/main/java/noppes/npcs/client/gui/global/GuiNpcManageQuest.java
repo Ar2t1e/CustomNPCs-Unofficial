@@ -58,7 +58,7 @@ public class GuiNpcManageQuest
       questData.clear();
       QuestController qData = QuestController.instance;
       LinkedHashMap<Integer, List<Component>> hts= new LinkedHashMap<>();
-      for (QuestCategory category : qData.categories.values()) {
+      for (QuestCategory category : new ArrayList<>(qData.categories.values())) {
          Component key = category.getTitle();
          categoryData.put(key, category);
          if (selectedCategory.getString().isEmpty() || selectedCategory.getString().equals(key.getString())) { selectedCategory = key; }
@@ -85,7 +85,7 @@ public class GuiNpcManageQuest
          if (!questData.isEmpty()) {
             int pos = 0;
             DialogController dData = DialogController.instance;
-            for (Quest quest : questData.values()) {
+            for (Quest quest : new ArrayList<>(questData.values())) {
                hts.put(pos++, getStrings(quest, qData, dData));
             }
          }
@@ -181,7 +181,7 @@ public class GuiNpcManageQuest
             boolean has = true;
             while (has) {
                has = false;
-               for (Quest q : quest.category.quests.values()) {
+               for (Quest q : new ArrayList<>(quest.category.quests.values())) {
                   if (quest.id != q.id && q.title.equalsIgnoreCase(t.toString())) {
                      has = true;
                      break;
@@ -322,14 +322,14 @@ public class GuiNpcManageQuest
       List<Component> quests = new ArrayList<>();
       List<Component> dialogs = new ArrayList<>();
       h.add(Component.translatable(quest.title).append(":"));
-      for (Quest q : qData.quests.values()) {
+      for (Quest q : new ArrayList<>(qData.quests.values())) {
          if (q.nextQuestId != quest.id) { continue; }
          quests.add(Component.empty()
                  .append(Component.literal("ID:" + q.id).withStyle(ChatFormatting.GRAY))
                  .append(Component.literal(q.category.getName() + "/").withStyle(ChatFormatting.DARK_GRAY))
                  .append(Component.literal(q.getName()).withStyle(ChatFormatting.RESET)));
       }
-      for (Dialog d : dData.dialogs.values()) {
+      for (Dialog d : new ArrayList<>(dData.dialogs.values())) {
          if (d.quest != quest.id) {
             continue;
          }

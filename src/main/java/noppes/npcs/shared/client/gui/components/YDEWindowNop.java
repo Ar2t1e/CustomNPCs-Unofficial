@@ -2,8 +2,8 @@ package noppes.npcs.shared.client.gui.components;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -11,10 +11,7 @@ import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.global.SubGuiNpcDialogOption;
 import noppes.npcs.client.gui.yellow_de.GuiYellowDialogEditor;
-import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
-import noppes.npcs.client.gui.yellow_de.data.UtilYDE;
-import noppes.npcs.client.gui.yellow_de.data.YDELink;
-import noppes.npcs.client.gui.yellow_de.data.YDENode;
+import noppes.npcs.client.gui.yellow_de.data.*;
 import noppes.npcs.client.gui.yellow_de.data.nodes.YDEDialog;
 import noppes.npcs.client.gui.yellow_de.data.nodes.YDEOption;
 import noppes.npcs.controllers.DialogController;
@@ -24,7 +21,6 @@ import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 
 public class YDEWindowNop extends GuiCustomWindowNop {
 
@@ -32,17 +28,17 @@ public class YDEWindowNop extends GuiCustomWindowNop {
 
     public final YDENode node;
     public final GuiYellowDialogEditor listener;
-    public Object object;
     protected GuiButtonNop b0;
     protected GuiButtonNop b1;
     protected GuiButtonNop b2;
     protected GuiButtonNop b3;
+    protected boolean isMoved;
     protected double tempDx;
     protected double tempDy;
     protected long lastClicked = 0L;
 
     public YDEWindowNop(GuiYellowDialogEditor gui, YDENode nodeIn) {
-        super(gui, nodeIn.id, nodeIn.x, nodeIn.y, nodeIn.width, nodeIn.height, nodeIn.title);
+        super(gui, nodeIn.id, nodeIn.x, nodeIn.y, nodeIn.width, nodeIn.height, nodeIn.getTitle());
         node = nodeIn;
         listener = gui;
 
@@ -116,7 +112,6 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                     .setHoverTexts("yde.hover.node.dialog.quest");
         }
         else if (node instanceof YDEOption yde_option) {
-            yde_option.refresh();
             // name
             addTextField(0, 3, y += 10, w, h0, yde_option.option.title)
                     .setColor(YDEController.textColor)
@@ -175,7 +170,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                     break;
                 }
             }
-            // -> options
+            // -> next dialog
             b0 = addButton(0, imageWidth - 4, imageHeight / 2 - 4, "")
                     .setSize(7, 7)
                     .setTexture(INFO)
@@ -227,44 +222,8 @@ public class YDEWindowNop extends GuiCustomWindowNop {
 
     @Override
     public void renderBackground(@Nonnull GuiGraphics graphics) {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
         PoseStack matrixStack = graphics.pose();
-        // links
-        if (!node.links.isEmpty()) {
-            matrixStack.pushPose();
-            float zDepth = (float) id / 10000.0f;
-            matrixStack.translate(0, 0, zDepth - 0.001f);
-            // link dots
-            for (YDELink link : new ArrayList<>(node.links)) {
-                if (link.backNodeId == node.id) {
-                    YDEWindowNop nextNode = listener.get(link.nextNodId, YDEWindowNop.class);
-                    if (nextNode != null) {
-                        if (link.type == EnumYDEType.OPTION) {
-                            UtilYDE.renderSpline(graphics, new float[] { getX() + imageWidth, getY() + imageHeight / 2.0f },
-                                    new float[] { nextNode.getX(), nextNode.getY() + nextNode.imageHeight / 2.0f },
-                                    false, getX() + imageWidth > nextNode.getX(),
-                                    EnumYDEType.DIALOG.color, zDepth - 0.001f);
-                        }
-                        else if (link.type == EnumYDEType.DIALOG) {
-                            UtilYDE.renderSpline(graphics, new float[] { getX() + imageWidth, getY() + imageHeight / 2.0f },
-                                    new float[] { nextNode.getX(), nextNode.getY() + nextNode.imageHeight / 2.0f },
-                                    false, getX() + imageWidth > nextNode.getX(), EnumYDEType.OPTION.color, zDepth - 0.001f);
-                        }
-                        else if (link.type == EnumYDEType.NPC) {
-                            UtilYDE.renderSpline(graphics, new float[] { getX(), getY() + imageHeight * 0.8f },
-                                    new float[] { nextNode.getX() + nextNode.imageWidth, nextNode.getY() + nextNode.imageHeight / 2.0f },
-                                    false, getX() > nextNode.getX() + nextNode.imageWidth, EnumYDEType.NPC.color, zDepth - 0.001f);
-                        }
-                        else if (link.type == EnumYDEType.QUEST) {
-                            UtilYDE.renderSpline(graphics, new float[] { getX() + imageWidth / 2.0f, getY() + imageHeight },
-                                    new float[] { nextNode.getX() + nextNode.imageWidth / 2.0f, nextNode.getY() },
-                                    false, getY() + imageHeight < nextNode.getY(), EnumYDEType.QUEST.color, zDepth - 0.001f);
-                        }
-                    }
-                    else { node.links.remove(link); }
-                }
-            }
-            matrixStack.popPose();
-        }
         matrixStack.pushPose();
         matrixStack.translate(guiLeft, guiTop, -1.0f);
         matrixStack.pushPose();
@@ -366,19 +325,8 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         boolean bo = super.mouseClicked(mouseX, mouseY, mouseButton);
-        if (isHovered) {
-            if (mouseButton == 0) {
-                if (Screen.hasControlDown()) {
-                    if (listener.hasSelect(node.id)) { listener.removeSelect(node.id); } else { listener.addSelect(node.id); }
-                }
-                else { listener.setActive(node.id); }
-                if (lastClicked + 500L > System.currentTimeMillis()) {
-                    lastClicked = 0L;
-                    return listener.doubleClicked(this);
-                }
-                else { lastClicked = System.currentTimeMillis(); }
-            }
-            else if (!bo) { bo = listener.mouseButtonEvent(this, null, mouseButton); }
+        if (isHovered && !bo) {
+            bo = listener.mouseButtonEvent(this, null, mouseButton);
         }
         return bo;
     }
@@ -389,52 +337,58 @@ public class YDEWindowNop extends GuiCustomWindowNop {
             if (isHovered || !hasShiftDown()) { focused = false; }
         }
         else { focused = isHovered; }
-        return super.mouseReleased(mouseX, mouseY, mouseButton);
+        boolean bo = super.mouseReleased(mouseX, mouseY, mouseButton);
+        if (isHovered && mouseButton == 0) {
+            if (isMoved) { isMoved = false; }
+            else {
+                if (Screen.hasControlDown()) {
+                    if (listener.hasSelect(node.id)) { listener.removeSelect(node.id); } else { listener.addSelect(node.id); }
+                }
+                else { listener.setActive(node.id); }
+                if (lastClicked + 500L > System.currentTimeMillis()) {
+                    lastClicked = 0L;
+                    return listener.doubleClicked(this);
+                }
+                else { lastClicked = System.currentTimeMillis(); }
+                bo = true;
+            }
+        }
+        return bo;
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
         boolean bo = wrapper.mouseDragged(mouseX, mouseY, mouseButton, dx, dy);
-        boolean hover = isHovered;
-        if (hover) {
-            for (IComponentGui component : new ArrayList<>(wrapper.components)) {
-                if (component instanceof AbstractWidget widget && widget.isHovered()) {
-                    hover = false;
-                    break;
+        if (isHovered && !bo && mouseButton == 0 && listener.selectLink == null && !isLock && listener.hasSelect(id)) {
+            tempDx += dx;
+            tempDy += dy;
+            int x = (int) (Math.floor(tempDx) * listener.guiScale /
+                    (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) / 2.0d);
+            int y = (int) (Math.floor(tempDy) * listener.guiScale /
+                    (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f)/ 2.0d);
+            int stepX = 1;
+            int stepY = 1;
+            if (Screen.hasShiftDown()) {
+                if (getX() % 10 != 0) { x = -(getX() % 10); }
+                else {
+                    stepX = 10;
+                    x = (int) (Math.floor((float) x / 10.0f));
+                }
+                if (getY() % 10 != 0) { y = -(getY() % 10); }
+                else {
+                    stepY = 10;
+                    y = (int) (Math.floor((float) y / 10.0f));
                 }
             }
-        }
-        if (hover && !bo) {
-            if (!isLock) {
-                tempDx += dx;
-                tempDy += dy;
-                int x = (int) (Math.floor(tempDx) * listener.guiScale /
-                        (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) / 2.0d);
-                int y = (int) (Math.floor(tempDy) * listener.guiScale /
-                        (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f)/ 2.0d);
-                int stepX = 1;
-                int stepY = 1;
-                if (Screen.hasShiftDown()) {
-                    if (getX() % 10 != 0) { x = -(getX() % 10); }
-                    else {
-                        stepX = 10;
-                        x = (int) (Math.floor((float) x / 10.0f));
-                    }
-                    if (getY() % 10 != 0) { y = -(getY() % 10); }
-                    else {
-                        stepY = 10;
-                        y = (int) (Math.floor((float) y / 10.0f));
-                    }
-                }
-                if (x != 0 || y != 0) {
-                    x *= stepX;
-                    y *= stepY;
-                    if (x != 0) { tempDx -= x / listener.guiScale *
-                            (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) * 2.0d; }
-                    if (y != 0) { tempDy -= y / listener.guiScale *
-                            (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) * 2.0d; }
-                    listener.movedSelectNodes(x, y);
-                }
+            if (x != 0 || y != 0) {
+                x *= stepX;
+                y *= stepY;
+                if (x != 0) { tempDx -= x / listener.guiScale *
+                        (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) * 2.0d; }
+                if (y != 0) { tempDy -= y / listener.guiScale *
+                        (GuiYellowDialogEditor.category != null ? GuiYellowDialogEditor.category.getScale() : 1.0f) * 2.0d; }
+                listener.movedSelectNodes(x, y);
+                isMoved = true;
             }
             return true;
         }
