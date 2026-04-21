@@ -2,37 +2,40 @@ package noppes.npcs.controllers;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.fml.common.eventhandler.Event;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IScriptHandler {
 
-	void clearConsole();
-
-	void clearConsoleText(Long key);
-
-	TreeMap<Long, String> getConsoleText();
-
-	boolean getEnabled();
-
-	String getLanguage();
-
-	List<ScriptContainer> getScripts();
+	void runScript(@ParamName("type") String type, @ParamName("event") Event event);
 
 	boolean isClient();
 
-	Component noticeString(String type, Object event);
+	boolean getEnabled();
 
-	void runScript(String type, Event event);
+	void setEnabled(@ParamName("isEnabled") boolean isEnabled);
 
-	void setEnabled(boolean bo);
+	String getLanguage();
 
-	void setLanguage(String language);
+	void setLanguage(@ParamName("language") String language);
 
-	void setLastInited(long timeMC);
+	List<ScriptContainer> getScripts();
 
-    void init();
+	Component noticeString(@ParamName("type") String type, @ParamName("event") Object event);
+
+	Map<Long, String> getConsoleText();
+
+	void clearConsole();
+
+	boolean isEnabled();
+
+	// New from Unofficial (BetaZavr)
+	void clearConsoleText(@ParamName("key") Long key);
+
+	void setLastInited(@ParamName("timeMC") long timeMC);
+
+	void init();
+
 }

@@ -5,6 +5,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -13,9 +14,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomTabs;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileCopy;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 
@@ -44,15 +45,14 @@ public class BlockCopy extends BlockInterface {
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
 		if (currentItem.getItem() == CustomItems.wand) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.CopyBlock, null, pos.getX(), pos.getY(), pos.getZ());
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.CopyBlock, null, pos);
 		}
 		return true;
 	}
 
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
-		if (entity instanceof EntityPlayer && !world.isRemote) {
-			NoppesUtilServer.sendOpenGui((EntityPlayer) entity, EnumGuiType.CopyBlock, null, pos.getX(), pos.getY(),
-					pos.getZ());
+		if (entity instanceof EntityPlayerMP && !world.isRemote) {
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entity, EnumGuiType.CopyBlock, null, pos);
 		}
 	}
 }

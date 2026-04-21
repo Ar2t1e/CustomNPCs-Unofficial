@@ -67,7 +67,7 @@ public class SPacketScriptGet extends PacketServerBasic {
                CustomNpcs.debugData.end("Packets");
                return;
             }
-            ((TileScripted) tile).getNBT(compound);
+            ((TileScripted) tile).save(compound);
             compound.setTag("Methods", NBTTags.nbtStringList(Arrays.stream(EnumScriptType.blockScripts).map((type) -> type.function).collect(Collectors.toList())));
             break;
          } // Tile scripted methods

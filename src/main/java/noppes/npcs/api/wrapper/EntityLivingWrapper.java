@@ -15,65 +15,49 @@ import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityLiving;
 import noppes.npcs.api.entity.IEntityLivingBase;
 
-@SuppressWarnings("rawtypes")
-public class EntityLivingWrapper<T extends EntityLiving> extends EntityLivingBaseWrapper<T> implements IEntityLiving {
+public class EntityLivingWrapper<T extends EntityLiving> extends EntityLivingBaseWrapper<T> implements IEntityLiving<T> {
 
-	public EntityLivingWrapper(T entity) {
-		super(entity);
-	}
+	public EntityLivingWrapper(T entity) { super(entity); }
 
 	@Override
-	public boolean canSeeEntity(IEntity entity) {
-		return this.entity.getEntitySenses().canSee(entity.getMCEntity());
-	}
+	public boolean canSeeEntity(IEntity<T> entityIn) { return entity.getEntitySenses().canSee(entityIn.getMCEntity()); }
 
 	@Override
-	public void clearNavigation() {
-		this.entity.getNavigator().clearPath();
-	}
+	public void clearNavigation() { entity.getNavigator().clearPath(); }
 
 	@Override
-	public IEntityLivingBase getAttackTarget() {
-		IEntityLivingBase base = (IEntityLivingBase) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.getAttackTarget());
+	@SuppressWarnings("unchecked")
+	public IEntityLivingBase<T> getAttackTarget() {
+		IEntityLivingBase<T> base = (IEntityLivingBase<T>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.getAttackTarget());
 		return (base != null) ? base : super.getAttackTarget();
 	}
 
 	@Override
 	public IPos getNavigationPath() {
-		if (!this.isNavigating()) {
-			return null;
-		}
-		PathPoint point = Objects.requireNonNull(this.entity.getNavigator().getPath()).getFinalPathPoint();
-		if (point == null) {
-			return null;
-		}
+		if (!isNavigating()) { return null; }
+		PathPoint point = Objects.requireNonNull(entity.getNavigator().getPath()).getFinalPathPoint();
+		if (point == null) { return null; }
 		return new BlockPosWrapper(new BlockPos(point.x, point.y, point.z));
 	}
 
 	@Override
-	public boolean isAttacking() {
-		return super.isAttacking() || this.entity.getAttackTarget() != null;
-	}
+	public boolean isAttacking() { return super.isAttacking() || entity.getAttackTarget() != null; }
 
 	@Override
-	public boolean isNavigating() {
-		return !this.entity.getNavigator().noPath();
-	}
+	public boolean isNavigating() { return !entity.getNavigator().noPath(); }
 
 	@Override
-	public void jump() {
-		this.entity.getJumpHelper().setJumping();
-	}
+	public void jump() { entity.getJumpHelper().setJumping(); }
 
 	@Override
 	public void navigateTo(double x, double y, double z, double speed) {
-		this.entity.getNavigator().clearPath();
-		this.entity.getNavigator().tryMoveToXYZ(x, y, z, speed * 0.7);
+		entity.getNavigator().clearPath();
+		entity.getNavigator().tryMoveToXYZ(x, y, z, speed * 0.7);
 	}
 
 	@Override
 	public void navigateTo(IPos[] posses, double speed) {
-		PathNavigate nav = this.entity.getNavigator();
+		PathNavigate nav = entity.getNavigator();
 		nav.clearPath();
 		List<PathPoint> points = new ArrayList<>();
 		for (IPos pos : posses) {
@@ -85,12 +69,9 @@ public class EntityLivingWrapper<T extends EntityLiving> extends EntityLivingBas
 	}
 
 	@Override
-	public void setAttackTarget(IEntityLivingBase living) {
-		if (living == null) {
-			this.entity.setAttackTarget(null);
-		} else {
-			this.entity.setAttackTarget(living.getMCEntity());
-		}
+	public void setAttackTarget(IEntityLivingBase<T> living) {
+		entity.setAttackTarget(living == null ? null : living.getMCEntity());
 		super.setAttackTarget(living);
 	}
+
 }

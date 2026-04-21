@@ -14,8 +14,6 @@ public interface IBlockScriptedDoor extends IBlock {
 
 	float getResistance();
 
-	String getSound(@ParamName("isOpen") boolean isOpen);
-
 	ITimers getTimers();
 
 	void setBlockModel(@ParamName("name") String name);
@@ -25,6 +23,13 @@ public interface IBlockScriptedDoor extends IBlock {
 	void setOpen(@ParamName("open") boolean open);
 
 	void setResistance(@ParamName("resistance") float resistance);
+
+
+	// New from Unofficial (GoodBird)
+	String executeCommand(@ParamName("command") String command);
+
+	// New from Unofficial (BetaZavr)
+	String getSound(@ParamName("isOpen") boolean isOpen);
 
 	void setSound(@ParamName("isOpen") boolean isOpen, @ParamName("song") String song);
 

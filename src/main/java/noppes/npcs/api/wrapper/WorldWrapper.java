@@ -20,6 +20,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
@@ -28,6 +29,8 @@ import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.mixin.world.biome.IBiomeMixin;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketPlaySound;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IDimension;
@@ -47,7 +50,7 @@ import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.EntityProjectile;
 import noppes.npcs.mixin.world.IWorldMixin;
-import noppes.npcs.util.Util;
+import noppes.npcs.util.ValueUtil;
 
 public class WorldWrapper implements IWorld {
 
@@ -123,11 +126,6 @@ public class WorldWrapper implements IWorld {
 	@Override
 	public void explode(double x, double y, double z, float range, boolean fire, boolean grief) {
 		world.newExplosion(null, x, y, z, range, fire, grief);
-	}
-
-	@Override
-	public void forcePlaySoundAt(int categoryType, IPos pos, String sound, float volume, float pitch) {
-		Server.sendRangedData(world, pos.getMCBlockPos(), 16, EnumPacketClient.FORCE_PLAY_SOUND, categoryType, sound, (float) pos.getX(), (float) pos.getY(), (float) pos.getZ(), volume, pitch);
 	}
 
 	@Override
@@ -359,8 +357,15 @@ public class WorldWrapper implements IWorld {
 
 	@Override
 	public void playSoundAt(IPos pos, String sound, float volume, float pitch) {
-		Server.sendRangedData(world, pos.getMCBlockPos(), 16, EnumPacketClient.PLAY_SOUND, sound, pos.getX(),
-				pos.getY(), pos.getZ(), volume, pitch);
+		Packets.sendNearby(world, pos.getMCBlockPos(), 16,
+				new PacketPlaySound(sound, SoundCategory.PLAYERS, pos.getX(), pos.getY(), pos.getZ(), volume, pitch));
+	}
+
+	@SuppressWarnings("unused")
+	public void forcePlaySoundAt(int categoryType, IPos pos, String sound, float volume, float pitch) {
+		SoundCategory cat = SoundCategory.values()[ValueUtil.correctInt(categoryType, 0, SoundCategory.values().length)];
+		Packets.sendNearby(world, pos.getMCBlockPos(), 16,
+				new PacketPlaySound(sound, cat, pos.getX(), pos.getY(), pos.getZ(), volume, pitch));
 	}
 
 	@Override

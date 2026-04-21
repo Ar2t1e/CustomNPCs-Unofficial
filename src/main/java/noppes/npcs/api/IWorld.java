@@ -25,9 +25,6 @@ public interface IWorld {
 	void explode(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
 				 @ParamName("range") float range, @ParamName("fire") boolean fire, @ParamName("grief") boolean grief);
 
-	void forcePlaySoundAt(@ParamName("categoryType") int categoryType, @ParamName("pos") IPos pos,
-						  @ParamName("sound") String sound, @ParamName("volume") float volume, @ParamName("pitch") float pitch);
-
 	IEntity<?>[] getAllEntities(@ParamName("type") int type);
 
 	IPlayer<?>[] getAllPlayers();

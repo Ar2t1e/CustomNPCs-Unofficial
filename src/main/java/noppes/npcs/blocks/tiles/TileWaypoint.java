@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -21,6 +22,8 @@ import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.QuestData;
 import noppes.npcs.client.gui.util.quests.QuestInterface;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketAchievement;
 
 import javax.annotation.Nonnull;
 
@@ -108,8 +111,7 @@ implements ITickable {
 						compound.setString("Type", "location");
 						compound.setIntArray("Progress", new int[] { 1, 1 });
 						compound.setString("TargetName", obj.getTargetName());
-						compound.setInteger("MessageType", 0);
-						Server.sendData((EntityPlayerMP) player, EnumPacketClient.MESSAGE_DATA, compound);
+						Packets.send((EntityPlayerMP) player, new PacketAchievement(Component.empty(), Component.empty(), 0, compound));
 					}
 					if (data.quest.showProgressInChat) {
 						player.sendMessage(new TextComponentTranslation("quest.message.location.1",

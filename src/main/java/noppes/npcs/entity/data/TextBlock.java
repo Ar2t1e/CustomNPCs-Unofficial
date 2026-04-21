@@ -3,10 +3,10 @@ package noppes.npcs.entity.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
 
 public class TextBlock {
 
-	public List<ITextComponent> lines = new ArrayList<>();
+	public List<Component> lines = new ArrayList<>();
 
 }

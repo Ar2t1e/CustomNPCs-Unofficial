@@ -39,7 +39,8 @@ public class GuiMenuTopButton extends GuiButtonNop {
             drawTexturedModalRect(getX(), getY(), 0, state * 20, getWidth() / 2, h);
             drawTexturedModalRect(getX() + getWidth() / 2, getY(), 200 - getWidth() / 2, state * 20, getWidth() / 2, h);
             if (rotated) { GlStateManager.rotate(90.0F, 1.0f, 0.0f, 0.0f); }
-            renderString(getMessage(), getX() + 2, getY(), getX() + getWidth() - 2, getY() + getHeight(), getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true);
+            renderString(getMessage(), getX() + 2, getY(), getX() + getWidth() - 2, getY() + getHeight(),
+                    getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true, customFont);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
             GlStateManager.disableDepth();

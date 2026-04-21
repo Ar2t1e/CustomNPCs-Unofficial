@@ -23,6 +23,8 @@ import net.minecraft.world.World;
 import noppes.npcs.CustomTabs;
 import noppes.npcs.blocks.tiles.TileMailbox;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiOpen;
 
 import javax.annotation.Nonnull;
 
@@ -82,9 +84,9 @@ public class BlockMailbox extends BlockInterface {
 		return false;
 	}
 
-	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (!par1World.isRemote) {
-			Server.sendData((EntityPlayerMP) player, EnumPacketClient.GUI, EnumGuiType.PlayerMailbox, pos.getX(), pos.getY(), pos.getZ());
+	public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
+		if (!world.isRemote) {
+			Packets.send((EntityPlayerMP) player, new PacketGuiOpen(EnumGuiType.PlayerMailbox, pos));
 		}
 		return true;
 	}

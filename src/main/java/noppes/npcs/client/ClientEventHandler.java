@@ -507,12 +507,12 @@ public class ClientEventHandler extends Gui {
 		}
 		if (mc.currentScreen == null || mc.currentScreen instanceof GuiChat || mc.currentScreen instanceof GuiLog) {
 			// Quest Compass
-			if (CustomNpcs.TypeShowQuestCompass) {
+			PlayerCompassData compassData = playerData.compass;
+			if (CustomNpcs.TypeShowQuestCompass != 4 && compassData.getShowOfPlayer()) {
 				String name = "", title = "";
 				double[] p = null;
 				int type = 0, range = 5;
 				String n = "";
-				PlayerCompassData compassData = playerData.compass;
 				if (compassData.isCustomPoint) {
 					p = new double[] { compassData.pos.getX() - 0.5d, compassData.pos.getY() + 0.5d, compassData.pos.getZ() + 0.5d };
 					name = compassData.name;

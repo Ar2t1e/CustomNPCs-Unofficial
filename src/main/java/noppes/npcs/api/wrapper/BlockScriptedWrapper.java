@@ -1,8 +1,6 @@
 package noppes.npcs.api.wrapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -13,6 +11,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.CustomNPCsException;
@@ -32,289 +31,213 @@ public class BlockScriptedWrapper
 
 	private TileScripted tile;
 
-	public BlockScriptedWrapper(World world, Block block, BlockPos pos) {
-		super(world, block, pos);
-		this.tile = (TileScripted) super.tile;
+	public BlockScriptedWrapper(World world, IBlockState state, BlockPos pos) {
+		super(world, state, pos);
+		tile = (TileScripted) super.tile;
 	}
 
 	@Override
-	public ILayerBlockModel createLayerModel() {
-		ILayerBlockModel[] ls = new ILayerBlockModel[this.tile.layers.length + 1];
-		int i;
-		for (i = 0; i < this.tile.layers.length; i++) {
-			((LayerModel) this.tile.layers[i]).pos = i;
-			ls[i] = this.tile.layers[i];
-		}
-		ls[i] = new LayerModel(i);
-		this.tile.layers = ls;
-		return this.tile.layers[i];
-	}
+	public void setModel(IItemStack item) { tile.getMainModel().setItemModel(item); }
 
 	@Override
-	public String executeCommand(String command) {
-		if (!Objects.requireNonNull(this.tile.getWorld().getMinecraftServer()).isCommandBlockEnabled()) {
-			throw new CustomNPCsException("Command blocks need to be enabled to executeCommands");
-		}
-		FakePlayer player = EntityNPCInterface.CommandPlayer;
-		player.setWorld(this.tile.getWorld());
-		player.setPosition(this.getX(), this.getY(), this.getZ());
-		return NoppesUtilServer.runCommand(this.tile.getWorld(), this.tile.getPos(),
-				"ScriptBlock: " + this.tile.getPos(), command, null, player);
-	}
+	public void setModel(IBlock block) { tile.getMainModel().setBlockModel(block); }
 
 	@Override
-	public float getHardness() {
-		return this.tile.blockHardness;
-	}
+	public void setModel(String name) { setModel(name, 0); }
 
 	@Override
-	public boolean getIsLadder() {
-		return this.tile.isLadder;
-	}
-
-	@Override
-	public boolean getIsPassible() {
-		return this.tile.isPassable;
-	}
-
-	@Override
-	public ILayerBlockModel[] getLayerModels() {
-		for (int i = 0; i < this.tile.layers.length; i++) {
-			((LayerModel) this.tile.layers[i]).pos = i;
-		}
-		return this.tile.layers;
-	}
-
-	@Override
-	public int getLight() {
-		return this.tile.lightValue;
-	}
-
-	@Override
-	public IItemStack getModel() {
-		return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(this.tile.itemModel);
-	}
-
-	@Override
-	public int getRedstonePower() {
-		return this.tile.prevPower;
-	}
-
-	@Override
-	public float getResistance() {
-		return this.tile.blockResistance;
-	}
-
-	@Override
-	public int getRotationX() {
-		return this.tile.rotationX;
-	}
-
-	@Override
-	public int getRotationY() {
-		return this.tile.rotationY;
-	}
-
-	@Override
-	public int getRotationZ() {
-		return this.tile.rotationZ;
-	}
-
-	@Override
-	public float getScaleX() {
-		return this.tile.scaleX;
-	}
-
-	@Override
-	public float getScaleY() {
-		return this.tile.scaleY;
-	}
-
-	@Override
-	public float getScaleZ() {
-		return this.tile.scaleZ;
-	}
-
-	@Override
-	public ITextPlane getTextPlane() {
-		return this.tile.text1;
-	}
-
-	@Override
-	public ITextPlane getTextPlane2() {
-		return this.tile.text2;
-	}
-
-	@Override
-	public ITextPlane getTextPlane3() {
-		return this.tile.text3;
-	}
-
-	@Override
-	public ITextPlane getTextPlane4() {
-		return this.tile.text4;
-	}
-
-	@Override
-	public ITextPlane getTextPlane5() {
-		return this.tile.text5;
-	}
-
-	@Override
-	public ITextPlane getTextPlane6() {
-		return this.tile.text6;
-	}
-
-	@Override
-	public ITimers getTimers() {
-		return this.tile.timers;
-	}
-
-	@Override
-	public boolean removeLayerModel(ILayerBlockModel layer) {
-		List<ILayerBlockModel> newLM = new ArrayList<>();
-		boolean found = false;
-		for (int i = 0; i < this.tile.layers.length; i++) {
-			if (this.tile.layers[i] == null) {
-				continue;
-			}
-			if (!this.tile.layers[i].equals(layer)) {
-				newLM.add(this.tile.layers[i]);
-			} else {
-				found = true;
+	public void setModel(String name, int meta) {
+		ILayerBlockModel lbm = tile.getMainModel();
+		if (name == null || meta < 0) { lbm.setItemModel(null); }
+		else {
+			ResourceLocation loc = new ResourceLocation(NoppesUtilServer.validLocation(name));
+			Block block = ForgeRegistries.BLOCKS.getValue(loc);
+			if (block != null) { lbm.setBlockModel(BlockWrapper.createNew(tile.getWorld(), tile.getPos(), block.getStateFromMeta(meta))); }
+			else {
+				Item item = ForgeRegistries.ITEMS.getValue(loc);
+				if (item != null) { lbm.setItemModel(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(new ItemStack(item, 1, meta))); }
+				else { lbm.setOBJModel(loc.toString()); }
 			}
 		}
-		if (found) {
-			this.tile.layers = newLM.toArray(new ILayerBlockModel[0]);
-		}
-		return found;
 	}
+
+	@Override
+	public void setObjModel(String path) { tile.getMainModel().setOBJModel(path); }
+
+	@Override
+	public void setObjModel(String path, String[] objVisibleMeshes, String[][] objMaterialsReplase) {
+		List<String > ovm = new ArrayList<>();
+		Map<String, ResourceLocation> omr = new HashMap<>();
+		if (objVisibleMeshes != null) { ovm.addAll(Arrays.asList(objVisibleMeshes)); }
+		if (objMaterialsReplase != null) {
+			for (String[] strings : objMaterialsReplase) {
+				if (strings != null && strings.length > 1 && strings[0] != null && strings[1] != null) {
+					omr.put(strings[0], new ResourceLocation(NoppesUtilServer.validLocation(strings[1])));
+				}
+			}
+		}
+		setObjModel(path, ovm, omr);
+	}
+
+	public void setObjModel(String path, List<String> objVisibleMeshes, Map<String, ResourceLocation> objMaterialsReplase) {
+		tile.getMainModel().setOBJModel(path, objVisibleMeshes, objMaterialsReplase);
+	}
+
+	@Override
+	public IItemStack getModel() { return tile.getMainModel().getItemModel(); }
+
+	@Override
+	public ILayerBlockModel getModel(int id) {
+		List<ILayerBlockModel> layers = tile.getLayers();
+		if (id < 0 || id >= layers.size()) {
+			throw new CustomNPCsException("Layer ID must be greater than 0 and no more than " + (layers.size() - 1));
+		}
+		return layers.get(id);
+	}
+
+	@Override
+	public ILayerBlockModel createLayerModel() { return tile.createLayerModel(); }
+
+	@Override
+	public List<ILayerBlockModel> getLayerModels() { return tile.getLayers(); }
+
+	@Override
+	public boolean removeLayerModel(ILayerBlockModel layer) { return tile.removeLayerModel(layer); }
 
 	@Override
 	public boolean removeLayerModel(int id) {
-		if (id < 0 || id >= this.tile.layers.length) {
-			return false;
-		}
-		List<ILayerBlockModel> newLM = new ArrayList<>();
-		for (int i = 0; i < this.tile.layers.length; i++) {
-			if (this.tile.layers[i] == null) {
-				continue;
-			}
-			if (i != id) {
-				newLM.add(this.tile.layers[i]);
-			}
-		}
-		this.tile.layers = newLM.toArray(new ILayerBlockModel[0]);
-		return true;
+		ILayerBlockModel ibm = getModel(id);
+		return ibm != null && tile.removeLayerModel(ibm);
 	}
 
 	@Override
-	public void setHardness(float hardness) {
-		this.tile.blockHardness = hardness;
-	}
+	public void setRedstonePower(int strength) { tile.setRedstonePower(strength); }
+
+	@Override
+	public int getRedstonePower() { return tile.prevPower; }
 
 	@Override
 	public void setIsLadder(boolean bo) {
-		this.tile.isLadder = bo;
-		this.tile.needsClientUpdate = true;
+		tile.isLadder = bo;
+		tile.needsClientUpdate = true;
 	}
+
+	@Override
+	public boolean getIsLadder() { return tile.isLadder; }
 
 	@Override
 	public void setIsPassible(boolean passable) {
-		this.tile.isPassable = passable;
-		this.tile.needsClientUpdate = true;
+		tile.isPassable = passable;
+		tile.needsClientUpdate = true;
 	}
 
 	@Override
-	public void setLight(int value) {
-		this.tile.setLightValue(value);
-	}
+	public boolean getIsPassible() { return tile.isPassable; }
 
 	@Override
-	public void setModel(IBlock block) {
-		if (block == null || block.getMCBlock() == null || block.getWorld() == null) {
-			this.tile.setItemModel(null, null);
-		} else {
-			this.setModel(Objects.requireNonNull(block.getMCBlock().getRegistryName()).toString(), block.getMetadata());
-		}
-	}
+	public void setLight(int value) { tile.setLightValue(value); }
 
 	@Override
-	public void setModel(IItemStack item) {
-		if (item == null) {
-			this.tile.setItemModel(null, null);
-		} else {
-			this.tile.setItemModel(item.getMCItemStack(), Block.getBlockFromItem(item.getMCItemStack().getItem()));
-		}
-	}
-
-	@Override
-	public void setModel(String name) {
-		if (name == null || name.isEmpty()) {
-			this.tile.setItemModel(null, null);
-		} else {
-			ResourceLocation loc = new ResourceLocation(name);
-			Block block = Block.REGISTRY.getObject(loc);
-			this.tile.setItemModel(new ItemStack(Objects.requireNonNull(Item.REGISTRY.getObject(loc))), block);
-		}
-	}
-
-	@Override
-	public void setModel(String blockName, int meta) {
-		if (blockName == null || meta < 0) {
-			this.tile.setItemModel(null, null);
-		} else {
-			ResourceLocation loc = new ResourceLocation(blockName);
-			Block block = Block.REGISTRY.getObject(loc);
-			ItemStack stack = new ItemStack(Item.getItemFromBlock(block));
-			if (stack.isEmpty()) {
-				stack = new ItemStack(Objects.requireNonNull(Item.getByNameOrId(blockName)));
-			}
-			try {
-				@SuppressWarnings("deprecation")
-				IBlockState state = block.getStateFromMeta(meta);
-                block = state.getBlock();
-            } catch (Exception e) {
-				meta = 0;
-			}
-			this.tile.setItemModel(stack, block, meta);
-		}
-	}
-
-	@Override
-	public void setRedstonePower(int strength) {
-		this.tile.setRedstonePower(strength);
-	}
-
-	@Override
-	public void setResistance(float resistance) {
-		this.tile.blockResistance = resistance;
-	}
-
-	@Override
-	public void setRotation(int x, int y, int z) {
-		this.tile.setRotation(x % 360, y % 360, z % 360);
-	}
+	public int getLight() { return tile.lightValue; }
 
 	@Override
 	public void setScale(float x, float y, float z) {
-		this.tile.setScale(x, y, z);
+		ILayerBlockModel lbm = tile.getMainModel();
+		if (lbm.getScale(0) != x || lbm.getScale(1) != y || lbm.getScale(2) != z) { lbm.setScale(x, y, z); }
 	}
 
 	@Override
-	public void setTile(TileEntity tile) {
-		this.tile = (TileScripted) tile;
-		super.setTile(tile);
+	public float getScaleX() { return tile.getMainModel().getScale(0); }
+
+	@Override
+	public float getScaleY() { return tile.getMainModel().getScale(1); }
+
+	@Override
+	public float getScaleZ() { return tile.getMainModel().getScale(2); }
+
+	@Override
+	public void setRotation(int x, int y, int z) {
+		ILayerBlockModel lbm = tile.getMainModel();
+		if (lbm.getRotation(0) != x || lbm.getRotation(1) != y || lbm.getRotation(2) != z) { lbm.setRotation(x, y, z); }
+	}
+
+	@Override
+	public float getRotationX() { return tile.getMainModel().getRotation(0); }
+
+	@Override
+	public float getRotationY() { return tile.getMainModel().getRotation(1); }
+
+	@Override
+	public float getRotationZ() { return tile.getMainModel().getRotation(2); }
+
+	@Override
+	public float getHardness() { return tile.blockHardness; }
+
+	@Override
+	public void setHardness(float hardness) { tile.blockHardness = hardness; }
+
+	@Override
+	public float getResistance() { return tile.blockResistance; }
+
+	@Override
+	public void setResistance(float resistance) { tile.blockResistance = resistance; }
+
+	@Override
+	public String executeCommand(String command) {
+		if (!Objects.requireNonNull(tile.getWorld().getMinecraftServer()).isCommandBlockEnabled()) {
+			throw new CustomNPCsException("Command blocks need to be enabled to executeCommands");
+		}
+		FakePlayer player = EntityNPCInterface.CommandPlayer;
+		player.setWorld(tile.getWorld());
+		player.setPosition(getX(), getY(), getZ());
+		return NoppesUtilServer.runCommand(tile.getWorld(), tile.getPos(),
+				"ScriptBlock: " + tile.getPos(), command, null, player);
+	}
+
+	@Override
+	public ITextPlane getTextPlane() { return tile.getTextPlanes().get(0); }
+
+	@Override
+	public ITextPlane getTextPlane2() { return tile.getTextPlanes().get(1); }
+
+	@Override
+	public ITextPlane getTextPlane3() { return tile.getTextPlanes().get(2); }
+
+	@Override
+	public ITextPlane getTextPlane4() { return tile.getTextPlanes().get(3); }
+
+	@Override
+	public ITextPlane getTextPlane5() { return tile.getTextPlanes().get(4); }
+
+	@Override
+	public ITextPlane getTextPlane6() { return tile.getTextPlanes().get(5); }
+
+	@Override
+	public ITextPlane getTextPlane(int id) {
+		List<ITextPlane> textPlanes = tile.getTextPlanes();
+		if (id < 0 || id >= textPlanes.size()) {
+			throw new CustomNPCsException("Layer ID must be greater than 0 and no more than " + (textPlanes.size() - 1));
+		}
+		return textPlanes.get(id);
+	}
+
+	@Override
+	public ITimers getTimers() { return tile.timers; }
+
+	@Override
+	public void setTile(TileEntity tileIn) {
+		if (tileIn instanceof TileScripted) {
+			tile = (TileScripted) tileIn;
+			super.setTile(tile);
+		}
 	}
 
 	@Override
 	public void trigger(int id, Object... arguments) {
-		EventHooks.onScriptTriggerEvent(this.tile, id, this.getWorld(), this.getPos(), null, arguments);
+		EventHooks.onScriptTriggerEvent(tile, id, world, getPos(), null, arguments);
 	}
 
 	@Override
-	public void updateModel() {
-		this.tile.needsClientUpdate = true;
-	}
+	public void updateModel() { tile.needsClientUpdate = true; }
 
 }

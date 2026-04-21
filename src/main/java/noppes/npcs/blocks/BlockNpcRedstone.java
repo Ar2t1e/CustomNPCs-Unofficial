@@ -21,9 +21,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.CustomTabs;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileRedstoneBlock;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 
@@ -92,7 +92,7 @@ public class BlockNpcRedstone extends BlockInterface {
 		if (par1World.isRemote) { return false; }
 		ItemStack currentItem = player.inventory.getCurrentItem();
 		if (currentItem.getItem() == CustomItems.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.RedstoneBlock, null, pos.getX(), pos.getY(), pos.getZ());
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.RedstoneBlock, null, pos);
 			return true;
 		}
 		return false;
@@ -109,9 +109,8 @@ public class BlockNpcRedstone extends BlockInterface {
 	}
 
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entityliving, @Nonnull ItemStack item) {
-		if (entityliving instanceof EntityPlayer && !world.isRemote) {
-			NoppesUtilServer.sendOpenGui((EntityPlayer) entityliving, EnumGuiType.RedstoneBlock, null, pos.getX(),
-					pos.getY(), pos.getZ());
+		if (entityliving instanceof EntityPlayerMP && !world.isRemote) {
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entityliving, EnumGuiType.RedstoneBlock, null, pos);
 		}
 	}
 

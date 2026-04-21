@@ -11,12 +11,12 @@ import javax.annotation.Nonnull;
 
 public class BlockData {
 
+	@SuppressWarnings("deprecation")
 	public static @Nonnull BlockData getData(@Nonnull NBTTagCompound compound) {
 		Block b = Block.getBlockFromName(compound.getString("Block"));
 		if (b == null) { b = Blocks.AIR; }
 		BlockPos pos = new BlockPos(compound.getInteger("BuildX"), compound.getInteger("BuildY"),
 				compound.getInteger("BuildZ"));
-		@SuppressWarnings("deprecation")
 		IBlockState state = b.getStateFromMeta(compound.getInteger("Meta"));
 		NBTTagCompound tile = null;
 		if (compound.hasKey("Tile")) { tile = compound.getCompoundTag("Tile"); }

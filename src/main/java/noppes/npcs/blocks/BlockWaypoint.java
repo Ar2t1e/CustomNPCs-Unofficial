@@ -19,9 +19,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.CustomTabs;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileWaypoint;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 
@@ -63,15 +63,15 @@ public class BlockWaypoint extends BlockInterface {
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
 		if (currentItem.getItem() == CustomItems.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.Waypoint, null, pos.getX(), pos.getY(), pos.getZ());
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.Waypoint, null, pos);
 			return true;
 		}
 		return false;
 	}
 
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
-		if (entity instanceof EntityPlayer && !world.isRemote) {
-			NoppesUtilServer.sendOpenGui((EntityPlayer) entity, EnumGuiType.Waypoint, null, pos.getX(), pos.getY(), pos.getZ());
+		if (entity instanceof EntityPlayerMP && !world.isRemote) {
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entity, EnumGuiType.Waypoint, null, pos);
 		}
 	}
 

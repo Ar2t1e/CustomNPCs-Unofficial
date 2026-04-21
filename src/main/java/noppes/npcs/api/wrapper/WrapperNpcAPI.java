@@ -97,7 +97,7 @@ public class WrapperNpcAPI extends NpcAPI {
 
 	@Override
 	public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame, IPlayer<?> player) {
-		return new CustomGuiWrapper(id, width, height, pauseGame, player.getMCEntity());
+		return new CustomGuiWrapper(player, id, width, height, pauseGame);
 	}
 
 	@Override
@@ -225,7 +225,7 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public IKeyBinding getIKeyBinding() { return KeyController.instance; }
+	public IKeyBinding getIKeyBinding() { return KeyController.getInstance(); }
 
 	@Override
 	public INbt getINbt(NBTTagCompound nbtMC) {

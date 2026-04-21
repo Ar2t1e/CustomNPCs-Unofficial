@@ -14,6 +14,7 @@
     "entity.IEntityMixin",
     "entity.ai.EntityAIAttackRangedBowMixin",
     "entity.ai.IEntityAITasksMixin",
+    "entity.item.IEntityItemMixin",
     "entity.player.EntityPlayerMixin",
     "fml.common.eventhandler.EventMixin",
     "init.ItemsMixin",

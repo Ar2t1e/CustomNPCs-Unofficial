@@ -6,6 +6,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumBlockRenderType;
@@ -18,9 +19,11 @@ import net.minecraft.world.World;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.EventHooks;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileScriptedDoor;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketPlaySound;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -109,8 +112,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
 		if (currentItem.getItem() == CustomItems.wand || currentItem.getItem() == CustomItems.scripter || currentItem.getItem() == CustomBlocks.scripted_door_item) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.ScriptDoor, null, blockpos1.getX(), blockpos1.getY(),
-					blockpos1.getZ());
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.ScriptDoor, null, blockpos1);
 			return true;
 		}
 		TileScriptedDoor tile = (TileScriptedDoor) world.getTileEntity(blockpos1);
@@ -179,7 +181,8 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 				if (tile != null) {
 					String sound = open ? tile.openSound : tile.closeSound;
 					if (sound != null && !sound.isEmpty()) {
-						Server.sendRangedData(world, pos, 32, EnumPacketClient.FORCE_PLAY_SOUND, SoundCategory.NEUTRAL.ordinal(), sound, (float) pos.getX(), (float) pos.getY(), (float) pos.getZ(), 1.0f, 1.0f);
+						Packets.sendNearby(world, pos, 32,
+								new PacketPlaySound(sound, SoundCategory.NEUTRAL, pos.getX(), pos.getY(), pos.getZ(), 1.0f, 1.0f));
 					} else {
 						world.playEvent(null, open ? this.blockMaterial == Material.IRON ? 1005 : 1006 : this.blockMaterial == Material.IRON ? 1011 : 1012, pos, 0);
 					}

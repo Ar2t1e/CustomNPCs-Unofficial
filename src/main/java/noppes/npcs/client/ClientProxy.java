@@ -955,4 +955,6 @@ public class ClientProxy extends CommonProxy {
 		else { MusicController.Instance.stopSound(new ResourceLocation(NoppesUtilServer.validLocation(sound)), source); }
 	}
 
+	public @Nullable World overworld() { return Minecraft.getMinecraft().world; }
+
 }

@@ -32,6 +32,8 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataInventory;
 import noppes.npcs.reflection.entity.player.EntityPlayerMPReflection;
 
+import javax.annotation.Nullable;
+
 public class CommonProxy implements IGuiHandler {
 
 	public static final Map<EntityPlayer, Availability> availabilityStacks = new HashMap<>();
@@ -232,5 +234,10 @@ public class CommonProxy implements IGuiHandler {
 	public void playSound(SoundCategory category, String sound, double x, double y, double z, float volume, float pitch, boolean streaming, boolean looping) {  }
 
 	public void stopSound(int category, String sound) { }
+
+	public @Nullable World overworld() {
+		if (CustomNpcs.Server != null) { return CustomNpcs.Server.getWorld(0); }
+		return null;
+	}
 
 }

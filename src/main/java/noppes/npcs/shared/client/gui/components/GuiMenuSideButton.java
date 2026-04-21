@@ -63,7 +63,8 @@ public class GuiMenuSideButton extends GuiButtonNop {
             }
         }
         // Title
-        renderString(getMessage(), getX() + (isRight ? 0 : 5 - width), getY(), getX() + (isRight ? width - 4 : - 4), getY() + height, getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true);
+        renderString(getMessage(), getX() + (isRight ? 0 : 5 - width), getY(), getX() + (isRight ? width - 4 : - 4), getY() + height,
+                getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true, customFont);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.popMatrix();
         GlStateManager.disableDepth();

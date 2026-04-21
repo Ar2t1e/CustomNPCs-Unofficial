@@ -1,13 +1,9 @@
 package noppes.npcs.client.gui.script;
 
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.server.SPacketScriptEncrypt;
 import noppes.npcs.packets.server.SPacketScriptGet;
-import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.blocks.tiles.TileScripted;
 
 public class GuiScriptBlock extends GuiScriptInterface {
@@ -29,7 +25,7 @@ public class GuiScriptBlock extends GuiScriptInterface {
 	@Override
 	public void save() {
 		super.save();
-		sendToServer(script.getNBT(new NBTTagCompound()));
+		sendToServer(script.save(new NBTTagCompound()));
 	}
 
 }

@@ -8,10 +8,10 @@ import noppes.npcs.api.IPos;
 public class BlockPosWrapper implements IPos {
 
 	public static final BlockPosWrapper ORIGIN = new BlockPosWrapper(BlockPos.ORIGIN);
-	private final BlockPos blockPos;
-	private final double x;
-	private final double y;
-	private final double z;
+	protected final BlockPos blockPos;
+	protected final double x;
+	protected final double y;
+	protected final double z;
 
 	public BlockPosWrapper(double bx, double by, double bz) {
 		x = Math.min(30000000, Math.max(-30000000, bx));

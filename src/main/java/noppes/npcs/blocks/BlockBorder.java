@@ -7,6 +7,7 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -22,9 +23,9 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomTabs;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.tiles.TileBorder;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 
@@ -86,7 +87,7 @@ public class BlockBorder extends BlockInterface {
 	public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		ItemStack currentItem = player.inventory.getCurrentItem();
 		if (!world.isRemote && currentItem.getItem() == CustomItems.wand) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.Border, null, pos.getX(), pos.getY(), pos.getZ());
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.Border, null, pos);
 			return true;
 		}
 		return false;
@@ -216,9 +217,9 @@ public class BlockBorder extends BlockInterface {
 			if (tile != null) { tile.readExtraNBT(compound); }
 		}
 		if (tile != null) { tile.rotation = l; }
-		if (entity instanceof EntityPlayer && !world.isRemote) {
+		if (entity instanceof EntityPlayerMP && !world.isRemote) {
 			if (adjacent == null) {
-				NoppesUtilServer.sendOpenGui((EntityPlayer) entity, EnumGuiType.Border, null, pos.getX(), pos.getY(), pos.getZ());
+				SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entity, EnumGuiType.Border, null, pos);
 			} else { // Copy
 				entity.sendMessage(new TextComponentTranslation("barrier.copied.around"));
 			}

@@ -1,6 +1,6 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.BlockFluidBase;
@@ -10,33 +10,24 @@ public class BlockFluidContainerWrapper extends BlockWrapper implements IBlockFl
 
 	private final BlockFluidBase block;
 
-	public BlockFluidContainerWrapper(World world, Block block, BlockPos pos) {
-		super(world, block, pos);
-		this.block = (BlockFluidBase) block;
+	public BlockFluidContainerWrapper(World world, IBlockState state, BlockPos pos) {
+		super(world, state, pos);
+		block = (BlockFluidBase) state.getBlock();
 	}
 
 	@Override
-	public String getFluidName() {
-		return this.block.getFluid().getName();
-	}
+	public String getFluidName() { return block.getFluid().getName(); }
 
 	@Override
-	public float getFluidPercentage() {
-		return this.block.getFilledPercentage(this.world.getMCWorld(), this.pos);
-	}
+	public float getFluidPercentage() { return world == null ? 0.0f : block.getFilledPercentage(world.getMCWorld(), iPos.blockPos); }
 
 	@Override
-	public float getFluidValue() {
-		return this.block.getQuantaValue(this.world.getMCWorld(), this.pos);
-	}
+	public float getFluidValue() { return world == null ? 0.0f : block.getQuantaValue(world.getMCWorld(), iPos.blockPos); }
 
 	@Override
-	public float getFluidDensity() {
-		return BlockFluidBase.getDensity(this.world.getMCWorld(), this.pos);
-	}
+	public float getFluidDensity() { return world == null ? 0.0f : BlockFluidBase.getDensity(world.getMCWorld(), iPos.blockPos); }
 
 	@Override
-	public float getFluidTemperature() {
-		return BlockFluidBase.getTemperature(this.world.getMCWorld(), this.pos);
-	}
+	public float getFluidTemperature() { return world == null ? 0.0f : BlockFluidBase.getTemperature(world.getMCWorld(), iPos.blockPos); }
+
 }

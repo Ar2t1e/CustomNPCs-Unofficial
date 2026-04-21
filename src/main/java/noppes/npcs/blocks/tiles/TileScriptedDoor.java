@@ -115,13 +115,6 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 		return this.scripts;
 	}
 
-	public String getSound(boolean isOpen) {
-		if (isOpen) {
-			return this.openSound;
-		}
-		return this.closeSound;
-	}
-
 	public boolean isClient() {
 		return this.getWorld().isRemote;
 	}
@@ -205,17 +198,6 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 		}
 	}
 
-	public void setSound(boolean isOpen, String song) {
-		if (song == null) {
-			song = "";
-		}
-		if (isOpen) {
-			this.openSound = song;
-		} else {
-			this.closeSound = song;
-		}
-	}
-
 	@Override
 	public void update() {
 		super.update();
@@ -240,6 +222,21 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 		this.getNBT(compound);
 		this.timers.writeToNBT(compound);
 		return super.writeToNBT(compound);
+	}
+
+	public String getSound(boolean isOpen) {
+		return isOpen ? openSound : closeSound;
+	}
+
+	public void setSound(boolean isOpen, String song) {
+		if (song == null) {
+			song = "";
+		}
+		if (isOpen) {
+			this.openSound = song;
+		} else {
+			this.closeSound = song;
+		}
 	}
 
 }

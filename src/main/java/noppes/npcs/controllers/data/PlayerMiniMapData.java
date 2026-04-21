@@ -13,7 +13,6 @@ import noppes.npcs.api.entity.data.IPlayerMiniMap;
 import noppes.npcs.api.handler.data.IPlayerData;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncUpdate;
-import noppes.npcs.packets.server.SPacketMiniMapDataSet;
 import noppes.npcs.util.Util;
 
 public class PlayerMiniMapData implements IPlayerData, IPlayerMiniMap {
@@ -30,7 +29,7 @@ public class PlayerMiniMapData implements IPlayerData, IPlayerMiniMap {
 	public IMiniMapData addPoint(int dimensionId) {
 		if (modName.equals("non")) { return new MiniMapData(); }
 		MiniMapData mmd = new MiniMapData();
-		mmd.dimIDs = new int[] { dimensionId };
+		mmd.dimIDs.add(dimensionId);
 		mmd.id = points.size();
 		if (modName.equals("voxelmap")) { mmd.icon = ""; }
 		points.add(mmd);
@@ -210,7 +209,7 @@ public class PlayerMiniMapData implements IPlayerData, IPlayerMiniMap {
 
 	public MiniMapData get(MiniMapData mmd) {
 		for (MiniMapData mmp : points) {
-			boolean equalDimIDs = mmp.dimIDs.length == mmd.dimIDs.length;
+			boolean equalDimIDs = mmp.dimIDs.size() == mmd.dimIDs.size();
 			if (equalDimIDs) {
 				int eq = 0;
 				for (int idp : mmp.dimIDs) {
@@ -218,7 +217,7 @@ public class PlayerMiniMapData implements IPlayerData, IPlayerMiniMap {
 						if (idp == idd) { eq ++; break; }
 					}
 				}
-				equalDimIDs = mmp.dimIDs.length == eq;
+				equalDimIDs = mmp.dimIDs.size() == eq;
 			}
 			if (equalDimIDs && mmp.name.equals(mmd.name) && mmp.type.equals(mmd.type) && mmp.pos.getMCBlockPos().equals(mmd.pos.getMCBlockPos())) {
 				return mmp;
@@ -227,4 +226,6 @@ public class PlayerMiniMapData implements IPlayerData, IPlayerMiniMap {
 		return null;
 	}
 
+    public void clear() {
+    }
 }

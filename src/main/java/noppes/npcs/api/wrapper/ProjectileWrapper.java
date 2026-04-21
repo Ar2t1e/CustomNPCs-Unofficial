@@ -13,8 +13,7 @@ import noppes.npcs.entity.EntityProjectile;
 
 import java.util.Objects;
 
-@SuppressWarnings("rawtypes")
-public class ProjectileWrapper<T extends EntityProjectile> extends ThrowableWrapper<T> implements IProjectile {
+public class ProjectileWrapper<T extends EntityProjectile> extends ThrowableWrapper<T> implements IProjectile<T> {
 
 	public ProjectileWrapper(T entity) {
 		super(entity);
@@ -87,7 +86,7 @@ public class ProjectileWrapper<T extends EntityProjectile> extends ThrowableWrap
 	}
 
 	@Override
-	public void setHeading(IEntity entity) {
+	public void setHeading(IEntity<?> entity) {
 		this.setHeading(entity.getX(), entity.getMCEntity().getEntityBoundingBox().minY + entity.getHeight() / 2.0f,
 				entity.getZ());
 	}

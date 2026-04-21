@@ -48,7 +48,8 @@ public class GuiCheckBoxNop extends GuiButtonNop {
         drawTexturedModalRect(0, 0, isFocused() ? 80 : 0, selected ? 80 : 0, 80, 80);
         GlStateManager.popMatrix();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        renderString(getMessage(), getX() + height + 1, getY(), getX() + width - 1, getY() + height, getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, false);
+        renderString(getMessage(), getX() + height + 1, getY(), getX() + width - 1, getY() + height,
+                getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, false, customFont);
     }
 
     @Override

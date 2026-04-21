@@ -7,8 +7,20 @@ import noppes.npcs.api.*;
 import noppes.npcs.api.entity.data.IData;
 import noppes.npcs.api.interfaces.ParamName;
 
+import java.util.List;
+
 public interface IBlock {
 
+	<T extends Comparable<T>> T getProperty(String name);
+
+	<T extends Comparable<T>> void setProperty(String name, Comparable<T> value);
+
+	List<String> getProperties();
+
+	@SuppressWarnings("unused")
+	String getStateName();
+
+	@SuppressWarnings("unused")
 	void blockEvent(@ParamName("type") int type, @ParamName("data") int data);
 
 	IContainer getContainer();
@@ -19,7 +31,10 @@ public interface IBlock {
 
 	IBlockState getMCBlockState();
 
+	@SuppressWarnings("unused")
 	TileEntity getMCTileEntity();
+
+	boolean isEmpty();
 
 	int getMetadata();
 
@@ -31,7 +46,7 @@ public interface IBlock {
 
 	IData getTempdata();
 
-	INbt getTileEntityNBT();
+	INbt getBlockEntityNBT();
 
 	IWorld getWorld();
 

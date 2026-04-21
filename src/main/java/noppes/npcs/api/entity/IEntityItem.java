@@ -4,13 +4,13 @@ import net.minecraft.entity.item.EntityItem;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
 public interface IEntityItem<T extends EntityItem> extends IEntity<T> {
 
 	long getAge();
 
 	IItemStack getItem();
 
+	@SuppressWarnings("unused")
 	int getLifeSpawn();
 
 	String getOwner();
@@ -21,6 +21,7 @@ public interface IEntityItem<T extends EntityItem> extends IEntity<T> {
 
 	void setItem(@ParamName("item") IItemStack item);
 
+	@SuppressWarnings("unused")
 	void setLifeSpawn(@ParamName("age") int age);
 
 	void setOwner(@ParamName("name") String name);
