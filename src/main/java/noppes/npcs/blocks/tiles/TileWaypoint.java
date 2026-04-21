@@ -93,7 +93,7 @@ public class TileWaypoint extends TileNpcEntity {
                      compound.putString("Type", "location");
                      compound.putIntArray("Progress", new int[]{1, 1});
                      compound.putString("TargetName", questObjective.getTargetName());
-                     Packets.send((ServerPlayer) player, new PacketAchievement(Component.empty(), Component.empty(), 0, new CompoundTag()));
+                     Packets.send((ServerPlayer) player, new PacketAchievement(Component.empty(), Component.empty(), 0, compound));
                   }
                   if (data.quest.showProgressInChat) {
                      player.sendSystemMessage(Component.translatable("quest.message.location.1",

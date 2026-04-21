@@ -25,7 +25,7 @@ public class GuiScriptBlock extends GuiScriptInterface {
    @Override
    public void save() {
       super.save();
-      sendToServer(script.getNBT(new CompoundTag()));
+      sendToServer(script.save(new CompoundTag()));
    }
 
 }

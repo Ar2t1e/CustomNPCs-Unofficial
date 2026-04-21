@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.client.model.animation.AnimationConfig;
@@ -66,5 +67,10 @@ public class CommonProxy {
    public void playSound(SoundSource category, String sound, double x, double y, double z, float volume, float pitch, boolean streaming, boolean looping) {  }
 
    public void stopSound(int category, String sound) { }
+
+   public @Nullable Level overworld() {
+      if (CustomNpcs.Server != null) { return CustomNpcs.Server.overworld(); }
+      return null;
+   }
 
 }

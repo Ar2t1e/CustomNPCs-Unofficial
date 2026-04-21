@@ -40,17 +40,15 @@ public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
    public float blockHardness = 5.0F;
    public float blockResistance = 10.0F;
 
-   public TileScriptedDoor(BlockPos pos, BlockState state) {
-      super(CustomBlocks.tile_scripteddoor, pos, state);
-   }
+   public TileScriptedDoor(BlockPos pos, BlockState state) { super(CustomBlocks.tile_scripteddoor, pos, state); }
 
+   @Override
    public IBlock getBlock() {
-      if (this.blockDummy == null) {
-         this.blockDummy = new BlockScriptedDoorWrapper(this.getLevel(), CustomBlocks.scripted_door, this.getBlockPos());
-      }
-      return this.blockDummy;
+      if (blockDummy == null) { blockDummy = new BlockScriptedDoorWrapper(getLevel(), CustomBlocks.scripted_door.defaultBlockState(), getBlockPos()); }
+      return blockDummy;
    }
 
+   @Override
    public void load(@NotNull CompoundTag compound) {
       super.load(compound);
       setNBT(compound);
@@ -69,6 +67,7 @@ public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
 
    }
 
+   @Override
    public void saveAdditional(@NotNull CompoundTag compound) {
       getNBT(compound);
       timers.save(compound);
@@ -85,15 +84,16 @@ public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
       return compound;
    }
 
+   @Override
    public void runScript(String type, Event event) {
-      if (this.isEnabled()) {
-         if (ScriptController.Instance.lastLoaded > this.lastInited) {
-            this.lastInited = ScriptController.Instance.lastLoaded;
+      if (isEnabled()) {
+         if (ScriptController.Instance.lastLoaded > lastInited) {
+            lastInited = ScriptController.Instance.lastLoaded;
             if (!type.equals(EnumScriptType.INIT.function)) {
                EventHooks.onScriptBlockInit(this);
             }
          }
-         for (ScriptContainer script : this.scripts) { script.run(type, event); }
+         for (ScriptContainer script : scripts) { script.run(type, event); }
       }
    }
 
@@ -102,7 +102,7 @@ public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
 
    @Override
    public void clearConsoleText(Long key) {
-      for (ScriptContainer script : this.getScripts()) { script.console.remove(key); }
+      for (ScriptContainer script : getScripts()) { script.console.remove(key); }
    }
 
    @Override
@@ -122,34 +122,22 @@ public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
    }
 
    @Override
-   public boolean isClient() {
-      return getLevel() == null || getLevel().isClientSide;
-   }
+   public boolean isClient() { return getLevel() == null || getLevel().isClientSide; }
 
    @Override
-   public boolean getEnabled() {
-      return this.enabled;
-   }
+   public boolean getEnabled() { return enabled; }
 
    @Override
-   public void setEnabled(boolean bo) {
-      this.enabled = bo;
-   }
+   public void setEnabled(boolean bo) { enabled = bo; }
 
    @Override
-   public String getLanguage() {
-      return this.scriptLanguage;
-   }
+   public String getLanguage() { return scriptLanguage; }
 
    @Override
-   public void setLanguage(String lang) {
-      this.scriptLanguage = lang;
-   }
+   public void setLanguage(String lang) { scriptLanguage = lang; }
 
    @Override
-   public List<ScriptContainer> getScripts() {
-      return this.scripts;
-   }
+   public List<ScriptContainer> getScripts() { return scripts; }
 
    @Override
    public MutableComponent noticeString(String type, Object event) {
@@ -182,20 +170,24 @@ public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
       int tab = 0;
       for (ScriptContainer script : getScripts()) {
          ++tab;
-         for (Entry<Long, String> entry : script.console.entrySet()) {
-            map.put(entry.getKey(), " tab " + tab + ":\n" + entry.getValue());
-         }
+         for (Entry<Long, String> entry : script.console.entrySet()) { map.put(entry.getKey(), " tab " + tab + ":\n" + entry.getValue()); }
       }
       return map;
    }
 
    @Override
    public void clearConsole() {
-      for (ScriptContainer script : this.getScripts()) {
-         script.console.clear();
-      }
+      for (ScriptContainer script : getScripts()) { script.console.clear(); }
    }
 
    public void init() { lastInited = -1; }
+
+   // New from Unofficial (BetaZavr)
+   @SuppressWarnings("unused")
+   public String getSound(boolean isOpen) { return ""; }
+
+   @SuppressWarnings("unused")
+   public void setSound(boolean isOpen, String song) {
+   }
 
 }

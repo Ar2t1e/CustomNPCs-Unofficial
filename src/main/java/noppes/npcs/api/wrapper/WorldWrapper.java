@@ -465,7 +465,7 @@ public class WorldWrapper implements IWorld {
    }
 
    public void playSoundAt(IPos pos, String sound, float volume, float pitch) {
-      Packets.sendNearby(level, pos.getMCBlockPos(), 16, new PacketPlaySound(sound, SoundSource.AMBIENT, pos.getX(), pos.getY(), pos.getZ(), volume, pitch));
+      Packets.sendNearby(level, pos.getMCBlockPos(), 16, new PacketPlaySound(sound, SoundSource.PLAYERS, pos.getX(), pos.getY(), pos.getZ(), volume, pitch));
    }
 
    public void trigger(int id, Object... arguments) {

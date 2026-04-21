@@ -48,7 +48,7 @@ import noppes.npcs.packets.server.SPacketGuiOpen;
 public class BlockScripted
         extends BlockInterface {
 
-   public static final VoxelShape AABB = Shapes.create(new AABB(0.0010000000474974513D, 0.0010000000474974513D, 0.0010000000474974513D, 0.9980000257492065D, 0.9980000257492065D, 0.9980000257492065D));
+   public static final VoxelShape AABB = Shapes.create(new AABB(0.001D, 0.001D, 0.001D, 0.998D, 0.9980000257492065D, 0.9980000257492065D));
 
    // New Unofficial (Goodbird)
    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -73,7 +73,7 @@ public class BlockScripted
    @Override
    public @Nonnull VoxelShape getCollisionShape(@Nonnull BlockState blockState, BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
       TileScripted tile = (TileScripted)level.getBlockEntity(pos);
-      return tile != null && tile.isPassible ? Shapes.empty() : AABB;
+      return tile != null && tile.isPassable ? Shapes.empty() : AABB;
    }
 
    /** @deprecated */
@@ -246,7 +246,7 @@ public class BlockScripted
    @Override
    public boolean isPathfindable(@Nonnull BlockState state, BlockGetter level, @Nonnull BlockPos pos, @Nonnull PathComputationType type) {
       TileScripted tile = (TileScripted)level.getBlockEntity(pos);
-      return tile != null && tile.isPassible;
+      return tile != null && tile.isPassable;
    }
 
    @Override

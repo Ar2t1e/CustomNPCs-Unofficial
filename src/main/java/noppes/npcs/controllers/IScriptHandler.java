@@ -5,24 +5,25 @@ import java.util.Map;
 
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraftforge.eventbus.api.Event;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IScriptHandler {
 
-   void runScript(String type, Event event);
+   void runScript(@ParamName("type") String type, @ParamName("event") Event event);
 
    boolean isClient();
 
    boolean getEnabled();
 
-   void setEnabled(boolean bo);
+   void setEnabled(@ParamName("isEnabled") boolean isEnabled);
 
    String getLanguage();
 
-   void setLanguage(String language);
+   void setLanguage(@ParamName("language") String language);
 
    List<ScriptContainer> getScripts();
 
-   MutableComponent noticeString(String type, Object event);
+   MutableComponent noticeString(@ParamName("type") String type, @ParamName("event") Object event);
 
    Map<Long, String> getConsoleText();
 
@@ -31,9 +32,9 @@ public interface IScriptHandler {
    boolean isEnabled();
 
    // New from Unofficial (BetaZavr)
-   void clearConsoleText(Long key);
+   void clearConsoleText(@ParamName("key") Long key);
 
-   void setLastInited(long timeMC);
+   void setLastInited(@ParamName("timeMC") long timeMC);
 
    void init();
 

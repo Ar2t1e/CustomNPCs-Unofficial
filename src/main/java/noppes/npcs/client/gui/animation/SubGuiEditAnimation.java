@@ -11,7 +11,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -2360,6 +2362,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
         if (tools != null && tools.visible) { showTools(); }
     }
 
+    @SuppressWarnings("unused")
     private void displayOffset(float x, float y) {
         for (int i = 0; i < 2; i++) {
             dispPos[i] += (i == 0 ? x : y);
@@ -2384,6 +2387,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
         }
     }
 
+    @SuppressWarnings("unused")
     private void drawCRect(GuiGraphics graphics, int left, int top, int right, int bottom, int color) {
         RenderSystem.enableBlend();
         graphics.fill(left, top, right, bottom, color);
@@ -2496,7 +2500,9 @@ public class SubGuiEditAnimation extends GuiNPCInterface
                 .endVertex();
     }
 
+    @SuppressWarnings("unused")
     private void drawWork(GuiGraphics graphics, float partialTicks) {
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
         PoseStack matrixStack = graphics.pose();
         // work place
         matrixStack.pushPose();
@@ -2536,7 +2542,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
                         } else if (blockType == 5) {
                             matrixStack.translate(0.0f, 0.9375f, 0.0f);
                         }
-                        ClientEventHandler.renderBlock(state, matrixStack, pos, partialTicks);
+                        ClientEventHandler.renderBlock(minecraft.level, state, pos, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, partialTicks);
                         matrixStack.popPose();
                     }
                 }

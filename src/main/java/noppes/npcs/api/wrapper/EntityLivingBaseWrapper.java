@@ -21,6 +21,7 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.mixin.world.entity.ai.attributes.IAttributeMap;
 import noppes.npcs.api.wrapper.data.AttributeWrapper;
 import noppes.npcs.controllers.data.MarkData;
+import noppes.npcs.util.ValueUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,127 +31,121 @@ public class EntityLivingBaseWrapper<T extends LivingEntity>
         extends EntityWrapper<T>
         implements IEntityLiving<T> {
 
-   public EntityLivingBaseWrapper(T entity) {
-      super(entity);
-   }
+   public EntityLivingBaseWrapper(T entity) { super(entity); }
 
-   public float getHealth() {
-      return entity.getHealth();
-   }
+   @Override
+   public float getHealth() { return entity.getHealth(); }
 
-   public void setHealth(float health) {
-      entity.setHealth(health);
-   }
+   @Override
+   public void setHealth(float health) { entity.setHealth(health); }
 
-   public float getMaxHealth() {
-      return entity.getMaxHealth();
-   }
+   @Override
+   public float getMaxHealth() { return entity.getMaxHealth(); }
 
+   @Override
    public void setMaxHealth(float health) {
       if (!(health < 0.0F)) {
          Objects.requireNonNull(entity.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(health);
       }
    }
 
-   public boolean isAttacking() {
-      return entity.getLastHurtByMob() != null;
-   }
+   @Override
+   public boolean isAttacking() { return entity.getLastHurtByMob() != null; }
 
+   @Override
    public void setAttackTarget(IEntityLiving<T> living) {
       if (living == null) { entity.setLastHurtByMob(null); }
       else { entity.setLastHurtByMob(living.getMCEntity()); }
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public IEntityLiving<T> getAttackTarget() {
       return (IEntityLiving<T>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.getLastHurtByMob());
    }
 
+   @Override
    @SuppressWarnings("unchecked")
    public IEntityLiving<T> getLastAttacked() {
       return (IEntityLiving<T>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity.getLastHurtMob());
    }
 
-   public int getLastAttackedTime() {
-      return entity.getLastHurtMobTimestamp();
-   }
+   @Override
+   public int getLastAttackedTime() { return entity.getLastHurtMobTimestamp(); }
 
-   public boolean canSeeEntity(IEntity<?> iEntity) {
-      return entity.hasLineOfSight(iEntity.getMCEntity());
-   }
+   @Override
+   public boolean canSeeEntity(IEntity<?> iEntity) { return entity.hasLineOfSight(iEntity.getMCEntity()); }
 
-   public void swingMainhand() {
-      entity.swing(InteractionHand.MAIN_HAND);
-   }
+   @Override
+   public void swingMainhand() { entity.swing(InteractionHand.MAIN_HAND); }
 
-   public void swingOffhand() {
-      entity.swing(InteractionHand.OFF_HAND);
-   }
+   @Override
+   public void swingOffhand() { entity.swing(InteractionHand.OFF_HAND); }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public void addPotionEffect(String effect, int duration, int strength, boolean hideParticles) {
-      MobEffect p = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effect));
-      addPotionEffect(p, duration, strength, hideParticles);
+      addPotionEffect(ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(effect)), duration, strength, hideParticles);
    }
 
+   @Override
    public void addPotionEffect(int effect, int duration, int strength, boolean hideParticles) {
-      MobEffect p = MobEffect.byId(effect);
-      addPotionEffect(p, duration, strength, hideParticles);
+      addPotionEffect(MobEffect.byId(effect), duration, strength, hideParticles);
    }
 
    public void addPotionEffect(MobEffect p, int duration, int strength, boolean hideParticles) {
       if (p != null) {
-         if (strength < 0) { strength = 0; }
-         else if (strength > 255) { strength = 255; }
          if (!p.isInstantenous()) { duration *= 20; }
-         if (duration < 0) { duration = 0; }
-         else if (duration > 1000000) { duration = 1000000; }
+         strength = ValueUtil.correctInt(strength, 0, 255);
+         duration = ValueUtil.correctInt(duration, 0, 1000000);
          if (duration == 0) { entity.removeEffect(p); }
          else { entity.addEffect(new MobEffectInstance(p, duration, strength, false, hideParticles)); }
       }
    }
 
+   @Override
    public void clearPotionEffects() {
       entity.removeAllEffects();
    }
 
+   @Override
    public int getPotionEffect(int effect) {
       MobEffectInstance pf = entity.getEffect(Objects.requireNonNull(MobEffect.byId(effect)));
       return pf == null ? -1 : pf.getAmplifier();
    }
 
+   @Override
    public IItemStack getMainhandItem() {
       return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(entity.getMainHandItem());
    }
 
+   @Override
    public void setMainhandItem(IItemStack item) {
       entity.setItemInHand(InteractionHand.MAIN_HAND, item == null ? ItemStack.EMPTY : item.getMCItemStack());
    }
 
+   @Override
    public IItemStack getOffhandItem() {
       return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(entity.getOffhandItem());
    }
 
+   @Override
    public void setOffhandItem(IItemStack item) {
       entity.setItemInHand(InteractionHand.OFF_HAND, item == null ? ItemStack.EMPTY : item.getMCItemStack());
    }
 
+   @Override
    public IItemStack getArmor(int slot) {
+      if (slot < 0 || slot > 3) { throw new CustomNPCsException("Wrong slot id:" + slot); }
       EquipmentSlot s = getSlot(slot);
-      if (s != null) {
-          return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(entity.getItemBySlot(s));
-      } else {
-         throw new CustomNPCsException("Wrong slot id:" + slot);
-      }
+      if (s == null) { return ItemStackWrapper.AIR;}
+      return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(entity.getItemBySlot(s));
    }
 
+   @Override
    public void setArmor(int slot, IItemStack item) {
+      if (slot < 0 || slot > 3) { throw new CustomNPCsException("Wrong slot id:" + slot); }
       EquipmentSlot s = getSlot(slot);
-      if (s != null) {
-         entity.setItemSlot(s, item == null ? ItemStack.EMPTY : item.getMCItemStack());
-      } else {
-         throw new CustomNPCsException("Wrong slot id:" + slot);
-      }
+      if (s != null) { entity.setItemSlot(s, item == null ? ItemStack.EMPTY : item.getMCItemStack()); }
    }
 
    private EquipmentSlot getSlot(int slot) {
@@ -163,62 +158,56 @@ public class EntityLivingBaseWrapper<T extends LivingEntity>
       };
    }
 
-   public float getRotation() {
-      return entity.yBodyRot;
-   }
+   @Override
+   public float getRotation() { return entity.yBodyRot; }
 
-   public void setRotation(float rotation) {
-      entity.yBodyRot = rotation;
-   }
+   @Override
+   public void setRotation(float rotation) { entity.yBodyRot = rotation; }
 
-   public int getType() {
-      return 5;
-   }
+   @Override
+   public int getType() { return 5; }
 
-   public boolean typeOf(int type) {
-      return type == 5 || super.typeOf(type);
-   }
+   @Override
+   public boolean typeOf(int type) { return type == 5 || super.typeOf(type); }
 
-   public boolean isChild() {
-      return entity.isBaby();
-   }
+   @Override
+   public boolean isChild() { return entity.isBaby(); }
 
+   @Override
    public IMark addMark(int type) {
       MarkData data = MarkData.get(entity);
       return data.addMark(type);
    }
 
+   @Override
    public void removeMark(IMark mark) {
       MarkData data = MarkData.get(entity);
       data.marks.remove((MarkData.Mark) mark);
       data.syncClients();
    }
 
+   @Override
    public IMark[] getMarks() {
       MarkData data = MarkData.get(entity);
       return data.marks.toArray(new IMark[0]);
    }
 
-   public float getMoveForward() {
-      return entity.zza;
-   }
+   @Override
+   public float getMoveForward() { return entity.zza; }
 
-   public void setMoveForward(float move) {
-      entity.zza = move;
-   }
+   @Override
+   public void setMoveForward(float move) { entity.zza = move; }
 
-   public float getMoveStrafing() {
-      return entity.xxa;
-   }
+   @Override
+   public float getMoveStrafing() { return entity.xxa; }
 
-   public void setMoveStrafing(float move) {
-      entity.xxa = move;
-   }
+   @Override
+   public void setMoveStrafing(float move) { entity.xxa = move; }
 
-   public float getMoveVertical() {
-      return entity.yya;
-   }
+   @Override
+   public float getMoveVertical() { return entity.yya; }
 
+   @Override
    public void setMoveVertical(float move) { entity.yya = move; }
 
    // New from Unofficial (BetaZavr)

@@ -353,9 +353,7 @@ public class ItemStackWrapper implements IItemStack, ICapabilitySerializable<Com
       return damage + (double)EnchantmentHelper.getDamageBonus(this.item, MobType.UNDEFINED);
    }
 
-   public boolean isEmpty() {
-      return this.item.isEmpty();
-   }
+   public boolean isEmpty() { return item.isEmpty(); }
 
    public int getType() {
       if (this.item.getItem() instanceof IPlantable) {

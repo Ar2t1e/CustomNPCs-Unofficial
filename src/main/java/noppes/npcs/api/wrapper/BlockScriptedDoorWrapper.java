@@ -19,63 +19,68 @@ import noppes.npcs.mixin.world.entity.IEntityMixin;
 
 public class BlockScriptedDoorWrapper extends BlockWrapper implements IBlockScriptedDoor {
 
-   private TileScriptedDoor tile;
+   protected TileScriptedDoor tile;
 
-   public BlockScriptedDoorWrapper(Level level, Block block, BlockPos pos) {
-      super(level, block, pos);
-      this.tile = (TileScriptedDoor)super.tile;
+   public BlockScriptedDoorWrapper(Level level, BlockState state, BlockPos pos) {
+      super(level, state, pos);
+      tile = (TileScriptedDoor) super.tile;
    }
 
-   public boolean getOpen() {
-      BlockState state = this.level.getMCLevel().getBlockState(this.pos);
-      return state.getValue(DoorBlock.OPEN).equals(true);
-   }
+   @Override
+   public boolean getOpen() { return getMCBlockState().getValue(DoorBlock.OPEN).equals(true); }
 
+   @Override
    public void setOpen(boolean open) {
-      if (this.getOpen() != open && !this.isRemoved()) {
-         BlockState state = this.level.getMCLevel().getBlockState(this.pos);
-         ((DoorBlock)this.block).setOpen(null, this.level.getMCLevel(), state, this.pos, open);
+      if (getOpen() != open && !isRemoved() && level != null) {
+         ((DoorBlock) getMCBlock()).setOpen(null, level.getMCLevel(), getMCBlockState(), iPos.blockPos, open);
       }
    }
 
+   @Override
    public void setBlockModel(String name) {
       Block b = null;
       if (name != null) {
          b = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse(name));
       }
-      this.tile.setItemModel(b);
+      tile.setItemModel(b);
    }
 
+   @Override
    public String getBlockModel() {
-      ResourceLocation registerName = ForgeRegistries.BLOCKS.getKey(this.tile.blockModel);
+      ResourceLocation registerName = ForgeRegistries.BLOCKS.getKey(tile.blockModel);
       return registerName != null ? registerName.toString() : "minecraft:air";
    }
 
-   public ITimers getTimers() {
-      return this.tile.timers;
+   @Override
+   public ITimers getTimers() { return tile.timers; }
+
+   @Override
+   public float getHardness() { return tile.blockHardness; }
+
+   @Override
+   public void setHardness(float hardness) { tile.blockHardness = hardness; }
+
+   @Override
+   public float getResistance() { return tile.blockResistance; }
+
+   @Override
+   public void setResistance(float resistance) { tile.blockResistance = resistance; }
+
+   @Override
+   protected void setTile(BlockEntity tileIn) {
+      if (tileIn instanceof TileScriptedDoor door) {
+         tile = door;
+         super.setTile(tile);
+      }
    }
 
-   public float getHardness() {
-      return this.tile.blockHardness;
-   }
+   @Override
+   public String getSound(boolean isOpen) { return tile.getSound(isOpen); }
 
-   public void setHardness(float hardness) {
-      this.tile.blockHardness = hardness;
-   }
+   @Override
+   public void setSound(boolean isOpen, String song) { tile.setSound(isOpen, song); }
 
-   public float getResistance() {
-      return this.tile.blockResistance;
-   }
-
-   public void setResistance(float resistance) {
-      this.tile.blockResistance = resistance;
-   }
-
-   protected void setTile(BlockEntity tile) {
-      this.tile = (TileScriptedDoor)tile;
-      super.setTile(tile);
-   }
-
+   @Override
    public String executeCommand(String command) {
       if (tile.getLevel() == null || tile.getLevel().getServer() == null) {
          throw new CustomNPCsException("There is no world or server to execute the command!");

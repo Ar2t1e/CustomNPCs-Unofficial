@@ -179,7 +179,7 @@ public class YDEScrollNop extends GuiBasic
 
                     if (mouseY < minY && mY > y - mouseY - minY) { mY = -1; }
                     if (mouseX < minX && mX > x - mouseX - minX) { mX = -1; }
-                    if (mouseX > maxX && (x + h) > mX) { mX = -1; }
+                    if (mouseX > maxX && (x + w) > mX) { mX = -1; }
                     if (mouseY > maxY && (y + h) > mY) { mY = -1; }
                     renderable.render(graphics, mX, mY, partialTicks);
                 }

@@ -39,6 +39,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ConfigScreenHandler;
@@ -589,5 +590,7 @@ public class ClientProxy extends CommonProxy {
       if (sound == null || sound.isEmpty()) { Minecraft.getInstance().getSoundManager().stop(null, source); }
       else { MusicController.Instance.stopSound(new ResourceLocation(NoppesUtilServer.validLocation(sound)), source); }
    }
+
+   public @Nullable Level overworld() { return Minecraft.getInstance().level; }
 
 }

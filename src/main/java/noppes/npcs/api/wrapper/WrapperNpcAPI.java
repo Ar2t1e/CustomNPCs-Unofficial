@@ -69,12 +69,14 @@ public class WrapperNpcAPI extends NpcAPI {
       WorldWrapper.getStoredData().setNbt(new NBTWrapper(compound));
    }
 
+   @Override
    public IEntity<?> getIEntity(Entity entity) {
       if (entity == null) { return null; }
       if (entity instanceof EntityNPCInterface) { return ((EntityNPCInterface) entity).wrappedNPC; }
       return WrapperEntityData.get(entity);
    }
 
+   @Override
    public ICustomNpc<?> createNPC(Level level) {
       if (level.isClientSide) {
          return null;
@@ -83,6 +85,7 @@ public class WrapperNpcAPI extends NpcAPI {
       return npc.wrappedNPC;
    }
 
+   @SuppressWarnings("unused")
    public void registerPermissionNode(String permission, int defaultType) {
       if (defaultType != 0) { throw new CustomNPCsException("There is only one default type available, 0: a boolean value"); }
       if (hasPermissionNode(permission)) { throw new CustomNPCsException("Permission \"" + permission + "\" already exists"); }
@@ -90,6 +93,7 @@ public class WrapperNpcAPI extends NpcAPI {
       CustomNpcsPermissions.register(permission);
    }
 
+   @Override
    public boolean hasPermissionNode(String permission) {
       for (PermissionNode<?> node : PermissionAPI.getRegisteredNodes()) {
          if (node.getNodeName().equals(permission)) { return true; }
@@ -97,6 +101,7 @@ public class WrapperNpcAPI extends NpcAPI {
       return CustomNpcsPermissions.hasPermission(permission);
    }
 
+   @Override
    public ICustomNpc<?> spawnNPC(Level level, int x, int y, int z) {
       if (level.isClientSide) {
          return null;
@@ -114,20 +119,22 @@ public class WrapperNpcAPI extends NpcAPI {
       return instance;
    }
 
-   public IEventBus events() {
-      return EVENT_BUS;
-   }
+   @Override
+   public IEventBus events() { return EVENT_BUS; }
 
+   @Override
    public IBlock getIBlock(Level level, BlockPos pos) {
       return BlockWrapper.createNew(level, pos, level.getBlockState(pos));
    }
 
+   @Override
    public IItemStack getIItemStack(ItemStack stackMC) {
       return stackMC != null && !stackMC.isEmpty() ?
               stackMC.getCapability(ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY, null).orElse(ItemStackWrapper.AIR) :
               ItemStackWrapper.AIR;
    }
 
+   @Override
    public IWorld getIWorld(Level level) {
       WorldWrapper w = worldCache.get(level.dimensionType());
       if (w != null) {
@@ -138,6 +145,7 @@ public class WrapperNpcAPI extends NpcAPI {
       return w;
    }
 
+   @Override
    public IWorld getIWorld(DimensionType dimensionTypeMC) {
       if (CustomNpcs.Server != null && levels.isEmpty()) {
          for (Level level : CustomNpcs.Server.getAllLevels()) { levels.add(level); }
@@ -148,6 +156,7 @@ public class WrapperNpcAPI extends NpcAPI {
       throw new CustomNPCsException((Thread.currentThread().getName().toLowerCase().contains("client") ? "Not found" : "Unknown") + " dimension: \"" + dimensionTypeMC + "\"");
    }
 
+   @Override
    public IWorld getIWorld(String dimensionName) {
       if (CustomNpcs.Server == null) {
          Player player = CustomNpcs.proxy.getPlayer();
@@ -161,14 +170,17 @@ public class WrapperNpcAPI extends NpcAPI {
       throw new CustomNPCsException((Thread.currentThread().getName().toLowerCase().contains("client") ? "Not found" : "Unknown") + " dimension: \"" + loc + "\"");
    }
 
+   @Override
    public IContainer getIContainer(AbstractContainerMenu container) {
       return new ContainerWrapper(container);
    }
 
+   @Override
    public IContainer getIContainer(Container inventory) {
       return inventory instanceof ContainerNpcInterface container ? ContainerNpcInterface.getOrCreateIContainer(container) : new ContainerWrapper(inventory);
    }
 
+   @Override
    public IFactionHandler getFactions() {
       checkLevel();
       return FactionController.instance;
@@ -180,16 +192,19 @@ public class WrapperNpcAPI extends NpcAPI {
       }
    }
 
+   @Override
    public IRecipeHandler getRecipes() {
       checkLevel();
       return RecipeController.getInstance();
    }
 
+   @Override
    public IQuestHandler getQuests() {
       checkLevel();
       return QuestController.instance;
    }
 
+   @Override
    public IWorld[] getIWorlds() {
       checkLevel();
       IWorld[] worlds;
@@ -239,18 +254,18 @@ public class WrapperNpcAPI extends NpcAPI {
       }
    }
 
+   @Override
    public IDamageSource getIDamageSource(DamageSource damageMC) {
       return new DamageSourceWrapper(damageMC);
    }
 
-   public IDialogHandler getDialogs() {
-      return DialogController.instance;
-   }
+   @Override
+   public IDialogHandler getDialogs() { return DialogController.instance; }
 
-   public ICloneHandler getClones() {
-      return ServerCloneController.Instance;
-   }
+   @Override
+   public ICloneHandler getClones() { return ServerCloneController.Instance; }
 
+   @Override
    public String executeCommand(IWorld level, String command) {
       FakePlayer player = EntityNPCInterface.CommandPlayer;
       ((IEntityMixin) player).setLevel(level.getMCLevel());
@@ -281,12 +296,15 @@ public class WrapperNpcAPI extends NpcAPI {
       return mail;
    }
 
+   @Override
    public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame, IPlayer<?> player) {
       return new CustomGuiWrapper(player, id, width, height, pauseGame);
    }
 
+   @Override
    public IOverlay createOverlay(int id) { return new OverlayWrapper(id); }
 
+   @Override
    public String getRandomName(int dictionary, int gender) {
       return MarkovGenerator.fetch(dictionary, gender);
    }

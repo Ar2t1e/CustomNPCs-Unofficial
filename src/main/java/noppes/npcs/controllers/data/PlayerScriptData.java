@@ -52,9 +52,9 @@ public class PlayerScriptData extends BaseScriptData {
 
    @Override
    public void runScript(String type, Event event) {
-      if (this.isEnabled()) {
+      if (isEnabled()) {
          ScriptContainer script;
-         if (ScriptController.Instance.lastLoaded > this.lastInited || ScriptController.Instance.lastPlayerUpdate > this.lastPlayerUpdate) {
+         if (ScriptController.Instance.lastLoaded > lastInited || ScriptController.Instance.lastPlayerUpdate > lastPlayerUpdate) {
             lastInited = ScriptController.Instance.lastLoaded;
             errored.clear();
             if (player != null) {
@@ -94,7 +94,7 @@ public class PlayerScriptData extends BaseScriptData {
    }
 
    @Override
-   public void setLanguage(String lang) { scriptLanguage = lang; }
+   public void setLanguage(String lang) { ScriptController.Instance.playerScripts.scriptLanguage = lang; }
 
    @Override
    public MutableComponent noticeString(String type, Object event) {
@@ -127,13 +127,15 @@ public class PlayerScriptData extends BaseScriptData {
       return message.append(Component.literal("; Side: " + (isClient() ? "Client" : "Server")).withStyle(ChatFormatting.DARK_GRAY));
    }
 
+   @Override
+   public TreeMap<Long, String> getConsoleText() { return console; }
+
+   @Override
+   public void clearConsole() { console.clear(); }
+
    public IPlayer<?> getPlayer() {
       if (playerAPI == null) { playerAPI = (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player); }
       return playerAPI;
    }
-
-   public TreeMap<Long, String> getConsoleText() { return console; }
-
-   public void clearConsole() { console.clear(); }
 
 }

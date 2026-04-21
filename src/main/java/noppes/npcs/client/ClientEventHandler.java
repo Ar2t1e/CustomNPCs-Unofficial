@@ -18,7 +18,6 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
@@ -222,7 +221,7 @@ public class ClientEventHandler {
                     matrixStack.pushPose();
                     matrixStack.translate((float)pos.getX(), (float)pos.getY(), (float)pos.getZ());
                     state = SchematicWrapper.rotationState(state, rotation);
-                    try { renderBlock(state, matrixStack, pos, partialTick); }
+                    try { renderBlock(mc.level, state, pos, matrixStack, bufferSource, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, partialTick); }
                     catch (Exception e) { LogWriter.error(e); }
                     matrixStack.popPose();
                     j++;
@@ -320,13 +319,10 @@ public class ClientEventHandler {
         }
     }
 
-    public static void renderBlock(BlockState state, PoseStack matrixStack, BlockPos pos, float partialTick) {
-        mc = Minecraft.getInstance();
-        ClientLevel level = mc.level;
+    public static void renderBlock(Level level, BlockState state, BlockPos pos, PoseStack matrixStack, MultiBufferSource buffer, int light, int overlay, float partialTick) {
         if (level != null) {
             BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
             BlockEntityRenderDispatcher entityDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
-            MultiBufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
             BakedModel bakedModel = dispatcher.getBlockModel(state);
             for (RenderType rType : bakedModel.getRenderTypes(state, RandomSource.create(), ModelData.EMPTY)) {
                 @NotNull RenderType renderType = RenderTypeHelper.getEntityRenderType(rType, false);
@@ -337,7 +333,7 @@ public class ClientEventHandler {
                 float blue  = (grassColor & 0xFF) / 255.0F;
                 VertexConsumer consumer = buffer.getBuffer(RenderType.translucent());
                 dispatcher.getModelRenderer().renderModel(matrixStack.last(), consumer, state, bakedModel,
-                        red, green, blue, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
+                        red, green, blue, light, overlay,
                         ModelData.EMPTY, renderType);
             }
             if (state.getBlock() instanceof EntityBlock) {
@@ -346,7 +342,7 @@ public class ClientEventHandler {
                     BlockEntityRenderer<BlockEntity> renderer = entityDispatcher.getRenderer(tileState);
                     if (renderer != null) {
                         tileState.setLevel(level);
-                        renderer.render(tileState, partialTick, matrixStack, buffer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                        renderer.render(tileState, partialTick, matrixStack, buffer, light, overlay);
                         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.5F);
                     }
                 }
