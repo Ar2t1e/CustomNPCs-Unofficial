@@ -203,7 +203,7 @@ public class LayerBlockModel implements ILayerBlockModel {
     @Override
     public void setItemModel(IItemStack stack) {
         itemModel = (ItemStackWrapper) stack;
-        blockModel = null;
+        blockModel = BlockWrapper.AIR;
         objModel = null;
         objVisibleMeshes = new ArrayList<>();
         objMaterialsReplase = new HashMap<>();
@@ -212,7 +212,7 @@ public class LayerBlockModel implements ILayerBlockModel {
 
     @Override
     public void setBlockModel(IBlock iBlock) {
-        itemModel = null;
+        itemModel = ItemStackWrapper.AIR;
         blockModel = (BlockWrapper) iBlock;
         objModel = null;
         objVisibleMeshes = new ArrayList<>();
@@ -222,8 +222,8 @@ public class LayerBlockModel implements ILayerBlockModel {
 
     @Override
     public void setOBJModel(String path) {
-        itemModel = null;
-        blockModel = null;
+        itemModel = ItemStackWrapper.AIR;
+        blockModel = BlockWrapper.AIR;
         objModel = new ResourceLocation(NoppesUtilServer.validLocation(path));
         objVisibleMeshes = new ArrayList<>();
         objMaterialsReplase = new HashMap<>();
@@ -232,8 +232,8 @@ public class LayerBlockModel implements ILayerBlockModel {
 
     @Override
     public void setOBJModel(String path, List<String> meshes,  Map<String, ResourceLocation> materials) {
-        itemModel = null;
-        blockModel = null;
+        itemModel = ItemStackWrapper.AIR;
+        blockModel = BlockWrapper.AIR;
         objModel = new ResourceLocation(NoppesUtilServer.validLocation(path));
         objVisibleMeshes = meshes;
         objMaterialsReplase = materials;

@@ -80,8 +80,8 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     public boolean hasSound = true;
     protected ItemStack[] itemStacks = null;
-    protected ItemStack currentStack = ItemStack.EMPTY;
-    protected int currentStackID = -1;
+    public ItemStack currentStack = ItemStack.EMPTY;
+    public int currentStackID = -1;
 
     // standard
     protected boolean focused = false;
@@ -674,10 +674,13 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         return false;
     }
 
-    protected boolean isValidClickButton(int mouseButton) { return true; }
-
     @Override
     public void tick() { }
+
+    @Override
+    public boolean isHovered() { return isHovered; }
+
+    protected boolean isValidClickButton(int mouseButton) { return true; }
 
     public int getX() { return x; }
 

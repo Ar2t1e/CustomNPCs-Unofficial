@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 public class ContainerNPCFollowerSetup extends Container {
 
     public ContainerNPCFollowerSetup(EntityNPCInterface npc, EntityPlayer player) {
-        RoleFollower role = (RoleFollower) npc.advanced.roleInterface;
+        RoleFollower role = (RoleFollower) npc.role;
 		for (int i1 = 0; i1 < 3; ++i1) {
 			this.addSlotToContainer(new Slot(role.rentalItems, i1, 44, 39 + i1 * 25));
 		}

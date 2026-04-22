@@ -8,6 +8,7 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.GuiComponentType;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 import noppes.npcs.shared.client.gui.listeners.ISliderListener;
@@ -28,6 +29,7 @@ public class GuiSliderNop extends Gui implements IComponentGui {
 
     // New from Unofficial (BetaZavr)
     protected List<Component> hoverText = new ArrayList<>();
+    protected ClientProxy.FontContainer customFont = null;
     protected boolean showShadow = true;
     protected boolean enabled = true;
     public boolean isDrag = false;
@@ -129,10 +131,17 @@ public class GuiSliderNop extends Gui implements IComponentGui {
         drawTexturedModalRect(getX() + getWidth() / 2, getY(), 200 - getWidth() / 2, 46, getWidth() / 2, getHeight());
         // scroll
         drawDefaultBackground();
-        GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + getWidth(), getY() + getHeight(), packedFGColor | 255 << 24, showShadow, true);
+        GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + getWidth(), getY() + getHeight(),
+                packedFGColor | 255 << 24, showShadow, true, customFont);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.popMatrix();
         GlStateManager.disableDepth();
+    }
+
+    @Override
+    public GuiSliderNop setCustomFont(ClientProxy.FontContainer font) {
+        customFont = font;
+        return this;
     }
 
     public void onClick(double x, double y) {
@@ -149,6 +158,7 @@ public class GuiSliderNop extends Gui implements IComponentGui {
         return false;
     }
 
+    @SuppressWarnings("unused")
     protected void onDrag(double mouseX, double mouseY, double dx, double dy) {
         setSliderValue((float) (mouseX - (double)(getX() + 4)) / (float)(width - 8));
     }
@@ -254,6 +264,9 @@ public class GuiSliderNop extends Gui implements IComponentGui {
     @Override
     public void tick() { }
 
+    @Override
+    public boolean isHovered() { return isHovered; }
+
     public int getX() { return x; }
 
     public void setX(int xIn) { x = xIn; }
@@ -269,7 +282,5 @@ public class GuiSliderNop extends Gui implements IComponentGui {
     public int getWidth() { return width; }
 
     public void setWidth(int widthIn) { width = widthIn; }
-
-    public boolean isHovered() { return isHovered; }
 
 }

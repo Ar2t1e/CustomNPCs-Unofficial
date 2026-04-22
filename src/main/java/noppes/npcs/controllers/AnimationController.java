@@ -1,5 +1,6 @@
 package noppes.npcs.controllers;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -25,20 +26,15 @@ import noppes.npcs.util.Util;
 
 public class AnimationController implements IAnimationHandler {
 
-	protected static AnimationController instance;
 	protected final TreeMap<Integer, AnimationConfig> animations = new TreeMap<>();
 	protected final TreeMap<Integer, EmotionConfig> emotions = new TreeMap<>();
+	protected static AnimationController instance;
+
+	protected int baseMaxAnimID = 0;
 
 	public static AnimationController getInstance() {
 		if (instance == null) { instance = new AnimationController(); }
 		return instance;
-	}
-
-	protected int baseMaxAnimID = 0;
-
-	public void clear() {
-		animations.clear();
-		emotions.clear();
 	}
 
 	@Override
@@ -160,7 +156,7 @@ public class AnimationController implements IAnimationHandler {
 		if (CustomNpcs.Dir != null) {
 			File oldFile = new File(CustomNpcs.Dir, "animations.dat");
 			if (oldFile.exists()) {
-				try { loadOldAnimations(CompressedStreamTools.readCompressed(Files.newInputStream(oldFile.toPath()))); } catch (Exception e) { LogWriter.error(e); }
+				try { loadOldAnimations(CompressedStreamTools.readCompressed(new DataInputStream(Files.newInputStream(oldFile.toPath())))); } catch (Exception e) { LogWriter.error(e); }
 				Util.instance.removeFile(oldFile);
 			}
 			animDir = new File (CustomNpcs.Dir,  "animations");
@@ -200,23 +196,23 @@ public class AnimationController implements IAnimationHandler {
 		NBTTagList listA = compound.getTagList("Animations", 10);
 		if (compound.hasKey("Animations", 9)) { listA = compound.getTagList("Animations", 10); }
 		else if (compound.hasKey("Data", 9)) { listA = compound.getTagList("Data", 10); }
-        for (int i = 0; i < listA.tagCount(); ++i) {
-            AnimationConfig anim = loadAnimation(listA.getCompoundTagAt(i));
-            if (anim.id < 43) { anim.immutable = true; }
-        }
-        emotions.clear();
+		for (int i = 0; i < listA.tagCount(); ++i) {
+			AnimationConfig anim = loadAnimation(listA.getCompoundTagAt(i));
+			if (anim.id < 43) { anim.immutable = true; }
+		}
+		emotions.clear();
 		NBTTagList listE = compound.getTagList("Emotions", 10);
-        for (int i = 0; i < listE.tagCount(); ++i) {
-            EmotionConfig emtn = loadEmotion(listE.getCompoundTagAt(i));
-            emtn.immutable = true;
-        }
-    }
+		for (int i = 0; i < listE.tagCount(); ++i) {
+			EmotionConfig emtn = loadEmotion(listE.getCompoundTagAt(i));
+			emtn.immutable = true;
+		}
+	}
 
 	private void loadAnimations(File file) {
 		List<NBTTagCompound> afterAnimations = new ArrayList<>();
 		for (File f : Objects.requireNonNull(file.listFiles())) {
 			try {
-				NBTTagCompound nbt = CompressedStreamTools.readCompressed(Files.newInputStream(f.toPath()));
+				NBTTagCompound nbt = CompressedStreamTools.readCompressed(new DataInputStream(Files.newInputStream(f.toPath())));
 				int id = -1;
 				try { id = Integer.parseInt(f.getName().toLowerCase().replace(".dat", "")); } catch (Exception e) { LogWriter.error(e); }
 				if (id == -1 || animations.containsKey(id) || id < baseMaxAnimID) { afterAnimations.add(nbt); }
@@ -237,7 +233,7 @@ public class AnimationController implements IAnimationHandler {
 		for (File f : Objects.requireNonNull(file.listFiles())) {
 			try {
 				try {
-					NBTTagCompound nbt = CompressedStreamTools.readCompressed(Files.newInputStream(f.toPath()));
+					NBTTagCompound nbt = CompressedStreamTools.readCompressed(new DataInputStream(Files.newInputStream(f.toPath())));
 					int id = -1;
 					try { id = Integer.parseInt(f.getName().toLowerCase().replace(".dat", "")); } catch (Exception e) { LogWriter.error(e); }
 					if (id != -1 && animations.containsKey(id)) { nbt.setInteger("ID", getUnusedAnimId()); }
@@ -255,7 +251,7 @@ public class AnimationController implements IAnimationHandler {
 		NBTTagCompound compound = new NBTTagCompound();
 		try { compound = CompressedStreamTools.readCompressed(inputStream); } catch (Exception e) { LogWriter.error(e); }
 		NBTTagList listA = compound.getTagList("Animations", 10);
-		if (listA.tagCount() != 0) {
+		if (!listA.hasNoTags()) {
 			for (int i = 0; i < listA.tagCount(); ++i) {
 				NBTTagCompound nbt = listA.getCompoundTagAt(i);
 				int id = nbt.getInteger("ID");
@@ -279,7 +275,7 @@ public class AnimationController implements IAnimationHandler {
 			}
 		}
 		NBTTagList listE = compound.getTagList("Emotions", 10);
-		if (listE.tagCount() != 0) {
+		if (!listE.hasNoTags()) {
 			for (int i = 0; i < listE.tagCount(); ++i) {
 				NBTTagCompound nbt = listE.getCompoundTagAt(i);
 				int id = nbt.getInteger("ID");
@@ -351,19 +347,23 @@ public class AnimationController implements IAnimationHandler {
 		CustomNpcs.debugData.start(null);
 		File animDir = CustomNpcs.getWorldSaveDirectory("animations");
 		if (animDir != null) {
-			if (!animDir.exists()) { animDir.mkdirs(); }
-			for (int id : animations.keySet()) {
-				if (animations.get(id).immutable) { continue; }
-				try { CompressedStreamTools.writeCompressed(animations.get(id).save(), Files.newOutputStream(new File(animDir, id + ".dat").toPath())); } catch (Exception e) { LogWriter.error(e); }
+			if (animDir.exists() || animDir.mkdirs()) {
+				for (int id : animations.keySet()) {
+					if (animations.get(id).immutable) { continue; }
+					try { CompressedStreamTools.writeCompressed(animations.get(id).save(), Files.newOutputStream(new File(animDir, id + ".dat").toPath())); }
+					catch (Exception e) { LogWriter.error(e); }
+				}
 			}
 			File emtnDir = CustomNpcs.getWorldSaveDirectory("emotions");
 			if (emtnDir == null) {
 				CustomNpcs.debugData.end(null);
 				return;
 			}
-			if (!emtnDir.exists()) { emtnDir.mkdirs(); }
-			for (int id : emotions.keySet()) {
-				try { CompressedStreamTools.writeCompressed(emotions.get(id).save(), Files.newOutputStream(new File(emtnDir, id + ".dat").toPath())); } catch (Exception e) { LogWriter.error(e); }
+			if (emtnDir.exists() || emtnDir.mkdirs()) {
+				for (int id : emotions.keySet()) {
+					try { CompressedStreamTools.writeCompressed(emotions.get(id).save(), Files.newOutputStream(new File(emtnDir, id + ".dat").toPath())); }
+					catch (Exception e) { LogWriter.error(e); }
+				}
 			}
 		}
 		CustomNpcs.debugData.end(null);
@@ -371,11 +371,10 @@ public class AnimationController implements IAnimationHandler {
 
 	public void sendTo(EntityPlayerMP player) {
 		if (CustomNpcs.Server != null && CustomNpcs.Server.isSinglePlayer()) { return; }
-		Packets.sendAll(new PacketSyncUpdate(0, 9, new NBTTagCompound()));
-		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.AnimationData, new NBTTagCompound());
-		for (AnimationConfig ac : animations.values()) { Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.AnimationData, ac.save()); }
-		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.EmotionData, new NBTTagCompound());
-		for (EmotionConfig ec : emotions.values()) { Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.EmotionData, ec.save()); }
+		Packets.send(player, new PacketSyncRemove(-1, 9));
+		Packets.send(player, new PacketSyncRemove(-1, 10));
+		for (AnimationConfig ac : animations.values()) { Packets.send(player, new PacketSyncUpdate(0, 9, ac.save())); }
+		for (EmotionConfig ec : emotions.values()) { Packets.send(player, new PacketSyncUpdate(0, 10, ec.save())); }
 	}
 
 	@Override
@@ -402,17 +401,6 @@ public class AnimationController implements IAnimationHandler {
 	public void sendAnimationToAll(int id) {
 		if (CustomNpcs.Server != null) {
 			NBTTagCompound data = animations.containsKey(id) ? animations.get(id).save() : null;
-			for (EntityPlayerMP player : CustomNpcs.Server. getPlayerList().getPlayers()) {
-				if (id < 0) { sendTo(player); }
-				else if (data == null) { Packets.send(player, new PacketSyncRemove(id, 9)); }
-				else { Packets.send(player, new PacketSyncUpdate(0, 9, data)); }
-			}
-		}
-	}
-
-	public void sendEmotionToAll(int id) {
-		if (CustomNpcs.Server != null) {
-			NBTTagCompound data = emotions.containsKey(id) ? emotions.get(id).save() : null;
 			for (EntityPlayerMP player : CustomNpcs.Server. getPlayerList().getPlayers()) {
 				if (id < 0) { sendTo(player); }
 				else if (data == null) { Packets.send(player, new PacketSyncRemove(id, 9)); }

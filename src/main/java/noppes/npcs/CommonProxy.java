@@ -69,9 +69,8 @@ public class CommonProxy implements IGuiHandler {
 			case PlayerBank: {
 				return new ContainerNPCBank(player, buffer.readAnySizeNbt());
 			}
-			case PlayerFollowerHire:
-			case PlayerFollower: {
-				return new ContainerNPCFollowerHire(npc, player, buffer.readInt());
+			case PlayerFollowerHire: {
+				return new ContainerNPCFollowerHire(player, buffer.readInt(), buffer.readBlockPos());
 			}
 			case PlayerTrader: {
 				return new ContainerNPCTrader(player, npc, buffer.readInt());
@@ -193,8 +192,6 @@ public class CommonProxy implements IGuiHandler {
 	public void spawnParticle(EntityLivingBase player, String string, Object... ob) { }
 
 	public void spawnParticle(EnumParticleTypes type, double x, double y, double z, double motionX, double motionY, double motionZ, float scale) { }
-
-	public void updateGUI() { }
 
 	// New from Unofficial (BetaZavr)
 	public void updateKeys() { }

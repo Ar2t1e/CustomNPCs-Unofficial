@@ -58,8 +58,10 @@ public class CmdDialog extends CommandNoppesBase {
 
 	@SubCommand(desc = "reload dialogs from disk", permission = 2)
 	public void reload(MinecraftServer server, ICommandSender sender, String[] args) {
-		new DialogController().load();
-		SyncController.syncAllDialogs(server);
+		DialogController.instance.load();
+		if (sender instanceof EntityPlayerMP) {
+			SyncController.syncAllDialogs((EntityPlayerMP) sender);
+		}
 	}
 
 	@SubCommand(desc = "show dialog", usage = "<player> <dialog> <name>", permission = 2)

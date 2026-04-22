@@ -17,6 +17,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.event.ClientEvent;
@@ -55,6 +56,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
 
     // New fields from Unofficial (BetaZavr)
     protected final List<Component> hoverText = new ArrayList<>();
+    protected ClientProxy.FontContainer hoverFont = null;
     protected ScaledResolution scaledResolution;
     public ResourceLocation background = null;
     public float bgScale = 1.0F;
@@ -227,7 +229,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     public void buttonEvent(GuiButtonNop button) { }
 
     @Override
-    public void mouseButtonEvent(GuiButtonNop button, int mouseButton) { }
+    public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) { return false; }
 
     public IComponentGui get(int id, Class<?> type) {
         for (IComponentGui component : new ArrayList<>(wrapper.components)) {
@@ -509,7 +511,8 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         }
         else if (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiNPCInterface.showHoverText) && !hoverText.isEmpty()) {
             if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
-            drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer);
+            if (hoverFont == null) { drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer); }
+            else { GuiBasic.renderTooltipInternal(mouseX, ValueUtil.correctInt(mouseY, 16, height), this, hoverFont, hoverText, bgScale); }
             hoverText.clear();
         }
     }

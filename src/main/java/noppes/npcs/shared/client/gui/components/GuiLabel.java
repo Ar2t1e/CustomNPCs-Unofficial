@@ -159,6 +159,7 @@ public class GuiLabel extends Gui implements IComponentGui {
     @Override
     public GuiComponentType getElementType() { return GuiComponentType.LABEL; }
 
+    @SuppressWarnings("unused")
     public void offsetHover(int x, int y) {
         offsetHoverX = x;
         offsetHoverY = y;
@@ -210,6 +211,9 @@ public class GuiLabel extends Gui implements IComponentGui {
 
     @Override
     public void tick() { }
+
+    @Override
+    public boolean isHovered() { return isHovered; }
 
     @Override
     public GuiLabel setCustomFont(ClientProxy.FontContainer font) {

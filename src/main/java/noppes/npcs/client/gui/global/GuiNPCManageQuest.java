@@ -249,29 +249,59 @@ public class GuiNpcManageQuest
 			SubGuiEditText editText = (SubGuiEditText) subgui;
 			if (editText.id == 1) {
 				QuestCategory category = new QuestCategory();
-				category.title = editText.text[0];
-				while (QuestController.instance.containsCategoryName(category.id, category.title)) { category.title = category.title + "_"; }
+				StringBuilder t = new StringBuilder(editText.text[0]);
+				boolean has = true;
+				while (has) {
+					has = false;
+					for (QuestCategory cat : new ArrayList<>(QuestController.instance.categories.values())) {
+						if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
+							has = true;
+							break;
+						}
+					}
+					if (has) { t.append("_"); }
+				}
+				category.title = t.toString();
 				Packets.sendServer(new SPacketQuestCategorySave(category.save(new NBTTagCompound())));
 			} // create category
 			else if (editText.id == 3) {
 				if (editText.text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
 				QuestCategory category = categoryData.get(selectedCategory);
 				if (category.getName().equals(editText.text[0])) { return; }
+				StringBuilder t = new StringBuilder(editText.text[0]);
+				boolean has = true;
+				while (has) {
+					has = false;
+					for (QuestCategory cat : QuestController.instance.categories.values()) {
+						if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
+							has = true;
+							break;
+						}
+					}
+					if (has) { t.append("_"); }
+				}
+				category.title = t.toString();
 				NBTTagCompound compound = category.save(new NBTTagCompound());
-				while (QuestController.instance.containsCategoryName(category.id, editText.text[0])) { editText.text[0] = editText.text[0] + "_"; }
-				compound.setString("Title", editText.text[0]);
-				selectedCategory = Component.translatable(editText.text[0]);
+				selectedCategory = Component.translatable(category.title);
 				Packets.sendServer(new SPacketQuestCategorySave(compound));
 			} // rename category
 			else if (editText.id == 11) {
 				if (editText.text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
 				QuestCategory category = categoryData.get(selectedCategory);
 				Quest quest = new Quest(category);
-				quest.title = editText.text[0];
-				while (QuestController.instance.containsQuestName(category, quest)) {
-					editText.text[0] += "_";
-					quest.title = editText.text[0];
+				StringBuilder t = new StringBuilder(editText.text[0]);
+				boolean has = true;
+				while (has) {
+					has = false;
+					for (Quest qet : new ArrayList<>(quest.category.quests.values())) {
+						if (qet.id != quest.id && qet.title.equalsIgnoreCase(t.toString())) {
+							has = true;
+							break;
+						}
+					}
+					if (has) { t.append("_"); }
 				}
+				quest.title = t.toString();
 				Packets.sendServer(new SPacketQuestSave(category.id, quest.save(new NBTTagCompound())));
 			} // create quest
 		}

@@ -821,7 +821,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 	public void unFocused(GuiTextFieldNop textField) { }
 
 	@Override
-	public void textUpdate(String text) {
+	public void textUpdate(IComponentGui component, String text) {
 		search = text;
 		initGui();
 	}

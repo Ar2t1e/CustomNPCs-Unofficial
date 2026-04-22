@@ -22,6 +22,7 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiMenuTopButton;
 import noppes.npcs.shared.client.gui.components.GuiTextArea;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.client.NoppesUtil;
@@ -396,7 +397,7 @@ public class GuiScriptInterface extends GuiNPCInterface
 	public void save() { setScript(); }
 
 	@Override
-	public void textUpdate(String text) {
+	public void textUpdate(IComponentGui component, String text) {
 		ScriptContainer container = handler.getScripts().get(activeTab - 1);
 		if (container != null) { container.script = text; }
 	}

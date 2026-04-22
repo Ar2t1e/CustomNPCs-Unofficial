@@ -25,13 +25,13 @@ public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollowe
 		implements IGuiData {
 
 	protected final RoleFollower role;
+
 	// New from Unofficial (BetaZavr)
 	protected EntityNPCInterface displayNPC;
 
 	public GuiNpcFollower(EntityNPCInterface npc, ContainerNPCFollowerHire container) {
 		super(npc, container, Component.empty());
 		setBackground("follower.png");
-		closeOnEsc = true;
 		ySize = 224;
 
 		role = (RoleFollower) npc.role;

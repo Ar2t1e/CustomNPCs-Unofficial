@@ -3,7 +3,9 @@ package noppes.npcs.containers;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.BlockPos;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleFollower;
 
@@ -14,35 +16,34 @@ public class ContainerNPCFollowerHire extends ContainerNpcInterface {
 	public final InventoryBasic currencyMatrix;
 	public final RoleFollower role;
 
-	public ContainerNPCFollowerHire(EntityNPCInterface npc, EntityPlayer player, int entityId) {
+	public ContainerNPCFollowerHire(EntityPlayer player, int entityId, BlockPos data) {
 		super(player);
-		this.currencyMatrix = new InventoryBasic("", false, 1);
-		this.role = (RoleFollower) npc.role;
-		int offSet = type == 0 ? 0 : 58;
-		int size = this.role.inventory.getSizeInventory();
+		EntityNPCInterface npc = (EntityNPCInterface) player.world.getEntityByID(entityId);
+		if (npc != null) { role = (RoleFollower) npc.role; }
+		else { role = new RoleFollower(null); }
+		currencyMatrix = new InventoryBasic("", false, 1);
+		int offSet = data.getX() == 0 ? 0 : 58;
+		int size = role.inventory.getSizeInventory();
 		if (size > 0) {
 			int s = (size == 2 || size == 4) ? 2 : 3;
 			boolean bo = false;
 			for (int y = 0; y < s; ++y) {
 				for (int x = 0; x < s; ++x) {
 					bo = (x + y * s) >= size;
-					if (bo) {
-						break;
+					if (!bo) {
+						addSlotToContainer(new Slot(role.inventory, x + y * s, 174 + x * 18, 142 + y * 18));
 					}
-					this.addSlotToContainer(new Slot(this.role.inventory, x + y * s, 174 + x * 18, 142 + y * 18));
 				}
-				if (bo) {
-					break;
-				}
+				if (bo) { break; }
 			}
 		}
 		for (int y = 0; y < 3; ++y) {
 			for (int x = 0; x < 9; ++x) {
-				this.addSlotToContainer(new Slot(player.inventory, x + y * 9 + 9, 8 + x * 18, 84 + y * 18 + offSet));
+				addSlotToContainer(new Slot(player.inventory, x + y * 9 + 9, 8 + x * 18, 84 + y * 18 + offSet));
 			}
 		}
 		for (int x = 0; x < 9; ++x) {
-			this.addSlotToContainer(new Slot(player.inventory, x, 8 + x * 18, 142 + offSet));
+			addSlotToContainer(new Slot(player.inventory, x, 8 + x * 18, 142 + offSet));
 		}
 	}
 

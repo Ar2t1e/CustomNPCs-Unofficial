@@ -5,6 +5,7 @@ import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.entity.data.DropNbtSet;
 import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
@@ -108,7 +109,7 @@ public class SubGuiDropValueNbt  extends GuiNPCInterface implements ITextfieldLi
 	}
 
 	@Override
-	public void textUpdate(String text) { tag.setValues(text); }
+	public void textUpdate(IComponentGui component, String text) { tag.setValues(text); }
 
 	@Override
 	public void unFocused(GuiTextFieldNop textField) {

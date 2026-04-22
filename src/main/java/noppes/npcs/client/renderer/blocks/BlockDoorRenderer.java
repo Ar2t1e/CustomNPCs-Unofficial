@@ -31,7 +31,7 @@ public class BlockDoorRenderer<T extends TileEntity> extends TileEntitySpecialRe
 	public void render(@Nullable TileEntity te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
 		if (te == null) { return; }
 		TileDoor tile = (TileDoor) te;
-		IBlockState original = CustomBlocks.scriptedDoor.getStateFromMeta(tile.getBlockMetadata());
+		IBlockState original = CustomBlocks.scripted_door.getStateFromMeta(tile.getBlockMetadata());
 		BlockPos lowerPos = tile.getPos();
 		if (original.getValue(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER) {
 			lowerPos = tile.getPos().down();
@@ -42,11 +42,11 @@ public class BlockDoorRenderer<T extends TileEntity> extends TileEntitySpecialRe
 		if (lowerTile == null || upperTile == null) {
 			return;
 		}
-		IBlockState lowerState = CustomBlocks.scriptedDoor.getStateFromMeta(lowerTile.getBlockMetadata());
-		IBlockState upperState = CustomBlocks.scriptedDoor.getStateFromMeta(upperTile.getBlockMetadata());
+		IBlockState lowerState = CustomBlocks.scripted_door.getStateFromMeta(lowerTile.getBlockMetadata());
+		IBlockState upperState = CustomBlocks.scripted_door.getStateFromMeta(upperTile.getBlockMetadata());
 		int meta = BlockNpcDoorInterface.combineMetadata(this.getWorld(), tile.getPos());
 		Block b = lowerTile.blockModel;
-		if (this.overrideModel()) { b = CustomBlocks.scriptedDoor; }
+		if (this.overrideModel()) { b = CustomBlocks.scripted_door; }
 		IBlockState state = b.getStateFromMeta(meta);
 		state = state.withProperty(BlockDoor.HALF, original.getValue(BlockDoor.HALF));
 		state = state.withProperty(BlockDoor.FACING, lowerState.getValue(BlockDoor.FACING));

@@ -230,6 +230,9 @@ public class ClientProxy extends CommonProxy {
 		}
 
         public int getHeight() { return height("|"); }
+
+		public TrueTypeFont getFont() { return textFont; }
+
     }
 
 	protected static PlayerData playerData = new PlayerData();
@@ -435,12 +438,12 @@ public class ClientProxy extends CommonProxy {
 				returnGui = new GuiNpcCarpentryBench((ContainerCarpentryBench) container);
 				break;
 			}
-			case PlayerFollowerHire: {
-				returnGui = new GuiNpcFollowerHire(npc, (ContainerNPCFollowerHire) container);
-				break;
-			}
 			case PlayerFollower: {
 				returnGui = new GuiNpcFollower(npc, (ContainerNPCFollowerHire) container);
+				break;
+			}
+			case PlayerFollowerHire: {
+				returnGui = new GuiNpcFollowerHire(npc, (ContainerNPCFollowerHire) container);
 				break;
 			}
 			case PlayerTrader: {
@@ -810,14 +813,6 @@ public class ClientProxy extends CommonProxy {
 		} else if (particle == EnumParticleTypes.SMOKE_NORMAL) {
 			((IParticleSmokeNormalMixin) fx).npcs$setSmokeParticleScale(scale);
 		}
-	}
-
-	public void updateGUI() {
-		GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-		if (gui == null) {
-			return;
-		}
-		gui.initGui();
 	}
 
 	@Override

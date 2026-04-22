@@ -11,6 +11,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
 import noppes.npcs.*;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.JobType;
@@ -26,6 +27,7 @@ import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerGameData.FollowerSet;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
@@ -238,15 +240,17 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 	}
 
 	@Override
-	public void interact(EntityPlayer player) {
-		if (player instanceof EntityPlayerMP) {
-			if (ownerUUID == null || ownerUUID.isEmpty()) {
-				npc.say(player, npc.advanced.getInteractLine());
-				if (!rentalItems.isEmpty() || rentalMoney > 0) {
-					NoppesUtilServer.sendOpenGui((EntityPlayerMP) player, EnumGuiType.PlayerFollowerHire, npc);
+	public void interact(EntityPlayer playerIn) {
+		if (playerIn instanceof EntityPlayerMP) {
+			EntityPlayerMP player = (EntityPlayerMP) playerIn;
+			if (ownerUUID != null && !ownerUUID.isEmpty()) {
+				if (player == owner && !disableGui) {
+					SPacketGuiOpen.sendOpenGui(player, EnumGuiType.PlayerFollower, npc, new BlockPos(1, 0, 0));
 				}
-			} else if (player == owner && !disableGui) {
-				NoppesUtilServer.sendOpenGui((EntityPlayerMP) player, EnumGuiType.PlayerFollower, npc);
+			}
+			else {
+				if (npc != null) { npc.say(player, npc.advanced.getInteractLine()); }
+				SPacketGuiOpen.sendOpenGui(player, EnumGuiType.PlayerFollowerHire, npc, new BlockPos(0, 0, 0));
 			}
 		}
 	}

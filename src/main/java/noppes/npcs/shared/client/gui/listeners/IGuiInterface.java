@@ -17,7 +17,7 @@ public interface IGuiInterface {
 
 	void buttonEvent(GuiButtonNop button);
 
-	void mouseButtonEvent(GuiButtonNop button, int mouseButton);
+	boolean mouseButtonEvent(GuiButtonNop button, int mouseButton);
 
 	void save();
 

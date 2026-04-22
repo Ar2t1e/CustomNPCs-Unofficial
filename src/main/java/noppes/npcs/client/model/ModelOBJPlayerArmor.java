@@ -23,9 +23,14 @@ import noppes.npcs.reflection.client.renderer.entity.RenderPlayerReflection;
 import javax.annotation.Nonnull;
 
 public class ModelOBJPlayerArmor extends ModelBiped {
-	public ResourceLocation objModel, mainTexture;
-	public ModelRenderer bipedBelt, bipedRightFeet, bipedLeftFeet;
-	private ModelOBJPart childRightArm, childLeftArm;
+
+	public ResourceLocation objModel;
+	public ResourceLocation mainTexture;
+	public ModelRenderer bipedBelt;
+	public ModelRenderer bipedRightFeet;
+	public ModelRenderer bipedLeftFeet;
+	private ModelOBJPart childRightArm;
+	private ModelOBJPart childLeftArm;
 
 	public ModelOBJPlayerArmor(CustomArmor armor) {
 		super(0, 0, 128, 128);

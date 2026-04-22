@@ -8,7 +8,6 @@ import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.entity.data.role.IRoleBank;
 import noppes.npcs.controllers.BankController;
 import noppes.npcs.controllers.data.Bank;
-import noppes.npcs.controllers.data.BankData;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
@@ -49,8 +48,8 @@ public class RoleBank extends RoleInterface implements IRoleBank {
 	}
 
 	public Bank getBank() {
-		Bank bank = BankController.getInstance().banks.get(bankId);
-		return bank != null ? bank : BankController.getInstance().banks.values().iterator().next();
+		Bank bank = BankController.getInstance().getBank(bankId);
+		return bank != null ? bank : BankController.getInstance().getBanks().iterator().next();
 	}
 
 	public int getBankId() { return bankId; }

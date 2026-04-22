@@ -135,6 +135,7 @@ public class Packets {
         register(PacketNpcInitData.class);
         register(PacketNpcLookPos.class);
         register(PacketCustomChestName.class);
+        register(PacketNpcRarityTitleSet.class);
 
         // Client -> Server
         register(SPacketBankGet.class);
@@ -352,6 +353,7 @@ public class Packets {
         register(SPacketItemChange.class);
         register(SPacketDeadLootsGet.class);
         register(SPacketDeadLootsOpen.class);
+        register(SPacketNpcRarityTitleGet.class);
 
     }
 

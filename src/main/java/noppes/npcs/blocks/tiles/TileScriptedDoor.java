@@ -12,6 +12,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NBTTags;
 import noppes.npcs.api.block.IBlock;
@@ -26,53 +27,38 @@ import javax.annotation.Nonnull;
 
 public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBlockHandler {
 
-	private IBlock blockDummy;
-	public float blockHardness;
-	public float blockResistance;
-	public boolean enabled;
-	public long lastInited;
-	public int newPower;
-	public int prevPower;
-	public String scriptLanguage, closeSound, openSound;
-	public List<ScriptContainer> scripts;
-	public boolean shouldRefreshData;
-	private short ticksExisted;
-	public DataTimers timers;
+	protected IBlock blockDummy = null;
+	public List<ScriptContainer> scripts = new ArrayList<>();
+	public String scriptLanguage = "ECMAScript";
+	public DataTimers timers = new DataTimers(this);
+	public boolean enabled = false;
+	public int newPower = 0;
+	public int prevPower = 0;
+	private short tickCount = 0;
+	public float blockHardness = 5.0F;
+	public float blockResistance = 10.0F;
+	public long lastInited = -1L;
 
-	public TileScriptedDoor() {
-		this.scripts = new ArrayList<>();
-		this.shouldRefreshData = false;
-		this.scriptLanguage = "ECMAScript";
-		this.closeSound = "";
-		this.openSound = "";
-		this.enabled = false;
-		this.blockDummy = null;
-		this.timers = new DataTimers(this);
-		this.lastInited = -1L;
-		this.ticksExisted = 0;
-		this.newPower = 0;
-		this.prevPower = 0;
-		this.blockHardness = 5.0f;
-		this.blockResistance = 10.0f;
-	}
+	// New from Unofficial (BetaZavr)
+	public String closeSound = "";
+	public String openSound = "";
 
+	@Override
 	public void clearConsole() {
-		for (ScriptContainer script : this.getScripts()) {
-			script.console.clear();
-		}
+		for (ScriptContainer script : getScripts()) { script.console.clear(); }
 	}
 
+	@Override
 	public IBlock getBlock() {
-		if (this.blockDummy == null) {
-			this.blockDummy = new BlockScriptedDoorWrapper(this.getWorld(), this.getBlockType(), this.getPos());
-		}
-		return this.blockDummy;
+		if (blockDummy == null) { blockDummy = new BlockScriptedDoorWrapper(getWorld(), CustomBlocks.scripted_door.getDefaultState(), getPos()); }
+		return blockDummy;
 	}
 
+	@Override
 	public TreeMap<Long, String> getConsoleText() {
 		TreeMap<Long, String> map = new TreeMap<>();
 		int tab = 0;
-		for (ScriptContainer script : this.getScripts()) {
+		for (ScriptContainer script : getScripts()) {
 			++tab;
 			for (Map.Entry<Long, String> entry : script.console.entrySet()) {
 				String log;
@@ -86,43 +72,37 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 
 	@Override
 	public void clearConsoleText(Long key) {
-		for (ScriptContainer script : this.getScripts()) {
-			script.console.remove(key);
-		}
+		for (ScriptContainer script : getScripts()) { script.console.remove(key); }
 	}
 
-	public boolean getEnabled() {
-		return this.enabled;
-	}
+	@Override
+	public boolean getEnabled() { return enabled; }
 
-	public String getLanguage() {
-		return this.scriptLanguage;
-	}
+	@Override
+	public String getLanguage() { return scriptLanguage; }
 
 	public NBTTagCompound getNBT(NBTTagCompound compound) {
-		compound.setTag("Scripts", NBTTags.nbtScript(this.scripts));
-		compound.setString("ScriptLanguage", this.scriptLanguage);
-		compound.setString("CloseSound", this.closeSound);
-		compound.setString("OpenSound", this.openSound);
-		compound.setBoolean("ScriptEnabled", this.enabled);
-		compound.setInteger("BlockPrevPower", this.prevPower);
-		compound.setFloat("BlockHardness", this.blockHardness);
-		compound.setFloat("BlockResistance", this.blockResistance);
+		compound.setTag("Scripts", NBTTags.nbtScript(scripts));
+		compound.setString("ScriptLanguage", scriptLanguage);
+		compound.setString("CloseSound", closeSound);
+		compound.setString("OpenSound", openSound);
+		compound.setBoolean("ScriptEnabled", enabled);
+		compound.setInteger("BlockPrevPower", prevPower);
+		compound.setFloat("BlockHardness", blockHardness);
+		compound.setFloat("BlockResistance", blockResistance);
 		return compound;
 	}
 
-	public List<ScriptContainer> getScripts() {
-		return this.scripts;
-	}
+	@Override
+	public List<ScriptContainer> getScripts() { return scripts; }
 
-	public boolean isClient() {
-		return this.getWorld().isRemote;
-	}
+	@Override
+	public boolean isClient() { return getWorld().isRemote; }
 
-	public boolean isEnabled() {
-		return this.enabled && ScriptController.HasStart && !this.world.isRemote;
-	}
+	@Override
+	public boolean isEnabled() { return enabled && ScriptController.HasStart && !world.isRemote; }
 
+	@Override
 	public Component noticeString(String type, Object event) {
 		Component message = Component.literal("Scripted Door")
 				.withStyle(TextFormatting.DARK_GRAY);
@@ -149,94 +129,78 @@ public class TileScriptedDoor extends TileDoor implements ITickable, IScriptBloc
 	@Override
 	public void readFromNBT(@Nonnull NBTTagCompound compound) {
 		super.readFromNBT(compound);
-		this.setNBT(compound);
-		this.timers.readFromNBT(compound);
+		setNBT(compound);
+		timers.readFromNBT(compound);
 	}
 
 	@Override
 	public void runScript(String type, Event event) {
-		if (!this.isEnabled()) {
-			return;
+		if (!isEnabled()) { return; }
+		if (ScriptController.Instance.lastLoaded > lastInited) {
+			lastInited = ScriptController.Instance.lastLoaded;
+			if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) { EventHooks.onScriptBlockInit(this); }
 		}
-		if (ScriptController.Instance.lastLoaded > this.lastInited) {
-			this.lastInited = ScriptController.Instance.lastLoaded;
-			if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) {
-				EventHooks.onScriptBlockInit(this);
-			}
-		}
-		for (ScriptContainer script : this.scripts) {
-			script.run(type, event);
-		}
-	}
-
-	public void setEnabled(boolean bo) {
-		this.enabled = bo;
-	}
-
-	public void setLanguage(String lang) {
-		this.scriptLanguage = lang;
+		for (ScriptContainer script : scripts) { script.run(type, event); }
 	}
 
 	@Override
-	public void setLastInited(long timeMC) {
-		this.lastInited = timeMC;
-	}
+	public void setEnabled(boolean bo) { enabled = bo; }
+
+	@Override
+	public void setLanguage(String lang) { scriptLanguage = lang; }
+
+	@Override
+	public void setLastInited(long timeMC) { lastInited = timeMC; }
 
 	@Override
 	public void init() { lastInited = -1; }
 
 	public void setNBT(NBTTagCompound compound) {
-		this.scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this);
-		this.scriptLanguage = compound.getString("ScriptLanguage");
-		this.closeSound = compound.getString("CloseSound");
-		this.openSound = compound.getString("OpenSound");
-		this.enabled = compound.getBoolean("ScriptEnabled");
-		this.prevPower = compound.getInteger("BlockPrevPower");
+		scripts = NBTTags.getScript(compound.getTagList("Scripts", 10), this);
+		scriptLanguage = compound.getString("ScriptLanguage");
+		closeSound = compound.getString("CloseSound");
+		openSound = compound.getString("OpenSound");
+		enabled = compound.getBoolean("ScriptEnabled");
+		prevPower = compound.getInteger("BlockPrevPower");
 		if (compound.hasKey("BlockHardness")) {
-			this.blockHardness = compound.getFloat("BlockHardness");
-			this.blockResistance = compound.getFloat("BlockResistance");
+			blockHardness = compound.getFloat("BlockHardness");
+			blockResistance = compound.getFloat("BlockResistance");
 		}
 	}
 
 	@Override
 	public void update() {
 		super.update();
-		++this.ticksExisted;
-		if (this.prevPower != this.newPower) {
-			EventHooks.onScriptBlockRedstonePower(this, this.prevPower, this.newPower);
-			this.prevPower = this.newPower;
+		++tickCount;
+		if (prevPower != newPower) {
+			EventHooks.onScriptBlockRedstonePower(this, prevPower, newPower);
+			prevPower = newPower;
 		}
-		this.timers.update();
-		if (this.ticksExisted >= 10) {
+		timers.update();
+		if (tickCount >= 10) {
 			if (isEnabled()) {
 				ScriptController.Instance.tryAdd(1, this);
 				EventHooks.onScriptBlockUpdate(this);
 			}
-			this.ticksExisted = 0;
+			tickCount = 0;
 		}
 	}
 
 	@Nonnull
 	@Override
 	public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
-		this.getNBT(compound);
-		this.timers.writeToNBT(compound);
+		getNBT(compound);
+		timers.writeToNBT(compound);
 		return super.writeToNBT(compound);
 	}
 
-	public String getSound(boolean isOpen) {
-		return isOpen ? openSound : closeSound;
-	}
+	// New from Unofficial (BetaZavr)
+	public String getSound(boolean isOpen) { return isOpen ? openSound : closeSound; }
 
 	public void setSound(boolean isOpen, String song) {
-		if (song == null) {
-			song = "";
-		}
-		if (isOpen) {
-			this.openSound = song;
-		} else {
-			this.closeSound = song;
-		}
+		if (song == null) { song = ""; }
+		if (isOpen) { openSound = song; }
+		else { closeSound = song; }
 	}
 
 }

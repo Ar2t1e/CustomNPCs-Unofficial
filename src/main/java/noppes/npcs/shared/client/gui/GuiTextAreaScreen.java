@@ -4,6 +4,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiTextArea;
+import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 
@@ -73,7 +74,7 @@ public class GuiTextAreaScreen extends GuiBasic implements ITextChangeListener {
 	}
 
 	@Override
-	public void textUpdate(String t) { text = t; }
+	public void textUpdate(IComponentGui component, String t) { text = t; }
 
 	public GuiTextAreaScreen enableHighlighting() {
 		highlighting = true;

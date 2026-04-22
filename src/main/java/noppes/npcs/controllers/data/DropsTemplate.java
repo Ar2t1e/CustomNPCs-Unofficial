@@ -14,9 +14,7 @@ public class DropsTemplate {
 	private boolean allDropsFromGroup = false; // or random
 	private final Random rnd = new Random();
 
-	public DropsTemplate() {
-		groups.put(0, new TreeMap<>());
-	}
+	public DropsTemplate() { groups.put(0, new TreeMap<>()); }
 
 	public DropsTemplate(NBTTagCompound nbtTemplate) {
 		this();
@@ -28,7 +26,7 @@ public class DropsTemplate {
 			id = groups.size();
 			groups.put(id, new TreeMap<>());
 		}
-		DropSet ds = new DropSet(null, null);
+		DropSet ds = new DropSet(null);
 		ds.item = item;
 		ds.setChance(chance);
 		ds.pos = groups.get(id).size();
@@ -70,7 +68,7 @@ public class DropsTemplate {
 			catch (Exception e) { LogWriter.error(e); }
 			if (id < 0) { continue; }
 			for (int j = 0; j < nbtTemplate.getTagList(groupId, 10).tagCount(); j++) {
-				DropSet ds = new DropSet(null, null);
+				DropSet ds = new DropSet(null);
 				ds.load(nbtTemplate.getTagList(groupId, 10).getCompoundTagAt(j));
 				ds.pos = j;
 				if (!groups.containsKey(id)) { groups.put(id, new TreeMap<>()); }

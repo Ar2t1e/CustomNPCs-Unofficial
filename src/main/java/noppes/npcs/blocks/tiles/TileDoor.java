@@ -26,7 +26,7 @@ public class TileDoor extends TileNpcEntity implements ITickable {
 
 	public TileDoor() {
 		this.ticksExisted = 0;
-		this.blockModel = CustomBlocks.scriptedDoor;
+		this.blockModel = CustomBlocks.scripted_door;
 		this.needsClientUpdate = false;
 		this.renderTileErrored = true;
 		this.renderTileUpdate = null;
@@ -65,7 +65,7 @@ public class TileDoor extends TileNpcEntity implements ITickable {
 	public void setDoorNBT(NBTTagCompound compound) {
 		this.blockModel = Block.REGISTRY.getObject(new ResourceLocation(compound.getString("ScriptDoorBlockModel")));
 		if (!(this.blockModel instanceof BlockDoor)) {
-			this.blockModel = CustomBlocks.scriptedDoor;
+			this.blockModel = CustomBlocks.scripted_door;
 		}
 		this.renderTileUpdate = null;
 		this.renderTile = null;
@@ -74,7 +74,7 @@ public class TileDoor extends TileNpcEntity implements ITickable {
 
 	public void setItemModel(Block block) {
 		if (!(block instanceof BlockDoor)) {
-			block = CustomBlocks.scriptedDoor;
+			block = CustomBlocks.scripted_door;
 		}
 		if (this.blockModel == block) {
 			return;

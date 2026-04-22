@@ -353,6 +353,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     @Override
     public boolean isVisible() { return visible; }
 
+    @Override
     public boolean isHovered() { return mouseInList; }
 
     @Override

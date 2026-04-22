@@ -333,8 +333,8 @@ extends LayerInterface<T> {
 					float x = sw.getScaledWidth() / 2.0f + 134.0f;
 					float y = sw.getScaledHeight() / 2.0f + 41.0f;
 					GuiNPCInterface gui = (GuiNPCInterface) mc.currentScreen;
-					x -= gui.mouseX;
-					y -= gui.mouseY;
+					x -= gui.wrapper.mouseX;
+					y -= gui.wrapper.mouseY;
 					x = ValueUtil.correctFloat(x, -70.0f, 70.0f);
 					y = ValueUtil.correctFloat(y, -70.0f, 70.0f);
 					double theta = Math.atan2(y, x);

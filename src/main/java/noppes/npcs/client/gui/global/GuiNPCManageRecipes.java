@@ -310,7 +310,7 @@ public class GuiNpcManageRecipes
 	}
 
 	@Override
-	public void mouseButtonEvent(GuiButtonNop button, int mouseButton) {
+	public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) {
 		int id = button.id;
 		boolean isCNPCsMod = recipe.domen.getString().equals(CustomNpcs.MODID);
 		if (mouseButton == 0) {
@@ -319,7 +319,7 @@ public class GuiNpcManageRecipes
 				// show list of ingredients
 				if (id != 10 && isShiftKeyDown()) {
 					if (recipe.recipeItems.get(id - 11).length > 0) { setSubGui(new SubGuiEditIngredients(id - 11, recipe.recipeItems.get(id - 11)));}
-					return;
+					return true;
 				}
 				// product
 				if (id == 10) {
@@ -353,7 +353,7 @@ public class GuiNpcManageRecipes
 					int pos = id - 11;
 					ItemStack[] array = recipe.recipeItems.get(pos);
 					if (isCtrlKeyDown()) {
-						if (heldStack.isEmpty() || array.length >= 16) { return; }
+						if (heldStack.isEmpty() || array.length >= 16) { return false; }
 						if (array.length == 0) {
 							array = new ItemStack[] { heldStack.copy() };
 							array[0].setCount(1);
@@ -496,7 +496,7 @@ public class GuiNpcManageRecipes
 					}
                     button.setColor(recipe.isValid() ? array != null && array.length > 0 ? 0 : green : red);
                 }
-				return;
+				return true;
 			}
 			switch (id) {
 				case 0: {
@@ -606,6 +606,7 @@ public class GuiNpcManageRecipes
 				Packets.sendServer(new SPacketDetectHeldItem(stack));
 			}
 		}
+		return false;
 	}
 
 	@Override

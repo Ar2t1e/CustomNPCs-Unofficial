@@ -13,8 +13,6 @@ import noppes.npcs.api.event.NpcEvent;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
-import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.Util;
 
 public class NpcScriptData
 extends BaseScriptData {

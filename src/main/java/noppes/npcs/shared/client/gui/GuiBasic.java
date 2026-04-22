@@ -5,7 +5,11 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
@@ -13,6 +17,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.client.ClientProxy;
+import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.event.ClientEvent;
@@ -25,6 +31,7 @@ import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -100,6 +107,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     }
 
     protected final List<Component> hoverText = new ArrayList<>();
+    protected ClientProxy.FontContainer hoverFont = null;
     protected ScaledResolution scaledResolution;
     public int widthTexture = 0;
     public int heightTexture = 0;
@@ -185,7 +193,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public void buttonEvent(GuiButtonNop button) { }
 
     @Override
-    public void mouseButtonEvent(GuiButtonNop button, int mouseButton) { }
+    public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) { return false; }
 
     @Override
     public void handleMouseInput() throws IOException {
@@ -562,9 +570,83 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         }
         else if (!hoverText.isEmpty() && (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText))) {
             if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
-            drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer);
+            if (hoverFont == null) { drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer); }
+            else { renderTooltipInternal(mouseX, ValueUtil.correctInt(mouseY, 16, height), this, hoverFont, hoverText, bgScale); }
             hoverText.clear();
         }
+    }
+
+    public static void renderTooltipInternal(int mouseX, int mouseY, GuiScreen screen, ClientProxy.FontContainer font, List<Component> collections, float scale) {
+        if (font != null && !collections.isEmpty()) {
+            GlStateManager.disableRescaleNormal();
+            RenderHelper.disableStandardItemLighting();
+            GlStateManager.disableLighting();
+            GlStateManager.disableDepth();
+            int i = 0;
+            for (Component s : collections) {
+                int j = font.width(s);
+                if (j > i) { i = j; }
+            }
+            int l1 = mouseX + 12;
+            int i2 = mouseY - 12;
+            int k = 8;
+            if (collections.size() > 1) { k += 2 + (collections.size() - 1) * 10; }
+            if (l1 + i > screen.width)  { l1 -= 28 + i; }
+            if (i2 + k + 6 > screen.height) { i2 = screen.height - k - 6; }
+
+            Minecraft.getMinecraft().getRenderItem().zLevel = 300.0F;
+            int l = -267386864;
+            drawGradientRect(l1 - 3, i2 - 4, l1 + i + 3, i2 - 3, 300.0d, l, l);
+            drawGradientRect(l1 - 3, i2 + k + 3, l1 + i + 3, i2 + k + 4, 300.0d, l, l);
+            drawGradientRect(l1 - 3, i2 - 3, l1 + i + 3, i2 + k + 3, 300.0d, l, l);
+            drawGradientRect(l1 - 4, i2 - 3, l1 - 3, i2 + k + 3, 300.0d, l, l);
+            drawGradientRect(l1 + i + 3, i2 - 3, l1 + i + 4, i2 + k + 3, 300.0d, l, l);
+            int i1 = 1347420415;
+            int j1 = 1344798847;
+            drawGradientRect(l1 - 3, i2 - 3 + 1, l1 - 3 + 1, i2 + k + 3 - 1, 300.0d, i1, j1);
+            drawGradientRect(l1 + i + 2, i2 - 3 + 1, l1 + i + 3, i2 + k + 3 - 1, 300.0d, i1, j1);
+            drawGradientRect(l1 - 3, i2 - 3, l1 + i + 3, i2 - 3 + 1, 300.0d, i1, i1);
+            drawGradientRect(l1 - 3, i2 + k + 2, l1 + i + 3, i2 + k + 3, 300.0d, j1, j1);
+            for (int k1 = 0; k1 < collections.size(); ++k1) {
+                Component s1 = collections.get(k1);
+                font.draw(s1, (float)l1, (float)i2, -1);
+                if (k1 == 0)  { i2 += 2; }
+                i2 += 10;
+            }
+            Minecraft.getMinecraft().getRenderItem().zLevel = 0.0F;
+            GlStateManager.enableLighting();
+            GlStateManager.enableDepth();
+            RenderHelper.enableStandardItemLighting();
+            GlStateManager.enableRescaleNormal();
+        }
+    }
+
+    protected static void drawGradientRect(double left, double top, double right, double bottom, double zLevel, int startColor, int endColor) {
+        float f = (float)(startColor >> 24 & 255) / 255.0F;
+        float f1 = (float)(startColor >> 16 & 255) / 255.0F;
+        float f2 = (float)(startColor >> 8 & 255) / 255.0F;
+        float f3 = (float)(startColor & 255) / 255.0F;
+        float f4 = (float)(endColor >> 24 & 255) / 255.0F;
+        float f5 = (float)(endColor >> 16 & 255) / 255.0F;
+        float f6 = (float)(endColor >> 8 & 255) / 255.0F;
+        float f7 = (float)(endColor & 255) / 255.0F;
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.pos(right, top, zLevel).color(f1, f2, f3, f).endVertex();
+        bufferbuilder.pos(left, top, zLevel).color(f1, f2, f3, f).endVertex();
+        bufferbuilder.pos(left, bottom, zLevel).color(f5, f6, f7, f4).endVertex();
+        bufferbuilder.pos(right, bottom, zLevel).color(f5, f6, f7, f4).endVertex();
+        tessellator.draw();
+        GlStateManager.shadeModel(GL11.GL_FLAT);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
     }
 
     protected List<String> toHoverText() {

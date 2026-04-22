@@ -80,10 +80,7 @@ public class SubGuiEditText extends GuiBasic implements ITextfieldListener {
 		onClose();
 	}
 
-	@Override
-	public void mouseButtonEvent(GuiButtonNop button, int mouseButton) { }
-
-	@Override
+    @Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		synchronized (hovers) {
 			for (int i : hovers.keySet()) {

@@ -98,16 +98,6 @@ public class SubGuiNpcJobHealerSettings
 	}
 
 	@Override
-	public boolean keyPressed(int key, int key_1, int key_2) {
-		boolean bo = super.keyPressed(key, key_1, key_2);
-		if (key == InputConstants.KEY_ESCAPE) {
-			onClose();
-			bo = true;
-		}
-		return bo;
-	}
-
-	@Override
 	public void unFocused(GuiTextFieldNop textField) {
 		switch (textField.id) {
 			case 1: healerSettings.range = textField.getInteger(); break;

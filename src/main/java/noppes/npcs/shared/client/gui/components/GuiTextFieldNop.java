@@ -123,7 +123,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
                 if (textIn.length() > maxStringLength) { text = textIn.substring(0, maxStringLength); }
                 else  { text = textIn; }
                 setCursorPositionEnd();
-                if (listener instanceof ITextChangeListener && !oldText.equals(text)) { ((ITextChangeListener) listener).textUpdate(text); }
+                if (listener instanceof ITextChangeListener && !oldText.equals(text)) { ((ITextChangeListener) listener).textUpdate(this, text); }
             }
         }
     }
@@ -156,7 +156,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
             text = s;
             moveCursorBy(i - selectionEnd + l);
             setResponderEntryValue(id, text);
-            if (listener instanceof ITextChangeListener && !oldText.equals(text)) { ((ITextChangeListener) listener).textUpdate(text); }
+            if (listener instanceof ITextChangeListener && !oldText.equals(text)) { ((ITextChangeListener) listener).textUpdate(this, text); }
         }
     }
 
@@ -186,7 +186,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
                     text = s;
                     if (flag) { moveCursorBy(num); }
                     setResponderEntryValue(id, text);
-                    if (listener instanceof ITextChangeListener && !oldText.equals(text)) { ((ITextChangeListener) listener).textUpdate(text); }
+                    if (listener instanceof ITextChangeListener && !oldText.equals(text)) { ((ITextChangeListener) listener).textUpdate(this, text); }
                 }
             }
         }
@@ -525,7 +525,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
         maxStringLength = length;
         if (text.length() > length) {
             text = text.substring(0, length);
-            if (listener instanceof ITextChangeListener) { ((ITextChangeListener) listener).textUpdate(text); }
+            if (listener instanceof ITextChangeListener) { ((ITextChangeListener) listener).textUpdate(this, text); }
         }
         return this;
     }

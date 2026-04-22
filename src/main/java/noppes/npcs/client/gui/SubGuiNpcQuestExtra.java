@@ -118,7 +118,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 			GlStateManager.pushMatrix();
 			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 			GlStateManager.translate(0.0f, 0.0f, 200.0f);
-			GuiButtonNop.renderString(name, u, v, u + 63, v +10, CustomNpcs.QuestLogColor.getRGB(), false, true);
+			GuiButtonNop.renderString(name, u, v, u + 63, v +10, CustomNpcs.QuestLogColor.getRGB(), false, true, null);
 			GlStateManager.popMatrix();
 		}
 		// script button

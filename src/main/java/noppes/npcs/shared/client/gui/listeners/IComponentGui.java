@@ -52,4 +52,5 @@ public interface IComponentGui {
 
     void tick();
 
+    boolean isHovered();
 }

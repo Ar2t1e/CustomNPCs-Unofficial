@@ -14,10 +14,7 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNextPage;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiLabel;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
-import noppes.npcs.shared.client.gui.listeners.IGuiClose;
-import noppes.npcs.shared.client.gui.listeners.IGuiError;
-import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
-import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.shared.client.gui.listeners.*;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
 
@@ -1549,7 +1546,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 	}
 
 	@Override
-	public void textUpdate(String text) {}
+	public void textUpdate(IComponentGui component, String text) { }
 
 	private void addNewPage() {
 		if (bookPages != null && bookPages.tagCount() < 50) {
@@ -1564,7 +1561,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 		int textHeight = mc.fontRenderer.getWordWrappedHeight(totalText, 152);
 		if (totalText.length() < 1024 && textHeight <= 108) {
 			setText(totalText);
-			textUpdate(totalText);
+			textUpdate(null, totalText);
 		}
 	}
 

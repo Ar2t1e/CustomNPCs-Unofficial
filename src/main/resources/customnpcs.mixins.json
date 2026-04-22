@@ -76,8 +76,8 @@
     "client.model.IModelPlayerMixin",
     "client.model.ModelBoxMixin",
     "client.model.ModelRendererMixin",
+    "client.network.INetworkPlayerInfoMixin",
     "client.network.NetHandlerPlayClientMixin",
-    "client.network.NetworkPlayerInfoMixin",
     "client.particle.ParticleFlameMixin",
     "client.particle.ParticleManagerMixin",
     "client.particle.ParticleSmokeNormalMixin",
@@ -90,6 +90,7 @@
     "client.resources.IFallbackResourceManagerMixin",
     "client.resources.II18nMixin",
     "client.resources.ILocaleMixin",
+    "client.resources.ISkinManagerMixin",
     "client.settings.IKeyBindingMixin",
     "client.world.storage.WorldSummaryMixin",
     "fml.client.GuiModListMixin"

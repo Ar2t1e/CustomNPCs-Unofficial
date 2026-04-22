@@ -12,12 +12,13 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomItems;
 import noppes.npcs.mixin.client.renderer.texture.ITextureManagerMixin;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketNpcRarityTitleGet;
+import noppes.npcs.shared.client.util.ResourceDownloader;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.gui.util.GuiNpcUtil;
-import noppes.npcs.client.util.ImageBufferDownloadAlt;
 import noppes.npcs.client.util.ImageDownloadAlt;
 import noppes.npcs.controllers.data.SkinData;
-import noppes.npcs.reflection.client.resources.SkinManagerReflection;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
@@ -34,7 +35,6 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.constants.EnumParts;
@@ -135,9 +135,9 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 				else if (npc.display.skinType == 2) {
 					try {
 						boolean fixSkin = npc instanceof EntityCustomNpc && ((EntityCustomNpc)npc).modelData.getEntity(npc) == null;
-						File file = new File(SkinManagerReflection.getDir(Minecraft.getMinecraft().getSkinManager()), "" + (npc.display.getSkinUrl() + fixSkin).hashCode());
-						npc.textureLocation = new ResourceLocation(CustomNpcs.MODID, "skins/" + (npc.display.getSkinUrl() + fixSkin).hashCode() + (fixSkin ? "" : "32"));
-						loadSkin(file, npc.textureLocation, npc.display.getSkinUrl());
+						File file = ResourceDownloader.getUrlFile(npc.display.getSkinUrl(), fixSkin);
+						npc.textureLocation = ResourceDownloader.getUrlResourceLocation(npc.display.getSkinUrl(), fixSkin);
+						loadSkin(file, npc.textureLocation, npc.display.getSkinUrl(), fixSkin);
 					}
 					catch (Exception e) { LogWriter.error(e); }
 				}
@@ -173,12 +173,11 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 		return super.handleRotationFloat(npc, par2);
 	}
 
-	private static void loadSkin(File file, ResourceLocation resource, String url) {
+	private static void loadSkin(File file, ResourceLocation resource, String url, boolean fix64) {
 		TextureManager texturemanager = Minecraft.getMinecraft().getTextureManager();
 		Map<ResourceLocation, ITextureObject> mapTextureObjects = ((ITextureManagerMixin) texturemanager).getMapTextureObjects();
 		if (!mapTextureObjects.containsKey(resource)) {
-			ITextureObject object = new ImageDownloadAlt(file, url, DefaultPlayerSkin.getDefaultSkinLegacy(), new ImageBufferDownloadAlt());
-			texturemanager.loadTexture(resource, object);
+			ResourceDownloader.load(new ImageDownloadAlt(file, url, resource, DefaultPlayerSkin.getDefaultSkinLegacy(), fix64, () -> {}));
         }
     }
 
@@ -362,10 +361,11 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 				d1 -= 0.35f;
 			}
 			renderLivingLabel(npc, d, d1 + npc.height - 0.06f * scale, d2, npc.getName(), npc.display.getTitle());
-			if (!CustomNpcs.ShowLR) { return; }
-			NoppesUtilPlayer.sendDataCheckDelay(EnumPlayerPacket.NpcVisualData, npc, 5000, npc.getEntityId());
-			if (!npc.stats.getRarityTitle().isEmpty()) {
-				renderLivingLabel(npc, d, d1 + npc.height - 0.06f * scale, d2, "", npc.stats.getRarityTitle());
+			if (CustomNpcs.ShowLR) {
+				Packets.sendServerDelayed(new SPacketNpcRarityTitleGet(npc.getEntityId()), npc, 5000);
+				if (!npc.stats.getRarityTitle().isEmpty()) {
+					renderLivingLabel(npc, d, d1 + npc.height - 0.06f * scale, d2, "", npc.stats.getRarityTitle());
+				}
 			}
 		}
 	}

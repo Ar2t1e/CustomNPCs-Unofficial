@@ -135,7 +135,7 @@ public class SubGuiSoundSelection extends ResourceSelection {
 						long n = System.currentTimeMillis() + 2500L;
 						while (n >= System.currentTimeMillis()) {
 							for (MusicData md : ClientTickHandler.musics) {
-								if (md.channel.playing() && md.name.equals(resource.getResourcePath()) && md.resource.equals(sound.getSoundLocation())) {
+								if (md.playing() && md.name.equals(resource.getResourcePath()) && md.resource.equals(sound.getSoundLocation())) {
 									musicData = md;
 									name.setMessage(Component.literal(musicData.name)
 											.append(Component.literal(" / ").withStyle(TextFormatting.GRAY))
@@ -190,17 +190,17 @@ public class SubGuiSoundSelection extends ResourceSelection {
 				int len = left + (int) (track * ((double) imageWidth - 10.0d));
 				time.setMessage(Component.literal(Util.instance.ticksToElapsedTime(musicData.getCurrentTime() / 50L, false, false, false))
 						.append(Component.literal("/").withStyle(TextFormatting.GRAY))
-						.append(Component.literal(Util.instance.ticksToElapsedTime(musicData.duration / 50L, false, false, false)).withStyle(TexFormatting.GRAY)));
+						.append(Component.literal(Util.instance.ticksToElapsedTime(musicData.duration / 50L, false, false, false)).withStyle(TextFormatting.GRAY)));
 				drawRect(left, top, len, bottom, 0xF000 | alpha << 24);
-				if (musicData.channel.stopped()) {
+				if (musicData.stopped()) {
 					if (delay == 0L) { delay = System.currentTimeMillis() + 2000L; }
 					if (delay < System.currentTimeMillis()) { isPlay = false; }
 				}
 			} else {
 				time.setMessage(Component.literal(Util.instance.ticksToElapsedTime((2500L - Math.min(2500L, Math.max(0L, System.currentTimeMillis() - wait))) / 50, false, false, false)).withStyle(TextFormatting.GRAY));
 			}
-			name.render(graphics, mouseX, mouseY, partialTicks);
-			time.render(graphics, mouseX, mouseY, partialTicks);
+			name.render(mouseX, mouseY, partialTicks);
+			time.render(mouseX, mouseY, partialTicks);
 		}
 	}
 

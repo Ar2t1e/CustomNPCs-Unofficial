@@ -143,11 +143,11 @@ public class CmdNPC extends CommandNoppesBase {
 	public void owner(MinecraftServer server, ICommandSender sender, String[] args) {
 		EntityPlayer player = null;
 		if (args.length < 1) {
-			if (this.selectedNpc.advanced.roleInterface instanceof RoleFollower) {
-				player = ((RoleFollower) this.selectedNpc.advanced.roleInterface).owner;
+			if (this.selectedNpc.role instanceof RoleFollower) {
+				player = ((RoleFollower) this.selectedNpc.role).owner;
 			}
-			if (this.selectedNpc.advanced.roleInterface instanceof RoleCompanion) {
-				player = ((RoleCompanion) this.selectedNpc.advanced.roleInterface).owner;
+			if (this.selectedNpc.role instanceof RoleCompanion) {
+				player = ((RoleCompanion) this.selectedNpc.role).owner;
 			}
 			if (player == null) {
 				this.sendMessage(sender, "No owner");
@@ -159,11 +159,11 @@ public class CmdNPC extends CommandNoppesBase {
 				player = CommandBase.getPlayer(server, sender, args[0]);
 			} catch (Exception e) { LogWriter.error(e); }
 			if (player != null) {
-				if (this.selectedNpc.advanced.roleInterface instanceof RoleFollower) {
-					((RoleFollower) this.selectedNpc.advanced.roleInterface).setOwner(player);
+				if (this.selectedNpc.role instanceof RoleFollower) {
+					((RoleFollower) this.selectedNpc.role).setOwner(player);
 				}
-				if (this.selectedNpc.advanced.roleInterface instanceof RoleCompanion) {
-					((RoleCompanion) this.selectedNpc.advanced.roleInterface).setOwner(player);
+				if (this.selectedNpc.role instanceof RoleCompanion) {
+					((RoleCompanion) this.selectedNpc.role).setOwner(player);
 				}
 			}
 		}

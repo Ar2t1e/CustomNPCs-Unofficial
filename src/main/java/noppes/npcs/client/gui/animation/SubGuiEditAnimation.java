@@ -476,7 +476,6 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				if (partNames == null) { showPartNames(); }
 				GuiCustomWindowNop window = get(partNames.id, GuiCustomWindowNop.class);
 				if (window != null) {
-					window.isMoving = false;
 					window.visible = true;
 					button.setIsEnabled(false);
 				}
@@ -556,7 +555,6 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				if (tools == null) { showTools(); }
 				GuiCustomWindowNop window = get(tools.id, GuiCustomWindowNop.class);
 				if (window != null) {
-					window.isMoving = false;
 					window.visible = true;
 					button.setIsEnabled(false);
 				}
@@ -626,7 +624,6 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				showHitBoxes();
 				GuiCustomWindowNop window = get(hitboxes.id, GuiCustomWindowNop.class);
 				if (window != null) {
-					window.isMoving = false;
 					window.visible = true;
 					button.setIsEnabled(false);
 				}
@@ -1004,17 +1001,17 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		ScaledResolution sw = new ScaledResolution(mc);
 		if (w > 0.0d && h > 0.0d) {
 			if (partNames != null) {
-				double left = 1.0d / w * partNames.guiLeft;
-				double top = 1.0d / h * partNames.guiTop;
-				partNames.guiLeft = (int) ((double) sw.getScaledWidth() * left);
-				partNames.guiTop = (int) ((double) sw.getScaledHeight() * top);
-				scrollParts.setPos(partNames.guiLeft + 4, partNames.guiTop + 12);
+				double left = 1.0d / w * partNames.getX();
+				double top = 1.0d / h * partNames.getY();
+				partNames.transferTo((int) ((double) sw.getScaledWidth() * left),
+						(int) ((double) sw.getScaledHeight() * top));
+				scrollParts.setPos(partNames.getX() + 4, partNames.getY() + 12);
 			}
 			if (tools != null) {
-				double left = 1.0d / w * tools.guiLeft;
-				double top = 1.0d / h * tools.guiTop;
-				tools.guiLeft = (int) ((double) sw.getScaledWidth() * left);
-				tools.guiTop = (int) ((double) sw.getScaledHeight() * top);
+				double left = 1.0d / w * tools.getX();
+				double top = 1.0d / h * tools.getY();
+				tools.transferTo((int) ((double) sw.getScaledWidth() * left),
+						(int) ((double) sw.getScaledHeight() * top));
 			}
 		}
 		w = sw.getScaledWidth();
@@ -1575,7 +1572,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			hitboxes.add(scrollHitboxes);
 		}
 		hitboxes.setPoint(getButton(45));
-		scrollHitboxes.setPos(hitboxes.guiLeft + 4, hitboxes.guiTop + 12);
+		scrollHitboxes.setPos(hitboxes.getX() + 4, hitboxes.getY() + 12);
 		add(hitboxes);
 	}
 
@@ -1587,8 +1584,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		if (isHitbox) { notNormal = false; }
 		y += notNormal ? -11 : 0;
 		if (tools != null) {
-			x = tools.guiLeft;
-			y = tools.guiTop;
+			x = tools.getX();
+			y = tools.getY();
 			h = tools.imageHeight;
 		}
 		tools = new GuiCustomWindowNop(this, 1, x, y, 146, notNormal ? 60 : 38, Component.translatable("gui.tools").append(":"))
@@ -1759,15 +1756,15 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			partNames.heightTexture = 256;
 			partNames.setColorLine(CustomNpcs.colorAnimHoverPart);
 			partNames.add(scrollParts.setSelect(part.id));
-			partNames.addButton(48, partNames.guiLeft + 4, partNames.guiTop + 125, "ai.movement")
+			partNames.addButton(48, partNames.getX() + 4, partNames.getY() + 125, "ai.movement")
 					.setSize(67, 12);
 		}
 		partNames.setPoint(getButton(29));
-		if (scrollParts != null) { scrollParts.setPos(partNames.guiLeft + 4,partNames.guiTop + 12); }
+		if (scrollParts != null) { scrollParts.setPos(partNames.getX() + 4,partNames.getY() + 12); }
 		if (partNames.getButton(48) != null) {
 			GuiButtonNop b = partNames.getButton(48);
-			b.setX(partNames.guiLeft + 4);
-			b.setY(partNames.guiTop + 125);
+			b.setX(partNames.getX() + 4);
+			b.setY(partNames.getY() + 125);
 		}
 		add(partNames);
 	}

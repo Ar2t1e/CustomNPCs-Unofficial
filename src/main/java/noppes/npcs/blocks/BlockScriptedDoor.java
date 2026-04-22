@@ -47,18 +47,20 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		return new TileScriptedDoor();
 	}
 
+	@Override
 	public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) {
 		return ((TileScriptedDoor) Objects.requireNonNull(world.getTileEntity(pos))).blockHardness;
 	}
 
+	@Override
 	public float getExplosionResistance(@Nonnull World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
 		return ((TileScriptedDoor) Objects.requireNonNull(world.getTileEntity(pos))).blockResistance;
 	}
 
-	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
-		return EnumBlockRenderType.INVISIBLE;
-	}
+	@Override
+	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) { return EnumBlockRenderType.INVISIBLE; }
 
+	@Override
 	public void neighborChanged(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull Block neighborBlock, @Nonnull BlockPos pos2) {
 		if (state.getValue(BlockScriptedDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER) {
 			BlockPos blockpos1 = pos.down();
@@ -100,6 +102,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		}
 	}
 
+	@Override
 	public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (world.isRemote) {
 			return true;
@@ -123,6 +126,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		return true;
 	}
 
+	@Override
 	public void onBlockClicked(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull EntityPlayer playerIn) {
 		if (world.isRemote) {
 			return;
@@ -137,6 +141,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		if (tile != null) { EventHooks.onScriptBlockClicked(tile, playerIn); }
 	}
 
+	@Override
 	public void onBlockHarvested(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player) {
 		BlockPos blockpos1 = (state.getValue(BlockScriptedDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER) ? pos
 				: pos.down();
@@ -148,6 +153,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		}
 	}
 
+	@Override
 	public void onEntityCollidedWithBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Entity entityIn) {
 		if (world.isRemote) {
 			return;
@@ -156,6 +162,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		if (tile != null) { EventHooks.onScriptBlockCollide(tile, entityIn); }
 	}
 
+	@Override
 	public boolean removedByPlayer(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EntityPlayer player, boolean willHarvest) {
 		if (!world.isRemote) {
 			TileScriptedDoor tile = (TileScriptedDoor) world.getTileEntity(pos);
@@ -166,6 +173,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		return super.removedByPlayer(state, world, pos, player, willHarvest);
 	}
 
+	@Override
 	public void toggleDoor(@Nonnull World world, @Nonnull BlockPos pos, boolean open) {
 		TileScriptedDoor tile = (TileScriptedDoor) world.getTileEntity(pos);
 		if (tile != null && EventHooks.onScriptBlockDoorToggle(tile)) {

@@ -32,6 +32,8 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import noppes.npcs.*;
+import noppes.npcs.api.IPos;
+import noppes.npcs.api.wrapper.BlockPosWrapper;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -403,9 +405,7 @@ public class Schematic implements ISchematic {
 	}
 
 	@Override
-	public BlockPos getOffset() {
-		return this.offset;
-	}
+	public IPos getOffset() { return new BlockPosWrapper(offset); }
 
 	@Override
 	public NBTTagCompound getTileEntity(int i) {

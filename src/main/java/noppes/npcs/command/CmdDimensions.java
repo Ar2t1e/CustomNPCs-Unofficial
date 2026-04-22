@@ -13,7 +13,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.dimensions.DimensionHandler;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
@@ -100,17 +99,17 @@ public class CmdDimensions extends CommandNoppesBase {
 	@SubCommand(desc = "Transfer player to dimension", usage = "<player> <dimensionID>", permission = 2)
 	public void tp(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		EntityPlayerMP player = CommandBase.getPlayer(server, sender, args[0]);
-		int id;
+		int dimId;
 		try {
-			id = Integer.parseInt(args[1]);
-			if (!DimensionManager.isDimensionRegistered(id) || DimensionHandler.getInstance().isDelete(id)) {
-				throw new CommandException("DimensionID: " + id + " - not found");
+			dimId = Integer.parseInt(args[1]);
+			if (!DimensionManager.isDimensionRegistered(dimId) || DimensionHandler.getInstance().isDelete(dimId)) {
+				throw new CommandException("DimensionID: " + dimId + " - not found");
 			}
 		} catch (NumberFormatException ex) {
 			throw new CommandException("DimensionID \"" + args[1]+"\" - must be an integer");
 		}
 
-		WorldServer world = Objects.requireNonNull(sender.getServer()).getWorld(id);
+		WorldServer world = Objects.requireNonNull(sender.getServer()).getWorld(dimId);
 		BlockPos coords = world.getSpawnCoordinate();
 		double x, y, z;
 		if (coords == null) {
@@ -139,7 +138,7 @@ public class CmdDimensions extends CommandNoppesBase {
 				z = dz;
 			} catch (NumberFormatException e) { LogWriter.error(e); }
 		}
-		SPacketDimensionTeleport.teleportPlayer(player, x, y, z, id, player.rotationYaw, player.rotationPitch);
+		SPacketDimensionTeleport.teleportPlayer(player, dimId, x, y, z, player.rotationYaw, player.rotationPitch);
 	}
 
 }

@@ -7,7 +7,10 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.handler.data.INpcRecipe;
+import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.items.crafting.NpcShapedRecipes;
 import noppes.npcs.items.crafting.NpcShapelessRecipes;
 
@@ -25,7 +28,7 @@ public class ContainerManageRecipes extends Container {
 		size = size * size;
 		width = size;
 		craftingMatrix = new InventoryBasic("crafting", false, size + 1);
-		recipe = new NpcShapedRecipes();
+		recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, ""), "");
 		addSlotToContainer(new Slot(craftingMatrix, 0, 87, 61));
 		for (int i = 0; i < size; ++i) {
 			for (int j = 0; j < size; ++j) {

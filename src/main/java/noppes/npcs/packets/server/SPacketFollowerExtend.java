@@ -8,7 +8,6 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.event.RoleEvent;
-import noppes.npcs.containers.ContainerNPCFollower;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;

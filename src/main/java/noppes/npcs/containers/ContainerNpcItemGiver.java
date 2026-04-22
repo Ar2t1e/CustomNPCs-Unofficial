@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 public class ContainerNpcItemGiver extends Container {
 
     public ContainerNpcItemGiver(EntityNPCInterface npc, EntityPlayer player) {
-        JobItemGiver role = (JobItemGiver) npc.advanced.jobInterface;
+        JobItemGiver role = (JobItemGiver) npc.job;
 		for (int j1 = 0; j1 < 9; ++j1) {
 			this.addSlotToContainer(new Slot(role.inventory, j1, 6 + j1 * 18, 90));
 		}

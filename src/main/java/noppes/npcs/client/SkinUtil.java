@@ -16,12 +16,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.client.renderer.texture.SimpleTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.util.ImageBufferDownloadAlt;
+import noppes.npcs.mixin.client.network.INetworkPlayerInfoMixin;
+import noppes.npcs.shared.client.util.ResourceDownloader;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.util.ImageDownloadAlt;
 import noppes.npcs.controllers.PlayerSkinController;
@@ -43,7 +48,7 @@ public class SkinUtil {
         if (connection == null) { return; }
         NetworkPlayerInfo playerInfo = connection.getPlayerInfo(uuid);
         if (playerInfo == null) { return; }
-        Map<MinecraftProfileTexture.Type, ResourceLocation> map = PlayerInfoReflections.getTextureLocations(playerInfo);
+        Map<MinecraftProfileTexture.Type, ResourceLocation> map = ((INetworkPlayerInfoMixin) playerInfo).getPlayerTextures();
         map.clear();
         for (SkinData skinData : data.values()) {
             if (!skinData.isValid()) {
@@ -64,7 +69,8 @@ public class SkinUtil {
             if (createdSkins.contains(location)) { return; }
             String locSkin = String.format("assets/%s/%s", location.getResourceDomain(), location.getResourcePath());
             File file = new File(CustomNpcs.Dir, locSkin);
-            if (!file.exists()) { ResourceDownloader.load(new ImageDownloadAlt(file, skinData.getUrl(), location, DefaultPlayerSkin.getDefaultSkin(), true, () -> {})); }
+            if (!file.exists()) {
+                ResourceDownloader.load(new ImageDownloadAlt(file, skinData.getUrl(), location, DefaultPlayerSkin.getDefaultSkinLegacy(), true, () -> {})); }
             createdSkins.add(location);
             return;
         }
@@ -112,9 +118,9 @@ public class SkinUtil {
         }
         catch (Exception ignored) { }
         SimpleTexture texture = new SimpleTexture(location);
-        TextureUtil.prepareImage(texture.getId(), skinImage.getWidth(), skinImage.getHeight());
-        uploadBufferedImageContents(skinImage, texture.getId());
-        texturemanager.register(location, texture);
+        TextureUtil.allocateTexture(texture.getGlTextureId(), skinImage.getWidth(), skinImage.getHeight());
+        uploadBufferedImageContents(skinImage, texture.getGlTextureId());
+        texturemanager.loadTexture(location, texture);
         createdSkins.add(location);
     }
 
@@ -140,7 +146,7 @@ public class SkinUtil {
         IntBuffer intbuffer = ByteBuffer.allocateDirect(4 * width * height).order(ByteOrder.nativeOrder()).asIntBuffer();
         intbuffer.put(lvt_8_1_);
         intbuffer.flip();
-        RenderSystem.activeTexture(33984);
+        //RenderSystem.activeTexture(33984);
         GlStateManager.bindTexture(id);
         initTexture(intbuffer, width, height);
     }

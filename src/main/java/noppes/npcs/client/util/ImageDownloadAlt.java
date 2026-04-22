@@ -22,22 +22,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @SideOnly(Side.CLIENT)
-public class ImageDownloadAlt extends SimpleTexture
-{
+public class ImageDownloadAlt extends SimpleTexture {
+
     private static final Logger logger = LogManager.getLogger();
     private static final AtomicInteger threadDownloadCounter = new AtomicInteger(0);
     private final File cacheFile;
     private final String imageUrl;
-    private final IImageBuffer imageBuffer;
+    private final IImageBuffer imageBuffer = new ImageBufferDownloadAlt();
     private BufferedImage bufferedImage;
     private Thread imageThread;
     private boolean textureUploaded;
+    public final ResourceLocation location;
 
-    public ImageDownloadAlt(File file, String url, ResourceLocation resource, IImageBuffer buffer) {
-        super(resource);
+    public ImageDownloadAlt(File file, String url, ResourceLocation locationIn, ResourceLocation defaultLocation, boolean fix64In, Runnable rIn) {
+        super(defaultLocation);
+        location = locationIn;
         cacheFile = file;
         imageUrl = url;
-        imageBuffer = buffer;
     }
 
     private void checkTextureUploaded() {
@@ -86,7 +87,7 @@ public class ImageDownloadAlt extends SimpleTexture
         }
     }
 
-    protected void loadTextureFromServer() {
+    public void loadTextureFromServer() {
         (imageThread = new Thread("Texture Downloader #" + ImageDownloadAlt.threadDownloadCounter.incrementAndGet()) {
             @Override
             public void run() {
@@ -125,5 +126,7 @@ public class ImageDownloadAlt extends SimpleTexture
         }).setDaemon(true);
         imageThread.start();
     }
+
+    public ResourceLocation getTextureLocation() { return textureLocation; }
 
 }

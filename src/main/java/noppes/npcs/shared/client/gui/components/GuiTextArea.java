@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.ChatAllowedCharacters;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.GuiComponentType;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
@@ -29,7 +30,7 @@ public class GuiTextArea
         extends Gui
         implements IComponentGui {
 
-    protected static final TrueTypeFont font = new TrueTypeFont(new Font(CustomNpcs.FontType, Font.PLAIN, CustomNpcs.FontSize), 1.0f);
+    protected static TrueTypeFont font = new TrueTypeFont(new Font(CustomNpcs.FontType, Font.PLAIN, CustomNpcs.FontSize), 1.0f);
     protected static final char colorChar = '\uffff';
 
     protected IGuiInterface listener;
@@ -61,7 +62,14 @@ public class GuiTextArea
     public boolean undoing;
 
     // New from Unofficial (BetaZavr)
+    private static GuiTextArea activeArea = null;
+    public static void unfocus() {
+        GuiTextArea prev = activeArea;
+        activeArea = null;
+        if (prev instanceof ITextChangeListener) { ((ITextChangeListener) prev).textUpdate(prev, prev.text); }
+    }
     protected List<Component> hoverText = new ArrayList<>();
+    public boolean isYDE = false;
 
     public GuiTextArea(int idIn, int xIn, int yIn, int widthIn, int heightIn, String text) {
         id = idIn;
@@ -488,7 +496,7 @@ public class GuiTextArea
     public void setText(String textIn) {
         textIn = textIn.replace("\r", "");
         if (text == null || !text.equals(textIn)) {
-            if (listener instanceof ITextChangeListener) { ((ITextChangeListener) listener).textUpdate(text); }
+            if (listener instanceof ITextChangeListener) { ((ITextChangeListener) listener).textUpdate(this, text); }
 
             if (!undoing) {
                 undoList.add(new AreaUndoData(text, cursorPosition, startSelection, endSelection, scrolledLine));
@@ -574,6 +582,12 @@ public class GuiTextArea
 
     @Override
     public GuiComponentType getElementType() { return GuiComponentType.TEXT_AREA; }
+
+    @Override
+    public GuiTextArea setCustomFont(ClientProxy.FontContainer fontIn) {
+        if (fontIn != null && fontIn.getFont() != null) { font = fontIn.getFont(); }
+        return this;
+    }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) { return false; }
