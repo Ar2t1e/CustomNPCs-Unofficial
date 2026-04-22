@@ -38,9 +38,7 @@ public class DialogController implements IDialogHandler {
    // New from Unofficial (BetaZavr)
    private final DialogGuiSettings guiSettings = new DialogGuiSettings();
 
-   public DialogController() {
-      instance = this;
-   }
+   public DialogController() { instance = this; }
 
    public void load() {
       CustomNpcs.debugData.start(null);
@@ -76,7 +74,8 @@ public class DialogController implements IDialogHandler {
       File dir = getDir();
       if (!dir.exists()) {
          if (dir.mkdirs()) { loadDefaultDialogs(); }
-      } else {
+      }
+      else {
          File[] files = dir.listFiles();
          if (files != null) {
             for(File dialogFile : files) {
@@ -350,16 +349,12 @@ public class DialogController implements IDialogHandler {
       }
    }
 
-   private File getDir() {
-      return new File(CustomNpcs.getLevelSaveDirectory(), "dialogs");
-   }
+   private File getDir() { return new File(CustomNpcs.getLevelSaveDirectory(), "dialogs"); }
 
    public boolean hasDialog(int dialogId) { return dialogs.containsKey(dialogId); }
 
    @Override
-   public List<IDialogCategory> categories() {
-      return new ArrayList<>(categories.values());
-   }
+   public List<IDialogCategory> categories() { return new ArrayList<>(categories.values()); }
 
    @Override
    public Dialog get(int id) { return dialogs.get(id); }
@@ -389,4 +384,5 @@ public class DialogController implements IDialogHandler {
       }
       return null;
    }
+
 }

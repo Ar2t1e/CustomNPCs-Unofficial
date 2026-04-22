@@ -22,29 +22,31 @@ public class InventoryTabQuests extends AbstractTab {
 
    public InventoryTabQuests() {
       super(2, 0, 0, new ItemStack(Items.BOOK));
-      this.displayString = Component.translatable("quest.quest").append(" (").append(ClientProxy.QuestLog.getKey().getDisplayName()).append(")");
+      displayString = Component.translatable("quest.quest").append(" (").append(ClientProxy.QuestLog.getKey().getDisplayName()).append(")");
+      setFocused(false);
    }
 
-   public void onTabClicked() {
-      NoppesUtil.openGUI(Minecraft.getInstance().player, new GuiLog(0));
-   }
+   @Override
+   public void onTabClicked() { NoppesUtil.openGUI(Minecraft.getInstance().player, new GuiLog(0)); }
 
+   @Override
    public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
       super.render(graphics, mouseX, mouseY, partialTicks);
-      if (this.visible) {
+      if (visible) {
          Minecraft mc = Minecraft.getInstance();
-         boolean hovered = mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
+         boolean hovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
          if (hovered) {
-            graphics.pose().translate((float)mouseX, (float)(this.getY() + 2), 0.0F);
-            this.drawHoveringText(graphics, Collections.singletonList(this.displayString), -mc.font.width(this.displayString), 0, mc.font);
-            graphics.pose().translate((float)(-mouseX), (float)(-(this.getY() + 2)), 0.0F);
+            graphics.pose().translate((float)mouseX, (float)(getY() + 2), 0.0F);
+            int y = 0;
+            drawHoveringText(graphics, Collections.singletonList(displayString), -mc.font.width(displayString), y, mc.font);
+            graphics.pose().translate((float)(-mouseX), (float)(-(getY() + 2)), 0.0F);
          }
 
       }
    }
 
-   protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
-   }
+   @Override
+   protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) { }
 
    protected void drawHoveringText(GuiGraphics graphics, List<Component> list, int x, int y, Font font) {
       if (!list.isEmpty()) {

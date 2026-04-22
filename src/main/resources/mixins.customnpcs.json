@@ -79,6 +79,7 @@
     "client.gui.screens.inventory.AbstractContainerScreenMixin",
     "client.gui.screens.inventory.IAbstractContainerScreenMixin",
     "client.gui.screens.inventory.tooltip.IClientTextTooltipMixin",
+    "client.gui.screens.recipebook.RecipeBookTabButtonMixin",
     "client.gui.worldselection.SelectWorldScreenMixin",
     "client.model.AgeableModelMixin",
     "client.model.BipedBodyMixin",

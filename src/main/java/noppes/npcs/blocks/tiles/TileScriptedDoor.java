@@ -28,17 +28,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
 
+   protected IBlock blockDummy = null;
    public List<ScriptContainer> scripts = new ArrayList<>();
    public String scriptLanguage = "ECMAScript";
-   public boolean enabled = false;
-   private IBlock blockDummy = null;
    public DataTimers timers = new DataTimers(this);
-   public long lastInited = -1L;
-   private short tickCount = 0;
+   public boolean enabled = false;
    public int newPower = 0;
    public int prevPower = 0;
+   private short tickCount = 0;
    public float blockHardness = 5.0F;
    public float blockResistance = 10.0F;
+   public long lastInited = -1L;
 
    public TileScriptedDoor(BlockPos pos, BlockState state) { super(CustomBlocks.tile_scripteddoor, pos, state); }
 
@@ -180,6 +180,7 @@ public class TileScriptedDoor extends TileDoor implements IScriptBlockHandler {
       for (ScriptContainer script : getScripts()) { script.console.clear(); }
    }
 
+   @Override
    public void init() { lastInited = -1; }
 
    // New from Unofficial (BetaZavr)

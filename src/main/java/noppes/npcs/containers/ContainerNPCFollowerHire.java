@@ -1,5 +1,6 @@
 package noppes.npcs.containers;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -7,7 +8,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import noppes.npcs.CustomContainer;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.containers.slots.SlotNpcMercenaryCurrency;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleFollower;
 import org.jetbrains.annotations.NotNull;
@@ -17,22 +17,35 @@ public class ContainerNPCFollowerHire extends ContainerNpcInterface {
    public final SimpleContainer currencyMatrix;
    public final RoleFollower role;
 
-   public ContainerNPCFollowerHire(int containerId, Inventory playerInventory, int entityId) {
+   public ContainerNPCFollowerHire(int containerId, Inventory playerInventory, int entityId, BlockPos data) {
       super(CustomContainer.container_followerhire, containerId, playerInventory);
       EntityNPCInterface npc = (EntityNPCInterface)player.level().getEntity(entityId);
       if (npc != null) { role = (RoleFollower) npc.role; }
       else { role = new RoleFollower(null); }
       currencyMatrix = new SimpleContainer(1);
-      addSlot(new SlotNpcMercenaryCurrency(role, currencyMatrix, 0, 44, 35));
 
-      int j1;
-      for(j1 = 0; j1 < 3; ++j1) {
-         for(int l1 = 0; l1 < 9; ++l1) {
-            addSlot(new Slot(player.getInventory(), l1 + j1 * 9 + 9, 8 + l1 * 18, 84 + j1 * 18));
+      int offSet = data.getX() == 0 ? 0 : 58;
+      int size = role.inventory.getContainerSize();
+      if (size > 0) {
+         int s = (size == 2 || size == 4) ? 2 : 3;
+         boolean bo = false;
+         for (int y = 0; y < s; ++y) {
+            for (int x = 0; x < s; ++x) {
+               bo = (x + y * s) >= size;
+               if (!bo) {
+                  addSlot(new Slot(role.inventory, x + y * s, 174 + x * 18, 142 + y * 18));
+               }
+            }
+            if (bo) { break; }
          }
       }
-      for(j1 = 0; j1 < 9; ++j1) {
-         addSlot(new Slot(player.getInventory(), j1, 8 + j1 * 18, 142));
+      for(int y = 0; y < 3; ++y) {
+         for(int x = 0; x < 9; ++x) {
+            addSlot(new Slot(player.getInventory(), x + y * 9 + 9, 8 + x * 18, 84 + y * 18 + offSet));
+         }
+      }
+      for(int x = 0; x < 9; ++x) {
+         addSlot(new Slot(player.getInventory(), x, 8 + x * 18, 142 + offSet));
       }
    }
 

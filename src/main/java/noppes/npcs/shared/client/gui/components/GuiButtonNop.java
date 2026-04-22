@@ -76,7 +76,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
    public boolean isScissor = true;
 
    public boolean hasSound = true;
-   private ItemStack[] itemStacks = null;
+   protected ItemStack[] itemStacks = null;
    public ItemStack currentStack = ItemStack.EMPTY;
    public int currentStackID = -1;
 

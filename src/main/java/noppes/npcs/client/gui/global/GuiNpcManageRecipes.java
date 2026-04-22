@@ -127,9 +127,9 @@ public class GuiNpcManageRecipes
                if (!found) { break; }
             }
             name = NoppesUtilServer.validPath(name);
-            RecipeCarpentry recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name), name);
+            RecipeCarpentry recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name));
             recipe.isGlobal = container.width == 3;
-            Packets.sendServer(new SPacketRecipeSave(recipe.writeNBT()));
+            Packets.sendServer(new SPacketRecipeSave(recipe.saveTo()));
             break;
          }
          case 4: {
@@ -207,7 +207,7 @@ public class GuiNpcManageRecipes
       GuiTextFieldNop.unfocus();
       if (!container.recipe.name.isEmpty()) {
          container.saveRecipe();
-         Packets.sendServer(new SPacketRecipeSave(container.recipe.writeNBT()));
+         Packets.sendServer(new SPacketRecipeSave(container.recipe.saveTo()));
       }
    }
 

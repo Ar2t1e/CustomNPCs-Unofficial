@@ -346,11 +346,19 @@ public class SubGuiQuestEdit
    @Override
    public void unFocused(GuiTextFieldNop textField) {
       if (textField.id == 1) {
-         quest.setName(textField.getValue());
-         while (QuestController.instance.containsQuestName(quest.category, quest)) {
-            StringBuilder sb = new StringBuilder();
-            quest.setName(sb.append(quest.getName()).append("_").toString());
+         StringBuilder t = new StringBuilder(textField.getValue());
+         boolean has = true;
+         while (has) {
+            has = false;
+            for (Quest qes : quest.category.quests.values()) {
+               if (qes.id != quest.id && qes.title.equalsIgnoreCase(quest.title)) {
+                  has = true;
+                  break;
+               }
+            }
+            if (has) { t.append("_"); }
          }
+         quest.setName(t.toString());
       }
       init();
    }

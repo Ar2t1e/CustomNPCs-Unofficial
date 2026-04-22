@@ -10,19 +10,20 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.RecipeController;
 
 public class RecipesDefault {
+
    public static void addRecipe(String name, Object ob, boolean isGlobal, Object... recipe) {
-      ItemStack item;
-      if (ob instanceof Item) {
-         item = new ItemStack((Item)ob);
-      } else if (ob instanceof Block) {
-         item = new ItemStack((Block)ob);
+      ItemStack stack;
+      if (ob instanceof Item item) {
+         stack = new ItemStack(item);
+      } else if (ob instanceof Block block) {
+         stack = new ItemStack(block);
       } else {
-         item = (ItemStack)ob;
+         stack = (ItemStack) ob;
       }
 
-      RecipeCarpentry recipeAnvil = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name), name);
+      RecipeCarpentry recipeAnvil = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name));
       recipeAnvil.isGlobal = isGlobal;
-      recipeAnvil = RecipeCarpentry.createRecipe(new ResourceLocation(CustomNpcs.MODID, name), recipeAnvil, item, recipe);
+      recipeAnvil = RecipeCarpentry.createRecipe(new ResourceLocation(CustomNpcs.MODID, name), recipeAnvil, stack, recipe);
       RecipeController.getInstance().saveRecipe(recipeAnvil);
    }
 

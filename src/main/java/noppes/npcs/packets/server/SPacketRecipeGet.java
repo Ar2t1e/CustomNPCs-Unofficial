@@ -36,7 +36,7 @@ public class SPacketRecipeGet extends PacketServerBasic {
    public static void setRecipeGui(ServerPlayer player, RecipeCarpentry recipe) {
       if (recipe != null && player.containerMenu instanceof ContainerManageRecipes container) {
          container.setRecipe(recipe, player.level().registryAccess());
-         Packets.send(player, new PacketGuiData(recipe.writeNBT()));
+         Packets.send(player, new PacketGuiData(recipe.saveTo()));
       }
    }
 

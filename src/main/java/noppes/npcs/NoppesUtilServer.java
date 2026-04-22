@@ -200,8 +200,7 @@ public class NoppesUtilServer {
          case MainMenuInv -> CustomContainer.container_inv;
          case CompanionInv -> CustomContainer.container_companion;
          case PlayerTrader -> CustomContainer.container_trader;
-         case PlayerFollower -> CustomContainer.container_follower;
-         case PlayerFollowerHire -> CustomContainer.container_followerhire;
+         case PlayerFollower, PlayerFollowerHire -> CustomContainer.container_followerhire;
          case SetupTraderDeal -> CustomContainer.container_tradersetup;
          case SetupDrop -> CustomContainer.container_dropsetup;
          case SetupFollower -> CustomContainer.container_followersetup;

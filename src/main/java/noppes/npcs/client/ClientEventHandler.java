@@ -969,7 +969,7 @@ public class ClientEventHandler {
                                 float w0 = 0.0f;
                                 float w1 = 0.0f;
                                 float l = 0.0f;
-                                if (compassData.showQuestName) {
+                                if (compassData.showQuestName && !name.isEmpty()) {
                                     h += 10.0f;
                                     w = ClientProxy.LogFont.width(name);
                                     w0 = w;
@@ -979,7 +979,7 @@ public class ClientEventHandler {
                                     } // right
                                     l = w0 / -2.0f;
                                 }
-                                if (compassData.showTaskProgress) {
+                                if (compassData.showTaskProgress && !title.isEmpty()) {
                                     h += 10.0f;
                                     w1 = ClientProxy.LogFont.width(title);
                                     if (w < w1) { w = w1; }
@@ -993,21 +993,23 @@ public class ClientEventHandler {
                                 if (uvPos[1] + yOffset + h > mc.getWindow().getGuiScaledHeight()) { yOffset = -h; }
                                 matrixStack.translate(0.0d, yOffset, 0.0d);
                                 // background
-                                l -= 2.0f;
-                                w += 5.0f;
-                                int color = 0x03202020;
-                                graphics.fill((int) l, 0, (int) (l + w) - 1, 1, color);
-                                graphics.fill((int) l, 1, (int) (l) + 1, (int) h - 1, color);
-                                graphics.fill((int) (l + w) - 2, 1, (int) (l + w) - 1, (int) h - 1, color);
-                                graphics.fill((int) l, (int) h - 1, (int) (l + w) - 1, (int) h, color);
-                                color = 0x03303030;
-                                graphics.fill((int) l + 1, 1, (int) (l + w) - 2, (int) h - 1, color);
-                                // name
-                                if (compassData.showQuestName) {
-                                    ClientProxy.LogFont.draw(graphics, name, w0 / -2.0f, 0, 0x0FFFFFFF);
-                                }
-                                if (compassData.showTaskProgress) {
-                                    ClientProxy.LogFont.draw(graphics, title, w1 / -2.0f, compassData.showQuestName ? 10 : 0, 0x0FFFFFFF);
+                                if (h > 0) {
+                                    l -= 2.0f;
+                                    w += 5.0f;
+                                    int color = 0x03202020;
+                                    graphics.fill((int) l, 0, (int) (l + w) - 1, 1, color);
+                                    graphics.fill((int) l, 1, (int) (l) + 1, (int) h - 1, color);
+                                    graphics.fill((int) (l + w) - 2, 1, (int) (l + w) - 1, (int) h - 1, color);
+                                    graphics.fill((int) l, (int) h - 1, (int) (l + w) - 1, (int) h, color);
+                                    color = 0x03303030;
+                                    graphics.fill((int) l + 1, 1, (int) (l + w) - 2, (int) h - 1, color);
+                                    // name
+                                    if (compassData.showQuestName) {
+                                        ClientProxy.LogFont.draw(graphics, name, w0 / -2.0f, 0, 0x0FFFFFFF);
+                                    }
+                                    if (compassData.showTaskProgress) {
+                                        ClientProxy.LogFont.draw(graphics, title, w1 / -2.0f, compassData.showQuestName ? 10 : 0, 0x0FFFFFFF);
+                                    }
                                 }
                                 matrixStack.popPose();
                             }

@@ -21,12 +21,13 @@ public class InventoryTabFactions extends AbstractTab {
 
    public InventoryTabFactions() {
       super(1, 0, 0, new ItemStack(Items.RED_BANNER, 1));
+      setFocused(false);
    }
 
-   public void onTabClicked() {
-      NoppesUtil.openGUI(Minecraft.getInstance().player, new GuiLog(1));
-   }
+   @Override
+   public void onTabClicked() { NoppesUtil.openGUI(Minecraft.getInstance().player, new GuiLog(1)); }
 
+   @Override
    public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
       super.render(graphics, mouseX, mouseY, partialTicks);
       if (this.visible) {
@@ -34,14 +35,15 @@ public class InventoryTabFactions extends AbstractTab {
          boolean hovered = mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
          if (hovered) {
             graphics.pose().translate((float)mouseX, (float)(this.getY() + 2), 0.0F);
-            this.drawHoveringText(graphics, List.of(this.displayString), -mc.font.width(this.displayString), 0, mc.font);
+            int y = 0;
+            drawHoveringText(graphics, List.of(this.displayString), -mc.font.width(this.displayString), y, mc.font);
             graphics.pose().translate((float)(-mouseX), (float)(-(this.getY() + 2)), 0.0F);
          }
       }
    }
 
-   protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
-   }
+   @Override
+   protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) { }
 
    protected void drawHoveringText(GuiGraphics graphics, List<Component> list, int x, int y, Font font) {
       if (!list.isEmpty()) {

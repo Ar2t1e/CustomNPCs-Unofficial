@@ -22,9 +22,12 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.mojang.blaze3d.vertex.IPoseStackMixin;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketNpcRarityTitleGet;
 import noppes.npcs.shared.client.util.ImageDownloadAlt;
 import noppes.npcs.shared.client.util.ResourceDownloader;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -56,7 +59,9 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 					npc.messages.renderMessages(matrixStack, buffer, 0.666667F * height, npc.isInRange(entityRenderDispatcher.camera.getEntity(), 4.0D), light, false);
 					matrixStack.translate(0.0F, -offset, 0.0F);
 				}
-				if (npc.display.showName()) { renderLivingLabel(npc, matrixStack, buffer, light); }
+				if (npc.display.showName()) {
+					renderLivingLabel(npc, matrixStack, buffer, light);
+				}
 				matrixStack.popPose();
 			}
 		}
@@ -66,7 +71,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 		float scale = npc.baseSize.height / 5.0F * (float)npc.display.getSize();
 		float height = npc.getBbHeight() - 0.06F * scale;
 		matrixStack.pushPose();
-		Font fontRenderer = getFont();
+		Font font = getFont();
 		float f2 = 0.01666667F * scale;
 		matrixStack.translate(0.0F, height, 0.0F);
 		matrixStack.mulPose(entityRenderDispatcher.cameraOrientation());
@@ -82,19 +87,27 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 		Matrix4f matrix4f = matrixStack.last().pose();
 		float y = 0.0F;
 		boolean nearby = npc.isInRange(entityRenderDispatcher.camera.getEntity(), 8.0D);
-		if (!npc.display.getTitle().isEmpty() && nearby) {
-			Component title = Component.literal("<").append(Component.translatable(npc.display.getTitle())).append(">");
+		boolean showLR = CustomNpcs.ShowLR;
+		if (showLR) { Packets.sendServerDelayed(new SPacketNpcRarityTitleGet(npc.getId()), npc, 5000); }
+		String title = npc.display.getTitle();
+		String rarityTitle = npc.stats.getRarityTitle();
+		if ((!title.isEmpty()  || (showLR && !rarityTitle.isEmpty())) && nearby) {
+			Component component = Component.literal("<").append(Component.translatable(title)).append(">");
 			float f3 = 0.6F;
 			matrixStack.translate(0.0F, 4.0F, 0.0F);
 			matrixStack.scale(f3, f3, f3);
-			fontRenderer.drawInBatch(title, (float)(-fontRenderer.width(title) / 2), 0.0F, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);
+			font.drawInBatch(component, (float)(-font.width(component) / 2), 0.0F, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);
+			if (showLR && !rarityTitle.isEmpty()) {
+				component = Component.translatable(rarityTitle);
+				font.drawInBatch(component, (float)(-font.width(component) / 2), -27.0F, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);
+			}
 			matrixStack.scale(1.0F / f3, 1.0F / f3, 1.0F / f3);
-			y = -10.0F;
+			y = -9.65F;
 		}
 		Component name = npc.getName();
-		fontRenderer.drawInBatch(name, (float)(-fontRenderer.width(name) / 2), y, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);
+		font.drawInBatch(name, (float)(-font.width(name) / 2), y, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);
 		if (nearby) {
-			fontRenderer.drawInBatch(name, (float)(-fontRenderer.width(name) / 2), y, color, false, matrix4f, buffer, DisplayMode.NORMAL, 0, light);
+			font.drawInBatch(name, (float)(-font.width(name) / 2), y, color, false, matrix4f, buffer, DisplayMode.NORMAL, 0, light);
 		}
 		matrixStack.popPose();
 	}

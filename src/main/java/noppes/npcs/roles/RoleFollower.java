@@ -3,6 +3,8 @@ package noppes.npcs.roles;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
+
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -11,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NBTTags;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.containers.ContainerNPCFollowerHire;
 import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.api.NpcAPI;
@@ -25,6 +26,7 @@ import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerGameData;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.util.Util;
 
@@ -192,16 +194,18 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       isFollowing = true;
    }
 
+   @Override
    public void reset() { killed(); }
 
+   @Override
    public void interact(Player playerIn) {
       if (playerIn instanceof ServerPlayer player) {
          if (ownerUUID != null && !ownerUUID.isEmpty()) {
-            if (player == owner && !disableGui) { NoppesUtilServer.sendOpenGui(player, EnumGuiType.PlayerFollower, npc); }
+            if (player == owner && !disableGui) { SPacketGuiOpen.sendOpenGui(player, EnumGuiType.PlayerFollower, npc, new BlockPos(1, 0, 0)); }
          }
          else {
             if (npc != null) { npc.say(player, npc.advanced.getInteractLine()); }
-            NoppesUtilServer.sendOpenGui(player, EnumGuiType.PlayerFollowerHire, npc);
+            SPacketGuiOpen.sendOpenGui(player, EnumGuiType.PlayerFollowerHire, npc, new BlockPos(0, 0, 0));
          }
       }
    }

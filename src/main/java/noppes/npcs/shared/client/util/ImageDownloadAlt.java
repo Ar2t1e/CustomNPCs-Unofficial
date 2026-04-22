@@ -145,16 +145,17 @@ public class ImageDownloadAlt extends SimpleTexture {
          nativeImage.copyRect(48 * scale, 20 * scale, -16 * scale, 32 * scale, 4 * scale, 12 * scale, true, false);
          nativeImage.copyRect(52 * scale, 20 * scale, -8 * scale, 32 * scale, 4 * scale, 12 * scale, true, false);
       }
+      int x = 0;
+      int y = 0;
       if (!SharedReferences.AllowFullyInvisibleSkins()) {
-         setAreaOpaque(image, 0, 0, 32 * scale, 16 * scale);
+         setAreaOpaque(image, x, y, 32 * scale, 16 * scale);
       }
       if (lvt_2_1_ && fix64) {
-         setAreaTransparent(image, 32 * scale, 0, 64 * scale, 32 * scale);
+         setAreaTransparent(image, 32 * scale, y, 64 * scale, 32 * scale);
       }
       return image;
    }
 
-   @SuppressWarnings("all")
    private static void setAreaTransparent(NativeImage image, int x, int y, int width, int height) {
       int l;
       int i1;
@@ -173,7 +174,6 @@ public class ImageDownloadAlt extends SimpleTexture {
       }
    }
 
-   @SuppressWarnings("all")
    private static void setAreaOpaque(NativeImage image, int x, int y, int width, int height) {
       for (int i = x; i < width; ++i) {
          for (int j = y; j < height; ++j) {

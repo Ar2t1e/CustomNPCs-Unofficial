@@ -31,9 +31,10 @@ public class PotionScriptData extends BaseScriptData {
                 }
                 for (ScriptContainer script : scripts) { script.run(type, event); }
             });
-        } catch (Exception e) { LogWriter.error("Error:", e); }
+        } catch (Exception e) { LogWriter.error("Error run script: ", e); }
     }
 
+    @Override
     public void load(CompoundTag compound) {
         super.load(compound);
         if (scripts.isEmpty() || scripts.get(0).script.isEmpty()) {

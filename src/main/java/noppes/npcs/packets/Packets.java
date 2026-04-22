@@ -135,6 +135,8 @@ public class Packets {
       register(PacketCustomEmotionRun.class);
       register(PacketNpcInitData.class);
       register(PacketNpcLookPos.class);
+      register(PacketNpcRarityTitleSet.class);
+
 
       // Client -> Server
       register(SPacketBankGet.class);
@@ -342,12 +344,12 @@ public class Packets {
       register(SPacketGetFirstID.class);
       register(SPacketMailsGet.class);
       register(SPacketMailsSave.class);
-
       register(SPacketRecipeRemoveGroup.class);
       register(SPacketDetectHeldItem.class);
       register(SPacketItemChange.class);
       register(SPacketDeadLootsGet.class);
       register(SPacketDeadLootsOpen.class);
+      register(SPacketNpcRarityTitleGet.class);
 
    }
 

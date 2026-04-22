@@ -9,12 +9,14 @@ import net.minecraft.util.RandomSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.client.event.RegisterRecipeBookCategoriesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomParticleTypes;
 import noppes.npcs.client.particles.CustomParticle;
 import noppes.npcs.client.particles.CustomParticleType;
+import noppes.npcs.controllers.RecipeController;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -29,6 +31,11 @@ public class ClientRegisterEvents {
         for (ParticleType<CustomParticleType> particleType: CustomParticleTypes.CUSTOMS.values()) {
             event.registerSpecial(particleType, provider.create(spriteSet));
         }
+    }
+
+    @SubscribeEvent
+    public static void cnpcsRegisterRecipe(RegisterRecipeBookCategoriesEvent event) {
+        event.registerAggregateCategory(RecipeController.CRAFTING_CUSTOM_NPC, RecipeController.CRAFTING_MOD_CATEGORIES);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -48,5 +55,7 @@ public class ClientRegisterEvents {
         public void rebind(List<TextureAtlasSprite> atlas) { sprites = ImmutableList.copyOf(atlas); }
 
     }
+
+
 
 }

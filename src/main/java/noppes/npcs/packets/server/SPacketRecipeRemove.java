@@ -31,7 +31,7 @@ public class SPacketRecipeRemove extends PacketServerBasic {
       CustomNpcs.debugData.start("Packets");
       RecipeCarpentry r = RecipeController.getInstance().delete(recipe);
       SPacketRecipesGet.sendRecipeData(player, r.isGlobal ? 3 : 4);
-      SPacketRecipeGet.setRecipeGui(player, new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, ""), ""));
+      SPacketRecipeGet.setRecipeGui(player, new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, "")));
       CustomNpcs.debugData.end("Packets");
    }
 

@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -15,46 +16,58 @@ public abstract class AbstractTab extends AbstractButton {
 
    protected ResourceLocation texture = new ResourceLocation(CustomNpcs.MODID, "textures/gui/tabs.png");
    protected ItemStack renderStack;
-   public int id;
+   protected int id;
 
-   public AbstractTab(int id, int posX, int posY, ItemStack renderStack) {
+   protected Screen screen;
+   protected int guiLeft = 0;
+   protected int guiTop = 0;
+
+   public AbstractTab(int idIn, int posX, int posY, ItemStack renderStackIn) {
       super(posX, posY, 28, 32, Component.empty());
-      this.renderStack = renderStack;
-      this.id = id;
+      renderStack = renderStackIn;
+      id = idIn;
    }
 
-   public AbstractTab init(Screen s) {
-      int guiLeft = (s.width - 176) / 2;
-      int guiTop = (s.height - 166) / 2;
-      this.setX(guiLeft + this.id * 28);
-      this.setY(guiTop - 28);
+   public AbstractTab init(Screen screenIn) {
+      screen = screenIn;
+      guiLeft = (screenIn.width - 176) / 2 + id * 28;
+      guiTop = (screenIn.height - 166) / 2 - 28;
       return this;
    }
 
    public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-      if (this.visible) {
+      if (visible) {
+         int x = guiLeft;
+         int y = guiTop;
+         if (screen instanceof InventoryScreen inv && inv.getRecipeBookComponent().isVisible()) {
+            x += 77;
+         }
+         if (getX() != x) { setX(x); }
+         if (getY() != y) { setY(y); }
+         isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
          RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
          Minecraft mc = Minecraft.getInstance();
-         int yTexPos = this.active ? 3 : 32;
-         int ySize = this.active ? 25 : 32;
-         int xOffset = this.id == 2 ? 0 : 1;
-         int yPos = this.getY() + (this.active ? 3 : 0);
-         RenderSystem.setShaderTexture(0, this.texture);
-         graphics.blit(this.texture, this.getX(), yPos, xOffset * 28, yTexPos, 28, ySize);
+         int yTexPos = isFocused() || isHovered ? 32 : 3;
+         int ySize = isFocused() || isHovered ? 32 : 29;
+         int xOffset = id == 0 ? 0 : 1;
+         RenderSystem.setShaderTexture(0, texture);
+         graphics.blit(texture, getX(), getY(), xOffset * 28, yTexPos, 28, ySize);
+         if (!isFocused() && isHovered) {
+            graphics.fill(getX() + 3, getY() + 3, getX() + width - 3, getY() + height - 1, 0xF07E88BF);
+         }
          graphics.pose().pushPose();
          graphics.pose().translate(0.0F, 0.0F, 30.0F);
-         graphics.renderItem(this.renderStack, this.getX() + 6, this.getY() + 8);
-         graphics.renderItemDecorations(mc.font, this.renderStack, this.getX() + 6, this.getY() + 8, null);
+         graphics.renderItem(renderStack, getX() + 6, getY() + 8);
+         graphics.renderItemDecorations(mc.font, renderStack, getX() + 6, getY() + 8, null);
          graphics.pose().popPose();
       }
    }
 
-   public void onClick(double mouseX, double mouseY) {
-      this.onTabClicked();
-   }
+   @Override
+   public void onClick(double mouseX, double mouseY) { onTabClicked(); }
 
-   public void onPress() {
-   }
+   @Override
+   public void onPress() { }
 
    public abstract void onTabClicked();
 

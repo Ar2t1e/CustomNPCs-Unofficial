@@ -8,7 +8,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.event.RoleEvent;
-import noppes.npcs.containers.ContainerNPCFollower;
+import noppes.npcs.containers.ContainerNPCFollowerHire;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -46,7 +46,7 @@ public class SPacketFollowerExtend extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      if (npc != null && npc.role.getEnumType() == RoleType.FOLLOWER && player.containerMenu instanceof ContainerNPCFollower container) {
+      if (npc != null && npc.role.getEnumType() == RoleType.FOLLOWER && player.containerMenu instanceof ContainerNPCFollowerHire) {
          RoleFollower role = (RoleFollower) npc.role;
          followerBuy(role, pos, player, npc);
          Packets.send(player, new PacketGuiData(npc.role.save(new CompoundTag())));

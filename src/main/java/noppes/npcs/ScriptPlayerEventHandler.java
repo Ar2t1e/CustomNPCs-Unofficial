@@ -86,7 +86,6 @@ import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.api.wrapper.ItemScriptedWrapper;
 import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
-import noppes.npcs.client.gui.yellow_de.data.YDEData;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.constants.EnumScriptType;
@@ -836,86 +835,71 @@ public class ScriptPlayerEventHandler {
       CustomNpcs.debugData.end(player);
    }
 
-   @SuppressWarnings({"rawtypes", "unchecked"})
    @SubscribeEvent
+   @SuppressWarnings("unused")
    public void cnpcTestingEvent(LivingEvent.LivingJumpEvent event) {
       if (!CustomNpcs.VerboseDebug || !(event.getEntity() instanceof Player player)) { return; }
       if (player instanceof ServerPlayer serverPlayer) {
          try {
-            new YDEData();
+            test();
+         }
+         catch (Exception e) { LogWriter.error("Client test error", e); }
+      } // Client tests:
+   }
 
-            /*
-            PlayerChatMessage message = PlayerChatMessage.unsigned(pl.getUUID(), "test");
-            ChatType.Bound bound = ChatType.bind(ChatType.CHAT, pl);
-            serverPlayer.sendChatMessage(OutgoingChatMessage.create(message), false, bound);
-         } catch (Exception e) { LogWriter.error("Server test error", e); }
-      } // Server tests:
-      else {
+   @SuppressWarnings("unused")
+   public static void test(Object ... objects) {
+
+      /*
+      // Found texts
+      java.io.File dir = new java.io.File("D:/1.20.1/customnpcs/src/main/java");
+      //dir = new java.io.File("E:/Sources/1.20.1/minecraft 1.20.1/net");
+      //dir = new java.io.File("E:/Sources/1.20.1/Mini Maps/VoxelMap/src/main/java");
+      //dir = new java.io.File("E:/Sources/1.20.1/geckolib-1.20.1/CNPC-Gecko-Addon-1.20.1-1.0.0/com/goodbird/cnpcgeckoaddon");
+      LogWriter.info("Directory: "+dir.exists()+" - "+dir);
+      String br = "" + ((char) 9) + ((char) 10) + " ()[]{}.,<>:;+-*\\/\"";
+      java.util.Map<String, java.util.Map<String, java.util.List<Integer>>> found = new java.util.TreeMap<>();
+      //found.put("TEST:", null);
+      found.put(" scene ", null);
+
+      java.util.function.Function<java.io.File, String> getClss = (file) -> {
+         Class<?> cl = null;
+         String classPath = file.getName().replace(".java", "");
+         file = file.getParentFile();
+         while (file.getParentFile().exists() && cl == null) {
+            classPath = file.getName() + "." + classPath;
+            try { cl = Class.forName(classPath); } catch (Exception ignored) { }
+            file = file.getParentFile();
+         }
+         return cl == null ? "" : classPath;
+      };
+      for (java.io.File file : noppes.npcs.util.Util.instance.getFiles(dir, "java")) {
          try {
-            //CreaterAPITypeJS.create(0, player);
-            //CreaterAPITypeJS.create(1, player);
-            //CreaterAPITypeJS.create(2, player);
-            */
-            /*
-            // Found texts
-            java.io.File dir = new java.io.File("D:/1.20.1/customnpcs/src/main/java");
-            //dir = new java.io.File("E:/Sources/1.20.1/minecraft 1.20.1/net");
-            //dir = new java.io.File("E:/Sources/1.20.1/Mini Maps/VoxelMap/src/main/java");
-            //dir = new java.io.File("E:/Sources/1.20.1/geckolib-1.20.1/CNPC-Gecko-Addon-1.20.1-1.0.0/com/goodbird/cnpcgeckoaddon");
-            LogWriter.info("Directory: "+dir.exists()+" - "+dir);
-            String br = "" + ((char) 9) + ((char) 10) + " ()[]{}.,<>:;+-*\\/\"";
-            java.util.Map<String, java.util.Map<String, java.util.List<Integer>>> found = new java.util.TreeMap<>();
-            //found.put("TEST:", null);
-            found.put(" scene ", null);
-
-            java.util.function.Function<java.io.File, String> getClss = (file) -> {
-               Class<?> cl = null;
-               String classPath = file.getName().replace(".java", "");
-               file = file.getParentFile();
-               while (file.getParentFile().exists() && cl == null) {
-                  classPath = file.getName() + "." + classPath;
-                  try { cl = Class.forName(classPath); } catch (Exception ignored) { }
-                  file = file.getParentFile();
-               }
-               return cl == null ? "" : classPath;
-            };
-            for (java.io.File file : noppes.npcs.util.Util.instance.getFiles(dir, "java")) {
-               try {
-                  java.io.BufferedReader reader = com.google.common.io.Files.newReader(file, java.nio.charset.StandardCharsets.UTF_8);
-                  String line;
-                  int l = 1;
-                  while ((line = reader.readLine()) != null) {
-                     for (String key : found.keySet()) {
-                        if (line.contains("found.put(\"" + key + "\"")) { continue; }
-                        if (key.contains("&&")) {
-                           String k = key.substring(0, key.indexOf("&&"));
-                           String s = key.substring(key.indexOf("&&") + 2);
-                           if (line.contains(k) && line.toLowerCase().contains(s.toLowerCase())) {
-                              found.computeIfAbsent(key, k1 -> new java.util.TreeMap<>());
-                              String classPath = getClss.apply(file);
-                              if (!classPath.isEmpty()) {
-                                 if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
-                                 found.get(key).get(classPath).add(l);
-                              }
-                           }
+            java.io.BufferedReader reader = com.google.common.io.Files.newReader(file, java.nio.charset.StandardCharsets.UTF_8);
+            String line;
+            int l = 1;
+            while ((line = reader.readLine()) != null) {
+               for (String key : found.keySet()) {
+                  if (line.contains("found.put(\"" + key + "\"")) { continue; }
+                  if (key.contains("&&")) {
+                     String k = key.substring(0, key.indexOf("&&"));
+                     String s = key.substring(key.indexOf("&&") + 2);
+                     if (line.contains(k) && line.toLowerCase().contains(s.toLowerCase())) {
+                        found.computeIfAbsent(key, k1 -> new java.util.TreeMap<>());
+                        String classPath = getClss.apply(file);
+                        if (!classPath.isEmpty()) {
+                           if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
+                           found.get(key).get(classPath).add(l);
                         }
-                        else if (key.indexOf("&") == 0) {
-                           String k = key.replace("&", "");
-                           if (line.contains(k)) {
-                              int s = line.indexOf(k) - 1;
-                              int e = line.indexOf(k) + k.length();
-                              if (br.contains("" + line.charAt(s)) && br.contains("" + line.charAt(e))) {
-                                 found.computeIfAbsent(key, k1 -> new java.util.TreeMap<>());
-                                 String classPath = getClss.apply(file);
-                                 if (!classPath.isEmpty()) {
-                                    if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
-                                    found.get(key).get(classPath).add(l);
-                                 }
-                              }
-                           }
-                        }
-                        else if (line.contains(key)) {
-                           found.computeIfAbsent(key, k -> new java.util.TreeMap<>());
+                     }
+                  }
+                  else if (key.indexOf("&") == 0) {
+                     String k = key.replace("&", "");
+                     if (line.contains(k)) {
+                        int s = line.indexOf(k) - 1;
+                        int e = line.indexOf(k) + k.length();
+                        if (br.contains("" + line.charAt(s)) && br.contains("" + line.charAt(e))) {
+                           found.computeIfAbsent(key, k1 -> new java.util.TreeMap<>());
                            String classPath = getClss.apply(file);
                            if (!classPath.isEmpty()) {
                               if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
@@ -923,26 +907,33 @@ public class ScriptPlayerEventHandler {
                            }
                         }
                      }
-                     l++;
                   }
-                  reader.close();
-               } catch (Exception e) { noppes.npcs.shared.common.util.LogWriter.error(e); }
-            }
-            for (String key : found.keySet()) {
-               if (found.get(key) == null || found.get(key).isEmpty()) {
-                  LogWriter.info("\"" + key + "\" not found;");
-                  continue;
+                  else if (line.contains(key)) {
+                     found.computeIfAbsent(key, k -> new java.util.TreeMap<>());
+                     String classPath = getClss.apply(file);
+                     if (!classPath.isEmpty()) {
+                        if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
+                        found.get(key).get(classPath).add(l);
+                     }
+                  }
                }
-               LogWriter.info("\"" + key + "\" found in:");
-               java.util.Map<String, java.util.List<Integer>> map = found.get(key);
-               for (String classPath : map.keySet()) {
-                  for (Integer line : map.get(classPath)) { LogWriter.info("found class:" + classPath + ":" + line); }
-               }
+               l++;
             }
-            /**/
+            reader.close();
+         } catch (Exception e) { noppes.npcs.shared.common.util.LogWriter.error(e); }
+      }
+      for (String key : found.keySet()) {
+         if (found.get(key) == null || found.get(key).isEmpty()) {
+            LogWriter.info("\"" + key + "\" not found;");
+            continue;
          }
-         catch (Exception e) { LogWriter.error("Client test error", e); }
-      } // Client tests:
+         LogWriter.info("\"" + key + "\" found in:");
+         java.util.Map<String, java.util.List<Integer>> map = found.get(key);
+         for (String classPath : map.keySet()) {
+            for (Integer line : map.get(classPath)) { LogWriter.info("found class:" + classPath + ":" + line); }
+         }
+      }
+      /**/
    }
 
 }

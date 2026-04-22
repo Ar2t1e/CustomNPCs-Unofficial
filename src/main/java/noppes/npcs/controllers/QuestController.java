@@ -40,23 +40,24 @@ public class QuestController implements IQuestHandler {
    public QuestController() { instance = this; }
 
    public void load() {
+      CustomNpcs.debugData.start(null);
       categories.clear();
       quests.clear();
-      lastUsedCatID = 1;
-      lastUsedQuestID = 1;
-      File file;
+      lastUsedCatID = 0;
+      lastUsedQuestID = 0;
       // OLD variant
       try {
-         file = new File(CustomNpcs.getLevelSaveDirectory(), "quests.dat");
+         File file = new File(CustomNpcs.getLevelSaveDirectory(), "quests.dat");
          if (file.exists()) {
             loadCategoriesOld(file);
             if (!file.delete()) { LogWriter.debug("Error delete \"" + file.getName() + "\" file"); }
             file = new File(CustomNpcs.getLevelSaveDirectory(), "quests.dat_old");
             if (file.exists() && !file.delete()) { LogWriter.debug("Error delete \"" + file.getName() + "\" file"); }
+            CustomNpcs.debugData.end(null);
             return;
          }
       }
-      catch (Exception e) { LogWriter.except(e); }
+      catch (Exception e) { LogWriter.error(e); }
 
       File dir = getDir();
       if (!dir.exists()) {
@@ -65,16 +66,19 @@ public class QuestController implements IQuestHandler {
       else {
          File[] files = dir.listFiles();
          if (files != null) {
-            for(File questFile : files) {
+            for (File questFile : files) {
                if (questFile.isDirectory()) {
                   QuestCategory category = loadCategoryDir(questFile);
-                  for (Entry<Integer, Quest> entry : new ArrayList<>(category.quests.entrySet())) {
-                     Integer id = entry.getKey();
-                     lastUsedQuestID = Math.max(lastUsedQuestID, id);
+                  Iterator<Integer> ite = category.quests.keySet().iterator();
+                  while (ite.hasNext()) {
+                     int id = ite.next();
+                     if (id > lastUsedQuestID) {
+                        lastUsedQuestID = id;
+                     }
                      Quest quest = category.quests.get(id);
                      if (quests.containsKey(id)) {
-                        LogWriter.error("Duplicate quest ID:" + quest.id + " from category " + category.title);
-                        category.quests.remove(id);
+                        LogWriter.error("Duplicate id " + quest.id + " from category " + category.title);
+                        ite.remove();
                      } else {
                         quests.put(id, quest);
                      }
@@ -86,6 +90,7 @@ public class QuestController implements IQuestHandler {
             }
          }
       }
+      CustomNpcs.debugData.end(null);
    }
 
    private QuestCategory loadCategoryDir(File dir) {
@@ -127,17 +132,13 @@ public class QuestController implements IQuestHandler {
             Quest quest = entry.getValue();
             quest.id = entry.getKey();
             lastUsedQuestID = Math.max(lastUsedQuestID, quest.id);
-            if (quests.containsKey(quest.id)) {
-               ita.remove();
-            } else {
-               saveQuest(category, quest);
-            }
+            if (quests.containsKey(quest.id)) { ita.remove(); }
+            else { saveQuest(category, quest); }
          }
       }
    }
 
    private void loadDefaultQuests() {
-      LogWriter.info("TEST: "+lastUsedCatID);
       QuestCategory cat = new QuestCategory();
       cat.id = lastUsedCatID++;
       cat.title = "Village";
@@ -167,17 +168,16 @@ public class QuestController implements IQuestHandler {
 
    public void removeCategory(int category) {
       QuestCategory cat = categories.get(category);
-      if (cat == null) { return; }
-      File dir = new File(getDir(), cat.title);
-      if (!Util.instance.removeFile(dir)) {
-         LogWriter.error("Error delete " + dir + "; no access or file not uploaded!");
-         return;
+      if (cat != null) {
+         File dir = new File(getDir(), cat.title);
+         if (!Util.instance.removeFile(dir)) {
+            LogWriter.error("Error delete " + dir + "; no access or file not uploaded!");
+            return;
+         }
+         for (Integer qId : cat.quests.keySet()) { quests.remove(qId); }
+         categories.remove(category);
+         Packets.sendAll(new PacketSyncRemove(category, 3));
       }
-      for (Integer qId : cat.quests.keySet()) {
-         quests.remove(qId);
-      }
-      categories.remove(category);
-      Packets.sendAll(new PacketSyncRemove(category, 3));
    }
 
    public void saveCategory(QuestCategory category) {
@@ -185,7 +185,13 @@ public class QuestController implements IQuestHandler {
       if (categories.containsKey(category.id)) {
          QuestCategory currentCategory = categories.get(category.id);
          if (!currentCategory.title.equals(category.title)) {
-            while(containsCategoryName(category)) { category.title += "_"; }
+            List<String> names = new ArrayList<>();
+            for (QuestCategory qc : new ArrayList<>(categories.values())) {
+               if (!qc.equals(category) && qc.id != category.id) { names.add(qc.title); }
+            }
+            String name = category.title;
+            while(names.contains(name)) { name = name + "_"; }
+            category.title = name;
             File newDir = new File(getDir(), category.title);
             File oldDir = new File(getDir(), currentCategory.title);
             if (newDir.exists()) {
@@ -202,39 +208,29 @@ public class QuestController implements IQuestHandler {
             ++lastUsedCatID;
             category.id = lastUsedCatID;
          }
-         while(containsCategoryName(category)) { category.title += "_"; }
-         File dir = new File(getDir(), category.title);
-         if (!dir.exists()) {
-            dir.mkdirs();
+         List<String> names = new ArrayList<>();
+         for (QuestCategory qc : new ArrayList<>(categories.values())) {
+            if (!qc.equals(category) && qc.id != category.id) { names.add(qc.title); }
          }
+         String name = category.title;
+         while(names.contains(name)) { name = name + "_"; }
+         category.title = name;
+         File dir = new File(getDir(), category.title);
+         if (!dir.exists() && !dir.mkdirs()) { LogWriter.error("Error create dir " + dir); }
       }
       categories.put(category.id, category);
       Packets.sendAll(new PacketSyncUpdate(category.id, 3, category.save(new CompoundTag())));
    }
 
-   public boolean containsCategoryName(QuestCategory categoryIn) {
-      for (QuestCategory category : categories.values()) {
-         if (!category.equals(categoryIn) &&
-                 category.id != categoryIn.id &&
-                 category.title.equalsIgnoreCase(categoryIn.title)) { return true; }
-      }
-      return false;
-   }
-
-   public boolean containsQuestName(QuestCategory category, Quest questIn) {
-      for (Quest quest : category.quests.values()) {
-         if (!quest.equals(questIn) &&
-                 quest.id != questIn.id &&
-                 quest.getName().equalsIgnoreCase(questIn.getName())) {
-            return true;
-         }
-      }
-      return false;
-   }
-
    public void saveQuest(QuestCategory category, Quest quest) {
       if (category != null) {
-         while(containsQuestName(quest.category, quest)) { quest.title = quest.title + "_"; }
+         List<String> names = new ArrayList<>();
+         for (Quest q : new ArrayList<>(quest.category.quests.values())) {
+            if (!q.equals(quest) && q.id != quest.id) { names.add(q.title); }
+         }
+         String name = quest.title;
+         while(names.contains(name)) { name = name + "_"; }
+         quest.title = name;
          if (quest.id < 0) {
             ++lastUsedQuestID;
             quest.id = lastUsedQuestID;
@@ -266,9 +262,7 @@ public class QuestController implements IQuestHandler {
       }
    }
 
-   public File getDir() {
-      return new File(CustomNpcs.getLevelSaveDirectory(), "quests");
-   }
+   public File getDir() { return new File(CustomNpcs.getLevelSaveDirectory(), "quests"); }
 
    @Override
    public List<IQuestCategory> categories() { return new ArrayList<>(categories.values()); }

@@ -11,7 +11,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
-import noppes.npcs.containers.ContainerNPCFollower;
+import noppes.npcs.containers.ContainerNPCFollowerHire;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketFollowerExtend;
@@ -26,14 +26,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
-public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollower>
+public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollowerHire>
         implements IGuiData {
 
    protected final RoleFollower role;
+
    // New from Unofficial (BetaZavr)
    protected EntityNPCInterface displayNPC;
 
-   public GuiNpcFollower(ContainerNPCFollower container, Inventory inv, Component titleIn) {
+   public GuiNpcFollower(ContainerNPCFollowerHire container, Inventory inv, Component titleIn) {
       super(NoppesUtilServer.getEditingNpc(Minecraft.getInstance().player), container, inv, titleIn);
       setBackground("follower.png");
 

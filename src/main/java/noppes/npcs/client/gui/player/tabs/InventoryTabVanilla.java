@@ -12,8 +12,10 @@ public class InventoryTabVanilla extends AbstractTab {
 
    public InventoryTabVanilla() {
       super(0, 0, 0, new ItemStack(Blocks.CRAFTING_TABLE));
+      setFocused(true);
    }
 
+   @Override
    public void onTabClicked() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null) {
@@ -23,7 +25,7 @@ public class InventoryTabVanilla extends AbstractTab {
       }
    }
 
-   protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
-   }
+   @Override
+   protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) { }
 
 }

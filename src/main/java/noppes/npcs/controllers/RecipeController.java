@@ -22,7 +22,7 @@ import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.handler.IRecipeHandler;
-import noppes.npcs.api.handler.data.IRecipe;
+import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.api.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.controllers.data.RecipesDefault;
@@ -119,14 +119,14 @@ public class RecipeController implements IRecipeHandler {
          while(var3.hasNext()) {
             recipe = var3.next();
             if (recipe.savesRecipe) {
-               list.add(recipe.writeNBT());
+               list.add(recipe.saveTo());
             }
          }
          var3 = anvilRecipes.values().iterator();
          while(var3.hasNext()) {
             recipe = var3.next();
             if (recipe.savesRecipe) {
-               list.add(recipe.writeNBT());
+               list.add(recipe.saveTo());
             }
          }
 
@@ -176,7 +176,7 @@ public class RecipeController implements IRecipeHandler {
          anvilRecipes.put(recipe.getId(), recipe);
       }
       if (Util.instance.getSide() == Dist.DEDICATED_SERVER) {
-         Packets.sendAll(new PacketSyncRecipeUpdate(recipe.getId(), recipe.isGlobal, recipe.writeNBT()));
+         Packets.sendAll(new PacketSyncRecipeUpdate(recipe.getId(), recipe.isGlobal, recipe.saveTo()));
       }
       saveCategories();
       return recipe;
@@ -206,22 +206,22 @@ public class RecipeController implements IRecipeHandler {
       return recipe;
    }
 
-   public List<IRecipe> getGlobalList() {
+   public List<INpcRecipe> getGlobalList() {
       return new ArrayList<>(globalRecipes.values());
    }
 
-   public List<IRecipe> getCarpentryList() {
+   public List<INpcRecipe> getCarpentryList() {
       return new ArrayList<>(anvilRecipes.values());
    }
 
-   public IRecipe addRecipe(String name, boolean global, ItemStack result, Object... objects) {
-      RecipeCarpentry recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name), name);
+   public INpcRecipe addRecipe(String name, boolean global, ItemStack result, Object... objects) {
+      RecipeCarpentry recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name));
       recipe.isGlobal = global;
       recipe = RecipeCarpentry.createRecipe(new ResourceLocation(CustomNpcs.MODID, name), recipe, result, objects);
       return saveRecipe(recipe);
    }
 
-   public IRecipe addRecipe(String name, boolean global, ItemStack result, int width, int height, ItemStack... objects) {
+   public INpcRecipe addRecipe(String name, boolean global, ItemStack result, int width, int height, ItemStack... objects) {
       NonNullList<Ingredient> list = NonNullList.create();
       for(ItemStack item : objects) {
          if (!item.isEmpty()) { list.add(Ingredient.of(item)); }
@@ -247,7 +247,7 @@ public class RecipeController implements IRecipeHandler {
        ListTag list = new ListTag();
        CompoundTag compound;
        for (RecipeCarpentry category : RecipeController.getInstance().getGlobalRecipes().values()) {
-          list.add(category.writeNBT());
+          list.add(category.saveTo());
           if (list.size() > 10) {
              compound = new CompoundTag();
              compound.put("Data", list);
@@ -262,7 +262,7 @@ public class RecipeController implements IRecipeHandler {
        // mod recipes
        list = new ListTag();
        for (RecipeCarpentry category : RecipeController.getInstance().getAnvilRecipes().values()) {
-          list.add(category.writeNBT());
+          list.add(category.saveTo());
           if (list.size() > 10) {
              compound = new CompoundTag();
              compound.put("Data", list);
@@ -294,8 +294,6 @@ public class RecipeController implements IRecipeHandler {
    }
 
    public List<RecipeBookCategories> getCategories(boolean isMod) {
-      LogWriter.info("TEST: "+CRAFTING_MOD_CATEGORIES+" / "+RecipeBookCategories.CRAFTING_CATEGORIES);
-      LogWriter.info("TEST: keySet "+RecipeBookCategories.AGGREGATE_CATEGORIES.keySet());
       return isMod ? CRAFTING_MOD_CATEGORIES : RecipeBookCategories.CRAFTING_CATEGORIES;
    }
 

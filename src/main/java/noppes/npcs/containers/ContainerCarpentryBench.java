@@ -181,7 +181,7 @@ public class ContainerCarpentryBench extends RecipeBookMenu<CraftingContainer> {
 
    @Override
    public @Nonnull List<RecipeBookCategories> getRecipeBookCategories() {
-      return RecipeController.getInstance().getCategories(true);
+      return RecipeController.getInstance().getCategories(false);
    }
 
 }

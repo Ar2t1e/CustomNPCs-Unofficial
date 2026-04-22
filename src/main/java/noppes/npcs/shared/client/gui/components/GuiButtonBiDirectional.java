@@ -69,17 +69,29 @@ public class GuiButtonBiDirectional extends GuiButtonNop {
    }
 
    @Override
-   public boolean mouseClicked(double mouseX, double mouseY, int button) {
-      int value = getValue();
-      if (isHovered && display != null && display.length != 0) {
-         if (hoverR) { value = (value + 1) % display.length; }
-         if (hoverL) {
-            if (value <= 0) { value = display.length; }
-            --value;
+   public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+      if (active && visible) {
+         if (clicked(mouseX, mouseY)) {
+            if (isValidClickButton(mouseButton) && display != null) {
+               if (hoverR) { displayValue = (displayValue + 1) % display.length; }
+               if (hoverL) {
+                  if (displayValue <= 0) { displayValue = display.length; }
+                  --displayValue;
+               }
+               setDisplay(displayValue);
+            }
+            if (listener != null && !listener.hasSubGui() && listener.mouseButtonEvent(this, mouseButton) ) {
+               playDownSound(Minecraft.getInstance().getSoundManager());
+               return true;
+            }
+            if (isValidClickButton(mouseButton)) {
+               playDownSound(Minecraft.getInstance().getSoundManager());
+               onClick(mouseX, mouseY);
+            }
+            return true;
          }
-         setDisplay(value);
       }
-      return super.mouseClicked(mouseX, mouseY, button);
+      return false;
    }
 
 }

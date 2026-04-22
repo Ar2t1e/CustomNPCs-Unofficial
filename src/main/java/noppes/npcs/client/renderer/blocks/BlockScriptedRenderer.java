@@ -48,7 +48,6 @@ public class BlockScriptedRenderer<T extends TileScripted> extends BlockRenderer
         if(overrideModel()){
 			matrixStack.pushPose();
 			matrixStack.translate(0.5f, 0.5f, 0.5f);
-			matrixStack.scale(2, 2, 2);
         	renderItem(new ItemStack(CustomBlocks.scripted), matrixStack, buffer, light, overlay);
 			matrixStack.popPose();
 			return;

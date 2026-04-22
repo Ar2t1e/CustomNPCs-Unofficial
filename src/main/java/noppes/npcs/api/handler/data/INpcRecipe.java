@@ -3,12 +3,13 @@ package noppes.npcs.api.handler.data;
 import net.minecraft.world.item.ItemStack;
 import noppes.npcs.api.interfaces.ParamName;
 
-public interface IRecipe {
+public interface INpcRecipe {
 
    String getName();
 
    boolean isGlobal();
 
+   @SuppressWarnings("unused")
    void setIsGlobal(@ParamName("bo") boolean bo);
 
    boolean getIgnoreNBT();
@@ -27,8 +28,10 @@ public interface IRecipe {
 
    ItemStack[] getRecipe();
 
+   @SuppressWarnings("unused")
    void saves(@ParamName("bo") boolean bo);
 
+   @SuppressWarnings("unused")
    boolean saves();
 
    void save();

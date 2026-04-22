@@ -319,12 +319,11 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
                }
                category.title = t.toString();
                Packets.sendServer(new SPacketDialogCategorySave(category.save(new CompoundTag())));
-            }
+            } // create category
             if (dialogEdit.id == 3) {
                if (dialogEdit.text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
                DialogCategory category = categoryData.get(selectedCategory).copy();
                if (category.title.equals(((SubGuiEditText) subgui).text[0])) { return; }
-               category.title = ((SubGuiEditText) subgui).text[0];
                StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
                boolean has = true;
                while (has) {
@@ -341,7 +340,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
                selectedCategory = Component.translatable(category.title);
                Packets.sendServer(new SPacketDialogCategorySave(category.save(new CompoundTag())));
                init();
-            }
+            } // rename category
             if (dialogEdit.id == 11) {
                if (((SubGuiEditText) subgui).text[0].isEmpty()) { return; }
                Dialog dialog = new Dialog(categoryData.get(selectedCategory));
@@ -368,7 +367,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
                        .append(Component.literal(")").withStyle(b ? ChatFormatting.DARK_GREEN : ChatFormatting.RED));
                Packets.sendServer(new SPacketDialogSave(categoryData.get(selectedCategory).id, dialog.save(new CompoundTag())));
                init();
-            }
+            } // create dialog
          }
          if (subgui instanceof SubGuiDialogEdit) { init(); }
       }

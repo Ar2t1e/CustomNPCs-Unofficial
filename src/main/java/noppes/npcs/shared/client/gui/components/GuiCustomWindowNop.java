@@ -38,6 +38,7 @@ public class GuiCustomWindowNop extends GuiBasic
     }
 
     // super
+    public int id;
     protected int guiLeft;
     protected int guiTop;
 
@@ -62,8 +63,6 @@ public class GuiCustomWindowNop extends GuiBasic
     public boolean isLock = false;
     public boolean isYDEShow = false;
     public YDEScrollNop yde_scroll;
-
-    public int id;
 
     public GuiCustomWindowNop(IGuiInterface gui, int idIn, int x, int y, int width, int height, Component titleIn) {
         super();
@@ -266,9 +265,7 @@ public class GuiCustomWindowNop extends GuiBasic
     public void moveTo(int addX, int addY) {
         guiLeft += addX;
         guiTop += addY;
-        for (IComponentGui component : new ArrayList<>(wrapper.components)) {
-            component.moveTo(addX, addY);
-        }
+        for (IComponentGui component : new ArrayList<>(wrapper.components)) { component.moveTo(addX, addY); }
     }
 
     public void transferTo(int newX, int newY) {
@@ -440,6 +437,8 @@ public class GuiCustomWindowNop extends GuiBasic
     @Override
     public int getY() { return guiTop; }
 
+    public boolean isHovered() { return visible && isHovered; }
+
     public void drawTopRect(GuiGraphics graphics, int width) {
         float r = (colorLine >> 16) / 255.0f;
         float g = (colorLine >> 8) / 255.0f;
@@ -458,8 +457,6 @@ public class GuiCustomWindowNop extends GuiBasic
     public void setColorLine(int color) { colorLine = color & 0x00FFFFFF; }
 
     public int getColorLine() { return colorLine; }
-
-    public boolean isHovered() { return visible && isHovered; }
 
     public boolean isHeadHovered() { return isHeadHovered; }
 

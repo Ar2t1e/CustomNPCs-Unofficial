@@ -26,14 +26,13 @@ public class ContainerManageRecipes extends AbstractContainerMenu {
    public RecipeCarpentry recipe;
    public int size;
    public int width;
-   public boolean init = false;
 
    public ContainerManageRecipes(int containerId, Inventory playerInventory, int sizeIn) {
       super(CustomContainer.container_managerecipes, containerId);
       size = sizeIn * sizeIn;
       width = sizeIn;
       craftingMatrix = new SimpleContainer(size + 1);
-      recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, ""), "");
+      recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, ""));
       addSlot(new Slot(craftingMatrix, 0, 87, 61));
 
       int j1;
@@ -145,7 +144,7 @@ public class ContainerManageRecipes extends AbstractContainerMenu {
       }
 
       if (nameMapping.isEmpty()) {
-         RecipeCarpentry r = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, recipe.name), recipe.name);
+         RecipeCarpentry r = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, recipe.name));
          r.copy(recipe);
          recipe = r;
       }
