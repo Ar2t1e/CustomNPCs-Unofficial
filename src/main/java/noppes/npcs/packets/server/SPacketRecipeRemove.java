@@ -6,7 +6,8 @@ import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.RecipeController;
-import noppes.npcs.controllers.data.RecipeCarpentry;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 public class SPacketRecipeRemove extends PacketServerBasic {
@@ -29,9 +30,8 @@ public class SPacketRecipeRemove extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      RecipeCarpentry r = RecipeController.getInstance().delete(recipe);
-      SPacketRecipesGet.sendRecipeData(player, r.isGlobal ? 3 : 4);
-      SPacketRecipeGet.setRecipeGui(player, new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, "")));
+      RecipeController.getInstance().delete(recipe);
+      Packets.sendDelayed(player, new PacketGuiUpdate(), 100);
       CustomNpcs.debugData.end("Packets");
    }
 

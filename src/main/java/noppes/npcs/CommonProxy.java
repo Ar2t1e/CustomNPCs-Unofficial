@@ -1,21 +1,36 @@
 package noppes.npcs;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.RecipeBook;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import noppes.npcs.api.ICustomElement;
+import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.stats.IRecipeBookMixin;
+import noppes.npcs.mixin.world.item.crafting.IRecipeManagerMixin;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class CommonProxy {
 
@@ -71,6 +86,69 @@ public class CommonProxy {
    public @Nullable Level overworld() {
       if (CustomNpcs.Server != null) { return CustomNpcs.Server.overworld(); }
       return null;
+   }
+
+   public RecipeManager getRecipeManager() {
+      if (CustomNpcs.Server != null) { return CustomNpcs.Server.getRecipeManager(); }
+      return null;
+   }
+
+   public void syncRecipeManager() {
+      RecipeManager manager = CustomNpcs.proxy.getRecipeManager();
+      Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> recipes = ((IRecipeManagerMixin) manager).getRecipes();
+      Map<ResourceLocation, Recipe<?>> byName = ((IRecipeManagerMixin) manager).getByName();
+      // new
+      Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> newRecipes = Maps.newHashMap();
+      Map<ResourceLocation, Recipe<?>> newByName = Maps.newHashMap(byName);
+      // collect
+      boolean isChanged = false;
+      for (Map.Entry<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> entry : new ArrayList<>(recipes.entrySet())) {
+         if (entry.getKey() != RecipeType.CRAFTING) {
+            newRecipes.put(entry.getKey(), entry.getValue());
+         }
+         else {
+            Map<ResourceLocation, Recipe<?>> map = new HashMap<>();
+            if (recipes.get(entry.getKey()) != null) { map.putAll(recipes.get(RecipeType.CRAFTING)); }
+            RecipeController rData = RecipeController.getInstance();
+            for (int i = 0; i < 2; i++) {
+               for (INpcRecipe npcRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
+                  Recipe<?> recipe = (Recipe<?>) npcRecipe;
+                  if (map.containsKey(recipe.getId())) {
+                     if (!npcRecipe.isValid()) { map.remove(recipe.getId()); isChanged = true; }
+                  }
+                  else if (npcRecipe.isValid()) { map.put(recipe.getId(), recipe); isChanged = true; }
+                  if (newByName.containsKey(recipe.getId())) {
+                     if (!npcRecipe.isValid()) { newByName.remove(recipe.getId()); isChanged = true; }
+                  }
+                  else if (npcRecipe.isValid()) { newByName.put(recipe.getId(), recipe); isChanged = true; }
+               }
+            }
+            newRecipes.put(entry.getKey(), map);
+         }
+      }
+      // changed
+      if (isChanged) {
+         ((IRecipeManagerMixin) manager).setRecipes(ImmutableMap.copyOf(newRecipes));
+         ((IRecipeManagerMixin) manager).setByName(ImmutableMap.copyOf(newByName));
+         if (CustomNpcs.Server != null) {
+            for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
+         }
+      }
+   }
+
+   protected void syncRecipe(RecipeBook book) {
+      RecipeManager manager = CustomNpcs.proxy.getRecipeManager();
+      Map<ResourceLocation, Recipe<?>> byName = ((IRecipeManagerMixin) manager).getByName();
+      Set<ResourceLocation> known = ((IRecipeBookMixin) book).getKnown();
+      known.removeIf(id -> !byName.containsKey(id));
+      ((IRecipeBookMixin) book).getHighlight().removeIf(id -> !byName.containsKey(id));
+      RecipeController rData = RecipeController.getInstance();
+      for (int i = 0; i < 2; i++) {
+         for (INpcRecipe npcRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
+            if (npcRecipe.isKnown()) { book.add((Recipe<?>) npcRecipe); }
+         }
+      }
+
    }
 
 }

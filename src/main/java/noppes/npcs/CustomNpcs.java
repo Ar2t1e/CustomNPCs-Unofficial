@@ -367,7 +367,6 @@ public class CustomNpcs {
       ServerCloneController.Instance = null;
 
       // New from Unofficial (BetaZavr)
-      RecipeController.getInstance().checkSaves();
       BankController.getInstance().update();
       PlayerSkinController.getInstance().save();
       PlayerSkinController.unload();

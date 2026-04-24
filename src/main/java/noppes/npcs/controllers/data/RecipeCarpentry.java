@@ -3,81 +3,87 @@ package noppes.npcs.controllers.data;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Container;
 import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.util.RecipeMatcher;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.api.INbt;
+import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.handler.data.IAvailability;
 import noppes.npcs.api.handler.data.INpcRecipe;
+import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.wrapper.NBTWrapper;
+import noppes.npcs.api.wrapper.gui.WrapperRecipe;
 import noppes.npcs.controllers.RecipeController;
+import noppes.npcs.util.CustomStackedContents;
+import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class RecipeCarpentry extends ShapedRecipe implements INpcRecipe {
+public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
 
    public Availability availability = new Availability();
-   public boolean isGlobal = false;
+   public boolean isGlobal;
    public boolean ignoreDamage = false;
    public boolean ignoreNBT = false;
    public boolean savesRecipe = true;
    public String name;
 
-   public RecipeCarpentry(ResourceLocation location, int width, int height, NonNullList<Ingredient> recipe, ItemStack result) {
-      super(location, location.getNamespace(), CraftingBookCategory.MISC, width, height, recipe, result);
-      name = location.getPath();
+   // New from Unofficial (BetaZavr)
+   protected final WrapperRecipe wrapper;
+   protected @Nonnull NonNullList<Ingredient> ingredients;
+   protected @Nonnull ItemStack result;
+   protected @Nonnull ResourceLocation id;
+   protected @Nonnull String group;
+   protected int width;
+   protected int height;
+   protected boolean showNotification;
+   protected boolean isShaped;
+   protected boolean isKnown = false;
+   protected boolean showInRecipeBook = true;
+   protected boolean isSimple;
+
+   public RecipeCarpentry(@Nonnull ResourceLocation idIn, @Nonnull String groupIn, int widthIn, int heightIn, boolean isGlobalIn, boolean isShapedIn, @Nonnull NonNullList<Ingredient> recipeItemsIn, @Nonnull ItemStack resultIn) {
+      id = idIn;
+      group = groupIn;
+      width = widthIn;
+      height = heightIn;
+      ingredients = recipeItemsIn;
+      result = resultIn;
+      isSimple = ingredients.stream().allMatch(Ingredient::isSimple);
+
+      name = idIn.getPath();
+      result = resultIn;
+      isShaped = isShapedIn;
+      isGlobal = isGlobalIn;
+
+      wrapper = new WrapperRecipe(result);
    }
 
-   public RecipeCarpentry(ResourceLocation location) {
-      this(location, 4, 4, NonNullList.create(), ItemStack.EMPTY);
-   }
-
-   public static RecipeCarpentry load(CompoundTag compound) {
-      ResourceLocation location;
-      if (compound.contains("ID", 8)) { location = new ResourceLocation(CustomNpcs.MODID, NoppesUtilServer.validPath(compound.getString("ID"))); }
-      else { location = new ResourceLocation(NoppesUtilServer.validLocation(compound.getString("Id"))); }
-
-      RecipeCarpentry recipe = new RecipeCarpentry(location, compound.getInt("Width"), compound.getInt("Height"),
-              NBTTags.getIngredientList(compound.getList("Materials", 10)),
-              compound.contains("Item", 10) ? ItemStack.of(compound.getCompound("Item")) : ItemStack.EMPTY);
-      recipe.availability.load(compound.getCompound("Availability"));
-      recipe.ignoreDamage = compound.getBoolean("IgnoreDamage");
-      recipe.ignoreNBT = compound.getBoolean("IgnoreNBT");
-      recipe.isGlobal = compound.getBoolean("Global");
-      recipe.name = compound.getString("Name");
+   public static RecipeCarpentry create(CompoundTag compound) {
+      RecipeCarpentry recipe = new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, ""), "", 0, 0, true, true, NonNullList.create(), ItemStack.EMPTY);
+      recipe.loadFrom(compound);
       return recipe;
    }
 
-   public CompoundTag saveTo() {
-      CompoundTag compound = new CompoundTag();
-      compound.putInt("Width", getRecipeWidth());
-      compound.putInt("Height", getRecipeHeight());
-      if (getResult() != null) { compound.put("Item", getResult().save(new CompoundTag())); }
-      compound.put("Materials", NBTTags.nbtIngredientList(getIngredients()));
-      compound.put("Availability", availability.save(new CompoundTag()));
-      compound.putString("Name", name);
-      compound.putString("Id", getId().toString());
-      compound.putBoolean("Global", isGlobal);
-      compound.putBoolean("IgnoreDamage", ignoreDamage);
-      compound.putBoolean("IgnoreNBT", ignoreNBT);
-      return compound;
-   }
-
-   public static RecipeCarpentry createRecipe(ResourceLocation location, RecipeCarpentry recipe, ItemStack result, Object... objects) {
+   public static RecipeCarpentry createRecipe(@Nonnull ResourceLocation location, String group, boolean isGlobal, boolean isShaped, ItemStack result, Object... objects) {
       StringBuilder lineData = new StringBuilder();
       int size = 0;
       int widht = 0;
@@ -97,7 +103,6 @@ public class RecipeCarpentry extends ShapedRecipe implements INpcRecipe {
             lineData.append(line);
          }
       }
-
       HashMap<Character, ItemStack> mapData;
       for(mapData = new HashMap<>(); size < objects.length; size += 2) {
          Character character = (Character) objects[size];
@@ -109,34 +114,54 @@ public class RecipeCarpentry extends ShapedRecipe implements INpcRecipe {
       }
       NonNullList<Ingredient> ingredients = NonNullList.create();
       for(int slotId = 0; slotId < widht * height; ++slotId) {
-         char var18 = lineData.charAt(slotId);
-         if (mapData.containsKey(var18)) {
-            ingredients.add(slotId, Ingredient.of(mapData.get(var18).copy()));
+         char c = lineData.charAt(slotId);
+         if (mapData.containsKey(c)) {
+            ingredients.add(slotId, Ingredient.of(mapData.get(c).copy()));
          } else {
             ingredients.add(slotId, Ingredient.EMPTY);
          }
       }
-      RecipeCarpentry newRecipe = new RecipeCarpentry(location, widht, height, ingredients, result);
-      newRecipe.copy(recipe);
-      newRecipe.isGlobal = widht < 4 && height < 4;
-      return newRecipe;
+      return new RecipeCarpentry(location, group, widht, height, isGlobal, isShaped, ingredients, result);
    }
 
    @Override
    public boolean matches(@Nonnull CraftingContainer inventoryCrafting, @Nullable Level world) {
-      for(int i = 0; i <= 4 - getRecipeWidth(); ++i) {
-         for(int j = 0; j <= 4 - getRecipeHeight(); ++j) {
-            if (checkMatch(inventoryCrafting, i, j, true)) { return true; }
-            if (checkMatch(inventoryCrafting, i, j, false)) { return true; }
+      if (isShaped) {
+         for(int i = 0; i <= 4 - width; ++i) {
+            for(int j = 0; j <= 4 - height; ++j) {
+               if (checkMatch(inventoryCrafting, i, j, true)) { return true; }
+               if (checkMatch(inventoryCrafting, i, j, false)) { return true; }
+            }
+         }
+         return false;
+      }
+      CustomStackedContents stackedContents = new CustomStackedContents();
+      List<ItemStack> inputs = new ArrayList<>();
+      int i = 0;
+      for(int j = 0; j < inventoryCrafting.getContainerSize(); ++j) {
+         ItemStack itemstack = inventoryCrafting.getItem(j);
+         if (!itemstack.isEmpty()) {
+            ++i;
+            if (isSimple) { stackedContents.accountStack(itemstack, -1); }
+            else { inputs.add(itemstack); }
          }
       }
-      return false;
+      return i == ingredients.size() && (isSimple ?
+              stackedContents.canCraft(this, null) :
+              RecipeMatcher.findMatches(inputs,  ingredients) != null);
+   }
+
+   @Override
+   public @Nonnull ItemStack assemble(@Nonnull CraftingContainer container, @Nonnull RegistryAccess registryAccess) { return result.copy(); }
+
+   @Override
+   public boolean canCraftInDimensions(int widthIn, int heightIn) {
+      return isShaped ? widthIn >= width && heightIn >= height : widthIn * heightIn >= ingredients.size();
    }
 
    @Override
    public @Nonnull ItemStack getResultItem(@Nonnull RegistryAccess registryAccess) {
-      ItemStack stack = super.getResultItem(registryAccess);
-      return stack.isEmpty() ? ItemStack.EMPTY : stack.copy();
+      return result.isEmpty() ? ItemStack.EMPTY : result.copy();
    }
 
    @Override
@@ -149,54 +174,11 @@ public class RecipeCarpentry extends ShapedRecipe implements INpcRecipe {
       return list;
    }
 
-   private boolean checkMatch(Container inventoryCrafting, int x, int y, boolean isRevers) {
-      for(int i = 0; i < 4; ++i) {
-         for(int j = 0; j < 4; ++j) {
-            int u = i - x;
-            int v = j - y;
-            Ingredient ingredient = Ingredient.EMPTY;
-            if (u >= 0 && v >= 0 && u < getRecipeWidth() && v < getRecipeHeight()) {
-               if (isRevers) { ingredient = getIngredients().get(getRecipeWidth() - u - 1 + v * getRecipeWidth()); }
-               else { ingredient = getIngredients().get(u + v * getRecipeWidth()); }
-            }
-            ItemStack stack = ItemStack.EMPTY;
-            if (inventoryCrafting instanceof TransientCraftingContainer tcc) { stack = tcc.getItem(i + j * tcc.getWidth()); }
-            if (!stack.isEmpty() && ingredient.getItems().length == 0) { return false; }
-            if (!stack.isEmpty() || ingredient.getItems().length != 0) {
-               ItemStack var9 = ingredient.getItems()[0];
-               if ((!stack.isEmpty() || !var9.isEmpty()) && !NoppesUtilPlayer.compareItems(var9, stack, ignoreDamage, ignoreNBT)) { return false; }
-            }
-         }
-      }
-      return true;
-   }
-
-   public void copy(RecipeCarpentry recipe) {
-      availability = recipe.availability;
-      isGlobal = recipe.isGlobal;
-      ignoreDamage = recipe.ignoreDamage;
-      ignoreNBT = recipe.ignoreNBT;
-   }
-
-   public ItemStack getCraftingItem(int slotId) {
-      if (slotId >= getIngredients().size()) { return ItemStack.EMPTY; }
-      Ingredient ingredients = getIngredients().get(slotId);
-      return ingredients.getItems().length == 0 ? ItemStack.EMPTY : ingredients.getItems()[0];
-   }
-
-   public boolean isValid() {
-      if (name.isEmpty() || getIngredients().isEmpty() || getResult().isEmpty()) { return false; }
-      for (Ingredient ingredient : getIngredients()) {
-         if (ingredient.getItems().length > 0) { return true; }
-      }
-      return false;
-   }
-
    @Override
    public String getName() { return name; }
 
    @Override
-   public ItemStack getResult() { return getResultItem(RegistryAccess.EMPTY); }
+   public IItemStack getResult() { return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(getResultItem(RegistryAccess.EMPTY)); }
 
    @Override
    public boolean isGlobal() { return isGlobal; }
@@ -217,18 +199,54 @@ public class RecipeCarpentry extends ShapedRecipe implements INpcRecipe {
    public void setIgnoreDamage(boolean bo) { ignoreDamage = bo; }
 
    @Override
-   public void save() { RecipeController.getInstance().saveRecipe(this); }
+   public int getWidth() { return width; }
 
    @Override
-   public void delete() { }
+   public int getHeight() { return height; }
 
    @Override
-   public ItemStack[] getRecipe() {
-      List<ItemStack> list = new ArrayList<>();
-      for (Ingredient ingredient : getIngredients()) {
-         if (ingredient.getItems().length > 0) { list.add(ingredient.getItems()[0]); }
+   public void save() {
+      if (Util.instance.getSide() == Dist.DEDICATED_SERVER) {
+         RecipeController.getInstance().addAndSaveRecipe(this);
       }
-      return list.toArray(new ItemStack[0]);
+   }
+
+   @Override
+   public void delete() {
+      if (Util.instance.getSide() == Dist.DEDICATED_SERVER) {
+         RecipeController.getInstance().delete(id);
+      }
+   }
+
+   @Override
+   public boolean isKnown() { return isKnown; }
+
+   @Override
+   public void setIsKnown(boolean isKnownIn) { isKnown = isKnownIn; }
+
+   @Override
+   public boolean showInRecipeBook() { return showInRecipeBook; }
+
+   @Override
+   public void setShowInRecipeBook(boolean showInRecipeBookIn) { showInRecipeBook = showInRecipeBookIn; }
+
+   @Override
+   public IAvailability getAvailability() { return availability; }
+
+   @Override
+   public IItemStack[][] getRecipe() {
+      IItemStack[][] array = new IItemStack[ingredients.size()][];
+      for (int i = 0; i < ingredients.size(); i++) {
+         if (ingredients.get(i).getItems().length > 0) {
+            ItemStack[] items = ingredients.get(i).getItems();
+            array[i] = new IItemStack[items.length];
+            for (int j = 0; j < items.length; j++) {
+               array[i][j] = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(items[j]);
+            }
+         }
+         else { array[i] = new IItemStack[0]; }
+      }
+      return array;
    }
 
    @Override
@@ -236,5 +254,176 @@ public class RecipeCarpentry extends ShapedRecipe implements INpcRecipe {
 
    @Override
    public boolean saves() { return savesRecipe; }
+
+   @Override
+   public boolean isSpecial() { return !showInRecipeBook; }
+
+   @Override
+   public @Nonnull ResourceLocation getId() { return id; }
+
+   @Override
+   public @Nonnull ResourceLocation getMCId() { return id; }
+
+   @Override
+   public INbt getNbt() { return new NBTWrapper(saveTo()); }
+
+   @Override
+   public String getNpcGroup() { return group; }
+
+   @Override
+   public void setNbt(INbt nbt) {
+      if (nbt != null) {
+         loadFrom(nbt.getMCNBT());
+         RecipeController.getInstance().updateToAll();
+      }
+   }
+
+   @Override
+   public boolean isRecipeItemsEmpty() {
+      for (Ingredient ingredient : ingredients) {
+         for (ItemStack stack : ingredient.getItems()) {
+            if (!stack.isEmpty()) { return false; }
+         }
+      }
+      return true;
+   }
+
+   @Override
+   public @Nonnull RecipeSerializer<?> getSerializer() { return isShaped ? RecipeSerializer.SHAPED_RECIPE : RecipeSerializer.SHAPELESS_RECIPE; }
+
+   @Override
+   public @Nonnull NonNullList<Ingredient> getIngredients() { return ingredients; }
+
+   @Override
+   public @Nonnull RecipeType<?> getType() { return RecipeType.CRAFTING; }
+
+   @Override
+   public @Nonnull CraftingBookCategory category() { return CraftingBookCategory.MISC; }
+
+   @Override
+   public @Nonnull String getGroup() { return group; }
+
+   @Override
+   public boolean isShaped() { return isShaped; }
+
+   @Override
+   public void setIsShaped(boolean isShapedIn) { isShaped = isShapedIn; }
+
+   public void setResult(ItemStack newResult) { result = newResult == null || newResult.isEmpty() ? ItemStack.EMPTY : newResult; }
+
+   public CompoundTag saveTo() {
+      CompoundTag compound = new CompoundTag();
+      compound.putString("Id", id.toString());
+      compound.putString("Group", group);
+      compound.putInt("Width", width);
+      compound.putInt("Height", height);
+      compound.put("Materials", NBTTags.nbtIngredientList(ingredients));
+      compound.put("Item", result.save(new CompoundTag()));
+      compound.put("Availability", availability.save(new CompoundTag()));
+      compound.putBoolean("IgnoreDamage", ignoreDamage);
+      compound.putBoolean("IgnoreNBT", ignoreNBT);
+      compound.putBoolean("Global", isGlobal);
+      compound.putBoolean("IsKnown", isKnown);
+      compound.putBoolean("IsShaped", isShaped);
+      compound.putBoolean("ShowInRecipeBook", showInRecipeBook);
+      compound.putString("Name", name);
+      return compound;
+   }
+
+   public void loadFrom(CompoundTag compound) {
+      if (compound.contains("ID", 8)) { id = new ResourceLocation(CustomNpcs.MODID, NoppesUtilServer.validPath(compound.getString("ID"))); }
+      else { id = new ResourceLocation(NoppesUtilServer.validLocation(compound.getString("Id"))); }
+      group = compound.getString("Group");
+      width = compound.getInt("Width");
+      height = compound.getInt("Height");
+      ingredients = NBTTags.getIngredientList(compound.getList("Materials", 10));
+      isSimple = ingredients.stream().allMatch(Ingredient::isSimple);
+      result = compound.contains("Item", 10) ? ItemStack.of(compound.getCompound("Item")) : ItemStack.EMPTY;
+      availability.load(compound.getCompound("Availability"));
+      ignoreDamage = compound.getBoolean("IgnoreDamage");
+      ignoreNBT = compound.getBoolean("IgnoreNBT");
+      isGlobal = compound.getBoolean("Global");
+      isKnown = compound.getBoolean("IsKnown");
+      isShaped = compound.getBoolean("IsShaped");
+      showInRecipeBook = compound.getBoolean("ShowInRecipeBook");
+      name = compound.getString("Name");
+   }
+
+   private boolean checkMatch(CraftingContainer inventoryCrafting, int x, int y, boolean isRevers) {
+      for(int i = 0; i < 4; ++i) {
+         for(int j = 0; j < 4; ++j) {
+            int u = i - x;
+            int v = j - y;
+            Ingredient ingredient = Ingredient.EMPTY;
+            if (u >= 0 && v >= 0 && u < width && v < height) {
+               if (isRevers) { ingredient = ingredients.get(width - u - 1 + v * width); }
+               else { ingredient = ingredients.get(u + v * width); }
+            }
+            ItemStack stack = inventoryCrafting.getItem(i + j * inventoryCrafting.getWidth());
+            if (!stack.isEmpty() && ingredient.getItems().length == 0) { return false; }
+            if (!stack.isEmpty() || ingredient.getItems().length != 0) {
+               ItemStack var9 = ingredient.getItems()[0];
+               if ((!stack.isEmpty() || !var9.isEmpty()) && !NoppesUtilPlayer.compareItems(var9, stack, ignoreDamage, ignoreNBT)) { return false; }
+            }
+         }
+      }
+      return true;
+   }
+
+   public void copy(RecipeCarpentry recipe) {
+      availability = recipe.availability;
+      isGlobal = recipe.isGlobal;
+      isKnown = recipe.isKnown;
+      showInRecipeBook = recipe.showInRecipeBook;
+      ignoreDamage = recipe.ignoreDamage;
+      ignoreNBT = recipe.ignoreNBT;
+   }
+
+   public ItemStack getCraftingItem(int slotId) {
+      if (slotId >= ingredients.size()) { return ItemStack.EMPTY; }
+      for (ItemStack stack : ingredients.get(slotId).getItems()) {
+         if (!stack.isEmpty()) { return stack; }
+      }
+      return ItemStack.EMPTY;
+   }
+
+   @Override
+   public boolean isValid() {
+      if (name.isEmpty() || ingredients.isEmpty() || getResult().isEmpty()) { return false; }
+      return !isRecipeItemsEmpty();
+   }
+
+   @Override
+   public WrapperRecipe getWrapperRecipe() {
+      wrapper.parent = this;
+      wrapper.isShaped = isShaped;
+      wrapper.isGlobal = isGlobal;
+      wrapper.isKnown = isKnown;
+      wrapper.ignoreDamage = ignoreDamage;
+      wrapper.ignoreNBT = ignoreNBT;
+      wrapper.id = id;
+      wrapper.width = width;
+      wrapper.height = height;
+      wrapper.group = Component.literal(getGroup());
+      wrapper.product = result.copy();
+      wrapper.availability.load(availability.save(new CompoundTag()));
+
+      wrapper.ingredients.clear();
+      int pos = 0;
+      for (Ingredient ingr : new ArrayList<>(ingredients)) {
+         ItemStack[] items = ingr.getItems();
+         ItemStack[] array = new ItemStack[items.length];
+         for (int j = 0; j < items.length; j++) {
+            array[j] = items[j].copy();
+         }
+         wrapper.ingredients.put(pos, array);
+         pos ++;
+      }
+      return wrapper;
+   }
+
+   public void setGroup(@Nonnull String newGroup) { group = newGroup; }
+
+   public void setId(@Nonnull ResourceLocation newId) { id = newId; }
 
 }

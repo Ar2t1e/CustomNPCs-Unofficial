@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -39,6 +40,27 @@ public class Packets {
 
    // New Unofficial (BetaZavr)
    private static final Map<Object, Long> delaySendMap = new HashMap<>();
+   private static final List<Class<? extends PacketBasic>> ignoredDebug = new ArrayList<>();
+   static {
+      ignoredDebug.add(SPacketPlayerMousePressed.class);
+      ignoredDebug.add(SPacketPlayerKeyPressed.class);
+      ignoredDebug.add(SPacketPlayerSound.class);
+      ignoredDebug.add(SPacketPlayerIsMoved.class);
+      ignoredDebug.add(SPacketPlayerScreen.class);
+      ignoredDebug.add(SPacketScriptConsole.class);
+      ignoredDebug.add(SPacketScriptText.class);
+      ignoredDebug.add(SPacketGetMovingPath.class);
+      ignoredDebug.add(SPacketNpcRarityTitleGet.class);
+
+      ignoredDebug.add(PacketScriptConsole.class);
+      ignoredDebug.add(PacketScriptText.class);
+      ignoredDebug.add(PacketSyncUpdate.class);
+      ignoredDebug.add(PacketEyeBlink.class);
+      ignoredDebug.add(PacketMenuSave.class);
+      ignoredDebug.add(PacketNpcNavigation.class);
+      ignoredDebug.add(PacketNpcTarget.class);
+      ignoredDebug.add(PacketNpcRarityTitleSet.class);
+   }
 
    public static void register() {
       totalIndex = 0;
@@ -82,8 +104,6 @@ public class Packets {
       register(PacketNpcRotationUpdate.class);
 
       // New Unofficial (Goodbird)
-      register(PacketSyncRecipeUpdate.class);
-      register(PacketSyncRecipeRemove.class);
       register(PacketUpdatePhysics.class);
       register(PacketOverlayShow.class);
       register(PacketOverlayHide.class);
@@ -207,10 +227,12 @@ public class Packets {
       register(SPacketQuestDialogTitles.class);
       register(SPacketQuestOpen.class);
       register(SPacketQuestRemove.class);
-      register(SPacketRecipeGet.class);
-      register(SPacketRecipeRemove.class);
+      register(SPacketRecipeGroupSave.class);
+      register(SPacketRecipeGroupRename.class);
+      register(SPacketRecipeGroupRemove.class);
       register(SPacketRecipeSave.class);
-      register(SPacketRecipesGet.class);
+      register(SPacketRecipeRename.class);
+      register(SPacketRecipeRemove.class);
       register(SPacketRemoteFreeze.class);
       register(SPacketRemoteMenuOpen.class);
       register(SPacketRemoteNpcDelete.class);
@@ -344,7 +366,6 @@ public class Packets {
       register(SPacketGetFirstID.class);
       register(SPacketMailsGet.class);
       register(SPacketMailsSave.class);
-      register(SPacketRecipeRemoveGroup.class);
       register(SPacketDetectHeldItem.class);
       register(SPacketItemChange.class);
       register(SPacketDeadLootsGet.class);
@@ -436,15 +457,10 @@ public class Packets {
 
    // New from Unofficial (BetaZavr)
    private static <MSG> void logged(MSG msg) {
-      String name = msg.getClass().getSimpleName();
-      if (!name.equals("SPacketPlayerMousePressed") && !name.equals("SPacketPlayerKeyPressed") && !name.equals("SPacketPlayerSound") &&
-              !name.equals("SPacketPlayerIsMoved") && !name.equals("SPacketPlayerScreen") && !name.equals("PacketScriptConsole") &&
-              !name.equals("PacketScriptText") && !name.equals("SPacketScriptConsole") && !name.equals("SPacketScriptText") &&
-              !name.equals("PacketSyncUpdate") && !name.equals("PacketEyeBlink") && !name.equals("SPacketGetMovingPath") && !name.equals("PacketMenuSave") &&
-              !name.equals("PacketNpcNavigation") && !name.equals("PacketNpcTarget")) {
+      if (!ignoredDebug.contains(msg.getClass())) {
          StringBuilder message = new StringBuilder(("" + Util.instance.getSide()).replace("DEDICATED_", ""));
          message.append(" send packet: ")
-                 .append(name)
+                 .append(msg.getClass().getSimpleName())
                  .append("; Channel ID:").append(((PacketBasic) msg).getChannelId());
          String line = Thread.currentThread().getStackTrace()[3].toString();
          if (line.contains("noppes.npcs")) { line = line.substring(line.indexOf("noppes.npcs")); }

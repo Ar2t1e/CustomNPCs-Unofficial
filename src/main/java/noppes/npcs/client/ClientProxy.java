@@ -9,22 +9,29 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.Unpooled;
+import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.particle.Particle;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
@@ -32,6 +39,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.RecipeBook;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.entity.LivingEntity;
@@ -39,6 +47,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -56,6 +66,7 @@ import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.client.IMinecraft;
 import noppes.npcs.api.event.ClientEvent;
 import noppes.npcs.api.handler.data.IKeySetting;
+import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.api.item.IItemScripted;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.client.WrapperMinecraft;
@@ -87,10 +98,7 @@ import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.config.CustomNpcsGuiFactory;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.containers.ContainerCustomGui;
-import noppes.npcs.controllers.ArmorersWorkshopHelper;
-import noppes.npcs.controllers.KeyController;
-import noppes.npcs.controllers.PixelmonHelper;
-import noppes.npcs.controllers.QuestController;
+import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.KeyConfig;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerScriptData;
@@ -101,6 +109,7 @@ import noppes.npcs.entity.data.DataAnimation;
 import noppes.npcs.items.custom.CustomBow;
 import noppes.npcs.items.custom.CustomFishingRod;
 import noppes.npcs.items.custom.CustomShield;
+import noppes.npcs.mixin.client.IClientRecipeBookMixin;
 import noppes.npcs.mixin.client.IKeyMappingMixin;
 import noppes.npcs.potions.PotionData;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
@@ -591,6 +600,58 @@ public class ClientProxy extends CommonProxy {
       else { MusicController.Instance.stopSound(new ResourceLocation(NoppesUtilServer.validLocation(sound)), source); }
    }
 
+   @Override
    public @Nullable Level overworld() { return Minecraft.getInstance().level; }
+
+   @Override
+   public RecipeManager getRecipeManager() {
+      if (CustomNpcs.Server != null) {
+         return CustomNpcs.Server.getRecipeManager();
+      } else if (Minecraft.getInstance().level != null) {
+         return Minecraft.getInstance().level.getRecipeManager();
+      }
+      return null;
+   }
+
+   @Override
+   public void syncRecipeManager() {
+      super.syncRecipeManager();
+      LocalPlayer player =  (LocalPlayer) getPlayer();
+      if (player != null) { syncRecipe(player.getRecipeBook()); }
+   }
+
+   @Override
+   protected void syncRecipe(RecipeBook book) {
+      super.syncRecipe(book);
+      Player player = getPlayer();
+      if (player != null) {
+         ClientRecipeBook cBook = (ClientRecipeBook) book;
+         Map<RecipeBookCategories, List<RecipeCollection>> collectionsByTab = new HashMap<>(((IClientRecipeBookMixin) cBook).getCollectionsByTab());
+         List<RecipeCollection> allCollections = new ArrayList<>(cBook.getCollections());
+         RegistryAccess registryAccess = player.level().registryAccess();
+         RecipeController rData = RecipeController.getInstance();
+         for (int i = 0; i < 2; i++) {
+            boolean isGlobal = i == 0;
+            List<RecipeCollection> list = new ArrayList<>();
+            for (String group : rData.getGroups(isGlobal)) {
+               List<Recipe<?>> recipes = new ArrayList<>();
+               for (INpcRecipe recipe : isGlobal ? rData.getGlobalRecipes(group) : rData.getAnvilRecipes(group)) {
+                  if (recipe.isValid()) { recipes.add((Recipe<?>) recipe); }
+               }
+               if (!recipes.isEmpty()) {
+                  RecipeCollection recipeCollection = new RecipeCollection(registryAccess, recipes);
+                  recipeCollection.updateKnownRecipes(book);
+                  list.add(recipeCollection);
+               }
+            }
+            collectionsByTab.put(isGlobal ? RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY : RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
+         }
+         LogWriter.info("[DEBUG] allCollections "+allCollections.size());
+         LogWriter.info("[DEBUG] GLOBAL "+collectionsByTab.get(RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY));
+         LogWriter.info("[DEBUG] ANVIL "+collectionsByTab.get(RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY));
+         ((IClientRecipeBookMixin) cBook).setCollectionsByTab(ImmutableMap.copyOf(collectionsByTab));
+         ((IClientRecipeBookMixin) cBook).setAllCollections(ImmutableList.copyOf(allCollections));
+      }
+   }
 
 }

@@ -87,8 +87,7 @@ public class SyncController {
 
    // New from Unofficial (BetaZavr)
    private static void syncAllRecipes(ServerPlayer player) {
-      RecipeController.instance.checkRecipeBook(player);
-      RecipeController.instance.sendTo(player);
+      RecipeController.getInstance().sendTo(player);
       player.awardRecipes(RecipeController.instance.getKnownRecipes());
    }
 

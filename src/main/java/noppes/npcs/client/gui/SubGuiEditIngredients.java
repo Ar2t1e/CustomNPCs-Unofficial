@@ -3,7 +3,6 @@ package noppes.npcs.client.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
-import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.client.gui.util.GuiTooltipUtils;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
@@ -13,8 +12,8 @@ import java.util.Arrays;
 
 public class SubGuiEditIngredients extends GuiBasic {
 
-    protected final int id;
     protected int hover;
+    public final int id;
     public final ItemStack[] stacks;
 
     public SubGuiEditIngredients(int idIn, ItemStack[] itemStacks) {

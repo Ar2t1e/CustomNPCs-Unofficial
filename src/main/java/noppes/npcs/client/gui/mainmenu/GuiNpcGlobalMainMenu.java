@@ -96,7 +96,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
          case 11: NoppesUtil.requestOpenGUI(EnumGuiType.ManageQuests); break;
          case 12: NoppesUtil.requestOpenGUI(EnumGuiType.ManageTransport, new BlockPos(-1, -1, 0)); break;
          case 13: NoppesUtil.openGUI(player, new GuiNpcManagePlayerData(npc)); break;
-         case 14: NoppesUtil.requestOpenGUI(EnumGuiType.ManageRecipes, new BlockPos(3, 0, 0)); break;
+         case 14: NoppesUtil.requestOpenGUI(EnumGuiType.ManageRecipes, BlockPos.ZERO); break;
          case 15: NoppesUtil.openGUI(player, new GuiNpcNaturalSpawns(npc)); break;
          case 16: NoppesUtil.requestOpenGUI(EnumGuiType.ManageLinked); break;
          case 17: NoppesUtil.openGUI(player, new GuiNpcManageMarkets(npc)); break;

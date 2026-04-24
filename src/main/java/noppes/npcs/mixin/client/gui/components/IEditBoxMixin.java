@@ -41,6 +41,6 @@ public interface IEditBoxMixin {
 
     @Accessor String getSuggestion();
 
-    @Invoker
-    int invokeGetMaxLength();
+    @Invoker int invokeGetMaxLength();
+
 }

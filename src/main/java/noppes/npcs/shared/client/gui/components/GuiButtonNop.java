@@ -28,6 +28,7 @@ import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class GuiButtonNop extends Button implements IComponentGui {
@@ -378,7 +379,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
    public Component[] getVariants() { return display; }
 
    @Override
-   public GuiButtonNop setHoverTexts(Object... components) {
+   public GuiButtonNop setHoverTexts(@Nullable Object... components) {
       hoverText.clear();
       if (components == null) { return this; }
       noppes.npcs.util.Util.instance.putHovers(hoverText, components);

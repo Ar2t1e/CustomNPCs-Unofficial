@@ -14,6 +14,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.RecipeCarpentry;
@@ -29,14 +30,14 @@ public class GuiRecipes extends GuiNPCInterface {
    protected GuiLabel label;
    protected GuiButtonNop left;
    protected GuiButtonNop right;
-   protected final List<Recipe<?>> recipes = new ArrayList<>();
+   protected final List<INpcRecipe> recipes = new ArrayList<>();
 
    public GuiRecipes() {
       super();
       imageHeight = 182;
       imageWidth = 256;
       setBackground("recipes.png");
-      recipes.addAll(RecipeController.getInstance().getAnvilRecipes().values());
+      recipes.addAll(RecipeController.getInstance().getAllAnvilRecipes());
    }
 
    public void init() {
@@ -80,21 +81,21 @@ public class GuiRecipes extends GuiNPCInterface {
          if (index >= recipes.size()) {
             break;
          }
-         irecipe = recipes.get(index);
+         irecipe = (Recipe<?>) recipes.get(index);
          if (!irecipe.getResultItem(player.level().registryAccess()).isEmpty()) {
             x = guiLeft + 5 + i / 2 * 126;
             y = guiTop + 15 + i % 2 * 76;
             drawItem(graphics, irecipe.getResultItem(player.level().registryAccess()), x + 98, y + 28);
             if (irecipe instanceof RecipeCarpentry recipe) {
-               x += (72 - recipe.getRecipeWidth() * 18) / 2;
-               y += (72 - recipe.getRecipeHeight() * 18) / 2;
-               for(int j = 0; j < recipe.getRecipeWidth(); ++j) {
-                  for(int k = 0; k < recipe.getRecipeHeight(); ++k) {
+               x += (72 - recipe.getWidth() * 18) / 2;
+               y += (72 - recipe.getHeight() * 18) / 2;
+               for(int j = 0; j < recipe.getWidth(); ++j) {
+                  for(int k = 0; k < recipe.getHeight(); ++k) {
                      RenderSystem.setShader(GameRenderer::getPositionTexShader);
                      RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                      RenderSystem.setShaderTexture(0, resource);
                      graphics.blit(resource, x + j * 18, y + k * 18, 0, 0, 18, 18);
-                     item = recipe.getCraftingItem(j + k * recipe.getRecipeWidth());
+                     item = recipe.getCraftingItem(j + k * recipe.getWidth());
                      if (!item.isEmpty()) {
                         drawItem(graphics, item, x + j * 18 + 1, y + k * 18 + 1);
                      }
@@ -108,17 +109,17 @@ public class GuiRecipes extends GuiNPCInterface {
          if (index >= recipes.size()) {
             break;
          }
-         irecipe = recipes.get(index);
+         irecipe = (Recipe<?>) recipes.get(index);
          if (irecipe instanceof RecipeCarpentry recipe) {
             if (!recipe.getResultItem(player.level().registryAccess()).isEmpty()) {
                x = guiLeft + 5 + i / 2 * 126;
                y = guiTop + 15 + i % 2 * 76;
                drawOverlay(graphics, recipe.getResultItem(player.level().registryAccess()), x + 98, y + 22, xMouse, yMouse);
-               x += (72 - recipe.getRecipeWidth() * 18) / 2;
-               y += (72 - recipe.getRecipeHeight() * 18) / 2;
-               for(int j = 0; j < recipe.getRecipeWidth(); ++j) {
-                  for(int k = 0; k < recipe.getRecipeHeight(); ++k) {
-                     item = recipe.getCraftingItem(j + k * recipe.getRecipeWidth());
+               x += (72 - recipe.getWidth() * 18) / 2;
+               y += (72 - recipe.getHeight() * 18) / 2;
+               for(int j = 0; j < recipe.getWidth(); ++j) {
+                  for(int k = 0; k < recipe.getHeight(); ++k) {
+                     item = recipe.getCraftingItem(j + k * recipe.getWidth());
                      if (!item.isEmpty()) {
                         drawOverlay(graphics, item, x + j * 18 + 1, y + k * 18 + 1, xMouse, yMouse);
                      }

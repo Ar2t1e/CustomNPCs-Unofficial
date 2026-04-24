@@ -1,5 +1,6 @@
 package noppes.npcs.packets.client;
 
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 import net.minecraft.client.Minecraft;
@@ -143,21 +144,23 @@ public class PacketSync extends PacketBasic {
             break;
          } // dialog gui settings
          case 11: {
-            ListTag list = data.getList("Data", 10);
-            for(int i = 0; i < list.size(); ++i) {
-               RecipeCarpentry recipe = RecipeCarpentry.load(list.getCompound(i));
-               RecipeController.getInstance().syncRecipes.put(recipe.getId(), recipe);
+            RecipeController rData = RecipeController.getInstance();
+            if (syncEnd) { rData.reloadGlobalRecipes(); }
+            else {
+               RecipeCarpentry recipe = RecipeCarpentry.create(data);
+               if (!rData.syncRecipes.containsKey(recipe.getGroup())) { rData.syncRecipes.put(recipe.getGroup(), new ArrayList<>()); }
+               rData.syncRecipes.get(recipe.getGroup()).add(recipe);
             }
-            if (syncEnd) { RecipeController.getInstance().reloadGlobalRecipes(); }
             break;
          } // global recipes
          case 12: {
-            ListTag list = data.getList("Data", 10);
-            for(int i = 0; i < list.size(); ++i) {
-               RecipeCarpentry recipe = RecipeCarpentry.load(list.getCompound(i));
-               RecipeController.getInstance().syncRecipes.put(recipe.getId(), recipe);
+            RecipeController rData = RecipeController.getInstance();
+            if (syncEnd) { rData.reloadAnvilRecipes(); }
+            else {
+               RecipeCarpentry recipe = RecipeCarpentry.create(data);
+               if (!rData.syncRecipes.containsKey(recipe.getGroup())) { rData.syncRecipes.put(recipe.getGroup(), new ArrayList<>()); }
+               rData.syncRecipes.get(recipe.getGroup()).add(recipe);
             }
-            if (syncEnd) { RecipeController.getInstance().reloadAnvilRecipes(); }
             break;
          } // mod recipes
          case 13: {
@@ -179,6 +182,10 @@ public class PacketSync extends PacketBasic {
             CustomNpcs.proxy.updateKeys();
             break;
          } // custom keys
+         case 18: {
+            CustomNpcs.proxy.syncRecipeManager();
+            break;
+         } // synchronized recipes
       }
       CustomNpcs.debugData.end("Packets");
    }

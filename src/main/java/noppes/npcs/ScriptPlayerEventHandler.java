@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -839,17 +840,14 @@ public class ScriptPlayerEventHandler {
    @SuppressWarnings("unused")
    public void cnpcTestingEvent(LivingEvent.LivingJumpEvent event) {
       if (!CustomNpcs.VerboseDebug || !(event.getEntity() instanceof Player player)) { return; }
-      if (player instanceof ServerPlayer serverPlayer) {
-         try {
-            test();
-         }
-         catch (Exception e) { LogWriter.error("Client test error", e); }
-      } // Client tests:
+      try { test(player); } catch (Exception e) { LogWriter.error("Client test error", e); }
    }
 
    @SuppressWarnings("unused")
    public static void test(Object ... objects) {
-
+      Minecraft mc = Minecraft.getInstance();
+      if (objects != null && objects.length > 0) {
+         if (objects[0] instanceof Player player) {
       /*
       // Found texts
       java.io.File dir = new java.io.File("D:/1.20.1/customnpcs/src/main/java");
@@ -934,6 +932,8 @@ public class ScriptPlayerEventHandler {
          }
       }
       /**/
+         }
+      }
    }
 
 }

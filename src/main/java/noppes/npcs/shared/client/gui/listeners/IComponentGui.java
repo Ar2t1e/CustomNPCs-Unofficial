@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.client.ClientProxy;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 // Change from Unofficial (BetaZavr)
@@ -23,7 +24,7 @@ public interface IComponentGui {
 
    void moveTo(int addX, int addY);
 
-   IComponentGui setHoverTexts(Object... components);
+   IComponentGui setHoverTexts(@Nullable Object... components);
 
    IComponentGui setIsEnabled(boolean isEnabled);
 

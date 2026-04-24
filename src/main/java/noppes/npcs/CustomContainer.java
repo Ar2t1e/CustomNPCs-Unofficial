@@ -67,10 +67,7 @@ public class CustomContainer {
          event.getForgeRegistry().register(CustomNpcs.MODID + ":container_itemgiver", container_itemgiver = createContainer((containerId, inv, buffer) -> new ContainerNpcItemGiver(containerId, inv, buffer.readInt())));
 
          // New Unofficial (Goodbird)
-         event.getForgeRegistry().register(CustomNpcs.MODID + ":container_managerecipes", container_managerecipes = createContainer((containerId, inv, buffer) -> {
-            buffer.readInt(); // npc id
-            return new ContainerManageRecipes(containerId, inv, buffer.readBlockPos().getX());
-         }));
+         event.getForgeRegistry().register(CustomNpcs.MODID + ":container_managerecipes", container_managerecipes = createContainer((containerId, inv, buffer) -> new ContainerManageRecipes(containerId, inv)));
 
          // New from Unofficial (BetaZavr)
          event.getForgeRegistry().register(CustomNpcs.MODID + ":container_questtypeitem", container_questtypeitem = createContainer((containerId, inv, buffer) -> new ContainerNpcQuestTypeItem(containerId, inv, buffer.readInt())));

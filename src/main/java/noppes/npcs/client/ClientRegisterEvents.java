@@ -1,6 +1,7 @@
 package noppes.npcs.client;
 
 import com.google.common.collect.ImmutableList;
+import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -35,7 +36,8 @@ public class ClientRegisterEvents {
 
     @SubscribeEvent
     public static void cnpcsRegisterRecipe(RegisterRecipeBookCategoriesEvent event) {
-        event.registerAggregateCategory(RecipeController.CRAFTING_CUSTOM_NPC, RecipeController.CRAFTING_MOD_CATEGORIES);
+        event.registerBookCategories(RecipeController.CRAFTING_CUSTOM_GLOBAL, RecipeBookCategories.CRAFTING_CATEGORIES);
+        event.registerBookCategories(RecipeController.CRAFTING_CUSTOM_ANVIL, RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORIES);
     }
 
     @OnlyIn(Dist.CLIENT)

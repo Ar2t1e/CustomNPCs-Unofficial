@@ -1,6 +1,5 @@
 package noppes.npcs.containers;
 
-import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,7 +17,6 @@ import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.mixin.world.inventory.ISlotMixin;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
 // net.minecraft.world.inventory.InventoryMenu
 public class ContainerCarpentryBench extends RecipeBookMenu<CraftingContainer> {
@@ -69,16 +67,8 @@ public class ContainerCarpentryBench extends RecipeBookMenu<CraftingContainer> {
       //CraftingMenu.slotChangedCraftingGrid(this, owner.level(), owner, craftSlots, resultSlots);
       if (!owner.level().isClientSide() && owner instanceof ServerPlayer player) {
          ItemStack itemstack = ItemStack.EMPTY;
-         /*Optional<CraftingRecipe> optional = owner.level().getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftSlots, owner.level());
-         if (optional.isPresent()) {
-            CraftingRecipe craftingrecipe = optional.get();
-            if (resultSlots.setRecipeUsed(owner.level(), player, craftingrecipe)) {
-               ItemStack itemstack1 = craftingrecipe.assemble(craftSlots, owner.level().registryAccess());
-               if (itemstack1.isItemEnabled(owner.level().enabledFeatures())) { itemstack = itemstack1; }
-            }
-         }*/
-         RecipeCarpentry recipe = RecipeController.getInstance().findMatchingRecipe(craftSlots);
-         if (recipe != null && recipe.availability.isAvailable(owner)) {
+         RecipeCarpentry recipe = RecipeController.getInstance().findMatchingAnvilRecipe(craftSlots, owner);
+         if (recipe != null) {
             itemstack = recipe.assemble(craftSlots, owner.level().registryAccess());
          }
          resultSlots.setItem(RESULT_SLOT, itemstack);
@@ -174,14 +164,10 @@ public class ContainerCarpentryBench extends RecipeBookMenu<CraftingContainer> {
    public int getSize() { return 17; }
 
    @Override
-   public @Nonnull RecipeBookType getRecipeBookType() { return RecipeBookType.CRAFTING; }
+   public @Nonnull RecipeBookType getRecipeBookType() { return RecipeController.CRAFTING_CUSTOM_ANVIL; }
 
    @Override
    public boolean shouldMoveToInventory(int slotIn) { return slotIn != getResultSlotIndex(); }
 
-   @Override
-   public @Nonnull List<RecipeBookCategories> getRecipeBookCategories() {
-      return RecipeController.getInstance().getCategories(false);
-   }
 
 }
