@@ -417,7 +417,7 @@ public class NpcShapelessRecipes extends ShapelessRecipes implements INpcRecipe,
 	}
 
 	@Override
-	public void setRecipeOutput(ItemStack item) {
+	public void setResult(ItemStack item) {
 		if (item == null || item.isEmpty()) { return; }
 		recipeOutput = item.copy();
 	}

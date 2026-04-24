@@ -1,5 +1,6 @@
 package noppes.npcs.api.wrapper;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -7,188 +8,179 @@ import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.crafting.IShapedRecipe;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.controllers.data.Availability;
+import noppes.npcs.controllers.data.RecipeCarpentry;
 
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 public class WrapperRecipe {
 
-    public boolean global = true;
-    public boolean known = false;
+    public final @Nonnull Map<Integer, ItemStack[]> ingredients = new TreeMap<>(); // -> ItemStack[].length == 0 ... 16 max (not null)
+    public final @Nonnull Availability availability = new Availability();
+    public @Nonnull ResourceLocation id = new ResourceLocation(CustomNpcs.MODID, "");
+    public @Nonnull ItemStack product;
+    public boolean isGlobal = true;
+    public boolean isKnown = false;
     public boolean ignoreDamage = false;
     public boolean ignoreNBT = false;
     public boolean isShaped = true;
-    public boolean main = false;
-    public ResourceLocation id = null;
     public int width = 3;
     public int height = 3;
-    public String group = "";
-    public String name = "";
-    public String domen = "minecraft";
-    // recipeItems -> ItemStack[].length == 0 ... 16 max (not null)
-    public final Map<Integer, ItemStack[]> recipeItems = new TreeMap<>();
-    public ItemStack product = new ItemStack(Blocks.COBBLESTONE);
-    public final Availability availability = new Availability();
+    public Component group = Component.empty();
     public IRecipe parent = null;
 
-    public WrapperRecipe() {
-        recipeItems.clear();
-        recipeItems.put(0, new ItemStack[] { new ItemStack(Blocks.COBBLESTONE) });
+    public WrapperRecipe(@Nonnull ItemStack productIn) {
+        product = productIn.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : productIn;
+        ingredients.clear();
+        ingredients.put(0, new ItemStack[] { new ItemStack(Blocks.COBBLESTONE) });
     }
 
     public void clear() {
-        known = false;
+        isKnown = false;
         ignoreDamage = false;
         ignoreNBT = false;
         isShaped = true;
-        id = null;
+        id = new ResourceLocation(CustomNpcs.MODID, "");
         width = 3;
         height = 3;
-        group = "";
-        name = "";
-        recipeItems.clear();
-        recipeItems.put(0, new ItemStack[]{ new ItemStack(Blocks.COBBLESTONE) });
+        group = Component.empty();
+        ingredients.clear();
+        ingredients.put(0, new ItemStack[]{ new ItemStack(Blocks.COBBLESTONE) });
         product = new ItemStack(Blocks.COBBLESTONE);
         availability.clear();
-        main = false;
     }
 
     public NBTTagCompound getNbt() {
         NBTTagCompound compound = new NBTTagCompound();
-        if (id != null) { compound.setString("ID", id.toString()); }
+        compound.setString("Id", id.toString());
+        compound.setString("Name", id.getResourcePath());
+        compound.setString("Group", group.getString());
         compound.setInteger("Width", width);
         compound.setInteger("Height", height);
-        if (product != null) { compound.setTag("Item", product.writeToNBT(new NBTTagCompound())); }
-        // NBTTags.nbtIngredientList(recipeItems)
-        NBTTagList nbttaglist = new NBTTagList();
-        for (int slot = 0; slot < (global ? 9 : 16); slot++) {
-            NBTTagCompound nbttagcompound = new NBTTagCompound();
-            nbttagcompound.setByte("Slot", (byte) slot);
-            NBTTagList ingredients = new NBTTagList();
-            if (recipeItems.get(slot) != null) {
-                for (ItemStack ing : recipeItems.get(slot)) {
-                    ingredients.appendTag(ing.writeToNBT(new NBTTagCompound()));
-                }
+        compound.setTag("Item", product.writeToNBT(new NBTTagCompound()));
+        NBTTagList list = new NBTTagList();
+        for (int slot = 0; slot < (isGlobal ? 9 : 16); slot++) {
+            NBTTagCompound nbt = new NBTTagCompound();
+            nbt.setByte("Slot", (byte) slot);
+            NBTTagList ings = new NBTTagList();
+            if (ingredients.get(slot) != null) {
+                for (ItemStack ing : ingredients.get(slot)) { ings.appendTag(ing.writeToNBT(new NBTTagCompound())); }
             }
-            nbttagcompound.setTag("Ingredients", ingredients);
-            nbttaglist.appendTag(nbttagcompound);
+            nbt.setTag("Ingredients", ings);
+            list.appendTag(nbt);
         }
-
-        compound.setTag("Materials", nbttaglist);
+        compound.setTag("Materials", list);
         compound.setTag("Availability", availability.save(new NBTTagCompound()));
-        compound.setString("Name", name);
-        compound.setString("Domen", domen);
-        compound.setBoolean("Global", global);
+        compound.setBoolean("Global", isGlobal);
         compound.setBoolean("IgnoreDamage", ignoreDamage);
         compound.setBoolean("IgnoreNBT", ignoreNBT);
-        compound.setString("Group", group);
-        compound.setBoolean("IsKnown", known);
+        compound.setBoolean("IsKnown", isKnown);
         compound.setBoolean("IsShaped", isShaped);
+        compound.setBoolean("ShowInRecipeBook", true);
         return compound;
     }
 
-    public boolean isValid() {
-        boolean hasStack = false;
-        for (ItemStack[] array : recipeItems.values()) {
+    public boolean isValid(boolean ignoreIngredients) {
+        if (id.getResourcePath().isEmpty() || !id.getResourceDomain().equals(CustomNpcs.MODID) ||
+                !group.getString().isEmpty() || ingredients.isEmpty() || product.isEmpty()) { return false; }
+        if (ignoreIngredients) { return true; }
+        for (ItemStack[] array : new ArrayList<>(ingredients.values())) {
             if (array == null) { continue; }
             for (ItemStack stack : array) {
-                if (stack != null && !stack.isEmpty()) {
-                    hasStack = true;
-                    break;
-                }
+                if (stack != null && !stack.isEmpty()) { return true; }
             }
-            if (hasStack) { break; }
         }
-        return hasStack && (domen.equals("minecraft") || !group.isEmpty() && !name.isEmpty());
+        return false;
     }
 
     public void copyFrom(WrapperRecipe wrapper) {
-        global = wrapper.global;
-        known = wrapper.known;
+        isGlobal = wrapper.isGlobal;
+        isKnown = wrapper.isKnown;
         ignoreDamage = wrapper.ignoreDamage;
         ignoreNBT = wrapper.ignoreNBT;
         isShaped = wrapper.isShaped;
-        main = wrapper.main;
         id = wrapper.id;
         width = wrapper.width;
         height = wrapper.height;
         group = wrapper.group;
-        name = wrapper.name;
-        domen = wrapper.domen;
-        recipeItems.clear();
-        recipeItems.putAll(wrapper.recipeItems);
+        ingredients.clear();
+        ingredients.putAll(wrapper.ingredients);
         product = wrapper.product;
         availability.load(wrapper.availability.save(new NBTTagCompound()));
         parent = wrapper.parent;
     }
 
-    public void copyFrom(IRecipe recipe, ResourceLocation recipeId) {
-        if (recipe instanceof INpcRecipe) {
-            copyFrom(((INpcRecipe) recipe).getWrapperRecipe());
-            id = recipeId;
+    public void copyFrom(EntityPlayer player, IRecipe recipe) {
+        if (recipe instanceof RecipeCarpentry) {
+            copyFrom(((RecipeCarpentry) recipe).getWrapperRecipe());
             return;
         }
         clear();
-        ResourceLocation location = recipe.getRegistryName();
-        if (location == null) { location = new ResourceLocation("default"); }
         parent = recipe;
-        global = true;
-        known = false;
+        isGlobal = true;
+        isKnown = false;
         ignoreDamage = false;
         ignoreNBT = false;
-        isShaped = recipe instanceof ShapedRecipes;
-        main = true;
-        id = recipeId;
-
+        id = Objects.requireNonNull(recipe.getRegistryName());
         int pos = 0;
-        NonNullList<Ingredient> ingredients = recipe.getIngredients();
-        if (recipe instanceof IShapedRecipe) {
-            width = ((IShapedRecipe) recipe).getRecipeWidth();
-            height = ((IShapedRecipe) recipe).getRecipeHeight();
+        NonNullList<Ingredient> ings = recipe.getIngredients();
+        if (recipe instanceof ShapedRecipes) {
+            isShaped = true;
+            width = ((ShapedRecipes) recipe).getRecipeWidth();
+            height = ((ShapedRecipes) recipe).getRecipeHeight();
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     int index = y * width + x;
-                    ItemStack[] rawMatchingStacks = ingredients.get(index).getMatchingStacks();
-                    ItemStack[] array = new ItemStack[rawMatchingStacks.length];
-                    for (int j = 0; j < rawMatchingStacks.length; j++) {
-                        array[j] = rawMatchingStacks[j].copy();
+                    ItemStack[] items = ings.get(index).getMatchingStacks();
+                    ItemStack[] array = new ItemStack[items.length];
+                    for (int j = 0; j < items.length; j++) {
+                        array[j] = items[j].copy();
                     }
                     int slotIndex = y * 3 + x;
-                    recipeItems.put(slotIndex, array);
+                    ings.add(slotIndex, Ingredient.fromStacks(array));
                 }
             }
-            for (int i = 0; i < 9; i++) {
-                if (recipeItems.containsKey(i)) { continue; }
-                recipeItems.put(i, new ItemStack[0]);
-            }
-        } else {
-            for (Ingredient ingr : ingredients) {
-                ItemStack[] rawMatchingStacks = ingr.getMatchingStacks();
-                ItemStack[] array = new ItemStack[rawMatchingStacks.length];
-                for (int j = 0; j < rawMatchingStacks.length; j++) {
-                    array[j] = rawMatchingStacks[j].copy();
+            for (int slotIndex = 0; slotIndex < 9; slotIndex++) {
+                if (slotIndex < ings.size()) {
+                    ings.add(slotIndex, Ingredient.fromStacks(ItemStack.EMPTY));
                 }
-                recipeItems.put(pos, array);
+            }
+        }
+        else {
+            isShaped = false;
+            int size = ings.size();
+            width = size / 2;
+            height = size - width;
+            for (Ingredient ingr : ings) {
+                ItemStack[] items = ingr.getMatchingStacks();
+                ItemStack[] array = new ItemStack[items.length];
+                for (int j = 0; j < items.length; j++) {
+                    array[j] = items[j].copy();
+                }
+                ingredients.put(pos, array);
                 pos ++;
             }
         }
-        width = 3;
-        height = 3;
-        group = TextFormatting.GRAY + recipe.getGroup();
-        name = TextFormatting.GRAY + location.getResourcePath();
+        group = Component.literal(recipe.getGroup().isEmpty() ? id.getResourceDomain() : recipe.getGroup()).withStyle(TextFormatting.GRAY);
         product = recipe.getRecipeOutput();
         availability.clear();
-        if (product != null && !product.isEmpty() && product.getItem().getRegistryName() != null) {
-            domen = product.getItem().getRegistryName().getResourceDomain();
-        }
     }
 
-    public String getName() { return name; }
+    public Component getName() {
+        Component name = Component.literal(id.getResourcePath());
+        if (!id.getResourceDomain().equals(CustomNpcs.MODID)) { name = name.withStyle(TextFormatting.GRAY); }
+        return name;
+    }
 
 }

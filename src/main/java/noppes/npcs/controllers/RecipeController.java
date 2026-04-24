@@ -277,14 +277,14 @@ public class RecipeController implements IRecipeHandler {
 		recipe = addRecipe("Mob Cloner Edit", "Carrot", CustomItems.cloner, true, true, true, "XX ", "XY ", " Y ", 'X', Items.CARROT, 'Y', Items.STICK);
 		recipe.getAvailability().setGMOnly(true);
 
-		ItemStack[] ingK = {new ItemStack(Items.DYE, 1, 15)};
+		ItemStack[] ingK = {new ItemStack(Items.DYE, 1, 15)}; // white
 		// Soul Stone (known, shapeless, only night)
 		recipe = addRecipe("Soul Stone Empty", "Empty", true, false, true, new ItemStack(CustomItems.soulstoneEmpty), new ItemStack[][]{{new ItemStack(Items.DIAMOND)}, {new ItemStack(Items.GLOWSTONE_DUST)}, {new ItemStack(Items.REDSTONE)}, ingK});
 		recipe.getAvailability().setDaytime(1);
 
 		// Mod
 		ItemStack[] ingR = {new ItemStack(Items.IRON_INGOT)};
-		ItemStack[] ingL = {new ItemStack(Items.DYE, 3, 4)};
+		ItemStack[] ingL = {new ItemStack(Items.DYE, 3, 4)}; // lapis
 		// Npc MailBox metallic (not known, is shaped)
 		addRecipe("Npc MailBox Blue", "Metallic", false, true, false, new ItemStack(CustomBlocks.mailbox, 1, 0),
 				new ItemStack[][] {
@@ -459,7 +459,7 @@ public class RecipeController implements IRecipeHandler {
 			for (INpcRecipe npcRecipe : map.get(recipe.getNpcGroup())) {
 				ItemStack cms = mainStack.copy();
 				cms.setCount(((IRecipe) npcRecipe).getRecipeOutput().getCount());
-				npcRecipe.setRecipeOutput(cms);
+				npcRecipe.setResult(cms);
 			}
 		}
 		// add new

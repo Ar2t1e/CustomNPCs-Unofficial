@@ -14,8 +14,8 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ServerRecipeBookHelper;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.handler.data.INpcRecipe;
-import noppes.npcs.client.util.NPCRecipeItemHelper;
-import noppes.npcs.controllers.data.Availability;
+import noppes.npcs.controllers.data.RecipeCarpentry;
+import noppes.npcs.util.CustomStackedContents;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,18 +23,19 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
-@Mixin(value = ServerRecipeBookHelper.class, remap = false, priority = 499)
+@Mixin(value = ServerRecipeBookHelper.class, remap = false, priority = 498)
 public class ServerRecipeBookHelperMixin {
 
     // (LOGGER) field_194330_a
     @Final
     @Shadow(aliases = "field_194331_b")
-    private RecipeItemHelper recipeItemHelper = new NPCRecipeItemHelper();
+    private RecipeItemHelper recipeItemHelper = new CustomStackedContents();
     @Shadow(aliases = "field_194332_c")
     private EntityPlayerMP player;
     @Shadow(aliases = "field_194333_d")
@@ -48,10 +49,8 @@ public class ServerRecipeBookHelperMixin {
     @Shadow(aliases = "field_194337_h")
     private List<Slot> slots;
 
-    @Unique
-    private boolean npcs$ignoreDamage = false;
-    @Unique
-    private boolean npcs$ignoreNBT = false;
+    @Unique private boolean npcs$ignoreDamage = false;
+    @Unique private boolean npcs$ignoreNBT = false;
 
     /**
      * NetHandlerPlayServer.func_194308_a(CPacketPlaceRecipe cPacket) {} -> here:
@@ -65,45 +64,43 @@ public class ServerRecipeBookHelperMixin {
      */
     @Inject(method = "func_194327_a", at = @At("HEAD"), cancellable = true)
     public void npcs$processCraftRecipe(EntityPlayerMP playerMP, @Nullable IRecipe iRecipe, boolean shiftPressed, CallbackInfo ci) {
-        ci.cancel();
-        if (iRecipe == null || !playerMP.getRecipeBook().isUnlocked(iRecipe)) { return; }
-        player = playerMP;
-        recipe = iRecipe;
-        isShiftPressed = shiftPressed;
-        slots = playerMP.openContainer.inventorySlots;
-        Container container = playerMP.openContainer;
-        invCraftResult = null;
-        invCrafting = null;
-        if (container instanceof ContainerWorkbench) {
-            invCraftResult = ((ContainerWorkbench)container).craftResult;
-            invCrafting = ((ContainerWorkbench)container).craftMatrix;
+        if (recipe instanceof RecipeCarpentry && playerMP.getRecipeBook().isUnlocked(iRecipe)) {
+            ci.cancel();
+            IServerRecipeBookHelperMixin mixin = (IServerRecipeBookHelperMixin) this;
+            RecipeCarpentry npcRecipe = (RecipeCarpentry) recipe;
+            npcs$ignoreDamage = npcRecipe.getIgnoreDamage();
+            npcs$ignoreNBT = npcRecipe.getIgnoreNBT();
+            player = playerMP;
+            recipe = iRecipe;
+            isShiftPressed = shiftPressed;
+            slots = playerMP.openContainer.inventorySlots;
+            Container container = playerMP.openContainer;
+            invCraftResult = null;
+            invCrafting = null;
+            if (container instanceof ContainerWorkbench) {
+                invCraftResult = ((ContainerWorkbench)container).craftResult;
+                invCrafting = ((ContainerWorkbench)container).craftMatrix;
+            }
+            else if (container instanceof ContainerPlayer) {
+                invCraftResult = ((ContainerPlayer)container).craftResult;
+                invCrafting = ((ContainerPlayer)container).craftMatrix;
+            }
+            else if (container instanceof IRecipeContainer) {
+                invCraftResult = ((IRecipeContainer)container).getCraftResult();
+                invCrafting = ((IRecipeContainer)container).getCraftMatrix();
+            }
+            if (invCraftResult == null && invCrafting == null || !(npcs$canPlaceStacks() || playerMP.isCreative())) { return; }
+            recipeItemHelper.clear();
+            playerMP.inventory.fillStackedContents(recipeItemHelper, false);
+            invCrafting.fillStackedContents(recipeItemHelper);
+            // Checking the availability of a crafting recipe for a player
+            if (npcRecipe.availability.isAvailable(player) && recipeItemHelper.canCraft(iRecipe, null)) { npcs$placeRecipeInCraftingGrid(); }
+            else {
+                mixin.invokeClearGrid();
+                playerMP.connection.sendPacket(new SPacketPlaceGhostRecipe(playerMP.openContainer.windowId, iRecipe));
+            }
+            playerMP.inventory.markDirty();
         }
-        else if (container instanceof ContainerPlayer) {
-            invCraftResult = ((ContainerPlayer)container).craftResult;
-            invCrafting = ((ContainerPlayer)container).craftMatrix;
-        }
-        else if (container instanceof IRecipeContainer) {
-            invCraftResult = ((IRecipeContainer)container).getCraftResult();
-            invCrafting = ((IRecipeContainer)container).getCraftMatrix();
-        }
-        boolean isAvailability = true;
-        if (recipe instanceof INpcRecipe) {
-            npcs$ignoreDamage = ((INpcRecipe) recipe).getIgnoreDamage();
-            npcs$ignoreNBT = ((INpcRecipe) recipe).getIgnoreNBT();
-            Availability availability = (Availability) ((INpcRecipe) recipe).getAvailability();
-            isAvailability = availability.isAvailable(player);
-        }
-        if (invCraftResult == null && invCrafting == null || !(npcs$canPlaceStacks() || playerMP.isCreative())) { return; }
-        recipeItemHelper.clear();
-        playerMP.inventory.fillStackedContents(recipeItemHelper, false);
-        invCrafting.fillStackedContents(recipeItemHelper);
-
-        if (isAvailability && recipeItemHelper.canCraft(iRecipe, null)) { npcs$placeRecipeInCraftingGrid(); }
-        else {
-            npcs$clearInventoryCrafting();
-            playerMP.connection.sendPacket(new SPacketPlaceGhostRecipe(playerMP.openContainer.windowId, iRecipe));
-        }
-        playerMP.inventory.markDirty();
     }
 
     // parent: func_194326_a()
@@ -155,7 +152,7 @@ public class ServerRecipeBookHelperMixin {
         if (!recipeItemHelper.canCraft(recipe, listOfItemIDs, minCraftableStacks)) { return; }
         int craftableCount = minCraftableStacks;
         for (int itemID : listOfItemIDs) {
-            int maxStack = NPCRecipeItemHelper.unpack(itemID).getMaxStackSize();
+            int maxStack = CustomStackedContents.unpack(itemID).getMaxStackSize();
             if (maxStack < craftableCount) {
                 craftableCount = maxStack;
             }
@@ -202,7 +199,7 @@ public class ServerRecipeBookHelperMixin {
                     break;
                 }
                 Slot slot = slots.get(slotID);
-                ItemStack itemstack = NPCRecipeItemHelper.unpack(iterator.next());
+                ItemStack itemstack = CustomStackedContents.unpack(iterator.next());
                 if (!itemstack.isEmpty()) {
                     int count = 1;
                     if (recipe instanceof INpcRecipe) {
@@ -249,8 +246,8 @@ public class ServerRecipeBookHelperMixin {
     }
 
     // parent: func_194328_c()
-    @Unique
-    private boolean npcs$canPlaceStacks() {
+    @Inject(method = "func_194328_c", at = @At("HEAD"))
+    private void npcs$canPlaceStacks(CallbackInfoReturnable<Boolean> cir) {
         InventoryPlayer inventoryplayer = player.inventory;
         if (recipe instanceof INpcRecipe) {
             int stackLimit = inventoryplayer.getInventoryStackLimit();

@@ -140,7 +140,8 @@ public class NpcShapedRecipes extends ShapedRecipes implements INpcRecipe, IReci
                     newIngredient.add(map.getOrDefault(slotIndex, Ingredient.EMPTY));
 				}
 			}
-		} else {
+		}
+		else {
 			maxW = recipeWidth;
 			maxH = recipeHeight;
 		}
@@ -166,7 +167,7 @@ public class NpcShapedRecipes extends ShapedRecipes implements INpcRecipe, IReci
 	public String name;
 
 	public boolean savesRecipe;
-	private final WrapperRecipe wrapper = new WrapperRecipe();
+	private final WrapperRecipe wrapper;
 
 	public NpcShapedRecipes(String group, String name, boolean isGlobal, NonNullList<Ingredient> ingredients, ItemStack result) {
 		super(Util.instance.getResourceName(group), isGlobal ? 3 : 4, isGlobal ? 3 : 4, ingredients, result);
@@ -444,7 +445,7 @@ public class NpcShapedRecipes extends ShapedRecipes implements INpcRecipe, IReci
 	}
 
 	@Override
-	public void setRecipeOutput(ItemStack item) {
+	public void setResult(ItemStack item) {
 		if (item == null || item.isEmpty()) { return; }
 		recipeOutput = item.copy();
 	}

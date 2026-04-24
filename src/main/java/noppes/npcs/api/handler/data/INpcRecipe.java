@@ -10,47 +10,65 @@ import noppes.npcs.api.wrapper.WrapperRecipe;
 @SuppressWarnings("all")
 public interface INpcRecipe {
 
-	void copy(@ParamName("recipe") INpcRecipe recipe);
+	String getName();
 
-	void delete();
+	boolean isGlobal();
 
-	boolean equal(@ParamName("recipe") INpcRecipe recipe);
-
-	IAvailability getAvailability();
-
-	int getHeightRecipe();
-
-	ResourceLocation getId();
-
-	boolean getIgnoreDamage();
+	@SuppressWarnings("unused")
+	void setIsGlobal(@ParamName("bo") boolean bo);
 
 	boolean getIgnoreNBT();
 
-	String getName();
+	void setIgnoreNBT(@ParamName("bo") boolean bo);
+
+	boolean getIgnoreDamage();
+
+	void setIgnoreDamage(@ParamName("bo") boolean bo);
+
+	int getWidth();
+
+	int getHeight();
+
+	IItemStack getResult();
+
+	IItemStack[][] getRecipe();
+
+	@SuppressWarnings("unused")
+	void saves(@ParamName("bo") boolean bo);
+
+	@SuppressWarnings("unused")
+	boolean saves();
+
+	void save();
+
+	void delete();
+
+	boolean isShaped();
+
+	@SuppressWarnings("unused")
+	void setIsShaped(boolean isShapedIn);
+
+	// New from Unofficial (BetaZavr)
+	boolean isValid();
+
+	boolean isKnown();
+
+	@SuppressWarnings("unused")
+	void setIsKnown(boolean isKnown);
+
+	@SuppressWarnings("unused")
+	boolean showInRecipeBook();
+
+	@SuppressWarnings("unused")
+	void setShowInRecipeBook(boolean showInRecipeBook);
+
+	IAvailability getAvailability();
+
+	ResourceLocation getMCId();
 
 	INbt getNbt();
 
 	String getNpcGroup();
-
-	IItemStack getProduct();
-
-	IItemStack[][] getRecipe();
-
-	int getWidthRecipe();
-
-	boolean isGlobal();
-
-	boolean isKnown();
-
-	boolean isShaped();
-
-	boolean isValid();
-
-	void setIgnoreDamage(@ParamName("ignoreDamage") boolean ignoreDamage);
-
-	void setIgnoreNBT(@ParamName("ignoreNBT") boolean ignoreNBT);
-
-	void setKnown(@ParamName("known") boolean known);
 
 	void setNbt(@ParamName("nbt") INbt nbt);
 
@@ -58,10 +76,6 @@ public interface INpcRecipe {
 
 	WrapperRecipe getWrapperRecipe();
 
-    boolean isMain();
-
-	boolean isChanged();
-
-    void setRecipeOutput(@ParamName("item") ItemStack item);
+    void setResult(@ParamName("item") ItemStack item);
 
 }

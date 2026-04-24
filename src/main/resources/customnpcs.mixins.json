@@ -42,6 +42,7 @@
     "tileentity.TileEntityMixin",
     "util.DamageSourceMixin",
     "util.EnumParticleTypesMixin",
+    "util.IServerRecipeBookHelperMixin",
     "util.ISoundEventMixin",
     "util.ServerRecipeBookHelperMixin",
     "util.text.ITextFormattingMixin",
