@@ -13,6 +13,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.client.gui.GuiNpcDimension;
 import noppes.npcs.client.gui.global.GuiNpcManageQuest;
+import noppes.npcs.client.gui.global.GuiNpcManageRecipes;
 import noppes.npcs.client.gui.global.GuiPermissionsEdit;
 import noppes.npcs.config.ConfigLoader;
 import noppes.npcs.controllers.*;
@@ -184,6 +185,10 @@ public class PacketSync extends PacketBasic {
          } // custom keys
          case 18: {
             CustomNpcs.proxy.syncRecipeManager();
+            if (mc.screen instanceof GuiNpcManageRecipes gui) {
+               gui.resetData();
+               gui.init();
+            }
             break;
          } // synchronized recipes
       }

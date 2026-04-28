@@ -37,6 +37,7 @@ import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,6 @@ public class GuiNpcManageRecipes
    public void init() {
       super.init();
       if (minecraft == null) { minecraft = Minecraft.getInstance(); }
-      wait = false;
       boolean isModRecipe = recipe.id.getNamespace().equals(CustomNpcs.MODID);
       if (onlyCustomNpc && !isModRecipe) { recipe.clear(); }
       if (recipe.group.getString().isEmpty() && !data.get(recipe.isGlobal).isEmpty()) {
@@ -101,7 +101,10 @@ public class GuiNpcManageRecipes
       if (groups == null) { groups = addScroll(0).setSize(120, 168); }
       if (recipes == null) { recipes = addScroll(1).setSize(120, 168); }
       List<Component> recipesList = new ArrayList<>();
-      List<Component> groupsList = new ArrayList<>(data.get(recipe.isGlobal).keySet());
+      List<Component> groupsList = new ArrayList<>();
+      for (Component groupName : data.get(recipe.isGlobal).keySet()) {
+         if (groupName.getStyle().getColor() == null || !onlyCustomNpc) { groupsList.add(groupName); }
+      }
       LinkedHashMap<Integer, List<Component>> htsG = new LinkedHashMap<>();
       int i = 0;
       for (Component group : groupsList) {
@@ -183,7 +186,7 @@ public class GuiNpcManageRecipes
               .setUnsortedList(recipesList)
               .setHoverTexts(htsR));
       if (!recipe.id.getPath().isEmpty()) { recipes.setSelected(recipe.id.getPath()); }
-      int x = guiLeft + 118;
+      int x = guiLeft + 119;
       int y = guiTop + 191;
       // Global type
       addButton(0, guiLeft + 6, y, true, recipe.isGlobal ? 0 : 1, "menu.global", "block.customnpcs.npccarpentybench")
@@ -193,9 +196,10 @@ public class GuiNpcManageRecipes
               new Color(0x4000FF00).getRGB() :
               new Color(0x400000FF).getRGB();
       // Only mod list
+      boolean isValid = recipe.isValid();
       if (recipe.isGlobal) {
          addCheckBox(30, guiLeft + 7, guiTop + 97, "gui.recipe.type.true", "gui.recipe.type.false", onlyCustomNpc)
-                 .setSize(95, 12);
+                 .setSize(isValid ? 111 : 163, 12);
       }
       // Groups
       addButton(1, guiLeft + 172, y, "gui.add")
@@ -216,7 +220,6 @@ public class GuiNpcManageRecipes
               .setHoverTexts("recipe.hover.del.recipe");
       // Recipe settings
       if (isModRecipe) {
-         boolean isValid = recipe.isValid(false);
          y = guiTop + 4;
          addLabel(2, guiLeft + 6, y + 5, "availability.options");
          addButton(8, x, y, "selectServer.edit")
@@ -263,36 +266,28 @@ public class GuiNpcManageRecipes
               .setDefBack(false)
               .setIsAnim(true)
               .setUV(220, 96, 36, 36)
-              .setIsEnabled(isModRecipe && recipe.isValid(true))
               .setStacks(recipe.product)
               .setHoverTexts(hover)
-              .layerColor = recipe.product.isEmpty() ? red : 0;
+              .layerColor = !isValid ? red : 0;
       // Craft grid
-      // set buttons
+      // set buttons / recipe
       int s = recipe.isGlobal ? 3 : 4;
+      GuiButtonNop button;
       for (int h = 0; h < s; ++h) {
          for (int w = 0; w < s; ++w) {
             int id = 11 + w + h * s;
-            addButton(id, guiLeft + craftOffset + w * 19 + 7, guiTop + craftOffset + h * 19 + 20, "")
+            button = addButton(id, guiLeft + craftOffset + w * 19 + 7, guiTop + craftOffset + h * 19 + 20, "")
                     .setSize(18, 18)
                     .setTexture(GuiBasic.ANIMATION_BUTTONS)
                     .setDefBack(false)
                     .setIsAnim(true)
                     .setUV(220, 96, 36, 36)
-                    .setIsEnabled(isModRecipe && recipe.isValid(true))
-                    .setStacks(recipe.product)
-                    .setHoverTexts(hover)
-                    .layerColor = isModRecipe ? recipe.isValid(false) ? green : red : 0;
-         }
-      }
-      // set recipe
-      for (int w = 0; w < recipe.width; ++w) {
-         for (int h = 0; h < recipe.height; ++h) {
-            int id = 11 + h * recipe.height + w;
-            int slotID = h * recipe.width + w;
-            ItemStack[] stacks = recipe.ingredients.get(slotID);
-            getButton(id).setStacks(stacks)
-                    .layerColor = isModRecipe ? recipe.isValid(false) ? (stacks != null && stacks.length > 0) ? 0 : green : red : 0;
+                    .setIsEnabled(isModRecipe)
+                    .setHoverTexts(hover);
+            if (!recipe.isShaped || w < recipe.width && h < recipe.height) {
+               int slotId = recipe.isShaped ? h * recipe.width + w : id - 11;
+               if (recipe.ingredients.containsKey(slotId)) { button.setStacks(recipe.ingredients.get(slotId)); }
+            }
          }
       }
       // Clear
@@ -302,21 +297,23 @@ public class GuiNpcManageRecipes
               .setDefBack(false)
               .setIsAnim(true)
               .setUV(120, 0, 24, 24)
-              .setIsEnabled(isModRecipe && recipe.isValid(true))
-              .setStacks(recipe.product)
+              .setIsEnabled(isModRecipe && isValid)
               .setHoverTexts(hover)
               .layerColor = recipe.product.isEmpty() ? red : 0;
    }
 
    @Override
    public boolean mouseButtonEvent(GuiButtonNop button, int mouseButton) {
-      ItemStack heldStack = player.inventoryMenu.getCarried();
+      if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+LogWriter.info("[DEBUG] buttonID: "+button.id+"; mouseButton: "+mouseButton);
+      ItemStack heldStack = menu.getCarried().copy();
       boolean isModRecipe = recipe.id.getNamespace().equals(CustomNpcs.MODID);
       int id = button.id;
       switch (mouseButton) {
          case 1: {
             if (id >= 10 && id < 27) {
                if (id == 10) {
+                  if (!isModRecipe) { return false; }
                   if (heldStack.isEmpty()) {
                      recipe.product.setCount(Math.max(1, recipe.product.getCount() - 1));
                   } // -1
@@ -329,7 +326,7 @@ public class GuiNpcManageRecipes
                   int pos = id - 11;
                   ItemStack[] array = recipe.ingredients.get(pos);
                   if (heldStack.isEmpty() && array != null && array.length > 0) {
-                     int p = button.currentStackID;
+                     int p = button.renderStackId;
                      int count = Math.max(0, array[p].getCount() - 1);
                      if (count > 0) { array[p].setCount(count); }
                      else {
@@ -362,26 +359,22 @@ public class GuiNpcManageRecipes
                         }
                      }
                   } // +N
-                  if (isModRecipe) {
-                     button.layerColor = recipe.isValid(true) ? array != null && array.length > 0 ? 0 : green : red;
-                  }
                } // ingredient
                return true;
             }
             break;
          } // RMB
          case 2: {
-            if (heldStack.isEmpty()) {
-               ItemStack stack = button.currentStack.copy();
-               stack.setCount(stack.getMaxStackSize());
-               player.inventoryMenu.setCarried(stack);
+            ItemStack stack = button.renderStack.copy();
+            if (heldStack.isEmpty() || NoppesUtilPlayer.compareItems(stack, heldStack, recipe.ignoreDamage, recipe. ignoreNBT)) {
+               if (Screen.hasControlDown()) { stack.setCount(stack.getMaxStackSize()); }
                Packets.sendServer(new SPacketDetectHeldItem(stack));
                return true;
             } // copy
             break;
          } // CMB
          default: {
-            if (id >= 10 && id < 27 && isModRecipe) {
+            if (id >= 10 && id < 27) {
                if (id == 10) {
                   if (Screen.hasAltDown()) { recipe.product.setCount(1); }
                   else {
@@ -389,7 +382,10 @@ public class GuiNpcManageRecipes
                      else if (NoppesUtilPlayer.compareItems(recipe.product, heldStack, false, false)) { // +N
                         recipe.product.setCount(Math.min(recipe.product.getMaxStackSize(), recipe.product.getCount() + heldStack.getCount()));
                      }
-                     else { recipe.product = heldStack.copy(); } // replace
+                     else {
+                        Packets.sendServer(new SPacketDetectHeldItem(recipe.product));
+                        recipe.product = heldStack.copy();
+                     } // replace
                      button.setStacks(recipe.product);
                   }
                   if (recipe.product.isEmpty()) { button.layerColor = red; }
@@ -428,8 +424,8 @@ public class GuiNpcManageRecipes
                      }
                   } // try to add new
                   else if (Screen.hasAltDown()) {
-                     if (button.currentStackID < array.length) {
-                        array[button.currentStackID].setCount(1);
+                     if (button.renderStackId < array.length) {
+                        array[button.renderStackId].setCount(1);
                         button.setStacks(array);
                         recipe.ingredients.put(pos, array);
                      }
@@ -449,7 +445,7 @@ public class GuiNpcManageRecipes
                   } // install at least something
                   else {
                      if (heldStack.isEmpty()) {
-                        int p = button.currentStackID;
+                        int p = button.renderStackId;
                         int count = Math.max(0, array[p].getCount() - 1);
                         if (count > 0) { array[p].setCount(count); }
                         else {
@@ -476,14 +472,13 @@ public class GuiNpcManageRecipes
                            }
                         }
                         if (!found) {
-                           array[button.currentStackID] = heldStack.copy();
+                           array[button.renderStackId] = heldStack.copy();
                            button.setStacks(array);
-                           button.setCurrentStackPos(button.currentStackID);
+                           button.setCurrentStackPos(button.renderStackId);
                         }
                      } // +N
                      recipe.ingredients.put(pos, array);
                   } // +/- count? and set display found stack
-                  button.layerColor = recipe.isValid(true) ? array != null && array.length > 0 ? 0 : green : red;
                } // ingredient
                return true;
             }
@@ -598,7 +593,7 @@ public class GuiNpcManageRecipes
          for (int i = 11; i < 27; i++) {
             GuiButtonNop button = getButton(i);
             if (button != null && button.isVisible() && button.isHovered()) {
-               if (button.currentStack.isEmpty()) { button.setHoverTexts((Object) null); }
+               if (button.renderStack.isEmpty()) { button.setHoverTexts((Object) null); }
                else {
                   MutableComponent hover = Component.translatable("recipe.hover.ingredients", "" + (i - 11));
                   if (recipe.id.getNamespace().equals(CustomNpcs.MODID)) {
@@ -607,7 +602,7 @@ public class GuiNpcManageRecipes
                      hover.append(Component.translatable("recipe.hover.ingredient.2"));
                   }
                   hover.append(Component.translatable("recipe.hover.ingredient.3"));
-                  for (Component line : button.currentStack.getTooltipLines(player,
+                  for (Component line : button.renderStack.getTooltipLines(player,
                           minecraft.options.advancedItemTooltips ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL)) { hover.append("<br>").append(line); }
                   button.setHoverTexts(hover);
                }
@@ -657,7 +652,7 @@ public class GuiNpcManageRecipes
    @Override
    public void save() {
       GuiTextFieldNop.unfocus();
-      if (recipe.isValid(false) &&
+      if (recipe.isValid() &&
               recipe.parent instanceof INpcRecipe &&
               recipe.id.getNamespace().equals(CustomNpcs.MODID)) {
          Packets.sendServer(new SPacketRecipeSave(recipe.getNbt()));
@@ -679,15 +674,7 @@ public class GuiNpcManageRecipes
             if (!list.isEmpty()) { stacks = list.toArray(stacks); }
          }
          GuiButtonNop button = getButton(11 + gui.id);
-         if (button != null) {
-            button.setStacks(stacks)
-                    .setCurrentStackPos(0);
-            if (stacks.length == 0) {
-               button.layerColor = recipe.isValid(true) ?
-                       new Color(0xFF70F070).getRGB() :
-                       new Color(0xFFF07070).getRGB();
-            }
-         }
+         if (button != null) { button.setStacks(stacks).setCurrentStackPos(0); }
          recipe.ingredients.put(gui.id, stacks);
       } // set new stacks to ingredient
       else if (subgui instanceof SubGuiEditText gui && !gui.cancelled) {
@@ -741,7 +728,8 @@ public class GuiNpcManageRecipes
       }
    }
 
-   protected void resetData() {
+   public void resetData() {
+      wait = false;
       data.clear();
       if (player != null) {
          player.level().getRecipeManager().getRecipes().forEach(r -> {
@@ -757,7 +745,7 @@ public class GuiNpcManageRecipes
          });
          data.replaceAll((key, map) -> map.entrySet().stream()
                  .sorted(Map.Entry.comparingByKey(
-                         Comparator.<Component, Boolean>comparing(c -> c.getStyle().getColor() == null)
+                         Comparator.<Component, Boolean>comparing(c -> c.getStyle().getColor() != null)
                                  .thenComparing(Component::getString, String.CASE_INSENSITIVE_ORDER)
                  ))
                  .collect(Collectors.toMap(

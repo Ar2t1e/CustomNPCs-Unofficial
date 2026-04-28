@@ -70,20 +70,6 @@ public class GuiCheckBoxNop extends GuiButtonNop {
     public @Nonnull Component getMessage() { return selected ? trueLabel : falseLabel; }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        if (!listener.hasSubGui()) { onPress(); }
-    }
-
-    @Override
-    public void onPress() {
-        selected = !selected;
-        super.onPress();
-    }
-
-    @Override
-    protected boolean isValidClickButton(int mouseButton) { return mouseButton == 0; }
-
-    @Override
     public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         narrationElementOutput.add(NarratedElementType.TITLE, createNarrationMessage());
         if (!active) { return; }

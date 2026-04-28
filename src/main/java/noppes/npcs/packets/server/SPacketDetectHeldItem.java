@@ -31,11 +31,14 @@ public class SPacketDetectHeldItem extends PacketServerBasic {
     @Override
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
-        if (!stack.isEmpty()) {
-            player.inventoryMenu.setCarried(stack);
-            player.inventoryMenu.broadcastChanges();
-            player.connection.send(new ClientboundContainerSetSlotPacket(-1, 0, 0, stack));
-        }
+        player.containerMenu.setCarried(stack);
+        player.connection.send(new ClientboundContainerSetSlotPacket(
+                player.inventoryMenu.containerId,
+                player.inventoryMenu.getStateId(),
+                -1,
+                stack
+        ));
+        player.containerMenu.broadcastChanges();
         CustomNpcs.debugData.end("Packets");
     }
 

@@ -646,9 +646,6 @@ public class ClientProxy extends CommonProxy {
             }
             collectionsByTab.put(isGlobal ? RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY : RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
          }
-         LogWriter.info("[DEBUG] allCollections "+allCollections.size());
-         LogWriter.info("[DEBUG] GLOBAL "+collectionsByTab.get(RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY));
-         LogWriter.info("[DEBUG] ANVIL "+collectionsByTab.get(RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY));
          ((IClientRecipeBookMixin) cBook).setCollectionsByTab(ImmutableMap.copyOf(collectionsByTab));
          ((IClientRecipeBookMixin) cBook).setAllCollections(ImmutableList.copyOf(allCollections));
       }

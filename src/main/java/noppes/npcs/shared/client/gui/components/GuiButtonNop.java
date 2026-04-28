@@ -56,12 +56,12 @@ public class GuiButtonNop extends Button implements IComponentGui {
    protected static final double step = 60;
 
    protected ItemStack[] renderStacks = null;
+   public ItemStack renderStack = ItemStack.EMPTY;
+   public int renderStackId = -1;
    protected int ticks = 0;
    protected int wait = 0;
 
    public ResourceLocation texture = null;
-   public ItemStack renderStack = ItemStack.EMPTY;
-   public int renderStackID = -1;
    public int txrX = 0;
    public int txrY = 0;
    public int txrW = 200;
@@ -77,9 +77,6 @@ public class GuiButtonNop extends Button implements IComponentGui {
    public boolean isScissor = true;
 
    public boolean hasSound = true;
-   protected ItemStack[] itemStacks = null;
-   public ItemStack currentStack = ItemStack.EMPTY;
-   public int currentStackID = -1;
 
    public static void renderString(@Nonnull GuiGraphics graphics, @Nonnull Component message,
                                    int left, int top, int right, int bottom, int color, boolean showShadow,
@@ -266,12 +263,12 @@ public class GuiButtonNop extends Button implements IComponentGui {
 
       if (renderStacks != null && renderStacks.length != 0) {
          renderStack = renderStacks[0];
-         renderStackID = 0;
+         renderStackId = 0;
          if (renderStacks.length > 1) {
             if (wait > 0) { wait --; }
             else {
-               renderStackID = (int) Math.floor(((double) ticks % (step * (double) renderStacks.length - 1.0d)) / step);
-               renderStack = renderStacks[renderStackID];
+               renderStackId = (int) Math.floor(((double) ticks % (step * (double) renderStacks.length - 1.0d)) / step);
+               renderStack = renderStacks[renderStackId];
             }
          }
          if (renderStack != null && !renderStack.isEmpty()) {
@@ -424,7 +421,10 @@ public class GuiButtonNop extends Button implements IComponentGui {
    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
       if (active && visible) {
          if (clicked(mouseX, mouseY)) {
-            if (isValidClickButton(mouseButton) && display != null) { setDisplay((displayValue + 1) % display.length); }
+            if (isValidClickButton(mouseButton)) {
+               if (display != null) { setDisplay((displayValue + 1) % display.length); }
+               if (this instanceof GuiCheckBoxNop checkBox) { checkBox.selected = !checkBox.selected; }
+            }
             if (listener != null && !listener.hasSubGui() && listener.mouseButtonEvent(this, mouseButton) ) {
                playDownSound(Minecraft.getInstance().getSoundManager());
                return true;
@@ -495,7 +495,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
    public GuiButtonNop setStacks(ItemStack... stacks) {
       if (renderStacks != null && stacks != null) { wait = 160; }
       renderStacks = stacks;
-      renderStackID = renderStacks != null ? 0 : -1;
+      renderStackId = renderStacks != null ? 0 : -1;
       ticks = 0;
       return this;
    }
@@ -504,7 +504,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
 
    public GuiButtonNop setCurrentStackPos(int pos) {
       if (renderStacks != null && pos >= 0 && pos < renderStacks.length) {
-         renderStackID = pos;
+         renderStackId = pos;
          wait = 160;
          ticks = 0;
       }

@@ -60,6 +60,8 @@ public class Packets {
       ignoredDebug.add(PacketNpcNavigation.class);
       ignoredDebug.add(PacketNpcTarget.class);
       ignoredDebug.add(PacketNpcRarityTitleSet.class);
+      ignoredDebug.add(PacketSync.class);
+
    }
 
    public static void register() {

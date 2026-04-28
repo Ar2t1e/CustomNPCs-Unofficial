@@ -37,7 +37,7 @@ public class RecipesDefault {
               wight <= 3 && height <= 3, isShaped, ingredients, result);
       recipe.isKnown = isKnown;
       recipe.availability.clear();
-      if (name.equals("soul_stone")) { recipe.availability.setDaytime(1); }
+      if (name.equals("npc_soul_stone")) { recipe.availability.setDaytime(1); }
       else if (recipe.isGlobal) { recipe.availability.setGMOnly(true); }
       RecipeController.getInstance().addAndSaveRecipe(recipe);
    }
@@ -67,9 +67,9 @@ public class RecipesDefault {
          // soul stone
          stacks = new ItemStack[4][];
          stacks[0] = new ItemStack[] { new ItemStack(Items.DIAMOND) };
-         stacks[1] = new ItemStack[] { new ItemStack(Items.GLOWSTONE_DUST) };
-         stacks[2] = new ItemStack[] { new ItemStack(Items.REDSTONE) };
-         stacks[3] = new ItemStack[] { new ItemStack(Items.LAPIS_LAZULI) };
+         stacks[1] = new ItemStack[] { new ItemStack(Items.GLOWSTONE_DUST, 6) };
+         stacks[2] = new ItemStack[] { new ItemStack(Items.REDSTONE, 8) };
+         stacks[3] = new ItemStack[] { new ItemStack(Items.LAPIS_LAZULI, 2) };
          addRecipe("npc_soul_stone", "npc_soul_stone", new ItemStack(CustomItems.soulstoneEmpty), false, true, 2, 2, stacks);
          // metal mailbox
          stacks = new ItemStack[16][];

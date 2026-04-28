@@ -18,7 +18,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.util.RecipeMatcher;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.NoppesUtilPlayer;
@@ -31,7 +30,7 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.api.wrapper.gui.WrapperRecipe;
 import noppes.npcs.controllers.RecipeController;
-import noppes.npcs.util.CustomStackedContents;
+import noppes.npcs.util.CustomRecipeMatcher;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
@@ -58,7 +57,6 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
    protected boolean isShaped;
    protected boolean isKnown = false;
    protected boolean showInRecipeBook = true;
-   protected boolean isSimple;
 
    public RecipeCarpentry(@Nonnull ResourceLocation idIn, @Nonnull String groupIn, int widthIn, int heightIn, boolean isGlobalIn, boolean isShapedIn, @Nonnull NonNullList<Ingredient> recipeItemsIn, @Nonnull ItemStack resultIn) {
       id = idIn;
@@ -67,7 +65,6 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
       height = heightIn;
       ingredients = recipeItemsIn;
       result = resultIn;
-      isSimple = ingredients.stream().allMatch(Ingredient::isSimple);
 
       name = idIn.getPath();
       result = resultIn;
@@ -127,28 +124,23 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
    @Override
    public boolean matches(@Nonnull CraftingContainer inventoryCrafting, @Nullable Level world) {
       if (isShaped) {
-         for(int i = 0; i <= 4 - width; ++i) {
-            for(int j = 0; j <= 4 - height; ++j) {
-               if (checkMatch(inventoryCrafting, i, j, true)) { return true; }
-               if (checkMatch(inventoryCrafting, i, j, false)) { return true; }
+         for(int x = 0; x <= inventoryCrafting.getWidth() - width; ++x) {
+            for(int y = 0; y <= inventoryCrafting.getHeight() - height; ++y) {
+               if (checkMatch(inventoryCrafting, x, y, true)) { return true; }
+               if (checkMatch(inventoryCrafting, x, y, false)) { return true; }
             }
          }
          return false;
       }
-      CustomStackedContents stackedContents = new CustomStackedContents();
       List<ItemStack> inputs = new ArrayList<>();
-      int i = 0;
-      for(int j = 0; j < inventoryCrafting.getContainerSize(); ++j) {
-         ItemStack itemstack = inventoryCrafting.getItem(j);
-         if (!itemstack.isEmpty()) {
-            ++i;
-            if (isSimple) { stackedContents.accountStack(itemstack, -1); }
-            else { inputs.add(itemstack); }
+      for(int slotId = 0; slotId < inventoryCrafting.getContainerSize(); ++slotId) {
+         ItemStack stackInGrid = inventoryCrafting.getItem(slotId);
+         if (!stackInGrid.isEmpty()) {
+            inputs.add(stackInGrid);
          }
       }
-      return i == ingredients.size() && (isSimple ?
-              stackedContents.canCraft(this, null) :
-              RecipeMatcher.findMatches(inputs,  ingredients) != null);
+      return CustomRecipeMatcher.findMatches(inputs, ingredients.stream().filter(ing -> !ing.isEmpty()).toList(),
+              ignoreDamage, ignoreNBT) != null;
    }
 
    @Override
@@ -156,7 +148,10 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
 
    @Override
    public boolean canCraftInDimensions(int widthIn, int heightIn) {
-      return isShaped ? widthIn >= width && heightIn >= height : widthIn * heightIn >= ingredients.size();
+      if (isShaped) { return widthIn >= width && heightIn >= height; }
+      List<Ingredient> list = new ArrayList<>(ingredients);
+      list.removeIf(Ingredient::isEmpty);
+      return widthIn * heightIn >= list.size();
    }
 
    @Override
@@ -280,9 +275,11 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
 
    @Override
    public boolean isRecipeItemsEmpty() {
-      for (Ingredient ingredient : ingredients) {
-         for (ItemStack stack : ingredient.getItems()) {
-            if (!stack.isEmpty()) { return false; }
+      if (!ingredients.isEmpty()) {
+         for (Ingredient ingredient : ingredients) {
+            for (ItemStack stack : ingredient.getItems()) {
+               if (!stack.isEmpty()) { return false; }
+            }
          }
       }
       return true;
@@ -337,7 +334,6 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
       width = compound.getInt("Width");
       height = compound.getInt("Height");
       ingredients = NBTTags.getIngredientList(compound.getList("Materials", 10));
-      isSimple = ingredients.stream().allMatch(Ingredient::isSimple);
       result = compound.contains("Item", 10) ? ItemStack.of(compound.getCompound("Item")) : ItemStack.EMPTY;
       availability.load(compound.getCompound("Availability"));
       ignoreDamage = compound.getBoolean("IgnoreDamage");
@@ -350,8 +346,8 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
    }
 
    private boolean checkMatch(CraftingContainer inventoryCrafting, int x, int y, boolean isRevers) {
-      for(int i = 0; i < 4; ++i) {
-         for(int j = 0; j < 4; ++j) {
+      for(int i = 0; i < inventoryCrafting.getWidth(); ++i) {
+         for(int j = 0; j < inventoryCrafting.getHeight(); ++j) {
             int u = i - x;
             int v = j - y;
             Ingredient ingredient = Ingredient.EMPTY;
@@ -359,11 +355,13 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
                if (isRevers) { ingredient = ingredients.get(width - u - 1 + v * width); }
                else { ingredient = ingredients.get(u + v * width); }
             }
-            ItemStack stack = inventoryCrafting.getItem(i + j * inventoryCrafting.getWidth());
-            if (!stack.isEmpty() && ingredient.getItems().length == 0) { return false; }
-            if (!stack.isEmpty() || ingredient.getItems().length != 0) {
-               ItemStack var9 = ingredient.getItems()[0];
-               if ((!stack.isEmpty() || !var9.isEmpty()) && !NoppesUtilPlayer.compareItems(var9, stack, ignoreDamage, ignoreNBT)) { return false; }
+            ItemStack stackInGrid = inventoryCrafting.getItem(i + j * inventoryCrafting.getWidth());
+            if (!stackInGrid.isEmpty() && ingredient.getItems().length == 0) { return false; }
+            if (!stackInGrid.isEmpty() || ingredient.getItems().length != 0) {
+               ItemStack ingredientStack = ingredient.getItems()[0];
+               if ((!stackInGrid.isEmpty() || !ingredientStack.isEmpty()) &&
+                       !NoppesUtilPlayer.compareItems(ingredientStack, stackInGrid, ignoreDamage, ignoreNBT) &&
+                       ingredientStack.getCount() >= stackInGrid.getCount()) { return false; }
             }
          }
       }
@@ -389,8 +387,7 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
 
    @Override
    public boolean isValid() {
-      if (name.isEmpty() || ingredients.isEmpty() || getResult().isEmpty()) { return false; }
-      return !isRecipeItemsEmpty();
+      return !name.isEmpty() && !getResult().isEmpty() && !isRecipeItemsEmpty();
    }
 
    @Override

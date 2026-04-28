@@ -22,6 +22,7 @@ import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.mixin.world.item.crafting.IRecipeManagerMixin;
@@ -113,14 +114,22 @@ public class CommonProxy {
             for (int i = 0; i < 2; i++) {
                for (INpcRecipe npcRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
                   Recipe<?> recipe = (Recipe<?>) npcRecipe;
+
+
                   if (map.containsKey(recipe.getId())) {
                      if (!npcRecipe.isValid()) { map.remove(recipe.getId()); isChanged = true; }
+                     else { ((RecipeCarpentry) map.get(recipe.getId())).loadFrom(((RecipeCarpentry) npcRecipe).saveTo()); }
                   }
-                  else if (npcRecipe.isValid()) { map.put(recipe.getId(), recipe); isChanged = true; }
+                  else if (npcRecipe.isValid()) {
+                     map.put(recipe.getId(), recipe); isChanged = true;
+                  }
                   if (newByName.containsKey(recipe.getId())) {
                      if (!npcRecipe.isValid()) { newByName.remove(recipe.getId()); isChanged = true; }
+                     else { ((RecipeCarpentry) newByName.get(recipe.getId())).loadFrom(((RecipeCarpentry) npcRecipe).saveTo()); }
                   }
-                  else if (npcRecipe.isValid()) { newByName.put(recipe.getId(), recipe); isChanged = true; }
+                  else if (npcRecipe.isValid()) {
+                     newByName.put(recipe.getId(), recipe); isChanged = true;
+                  }
                }
             }
             newRecipes.put(entry.getKey(), map);

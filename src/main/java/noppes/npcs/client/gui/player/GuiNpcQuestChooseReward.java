@@ -52,7 +52,7 @@ public class GuiNpcQuestChooseReward extends GuiNPCInterface {
     public void buttonEvent(GuiButtonNop button) {
         ItemStack stack = ItemStack.EMPTY;
         if (button.id == 0) { onClose(); }
-        else { stack = button.currentStack; }
+        else { stack = button.renderStack; }
         Packets.sendServer(new SPacketQuestCompletionCheck(questId, stack));
     }
 

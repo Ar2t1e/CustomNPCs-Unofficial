@@ -3,6 +3,8 @@ package noppes.npcs;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.Objects;
+
 public class NoppesUtilPlayer {
 
    public static boolean compareItems(ItemStack item, ItemStack item2, boolean ignoreDamage, boolean ignoreNBT) {
@@ -13,9 +15,8 @@ public class NoppesUtilPlayer {
 
    private static boolean compareItemDetails(ItemStack item, ItemStack item2, boolean ignoreDamage, boolean ignoreNBT) {
       if (item.getItem() != item2.getItem()) { return false; }
-      else if (!ignoreDamage && item.getDamageValue() != -1 && item.getDamageValue() != item2.getDamageValue()) { return false; }
-      else if (!ignoreNBT && item.getTag() != null && (item2.getTag() == null || !item.getTag().equals(item2.getTag()))) { return false; }
-      return ignoreNBT || item2.getTag() == null || item.getTag() != null;
+      if (!ignoreDamage && item.getDamageValue() != item2.getDamageValue()) { return false; }
+      return ignoreNBT || Objects.equals(item.getTag(), item2.getTag());
    }
 
    public static boolean compareItems(Player player, ItemStack item, boolean ignoreDamage, boolean ignoreNBT) {

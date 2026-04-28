@@ -90,10 +90,11 @@ public class WrapperRecipe {
         return compound;
     }
 
-    public boolean isValid(boolean ignoreIngredients) {
+    public boolean isValid() {
         if (id.getPath().isEmpty() || !id.getNamespace().equals(CustomNpcs.MODID) ||
-                !group.getString().isEmpty() || ingredients.isEmpty() || product.isEmpty()) { return false; }
-        if (ignoreIngredients) { return true; }
+                group.getString().isEmpty() || ingredients.isEmpty() || product.isEmpty()) {
+            return false;
+        }
         for (ItemStack[] array : new ArrayList<>(ingredients.values())) {
             if (array == null) { continue; }
             for (ItemStack stack : array) {
