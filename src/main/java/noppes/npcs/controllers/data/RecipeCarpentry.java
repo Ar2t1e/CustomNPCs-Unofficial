@@ -12,19 +12,22 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.crafting.IRecipeContainer;
-import net.minecraftforge.common.util.RecipeMatcher;
 import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.registries.GameData;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.handler.data.IAvailability;
 import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.api.wrapper.WrapperRecipe;
 import noppes.npcs.controllers.RecipeController;
-import noppes.npcs.util.CustomStackedContents;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomRecipeMatcher;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
@@ -124,28 +127,20 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
     @Override
     public boolean matches(@Nonnull InventoryCrafting inventoryCrafting, @Nullable World world) {
         if (isShaped) {
-            for(int i = 0; i <= 4 - width; ++i) {
-                for(int j = 0; j <= 4 - height; ++j) {
-                    if (checkMatch(inventoryCrafting, i, j, true)) { return true; }
-                    if (checkMatch(inventoryCrafting, i, j, false)) { return true; }
+            for(int x = 0; x <= 4 - width; ++x) {
+                for(int y = 0; y <= 4 - height; ++y) {
+                    if (checkMatch(inventoryCrafting, x, y, true)) { return true; }
+                    if (checkMatch(inventoryCrafting, x, y, false)) { return true; }
                 }
             }
             return false;
         }
-        CustomStackedContents stackedContents = new CustomStackedContents();
         List<ItemStack> inputs = new ArrayList<>();
-        int i = 0;
-        for(int j = 0; j < inventoryCrafting.getSizeInventory(); ++j) {
-            ItemStack itemstack = inventoryCrafting.getStackInSlot(j);
-            if (!itemstack.isEmpty()) {
-                ++i;
-                if (isSimple) { stackedContents.accountStack(itemstack, -1); }
-                else { inputs.add(itemstack); }
-            }
+        for(int slotId = 0; slotId < inventoryCrafting.getSizeInventory(); ++slotId) {
+            ItemStack stackInGrid = inventoryCrafting.getStackInSlot(slotId);
+            if (!stackInGrid.isEmpty()) { inputs.add(stackInGrid); }
         }
-        return i == ingredients.size() && (isSimple ?
-                stackedContents.canCraft(this, null) :
-                RecipeMatcher.findMatches(inputs,  ingredients) != null);
+        return CustomRecipeMatcher.findMatches(inputs, ingredients, ignoreDamage, ignoreNBT) != null;
     }
 
     @Override
@@ -153,7 +148,12 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public boolean canFit(int widthIn, int heightIn) {
-        return isShaped ? widthIn >= width && heightIn >= height : widthIn * heightIn >= ingredients.size();
+        if (isShaped) { return widthIn >= width && heightIn >= height; }
+        int size = 0;
+        for (Ingredient ingredient : ingredients) {
+            if (ingredient.getMatchingStacks().length > 0) { size++; }
+        }
+        return widthIn * heightIn >= size;
     }
 
     @Override
@@ -226,6 +226,9 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
     public void setShowInRecipeBook(boolean showInRecipeBookIn) { showInRecipeBook = showInRecipeBookIn; }
 
     @Override
+    public IAvailability getAvailability() { return availability; }
+
+    @Override
     public IItemStack[][] getRecipe() {
         IItemStack[][] array = new IItemStack[ingredients.size()][];
         for (int i = 0; i < ingredients.size(); i++) {
@@ -252,6 +255,32 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public @Nonnull ResourceLocation getMCId() { return id; }
+
+    @Override
+    public INbt getNbt() { return new NBTWrapper(saveTo()); }
+
+    @Override
+    public String getNpcGroup() { return getGroup(); }
+
+    @Override
+    public void setNbt(INbt nbt) {
+        if (nbt != null) {
+            loadFrom(nbt.getMCNBT());
+            RecipeController.getInstance().updateToAll();
+        }
+    }
+
+    @Override
+    public boolean isRecipeItemsEmpty() {
+        if (!ingredients.isEmpty()) {
+            for (Ingredient ingredient : ingredients) {
+                for (ItemStack stack : ingredient.getMatchingStacks()) {
+                    if (!stack.isEmpty()) { return false; }
+                }
+            }
+        }
+        return true;
+    }
 
     @Override
     public @Nonnull NonNullList<Ingredient> getIngredients() { return ingredients; }
@@ -337,13 +366,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public boolean isValid() {
-        if (name.isEmpty() || ingredients.isEmpty() || getResult().isEmpty()) { return false; }
-        for (Ingredient ingredient : ingredients) {
-            for (ItemStack stack : ingredient.getMatchingStacks()) {
-                if (!stack.isEmpty()) { return true; }
-            }
-        }
-        return false;
+        return !name.isEmpty() && !getResult().isEmpty() && !isRecipeItemsEmpty();
     }
 
     @Override
@@ -378,5 +401,18 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
     public void setGroup(@Nonnull String newGroup) { group = newGroup; }
 
     public void setId(@Nonnull ResourceLocation newId) { id = newId; }
+
+    @Override
+    public IRecipe setRegistryName(ResourceLocation name) {
+        if (getRegistryName() == null && name != null) { id = GameData.checkPrefix(name.toString(), true); }
+        return this;
+    }
+
+    @Nullable
+    @Override
+    public ResourceLocation getRegistryName() { return id; }
+
+    @Override
+    public Class<IRecipe> getRegistryType() { return IRecipe.class; }
 
 }

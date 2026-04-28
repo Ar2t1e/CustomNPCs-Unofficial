@@ -26,6 +26,7 @@ import noppes.npcs.*;
 import noppes.npcs.api.handler.IRecipeHandler;
 import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.api.mixin.stats.IRecipeBookMixin;
+import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.items.crafting.NpcShapedRecipes;
 import noppes.npcs.items.crafting.NpcShapelessRecipes;
 import noppes.npcs.packets.Packets;
@@ -49,8 +50,8 @@ public class RecipeController implements IRecipeHandler {
 	protected static final int version = 3;
 	protected static RecipeController instance;
 
-	protected final Map<ResourceLocation, INpcRecipe> globalRecipes = new HashMap<>(); // [GroupName, RecipeList]
-	protected final Map<ResourceLocation, INpcRecipe> anvilRecipes = new HashMap<>(); // [GroupName, RecipeList]
+	protected final Map<ResourceLocation, RecipeCarpentry> globalRecipes = new HashMap<>(); // [GroupName, RecipeList]
+	protected final Map<ResourceLocation, RecipeCarpentry> anvilRecipes = new HashMap<>(); // [GroupName, RecipeList]
 
 	public static RecipeController getInstance() {
 		if (instance == null) { instance = new RecipeController(); }
@@ -617,15 +618,7 @@ public class RecipeController implements IRecipeHandler {
 	}
 
 	public void sendTo(EntityPlayerMP player) {
-		this.checkRecipeBook(player);
-		Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.RecipesData, new NBTTagCompound());
-		for (int i = 0; i < 2; i++) {
-			for (List<INpcRecipe> list : (i == 0 ? globalRecipes.values() : anvilRecipes.values())) {
-				for (INpcRecipe recipe : list) {
-					Server.sendData(player, EnumPacketClient.SYNC_UPDATE, EnumSync.RecipesData, recipe.getNbt().getMCNBT());
-				}
-			}
-		}
+
 	}
 
 	public void checkRecipeBook(EntityPlayerMP player) {
@@ -634,4 +627,9 @@ public class RecipeController implements IRecipeHandler {
 		}
 	}
 
+    public void addAndSaveRecipe(RecipeCarpentry recipeCarpentry) {
+    }
+
+	public void updateToAll() {
+	}
 }

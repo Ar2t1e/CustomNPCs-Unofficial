@@ -905,7 +905,7 @@ public class Availability implements ICompatibilty, IAvailability {
 			for (int id : dialogues.keySet()) {
 				if (dialogues.get(id) != EnumAvailabilityDialog.Always) {continue; }
 				IDialog d = DialogController.instance.get(id);
-				data.append("\n")
+				data.append(" ")
 						.append(Component.translatable("availability." + dialogues.get(id).name().toLowerCase()))
 						.append(" ");
 				if (d == null || gm) {
@@ -924,7 +924,7 @@ public class Availability implements ICompatibilty, IAvailability {
 			for (int id : quests.keySet()) {
 				if (quests.get(id) != EnumAvailabilityQuest.Always) { continue; }
 				IQuest q = QuestController.instance.get(id);
-				data.append("\n");
+				data.append(" ");
 				if (q == null || gm) {
 					data.append(Component.literal( "ID: ").withStyle(TextFormatting.GRAY))
 							.append(Component.literal( "" + id).withStyle(TextFormatting.GOLD))
@@ -943,7 +943,7 @@ public class Availability implements ICompatibilty, IAvailability {
 			for (int id : factions.keySet()) {
 				if (factions.get(id).factionAvailable == EnumAvailabilityFactionType.Always) { continue; }
 				IFaction f = FactionController.instance.get(id);
-				data.append("\n");
+				data.append(" ");
 				if (f == null || gm) {
 					data.append(Component.literal( "ID: ").withStyle(TextFormatting.GRAY))
 							.append(Component.literal( "" + id).withStyle(TextFormatting.GOLD))
@@ -963,7 +963,7 @@ public class Availability implements ICompatibilty, IAvailability {
 		if (!scoreboards.isEmpty()) {
 			data = Component.empty();
 			for (String obj : scoreboards.keySet()) {
-				data.append("\n")
+				data.append(" ")
 						.append(Component.translatable("gui.name")).append(": ").append(obj)
 						.append(Component.translatable("availability." + scoreboards.get(obj).scoreboardType.name().toLowerCase()))
 						.append(" ")
@@ -989,7 +989,7 @@ public class Availability implements ICompatibilty, IAvailability {
 					}
 				}
 			}
-			if (!listOnly.isEmpty() || !listExcept.isEmpty()) { data.append("\n"); }
+			if (!listOnly.isEmpty() || !listExcept.isEmpty()) { data.append(" "); }
 			if (!listOnly.isEmpty()) {
 				data.append(Component.translatable("availability.only")).append("[");
 				boolean st = true;
@@ -1034,7 +1034,7 @@ public class Availability implements ICompatibilty, IAvailability {
 				if (!isNumber) {
 					if ((dataP.has(sd.key) && type == EnumAvailabilityStoredData.EXCEPT) || (!dataP.has(sd.key) && type == EnumAvailabilityStoredData.ONLY)) { bo = false; }
 				}
-				data.append("\n")
+				data.append(" ")
 						.append(Component.translatable("gui.name"))
 						.append(": ")
 						.append(sd.key)
@@ -1056,7 +1056,7 @@ public class Availability implements ICompatibilty, IAvailability {
 					case BIGGER: bo = value < money.value; break;
 					default: bo = value != money.value; break;
 				}
-				data.append("\n")
+				data.append(" ")
 						.append(Component.translatable("gui.name"))
 						.append(": ")
 						.append(Component.translatable("gui." + eam.name().toLowerCase()))
@@ -1070,7 +1070,7 @@ public class Availability implements ICompatibilty, IAvailability {
 			for (int i = 0; i < stacks.getSizeInventory(); i++) {
 				ItemStack stack = stacks.getStackInSlot(i);
 				if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
-				data.append("\n")
+				data.append(" ")
 						.append(stack.getDisplayName())
 						.append(" x" + stack.getCount());
 			}
@@ -1079,7 +1079,7 @@ public class Availability implements ICompatibilty, IAvailability {
 		// health
 		if (healthType != 0) {
 			int h = (int) (player.getHealth() / player.getMaxHealth() * 100);
-			data = Component.empty().append("\n")
+			data = Component.empty().append(" ")
 					.append(Component.translatable("availability." + (healthType == 1 ? "smaller" : "bigger")))
 					.append(" " + h + "%")
 					.append(Component.translatable("quest.task.item."+((healthType == 1 && h < health) || (healthType == 2 && h > health) ? "1" : "0")));
@@ -1087,14 +1087,14 @@ public class Availability implements ICompatibilty, IAvailability {
 		}
 		// in creative mode
 		if (onlyGM) {
-			data = Component.empty().append("\n")
+			data = Component.empty().append(" ")
 					.append(Component.translatable("gui.enabled"))
 					.append(Component.translatable("quest.task.manual."+(gm ? "0" : "1")));
 			list.add(Component.translatable("availability.type.only.gm").append(data));
 		}
 		// xp level
 		if (minPlayerLevel > 0) {
-			data = Component.empty().append("\n")
+			data = Component.empty().append(" ")
 					.append(Component.translatable("availability.bigger"))
 					.append(" " + minPlayerLevel)
 					.append(Component.translatable("quest.task.manual."+(player.experienceLevel >= minPlayerLevel ? "0" : "1")));

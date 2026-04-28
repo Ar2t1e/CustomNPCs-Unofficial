@@ -8,5 +8,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface IServerRecipeBookHelperMixin {
 
     @Invoker("func_194326_a") void invokeClearGrid();
+    @Invoker("func_194328_c") boolean invokeTestClearGrid();
 
 }
