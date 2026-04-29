@@ -13,8 +13,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.RecipeBookType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
@@ -34,16 +32,14 @@ import javax.annotation.Nonnull;
 // Changed by Unofficial (BetaZavr)
 public class RecipeController implements IRecipeHandler {
 
-   protected static RecipeController instance;
-
    public static final RecipeBookType CRAFTING_CUSTOM_GLOBAL = RecipeBookType.create("CRAFTING_CUSTOM_GLOBAL");
    public static final RecipeBookType CRAFTING_CUSTOM_ANVIL = RecipeBookType.create("CRAFTING_CUSTOM_ANVIL");
-
    public static final RecipeBookCategories CRAFTING_CUSTOM_GLOBAL_CATEGORY = RecipeBookCategories.create("CRAFTING_CUSTOM_GLOBAL_CATEGORY", new ItemStack(CustomItems.wand), new ItemStack(CustomItems.cloner));
-
    public static final RecipeBookCategories CRAFTING_CUSTOM_ANVIL_CATEGORY = RecipeBookCategories.create("CRAFTING_CUSTOM_ANVIL_CATEGORY", new ItemStack(CustomItems.wand), new ItemStack(CustomItems.cloner));
    public static final List<RecipeBookCategories> CRAFTING_CUSTOM_ANVIL_CATEGORIES = ImmutableList.of(CRAFTING_CUSTOM_ANVIL_CATEGORY);
    public static final int version = 4;
+
+   protected static RecipeController instance;
 
    protected final Map<String, List<RecipeCarpentry>> globalRecipes = new HashMap<>(); // { group, group recipes }
    protected final Map<String, List<RecipeCarpentry>> anvilRecipes = new HashMap<>(); // { group, group recipes }
@@ -153,13 +149,26 @@ public class RecipeController implements IRecipeHandler {
       globalRecipes.clear();
       anvilRecipes.clear();
       int version = compound.getInt("Version");
-      if (version < 4) {
+      if (version < 3) {
          ListTag list = compound.getList("Data", 10);
          for(int i = 0; i < list.size(); ++i) {
             RecipeCarpentry recipe = RecipeCarpentry.create(list.getCompound(i));
             Map<String, List<RecipeCarpentry>> map = recipe.isGlobal ? globalRecipes : anvilRecipes;
             if (!map.containsKey("main")) { map.put("main", new ArrayList<>()); }
             map.get("main").add(recipe);
+         }
+      }
+      else if (version == 3) {
+         ListTag list = compound.getList("Data", 10);
+         for (int i = 0; i < list.size(); i++) {
+            CompoundTag nbtG = list.getCompound(i);
+            if (!nbtG.contains("GroupName", 8)) { continue; }
+            Map<String, List<RecipeCarpentry>> map = nbtG.getBoolean("isGlobal") ? globalRecipes : anvilRecipes;
+            if (!map.containsKey(nbtG.getString("GroupName"))) { map.put(nbtG.getString("GroupName"), new ArrayList<>()); }
+            for (int j = 0; j < nbtG.getList("Recipes", 10).size(); j++) {
+               map.get(nbtG.getString("GroupName"))
+                       .add(RecipeCarpentry.create(nbtG.getList("Recipes", 10).getCompound(j)));
+            }
          }
       }
       else {
@@ -176,7 +185,7 @@ public class RecipeController implements IRecipeHandler {
             }
          }
       }
-      loadDefaultRecipes(compound.getInt("Version"));
+      loadDefaultRecipes(version);
    }
 
    private void saveCategories() {
@@ -204,17 +213,6 @@ public class RecipeController implements IRecipeHandler {
          if (!file.renameTo(file2) || (file.exists() && !file.delete())) { LogWriter.debug("Error delete or rename \"" + file.getName() + "\" file"); }
       }
       catch (Exception e) { LogWriter.error(e); }
-   }
-
-   public RecipeCarpentry findMatchingAnvilRecipe(CraftingContainer inventoryCrafting, Player owner) {
-      for (List<RecipeCarpentry> group : new ArrayList<>(anvilRecipes.values())) {
-         for (RecipeCarpentry recipe : new ArrayList<>(group)) {
-            if (recipe.isValid() && recipe.availability.isAvailable(owner) && recipe.matches(inventoryCrafting, null)) {
-               return recipe;
-            }
-         }
-      }
-      return null;
    }
 
    public RecipeCarpentry getRecipe(ResourceLocation id) {

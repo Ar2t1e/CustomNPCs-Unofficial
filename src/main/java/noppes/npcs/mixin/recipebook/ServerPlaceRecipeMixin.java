@@ -28,6 +28,7 @@ public class ServerPlaceRecipeMixin<C extends Container> {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Inject(at = {@At("HEAD")}, method = {"recipeClicked"}, cancellable = true)
     public void npcs$recipeClicked(ServerPlayer player, Recipe<C> recipe, boolean isShiftPress, CallbackInfo ci) {
+        //LogWriter.debug("[DEBUG] recipe clicked: "+recipe.getId()+"; player knows: "+player.getRecipeBook().contains(recipe));
         if (recipe instanceof RecipeCarpentry npcRecipe && player.getRecipeBook().contains(recipe)) {
             ci.cancel();
             IServerPlaceRecipeMixin mixin = (IServerPlaceRecipeMixin) this;

@@ -666,7 +666,7 @@ public class ClientEventHandler {
                     default -> "GuiInventoryLog";
                 };
             }
-            LogWriter.info("Open GUI - " + newGUI + "; OLD - " + oldScreenName);
+            LogWriter.info("Open GUI - " + event.getScreen().getClass().getName() + "; OLD - " + oldScreenName);
             Packets.sendServer(new SPacketPlayerScreen(newGUI, oldScreenName));
         }
         if (event.getScreen() instanceof GuiNpcPather) { movingPath.clear(); }

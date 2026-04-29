@@ -55,7 +55,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
    protected ClientProxy.FontContainer customFont = null;
    protected static final double step = 60;
 
-   protected ItemStack[] renderStacks = null;
+   public ItemStack[] renderStacks = null;
    public ItemStack renderStack = ItemStack.EMPTY;
    public int renderStackId = -1;
    protected int ticks = 0;
@@ -261,7 +261,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
       RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
       matrixStack.popPose();
 
-      if (renderStacks != null && renderStacks.length != 0) {
+      if (renderStacks != null && renderStacks.length != 0 && (listener == null || !listener.hasSubGui())) {
          renderStack = renderStacks[0];
          renderStackId = 0;
          if (renderStacks.length > 1) {
@@ -274,7 +274,7 @@ public class GuiButtonNop extends Button implements IComponentGui {
          if (renderStack != null && !renderStack.isEmpty()) {
             matrixStack.pushPose();
             matrixStack.translate((float) getX() + (float) getWidth() / 2.0f - 8.0f, (float) getY() + (float) getHeight() / 2.0f - 8.0f, 30.0F);
-            graphics.renderItem(renderStack, 0, 0);
+            graphics.renderFakeItem(renderStack, 0, 0);
             graphics.renderItemDecorations(mc.font, renderStack, 0, 0, null);
             matrixStack.popPose();
          }

@@ -85,7 +85,7 @@
     "client.gui.screens.inventory.tooltip.IClientTextTooltipMixin",
     "client.gui.screens.recipebook.GhostRecipeMixin",
     "client.gui.screens.recipebook.IRecipeButtonMixin",
-    "client.gui.screens.recipebook.OverlayRecipeComponentMixin",
+    "client.gui.screens.recipebook.RecipeBookPageMixin",
     "client.gui.screens.recipebook.RecipeBookComponentMixin",
     "client.gui.screens.recipebook.RecipeButtonMixin",
     "client.gui.worldselection.SelectWorldScreenMixin",

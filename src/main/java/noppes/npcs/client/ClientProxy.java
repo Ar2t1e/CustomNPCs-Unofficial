@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.Unpooled;
@@ -616,7 +615,7 @@ public class ClientProxy extends CommonProxy {
    @Override
    public void syncRecipeManager() {
       super.syncRecipeManager();
-      LocalPlayer player =  (LocalPlayer) getPlayer();
+      LocalPlayer player = (LocalPlayer) getPlayer();
       if (player != null) { syncRecipe(player.getRecipeBook()); }
    }
 
@@ -624,10 +623,8 @@ public class ClientProxy extends CommonProxy {
    protected void syncRecipe(RecipeBook book) {
       super.syncRecipe(book);
       Player player = getPlayer();
-      if (player != null) {
-         ClientRecipeBook cBook = (ClientRecipeBook) book;
+      if (player != null && book instanceof ClientRecipeBook cBook) {
          Map<RecipeBookCategories, List<RecipeCollection>> collectionsByTab = new HashMap<>(((IClientRecipeBookMixin) cBook).getCollectionsByTab());
-         List<RecipeCollection> allCollections = new ArrayList<>(cBook.getCollections());
          RegistryAccess registryAccess = player.level().registryAccess();
          RecipeController rData = RecipeController.getInstance();
          for (int i = 0; i < 2; i++) {
@@ -647,7 +644,6 @@ public class ClientProxy extends CommonProxy {
             collectionsByTab.put(isGlobal ? RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY : RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
          }
          ((IClientRecipeBookMixin) cBook).setCollectionsByTab(ImmutableMap.copyOf(collectionsByTab));
-         ((IClientRecipeBookMixin) cBook).setAllCollections(ImmutableList.copyOf(allCollections));
       }
    }
 

@@ -67,22 +67,21 @@ public class RecipeBookComponentMixin {
             ),
             cancellable = true
     )
-    public void npcs$setupGhostRecipe(Recipe<?> recipe, List<Slot> p_100317_, CallbackInfo ci) {
+    public void npcs$setupGhostRecipe(Recipe<?> recipe, List<Slot> slots, CallbackInfo ci) {
         if (recipe instanceof RecipeCarpentry npcRecipe) {
             ci.cancel();
-
             int gridWidth = menu.getGridWidth();
             int gridHeight = menu.getGridHeight();
             int recipeWidth = gridWidth;
             int recipeHeight = gridHeight;
             List<Ingredient> ingredients = new ArrayList<>(npcRecipe.getIngredients());
-            if (!npcRecipe.isShaped()) { ingredients.removeIf(Ingredient::isEmpty); }
-            Iterator<Ingredient> intList = ingredients.iterator();
-            // Exact width and height of the recipe
             if (npcRecipe.isShaped()) {
                 recipeWidth = npcRecipe.getWidth();
                 recipeHeight = npcRecipe.getHeight();
             }
+            else { ingredients.removeIf(Ingredient::isEmpty); }
+            Iterator<Ingredient> intList = ingredients.iterator();
+            // Exact width and height of the recipe
             int slotId = 0;
             // We go along the height of the prescription grid
             for (int row = 0; row < gridHeight; ++row) {
@@ -130,7 +129,6 @@ public class RecipeBookComponentMixin {
                     ++slotId;
                 }
             }
-            /**/
         }
     }
 

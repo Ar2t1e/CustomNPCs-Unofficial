@@ -25,7 +25,7 @@ import java.util.TreeMap;
 public class WrapperRecipe {
 
     public final @Nonnull Map<Integer, ItemStack[]> ingredients = new TreeMap<>(); // -> ItemStack[].length == 0 ... 16 max (not null)
-    public final @Nonnull Availability availability = new Availability();
+    public @Nonnull Availability availability = new Availability();
     public @Nonnull ResourceLocation id = new ResourceLocation(CustomNpcs.MODID, "");
     public @Nonnull ItemStack product;
     public boolean isGlobal = true;
@@ -38,25 +38,9 @@ public class WrapperRecipe {
     public Component group = Component.empty();
     public CraftingRecipe parent = null;
 
-    public WrapperRecipe(@Nonnull ItemStack productIn) {
-        product = productIn.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : productIn;
-        ingredients.clear();
-        ingredients.put(0, new ItemStack[] { new ItemStack(Blocks.COBBLESTONE) });
-    }
-
-    public void clear() {
-        isKnown = false;
-        ignoreDamage = false;
-        ignoreNBT = false;
-        isShaped = true;
-        id = new ResourceLocation(CustomNpcs.MODID, "");
-        width = 3;
-        height = 3;
-        group = Component.empty();
-        ingredients.clear();
-        ingredients.put(0, new ItemStack[]{ new ItemStack(Blocks.COBBLESTONE) });
+    public WrapperRecipe() {
         product = new ItemStack(Blocks.COBBLESTONE);
-        availability.clear();
+        ingredients.put(0, new ItemStack[] { new ItemStack(Blocks.COBBLESTONE) });
     }
 
     public CompoundTag getNbt() {
@@ -64,20 +48,56 @@ public class WrapperRecipe {
         compound.putString("Id", id.toString());
         compound.putString("Name", id.getPath());
         compound.putString("Group", group.getString());
+        compound.put("Item", product.save(new CompoundTag()));
+        int size = isGlobal ? 3 : 4;
+        int maxX = 0;
+        int maxY = 0;
+        int minX = -1;
+        int minY = -1;
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                int slotId = x + y * size;
+                if (ingredients.get(slotId).length != 0) {
+                    if (maxX < x) { maxX = x; }
+                    if (maxY < y) { maxY = y; }
+                    if (minX == -1 && minY == -1) { minX = x; minY = y; }
+                }
+            }
+        }
+        maxX += 1;
+        maxY += 1;
+        if (minX < 0) { minX = 0; }
+        if (minY < 0) { minY = 0; }
+        width = maxX - minX;
+        height = maxY - minY;
         compound.putInt("Width", width);
         compound.putInt("Height", height);
-        compound.put("Item", product.save(new CompoundTag()));
-        // NBTTags.nbtIngredientList(recipeItems)
+        int nsPos = 0;
         ListTag list = new ListTag();
-        for (int slot = 0; slot < (isGlobal ? 9 : 16); slot++) {
+        for (int slotId = 0; slotId < size * size; slotId++) {
             CompoundTag nbt = new CompoundTag();
-            nbt.putByte("Slot", (byte) slot);
             ListTag ings = new ListTag();
-            if (ingredients.get(slot) != null) {
-                for (ItemStack ing : ingredients.get(slot)) { ings.add(ing.save(new CompoundTag())); }
+            if (!isShaped) {
+                if (ingredients.get(slotId) != null) {
+                    for (ItemStack ing : ingredients.get(slotId)) { ings.add(ing.save(new CompoundTag())); }
+                    if (!ings.isEmpty()) {
+                        nbt.putByte("Slot", (byte) (nsPos++));
+                        nbt.put("Ingredients", ings);
+                    }
+                }
             }
-            nbt.put("Ingredients", ings);
-            list.add(nbt);
+            else {
+                int x = slotId % size;
+                int y = (int) Math.floor((double) slotId / (double) size);
+                if (x >= minX && y >= minY && x < minX + width && y < minY + height) {
+                    x -= minX;
+                    y -= minY;
+                    for (ItemStack ing : ingredients.get(slotId)) { ings.add(ing.save(new CompoundTag())); }
+                    nbt.putByte("Slot", (byte) (x + y * width));
+                    nbt.put("Ingredients", ings);
+                }
+            }
+            if (nbt.contains("Slot", 1)) { list.add(nbt); }
         }
         compound.put("Materials", list);
         compound.put("Availability", availability.save(new CompoundTag()));
@@ -104,77 +124,40 @@ public class WrapperRecipe {
         return false;
     }
 
-    public void copyFrom(WrapperRecipe wrapper) {
-        isGlobal = wrapper.isGlobal;
-        isKnown = wrapper.isKnown;
-        ignoreDamage = wrapper.ignoreDamage;
-        ignoreNBT = wrapper.ignoreNBT;
-        isShaped = wrapper.isShaped;
-        id = wrapper.id;
-        width = wrapper.width;
-        height = wrapper.height;
-        group = wrapper.group;
-        ingredients.clear();
-        ingredients.putAll(wrapper.ingredients);
-        product = wrapper.product;
-        availability.load(wrapper.availability.save(new CompoundTag()));
-        parent = wrapper.parent;
-    }
-
-    public void copyFrom(Player player, CraftingRecipe recipe) {
-        if (recipe instanceof RecipeCarpentry npcRecipe) {
-            copyFrom(npcRecipe.getWrapperRecipe());
-            return;
-        }
-        clear();
-        parent = recipe;
-        isGlobal = true;
-        isKnown = false;
-        ignoreDamage = false;
-        ignoreNBT = false;
-        id = recipe.getId();
-        int pos = 0;
+    public static WrapperRecipe of(@Nonnull Player player, @Nonnull CraftingRecipe recipe) {
+        if (recipe instanceof RecipeCarpentry npcRecipe) { return npcRecipe.getWrapperRecipe(); }
+        WrapperRecipe wrapper = new WrapperRecipe();
+        wrapper.parent = recipe;
+        wrapper.isGlobal = true;
+        wrapper.isKnown = false;
+        wrapper.ignoreDamage = false;
+        wrapper.ignoreNBT = false;
+        wrapper.id = recipe.getId();
         NonNullList<Ingredient> ings = recipe.getIngredients();
         if (recipe instanceof ShapedRecipe sRecipe) {
-            isShaped = true;
-            width = sRecipe.getRecipeWidth();
-            height = sRecipe.getRecipeHeight();
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    int index = y * width + x;
-                    ItemStack[] items = ings.get(index).getItems();
-                    ItemStack[] array = new ItemStack[items.length];
-                    for (int j = 0; j < items.length; j++) {
-                        array[j] = items[j].copy();
-                    }
-                    int slotIndex = y * 3 + x;
-                    ings.add(slotIndex, Ingredient.of(array));
-                }
-            }
-            for (int slotIndex = 0; slotIndex < 9; slotIndex++) {
-                if (slotIndex < ings.size()) {
-                    ings.add(slotIndex, Ingredient.of(ItemStack.EMPTY));
-                }
+            wrapper.isShaped = true;
+            wrapper.width = sRecipe.getRecipeWidth();
+            wrapper.height = sRecipe.getRecipeHeight();
+            for (int slotId = 0; slotId < 9; slotId++) {
+                int x = slotId % 3;
+                int y = (int) Math.floor((double) slotId / 3.0d);
+                if (x < wrapper.width && y < wrapper.height) { wrapper.ingredients.put(slotId, ings.get(x + y * wrapper.width).getItems()); }
+                else { wrapper.ingredients.put(slotId, new ItemStack[0]); }
             }
         }
         else {
-            isShaped = false;
+            wrapper.isShaped = false;
             int size = ings.size();
-            width = size / 2;
-            height = size - width;
-            for (Ingredient ingr : ings) {
-                ItemStack[] items = ingr.getItems();
-                ItemStack[] array = new ItemStack[items.length];
-                for (int j = 0; j < items.length; j++) {
-                    array[j] = items[j].copy();
-                }
-                ingredients.put(pos, array);
-                pos ++;
+            wrapper.width = Math.max(1, size / 2);
+            wrapper.height = Math.max(1, size - wrapper.width);
+            for (int slotId = 0; slotId < 9; slotId++) {
+                if (slotId < size) { wrapper.ingredients.put(slotId, ings.get(slotId).getItems()); }
+                else { wrapper.ingredients.put(slotId, new ItemStack[0]); }
             }
         }
-        group = Component.literal(recipe.getGroup().isEmpty() ? id.getNamespace() : recipe.getGroup()).withStyle(ChatFormatting.GRAY);
-        product = recipe.getResultItem(player.level().registryAccess());
-        availability.clear();
+        wrapper.group = Component.literal(recipe.getGroup().isEmpty() ? wrapper.id.getNamespace() : recipe.getGroup()).withStyle(ChatFormatting.GRAY);
+        wrapper.product = recipe.getResultItem(player.level().registryAccess());
+        return wrapper;
     }
 
     public Component getName() {

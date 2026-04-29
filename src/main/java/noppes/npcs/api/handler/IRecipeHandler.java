@@ -8,10 +8,8 @@ import noppes.npcs.api.handler.data.INpcRecipe;
 
 public interface IRecipeHandler {
 
-   @SuppressWarnings("unused")
    List<INpcRecipe> getAnvilRecipes(String group);
 
-   @SuppressWarnings("unused")
    List<INpcRecipe> getGlobalRecipes(String group);
 
    List<INpcRecipe> getAllAnvilRecipes();

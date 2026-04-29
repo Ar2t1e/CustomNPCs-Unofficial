@@ -5,6 +5,7 @@ import java.util.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.ServerScoreboard;
@@ -380,7 +381,9 @@ public class Availability implements ICompatibilty, IAvailability {
       VersionCompatibility.CheckAvailabilityCompatibility(this, compound);
       minPlayerLevel = compound.getInt("AvailabilityMinPlayerLevel");
 
-      if (compound.contains("AvailabilityDayTime", 11)) { daytime = compound.getIntArray("AvailabilityDayTime"); }
+      if (compound.contains("AvailabilityDayTime", Tag.TAG_INT_ARRAY)) {
+         daytime = compound.getIntArray("AvailabilityDayTime");
+      }
       else {
          int v = compound.getInt("AvailabilityDayTime");
          if (v < 0) { v *= -1; }
@@ -403,7 +406,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       } // OLD versions
 
-      if (compound.contains("AvailabilityDialogs", 9)) {
+      if (compound.contains("AvailabilityDialogs", Tag.TAG_LIST)) {
          for (int d = 0; d < max && d < compound.getList("AvailabilityDialogs", 10).size(); d++) {
             CompoundTag nbtDialog = compound.getList("AvailabilityDialogs", 10).getCompound(d);
             int v = nbtDialog.getInt("Availability");
@@ -412,7 +415,7 @@ public class Availability implements ICompatibilty, IAvailability {
             dialogues.put(nbtDialog.getInt("ID"), EnumAvailabilityDialog.values()[v]);
          }
       }
-      else if (compound.contains("AvailabilityDialogId", 3)) {
+      else if (compound.contains("AvailabilityDialogId", Tag.TAG_INT)) {
          for (int i = 0; i < 4; i++) {
             String key = i == 0 ? "" : "" + (i + 1);
             if (compound.getInt("AvailabilityDialog" + key + "Id") > 0) {
@@ -424,7 +427,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       } // OLD versions
 
-      if (compound.contains("AvailabilityQuests", 9)) {
+      if (compound.contains("AvailabilityQuests", Tag.TAG_LIST)) {
          for (int q = 0; q < max && q < compound.getList("AvailabilityQuests", 10).size(); q++) {
             CompoundTag nbtQuest = compound.getList("AvailabilityQuests", 10).getCompound(q);
             int v = nbtQuest.getInt("Availability");
@@ -433,7 +436,7 @@ public class Availability implements ICompatibilty, IAvailability {
             quests.put(nbtQuest.getInt("ID"), EnumAvailabilityQuest.values()[v]);
          }
       }
-      else if (compound.contains("AvailabilityQuestId", 3)) {
+      else if (compound.contains("AvailabilityQuestId", Tag.TAG_INT)) {
          for (int i = 0; i < 4; i++) {
             String key = i == 0 ? "" : "" + (i + 1);
             if (compound.getInt("AvailabilityQuest" + key + "Id") > 0) {
@@ -445,7 +448,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       } // OLD versions
 
-      if (compound.contains("AvailabilityFactions", 9)) {
+      if (compound.contains("AvailabilityFactions", Tag.TAG_LIST)) {
          for (int f = 0; f < max && f < compound.getList("AvailabilityFactions", 10).size(); f++) {
             CompoundTag nbtFaction = compound.getList("AvailabilityFactions", 10).getCompound(f);
             int v = nbtFaction.getInt("Stance");
@@ -457,7 +460,7 @@ public class Availability implements ICompatibilty, IAvailability {
             factions.put(nbtFaction.getInt("ID"), new AvailabilityFactionData(EnumAvailabilityFactionType.values()[g], EnumAvailabilityFaction.values()[v]));
          }
       }
-      else if (compound.contains("AvailabilityFactionId", 3)) {
+      else if (compound.contains("AvailabilityFactionId", Tag.TAG_INT)) {
          for (int i = 0; i < 4; i++) {
             String key = i == 0 ? "" : "2";
             if (compound.getInt("AvailabilityFaction" + key + "Id") > 0) {
@@ -473,7 +476,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       } // OLD versions
 
-      if (compound.contains("AvailabilityScoreboards", 9)) {
+      if (compound.contains("AvailabilityScoreboards", Tag.TAG_LIST)) {
          for (int s = 0; s < max && s < compound.getList("AvailabilityScoreboards", 10).size(); s++) {
             CompoundTag nbtScoreboard = compound.getList("AvailabilityScoreboards", 10).getCompound(s);
             int v = nbtScoreboard.getInt("Availability");
@@ -484,7 +487,7 @@ public class Availability implements ICompatibilty, IAvailability {
             initScore(nbtScoreboard.getString("Objective"));
          }
       }
-      else if (compound.contains("AvailabilityScoreboardObjective", 8)) {
+      else if (compound.contains("AvailabilityScoreboardObjective", Tag.TAG_STRING)) {
          for (int i = 0; i < 2; i++) {
             String key = i == 0 ? "" : "2";
             if (!compound.getString("AvailabilityScoreboard" + key + "Objective").isEmpty()) {
@@ -499,7 +502,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       } // OLD versions
 
-      if (compound.contains("AvailabilityPlayerNames", 9)) {
+      if (compound.contains("AvailabilityPlayerNames", Tag.TAG_LIST)) {
          for (int s = 0; s < compound.getList("AvailabilityPlayerNames", 10).size(); s++) {
             CompoundTag nbtName = compound.getList("AvailabilityPlayerNames", 10).getCompound(s);
             int v = compound.getInt("Availability");
@@ -509,7 +512,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       }
 
-      if (compound.contains("AvailabilityStoredData", 9)) {
+      if (compound.contains("AvailabilityStoredData", Tag.TAG_LIST)) {
          for (int i = 0; i < compound.getList("AvailabilityStoredData", 10).size(); i++) {
             AvailabilityStoredData asd = new AvailabilityStoredData(compound.getList("AvailabilityStoredData", 10).getCompound(i));
             boolean found = false;
@@ -525,7 +528,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       }
 
-      if (compound.contains("AvailabilityMoneys", 9)) {
+      if (compound.contains("AvailabilityMoneys", Tag.TAG_LIST)) {
          for (int i = 0; i < compound.getList("AvailabilityMoneys", 10).size(); i++) {
             CompoundTag nbtMoney = compound.getList("AvailabilityMoneys", 10).getCompound(i);
             int t = nbtMoney.getInt("EqualsType");
@@ -534,7 +537,7 @@ public class Availability implements ICompatibilty, IAvailability {
          }
       }
 
-      if (compound.contains("AvailabilityHealth", 3)) {
+      if (compound.contains("AvailabilityHealth", Tag.TAG_INT)) {
          health = compound.getInt("AvailabilityHealth");
          if (health < 0) { health = 0; }
          if (health > 100) { health = 100; }
@@ -546,9 +549,9 @@ public class Availability implements ICompatibilty, IAvailability {
       onlyGM = compound.getBoolean("OnlyGM");
 
       stacks.clearContent();
-      if (compound.contains("NpcMiscInv", 9)) { stacks.load(compound); }
+      if (compound.contains("NpcMiscInv", Tag.TAG_LIST)) { stacks.load(compound); }
       stacksData.clear();
-      if (compound.contains("AvailabilityMiscInv", 9)) {
+      if (compound.contains("AvailabilityMiscInv", Tag.TAG_LIST)) {
          for (int i = 0; i < compound.getList("AvailabilityMiscInv", 10).size() && i < 9; i++) {
             stacksData.put(i, new AvailabilityStackData(compound.getList("AvailabilityMiscInv", 10).getCompound(i)));
          }
@@ -1092,10 +1095,10 @@ public class Availability implements ICompatibilty, IAvailability {
       }
       // in creative mode
       if (onlyGM) {
-         data = Component.empty().append(" ")
+         data = Component.empty().append(": ")
                  .append(Component.translatable("gui.enabled"))
                  .append(Component.translatable("quest.task.manual."+(gm ? "0" : "1")));
-         list.add(Component.translatable("availability.type.only.gm").append(data));
+         list.add(Component.translatable("availability.type.only.gm.true").append(data));
       }
       // xp level
       if (minPlayerLevel > 0) {

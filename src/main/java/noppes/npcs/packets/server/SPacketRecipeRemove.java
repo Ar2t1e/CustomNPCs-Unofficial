@@ -13,14 +13,14 @@ import noppes.npcs.shared.common.PacketServerBasic;
 public class SPacketRecipeRemove extends PacketServerBasic {
 
    protected static int channelId;
-   private final ResourceLocation recipe;
+   private final ResourceLocation recipeId;
 
-   public SPacketRecipeRemove(ResourceLocation recipeIn) { recipe = recipeIn; }
+   public SPacketRecipeRemove(ResourceLocation recipeIn) { recipeId = recipeIn; }
 
    @Override
    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_RECIPE; }
 
-   public static void encode(SPacketRecipeRemove msg, FriendlyByteBuf buf) { buf.writeResourceLocation(msg.recipe); }
+   public static void encode(SPacketRecipeRemove msg, FriendlyByteBuf buf) { buf.writeResourceLocation(msg.recipeId); }
 
    public static SPacketRecipeRemove decode(FriendlyByteBuf buf) { return new SPacketRecipeRemove(buf.readResourceLocation()); }
 
@@ -30,7 +30,7 @@ public class SPacketRecipeRemove extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      RecipeController.getInstance().delete(recipe);
+      RecipeController.getInstance().delete(recipeId);
       Packets.sendDelayed(player, new PacketGuiUpdate(), 100);
       CustomNpcs.debugData.end("Packets");
    }

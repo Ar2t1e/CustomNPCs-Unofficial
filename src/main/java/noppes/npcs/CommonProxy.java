@@ -22,16 +22,12 @@ import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.mixin.world.item.crafting.IRecipeManagerMixin;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CommonProxy {
 
@@ -96,6 +92,7 @@ public class CommonProxy {
 
    public void syncRecipeManager() {
       RecipeManager manager = CustomNpcs.proxy.getRecipeManager();
+      if (manager == null) { return; }
       Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> recipes = ((IRecipeManagerMixin) manager).getRecipes();
       Map<ResourceLocation, Recipe<?>> byName = ((IRecipeManagerMixin) manager).getByName();
       // new
@@ -114,18 +111,18 @@ public class CommonProxy {
             for (int i = 0; i < 2; i++) {
                for (INpcRecipe npcRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
                   Recipe<?> recipe = (Recipe<?>) npcRecipe;
-
-
                   if (map.containsKey(recipe.getId())) {
-                     if (!npcRecipe.isValid()) { map.remove(recipe.getId()); isChanged = true; }
-                     else { ((RecipeCarpentry) map.get(recipe.getId())).loadFrom(((RecipeCarpentry) npcRecipe).saveTo()); }
+                     map.remove(recipe.getId());
+                     if (!npcRecipe.isValid()) { isChanged = true; }
+                     else { map.put(recipe.getId(), recipe); }
                   }
                   else if (npcRecipe.isValid()) {
                      map.put(recipe.getId(), recipe); isChanged = true;
                   }
                   if (newByName.containsKey(recipe.getId())) {
-                     if (!npcRecipe.isValid()) { newByName.remove(recipe.getId()); isChanged = true; }
-                     else { ((RecipeCarpentry) newByName.get(recipe.getId())).loadFrom(((RecipeCarpentry) npcRecipe).saveTo()); }
+                     newByName.remove(recipe.getId());
+                     if (!npcRecipe.isValid()) { isChanged = true; }
+                     else { newByName.put(recipe.getId(), recipe); }
                   }
                   else if (npcRecipe.isValid()) {
                      newByName.put(recipe.getId(), recipe); isChanged = true;

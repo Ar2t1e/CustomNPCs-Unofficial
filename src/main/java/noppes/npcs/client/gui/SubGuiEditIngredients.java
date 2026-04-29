@@ -21,7 +21,7 @@ public class SubGuiEditIngredients extends GuiBasic {
         setBackground("smallbg.png");
         closeOnEsc = true;
         imageWidth = 176;
-        imageHeight = 76;
+        imageHeight = 79;
 
         id = idIn;
         stacks = Arrays.copyOf(itemStacks, itemStacks.length);
@@ -35,7 +35,6 @@ public class SubGuiEditIngredients extends GuiBasic {
         super.render(graphics, mouseX, mouseY, partialTicks);
         hover = -1;
         PoseStack matrixStack = graphics.pose();
-        graphics.blit(background, guiLeft, guiTop + imageHeight, 0, 219, imageWidth, 3);
 
         matrixStack.pushPose();
         matrixStack.translate(guiLeft + 7.0f, guiTop + 16.0f, 0.0f);
@@ -64,7 +63,8 @@ public class SubGuiEditIngredients extends GuiBasic {
     @Override
     public void init() {
         super.init();
-        addLabel(0, guiLeft + 8, guiTop + 5, "gui.recipe.del");
+        addLabel(0, guiLeft + 8, guiTop + 5, "gui.recipe.del")
+                .setSize(imageWidth - 16, 10);
         addButton(66, guiLeft + 57, guiTop + 54, "gui.done")
                 .setSize(60, 20)
                 .setHoverTexts("hover.back");

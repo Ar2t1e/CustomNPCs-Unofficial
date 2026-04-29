@@ -48,7 +48,6 @@ public class RecipesDefault {
          ItemStack stick = new ItemStack(Items.STICK);
          ItemStack potato = new ItemStack(Items.POTATO);
          ItemStack carrot = new ItemStack(Items.CARROT);
-         ItemStack iron = new ItemStack(Items.IRON_INGOT);
          ItemStack paper = new ItemStack(Items.PAPER);
          ItemStack empty = ItemStack.EMPTY;
          // wand
@@ -73,23 +72,30 @@ public class RecipesDefault {
          addRecipe("npc_soul_stone", "npc_soul_stone", new ItemStack(CustomItems.soulstoneEmpty), false, true, 2, 2, stacks);
          // metal mailbox
          stacks = new ItemStack[16][];
-         variants = new ItemStack[] { new ItemStack(Items.OAK_PLANKS), new ItemStack(Items.SPRUCE_PLANKS), new ItemStack(Items.BIRCH_PLANKS),
-                 new ItemStack(Items.JUNGLE_PLANKS), new ItemStack(Items.ACACIA_PLANKS), new ItemStack(Items.DARK_OAK_PLANKS),
-                 new ItemStack(Items.CHERRY_PLANKS), new ItemStack(Items.MANGROVE_PLANKS), new ItemStack(Items.BAMBOO_PLANKS),
-                 new ItemStack(Items.CRIMSON_PLANKS), new ItemStack(Items.WARPED_PLANKS) };
+         variants = new ItemStack[] { new ItemStack(Items.IRON_INGOT) };
          stacks[0] = variants; stacks[1] = variants; stacks[2] = variants; stacks[3] = variants;
-         stacks[4] = variants; stacks[5] = new ItemStack[] { new ItemStack(Items.LAPIS_LAZULI, 3) }; stacks[6] = new ItemStack[] { new ItemStack(Items.LAPIS_LAZULI, 3) }; stacks[7] = variants;
+         stacks[4] = variants; stacks[5] = new ItemStack[] { paper }; stacks[6] = new ItemStack[] { new ItemStack(Items.WHITE_DYE) }; stacks[7] = variants;
          stacks[8] = variants; stacks[9] = variants; stacks[10] = variants; stacks[11] = variants;
-         stacks[12] = new ItemStack[] { empty }; stacks[13] = new ItemStack[] { paper }; stacks[14] = new ItemStack[] { new ItemStack(Items.WHITE_DYE) }; stacks[15] = new ItemStack[] { empty };
+         stacks[12] = new ItemStack[] { new ItemStack(Items.LAPIS_LAZULI, 3) }; stacks[13] = new ItemStack[] { empty }; stacks[14] = new ItemStack[] { empty }; stacks[15] = new ItemStack[] { new ItemStack(Items.LAPIS_LAZULI, 3) };
          addRecipe("npc_mailbox_metal", "npc_mailbox", new ItemStack(CustomBlocks.mailbox_item), true, true, 4, 4, stacks);
-         // wooden mailbox
-         variants = new ItemStack[] { iron };
+         // stone mailbox
+         variants = new ItemStack[] { new ItemStack(Items.STONE) };
          stacks = new ItemStack[12][];
          stacks[0] = variants; stacks[1] = variants; stacks[2] = variants;
          stacks[3] = variants; stacks[4] = new ItemStack[] { paper }; stacks[5] = variants;
          stacks[6] = variants; stacks[7] = variants; stacks[8] = variants;
-         stacks[9] = new ItemStack[] { empty }; stacks[10] = new ItemStack[] { new ItemStack(Blocks.COBBLESTONE) }; stacks[11] = new ItemStack[] { empty };
-         addRecipe("npc_mailbox_wooden", "npc_mailbox", new ItemStack(CustomBlocks.mailbox2_item), true, true, 4, 4, stacks);
+         stacks[9] = new ItemStack[] { new ItemStack(Items.RED_DYE, 2) }; stacks[10] = new ItemStack[] { new ItemStack(Blocks.COBBLESTONE) }; stacks[11] = new ItemStack[] { new ItemStack(Items.IRON_INGOT) };
+         addRecipe("npc_mailbox_stone", "npc_mailbox", new ItemStack(CustomBlocks.mailbox2_item), true, true, 3, 4, stacks);
+         // wooden mailbox
+         variants = new ItemStack[] { new ItemStack(Items.OAK_PLANKS), new ItemStack(Items.SPRUCE_PLANKS), new ItemStack(Items.BIRCH_PLANKS),
+                 new ItemStack(Items.JUNGLE_PLANKS), new ItemStack(Items.ACACIA_PLANKS), new ItemStack(Items.DARK_OAK_PLANKS),
+                 new ItemStack(Items.CHERRY_PLANKS), new ItemStack(Items.MANGROVE_PLANKS), new ItemStack(Items.BAMBOO_PLANKS),
+                 new ItemStack(Items.CRIMSON_PLANKS), new ItemStack(Items.WARPED_PLANKS) };
+         stacks[0] = variants; stacks[1] = variants; stacks[2] = variants;
+         stacks[3] = variants; stacks[4] = new ItemStack[] { paper }; stacks[5] = variants;
+         stacks[6] = variants; stacks[7] = variants; stacks[8] = variants;
+         stacks[9] = new ItemStack[] { new ItemStack(Items.BLACK_DYE, 2) }; stacks[10] = new ItemStack[] { new ItemStack(Blocks.ANDESITE) }; stacks[11] = new ItemStack[] { new ItemStack(Items.IRON_INGOT) };
+         addRecipe("npc_mailbox_wooden", "npc_mailbox", new ItemStack(CustomBlocks.mailbox3_item), true, true, 3, 4, stacks);
       }
    }
 

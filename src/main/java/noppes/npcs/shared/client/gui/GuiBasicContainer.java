@@ -7,7 +7,6 @@ import javax.annotation.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -293,6 +292,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
       return null;
    }
 
+   @SuppressWarnings("unused")
    public GuiMenuSideButton getSideButton(int id) {
       for (IComponentGui element : new ArrayList<>(wrapper.components)) {
          if (element.getElementType() == GuiComponentType.SIDE_BUTTON &&
@@ -302,6 +302,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
       return null;
    }
 
+   @SuppressWarnings("unused")
    public GuiMenuTopButton getTopButton(int id) {
       for (IComponentGui element : new ArrayList<>(wrapper.components)) {
          if (element.getElementType() == GuiComponentType.TOP_BUTTON &&
@@ -329,6 +330,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
       return null;
    }
 
+   @SuppressWarnings("unused")
    public GuiSliderNop getSlider(int id) {
       for (IComponentGui element : new ArrayList<>(wrapper.components)) {
          if (element.getElementType() == GuiComponentType.SLIDER &&
@@ -338,6 +340,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
       return null;
    }
 
+   @SuppressWarnings("unused")
    public GuiCustomScrollNop getScroll(int id) {
       for (IComponentGui element : new ArrayList<>(wrapper.components)) {
          if (element.getElementType() == GuiComponentType.SCROLL &&
@@ -347,6 +350,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
       return null;
    }
 
+   @SuppressWarnings("unused")
    public IComponentGui getExtra(int id) {
       for (IComponentGui element : new ArrayList<>(wrapper.components)) {
          if (element.getElementType() == GuiComponentType.EXTRA && element.getId() == id) { return element; }
@@ -462,8 +466,6 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
    }
 
    public void postDrawBackground() { }
-
-   public Font getFontRenderer() { return font; }
 
    public void setScreen(Screen gui) {
       if (minecraft == null) { minecraft = Minecraft.getInstance(); }
