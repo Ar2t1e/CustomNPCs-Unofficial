@@ -6,7 +6,6 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.stats.RecipeBook;
 import noppes.npcs.CustomTabs;
-import noppes.npcs.api.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.client.gui.player.GuiNpcCarpentryBench;
 import noppes.npcs.client.gui.recipebook.NpcGhostRecipe;
 import noppes.npcs.client.gui.recipebook.NpcGuiButtonRecipeTab;

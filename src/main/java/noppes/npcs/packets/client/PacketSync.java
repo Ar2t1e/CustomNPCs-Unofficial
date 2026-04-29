@@ -1,5 +1,6 @@
 package noppes.npcs.packets.client;
 
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 import net.minecraft.client.Minecraft;
@@ -12,6 +13,7 @@ import noppes.npcs.NBTTags;
 import noppes.npcs.client.gui.GuiNpcDimension;
 import noppes.npcs.client.gui.global.GuiNpcManageDialogs;
 import noppes.npcs.client.gui.global.GuiNpcManageQuest;
+import noppes.npcs.client.gui.global.GuiNpcManageRecipes;
 import noppes.npcs.client.gui.global.GuiPermissionsEdit;
 import noppes.npcs.config.ConfigLoader;
 import noppes.npcs.controllers.*;
@@ -148,28 +150,23 @@ public class PacketSync extends PacketBasic {
             break;
          } // dialog gui settings
          case 11: {
-            NBTTagList list = data.getTagList("Data", 10);
-            /*for(int i = 0; i < list.tagCount(); ++i) {
-               RecipeCarpentry recipe = RecipeCarpentry.load(list.getCompoundTagAt(i));
-               RecipeController.syncRecipes.put(recipe.getId(), recipe);
+            RecipeController rData = RecipeController.getInstance();
+            if (syncEnd) { rData.reloadGlobalRecipes(); }
+            else {
+               RecipeCarpentry recipe = RecipeCarpentry.create(data);
+               if (!rData.syncRecipes.containsKey(recipe.getGroup())) { rData.syncRecipes.put(recipe.getGroup(), new ArrayList<>()); }
+               rData.syncRecipes.get(recipe.getGroup()).add(recipe);
             }
-            if (syncEnd) {
-               RecipeController.instance.globalRecipes = RecipeController.syncRecipes;
-               RecipeController.instance.reloadGlobalRecipes();
-               RecipeController.syncRecipes.clear();
-            }*/
             break;
          } // global recipes
          case 12: {
-            NBTTagList list = data.getTagList("Data", 10);
-            /*for(int i = 0; i < list.tagCount(); ++i) {
-               RecipeCarpentry recipe = RecipeCarpentry.load(list.getCompoundTagAt(i));
-               RecipeController.syncRecipes.put(recipe.getId(), recipe);
+            RecipeController rData = RecipeController.getInstance();
+            if (syncEnd) { rData.reloadAnvilRecipes(); }
+            else {
+               RecipeCarpentry recipe = RecipeCarpentry.create(data);
+               if (!rData.syncRecipes.containsKey(recipe.getGroup())) { rData.syncRecipes.put(recipe.getGroup(), new ArrayList<>()); }
+               rData.syncRecipes.get(recipe.getGroup()).add(recipe);
             }
-            if (syncEnd) {
-               RecipeController.instance.anvilRecipes = RecipeController.syncRecipes;
-               RecipeController.syncRecipes.clear();
-            }*/
             break;
          } // mod recipes
          case 13: {
@@ -197,6 +194,14 @@ public class PacketSync extends PacketBasic {
             CustomNpcs.proxy.updateKeys();
             break;
          } // custom keys
+         case 18: {
+            CustomNpcs.proxy.syncRecipeManager();
+            if (mc.currentScreen instanceof GuiNpcManageRecipes) {
+               ((GuiNpcManageRecipes) mc.currentScreen).resetData();
+               mc.currentScreen.initGui();
+            }
+            break;
+         } // synchronized recipes
       }
       CustomNpcs.debugData.end("Packets");
    }

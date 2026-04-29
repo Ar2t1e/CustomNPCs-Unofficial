@@ -17,7 +17,6 @@ import net.minecraft.stats.RecipeBook;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.api.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.client.gui.player.GuiNpcCarpentryBench;
 import noppes.npcs.util.Util;
 

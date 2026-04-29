@@ -109,6 +109,7 @@ import noppes.npcs.client.renderer.RenderNpcDragon;
 import noppes.npcs.client.renderer.RenderNpcSlime;
 import noppes.npcs.client.renderer.RenderProjectile;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
+import noppes.npcs.mixin.client.util.IRecipeBookClientMixin;
 import noppes.npcs.shared.client.gui.util.TrueTypeFont;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumQuestTask;
@@ -950,6 +951,43 @@ public class ClientProxy extends CommonProxy {
 		else { MusicController.Instance.stopSound(new ResourceLocation(NoppesUtilServer.validLocation(sound)), source); }
 	}
 
+	@Override
 	public @Nullable World overworld() { return Minecraft.getMinecraft().world; }
+
+	@Override
+	public void syncRecipeManager() {
+		super.syncRecipeManager();
+		EntityPlayerSP player = (EntityPlayerSP) getPlayer();
+		if (player != null) { syncRecipe(player.getRecipeBook()); }
+	}
+
+	@Override
+	protected void syncRecipe(RecipeBook book) {
+		super.syncRecipe(book);
+		EntityPlayer player = getPlayer();
+		if (player != null && book instanceof RecipeBookClient) {
+			RecipeBookClient cBook = (RecipeBookClient) book;
+			Map<CreativeTabs, List<RecipeList>> RECIPES_BY_TAB = ((IRecipeBookClientMixin) cBook).getCollectionsByTab();
+			RecipeController rData = RecipeController.getInstance();
+			for (int i = 0; i < 2; i++) {
+				boolean isGlobal = i == 0;
+				List<RecipeList> list = new ArrayList<>();
+				for (String group : rData.getGroups(isGlobal)) {
+					List<IRecipe> recipes = new ArrayList<>();
+					for (INpcRecipe recipe : isGlobal ? rData.getGlobalRecipes(group) : rData.getAnvilRecipes(group)) {
+						if (recipe.isValid()) { recipes.add((IRecipe) recipe); }
+					}
+					if (!recipes.isEmpty()) {
+						RecipeList recipeCollection = new RecipeList();
+						for (IRecipe recipe : recipes) { recipeCollection.add(recipe); }
+						recipeCollection.updateKnownRecipes(book);
+						list.add(recipeCollection);
+					}
+				}
+				RECIPES_BY_TAB.put(isGlobal ? RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY : RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
+			}
+			((IRecipeBookClientMixin) cBook).setCollectionsByTab(RECIPES_BY_TAB);
+		}
+	}
 
 }

@@ -67,9 +67,11 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     // standard
     public final Minecraft minecraft;
     protected FontRenderer font;
+    protected final T menu;
 
     public GuiBasicContainer(T cont, Component titleIn) {
         super(cont);
+        menu = cont;
         mc = Minecraft.getMinecraft();
         minecraft = mc;
         font = (fontRenderer = mc.fontRenderer);

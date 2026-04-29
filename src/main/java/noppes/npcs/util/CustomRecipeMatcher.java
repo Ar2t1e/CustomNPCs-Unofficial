@@ -9,7 +9,7 @@ import java.util.*;
 
 public class CustomRecipeMatcher {
 
-    public static int[] findMatches(List<ItemStack> inputs, NonNullList<Ingredient> tests, boolean ignoreDamage, boolean ignoreNBT) {
+    public static int[] findMatches(List<ItemStack> inputs, List<Ingredient> tests, boolean ignoreDamage, boolean ignoreNBT) {
         int elements = inputs.size();
         if (elements != tests.size()) { return null; }
         int[] ret = new int[elements];
@@ -33,11 +33,12 @@ public class CustomRecipeMatcher {
         return null;
     }
 
-    private static boolean test(ItemStack stack, Ingredient ingredient, boolean ignoreDamage, boolean ignoreNBT) {
-        if (stack == null) { return false; }
-        if (ingredient.getMatchingStacks().length == 0) { return stack.isEmpty(); }
+    private static boolean test(ItemStack inputStack, Ingredient ingredient, boolean ignoreDamage, boolean ignoreNBT) {
+        if (inputStack == null) { return false; }
+        if (ingredient.getMatchingStacks().length == 0) { return inputStack.isEmpty(); }
         for(ItemStack itemstack : ingredient.getMatchingStacks()) {
-            if (NoppesUtilPlayer.compareItems(itemstack, stack, ignoreDamage, ignoreNBT)) { return true; }
+            if (NoppesUtilPlayer.compareItems(itemstack, inputStack, ignoreDamage, ignoreNBT) &&
+                    inputStack.getCount() >= itemstack.getCount()) { return true; }
         }
         return false;
     }

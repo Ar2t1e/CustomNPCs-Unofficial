@@ -5,7 +5,6 @@ import net.minecraft.block.BlockDoor;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.StateMap;
 import net.minecraft.item.Item;
-import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
@@ -19,7 +18,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraftforge.registries.ForgeRegistry;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.blocks.*;
 import noppes.npcs.blocks.custom.*;
@@ -29,7 +27,6 @@ import noppes.npcs.blocks.tiles.*;
 import noppes.npcs.client.renderer.blocks.*;
 import noppes.npcs.client.renderer.item.ItemCarpentryBenchRenderer;
 import noppes.npcs.client.renderer.item.ItemMailboxRenderer;
-import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.fluids.CustomFluid;
 import noppes.npcs.items.*;
 import noppes.npcs.items.custom.CustomItem;
@@ -240,11 +237,6 @@ public class CustomBlocks {
             if (it instanceof UniversalBucket) { it.setCreativeTab(CustomTabs.BLOCKS); }
         }
         event.getRegistry().registerAll(items.toArray(new Item[0]));
-    }
-
-    @SubscribeEvent
-    public void registryRecipes(RegistryEvent.Register<IRecipe> event) {
-        RecipeController.Registry = (ForgeRegistry<IRecipe>) event.getRegistry();
     }
 
     @SideOnly(Side.CLIENT)

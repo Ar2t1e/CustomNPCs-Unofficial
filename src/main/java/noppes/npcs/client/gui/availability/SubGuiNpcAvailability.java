@@ -8,6 +8,7 @@ import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketContainerOpen;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
 import noppes.npcs.shared.client.gui.components.GuiSliderNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ISliderListener;
@@ -98,6 +99,9 @@ public class SubGuiNpcAvailability extends GuiNPCInterface implements ISliderLis
 		addTextField(51, x0 + 1, y + 1, 68, h - 2, availability.minPlayerLevel)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, 0)
 				.setHoverTexts("availability.hover.level");
+		// GM
+		addCheckBox(5, x0 + 75, y, "availability.type.only.gm", "availability.type.only.gm.false", availability.getGMOnly())
+				.setSize(93, 18);
 		// health
 		addLabel(52, x, (y += 22) + 4, "availability.health")
 				.setSize(74, 12);
@@ -122,6 +126,7 @@ public class SubGuiNpcAvailability extends GuiNPCInterface implements ISliderLis
 				if (getSlider(5) != null) { getSlider(5).setIsVisible(availability.healthType != 0); }
 				break;
 			} // health type
+			case 5: availability.setGMOnly(((GuiCheckBoxNop) button).selected()); break;
 			case 6: setSubGui(new SubGuiNpcAvailabilityNames(availability)); break;
 			case 7: setSubGui(new SubGuiNpcAvailabilityStoredData(availability)); break;
 			case 8: {

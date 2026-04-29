@@ -206,10 +206,12 @@ public class Packets {
         register(SPacketQuestDialogTitles.class);
         register(SPacketQuestOpen.class);
         register(SPacketQuestRemove.class);
-        register(SPacketRecipeGet.class);
-        register(SPacketRecipeRemove.class);
+        register(SPacketRecipeGroupSave.class);
+        register(SPacketRecipeGroupRename.class);
+        register(SPacketRecipeGroupRemove.class);
         register(SPacketRecipeSave.class);
-        register(SPacketRecipesGet.class);
+        register(SPacketRecipeRename.class);
+        register(SPacketRecipeRemove.class);
         register(SPacketRemoteFreeze.class);
         register(SPacketRemoteMenuOpen.class);
         register(SPacketRemoteNpcDelete.class);
@@ -348,7 +350,6 @@ public class Packets {
         register(SPacketGetFirstID.class);
         register(SPacketMailsGet.class);
         register(SPacketMailsSave.class);
-        register(SPacketRecipeRemoveGroup.class);
         register(SPacketDetectHeldItem.class);
         register(SPacketItemChange.class);
         register(SPacketDeadLootsGet.class);

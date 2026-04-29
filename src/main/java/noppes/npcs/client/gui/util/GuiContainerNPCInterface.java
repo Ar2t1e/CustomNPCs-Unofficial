@@ -1,5 +1,6 @@
 package noppes.npcs.client.gui.util;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.inventory.Container;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.shared.client.gui.GuiBasicContainer;
@@ -17,7 +18,12 @@ public class GuiContainerNPCInterface<T extends Container> extends GuiBasicConta
 
 	public void drawNpc(int x, int y) {
 		if (npc == null) { return; }
-		drawNpc(npc, x, y, 1.0F, 0, 0, 0);
+		wrapper.drawNpc(npc, x, y, 1.0F, 0, 0, 0, guiLeft, guiTop);
+	}
+
+	public void drawNpc(Entity entity, int x, int y, float zoomed, int rotation, int vertical, int followCursor) {
+		if (entity == null) { return; }
+		wrapper.drawNpc(entity, x, y, zoomed, rotation, vertical, followCursor, guiLeft, guiTop);
 	}
 
 }

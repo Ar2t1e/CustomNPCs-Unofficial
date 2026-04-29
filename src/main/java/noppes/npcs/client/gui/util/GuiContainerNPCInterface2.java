@@ -10,28 +10,27 @@ import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.entity.EntityNPCInterface;
 
+import javax.annotation.Nonnull;
+
 public abstract class GuiContainerNPCInterface2<T extends Container>
 extends GuiContainerNPCInterface<T> implements INpcMenuGui {
 
-	protected final GuiNpcMenu menuTabs;
-	protected final ResourceLocation defaultBackground;
+	protected final @Nonnull GuiNpcMenu menuTabs;
+	protected final ResourceLocation rightBackground = getResource("menubg.png");
 	protected EnumGuiType backGui = EnumGuiType.MainMenuDisplay;
-	protected ResourceLocation background;
 	public int menuYOffset;
 
-	public GuiContainerNPCInterface2(EntityNPCInterface npc, T cont, Component titleIn) { this(npc, cont, titleIn, -1); }
+	public GuiContainerNPCInterface2(EntityNPCInterface npc, T cont, Component titleIn) {
+		this(npc, cont, titleIn, -1);
+	}
 
 	public GuiContainerNPCInterface2(EntityNPCInterface npc, T cont, Component titleIn, int activeMenu) {
 		super(npc, cont, titleIn);
-		background = getResource("menubg.png");
-		defaultBackground = getResource("menubg.png");
+		drawDefaultBackground = false;
 		menuYOffset = 0;
 		xSize = 420;
 		menuTabs = new GuiNpcMenu(this, activeMenu, npc);
 	}
-
-	@Override
-	public void setBackground(String texture) { background = getResource(texture); }
 
 	@Override
 	public void initGui() {
@@ -57,8 +56,7 @@ extends GuiContainerNPCInterface<T> implements INpcMenuGui {
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 		mc.getTextureManager().bindTexture(background);
 		drawTexturedModalRect(guiLeft, guiTop, 0, 0, 256, 256);
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		mc.getTextureManager().bindTexture(defaultBackground);
+		mc.getTextureManager().bindTexture(rightBackground);
 		drawTexturedModalRect(guiLeft + xSize - 200, guiTop, 56, 0, 200, 220);
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 	}
@@ -87,13 +85,11 @@ extends GuiContainerNPCInterface<T> implements INpcMenuGui {
 
 	@Override
 	public void setMenuData(boolean display, boolean stats, boolean ai, boolean inventory, boolean advanced) {
-		if (menuTabs != null) {
-			menuTabs.permissions[0] = display;
-			menuTabs.permissions[1] = stats;
-			menuTabs.permissions[2] = ai;
-			menuTabs.permissions[3] = inventory;
-			menuTabs.permissions[4] = advanced;
-		}
-	}
+		menuTabs.permissions[0] = display;
+		menuTabs.permissions[1] = stats;
+		menuTabs.permissions[2] = ai;
+		menuTabs.permissions[3] = inventory;
+		menuTabs.permissions[4] = advanced;
+    }
 
 }

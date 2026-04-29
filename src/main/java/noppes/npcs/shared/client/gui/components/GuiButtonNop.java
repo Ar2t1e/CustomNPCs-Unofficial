@@ -58,12 +58,13 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     protected ClientProxy.FontContainer customFont = null;
     protected static final double step = 60;
 
-    protected ItemStack[] renderStacks = null;
+    public ItemStack[] renderStacks = null;
+    public ItemStack renderStack = ItemStack.EMPTY;
+    public int renderStackId = -1;
     protected int ticks = 0;
     protected int wait = 0;
 
     public ResourceLocation texture = null;
-    public ItemStack renderStack = ItemStack.EMPTY;
     public int renderStackID = -1;
     public int txrX = 0;
     public int txrY = 0;
@@ -79,9 +80,6 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     public boolean isScissor = true;
 
     public boolean hasSound = true;
-    protected ItemStack[] itemStacks = null;
-    public ItemStack currentStack = ItemStack.EMPTY;
-    public int currentStackID = -1;
 
     // standard
     protected boolean focused = false;
@@ -395,7 +393,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         GlStateManager.popMatrix();
-        if (renderStacks != null && renderStacks.length != 0) {
+        if (renderStacks != null && renderStacks.length != 0 && (listener == null || !listener.hasSubGui())) {
             renderStack = renderStacks[0];
             renderStackID = 0;
             if (renderStacks.length > 1) {
@@ -451,9 +449,9 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         return this;
     }
 
-    public ItemStack getCurrentStack() { return currentStack; }
+    public ItemStack getRenderStack() { return renderStack; }
 
-    public int getCurrentStackID() { return currentStackID; }
+    public int getRenderStackId() { return renderStackId; }
 
     @SideOnly(Side.CLIENT)
     public interface OnRender {

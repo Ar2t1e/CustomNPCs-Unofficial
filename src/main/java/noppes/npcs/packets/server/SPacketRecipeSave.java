@@ -5,6 +5,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.RecipeController;
+import noppes.npcs.controllers.data.RecipeCarpentry;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 public class SPacketRecipeSave extends PacketServerBasic {
@@ -31,10 +34,9 @@ public class SPacketRecipeSave extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      RecipeCarpentry recipe = RecipeCarpentry.load(data);
-      RecipeController.instance.saveRecipe(recipe);
-      SPacketRecipesGet.sendRecipeData(player, recipe.isGlobal ? 3 : 4);
-      SPacketRecipeGet.setRecipeGui(player, recipe);
+      RecipeCarpentry recipe = RecipeCarpentry.create(data);
+      RecipeController.getInstance().addAndSaveRecipe(recipe);
+      Packets.sendDelayed(player, new PacketGuiUpdate(), 100);
       CustomNpcs.debugData.end("Packets");
    }
 

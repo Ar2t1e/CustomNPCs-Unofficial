@@ -1087,10 +1087,10 @@ public class Availability implements ICompatibilty, IAvailability {
 		}
 		// in creative mode
 		if (onlyGM) {
-			data = Component.empty().append(" ")
+			data = Component.empty().append(": ")
 					.append(Component.translatable("gui.enabled"))
 					.append(Component.translatable("quest.task.manual."+(gm ? "0" : "1")));
-			list.add(Component.translatable("availability.type.only.gm").append(data));
+			list.add(Component.translatable("availability.type.only.gm.true").append(data));
 		}
 		// xp level
 		if (minPlayerLevel > 0) {

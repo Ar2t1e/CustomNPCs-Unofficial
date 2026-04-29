@@ -7,23 +7,21 @@ import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.WrapperRecipe;
 
-@SuppressWarnings("all")
 public interface INpcRecipe {
 
 	String getName();
 
 	boolean isGlobal();
 
-	@SuppressWarnings("unused")
-	void setIsGlobal(@ParamName("bo") boolean bo);
+	void setIsGlobal(@ParamName("isGlobal") boolean isGlobal);
 
 	boolean getIgnoreNBT();
 
-	void setIgnoreNBT(@ParamName("bo") boolean bo);
+	void setIgnoreNBT(@ParamName("ignoreNBT") boolean ignoreNBT);
 
 	boolean getIgnoreDamage();
 
-	void setIgnoreDamage(@ParamName("bo") boolean bo);
+	void setIgnoreDamage(@ParamName("ignoreDamage") boolean ignoreDamage);
 
 	int getWidth();
 
@@ -33,12 +31,6 @@ public interface INpcRecipe {
 
 	IItemStack[][] getRecipe();
 
-	@SuppressWarnings("unused")
-	void saves(@ParamName("bo") boolean bo);
-
-	@SuppressWarnings("unused")
-	boolean saves();
-
 	void save();
 
 	void delete();
@@ -46,7 +38,7 @@ public interface INpcRecipe {
 	boolean isShaped();
 
 	@SuppressWarnings("unused")
-	void setIsShaped(boolean isShapedIn);
+	void setIsShaped(@ParamName("isShaped") boolean isShaped);
 
 	// New from Unofficial (BetaZavr)
 	boolean isValid();
@@ -54,13 +46,13 @@ public interface INpcRecipe {
 	boolean isKnown();
 
 	@SuppressWarnings("unused")
-	void setIsKnown(boolean isKnown);
+	void setIsKnown(@ParamName("isKnown") boolean isKnown);
 
 	@SuppressWarnings("unused")
 	boolean showInRecipeBook();
 
 	@SuppressWarnings("unused")
-	void setShowInRecipeBook(boolean showInRecipeBook);
+	void setShowInRecipeBook(@ParamName("showInRecipeBook") boolean showInRecipeBook);
 
 	IAvailability getAvailability();
 

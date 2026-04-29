@@ -10,6 +10,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.item.Item;
+import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.stats.RecipeBook;
@@ -19,6 +20,10 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.IGuiHandler;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.RegistryManager;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityChest;
@@ -26,10 +31,12 @@ import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.containers.*;
 import noppes.npcs.controllers.MarcetController;
+import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataInventory;
+import noppes.npcs.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.reflection.entity.player.EntityPlayerMPReflection;
 
 import javax.annotation.Nullable;
@@ -95,7 +102,7 @@ public class CommonProxy implements IGuiHandler {
 				return new ContainerNpcQuestTypeItem(player, buffer.readInt());
 			}
 			case ManageRecipes: {
-				return new ContainerManageRecipes(player, buffer.readBlockPos().getX());
+				return new ContainerManageRecipes(player);
 			} // Change
 			case ManageBanks: {
 				return new ContainerManageBanks(player);
@@ -235,6 +242,71 @@ public class CommonProxy implements IGuiHandler {
 	public @Nullable World overworld() {
 		if (CustomNpcs.Server != null) { return CustomNpcs.Server.getWorld(0); }
 		return null;
+	}
+
+	public IForgeRegistry<IRecipe> getRecipeManager() { return RegistryManager.ACTIVE.getRegistry(IRecipe.class); }
+
+	public void syncRecipeManager() {
+		IForgeRegistry<IRecipe> manager = CustomNpcs.proxy.getRecipeManager();
+		List<IRecipe> recipes = new ArrayList<>(manager.getValuesCollection());
+		// new
+		// collect
+		boolean isChanged = false;
+		RecipeController rData = RecipeController.getInstance();
+		for (int i = 0; i < 2; i++) {
+			for (INpcRecipe iRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
+				RecipeCarpentry npcRecipe = (RecipeCarpentry) iRecipe;
+				RecipeCarpentry recipe = null;
+				for (IRecipe r : recipes) {
+					if (r instanceof RecipeCarpentry) {
+						if (((RecipeCarpentry) r).getRegistryName().equals(npcRecipe.getRegistryName())) {
+							recipe = (RecipeCarpentry) r;
+							break;
+						}
+					}
+				}
+				if (recipe != null) {
+					if (!npcRecipe.isValid()) { recipes.remove(recipe); isChanged = true; }
+					else { recipe.loadFrom(npcRecipe.saveTo()); }
+				}
+				else if (npcRecipe.isValid()) { recipes.add(npcRecipe); isChanged = true; }
+			}
+		}
+		// changed
+		if (isChanged) {
+			for (IRecipe r : recipes) { manager.register(r); }
+			if (CustomNpcs.Server != null) {
+				for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
+			}
+		}
+	}
+
+	protected void syncRecipe(RecipeBook book) {
+		IForgeRegistry<IRecipe> manager = CustomNpcs.proxy.getRecipeManager();
+		List<IRecipe> recipes = new ArrayList<>(manager.getValuesCollection());
+		BitSet known = ((IRecipeBookMixin) book).getKnown();
+		BitSet highlight = ((IRecipeBookMixin) book).getHighlight();
+
+		for (int i = known.nextSetBit(0); i >= 0; i = known.nextSetBit(i + 1)) {
+			IRecipe recipe = getRecipe(i);
+			if (recipe == null || !recipes.contains(recipe)) { known.clear(i); }
+		}
+		for (int i = highlight.nextSetBit(0); i >= 0; i = highlight.nextSetBit(i + 1)) {
+			IRecipe recipe = getRecipe(i);
+			if (recipe == null || !recipes.contains(recipe)) { highlight.clear(i); }
+		}
+		RecipeController rData = RecipeController.getInstance();
+		for (int i = 0; i < 2; i++) {
+			for (INpcRecipe npcRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
+				if (npcRecipe.isKnown()) { book.unlock((IRecipe) npcRecipe); }
+			}
+		}
+	}
+
+	protected static @Nullable IRecipe getRecipe(int id) {
+		IRecipe recipe = CraftingManager.REGISTRY.getObjectById(id);
+		if (recipe == null) { recipe = ((ForgeRegistry<IRecipe>) ForgeRegistries.RECIPES).getValue(id); }
+		return recipe;
 	}
 
 }

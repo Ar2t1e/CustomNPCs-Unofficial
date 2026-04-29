@@ -1,10 +1,10 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.RecipeController;
-import noppes.npcs.items.crafting.NpcShapedRecipes;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
@@ -12,34 +12,20 @@ import noppes.npcs.shared.common.PacketServerBasic;
 public class SPacketRecipeRemove extends PacketServerBasic {
 
    protected static int channelId;
-   private int size;
-   private String group;
-   private String name;
+   private ResourceLocation recipeId;
 
    public SPacketRecipeRemove() { }
 
-   public SPacketRecipeRemove(int sizeIn, String groupIn, String nameIn) {
-      size = sizeIn;
-      group = groupIn;
-      name = nameIn;
-   }
+   public SPacketRecipeRemove(ResourceLocation recipeIdIn) { recipeId = recipeIdIn; }
 
    @Override
    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_RECIPE; }
 
    @Override
-   public void encode(FriendlyByteBuf buf) {
-      buf.writeInt(size);
-      buf.writeUtf(group);
-      buf.writeUtf(name);
-   }
+   public void encode(FriendlyByteBuf buf) { buf.writeResourceLocation(recipeId); }
 
    @Override
-   public void decode(FriendlyByteBuf buf) {
-      size = buf.readInt();
-      group = buf.readUtf();
-      name = buf.readUtf();
-   }
+   public void decode(FriendlyByteBuf buf) { recipeId = buf.readResourceLocation(); }
 
    @Override
    public int getChannelId() { return channelId; }
@@ -47,16 +33,8 @@ public class SPacketRecipeRemove extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      /*
-      INpcRecipe r = RecipeController.instance.delete(recipe);
-      SPacketRecipesGet.sendRecipeData(player, r.isGlobal() ? 3 : 4);
-      SPacketRecipeGet.setRecipeGui(player, new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, ""), ""));
-      /**/
-      if (RecipeController.getInstance().delete(group, name)) {
-         NoppesUtilServer.sendRecipeData(player, size, group, name);
-         NoppesUtilServer.setRecipeGui(player, new NpcShapedRecipes());
-      }
-      Packets.send(player, new PacketGuiUpdate());
+      RecipeController.getInstance().delete(recipeId);
+      Packets.sendDelayed(player, new PacketGuiUpdate(), 100);
       CustomNpcs.debugData.end("Packets");
    }
 
