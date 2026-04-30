@@ -4,9 +4,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.*;
 
-import com.google.common.collect.ImmutableList;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -35,12 +35,8 @@ public class RecipeController implements IRecipeHandler {
 	};
 	public static final CreativeTabs CRAFTING_CUSTOM_ANVIL_CATEGORY = new CreativeTabs("CRAFTING_CUSTOM_ANVIL_CATEGORY") {
 		@Override
-		public @Nonnull ItemStack getTabIconItem() { return new ItemStack(CustomItems.wand); }
+		public @Nonnull ItemStack getTabIconItem() { return new ItemStack(CustomBlocks.carpenty); }
 	};
-
-	//public static final RecipeBookType CRAFTING_CUSTOM_GLOBAL = RecipeBookType.create("CRAFTING_CUSTOM_GLOBAL");
-	//public static final RecipeBookType CRAFTING_CUSTOM_ANVIL = RecipeBookType.create("CRAFTING_CUSTOM_ANVIL");
-	//public static final List<RecipeBookCategories> CRAFTING_CUSTOM_ANVIL_CATEGORIES = ImmutableList.of(CRAFTING_CUSTOM_ANVIL_CATEGORY);
 	public static final int version = 4;
 
 	protected static RecipeController instance;
@@ -338,7 +334,9 @@ public class RecipeController implements IRecipeHandler {
 		String name = "new";
 		while (containsName(name)) { name += "_"; }
 		return new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name), group,
-				isGlobal ? 3 : 4, isGlobal ? 3 : 4, isGlobal, true, NonNullList.create(), ItemStack.EMPTY);
+				isGlobal ? 3 : 4, isGlobal ? 3 : 4, isGlobal, true,
+				NonNullList.create(),
+				new ItemStack(Blocks.COBBLESTONE));
 	}
 
 	public void renameGroup(boolean isGlobal, @Nonnull String oldGroup, @Nonnull String newGroup) {
@@ -355,17 +353,15 @@ public class RecipeController implements IRecipeHandler {
 				for (RecipeCarpentry r : list) { r.setGroup(newGroup); }
 			}
 			map.put(newGroup, list);
-			updateToAll();
 		}
 	}
 
 	public void renameRecipe(@Nonnull String oldName, @Nonnull String newName) {
 		if (CustomNpcs.Server != null) {
-			RecipeCarpentry oldRecipe = getRecipe(new ResourceLocation(CustomNpcs.MODID, oldName));
-			if (oldRecipe != null) {
+			RecipeCarpentry recipe = getRecipe(new ResourceLocation(CustomNpcs.MODID, oldName));
+			if (recipe != null) {
 				while (containsName(newName)) { newName += "_"; }
-				oldRecipe.setId(new ResourceLocation(CustomNpcs.MODID, newName));
-				updateToAll();
+				recipe.setId(new ResourceLocation(CustomNpcs.MODID, newName));
 			}
 		}
 	}

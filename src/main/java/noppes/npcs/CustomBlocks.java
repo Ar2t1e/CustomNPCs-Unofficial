@@ -46,7 +46,7 @@ public class CustomBlocks {
     @GameRegistry.ObjectHolder("npcbuilderblock")
     public static Block builder = null;
     @GameRegistry.ObjectHolder("npccarpentybench")
-    public static Block carpentyBench = null;
+    public static Block carpenty = null;
     @GameRegistry.ObjectHolder("npccopyblock")
     public static Block copy = null;
     @GameRegistry.ObjectHolder("npcmailbox")
@@ -104,7 +104,7 @@ public class CustomBlocks {
         List<Block> blocks = new ArrayList<>();
         List<String> names = new ArrayList<>();
         blocks.add(redstoneBlock = new BlockNpcRedstone());
-        blocks.add(carpentyBench = new BlockCarpentryBench());
+        blocks.add(carpenty = new BlockCarpentryBench());
         blocks.add(mailbox = new BlockMailbox());
         blocks.add(waypoint = new BlockWaypoint());
         blocks.add(border = new BlockBorder());
@@ -216,7 +216,7 @@ public class CustomBlocks {
     public void registerItems(RegistryEvent.Register<Item> event) {
         List<Item> items = new ArrayList<>();
         items.add(scripted_door_item = new ItemScriptedDoor(scripted_door));
-        items.add(carpentry_item = createItem(carpentyBench));
+        items.add(carpentry_item = createItem(carpenty));
         items.add(mailbox_item = createItem(mailbox).setHasSubtypes(true));
         items.add(redstone_item = createItem(redstoneBlock));
         items.add(waypoint_item = createItem(waypoint));
@@ -246,7 +246,7 @@ public class CustomBlocks {
         ModelLoader.setCustomStateMapper(mailbox, new StateMap.Builder().ignore(BlockMailbox.ROTATION, BlockMailbox.TYPE).build());
         ModelLoader.setCustomStateMapper(scripted_door, new StateMap.Builder().ignore(BlockDoor.POWERED).build());
         ModelLoader.setCustomStateMapper(builder, new StateMap.Builder().ignore(BlockBuilder.ROTATION).build());
-        ModelLoader.setCustomStateMapper(carpentyBench, new StateMap.Builder().ignore(BlockCarpentryBench.ROTATION).build());
+        ModelLoader.setCustomStateMapper(carpenty, new StateMap.Builder().ignore(BlockCarpentryBench.ROTATION).build());
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(redstoneBlock), 0, new ModelResourceLocation(Objects.requireNonNull(redstoneBlock.getRegistryName()), "inventory"));
         ModelLoader.setCustomModelResourceLocation(mailbox_item, 0, new ModelResourceLocation(Objects.requireNonNull(mailbox.getRegistryName()), "inventory"));
         ModelLoader.setCustomModelResourceLocation(mailbox_item, 1, new ModelResourceLocation(mailbox.getRegistryName(), "inventory"));
@@ -257,7 +257,7 @@ public class CustomBlocks {
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(scripted_door), 0, new ModelResourceLocation(Objects.requireNonNull(scripted_door.getRegistryName()), "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(builder), 0, new ModelResourceLocation(Objects.requireNonNull(builder.getRegistryName()), "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(copy), 0, new ModelResourceLocation(Objects.requireNonNull(copy.getRegistryName()), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(carpentry_item, 0, new ModelResourceLocation(Objects.requireNonNull(carpentyBench.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(carpentry_item, 0, new ModelResourceLocation(Objects.requireNonNull(carpenty.getRegistryName()), "inventory"));
         for (ICustomElement element : customblocks.keySet()) {
             if (element instanceof Block) {
                 Block block = (Block) element;

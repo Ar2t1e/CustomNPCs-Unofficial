@@ -250,34 +250,17 @@ public class CommonProxy implements IGuiHandler {
 		IForgeRegistry<IRecipe> manager = CustomNpcs.proxy.getRecipeManager();
 		List<IRecipe> recipes = new ArrayList<>(manager.getValuesCollection());
 		// new
+        recipes.removeIf(r -> r instanceof RecipeCarpentry);
 		// collect
-		boolean isChanged = false;
 		RecipeController rData = RecipeController.getInstance();
 		for (int i = 0; i < 2; i++) {
 			for (INpcRecipe iRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
-				RecipeCarpentry npcRecipe = (RecipeCarpentry) iRecipe;
-				RecipeCarpentry recipe = null;
-				for (IRecipe r : recipes) {
-					if (r instanceof RecipeCarpentry) {
-						if (((RecipeCarpentry) r).getRegistryName().equals(npcRecipe.getRegistryName())) {
-							recipe = (RecipeCarpentry) r;
-							break;
-						}
-					}
-				}
-				if (recipe != null) {
-					if (!npcRecipe.isValid()) { recipes.remove(recipe); isChanged = true; }
-					else { recipe.loadFrom(npcRecipe.saveTo()); }
-				}
-				else if (npcRecipe.isValid()) { recipes.add(npcRecipe); isChanged = true; }
+				recipes.add((RecipeCarpentry) iRecipe);
 			}
 		}
-		// changed
-		if (isChanged) {
-			for (IRecipe r : recipes) { manager.register(r); }
-			if (CustomNpcs.Server != null) {
-				for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
-			}
+		for (IRecipe r : recipes) { manager.register(r); }
+		if (CustomNpcs.Server != null) {
+			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
 		}
 	}
 
@@ -286,7 +269,6 @@ public class CommonProxy implements IGuiHandler {
 		List<IRecipe> recipes = new ArrayList<>(manager.getValuesCollection());
 		BitSet known = ((IRecipeBookMixin) book).getKnown();
 		BitSet highlight = ((IRecipeBookMixin) book).getHighlight();
-
 		for (int i = known.nextSetBit(0); i >= 0; i = known.nextSetBit(i + 1)) {
 			IRecipe recipe = getRecipe(i);
 			if (recipe == null || !recipes.contains(recipe)) { known.clear(i); }

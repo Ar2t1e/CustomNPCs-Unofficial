@@ -110,7 +110,6 @@ public class Util implements IMethods {
 	public static Object temp;
 
 	public static boolean hasInternet = false;
-	public static final ResourceLocation RECIPE_BOOK = new ResourceLocation("textures/gui/recipe_book.png");
 
 	static {
 		steps[0] = new NumInfo(-24, "y", "d");  // yocto

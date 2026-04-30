@@ -1,5 +1,6 @@
 package noppes.npcs.client.particles;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.ParticlePortal;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -8,7 +9,6 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.client.parts.ModelPartData;
-import noppes.npcs.client.ClientProxy;
 import noppes.npcs.entity.EntityCustomNpc;
 
 import javax.annotation.Nonnull;
@@ -66,7 +66,7 @@ public class EntityEnderFX extends ParticlePortal {
 		scale *= scale;
 		scale = 1.0f - scale;
 		this.particleScale = this.portalParticleScale * scale;
-		ClientProxy.bindTexture(this.location);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(this.location);
 		float f = 0.875f;
 		float f2 = f + 0.125f;
 		float f3 = 0.75f - this.particleNumber * 0.25f;
@@ -92,7 +92,7 @@ public class EntityEnderFX extends ParticlePortal {
 		renderer.pos((f6 + par3 * f5 - par6 * f5), (f7 - par4 * f5), (f8 + par5 * f5 - par7 * f5)).tex(f, f4)
 				.color(this.particleRed, this.particleGreen, this.particleBlue, 1.0f).lightmap(j, k).endVertex();
 		tessellator.draw();
-		ClientProxy.bindTexture(EntityEnderFX.resource);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(EntityEnderFX.resource);
 		renderer.begin(7, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
 	}
 

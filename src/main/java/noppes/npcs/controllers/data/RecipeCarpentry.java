@@ -1,6 +1,7 @@
 package noppes.npcs.controllers.data;
 
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.inventory.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -12,7 +13,6 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.registries.GameData;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
@@ -23,18 +23,15 @@ import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.handler.data.IAvailability;
 import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.wrapper.ItemStackWrapper;
 import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.api.wrapper.WrapperRecipe;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.util.CustomRecipeMatcher;
-import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RecipeCarpentry implements IRecipe, INpcRecipe {
@@ -62,10 +59,14 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
         width = widthIn;
         height = heightIn;
         ingredients = recipeItemsIn;
+        if (ingredients.isEmpty()) {
+            ingredients = NonNullList.create();
+            ingredients.add(Ingredient.fromStacks(new ItemStack(Blocks.COBBLESTONE)));
+        }
         result = resultIn;
+        if (result.isEmpty()) { result = new ItemStack(Blocks.COBBLESTONE); }
 
         name = idIn.getResourcePath();
-        result = resultIn;
         isShaped = isShapedIn;
         isGlobal = isGlobalIn;
     }
@@ -169,7 +170,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void setIsGlobal(boolean isGlobalIn) {
-        if (isGlobal != isGlobalIn && Util.instance.getSide() == Side.SERVER) {
+        if (isGlobal != isGlobalIn && CustomNpcs.Server != null) {
             isGlobal = isGlobalIn;
             RecipeController.getInstance().updateToAll();
         }
@@ -180,7 +181,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void setIgnoreNBT(boolean ignoreNBTIn) {
-        if (ignoreNBT != ignoreNBTIn && Util.instance.getSide() == Side.SERVER) {
+        if (ignoreNBT != ignoreNBTIn && CustomNpcs.Server != null) {
             ignoreNBT = ignoreNBTIn;
             RecipeController.getInstance().updateToAll();
         }
@@ -191,7 +192,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void setIgnoreDamage(boolean ignoreDamageIn) {
-        if (ignoreDamage != ignoreDamageIn && Util.instance.getSide() == Side.SERVER) {
+        if (ignoreDamage != ignoreDamageIn && CustomNpcs.Server != null) {
             ignoreDamage = ignoreDamageIn;
             RecipeController.getInstance().updateToAll();
         }
@@ -205,12 +206,12 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void save() {
-        if (Util.instance.getSide() == Side.SERVER) { RecipeController.getInstance().addAndSaveRecipe(this); }
+        if (CustomNpcs.Server != null) { RecipeController.getInstance().addAndSaveRecipe(this); }
     }
 
     @Override
     public void delete() {
-        if (Util.instance.getSide() == Side.SERVER) { RecipeController.getInstance().delete(id); }
+        if (CustomNpcs.Server != null) { RecipeController.getInstance().delete(id); }
     }
 
     @Override
@@ -218,7 +219,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void setIsKnown(boolean isKnownIn) {
-        if (isKnown != isKnownIn && Util.instance.getSide() == Side.SERVER) {
+        if (isKnown != isKnownIn && CustomNpcs.Server != null) {
             isKnown = isKnownIn;
             RecipeController.getInstance().updateToAll();
         }
@@ -229,7 +230,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void setShowInRecipeBook(boolean showInRecipeBookIn) {
-        if (showInRecipeBook != showInRecipeBookIn && Util.instance.getSide() == Side.SERVER) {
+        if (showInRecipeBook != showInRecipeBookIn && CustomNpcs.Server != null) {
             showInRecipeBook = showInRecipeBookIn;
             RecipeController.getInstance().updateToAll();
         }
@@ -272,7 +273,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void setNbt(INbt nbt) {
-        if (nbt != null && Util.instance.getSide() == Side.SERVER) {
+        if (nbt != null && CustomNpcs.Server != null) {
             loadFrom(nbt.getMCNBT());
             RecipeController.getInstance().updateToAll();
         }
@@ -280,11 +281,9 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public boolean isRecipeItemsEmpty() {
-        if (!ingredients.isEmpty()) {
-            for (Ingredient ingredient : ingredients) {
-                for (ItemStack stack : ingredient.getMatchingStacks()) {
-                    if (!stack.isEmpty()) { return false; }
-                }
+        for (Ingredient ingredient : ingredients) {
+            for (ItemStack stack : ingredient.getMatchingStacks()) {
+                if (!stack.isEmpty()) { return false; }
             }
         }
         return true;
@@ -304,16 +303,16 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public void setIsShaped(boolean isShapedIn) {
-        if (isShaped != isShapedIn && Util.instance.getSide() == Side.SERVER) {
+        if (isShaped != isShapedIn && CustomNpcs.Server != null) {
             isShaped = isShapedIn;
             RecipeController.getInstance().updateToAll();
         }
     }
 
     @Override
-    public void setResult(ItemStack newResult) {
-        ItemStack resultIn = newResult == null ? ItemStack.EMPTY : newResult;
-        if (!NoppesUtilPlayer.compareItems(result, resultIn, ignoreDamage, ignoreNBT) && Util.instance.getSide() == Side.SERVER) {
+    public void setResult(IItemStack newResult) {
+        ItemStack resultIn = newResult == null ? ItemStack.EMPTY : newResult.getMCItemStack();
+        if (!NoppesUtilPlayer.compareItems(result, resultIn, ignoreDamage, ignoreNBT) && CustomNpcs.Server != null) {
             result = resultIn;
             RecipeController.getInstance().updateToAll();
         }
@@ -345,7 +344,12 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
         width = compound.getInteger("Width");
         height = compound.getInteger("Height");
         ingredients = NBTTags.getIngredientList(compound.getTagList("Materials", 10));
+        if (ingredients.isEmpty()) {
+            ingredients = NonNullList.create();
+            ingredients.add(Ingredient.fromStacks(new ItemStack(Blocks.COBBLESTONE)));
+        }
         result = compound.hasKey("Item", 10) ? new ItemStack(compound.getCompoundTag("Item")) : ItemStack.EMPTY;
+        if (result.isEmpty()) { result = new ItemStack(Blocks.COBBLESTONE); }
         availability.load(compound.getCompoundTag("Availability"));
         ignoreDamage = compound.getBoolean("IgnoreDamage");
         ignoreNBT = compound.getBoolean("IgnoreNBT");
@@ -412,7 +416,8 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
             int x = slotId % size;
             int y = (int) Math.floor((double) slotId / (double) size);
             if (isShaped) {
-                if (x < width && y < height) { wrapper.ingredients.put(slotId, ingredients.get(x + y * width).getMatchingStacks()); }
+                int ingredient = x + y * width;
+                if (ingredient < ingredients.size()) { wrapper.ingredients.put(slotId, ingredients.get(ingredient).getMatchingStacks()); }
                 else { wrapper.ingredients.put(slotId, new ItemStack[0]); }
             } else {
                 if (slotId < ingredients.size()) { wrapper.ingredients.put(slotId, ingredients.get(slotId).getMatchingStacks()); }
@@ -422,8 +427,51 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
         return wrapper;
     }
 
+    @Override
+    public void setItems(IItemStack[][] items) {
+        if (CustomNpcs.Server != null && items != null && items.length > 0) {
+            Map<Integer, List<IItemStack>> mapItems = new HashMap<>();
+            for (int slotId = 0; slotId < items.length && (!isShaped || slotId < width * height); slotId++) {
+                mapItems.put(slotId, new ArrayList<>());
+                for (IItemStack stack : items[slotId]) {
+                    if (stack != null && stack.isEmpty()) { mapItems.get(slotId).add(stack); }
+                }
+                if (items[slotId].length > 0 && mapItems.get(slotId).isEmpty()) {
+                    mapItems.get(slotId).add(ItemStackWrapper.AIR);
+                }
+            }
+            setItems(mapItems);
+        }
+    }
+
+    @Override
+    public void setItems(Map<Integer, List<IItemStack>> mapItems) {
+        if (CustomNpcs.Server != null) {
+            if (isShaped) {
+                int size = width * height;
+                for (int slotId = 0; slotId < size; slotId++) {
+                    if (!mapItems.containsKey(slotId)) {
+                        mapItems.put(slotId, new ArrayList<>());
+                        mapItems.get(slotId).add(ItemStackWrapper.AIR);
+                    }
+                }
+                for (int slotId : new ArrayList<>(mapItems.keySet())) {
+                    if (slotId > size) { mapItems.remove(slotId); }
+                }
+            }
+            ingredients = NonNullList.create();
+            for (List<IItemStack> list : new ArrayList<>(mapItems.values())) {
+                ItemStack[] items = new ItemStack[list.size()];
+                int i = 0;
+                for (IItemStack iStack : list) { items[i++] = iStack.getMCItemStack(); }
+                ingredients.add(Ingredient.fromStacks(items));
+            }
+            RecipeController.getInstance().updateToAll();
+        }
+    }
+
     public void setGroup(String newGroup) {
-        if (newGroup != null && !group.equals(newGroup) && Util.instance.getSide() == Side.SERVER) {
+        if (newGroup != null && !group.equals(newGroup) && CustomNpcs.Server != null) {
             group = newGroup;
             RecipeController.getInstance().updateToAll();
         }
@@ -433,7 +481,7 @@ public class RecipeCarpentry implements IRecipe, INpcRecipe {
 
     @Override
     public IRecipe setRegistryName(ResourceLocation newId) {
-        if (newId != null && !id.equals(newId) && Util.instance.getSide() == Side.SERVER) {
+        if (newId != null && !id.equals(newId) && CustomNpcs.Server != null) {
             id = GameData.checkPrefix(newId.toString(), true);
             RecipeController.getInstance().updateToAll();
         }

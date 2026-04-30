@@ -10,7 +10,6 @@ import net.minecraft.entity.EntityLivingBase;
 import noppes.npcs.CustomItems;
 import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.api.constants.AnimationKind;
-import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.entity.EntityCustomNpc;
 
@@ -73,8 +72,8 @@ implements LayerRenderer<T> {
 
 	public void preRender(ModelPartData data) {
 		if (data == null) { return; }
-		if (data.playerTexture) { ClientProxy.bindTexture(npc.textureLocation); }
-		else { ClientProxy.bindTexture(data.getResource()); }
+		if (data.playerTexture) { Minecraft.getMinecraft().getTextureManager().bindTexture(npc.textureLocation); }
+		else { Minecraft.getMinecraft().getTextureManager().bindTexture(data.getResource()); }
 		if (!npc.animation.isAnimated(AnimationKind.DIES) && npc.hurtTime > 0 || npc.deathTime > 0) { return; }
 
 		int color = data.color;

@@ -16,14 +16,10 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.recipebook.RecipeList;
 import net.minecraft.client.particle.IParticleFactory;
 import net.minecraft.client.particle.Particle;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.texture.ITextureObject;
-import net.minecraft.client.renderer.texture.SimpleTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.*;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.RecipeBookClient;
@@ -242,23 +238,7 @@ public class ClientProxy extends CommonProxy {
 	public static FontContainer LogFont;
 
 	public static final Map<String, TempFile> loadFiles = new TreeMap<>();
-    private final static List<ResourceLocation> notLoadTextures = new ArrayList<>();
 	public static IMinecraft mcWrapper = null;
-
-	public static void bindTexture(ResourceLocation location) {
-		try {
-			if (location == null) { return; }
-			TextureManager manager = Minecraft.getMinecraft().getTextureManager();
-			ITextureObject ob = manager.getTexture(location);
-			if (ob == null && !notLoadTextures.contains(location)) {
-				ob = new SimpleTexture(location);
-				manager.loadTexture(location, ob);
-				notLoadTextures.add(location);
-			}
-			if (ob != null) { GlStateManager.bindTexture(ob.getGlTextureId()); }
-		}
-		catch (Exception e) { LogWriter.error(e); }
-	}
 
 	// Apply changes to your localizations without disabling processes
 	public static void checkLocalization() {
@@ -375,10 +355,12 @@ public class ClientProxy extends CommonProxy {
 			}
 			case QuestChooseReward: {
 				Quest quest = QuestController.instance.get(preEvent.buffer.readInt());
-				int size = preEvent.buffer.readInt();
-				Map<Integer, ItemStack> rewardItems = new TreeMap<>();
-				for (int i = 0; i < size; i++) { rewardItems.put(i, preEvent.buffer.readItem()); }
-				returnGui = new GuiNpcQuestChooseReward(quest, rewardItems);
+				if (quest != null) {
+					int size = preEvent.buffer.readInt();
+					Map<Integer, ItemStack> rewardItems = new TreeMap<>();
+					for (int i = 0; i < size; i++) { rewardItems.put(i, preEvent.buffer.readItem()); }
+					returnGui = new GuiNpcQuestChooseReward(quest, rewardItems);
+				}
 				break;
 			}
 			case QuestTypeItem: {

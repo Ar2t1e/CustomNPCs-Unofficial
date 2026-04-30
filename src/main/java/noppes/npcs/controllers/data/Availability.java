@@ -106,8 +106,10 @@ public class Availability implements ICompatibilty, IAvailability {
 		if (!hasOptions) { return true; }
 		if (daytime[0] >= 0 && daytime[0] <= 23 && daytime[1] >= 0 && daytime[1] <= 23 && daytime[0] != daytime[1]) {
 			int time = (int) ((player.world.getWorldTime() + 30000L) % 24000L) / 1000;
-			if (daytime[0] < daytime[1]) { return time > daytime[0] && time < daytime[1]; }
-			else { return time > daytime[0] || time < daytime[1]; }
+			boolean bo;
+			if (daytime[0] < daytime[1]) { bo = time >= daytime[0] && time <= daytime[1]; }
+			else { bo = time >= daytime[0] || time <= daytime[1]; }
+			if (!bo) { return false; }
 		}
 		for (int id : dialogues.keySet()) {
 			if (!dialogAvailable(id, dialogues.get(id), player)) { return false; }
@@ -865,17 +867,19 @@ public class Availability implements ICompatibilty, IAvailability {
 				+ ", moneys:" + moneys.size() + "] }";
 	}
 
-	public List<Component> getAvailability(EntityPlayer player) {
+	public List<Component> getAvailability(EntityPlayer player, Component titleType) {
 		List<Component> list = new ArrayList<>();
 		if (!hasOptions || player == null) { return list; }
-		list.add(Component.translatable("availability.options").append(Component.literal(":")));
+		Component title = Component.translatable("availability.options");
+		if (titleType != null) { title.append(titleType); }
+		list.add(title.append(":"));
         boolean gm = player.isCreative();
 		// daytime
 		if (daytime[0] >= 0 && daytime[0] <= 23 && daytime[1] >= 0 && daytime[1] <= 23 && daytime[0] != daytime[1]) {
 			int time = (int) ((player.world.getWorldTime() + 30000L) % 24000L) / 1000;
 			boolean bo;
-			if (daytime[0] < daytime[1]) { bo = time > daytime[0] && time < daytime[1]; }
-			else { bo = time > daytime[0] || time < daytime[1]; }
+			if (daytime[0] < daytime[1]) { bo = time >= daytime[0] && time <= daytime[1]; }
+			else { bo = time >= daytime[0] || time <= daytime[1]; }
 			boolean hasClock = false;
 			if (player.capabilities.isCreativeMode) { hasClock = true; }
 			else {

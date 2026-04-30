@@ -56,7 +56,7 @@ public class ContainerCarpentryBench
 
 	@Override
 	public boolean canInteractWith(@Nonnull EntityPlayer playerIn) {
-		return world.getBlockState(pos).getBlock() == CustomBlocks.carpentyBench &&
+		return world.getBlockState(pos).getBlock() == CustomBlocks.carpenty &&
 				playerIn.getDistanceSq((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) <= 64.0D;
 	}
 
