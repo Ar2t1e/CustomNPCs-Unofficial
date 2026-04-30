@@ -71,10 +71,27 @@ public class GuiNpcManageRecipes
       super.init();
       if (minecraft == null) { minecraft = Minecraft.getInstance(); }
       boolean isModRecipe = recipe.id.getNamespace().equals(CustomNpcs.MODID);
-      if (onlyCustomNpc && !isModRecipe) { recipe = new WrapperRecipe(); }
-      if (recipe.group.getString().isEmpty() && !data.get(recipe.isGlobal).isEmpty()) {
+      if (onlyCustomNpc && !isModRecipe) {
+         boolean isGlobal = recipe.isGlobal;
          recipe = new WrapperRecipe();
-         recipe.group = data.get(recipe.isGlobal).values().iterator().next().get(0).group;
+         recipe.isGlobal = isGlobal;
+      }
+      if (!data.get(recipe.isGlobal).isEmpty()) {
+         if (!recipe.group.getString().isEmpty()) {
+            String name = Util.instance.getOldFormattedText(recipe.group);
+            for (Component group : data.get(recipe.isGlobal).keySet()) {
+               if (name.equals(Util.instance.getOldFormattedText(group))) {
+                  recipe.group = group;
+                  break;
+               }
+            }
+         }
+         if (recipe.group.getString().isEmpty() || !data.get(recipe.isGlobal).containsKey(recipe.group)) {
+            boolean isGlobal = recipe.isGlobal;
+            recipe = new WrapperRecipe();
+            recipe.isGlobal = isGlobal;
+            recipe.group = data.get(recipe.isGlobal).values().iterator().next().get(0).group;
+         }
       }
       if (!recipe.id.getPath().isEmpty()) {
          boolean found = false;
@@ -495,7 +512,7 @@ public class GuiNpcManageRecipes
                   return true;
                } // global type
                case 1: {
-                  SubGuiEditText subGui = new SubGuiEditText(0, new String[]{ Util.instance.getOldFormattedText(recipe.group) });
+                  SubGuiEditText subGui = new SubGuiEditText(0, new String[]{ "npc_new" });
                   subGui.latinAlphabetOnly = true;
                   subGui.allowUppercase = false;
                   setSubGui(subGui);
@@ -503,7 +520,9 @@ public class GuiNpcManageRecipes
                } // Add Group
                case 2: {
                   Packets.sendServer(new SPacketRecipeGroupRemove(recipe.isGlobal, Util.instance.getOldFormattedText(recipe.group)));
+                  boolean isGlobal = recipe.isGlobal;
                   recipe = new WrapperRecipe();
+                  recipe.isGlobal = isGlobal;
                   wait = true;
                   return true;
                } // Del Group
@@ -535,7 +554,11 @@ public class GuiNpcManageRecipes
                } // Add Recipe
                case 4: {
                   Packets.sendServer(new SPacketRecipeRemove(recipe.id));
+                  Component group = recipe.group;
+                  boolean isGlobal = recipe.isGlobal;
                   recipe = new WrapperRecipe();
+                  recipe.isGlobal = isGlobal;
+                  recipe.group = group;
                   wait = true;
                   return true;
                } // Del Recipe
@@ -688,7 +711,9 @@ public class GuiNpcManageRecipes
          switch (gui.id) {
             case 0: {
                save();
+               boolean isGlobal = recipe.isGlobal;
                recipe = new WrapperRecipe();
+               recipe.isGlobal = isGlobal;
                String name = NoppesUtilServer.validNamespace(gui.text[0]);
                recipe.group = Component.literal(name);
                Packets.sendServer(new SPacketRecipeGroupSave(recipe.isGlobal, name));
@@ -716,8 +741,8 @@ public class GuiNpcManageRecipes
                String name = NoppesUtilServer.validPath(gui.text[0]);
                RecipeController rData = RecipeController.getInstance();
                while (rData.containsName(name)) { name += "_"; }
-               recipe.id = new ResourceLocation(recipe.id.getNamespace(), name);
                Packets.sendServer(new SPacketRecipeRename(recipe.id.getPath(), name));
+               recipe.id = new ResourceLocation(recipe.id.getNamespace(), name);
                wait = true;
                break;
             } // Rename Recipe
@@ -738,34 +763,53 @@ public class GuiNpcManageRecipes
    public void resetData() {
       wait = false;
       data.clear();
-      if (player != null) {
-         CustomNpcs.proxy.getRecipeManager().getRecipes().forEach(r -> {
-            if (r instanceof INpcRecipe || (recipe.isGlobal && !onlyCustomNpc &&
-                    (r instanceof ShapedRecipe sRecipe && sRecipe.getRecipeWidth() < 4 && sRecipe.getRecipeHeight() < 4) ||
-                    (r instanceof ShapelessRecipe lRecipe && lRecipe.getIngredients().size() < 10))) {
-               WrapperRecipe wrapper = WrapperRecipe.of(player, (CraftingRecipe) r);
-               if (!data.containsKey(wrapper.isGlobal)) { data.put(wrapper.isGlobal, new LinkedHashMap<>()); }
-               if (!data.get(wrapper.isGlobal).containsKey(wrapper.group)) { data.get(wrapper.isGlobal).put(wrapper.group, new ArrayList<>()); }
-               data.get(wrapper.isGlobal).get(wrapper.group).add(wrapper);
+      CustomNpcs.proxy.getRecipeManager().getRecipes().forEach(r -> {
+         if (r instanceof INpcRecipe || (recipe.isGlobal && !onlyCustomNpc &&
+                 (r instanceof ShapedRecipe sRecipe && sRecipe.getRecipeWidth() < 4 && sRecipe.getRecipeHeight() < 4) ||
+                 (r instanceof ShapelessRecipe lRecipe && lRecipe.getIngredients().size() < 10))) {
+            WrapperRecipe wrapper = WrapperRecipe.of(player, (CraftingRecipe) r);
+            if (!data.containsKey(wrapper.isGlobal)) { data.put(wrapper.isGlobal, new LinkedHashMap<>()); }
+            if (!data.get(wrapper.isGlobal).containsKey(wrapper.group)) { data.get(wrapper.isGlobal).put(wrapper.group, new ArrayList<>()); }
+            data.get(wrapper.isGlobal).get(wrapper.group).add(wrapper);
+         }
+      });
+      RecipeController rData = RecipeController.getInstance();
+      for (int i = 0; i < 2; i++) {
+         boolean isGlobal = i == 0;
+         for (String group : rData.getGroups(isGlobal)) {
+            for (INpcRecipe recipe : isGlobal ? rData.getGlobalRecipes(group) : rData.getAnvilRecipes(group)) {
+               if (!recipe.isValid()) {
+                  WrapperRecipe wrapper = WrapperRecipe.of(player, (CraftingRecipe) recipe);
+                  if (!data.containsKey(wrapper.isGlobal)) { data.put(wrapper.isGlobal, new LinkedHashMap<>()); }
+                  if (!data.get(wrapper.isGlobal).containsKey(wrapper.group)) { data.get(wrapper.isGlobal).put(wrapper.group, new ArrayList<>()); }
+                  boolean notFound = true;
+                  for (WrapperRecipe wr : data.get(wrapper.isGlobal).get(wrapper.group)) {
+                     if (wr == wrapper || wr.id.equals(wrapper.id)) {
+                        notFound = false;
+                        break;
+                     }
+                  }
+                  if (notFound) { data.get(wrapper.isGlobal).get(wrapper.group).add(wrapper); }
+               }
             }
-         });
-         data.replaceAll((key, map) -> map.entrySet().stream()
-                 .sorted(Map.Entry.comparingByKey(
-                         Comparator.<Component, Boolean>comparing(c -> c.getStyle().getColor() != null)
-                                 .thenComparing(Component::getString, String.CASE_INSENSITIVE_ORDER)
-                 ))
-                 .collect(Collectors.toMap(
-                         Map.Entry::getKey,
-                         e -> e.getValue().stream()
-                                 .sorted(Comparator.comparing(
-                                         w -> w.getName().getString(),
-                                         String.CASE_INSENSITIVE_ORDER
-                                 ))
-                                 .collect(Collectors.toList()),
-                         (a, b) -> a,
-                         LinkedHashMap::new
-                 )));
+         }
       }
+      data.replaceAll((key, map) -> map.entrySet().stream()
+              .sorted(Map.Entry.comparingByKey(
+                      Comparator.<Component, Boolean>comparing(c -> c.getStyle().getColor() != null)
+                              .thenComparing(Component::getString, String.CASE_INSENSITIVE_ORDER)
+              ))
+              .collect(Collectors.toMap(
+                      Map.Entry::getKey,
+                      e -> e.getValue().stream()
+                              .sorted(Comparator.comparing(
+                                      w -> w.getName().getString(),
+                                      String.CASE_INSENSITIVE_ORDER
+                              ))
+                              .collect(Collectors.toList()),
+                      (a, b) -> a,
+                      LinkedHashMap::new
+              )));
    }
 
 }

@@ -17,5 +17,4 @@ public class RecipeBookPageMixin {
     @SuppressWarnings("unused")
     private OverlayRecipeComponent overlay = new CustomOverlayRecipeComponent();
 
-
 }

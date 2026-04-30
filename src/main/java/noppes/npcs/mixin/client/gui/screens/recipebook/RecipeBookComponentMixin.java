@@ -74,6 +74,8 @@ public class RecipeBookComponentMixin {
             int gridHeight = menu.getGridHeight();
             int recipeWidth = gridWidth;
             int recipeHeight = gridHeight;
+            RecipeCarpentry temp = RecipeController.getInstance().getRecipe(recipe.getId());
+            if (temp != null) { npcRecipe = temp; }
             List<Ingredient> ingredients = new ArrayList<>(npcRecipe.getIngredients());
             if (npcRecipe.isShaped()) {
                 recipeWidth = npcRecipe.getWidth();

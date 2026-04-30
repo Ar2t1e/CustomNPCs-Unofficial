@@ -1,11 +1,13 @@
 package noppes.npcs.api.handler.data;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.gui.WrapperRecipe;
+
+import java.util.List;
+import java.util.Map;
 
 public interface INpcRecipe {
 
@@ -71,6 +73,9 @@ public interface INpcRecipe {
 
    WrapperRecipe getWrapperRecipe();
 
-   void setResult(@ParamName("item") ItemStack item);
+   void setResult(@ParamName("item") IItemStack item);
 
+   void setItems(@ParamName("items") IItemStack[][] items);
+
+   void setItems(@ParamName("mapItems") Map<Integer, List<IItemStack>> mapItems);
 }

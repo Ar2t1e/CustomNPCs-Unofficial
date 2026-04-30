@@ -24,10 +24,10 @@ public class GhostRecipeMixin {
     @Inject(at = {@At("TAIL")}, method = {"render"})
     public void render(GuiGraphics graphics, Minecraft mc, int leftPos, int topPos, boolean hasRedMark, float partialTicks, CallbackInfo ci) {
         if (recipe instanceof RecipeCarpentry) {
-            for(int i = 0; i < ingredients.size(); ++i) {
+            for(int i = 1; i < ingredients.size(); ++i) {
                 GhostRecipe.GhostIngredient ingredient = ingredients.get(i);
                 ItemStack itemstack = ingredient.getItem();
-                if (i != 0 && !itemstack.isEmpty()) {
+                if (!itemstack.isEmpty()) {
                     graphics.renderItemDecorations(mc.font, itemstack,
                             ingredient.getX() + leftPos, ingredient.getY() + topPos,
                             String.valueOf(itemstack.getCount()));

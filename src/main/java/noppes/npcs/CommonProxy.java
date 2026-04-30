@@ -22,6 +22,7 @@ import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.stats.IRecipeBookMixin;
 import noppes.npcs.mixin.world.item.crafting.IRecipeManagerMixin;
@@ -99,46 +100,33 @@ public class CommonProxy {
       Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> newRecipes = Maps.newHashMap();
       Map<ResourceLocation, Recipe<?>> newByName = Maps.newHashMap(byName);
       // collect
-      boolean isChanged = false;
       for (Map.Entry<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> entry : new ArrayList<>(recipes.entrySet())) {
          if (entry.getKey() != RecipeType.CRAFTING) {
             newRecipes.put(entry.getKey(), entry.getValue());
          }
          else {
             Map<ResourceLocation, Recipe<?>> map = new HashMap<>();
-            if (recipes.get(entry.getKey()) != null) { map.putAll(recipes.get(RecipeType.CRAFTING)); }
+            if (recipes.get(entry.getKey()) != null) {
+               for (Map.Entry<ResourceLocation, Recipe<?>> entryCr : new ArrayList<>(recipes.get(RecipeType.CRAFTING).entrySet())) {
+                  if (!(entryCr.getValue() instanceof RecipeCarpentry)) { map.put(entryCr.getKey(), entryCr.getValue()); }
+               }
+            }
             RecipeController rData = RecipeController.getInstance();
             for (int i = 0; i < 2; i++) {
                for (INpcRecipe npcRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
-                  Recipe<?> recipe = (Recipe<?>) npcRecipe;
-                  if (map.containsKey(recipe.getId())) {
-                     map.remove(recipe.getId());
-                     if (!npcRecipe.isValid()) { isChanged = true; }
-                     else { map.put(recipe.getId(), recipe); }
-                  }
-                  else if (npcRecipe.isValid()) {
-                     map.put(recipe.getId(), recipe); isChanged = true;
-                  }
-                  if (newByName.containsKey(recipe.getId())) {
-                     newByName.remove(recipe.getId());
-                     if (!npcRecipe.isValid()) { isChanged = true; }
-                     else { newByName.put(recipe.getId(), recipe); }
-                  }
-                  else if (npcRecipe.isValid()) {
-                     newByName.put(recipe.getId(), recipe); isChanged = true;
-                  }
+                  RecipeCarpentry recipe = (RecipeCarpentry) npcRecipe;
+                  map.put(recipe.getId(), recipe);
+                  newByName.put(recipe.getId(), recipe);
                }
             }
             newRecipes.put(entry.getKey(), map);
          }
       }
       // changed
-      if (isChanged) {
-         ((IRecipeManagerMixin) manager).setRecipes(ImmutableMap.copyOf(newRecipes));
-         ((IRecipeManagerMixin) manager).setByName(ImmutableMap.copyOf(newByName));
-         if (CustomNpcs.Server != null) {
-            for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
-         }
+      ((IRecipeManagerMixin) manager).setRecipes(ImmutableMap.copyOf(newRecipes));
+      ((IRecipeManagerMixin) manager).setByName(ImmutableMap.copyOf(newByName));
+      if (CustomNpcs.Server != null) {
+         for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
       }
    }
 

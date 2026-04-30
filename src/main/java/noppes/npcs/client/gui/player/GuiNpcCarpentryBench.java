@@ -32,6 +32,7 @@ public class GuiNpcCarpentryBench extends GuiContainerNPCInterface<ContainerCarp
       super(null, container, inv, titleIn);
       setBackground("carpentry.png");
       imageHeight = 180;
+      titleLabelX = 7;
    }
 
    @Override
@@ -41,9 +42,13 @@ public class GuiNpcCarpentryBench extends GuiContainerNPCInterface<ContainerCarp
       widthTooNarrow = width < 379;
       recipeBookComponent.init(width, height, minecraft, widthTooNarrow, menu);
       guiLeft = recipeBookComponent.updateScreenPosition(width, imageWidth);
+      leftPos = guiLeft;
+      topPos = guiTop;
       GuiButtonNop button = new GuiButtonNop(this, 10, "", guiLeft + 5, height / 2 - 49, (b) -> {
          recipeBookComponent.toggleVisibility();
          guiLeft = recipeBookComponent.updateScreenPosition(width, imageWidth);
+         leftPos = guiLeft;
+         topPos = guiTop;
          b.setPosition(guiLeft + 5, height / 2 - 49);
       })
               .setSize(20, 19)
@@ -53,7 +58,6 @@ public class GuiNpcCarpentryBench extends GuiContainerNPCInterface<ContainerCarp
       add(button);
       addWidget(recipeBookComponent);
       setInitialFocus(recipeBookComponent);
-      titleLabelX = 29;
    }
 
    @Override
@@ -112,10 +116,10 @@ public class GuiNpcCarpentryBench extends GuiContainerNPCInterface<ContainerCarp
 
    @Override
    protected void renderLabels(@Nonnull GuiGraphics graphics, int mouseX, int mouseY) {
-      int x = titleLabelX + (recipeBookComponent.isVisible() ? 77 : 0);
-      int y = titleLabelY - 2;
-      graphics.drawString(font, Component.translatable("tile.npccarpentybench.name"), x, y, CustomNpcResourceListener.DefaultTextColor, false);
-      graphics.drawString(font, Component.translatable("container.inventory"), x, y + 84, CustomNpcResourceListener.DefaultTextColor, false);
+      graphics.drawString(font, Component.translatable("tile.npccarpentybench.name").append(":"),
+              titleLabelX, titleLabelY - 2, CustomNpcResourceListener.DefaultTextColor, false);
+      graphics.drawString(font, Component.translatable("container.inventory").append(":"),
+              titleLabelX, titleLabelY + 82, CustomNpcResourceListener.DefaultTextColor, false);
    }
 
 }

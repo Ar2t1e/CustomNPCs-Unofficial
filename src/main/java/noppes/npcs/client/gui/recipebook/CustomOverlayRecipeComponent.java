@@ -10,6 +10,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.recipebook.OverlayRecipeComponent;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.recipebook.PlaceRecipe;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -20,6 +21,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.crafting.IShapedRecipe;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.data.RecipeCarpentry;
 
@@ -29,13 +31,15 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+// Displaying variations of one recipe in the GUI recipe window
+@OnlyIn(Dist.CLIENT)
 public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
 
     protected static final ResourceLocation RECIPE_BOOK_LOCATION = new ResourceLocation("textures/gui/recipe_book.png");
     protected static final int MAX_ROW = 4;
     protected static final int MAX_ROW_LARGE = 5;
     protected static final float ITEM_RENDER_SCALE = 0.375F;
-    public static final int BUTTON_SIZE = 25;
+    public static int BUTTON_SIZE = 25;
 
     protected final List<OverlayRecipeButton> recipeButtons = Lists.newArrayList();
     protected boolean isVisible;
@@ -48,7 +52,6 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
 
     // New from Unofficial (BetaZavr)
     protected static final ResourceLocation CUSTOM_RECIPE_BOOK_LOCATION = new ResourceLocation(CustomNpcs.MODID, "textures/gui/recipe_book.png");
-    protected int recipeSize = 25;
 
     @Override
     public void init(@Nonnull Minecraft minecraftIn, @Nonnull RecipeCollection collectionIn,
@@ -60,11 +63,12 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
         boolean isFiltering = minecraftIn.player != null && minecraftIn.player.getRecipeBook().isFiltering((RecipeBookMenu<?>) minecraftIn.player.containerMenu);
         List<Recipe<?>> listCraftable = collection.getDisplayRecipes(true);
         List<Recipe<?>> listNotCraftable = isFiltering ? Collections.emptyList() : collection.getDisplayRecipes(false);
+
         Recipe<?> recipe = null;
         if (!listCraftable.isEmpty()) { recipe = listCraftable.get(0); }
         else if (!listNotCraftable.isEmpty()) { recipe = listNotCraftable.get(0); }
-        recipeSize = 25;
-        if (recipe instanceof RecipeCarpentry npcRecipe && !npcRecipe.isGlobal) { recipeSize = 32; }
+        BUTTON_SIZE = 25;
+        if (recipe instanceof RecipeCarpentry npcRecipe && !npcRecipe.isGlobal) { BUTTON_SIZE = 32; }
 
         int craftableSize = listCraftable.size();
         int buttonAmount = craftableSize + listNotCraftable.size();
@@ -72,18 +76,19 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
         int l = (int) Math.ceil((float) buttonAmount / (float) borderSize);
         x = xIn;
         y = yIn;
-        float f = (float)(x + Math.min(buttonAmount, borderSize) * recipeSize);
-        float f1 = (float) (viewportWidth + recipeSize * 2);
+
+        float f = (float)(x + Math.min(buttonAmount, borderSize) * BUTTON_SIZE);
+        float f1 = (float) (viewportWidth + BUTTON_SIZE * 2);
         if (f > f1) {
             x = (int)((float)x - uiScalingFactor * (float)((int)((f - f1) / uiScalingFactor)));
         }
-        float f2 = (float)(y + l * recipeSize);
-        float f3 = (float)(viewportHeight + recipeSize * 2);
+        float f2 = (float)(y + l * BUTTON_SIZE);
+        float f3 = (float)(viewportHeight + BUTTON_SIZE * 2);
         if (f2 > f3) {
             y = (int)((float)y - uiScalingFactor * (float) Mth.ceil((f2 - f3) / uiScalingFactor));
         }
         float f4 = (float)y;
-        float f5 = (float)(viewportHeight - recipeSize * 4);
+        float f5 = (float)(viewportHeight - BUTTON_SIZE * 4);
         if (f4 < f5) {
             y = (int)((float)y - uiScalingFactor * (float)Mth.ceil((f4 - f5) / uiScalingFactor));
         }
@@ -92,8 +97,8 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
         for(int buttonId = 0; buttonId < buttonAmount; ++buttonId) {
             boolean isCraftable = buttonId < craftableSize;
             recipe = isCraftable ? listCraftable.get(buttonId) : listNotCraftable.get(buttonId - craftableSize);
-            int buttonX = x + MAX_ROW + recipeSize * (buttonId % borderSize);
-            int buttonY = y + MAX_ROW_LARGE + recipeSize * (buttonId / borderSize);
+            int buttonX = x + MAX_ROW + BUTTON_SIZE * (buttonId % borderSize);
+            int buttonY = y + MAX_ROW_LARGE + BUTTON_SIZE * (buttonId / borderSize);
             if (isFurnaceMenu) { recipeButtons.add(new OverlaySmeltingRecipeButton(buttonX, buttonY, recipe, isCraftable)); }
             else { recipeButtons.add(new OverlayRecipeButton(buttonX, buttonY, recipe, isCraftable)); }
         }
@@ -104,8 +109,7 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
     public @Nonnull RecipeCollection getRecipeCollection() { return collection; }
 
     @Override
-    @Nullable
-    public Recipe<?> getLastRecipeClicked() { return lastRecipeClicked; }
+    public @Nullable Recipe<?> getLastRecipeClicked() { return lastRecipeClicked; }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
@@ -130,10 +134,10 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
             matrixStack.pushPose();
             matrixStack.translate(0.0F, 0.0F, 1000.0F);
             int i = recipeButtons.size() <= 16 ? MAX_ROW : MAX_ROW_LARGE;
-            int j = Math.min(recipeButtons.size(), i);
-            int k = Mth.ceil((float) recipeButtons.size() / (float)i);
-            graphics.blitNineSliced(RECIPE_BOOK_LOCATION, x, y, j * recipeSize + 8, k * recipeSize + 8,
-                    4, 32, 32, 82, 208);
+            int u = Math.min(recipeButtons.size(), i);
+            int v = Mth.ceil((float) recipeButtons.size() / (float)i);
+            graphics.blitNineSliced(RECIPE_BOOK_LOCATION, x, y, u * BUTTON_SIZE + 8, v * BUTTON_SIZE + 8,
+                    MAX_ROW, 32, 32, 82, 208);
             RenderSystem.disableBlend();
             // recipes
             for(OverlayRecipeButton recipeButton : recipeButtons) { recipeButton.render(graphics, mouseX, mouseY, partialTicks); }
@@ -162,10 +166,10 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
             width = size;
             height = size;
             isCraftable = isCraftableIn;
-            calculateIngredientsPositions(recipe);
+            calculateIngredientsPositions();
         }
 
-        protected void calculateIngredientsPositions(Recipe<?> recipe) {
+        protected void calculateIngredientsPositions() {
             int recipeWidth = 3;
             int recipeHeight = 3;
             if (recipe instanceof RecipeCarpentry npcRecipe) {
@@ -188,27 +192,34 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
 
         @Override
         public void renderWidget(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-            boolean isNcpModRecipe = recipeSize == 32;
+            // background
+            boolean isNcpModRecipe = BUTTON_SIZE == 32;
             int u = isNcpModRecipe ? 0 : 152;
             int v = isNcpModRecipe ? 0 : isFurnaceMenu ? 130 : 78;
             if (!isCraftable) { u += isNcpModRecipe ? 33 : 26; }
             if (isHoveredOrFocused()) { v += isNcpModRecipe ? 33 : 26; }
             graphics.blit(isNcpModRecipe ? CUSTOM_RECIPE_BOOK_LOCATION : RECIPE_BOOK_LOCATION, getX(), getY(), u, v, width, height);
-
+            // items
             PoseStack matrixStack = graphics.pose();
             matrixStack.pushPose();
             matrixStack.translate(getX() + 2, getY() + 2, 150.0D);
             for(OverlayRecipeButton.Pos recipeButtonPos : ingredientPos) {
-                matrixStack.pushPose();
-                matrixStack.translate(recipeButtonPos.x, recipeButtonPos.y, 0.0D);
-                matrixStack.scale(ITEM_RENDER_SCALE, ITEM_RENDER_SCALE, 1.0F);
-                matrixStack.translate(-8.0D, -8.0D, 0.0D);
                 if (recipeButtonPos.ingredients.length > 0) {
+                    matrixStack.pushPose();
+                    matrixStack.translate(recipeButtonPos.x, recipeButtonPos.y, 0.0D);
+                    matrixStack.scale(ITEM_RENDER_SCALE, ITEM_RENDER_SCALE, 1.0F);
+                    matrixStack.translate(-8.0D, -8.0D, 0.0D);
                     graphics.renderItem(recipeButtonPos.ingredients[Mth.floor(time / 30.0F) % recipeButtonPos.ingredients.length], 0, 0);
+                    matrixStack.popPose();
                 }
-                matrixStack.popPose();
             }
             matrixStack.popPose();
+            if (!isFurnaceMenu && isHovered) {
+                graphics.drawCenteredString(Minecraft.getInstance().font,
+                        Component.translatable("item.craft.type." +
+                                (recipe instanceof IShapedRecipe || recipe instanceof RecipeCarpentry npcRecipe && npcRecipe.isShaped())),
+                        getX() + width / 2, getY() - 12, 0xFFFFFFFF);
+            }
         }
 
         @OnlyIn(Dist.CLIENT)
@@ -234,10 +245,10 @@ public class CustomOverlayRecipeComponent extends OverlayRecipeComponent {
         }
 
         @Override
-        protected void calculateIngredientsPositions(Recipe<?> recipe) {
-            ItemStack[] aitemstack = recipe.getIngredients().get(0).getItems();
-            ingredientPos.add(new Pos(10, 10, aitemstack));
+        protected void calculateIngredientsPositions() {
+            ingredientPos.add(new Pos(10, 10, recipe.getIngredients().get(0).getItems()));
         }
+
     }
 
 }

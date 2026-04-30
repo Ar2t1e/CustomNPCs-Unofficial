@@ -16,6 +16,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.RecipeBookType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.level.block.Blocks;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
@@ -35,7 +37,7 @@ public class RecipeController implements IRecipeHandler {
    public static final RecipeBookType CRAFTING_CUSTOM_GLOBAL = RecipeBookType.create("CRAFTING_CUSTOM_GLOBAL");
    public static final RecipeBookType CRAFTING_CUSTOM_ANVIL = RecipeBookType.create("CRAFTING_CUSTOM_ANVIL");
    public static final RecipeBookCategories CRAFTING_CUSTOM_GLOBAL_CATEGORY = RecipeBookCategories.create("CRAFTING_CUSTOM_GLOBAL_CATEGORY", new ItemStack(CustomItems.wand), new ItemStack(CustomItems.cloner));
-   public static final RecipeBookCategories CRAFTING_CUSTOM_ANVIL_CATEGORY = RecipeBookCategories.create("CRAFTING_CUSTOM_ANVIL_CATEGORY", new ItemStack(CustomItems.wand), new ItemStack(CustomItems.cloner));
+   public static final RecipeBookCategories CRAFTING_CUSTOM_ANVIL_CATEGORY = RecipeBookCategories.create("CRAFTING_CUSTOM_ANVIL_CATEGORY", new ItemStack(CustomBlocks.carpenty));
    public static final List<RecipeBookCategories> CRAFTING_CUSTOM_ANVIL_CATEGORIES = ImmutableList.of(CRAFTING_CUSTOM_ANVIL_CATEGORY);
    public static final int version = 4;
 
@@ -323,11 +325,10 @@ public class RecipeController implements IRecipeHandler {
    public void addGroup(boolean isGlobal, @Nonnull String group) {
       if (CustomNpcs.Server != null) {
          Map<String, List<RecipeCarpentry>> map = (isGlobal ? globalRecipes : anvilRecipes);
-         if (!map.containsKey(group)) {
-            map.put(group, new ArrayList<>());
-            map.get(group).add(createNewRecipe(isGlobal, group));
-            updateToAll();
-         }
+         while (map.containsKey(group)) { group += "_"; }
+         map.put(group, new ArrayList<>());
+         map.get(group).add(createNewRecipe(isGlobal, group));
+         updateToAll();
       }
    }
 
@@ -335,7 +336,9 @@ public class RecipeController implements IRecipeHandler {
       String name = "new";
       while (containsName(name)) { name += "_"; }
       return new RecipeCarpentry(new ResourceLocation(CustomNpcs.MODID, name), group,
-              isGlobal ? 3 : 4, isGlobal ? 3 : 4, isGlobal, true, NonNullList.create(), ItemStack.EMPTY);
+              isGlobal ? 3 : 4, isGlobal ? 3 : 4, isGlobal, true,
+              NonNullList.create(),
+              new ItemStack(Blocks.COBBLESTONE));
    }
 
    public void renameGroup(boolean isGlobal, @Nonnull String oldGroup, @Nonnull String newGroup) {
@@ -352,17 +355,15 @@ public class RecipeController implements IRecipeHandler {
             for (RecipeCarpentry r : list) { r.setGroup(newGroup); }
          }
          map.put(newGroup, list);
-         updateToAll();
       }
    }
 
    public void renameRecipe(@Nonnull String oldName, @Nonnull String newName) {
       if (CustomNpcs.Server != null) {
-         RecipeCarpentry oldRecipe = getRecipe(new ResourceLocation(CustomNpcs.MODID, oldName));
-         if (oldRecipe != null) {
+         RecipeCarpentry recipe = getRecipe(new ResourceLocation(CustomNpcs.MODID, oldName));
+         if (recipe != null) {
             while (containsName(newName)) { newName += "_"; }
-            oldRecipe.setId(new ResourceLocation(CustomNpcs.MODID, newName));
-            updateToAll();
+            recipe.setId(new ResourceLocation(CustomNpcs.MODID, newName));
          }
       }
    }

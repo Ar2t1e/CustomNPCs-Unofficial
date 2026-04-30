@@ -31,20 +31,14 @@ public class ConfirmScreenMixin {
 
     @Unique private MultiLineLabel npcs$multilineTitle = MultiLineLabel.EMPTY;
 
-    @Inject(
-            at = {@At("TAIL")},
-            method = {"render"}
-    )
+    @Inject(at = {@At("TAIL")}, method = {"render"})
     private void npcs$render(GuiGraphics graphics, int xMouse, int yMouse, float partialTicks, CallbackInfo ci) {
         if (npcs$isScriptsAgree()) {
             npcs$multilineTitle.renderCentered(graphics, ((ConfirmScreen) (Object) this).width / 2, npcs$titleCustomTop());
         }
     }
 
-    @Inject(
-            at = {@At("HEAD")},
-            method = {"init"}
-    )
+    @Inject(at = {@At("HEAD")}, method = {"init"})
     protected void npcs$init(CallbackInfo ci) {
         if (npcs$isScriptsAgree()) {
             ConfirmScreen parent = (ConfirmScreen) (Object) this;
