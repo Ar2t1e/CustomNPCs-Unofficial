@@ -3,6 +3,7 @@ package noppes.npcs.items;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemDoor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumActionResult;
@@ -12,8 +13,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTabs;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 
@@ -31,9 +33,9 @@ public class ItemScriptedDoor extends ItemDoor {
 	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer playerIn, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		EnumActionResult res = super.onItemUse(playerIn, worldIn, pos, hand, side, hitX, hitY, hitZ);
 		if (res == EnumActionResult.SUCCESS && !worldIn.isRemote) {
-			BlockPos newPos = pos.up();
-			NoppesUtilServer.sendOpenGui(playerIn, EnumGuiType.ScriptDoor, null, newPos.getX(), newPos.getY(),
-					newPos.getZ());
+			PlayerData data = PlayerData.get(playerIn);
+			data.scriptBlockPos = pos;
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) playerIn, EnumGuiType.ScriptDoor, null, data.scriptBlockPos.up());
 			return EnumActionResult.SUCCESS;
 		}
 		return res;

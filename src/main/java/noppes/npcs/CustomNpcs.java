@@ -283,8 +283,6 @@ public class CustomNpcs {
 	public static boolean ReplaceCustomBackground = true;
 	@ConfigProp(info = "Commission for transferring coins between players through a team", def = "5", min = "0", max = "500")
 	public static int CoinCommission = 5;
-	@ConfigProp(info = "When a player's dimension changes, their home position will change to portal position", def = "true")
-	public static boolean SetPlayerHomeWhenChangingDimension = true;
 
 	@SidedProxy(clientSide = "noppes.npcs.client.ClientProxy", serverSide = "noppes.npcs.CommonProxy")
 	public static CommonProxy proxy;
@@ -460,13 +458,11 @@ public class CustomNpcs {
 		KeyController.getInstance().loadKeys();
 		AnimationController.getInstance().loadAnimations();
 		CustomNpcsPermissions.getInstance();
-		new MassBlockController();
 		new TransportController();
 		new PlayerDataController();
 		new GlobalDataController();
 		new SpawnController();
 		new LinkedNpcController();
-		new MassBlockController();
 		new PlayerSkinController();
 		WrapperNpcAPI.clearCache();
 		Set<ResourceLocation> names = Block.REGISTRY.getKeys();
@@ -525,8 +521,8 @@ public class CustomNpcs {
 	public void stopped(FMLServerStoppedEvent event) {
 		CustomNpcs.Config.config.save();
 		ServerCloneController.Instance = null;
+
 		// New from Unofficial (BetaZavr)
-		RecipeController.getInstance().checkSaves();
 		BankController.getInstance().update();
 		AnimationController.getInstance().save();
 		ScriptController.Instance.saveItemTextures();
@@ -536,6 +532,7 @@ public class CustomNpcs {
 		KeyController.getInstance().save();
 		DropController.getInstance().save();
 		MarcetController.getInstance().save();
+
 		CustomNpcs.Server = null;
 	}
 

@@ -2,8 +2,6 @@ package noppes.npcs;
 
 import java.util.Objects;
 
-import net.minecraftforge.event.entity.EntityEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import noppes.npcs.api.event.*;
 import noppes.npcs.api.gui.IButton;
 import noppes.npcs.api.gui.IItemSlot;
@@ -137,16 +135,6 @@ public class EventHooks {
 		}
 		script.run(enumFunction.function, event);
 		return WrapperNpcAPI.EVENT_BUS.post(event) && event.isCanceled();
-	}
-
-	public static void onForgeEntityEvent(EntityEvent event) {
-		onForgeEvent(new ForgeEvent.EntityEvent(event, event.getEntity()));
-	}
-
-	public static void onForgeLevelEvent(WorldEvent event) {
-		if (!ScriptController.Instance.forgeScripts.isEnabled()) { return;}
-		IWorld e = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(event.getWorld());
-		onForgeEvent(new ForgeEvent.WorldEvent(event, e));
 	}
 
 	public static void onForgeInit(ForgeScriptData handler) {

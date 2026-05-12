@@ -1,16 +1,13 @@
 package noppes.npcs;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.GameType;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -36,7 +33,6 @@ import noppes.npcs.util.BuilderData;
 
 public class ServerTickHandler {
 
-	private final static Map<EntityPlayerMP, GameType> visibleData = new HashMap<>();
 	public static int ticks = 0;
 
 	@SubscribeEvent

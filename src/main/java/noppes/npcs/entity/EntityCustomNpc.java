@@ -15,12 +15,11 @@ import javax.annotation.Nonnull;
 
 public class EntityCustomNpc extends EntityNPCFlying {
 
-	public ModelData modelData;
+	public ModelData modelData = new ModelData(this);
 
 	public EntityCustomNpc(World world) {
 		super(world);
-		this.modelData = new ModelData();
-		if (!CustomNpcs.EnableDefaultEyes) { this.modelData.eyes.type = -1; }
+		if (!CustomNpcs.EnableDefaultEyes) { modelData.eyes.type = -1; }
 	}
 
 	@Override

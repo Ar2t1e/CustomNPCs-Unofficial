@@ -27,7 +27,6 @@ import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -563,7 +562,12 @@ public class FriendlyByteBuf extends ByteBuf {
     public int hashCode() { return source.hashCode(); }
 
     @Override
-    public boolean equals(Object obj) { return source.equals(obj); }
+    public boolean equals(Object obj) {
+        if (obj instanceof ByteBuf && source != null) {
+            return source.equals(obj);
+        }
+        return false;
+    }
 
     @Override
     public int compareTo(ByteBuf buffer) { return source.compareTo(buffer); }
@@ -594,21 +598,25 @@ public class FriendlyByteBuf extends ByteBuf {
 
     // in 1.20.1
     public Component readComponent() {
-        String content = readUtf();
-        return content.isEmpty() ? Component.empty() : Component.Serializer.fromJson(content);
+        Component component = Component.Serializer.fromJson(readUtf(262144));
+        if (component == null) {
+            throw new DecoderException("Received unexpected null component");
+        }
+        return component;
     }
 
-    public FriendlyByteBuf writeComponent(ITextComponent component) {
-        writeUtf(ITextComponent.Serializer.componentToJson(component));
-        return this;
+    public void writeComponent(ITextComponent component) {
+        writeUtf(Component.Serializer.toJson(component), 262144);
     }
 
+    @SuppressWarnings("unused")
     public int[] readIntArray() {
         int[] a = new int[source.readInt()];
         for (int i = 0; i < a.length; i++) { a[i] = source.readInt(); }
         return a;
     }
 
+    @SuppressWarnings("unused")
     public FriendlyByteBuf writeIntArray(int[] a) {
         source.writeInt(a.length);
         for (int i : a) { source.writeInt(i); }
@@ -680,9 +688,8 @@ public class FriendlyByteBuf extends ByteBuf {
 
     public CustomWorldInfo readWorldInfo() { return new CustomWorldInfo(ByteBufUtils.readTag(source)); }
 
-    public FriendlyByteBuf writeWorldInfo(WorldInfo wi) {
+    public void writeWorldInfo(WorldInfo wi) {
         ByteBufUtils.writeTag(source, wi.cloneNBTCompound(null));
-        return this;
     }
 
     public UUID readUUID() { return new UUID(source.readLong(), source.readLong()); }
@@ -735,7 +742,7 @@ public class FriendlyByteBuf extends ByteBuf {
 
     public ResourceLocation readResourceLocation() { return new ResourceLocation(readUtf()); }
 
-    public FriendlyByteBuf writeItemStack(ItemStack stack, boolean limitedTag) {
+    public FriendlyByteBuf writeItemStack(ItemStack stack, boolean ignoredLimitedTag) {
         if (stack.isEmpty()) {
             writeBoolean(false);
         } else {

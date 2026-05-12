@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.controllers.data.DimensionData;
 import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSync;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
 import org.apache.commons.io.FileUtils;
 
@@ -31,7 +34,6 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.handler.IDimensionHandler;
@@ -43,6 +45,7 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
 
 	static String NAME = "CustomNpcsHandler";
 
+	@SuppressWarnings("unused")
 	public DimensionHandler(String mapName) { super(mapName); }
 	
 	public static DimensionHandler getInstance() {
@@ -188,14 +191,14 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
         try {
 			DimensionManager.getProviderType(dimensionID);
 		} catch (Exception e) {
-			LogWriter.error("Cannot Hotload Dim: " + e);
+			LogWriter.error("Cannot Hot-load Dim: " + e);
 			return;
 		}
 		MinecraftServer mcServer = overworld.getMinecraftServer();
-		ISaveHandler savehandler = overworld.getSaveHandler();
+		ISaveHandler saveHandler = overworld.getSaveHandler();
         assert mcServer != null;
         EnumDifficulty difficulty = mcServer.getEntityWorld().getDifficulty();
-		WorldServer world = (WorldServer) (new WorldCustom(worldInfo, mcServer, savehandler, dimensionID, overworld,
+		WorldServer world = (WorldServer) (new WorldCustom(worldInfo, mcServer, saveHandler, dimensionID, overworld,
 				mcServer.profiler).init());
 		world.addEventListener(new ServerWorldEventHandler(mcServer, world));
 		LogWriter.debug("Try Load World: " + dimensionID + "; world = " + world);
@@ -238,7 +241,17 @@ public class DimensionHandler extends WorldSavedData implements IDimensionHandle
 	}
 
 	private void syncWithClients() {
-		Packets.sendAll(new PacketDimensions(getAllIDs()));
+		NBTTagCompound compound = new NBTTagCompound();
+		NBTTagList list = new NBTTagList();
+		for (WorldServer world : CustomNpcs.Server.worlds) {
+			DimensionData data = DimensionController.get(world);
+			NBTTagCompound nbt = data.save();
+			nbt.setBoolean("loaded", world.isBlockLoaded(BlockPos.ORIGIN));
+			nbt.setInteger("name", world.provider.getDimension());
+			list.appendTag(nbt);
+		}
+		compound.setTag("Data", list);
+		Packets.sendAll(new PacketSync(9, compound, true));
 	}
 
 	public void unload(World world, int dimensionID) {

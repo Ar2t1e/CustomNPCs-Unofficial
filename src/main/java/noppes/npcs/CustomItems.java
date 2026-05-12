@@ -163,7 +163,7 @@ public class CustomItems {
                         case "hoe": item = new CustomHoe(damage, speed, material, effectiveBlocks, nbtItem); break;
                         case "shovel": item = new CustomShovel(damage, speed, material, effectiveBlocks, nbtItem); break;
                         default: item = new CustomPickaxe(damage, speed, material, effectiveBlocks, nbtItem); break;
-                    };
+                    }
                     registryItem(location, item, names, items, nbtItem.getBoolean("CreateDefaultFiles"));
                     break;
                 } // Tool

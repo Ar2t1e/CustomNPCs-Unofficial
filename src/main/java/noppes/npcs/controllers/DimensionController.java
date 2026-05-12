@@ -64,6 +64,7 @@ public class DimensionController {
         }
     }
 
+    @SuppressWarnings("unused")
     public static List<Integer> getLineKeys() { return new ArrayList<>(data.keySet()); }
 
     public static boolean has(int id) { return data.containsKey(id); }

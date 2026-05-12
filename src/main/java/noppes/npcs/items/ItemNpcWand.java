@@ -53,8 +53,7 @@ public class ItemNpcWand extends Item implements INPCToolItem {
 
 	public @Nonnull ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
 		ItemStack itemstack = player.getHeldItem(hand);
-		if (!world.isRemote) { return new ActionResult<>(EnumActionResult.SUCCESS, itemstack); }
-		CustomNpcs.proxy.openGui(0, 0, 0, EnumGuiType.NpcRemote, player);
+		if (world.isRemote) { CustomNpcs.proxy.openGui(player, EnumGuiType.NpcRemote); }
 		return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
 	}
 

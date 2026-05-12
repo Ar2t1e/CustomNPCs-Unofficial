@@ -11,6 +11,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.math.MathHelper;
+import noppes.npcs.client.ClientRegisterEvents;
 import noppes.npcs.client.gui.player.GuiNpcCarpentryBench;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.RecipeCarpentry;
@@ -50,7 +51,7 @@ public class GuiRecipeBookMixin {
         if (minecraft.currentScreen instanceof GuiNpcCarpentryBench) {
             if (recipeTabs.size() != 2) {
                 recipeTabs.clear();
-                recipeTabs.add(new GuiButtonRecipeTab(0, RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY));
+                recipeTabs.add(new GuiButtonRecipeTab(0, ClientRegisterEvents.CRAFTING_CUSTOM_ANVIL_CATEGORY));
             }
         } else {
             if (recipeTabs.size() != 6) {
@@ -60,7 +61,7 @@ public class GuiRecipeBookMixin {
                 recipeTabs.add(new GuiButtonRecipeTab(2, CreativeTabs.BUILDING_BLOCKS));
                 recipeTabs.add(new GuiButtonRecipeTab(3, CreativeTabs.MISC));
                 recipeTabs.add(new GuiButtonRecipeTab(4, CreativeTabs.REDSTONE));
-                recipeTabs.add(new GuiButtonRecipeTab(5, RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY));
+                recipeTabs.add(new GuiButtonRecipeTab(5, ClientRegisterEvents.CRAFTING_CUSTOM_GLOBAL_CATEGORY));
             }
         }
     }
@@ -75,8 +76,8 @@ public class GuiRecipeBookMixin {
         for(GuiButtonRecipeTab tabButton : recipeTabs) {
             CreativeTabs category = tabButton.getCategory();
             if (category == CreativeTabs.SEARCH ||
-                    category == RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY ||
-                    category == RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY) {
+                    category == ClientRegisterEvents.CRAFTING_CUSTOM_GLOBAL_CATEGORY ||
+                    category == ClientRegisterEvents.CRAFTING_CUSTOM_ANVIL_CATEGORY) {
                 tabButton.visible = true;
                 tabButton.setPosition(x, y + tabHeight * tabId++);
             }

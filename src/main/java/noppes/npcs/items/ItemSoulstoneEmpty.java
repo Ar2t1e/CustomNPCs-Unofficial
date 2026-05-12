@@ -13,7 +13,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagString;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -22,85 +22,74 @@ import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.roles.RoleFollower;
+import noppes.npcs.shared.common.CommonUtil;
 
 import javax.annotation.Nonnull;
 
 public class ItemSoulstoneEmpty extends Item {
 
 	public ItemSoulstoneEmpty() {
-		this.setRegistryName(CustomNpcs.MODID, "npcsoulstoneempty");
-		this.setUnlocalizedName("npcsoulstoneempty");
-		this.setCreativeTab(CustomTabs.TOOLS);
-		this.setMaxStackSize(64);
+		setRegistryName(CustomNpcs.MODID, "npcsoulstoneempty");
+		setUnlocalizedName("npcsoulstoneempty");
+		setCreativeTab(CustomTabs.TOOLS);
+		setMaxStackSize(64);
 	}
 
-	@SideOnly(Side.CLIENT)
-	public void addInformation(@Nonnull ItemStack stack, World world, @Nonnull List<String> list, @Nonnull ITooltipFlag flag) {
-		list.add(new TextComponentTranslation("info.item.soulstone.0").getFormattedText());
+	public void store(EntityLivingBase entity, ItemStack stack, EntityPlayerMP player) {
+		if (hasPermission(entity, player) && !(entity instanceof EntityPlayer)) {
+			ItemStack stone = new ItemStack(CustomItems.soulstoneFull);
+			NBTTagCompound compound = new NBTTagCompound();
+			if (entity.writeToNBTAtomically(compound)) {
+				if (compound.getString("id").equals("minecraft:customnpcs.customnpc")
+						|| compound.getString("id").equals("minecraft:customnpcs:customnpc")) {
+					compound.setString("id", CustomNpcs.MODID + ":customnpc");
+				}
+				ServerCloneController.Instance.cleanTags(compound);
+				stone.setTagInfo("Entity", compound);
+				String name = EntityList.getEntityString(entity);
+				if (name == null) { name = "generic"; }
+				stone.setTagInfo("Name", new NBTTagString("entity." + name + ".name"));
+				if (entity instanceof EntityNPCInterface) {
+					EntityNPCInterface npc = (EntityNPCInterface) entity;
+					stone.setTagInfo("DisplayName", new NBTTagString(entity.getName()));
+					if (npc.role instanceof RoleCompanion) {
+						stone.setTagInfo("ExtraText", new NBTTagString(
+								"companion.stage,: ," + ((RoleCompanion) npc.role).stage.name));
+					}
+				}
+				else if (entity instanceof EntityLiving && (entity).hasCustomName()) {
+					stone.setTagInfo("DisplayName", new NBTTagString((entity).getCustomNameTag()));
+				}
+				NoppesUtilServer.givePlayerItem(player, player, stone);
+				if (!player.isCreative()) {
+					stack.splitStack(1);
+					if (stack.getCount() <= 0) { player.inventory.deleteStack(stack); }
+				}
+				entity.isDead = true;
+			}
+		}
 	}
 
 	public boolean hasPermission(EntityLivingBase entity, EntityPlayerMP player) {
-		if (NoppesUtilServer.isOp(player)) {
-			return true;
-		}
-		if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.SOULSTONE_ALL)) {
-			return true;
-		}
+		if ((CustomNpcs.OpsOnly && CommonUtil.isOp(player)) ||
+				CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.SOULSTONE_ALL)) { return true; }
 		if (entity instanceof EntityNPCInterface) {
 			EntityNPCInterface npc = (EntityNPCInterface) entity;
 			if (npc.role instanceof RoleCompanion) {
-				if (((RoleCompanion) npc.role).getOwner() == player) {
-					return true;
-				}
+				if (((RoleCompanion) npc.role).getOwner() == player) { return true; }
 			}
 			if (npc.role instanceof RoleFollower) {
-				if (((RoleFollower) npc.role).getOwner() == player) {
-					return !((RoleFollower) npc.role).refuseSoulStone;
-				}
+				if (((RoleFollower) npc.role).getOwner() == player) { return !((RoleFollower) npc.role).refuseSoulStone; }
 			}
 			return CustomNpcs.SoulStoneNPCs;
 		}
 		return entity instanceof EntityAnimal && CustomNpcs.SoulStoneAnimals;
 	}
 
-	public boolean store(EntityLivingBase entity, ItemStack stack, EntityPlayerMP player) {
-		if (!this.hasPermission(entity, player) || entity instanceof EntityPlayer) {
-			return false;
-		}
-		ItemStack stone = new ItemStack(CustomItems.soulstoneFull);
-		NBTTagCompound compound = new NBTTagCompound();
-		if (!entity.writeToNBTAtomically(compound)) {
-			return false;
-		}
-		if (compound.getString("id").equals("minecraft:customnpcs.customnpc")
-				|| compound.getString("id").equals("minecraft:customnpcs:customnpc")) {
-			compound.setString("id", CustomNpcs.MODID + ":customnpc");
-		}
-		ServerCloneController.Instance.cleanTags(compound);
-		stone.setTagInfo("Entity", compound);
-		String name = EntityList.getEntityString(entity);
-		if (name == null) {
-			name = "generic";
-		}
-		stone.setTagInfo("Name", new NBTTagString("entity." + name + ".name"));
-		if (entity instanceof EntityNPCInterface) {
-			EntityNPCInterface npc = (EntityNPCInterface) entity;
-			stone.setTagInfo("DisplayName", new NBTTagString(entity.getName()));
-			if (npc.role instanceof RoleCompanion) {
-				stone.setTagInfo("ExtraText", new NBTTagString(
-						"companion.stage,: ," + ((RoleCompanion) npc.role).stage.name));
-			}
-		} else if (entity instanceof EntityLiving && (entity).hasCustomName()) {
-			stone.setTagInfo("DisplayName", new NBTTagString((entity).getCustomNameTag()));
-		}
-		NoppesUtilServer.givePlayerItem(player, player, stone);
-		if (!player.capabilities.isCreativeMode) {
-			stack.splitStack(1);
-			if (stack.getCount() <= 0) {
-				player.inventory.deleteStack(stack);
-			}
-		}
-		return entity.isDead = true;
+	// New from Unofficial (BetaZavr)
+	@SideOnly(Side.CLIENT)
+	public void addInformation(@Nonnull ItemStack stack, World world, @Nonnull List<String> list, @Nonnull ITooltipFlag flag) {
+		list.add(Component.translatable("info.item.soulstone.0").getFormattedText());
 	}
 
 }

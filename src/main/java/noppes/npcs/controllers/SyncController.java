@@ -21,6 +21,7 @@ import noppes.npcs.util.BuilderData;
 
 public class SyncController {
 
+	// New from Unofficial (BetaZavr)
 	public static final Map<Integer, BuilderData> dataBuilder = new HashMap<>();
 
 	public static void syncPlayer(EntityPlayerMP player) {
@@ -88,11 +89,11 @@ public class SyncController {
 	}
 
 	private static void syncAllRecipes(EntityPlayerMP player) {
-		RecipeController.instance.checkRecipeBook(player);
-		RecipeController.instance.sendTo(player);
+		RecipeController.getInstance().sendTo(player);
 		player.unlockRecipes(RecipeController.instance.getKnownRecipes());
 	}
 
+	// New from Unofficial (BetaZavr)
 	public static void syncScriptItems(EntityPlayerMP player) {
 		NBTTagCompound compound = new NBTTagCompound();
 		compound.setTag("List", NBTTags.nbtIntegerStringMap(ItemScripted.Resources));

@@ -3,8 +3,10 @@ package net.minecraft.network.chat;
 import net.minecraft.util.text.*;
 import noppes.npcs.api.interfaces.IgnoreForAPI;
 import noppes.npcs.api.mixin.util.text.IStyleMixin;
+import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,15 +29,13 @@ public class Component implements ICustomTextComponent {
 
     public static class Serializer {
 
-        public static String toJson(Component component) {
-            return ITextComponent.Serializer.componentToJson(component.parent);
-        }
+        public static String toJson(Component component) { return toJson(component.parent); }
 
-        @Nonnull
-        public static Component fromJson(String content) {
+        public static String toJson(ITextComponent component) { return ITextComponent.Serializer.componentToJson(component); }
+
+        public static @Nullable Component fromJson(String content) {
             ITextComponent iText = ITextComponent.Serializer.jsonToComponent(content);
-            if (iText == null) { return new Component(content); }
-            return new Component(iText);
+            return iText != null ? new Component(iText) : null;
         }
 
     }
@@ -102,7 +102,7 @@ public class Component implements ICustomTextComponent {
 
     @Nonnull
     @Override
-    public String getString() { return parent.getFormattedText(); }
+    public String getString() { return Util.instance.deleteColor(parent.getFormattedText()); }
 
     public Component withStyle(TextFormatting ... textFormats) {
         Style style = parent.getStyle();

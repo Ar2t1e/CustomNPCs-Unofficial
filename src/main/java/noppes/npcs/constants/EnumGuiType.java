@@ -93,6 +93,7 @@ public enum EnumGuiType
 		hasContainer = hasContainerIn;
 	}
 
+	@SuppressWarnings("unused")
 	public static EnumGuiType getEnum(ResourceLocation location) {
 		for (EnumGuiType type : values()) {
 			if (type.resource.equals(location)) { return type; }

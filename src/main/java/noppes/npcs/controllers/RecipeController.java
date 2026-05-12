@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.*;
 
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
@@ -29,14 +28,6 @@ import javax.annotation.Nonnull;
 
 public class RecipeController implements IRecipeHandler {
 
-	public static final CreativeTabs CRAFTING_CUSTOM_GLOBAL_CATEGORY = new CreativeTabs("CRAFTING_CUSTOM_GLOBAL_CATEGORY") {
-		@Override
-		public @Nonnull ItemStack getTabIconItem() { return new ItemStack(CustomItems.wand); }
-	};
-	public static final CreativeTabs CRAFTING_CUSTOM_ANVIL_CATEGORY = new CreativeTabs("CRAFTING_CUSTOM_ANVIL_CATEGORY") {
-		@Override
-		public @Nonnull ItemStack getTabIconItem() { return new ItemStack(CustomBlocks.carpenty); }
-	};
 	public static final int version = 4;
 
 	protected static RecipeController instance;

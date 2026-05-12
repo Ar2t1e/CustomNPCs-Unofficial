@@ -69,10 +69,12 @@ public class GuiNpcManageRecipes
 		super.initGui();
 		boolean isModRecipe = recipe.id.getResourceDomain().equals(CustomNpcs.MODID);
 		if (onlyCustomNpc && !isModRecipe) { recipe = new WrapperRecipe(); }
+
 		if (recipe.group.getString().isEmpty() && !data.get(recipe.isGlobal).isEmpty()) {
 			recipe = new WrapperRecipe();
 			recipe.group = data.get(recipe.isGlobal).values().iterator().next().get(0).group;
 		}
+
 		if (!recipe.id.getResourcePath().isEmpty()) {
 			boolean found = false;
 			if (data.get(recipe.isGlobal).containsKey(recipe.group) && !data.get(recipe.isGlobal).get(recipe.group).isEmpty()) {
@@ -494,7 +496,7 @@ public class GuiNpcManageRecipes
 						return true;
 					} // global type
 					case 1: {
-						SubGuiEditText subGui = new SubGuiEditText(0, new String[]{ recipe.group.getString() });
+						SubGuiEditText subGui = new SubGuiEditText(0, new String[]{ "npc_new" });
 						subGui.latinAlphabetOnly = true;
 						subGui.allowUppercase = false;
 						setSubGui(subGui);
@@ -715,8 +717,8 @@ public class GuiNpcManageRecipes
 					String name = NoppesUtilServer.validPath(gui.text[0]);
 					RecipeController rData = RecipeController.getInstance();
 					while (rData.containsName(name)) { name += "_"; }
-					recipe.id = new ResourceLocation(recipe.id.getResourceDomain(), name);
 					Packets.sendServer(new SPacketRecipeRename(recipe.id.getResourcePath(), name));
+					recipe.id = new ResourceLocation(recipe.id.getResourceDomain(), name);
 					wait = true;
 					break;
 				} // Rename Recipe

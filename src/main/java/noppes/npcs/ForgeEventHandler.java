@@ -1,8 +1,5 @@
 package noppes.npcs;
 
-import net.minecraftforge.event.entity.EntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import noppes.npcs.api.event.ForgeEvent;
@@ -29,11 +26,7 @@ public class ForgeEventHandler {
             if (lastSeenEvent != event) {
                 CustomNpcs.debugData.start("Mod");
                 lastSeenEvent = event;
-                try {
-                    if (event instanceof EntityEvent) { EventHooks.onForgeEntityEvent((EntityEvent) event); }
-                    else if (event instanceof WorldEvent) { EventHooks.onForgeLevelEvent((WorldEvent) event); }
-                    else { EventHooks.onForgeEvent(new ForgeEvent(event)); }
-                }
+                try { EventHooks.onForgeEvent(new ForgeEvent(event)); }
                 catch (Throwable t) { LogWriter.error("Error in " + event.getClass().getName(), t); }
                 CustomNpcs.debugData.end("Mod");
             }

@@ -94,6 +94,7 @@ public class NPCSpawning {
 				Collections.shuffle(tmp);
 				for (ChunkPos chunkcoordintpair2 : tmp) {
 					BlockPos chunkposition = getChunk(world, chunkcoordintpair2.x, chunkcoordintpair2.z);
+
 					byte range = 6;
 					int posX = chunkposition.getX() + world.rand.nextInt(range) - world.rand.nextInt(range);
 					int posZ = chunkposition.getZ() + world.rand.nextInt(range) - world.rand.nextInt(range);
@@ -239,7 +240,7 @@ public class NPCSpawning {
 				if (e instanceof EntityNPCInterface && ((EntityNPCInterface) e).stats.spawnCycle == 4) { count++; }
 			}
 		}
-        return count <= data.group;
+        return count <= data.group && count <= CustomNpcs.NpcNaturalSpawningChunkLimit;
     }
 
 	private static int[] getEntitySizes(World world) {

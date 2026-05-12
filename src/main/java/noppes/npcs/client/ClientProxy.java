@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.recipebook.RecipeList;
-import net.minecraft.client.particle.IParticleFactory;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -31,7 +30,6 @@ import net.minecraft.inventory.Container;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.play.client.CPacketPlayer;
@@ -131,12 +129,10 @@ import noppes.npcs.items.custom.CustomArmor;
 import noppes.npcs.items.ItemScripted;
 import noppes.npcs.api.mixin.client.gui.recipebook.IRecipeListMixin;
 import noppes.npcs.api.mixin.client.particle.IParticleFlameMixin;
-import noppes.npcs.api.mixin.client.particle.IParticleManagerMixin;
 import noppes.npcs.api.mixin.client.particle.IParticleSmokeNormalMixin;
 import noppes.npcs.mixin.client.resources.II18nMixin;
 import noppes.npcs.mixin.client.resources.ILocaleMixin;
 import noppes.npcs.mixin.client.settings.IKeyBindingMixin;
-import noppes.npcs.client.particles.CustomParticle;
 import noppes.npcs.client.particles.CustomParticleSettings;
 import noppes.npcs.potions.PotionData;
 import noppes.npcs.reflection.client.ItemModelMesherForgeReflection;
@@ -271,7 +267,7 @@ public class ClientProxy extends CommonProxy {
 
 	@Override
 	public void checkTexture(EntityNPCInterface npc) {
-		if (npc.display.skinType != 0) { return; }
+		//if (npc.display.skinType == 0) { return; }
 		//createPlayerSkin(new ResourceLocation(npc.display.getSkinTexture()));
 	}
 
@@ -650,16 +646,7 @@ public class ClientProxy extends CommonProxy {
 			return -1;
 		}, CustomItems.scripted_item);
 		checkLocalization();
-		Map<Integer, IParticleFactory> map = ((IParticleManagerMixin) mc.effectRenderer).npcs$getParticleTypes();
-		for (int id : CustomParticles.customparticles.keySet()) {
-			if (map.containsKey(id)) {
-				continue;
-			}
-			map.put(id, (particleID, worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn, parameters) -> {
-                CustomParticleSettings ps = CustomParticles.customparticles.get(particleID);
-                return new CustomParticle(ps == null ? new NBTTagCompound() : ps.nbtData, worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
-            });
-		}
+		ClientRegisterEvents.load();
 	}
 
 	@Override
@@ -966,7 +953,7 @@ public class ClientProxy extends CommonProxy {
 						list.add(recipeCollection);
 					}
 				}
-				RECIPES_BY_TAB.put(isGlobal ? RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY : RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
+				RECIPES_BY_TAB.put(isGlobal ? ClientRegisterEvents.CRAFTING_CUSTOM_GLOBAL_CATEGORY : ClientRegisterEvents.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
 			}
 			((IRecipeBookClientMixin) cBook).setCollectionsByTab(RECIPES_BY_TAB);
 		}

@@ -34,10 +34,9 @@ public class GuiNpcUtil {
         if (!notAnimated.contains(textureLocation)) {
             if (!itemsMap.containsKey(textureLocation)) { load(textureLocation, true); }
             if (itemsMap.containsKey(textureLocation)) {
-                float wight = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
-                float height = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
-                float frame = itemsMap.get(textureLocation).getFrameId();
-                float scale = height / wight;
+                GuiNpcPngAnimation pngAnimation = itemsMap.get(textureLocation);
+                int frame = pngAnimation.getFrameId();
+                float scale = (float) pngAnimation.height / (float) pngAnimation.width;
                 drawHeight = (int) (scaleSize / scale);
                 addV = (int) (frame * (float) drawHeight);
                 GlStateManager.scale(1.0f, scale, 1.0f);
@@ -51,8 +50,7 @@ public class GuiNpcUtil {
         try {
             IResource res = mc.getResourceManager().getResource(new ResourceLocation(textureLocation.getResourceDomain(), textureLocation.getResourcePath() + ".mcmeta"));
             try (InputStreamReader reader = new InputStreamReader(res.getInputStream(), StandardCharsets.UTF_8)) {
-                JsonParser parser = new JsonParser();
-                JsonElement json = parser.parse(reader);
+                JsonElement json = new JsonParser().parse(reader);
                 if (json != null && json.getAsJsonObject().getAsJsonObject("animation") != null) {
                     JsonObject animation = json.getAsJsonObject().getAsJsonObject("animation");
                     mc.getTextureManager().bindTexture(textureLocation);

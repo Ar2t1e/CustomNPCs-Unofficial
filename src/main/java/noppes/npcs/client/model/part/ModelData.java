@@ -9,14 +9,19 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityNPCInterface;
 
 public class ModelData extends ModelDataShared {
 
+	public EntityCustomNpc npc;
+
+	public ModelData(EntityCustomNpc npcIn) { npc = npcIn; }
+
 	public ModelData copy() {
-		ModelData data = new ModelData();
+		ModelData data = new ModelData(npc);
 		data.load(save());
 		return data;
 	}

@@ -11,6 +11,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.DimensionManager;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.ForgeEventHandler;
 import noppes.npcs.packets.Packets;
@@ -27,15 +28,19 @@ import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.dimensions.DimensionHandler;
-import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 
 public class CmdScript extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 4;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
+
+	@Override
+	public String getDescription() { return "Commands for scripts"; }
+
+	@Nonnull
+	public String getName() { return "script"; }
 
 	@SubCommand(desc = "List of available event names from all APIs in mod", permission = 4)
 	public Boolean apilist(MinecraftServer server, ICommandSender sender, String[] args) {
@@ -137,46 +142,29 @@ public class CmdScript extends CommandNoppesBase {
 	@SubCommand(desc = "Reload scripts and saved data from disks script folder.", permission = 4)
 	public Boolean reload(MinecraftServer server, ICommandSender sender, String[] args) {
 		ScriptController.Instance.loadCategories();
-		if (ScriptController.Instance.loadPlayerScripts()) {
-			sender.sendMessage(new TextComponentString("Reload player scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading player scripts"));
-		}
-		if (ScriptController.Instance.loadNPCsScripts()) {
-			sender.sendMessage(new TextComponentString("Reload NPCs scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading NPCs scripts"));
-		}
-		if (ScriptController.Instance.loadForgeScripts()) {
-			sender.sendMessage(new TextComponentString("Reload forge scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading forge scripts"));
-		}
-		if (ScriptController.Instance.loadClientScripts()) {
-			sender.sendMessage(new TextComponentString("Reload client scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading client scripts"));
-		}
-		if (ScriptController.Instance.loadPotionScripts()) {
-			sender.sendMessage(new TextComponentString("Reload potion scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading potion scripts"));
-		}
-		if (ScriptController.Instance.loadConstantData()) {
-			sender.sendMessage(new TextComponentString("Reload constant data successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading constant data"));
-		}
-		if (ScriptController.Instance.loadStoredData()) {
-			sender.sendMessage(new TextComponentString("Reload stored data successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading stored data"));
-		}
-		if (server != null) {
-			for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-				ScriptController.Instance.sendClientTo(player);
-			}
-		}
+		// Players
+		if (ScriptController.Instance.loadPlayerScripts()) { sender.sendMessage(Component.literal("Reload player scripts successfully")); }
+		else { sender.sendMessage(Component.literal("Failed reloading player scripts")); }
+		// NPCs
+		if (ScriptController.Instance.loadNPCsScripts()) { sender.sendMessage(Component.literal("Reload NPCs scripts successfully")); }
+		else { sender.sendMessage(Component.literal("Failed reloading NPCs scripts")); }
+		// Forge
+		if (ScriptController.Instance.loadForgeScripts()) { sender.sendMessage(Component.literal("Reload forge scripts successfully")); }
+		else { sender.sendMessage(Component.literal("Failed reloading forge scripts")); }
+		// Clients
+		if (ScriptController.Instance.loadClientScripts()) { sender.sendMessage(Component.literal("Reload client scripts successfully")); }
+		else { sender.sendMessage(Component.literal("Failed reloading client scripts")); }
+		// Potions
+		if (ScriptController.Instance.loadPotionScripts()) { sender.sendMessage(Component.literal("Reload potion scripts successfully")); }
+		else { sender.sendMessage(Component.literal("Failed reloading potion scripts")); }
+		// Constants data
+		if (ScriptController.Instance.loadConstantData()) { sender.sendMessage(Component.literal("Reload constant data successfully")); }
+		else { sender.sendMessage(Component.literal("Failed reloading constant data")); }
+		// Stored data
+		if (ScriptController.Instance.loadStoredData()) { sender.sendMessage(Component.literal("Reload stored data successfully")); }
+		else { sender.sendMessage(Component.literal("Failed reloading stored data")); }
+		// Client data
+		for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { ScriptController.Instance.sendClientTo(player); }
 		return true;
 	}
 
@@ -289,12 +277,6 @@ public class CmdScript extends CommandNoppesBase {
 		}
 		return true;
 	}
-
-	@Override
-	public String getDescription() { return "Commands for scripts"; }
-
-	@Nonnull
-	public String getName() { return "script"; }
 
 	@Override
 	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
