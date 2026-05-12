@@ -49,9 +49,7 @@ public class BorderController implements IBorderHandler {
     }
 
     @Override
-    public Zone3D[] getAllRegions() {
-        return regions.values().toArray(new Zone3D[0]);
-    }
+    public Zone3D[] getAllRegions() { return regions.values().toArray(new Zone3D[0]); }
 
     public CompoundTag getNBT() {
         ListTag list = new ListTag();
@@ -84,9 +82,7 @@ public class BorderController implements IBorderHandler {
     }
 
     @Override
-    public Zone3D getRegion(int regionId) {
-        return regions.get(regionId);
-    }
+    public Zone3D getRegion(int regionId) { return regions.get(regionId); }
 
     @Override
     public Zone3D[] getRegions(String dimensionId) {
@@ -123,23 +119,23 @@ public class BorderController implements IBorderHandler {
     }
 
     public Zone3D loadRegion(CompoundTag nbtRegion) {
-        if (nbtRegion == null || !nbtRegion.contains("ID", 3) || nbtRegion.getInt("ID") < 0) {
-            return null;
+        if (nbtRegion != null && nbtRegion.contains("ID", 3) && nbtRegion.getInt("ID") >= 0) {
+            int id = nbtRegion.getInt("ID");
+            if (regions.containsKey(id)) {
+                regions.get(id).load(nbtRegion);
+                regions.get(id);
+                return regions.get(id);
+            }
+            Zone3D region = new Zone3D();
+            region.load(nbtRegion);
+            regions.put(region.getId(), region);
+            return regions.get(region.getId());
         }
-        int id = nbtRegion.getInt("ID");
-        if (regions.containsKey(id)) {
-            regions.get(id).load(nbtRegion);
-            regions.get(id);
-            return regions.get(id);
-        }
-        Zone3D region = new Zone3D();
-        region.load(nbtRegion);
-        regions.put(region.getId(), region);
-        return regions.get(region.getId());
+        return null;
     }
 
     private void loadRegions() {
-        CustomNpcs.debugData.start("Mod");
+        CustomNpcs.debugData.start(null);
         File saveDir = CustomNpcs.getLevelSaveDirectory();
         if (saveDir == null) {
             return;
@@ -155,7 +151,7 @@ public class BorderController implements IBorderHandler {
                 if (file2.exists()) { loadRegions(file2); }
             } catch (Exception ex) { LogWriter.error("Error:", ex); }
         }
-        CustomNpcs.debugData.end("Mod");
+        CustomNpcs.debugData.end(null);
     }
 
     private void loadRegions(File file) throws IOException {
@@ -184,6 +180,7 @@ public class BorderController implements IBorderHandler {
     }
 
     public void save() {
+        CustomNpcs.debugData.start(null);
         try {
             File saveDir = CustomNpcs.getLevelSaveDirectory();
             File file = new File(saveDir, "borders.dat_new");
@@ -194,6 +191,7 @@ public class BorderController implements IBorderHandler {
             if (!file2.renameTo(file1) || (file2.exists() && !file2.delete())) { LogWriter.debug("Error delete or rename \"" + file2.getName() + "\" file"); }
             if (!file.renameTo(file2) || (file.exists() && !file.delete())) { LogWriter.debug("Error delete or rename \"" + file.getName() + "\" file"); }
         } catch (Exception e) { LogWriter.error("Error:", e); }
+        CustomNpcs.debugData.end(null);
     }
 
     public void sendTo(ServerPlayer player) {
@@ -225,7 +223,8 @@ public class BorderController implements IBorderHandler {
                     Packets.send(player, new PacketGuiUpdate());
                 }
             }
-        } else if (regions.containsKey(id)) {
+        }
+        else if (regions.containsKey(id)) {
             CompoundTag nbtRegion = new CompoundTag();
             regions.get(id).save(nbtRegion);
             for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) {

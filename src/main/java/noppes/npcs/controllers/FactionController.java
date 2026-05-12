@@ -1,6 +1,5 @@
 package noppes.npcs.controllers;
 
-import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -9,11 +8,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.resources.ResourceLocation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.handler.IFactionHandler;
@@ -31,11 +30,7 @@ public class FactionController implements IFactionHandler {
    public static final FactionController instance = new FactionController();
    private int lastUsedID = 0;
 
-   public FactionController() {
-      factions.put(0, new Faction(0, "Friendly", new Color(0x00DD00).getRGB(), 2000));
-      factions.put(1, new Faction(1, "Neutral", new Color(0xF2DD00).getRGB(), 1000));
-      factions.put(2, new Faction(2, "Aggressive", new Color(0xD00D00).getRGB(), 0));
-   }
+   public FactionController() { createDefaultFactions(); }
 
    public void load() {
       factions.clear();
@@ -45,10 +40,9 @@ public class FactionController implements IFactionHandler {
          if (saveDir != null) {
             try {
                File file = new File(saveDir, "factions.dat");
-               if (file.exists()) {
-                  loadFactionsFile(file);
-               }
-            } catch (Exception var9) {
+               if (file.exists()) { loadFactionsFile(file); }
+            }
+            catch (Exception e) {
                try {
                   File file = new File(saveDir, "factions.dat_old");
                   if (file.exists()) { loadFactionsFile(file); }
@@ -56,20 +50,37 @@ public class FactionController implements IFactionHandler {
                catch (Exception ignored) { }
             }
          }
-      } finally {
+      }
+      finally {
          EventHooks.onGlobalFactionsLoaded(this);
-         if (factions.isEmpty()) {
-            factions.put(0, new Faction(0, "Friendly", 56576, 2000));
-            factions.put(1, new Faction(1, "Neutral", 15916288, 1000));
-            factions.put(2, new Faction(2, "Aggressive", 14483456, 0));
-         }
+         if (factions.isEmpty()) { createDefaultFactions(); }
+      }
+   }
+
+   private void createDefaultFactions() {
+      if (!factions.containsKey(0)) {
+         Faction friendly = new Faction(0, "faction.name.friendly", 0x00DD00, 2000);
+         friendly.frendFactions.add(1);
+         factions.put(0, friendly);
+      }
+      if (!factions.containsKey(1)) {
+         Faction neutral = new Faction(1, "faction.name.neutral", 0xF2DD00, 1000);
+         neutral.flag = new ResourceLocation(CustomNpcs.MODID + ":textures/cloak/baconcape.png");
+         factions.put(1, neutral);
+      }
+      if (!factions.containsKey(2)) {
+         Faction aggressive = new Faction(2, "faction.name.aggressive", 0xDD0000, 0);
+         aggressive.attackFactions.add(0);
+         aggressive.attackFactions.add(1);
+         aggressive.flag = new ResourceLocation(CustomNpcs.MODID + ":textures/cloak/enderdragoncape.png");
+         factions.put(2, aggressive);
       }
    }
 
    private void loadFactionsFile(File file) throws IOException {
-      DataInputStream var1 = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file))));
-      loadFactions(var1);
-      var1.close();
+      DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file))));
+      loadFactions(inputStream);
+      inputStream.close();
    }
 
    public void loadFactions(DataInputStream stream) throws IOException {
@@ -99,7 +110,6 @@ public class FactionController implements IFactionHandler {
       return compound;
    }
 
-   @SuppressWarnings("all")
    public void saveFactions() {
       try {
          File saveDir = CustomNpcs.getLevelSaveDirectory();
@@ -107,18 +117,14 @@ public class FactionController implements IFactionHandler {
          File file1 = new File(saveDir, "factions.dat_old");
          File file2 = new File(saveDir, "factions.dat");
          NbtIo.writeCompressed(getNBT(), new FileOutputStream(file));
-         if (file1.exists()) { file1.delete(); }
-         file2.renameTo(file1);
-         if (file2.exists()) { file2.delete(); }
-         file.renameTo(file2);
-         if (file.exists()) { file.delete(); }
+         if (file1.exists() && !file1.delete()) { LogWriter.debug("Error delete \"" + file1.getName() + "\" file"); }
+         if (!file2.renameTo(file1) || (file2.exists() && !file2.delete())) { LogWriter.debug("Error delete or rename \"" + file2.getName() + "\" file"); }
+         if (!file.renameTo(file2) || (file.exists() && !file.delete())) { LogWriter.debug("Error delete or rename \"" + file.getName() + "\" file"); }
       }
       catch (Exception e) { LogWriter.except(e); }
    }
 
-   public Faction getFaction(int faction) {
-      return factions.get(faction);
-   }
+   public Faction getFaction(int faction) { return factions.get(faction); }
 
    public void saveFaction(Faction faction) {
       if (faction.id < 0) {
@@ -127,9 +133,7 @@ public class FactionController implements IFactionHandler {
       } else {
          Faction existing = factions.get(faction.id);
          if (existing != null && !existing.name.equals(faction.name)) {
-            while(hasName(faction.name)) {
-               faction.name = faction.name + "_";
-            }
+            while(hasName(faction.name)) { faction.name = faction.name + "_"; }
          }
       }
       factions.remove(faction.id);
@@ -144,48 +148,36 @@ public class FactionController implements IFactionHandler {
             if (catId > lastUsedID) { lastUsedID = catId; }
          }
       }
-      ++lastUsedID;
-      return lastUsedID;
+      return ++lastUsedID;
    }
 
+   @Override
    public IFaction delete(int id) {
       if (id >= 0 && factions.size() > 1) {
          Faction faction = factions.remove(id);
-         if (faction == null) {
-            return null;
-         } else {
+         if (faction != null) {
             saveFactions();
             faction.id = -1;
             Packets.sendAll(new PacketSyncRemove(id, 1));
             return faction;
          }
-      } else {
-         return null;
       }
+      return null;
    }
 
-   public int getFirstFactionId() {
-      return factions.keySet().iterator().next();
-   }
+   public int getFirstFactionId() { return factions.keySet().iterator().next(); }
 
-   @SuppressWarnings("all")
-   public Faction getFirstFaction() {
-      return factions.values().iterator().next();
-   }
+   @SuppressWarnings("unused")
+   public Faction getFirstFaction() { return factions.values().iterator().next(); }
 
    public boolean hasName(String newName) {
-       if (!newName.trim().isEmpty()) {
-           Iterator<Faction> var2 = factions.values().iterator();
-           Faction faction;
-           do {
-               if (!var2.hasNext()) {
-                   return false;
-               }
-
-               faction = var2.next();
-           } while (!faction.name.equals(newName));
-       }
-       return true;
+      if (newName.trim().isEmpty()) {
+         return true;
+      }
+      for (Faction faction : new ArrayList<>(factions.values())) {
+         if (faction.name.equals(newName)) { return true; }
+      }
+      return false;
    }
 
    public Faction getFactionFromName(String factionName) {
@@ -198,17 +190,16 @@ public class FactionController implements IFactionHandler {
    public String[] getNames() {
       String[] names = new String[factions.size()];
       int i = 0;
-      for(Iterator<Faction> var3 = factions.values().iterator(); var3.hasNext(); ++i) {
-         Faction faction = var3.next();
-         names[i] = faction.name.toLowerCase();
+      for (Faction faction : new ArrayList<>(factions.values())) {
+         names[i++] = faction.name.toLowerCase();
       }
       return names;
    }
 
-   public List<IFaction> list() {
-      return new ArrayList<>(factions.values());
-   }
+   @Override
+   public List<IFaction> list() { return new ArrayList<>(factions.values()); }
 
+   @Override
    public IFaction create(String name, int color) {
       Faction faction = new Faction();
       while (hasName(name)) { name = name + "_"; }

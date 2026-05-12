@@ -107,8 +107,8 @@ public class GuiModelPart extends GuiBasic {
     }
 
     @Override
-    public void buttonEvent(GuiButtonNop guiButton) {
-        switch (guiButton.id) {
+    public void buttonEvent(GuiButtonNop button) {
+        switch (button.id) {
             case 0: {
                 if (!part.isEnabled || basic) { return; }
                 selected = !selected;
@@ -135,12 +135,12 @@ public class GuiModelPart extends GuiBasic {
                 break;
             } // settings
             case 3: {
-                part = all.get(guiButton.getValue());
+                part = all.get(button.getValue());
                 data.partId = part.id;
                 break;
             } // variant
         }
-        parent.buttonEvent(guiButton);
+        parent.buttonEvent(button);
     }
 
     public void render(float yOffset, int hoverID, GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {

@@ -108,6 +108,7 @@ public class GuiCreationNewParts
       return -10;
    }
 
+   @SuppressWarnings("unused")
    public void onRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
       entity.visible = listener.subgui == null;
       render(graphics, mouseX, mouseY, partialTicks);
@@ -332,11 +333,8 @@ public class GuiCreationNewParts
 
          all = all.stream().sorted(Comparator.comparing((t) -> t.id)).collect(Collectors.toList());
          if (data == null) {
-            if (!partIn.id.equals(ModelEyeData.RESOURCE) && !partIn.id.equals(ModelEyeData.RESOURCE_RIGHT) && !partIn.id.equals(ModelEyeData.RESOURCE_LEFT)) {
-               data = new MpmPartData();
-            } else {
-               data = new ModelEyeData();
-            }
+            if (!partIn.id.equals(ModelEyeData.RESOURCE) && !partIn.id.equals(ModelEyeData.RESOURCE_RIGHT) && !partIn.id.equals(ModelEyeData.RESOURCE_LEFT)) { data = new MpmPartData(); }
+            else { data = new ModelEyeData(); }
             data.partId = partIn.id;
             data.usePlayerSkin = partIn.defaultUsePlayerSkins;
             selected = false;
@@ -591,6 +589,7 @@ public class GuiCreationNewParts
          if (listener.subgui == null) { renderModel(graphics); }
       }
 
+      @SuppressWarnings("unused")
       public void onRenderPost(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
          if (listener.subgui == null) {
             renderIcons(graphics, mouseX, mouseY);

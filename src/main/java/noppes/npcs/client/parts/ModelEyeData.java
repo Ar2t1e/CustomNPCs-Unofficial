@@ -30,46 +30,69 @@ public class ModelEyeData extends MpmPartData {
    public boolean disableBlink;
 
    public ModelEyeData() {
-      this.eyePos = NopVector2i.ZERO;
-      this.mirror = false;
-      this.eyeSize = 0;
-      this.skinType = 0;
-      this.useLidTexture = false;
-      this.lidColor = ColorUtil.colorToRgb(11830381);
-      this.browColor = ColorUtil.colorToRgb(5982516);
-      this.blinkStart = 0L;
-      this.disableBlink = false;
-      this.color = (new NopVector3f[]{ColorUtil.colorToRgb(8368696), ColorUtil.colorToRgb(16247203), ColorUtil.colorToRgb(10526975), ColorUtil.colorToRgb(10987431), ColorUtil.colorToRgb(10791096), ColorUtil.colorToRgb(4210943), ColorUtil.colorToRgb(14188339), ColorUtil.colorToRgb(11685080), ColorUtil.colorToRgb(6724056), ColorUtil.colorToRgb(15066419), ColorUtil.colorToRgb(55610), ColorUtil.colorToRgb(8375321), ColorUtil.colorToRgb(15892389), ColorUtil.colorToRgb(10066329), ColorUtil.colorToRgb(5013401), ColorUtil.colorToRgb(8339378), ColorUtil.colorToRgb(3361970), ColorUtil.colorToRgb(6704179), ColorUtil.colorToRgb(6717235), ColorUtil.colorToRgb(10040115), ColorUtil.colorToRgb(16445005), ColorUtil.colorToRgb(6085589), ColorUtil.colorToRgb(4882687)})[this.r.nextInt(23)];
+      eyePos = NopVector2i.ZERO;
+      mirror = false;
+      eyeSize = 0;
+      skinType = 0;
+      useLidTexture = false;
+      lidColor = ColorUtil.colorToRgb(0xB4846D);
+      browColor = ColorUtil.colorToRgb(0x5B4934);
+      blinkStart = 0L;
+      disableBlink = false;
+      color = new NopVector3f[]{ ColorUtil.colorToRgb(0x7FB238),
+              ColorUtil.colorToRgb(0xF7E9A3),
+              ColorUtil.colorToRgb(0xA0A0FF),
+              ColorUtil.colorToRgb(0xA7A7A7),
+              ColorUtil.colorToRgb(0xA4A8B8),
+              ColorUtil.colorToRgb(0x4040FF),
+              ColorUtil.colorToRgb(0xD87F33),
+              ColorUtil.colorToRgb(0xB24CD8),
+              ColorUtil.colorToRgb(0x6699D8),
+              ColorUtil.colorToRgb(0xE5E533),
+              ColorUtil.colorToRgb(0x00D93A),
+              ColorUtil.colorToRgb(0x7FCC19),
+              ColorUtil.colorToRgb(0xF27FA5),
+              ColorUtil.colorToRgb(0x999999),
+              ColorUtil.colorToRgb(0x4C7F99),
+              ColorUtil.colorToRgb(0x7F3FB2),
+              ColorUtil.colorToRgb(0x334CB2),
+              ColorUtil.colorToRgb(0x664C33),
+              ColorUtil.colorToRgb(0x667F33),
+              ColorUtil.colorToRgb(0x993333),
+              ColorUtil.colorToRgb(0xFAEE4D),
+              ColorUtil.colorToRgb(0x5CDBD5),
+              ColorUtil.colorToRgb(0x4A80FF) }
+      [r.nextInt(23)];
    }
 
    public CompoundTag getNbt() {
       CompoundTag compound = super.getNbt();
-      compound.putBoolean("Glint", this.glint);
-      compound.putBoolean("UseLidTexture", this.useLidTexture);
-      compound.putBoolean("Mirror", this.mirror);
-      compound.putBoolean("DisableBlink", this.disableBlink);
-      compound.putInt("SkinType", this.skinType);
-      compound.putInt("EyeSize", this.eyeSize);
-      compound.putInt("SkinColor", ColorUtil.rgbToColor(this.lidColor));
-      compound.putInt("BrowColor", ColorUtil.rgbToColor(this.browColor));
-      compound.putInt("PositionX", this.eyePos.x);
-      compound.putInt("PositionY", this.eyePos.y);
-      compound.putInt("BrowThickness", (int)(this.browThickness.y * 10.0F));
+      compound.putBoolean("Glint", glint);
+      compound.putBoolean("UseLidTexture", useLidTexture);
+      compound.putBoolean("Mirror", mirror);
+      compound.putBoolean("DisableBlink", disableBlink);
+      compound.putInt("SkinType", skinType);
+      compound.putInt("EyeSize", eyeSize);
+      compound.putInt("SkinColor", ColorUtil.rgbToColor(lidColor));
+      compound.putInt("BrowColor", ColorUtil.rgbToColor(browColor));
+      compound.putInt("PositionX", eyePos.x);
+      compound.putInt("PositionY", eyePos.y);
+      compound.putInt("BrowThickness", (int)(browThickness.y * 10.0F));
       return compound;
    }
 
    public void setNbt(CompoundTag compound) {
       super.setNbt(compound);
-      this.glint = compound.getBoolean("Glint");
-      this.useLidTexture = compound.getBoolean("UseLidTexture");
-      this.mirror = compound.getBoolean("Mirror");
-      this.disableBlink = compound.getBoolean("DisableBlink");
-      this.skinType = compound.getInt("SkinType");
-      this.eyeSize = compound.getInt("EyeSize");
-      this.lidColor = ColorUtil.colorToRgb(compound.getInt("SkinColor"));
-      this.browColor = ColorUtil.colorToRgb(compound.getInt("BrowColor"));
-      this.eyePos = new NopVector2i(compound.getInt("PositionX"), compound.getInt("PositionY"));
-      this.browThickness = new NopVector3f(1.0F, (float)compound.getInt("BrowThickness") / 10.0F, 1.0F);
+      glint = compound.getBoolean("Glint");
+      useLidTexture = compound.getBoolean("UseLidTexture");
+      mirror = compound.getBoolean("Mirror");
+      disableBlink = compound.getBoolean("DisableBlink");
+      skinType = compound.getInt("SkinType");
+      eyeSize = compound.getInt("EyeSize");
+      lidColor = ColorUtil.colorToRgb(compound.getInt("SkinColor"));
+      browColor = ColorUtil.colorToRgb(compound.getInt("BrowColor"));
+      eyePos = new NopVector2i(compound.getInt("PositionX"), compound.getInt("PositionY"));
+      browThickness = new NopVector3f(1.0F, (float)compound.getInt("BrowThickness") / 10.0F, 1.0F);
    }
 
    public void update(LivingEntity npc) {

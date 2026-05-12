@@ -10,6 +10,8 @@ import java.nio.ByteBuffer;
 
 public class GuiNpcPngAnimation {
 
+    public final int width;
+    public final int height;
     private final int mcmetaFrameTime;
     private final int mcmetaFrameSize;
     private long mcmetaCurrentTime = 0;
@@ -17,7 +19,9 @@ public class GuiNpcPngAnimation {
     private final int[] mcmetaFrames;
     private final int[] mcmetaTexturesFrames;
 
-    public GuiNpcPngAnimation(int width, int height, int baseTextureId, JsonObject animation) {
+    public GuiNpcPngAnimation(int widthIn, int heightIn, int baseTextureId, JsonObject animation) {
+        width = widthIn;
+        height = heightIn;
         mcmetaFrameTime = animation.get("frametime") != null ? animation.get("frametime").getAsInt() : 0;
         if (animation.get("framesize") != null) { mcmetaFrameSize = animation.get("framesize").getAsInt(); }
         else { mcmetaFrameSize = height / width; }
@@ -94,7 +98,7 @@ public class GuiNpcPngAnimation {
         return 0;
     }
 
-    @SuppressWarnings("all")
+    @SuppressWarnings("unused")
     public int getFrameEntityId() {
         if (mcmetaTexturesFrames.length != 0) {
             return mcmetaTexturesFrames[getFrame()];

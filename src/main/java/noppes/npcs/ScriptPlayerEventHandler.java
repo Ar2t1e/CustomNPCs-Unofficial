@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -53,7 +52,6 @@ import net.minecraftforge.event.entity.EntityEvent.EntityConstructing;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent.Close;
@@ -207,7 +205,7 @@ public class ScriptPlayerEventHandler {
       // New from Unofficial (BetaZavr)
       ResourceKey<Level> dimId = event.player.level().dimension();
       if (!data.game.dimID.equals(dimId)) {
-         if (CustomNpcs.SetPlayerHomeWhenChangingDimension) {
+         if (CustomNpcs.SetHomeDimension) {
             player.setRespawnPosition(dimId, player.blockPosition(), player.getYRot(), true, false);
          }
          data.game.dimID = event.player.level().dimension();
@@ -834,106 +832,6 @@ public class ScriptPlayerEventHandler {
          else { drops.set(i, iStack.getMCItemStack()); }
       }
       CustomNpcs.debugData.end(player);
-   }
-
-   @SubscribeEvent
-   @SuppressWarnings("unused")
-   public void cnpcTestingEvent(LivingEvent.LivingJumpEvent event) {
-      if (!CustomNpcs.VerboseDebug || !(event.getEntity() instanceof Player player)) { return; }
-      try { test(player); } catch (Exception e) { LogWriter.error("Client test error", e); }
-   }
-
-   @SuppressWarnings("unused")
-   public static void test(Object ... objects) {
-      Minecraft mc = Minecraft.getInstance();
-      if (objects != null && objects.length > 0) {
-         if (objects[0] instanceof Player player) {
-      /*
-      // Found texts
-      java.io.File dir = new java.io.File("D:/1.20.1/customnpcs/src/main/java");
-      //dir = new java.io.File("E:/Sources/1.20.1/minecraft 1.20.1/net");
-      //dir = new java.io.File("E:/Sources/1.20.1/Mini Maps/VoxelMap/src/main/java");
-      //dir = new java.io.File("E:/Sources/1.20.1/geckolib-1.20.1/CNPC-Gecko-Addon-1.20.1-1.0.0/com/goodbird/cnpcgeckoaddon");
-      LogWriter.info("Directory: "+dir.exists()+" - "+dir);
-      String br = "" + ((char) 9) + ((char) 10) + " ()[]{}.,<>:;+-*\\/\"";
-      java.util.Map<String, java.util.Map<String, java.util.List<Integer>>> found = new java.util.TreeMap<>();
-      //found.put("TEST:", null);
-      found.put(" scene ", null);
-
-      java.util.function.Function<java.io.File, String> getClss = (file) -> {
-         Class<?> cl = null;
-         String classPath = file.getName().replace(".java", "");
-         file = file.getParentFile();
-         while (file.getParentFile().exists() && cl == null) {
-            classPath = file.getName() + "." + classPath;
-            try { cl = Class.forName(classPath); } catch (Exception ignored) { }
-            file = file.getParentFile();
-         }
-         return cl == null ? "" : classPath;
-      };
-      for (java.io.File file : noppes.npcs.util.Util.instance.getFiles(dir, "java")) {
-         try {
-            java.io.BufferedReader reader = com.google.common.io.Files.newReader(file, java.nio.charset.StandardCharsets.UTF_8);
-            String line;
-            int l = 1;
-            while ((line = reader.readLine()) != null) {
-               for (String key : found.keySet()) {
-                  if (line.contains("found.put(\"" + key + "\"")) { continue; }
-                  if (key.contains("&&")) {
-                     String k = key.substring(0, key.indexOf("&&"));
-                     String s = key.substring(key.indexOf("&&") + 2);
-                     if (line.contains(k) && line.toLowerCase().contains(s.toLowerCase())) {
-                        found.computeIfAbsent(key, k1 -> new java.util.TreeMap<>());
-                        String classPath = getClss.apply(file);
-                        if (!classPath.isEmpty()) {
-                           if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
-                           found.get(key).get(classPath).add(l);
-                        }
-                     }
-                  }
-                  else if (key.indexOf("&") == 0) {
-                     String k = key.replace("&", "");
-                     if (line.contains(k)) {
-                        int s = line.indexOf(k) - 1;
-                        int e = line.indexOf(k) + k.length();
-                        if (br.contains("" + line.charAt(s)) && br.contains("" + line.charAt(e))) {
-                           found.computeIfAbsent(key, k1 -> new java.util.TreeMap<>());
-                           String classPath = getClss.apply(file);
-                           if (!classPath.isEmpty()) {
-                              if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
-                              found.get(key).get(classPath).add(l);
-                           }
-                        }
-                     }
-                  }
-                  else if (line.contains(key)) {
-                     found.computeIfAbsent(key, k -> new java.util.TreeMap<>());
-                     String classPath = getClss.apply(file);
-                     if (!classPath.isEmpty()) {
-                        if (!found.get(key).containsKey(classPath)) { found.get(key).put(classPath, new java.util.ArrayList<>()); }
-                        found.get(key).get(classPath).add(l);
-                     }
-                  }
-               }
-               l++;
-            }
-            reader.close();
-         } catch (Exception e) { noppes.npcs.shared.common.util.LogWriter.error(e); }
-      }
-      for (String key : found.keySet()) {
-         if (found.get(key) == null || found.get(key).isEmpty()) {
-            LogWriter.info("\"" + key + "\" not found;");
-            continue;
-         }
-         LogWriter.info("\"" + key + "\" found in:");
-         java.util.Map<String, java.util.List<Integer>> map = found.get(key);
-         for (String classPath : map.keySet()) {
-            for (Integer line : map.get(classPath)) { LogWriter.info("found class:" + classPath + ":" + line); }
-         }
-      }
-      /**/
-         }
-      }
    }
 
 }

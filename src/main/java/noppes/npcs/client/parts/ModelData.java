@@ -25,7 +25,7 @@ public class ModelData extends ModelDataShared {
    public float elytraRotY;
    public float elytraRotZ;
 
-   public ModelData(EntityCustomNpc npcIn) { npc = npcIn; }
+   public ModelData(EntityCustomNpc npcIn) { super(); npc = npcIn; }
 
    public LivingEntity getEntity(EntityNPCInterface npc) {
       if (!hasEntity()) { return null; }

@@ -2,11 +2,15 @@ package noppes.npcs.controllers.data;
 
 import java.util.*;
 
+import com.google.gson.*;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -15,6 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.NoppesUtilPlayer;
@@ -35,6 +40,10 @@ import javax.annotation.Nullable;
 
 public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
 
+   static int MAX_WIDTH = 4;
+   static int MAX_HEIGHT = 4;
+
+   public static final RecipeSerializer<RecipeCarpentry> CARPENTRY_RECIPE = new Serializer();
    public final Availability availability = new Availability();
    public boolean isGlobal;
    public boolean ignoreDamage = false;
@@ -293,7 +302,7 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
    }
 
    @Override
-   public @Nonnull RecipeSerializer<?> getSerializer() { return isShaped ? RecipeSerializer.SHAPED_RECIPE : RecipeSerializer.SHAPELESS_RECIPE; }
+   public @Nonnull RecipeSerializer<?> getSerializer() { return CARPENTRY_RECIPE; }
 
    @Override
    public @Nonnull NonNullList<Ingredient> getIngredients() { return ingredients; }
@@ -496,6 +505,105 @@ public class RecipeCarpentry implements CraftingRecipe, INpcRecipe {
          id = newId;
          RecipeController.getInstance().updateToAll();
       }
+   }
+
+
+   public static class Serializer implements RecipeSerializer<RecipeCarpentry> {
+
+      public static CompoundTag getAsCompoundTag(JsonObject json, String key, CompoundTag defaultValue) {
+         if (json.has(key)) {
+            JsonElement element = json.get(key);
+            if (element.isJsonNull()) { return defaultValue; }
+            return parseCompoundTag(element, key);
+         }
+         return defaultValue;
+      }
+
+      private static CompoundTag parseCompoundTag(JsonElement element, String key) {
+         if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            String nbtString = element.getAsString();
+            try { return TagParser.parseTag(nbtString); }
+            catch (Exception e) { throw new JsonSyntaxException("Invalid NBT tag at '" + key + "': " + nbtString, e); }
+         }
+         if (element.isJsonObject()) {
+            String jsonStr = element.toString();
+            try { return TagParser.parseTag(jsonStr); }
+            catch (Exception e) { throw new JsonSyntaxException("Invalid NBT JSON at '" + key + "': " + jsonStr, e); }
+         }
+         throw new JsonSyntaxException("Expected NBT tag to be a string or object at '" + key + "'");
+      }
+
+      @Override
+      public @Nonnull RecipeCarpentry fromJson(@Nonnull ResourceLocation idIn, @Nonnull JsonObject jsonObject) {
+         NonNullList<Ingredient> ingredients = itemsFromJson(GsonHelper.getAsJsonArray(jsonObject, "ingredients"));
+         if (ingredients.isEmpty()) {
+            throw new JsonParseException("No ingredients for shapeless recipe");
+         }
+         if (ingredients.size() > MAX_WIDTH * MAX_HEIGHT) {
+            throw new JsonParseException("Too many ingredients for shapeless recipe. The maximum is " + (MAX_WIDTH * MAX_HEIGHT));
+         }
+         RecipeCarpentry npcRecipe = new RecipeCarpentry(idIn,
+                 GsonHelper.getAsString(jsonObject, "group", "npc_new"),
+                 GsonHelper.getAsInt(jsonObject, "width", 3),
+                 GsonHelper.getAsInt(jsonObject, "height", 3),
+                 GsonHelper.getAsBoolean(jsonObject, "is_global", true),
+                 GsonHelper.getAsBoolean(jsonObject, "is_shaped", true),
+                 ingredients,
+                 CraftingHelper.getItemStack(GsonHelper.getAsJsonObject(jsonObject, "result"), true, true));
+         npcRecipe.showInRecipeBook = GsonHelper.getAsBoolean(jsonObject, "show_notification", true);
+         npcRecipe.ignoreDamage = GsonHelper.getAsBoolean(jsonObject, "ignore_damage", false);
+         npcRecipe.ignoreNBT = GsonHelper.getAsBoolean(jsonObject, "ignore_nbt", false);
+         npcRecipe.isKnown = GsonHelper.getAsBoolean(jsonObject, "is_known", false);
+         npcRecipe.name = GsonHelper.getAsString(jsonObject, "name", idIn.getPath()); // name
+         CompoundTag compound = getAsCompoundTag(jsonObject, "availability", new CompoundTag());
+         npcRecipe.availability.load(compound);
+         return npcRecipe;
+      }
+
+      @Override
+      public RecipeCarpentry fromNetwork(@Nonnull ResourceLocation idIn, FriendlyByteBuf buf) {
+         int width = buf.readVarInt(); // width
+         int height = buf.readVarInt(); // height
+         String group = buf.readUtf(); // group
+         NonNullList<Ingredient> ingredients = NonNullList.withSize(width * height, Ingredient.EMPTY);
+         ingredients.replaceAll(ignored -> Ingredient.fromNetwork(buf)); // ingredients
+         ItemStack itemstack = buf.readItem(); // result
+         RecipeCarpentry npcRecipe = new RecipeCarpentry(idIn, group, width, height,
+                 buf.readBoolean(), // isGlobal
+                 buf.readBoolean(), // isShaped
+                 ingredients, itemstack);
+         npcRecipe.showInRecipeBook = buf.readBoolean(); // showInRecipeBook
+         npcRecipe.ignoreDamage = buf.readBoolean(); // ignoreDamage
+         npcRecipe.ignoreNBT = buf.readBoolean(); // ignoreNBT
+         npcRecipe.isKnown = buf.readBoolean(); // isKnown
+         npcRecipe.name = buf.readUtf(); // name
+         npcRecipe.availability.load(Objects.requireNonNull(buf.readAnySizeNbt())); // availability
+         return npcRecipe;
+      }
+
+      @Override
+      public void toNetwork(FriendlyByteBuf buf, RecipeCarpentry npcRecipe) {
+         buf.writeVarInt(npcRecipe.width); // width
+         buf.writeVarInt(npcRecipe.height); // height
+         buf.writeUtf(npcRecipe.group); // group
+         for(Ingredient ingredient : npcRecipe.getIngredients()) { ingredient.toNetwork(buf); } // ingredients
+         buf.writeItem(npcRecipe.result); // result
+         buf.writeBoolean(npcRecipe.isGlobal); // isGlobal
+         buf.writeBoolean(npcRecipe.isShaped); // isShaped
+         buf.writeBoolean(npcRecipe.showInRecipeBook); // showInRecipeBook
+         buf.writeBoolean(npcRecipe.ignoreDamage); // ignoreDamage
+         buf.writeBoolean(npcRecipe.ignoreNBT); // ignoreNBT
+         buf.writeBoolean(npcRecipe.isKnown); // isKnown
+         buf.writeUtf(npcRecipe.name); // name
+         buf.writeNbt(npcRecipe.availability.save(new CompoundTag())); // availability
+      }
+
+      private static NonNullList<Ingredient> itemsFromJson(JsonArray jsonIngredients) {
+         NonNullList<Ingredient> nonnulllist = NonNullList.create();
+         for(int i = 0; i < jsonIngredients.size(); ++i) { nonnulllist.add(Ingredient.fromJson(jsonIngredients.get(i), false)); }
+         return nonnulllist;
+      }
+
    }
 
 }

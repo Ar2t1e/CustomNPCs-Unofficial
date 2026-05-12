@@ -3,9 +3,6 @@ package noppes.npcs;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.minecraftforge.event.entity.EntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import noppes.npcs.api.event.ForgeEvent;
@@ -28,11 +25,7 @@ public class ForgeEventHandler {
          if (lastSeenEvent != event) {
             CustomNpcs.debugData.start("Mod");
             lastSeenEvent = event;
-            try {
-               if (event instanceof EntityEvent ev) { EventHooks.onForgeEntityEvent(ev); }
-               else if (event instanceof LevelEvent ev) { EventHooks.onForgeLevelEvent(ev); }
-               else { EventHooks.onForgeEvent(new ForgeEvent(event)); }
-            }
+            try { EventHooks.onForgeEvent(new ForgeEvent(event)); }
             catch (Throwable t) { LogWriter.error("Error in " + event.getClass().getName(), t); }
             CustomNpcs.debugData.end("Mod");
          }

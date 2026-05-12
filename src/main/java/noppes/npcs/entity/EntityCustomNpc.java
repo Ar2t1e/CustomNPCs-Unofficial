@@ -12,9 +12,7 @@ import net.minecraft.world.level.Level;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.EntityUtil;
-import noppes.npcs.client.parts.ModelData;
-import noppes.npcs.client.parts.ModelEyeData;
-import noppes.npcs.client.parts.MpmPartData;
+import noppes.npcs.client.parts.*;
 import noppes.npcs.constants.EnumParts;
 
 import javax.annotation.Nonnull;
@@ -25,13 +23,22 @@ public class EntityCustomNpc extends EntityNPCFlying {
 
    public EntityCustomNpc(EntityType<? extends PathfinderMob> type, Level world) {
       super(type, world);
+      if (CustomNpcs.EnableDefaultEyes) {
+         MpmPart part = MpmPartReader.PARTS.get(ModelEyeData.RESOURCE);
+         if (part != null) {
+            MpmPartData data = new MpmPartData();
+            data.partId = part.id;
+            data.usePlayerSkin = part.defaultUsePlayerSkins;
+            modelData.mpmParts.add(data);
+            modelData.refreshParts();
+         }
+      }
    }
 
    public void readAdditionalSaveData(@Nonnull CompoundTag compound) {
       if (compound.contains("NpcModelData")) {
          modelData.load(compound.getCompound("NpcModelData"));
       }
-
       super.readAdditionalSaveData(compound);
    }
 
@@ -129,7 +136,8 @@ public class EntityCustomNpc extends EntityNPCFlying {
       if (display.getHitboxState() == 0) {
          if (level().isClientSide() && CustomNpcs.EnableInvisibleNpcs && CustomNpcs.InvisibilityAlgorithm == 2) {
             Player player = CustomNpcs.proxy.getPlayer();
-            if (!display.isVisibleTo(player) && !player.isSpectator() && player.getMainHandItem().getItem() != CustomItems.wand) { return; }
+            if (!display.isVisibleTo(player) && player != null &&
+                    !player.isSpectator() && player.getMainHandItem().getItem() != CustomItems.wand) { return; }
          }
          super.pushEntities();
       }

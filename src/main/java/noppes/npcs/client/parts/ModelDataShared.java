@@ -39,9 +39,6 @@ public abstract class ModelDataShared {
    public boolean startAnimation = false;
    public int animationStart = 0;
 
-   // New from Unofficial (BetaZavr)
-   private final List<String> disableLayers = new ArrayList<>();
-
    public CompoundTag save() {
       CompoundTag compound = new CompoundTag();
       if (entityName != null) { compound.putString("EntityName", entityName.toString()); }

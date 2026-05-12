@@ -57,6 +57,8 @@ public class CmdScript {
                     // Stored data
                     if (ScriptController.Instance.loadStoredData()) { context.getSource().sendSuccess(() -> Component.literal("Reload stored data successfully"), false); }
                     else { context.getSource().sendSuccess(() -> Component.literal("Failed reloading stored data"), false); }
+                    // Client data
+                    for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) { ScriptController.Instance.sendClientTo(player); }
                     return 1;
                 }));
         command.then(Commands.literal("trigger")

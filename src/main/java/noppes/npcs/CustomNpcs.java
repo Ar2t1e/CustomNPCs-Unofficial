@@ -240,8 +240,6 @@ public class CustomNpcs {
    public static boolean ReplaceCustomBackground = true;
    @ConfigProp(info = "Commission for transferring coins between players through a team", def = "5", min = "0", max = "500")
    public static int CoinCommission = 5;
-   @ConfigProp(info = "When a player's dimension changes, their home position will change to portal position", def = "true")
-   public static boolean SetPlayerHomeWhenChangingDimension = true;
 
    public static boolean FixUpdateFromPre_1_12 = false;
    public static CommonProxy proxy = DistExecutor.unsafeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
@@ -281,6 +279,7 @@ public class CustomNpcs {
          context.getModEventBus().addListener(this::setup);
          context.getModEventBus().addListener(CustomFluidTypes::registerFluidTypes);
          CustomTabs.CREATIVE_TABS.register(context.getModEventBus());
+         RecipeController.RECIPE_SERIALIZERS.register(context.getModEventBus());
          CustomParticleTypes.CUSTOM_PARTICLES.register(context.getModEventBus());
          File dir = new File(FMLPaths.CONFIGDIR.get().toFile(), "..");
          Config = new ConfigLoader(this, MODNAME, new File(dir, "config"));
@@ -368,6 +367,7 @@ public class CustomNpcs {
 
       // New from Unofficial (BetaZavr)
       BankController.getInstance().update();
+      AnimationController.getInstance().save();
       PlayerSkinController.getInstance().save();
       PlayerSkinController.unload();
       KeyController.getInstance().save();

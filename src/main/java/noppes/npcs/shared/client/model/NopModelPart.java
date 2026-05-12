@@ -48,10 +48,9 @@ public class NopModelPart {
       setTexSize(width, height);
    }
 
-   private NopModelPart() {
-      scale = NopVector3f.ONE;
-   }
+   private NopModelPart() { scale = NopVector3f.ONE; }
 
+   @SuppressWarnings("unused")
    public NopModelPart createShallowCopy() {
       NopModelPart MpmModelPart = new NopModelPart();
       MpmModelPart.copyFrom(this);
@@ -83,33 +82,33 @@ public class NopModelPart {
 
    public NopModelPart addBox(String ignoredName, float x, float y, float z, int dx, int dy, int dz, float size, int textureU, int textureV) {
       texOffs(textureU, textureV);
-      addBox(xTexOffs, yTexOffs, x, y, z, (float)dx, (float)dy, (float)dz, size, size, size, mirror, false);
+      addBox(xTexOffs, yTexOffs, x, y, z, (float)dx, (float)dy, (float)dz, size, size, size, mirror);
       return this;
    }
 
    public NopModelPart addBox(float x, float y, float z, float dx, float dy, float dz) {
-      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, 0.0F, 0.0F, 0.0F, mirror, false);
+      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, 0.0F, 0.0F, 0.0F, mirror);
       return this;
    }
 
    public NopModelPart addBox(float x, float y, float z, float dx, float dy, float dz, boolean isMirror) {
-      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, 0.0F, 0.0F, 0.0F, isMirror, false);
+      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, 0.0F, 0.0F, 0.0F, isMirror);
       return this;
    }
 
    public void addBox(float x, float y, float z, float dx, float dy, float dz, float size) {
-      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, size, size, size, mirror, false);
+      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, size, size, size, mirror);
    }
 
    public void addBox(float x, float y, float z, float dx, float dy, float dz, float width, float height, float depth) {
-      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, width, height, depth, mirror, false);
+      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, width, height, depth, mirror);
    }
 
    public void addBox(float x, float y, float z, float dx, float dy, float dz, float size, boolean isMirror) {
-      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, size, size, size, isMirror, false);
+      addBox(xTexOffs, yTexOffs, x, y, z, dx, dy, dz, size, size, size, isMirror);
    }
 
-   private void addBox(int textureU, int textureV, float x, float y, float z, float dx, float dy, float dz, float width, float height, float depth, boolean isMirror, boolean ignoredIs) {
+   private void addBox(int textureU, int textureV, float x, float y, float z, float dx, float dy, float dz, float width, float height, float depth, boolean isMirror) {
       cubes.add(new NopModelPart.ModelBox(textureU, textureV, x, y, z, dx, dy, dz, width, height, depth, isMirror, xTexSize, yTexSize));
    }
 

@@ -121,7 +121,7 @@ public abstract class BaseScriptData implements IScriptHandler {
         IEntity<?> iEntity = null;
         IBlock iBlock = null;
         if (event instanceof Event && !(event instanceof CustomNPCsEvent)) { event = new ForgeEvent((Event) event); }
-        if (event instanceof ForgeEvent.EntityEvent) { iEntity = ((ForgeEvent.EntityEvent) event).entity; }
+        if (event instanceof ForgeEvent) { iEntity = ((ForgeEvent) event).entity; }
         if (event instanceof PlayerEvent) {
             if (((PlayerEvent) event).player != null) { iEntity =  ((PlayerEvent) event).player; }
             else { message.append(Component.literal("Global players script").withStyle(ChatFormatting.DARK_GRAY)); }

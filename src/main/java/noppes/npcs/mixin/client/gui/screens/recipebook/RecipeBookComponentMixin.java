@@ -11,6 +11,7 @@ import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import noppes.npcs.client.util.ClientRecipeRegister;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.RecipeCarpentry;
 import org.spongepowered.asm.mixin.Final;
@@ -47,8 +48,8 @@ public class RecipeBookComponentMixin {
             RecipeBookCategories category = tabButton.getCategory();
             if (category == RecipeBookCategories.CRAFTING_SEARCH ||
                     category == RecipeBookCategories.FURNACE_SEARCH ||
-                    category == RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY ||
-                    category == RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY) {
+                    category == ClientRecipeRegister.CRAFTING_CUSTOM_GLOBAL_CATEGORY ||
+                    category == ClientRecipeRegister.CRAFTING_CUSTOM_ANVIL_CATEGORY) {
                 tabButton.visible = true;
                 tabButton.setPosition(x, y + tabHeight * tabId++);
             }

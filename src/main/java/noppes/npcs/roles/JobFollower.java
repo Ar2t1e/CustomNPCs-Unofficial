@@ -2,14 +2,12 @@ package noppes.npcs.roles;
 
 import java.util.List;
 
-import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.nbt.CompoundTag;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.data.role.IJobFollower;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ValueUtil;
 
 public class JobFollower extends JobInterface implements IJobFollower {

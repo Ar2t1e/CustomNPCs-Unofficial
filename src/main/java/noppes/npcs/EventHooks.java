@@ -6,7 +6,6 @@ import java.util.Objects;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -17,8 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.EntityEvent;
-import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.Event;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.IWorld;
@@ -347,15 +344,6 @@ public class EventHooks {
             EventHooks.onEvent(handler, EnumScriptType.KEY_ACTIVE, new PlayerEvent.KeyActive(handler.getPlayer(), kb));
          }
       }
-   }
-
-   public static void onForgeEntityEvent(EntityEvent event) {
-      onForgeEvent(new ForgeEvent.EntityEvent(event, event.getEntity()));
-   }
-
-   public static void onForgeLevelEvent(LevelEvent event) {
-      IWorld e = Objects.requireNonNull(NpcAPI.Instance()).getIWorld((ServerLevel)event.getLevel());
-      onForgeEvent(new ForgeEvent.LevelEvent(event, e));
    }
 
    public static void onForgeInit(ForgeScriptData handler) {

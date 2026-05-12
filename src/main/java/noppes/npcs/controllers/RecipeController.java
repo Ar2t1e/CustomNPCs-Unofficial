@@ -5,8 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.*;
 
-import com.google.common.collect.ImmutableList;
-import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -17,8 +15,8 @@ import net.minecraft.world.inventory.RecipeBookType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.block.Blocks;
-import noppes.npcs.CustomBlocks;
-import noppes.npcs.CustomItems;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.handler.IRecipeHandler;
@@ -36,9 +34,13 @@ public class RecipeController implements IRecipeHandler {
 
    public static final RecipeBookType CRAFTING_CUSTOM_GLOBAL = RecipeBookType.create("CRAFTING_CUSTOM_GLOBAL");
    public static final RecipeBookType CRAFTING_CUSTOM_ANVIL = RecipeBookType.create("CRAFTING_CUSTOM_ANVIL");
-   public static final RecipeBookCategories CRAFTING_CUSTOM_GLOBAL_CATEGORY = RecipeBookCategories.create("CRAFTING_CUSTOM_GLOBAL_CATEGORY", new ItemStack(CustomItems.wand), new ItemStack(CustomItems.cloner));
-   public static final RecipeBookCategories CRAFTING_CUSTOM_ANVIL_CATEGORY = RecipeBookCategories.create("CRAFTING_CUSTOM_ANVIL_CATEGORY", new ItemStack(CustomBlocks.carpenty));
-   public static final List<RecipeBookCategories> CRAFTING_CUSTOM_ANVIL_CATEGORIES = ImmutableList.of(CRAFTING_CUSTOM_ANVIL_CATEGORY);
+
+   public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
+           DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, CustomNpcs.MODID);
+   static {
+      RECIPE_SERIALIZERS.register("npcs_carpentry", () -> RecipeCarpentry.CARPENTRY_RECIPE);
+   }
+
    public static final int version = 4;
 
    protected static RecipeController instance;

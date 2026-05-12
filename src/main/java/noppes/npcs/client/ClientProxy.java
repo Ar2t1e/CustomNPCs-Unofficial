@@ -94,6 +94,7 @@ import noppes.npcs.client.particles.EntityEnderFX;
 import noppes.npcs.client.particles.CustomParticleType;
 import noppes.npcs.client.parts.ModelData;
 import noppes.npcs.client.parts.ModelPartData;
+import noppes.npcs.client.util.ClientRecipeRegister;
 import noppes.npcs.config.CustomNpcsGuiFactory;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.containers.ContainerCustomGui;
@@ -638,7 +639,7 @@ public class ClientProxy extends CommonProxy {
                   list.add(recipeCollection);
                }
             }
-            collectionsByTab.put(isGlobal ? RecipeController.CRAFTING_CUSTOM_GLOBAL_CATEGORY : RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
+            collectionsByTab.put(isGlobal ? ClientRecipeRegister.CRAFTING_CUSTOM_GLOBAL_CATEGORY : ClientRecipeRegister.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
          }
          ((IClientRecipeBookMixin) cBook).setCollectionsByTab(ImmutableMap.copyOf(collectionsByTab));
       }

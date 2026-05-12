@@ -21,62 +21,50 @@ import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.roles.RoleFollower;
-import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nonnull;
 
 public class ItemSoulstoneFilled extends Item {
 
-   public ItemSoulstoneFilled() {
-      super((new Properties()).stacksTo(1));
-   }
+   public ItemSoulstoneFilled() { super((new Properties()).stacksTo(1)); }
 
+   @Override
    @OnlyIn(Dist.CLIENT)
-   public void appendHoverText(@NotNull ItemStack stack, Level level, @NotNull List<Component> list, @NotNull TooltipFlag flag) {
+   public void appendHoverText(@Nonnull ItemStack stack, Level level, @Nonnull List<Component> list, @Nonnull TooltipFlag flag) {
       CompoundTag compound = stack.getTag();
       if (compound != null && compound.contains("Entity", 10)) {
          Component name = Component.translatable(compound.getString("Name"));
          if (compound.contains("DisplayName")) {
-            name = Component.translatable(compound.getString("DisplayName")).append(" (").append(name).append(")");
+            String key = compound.getString("DisplayName");
+            MutableComponent displayName = Component.Serializer.fromJson(key);
+            if (displayName == null) { displayName = Component.translatable(key); }
+            name = displayName.append(" (").append(name).append(")");
          }
-
          list.add(Component.literal(ChatFormatting.BLUE.getName()).append(name));
          if (stack.getTag().contains("ExtraText")) {
             MutableComponent text = Component.literal("");
             String[] split = compound.getString("ExtraText").split(",");
-            for (String s : split) {
-               text.append(Component.translatable(s));
-            }
+            for (String s : split) { text.append(Component.translatable(s)); }
             list.add(text);
          }
-      } else {
-         list.add(Component.literal(ChatFormatting.RED + "Error"));
       }
+      else { list.add(Component.literal(ChatFormatting.RED + "Error")); }
    }
 
-   public @NotNull InteractionResult useOn(UseOnContext context) {
-      if (context.getLevel().isClientSide) {
-         return InteractionResult.SUCCESS;
-      } else {
-         ItemStack stack = context.getItemInHand();
-         if (Spawn(context.getPlayer(), stack, context.getLevel(), context.getClickedPos()) == null) {
-            return InteractionResult.FAIL;
-         } else {
-            if (context.getPlayer() != null && !context.getPlayer().getAbilities().instabuild) {
-               stack.split(1);
-            }
-            return InteractionResult.SUCCESS;
-         }
-      }
+   @Override
+   public @Nonnull InteractionResult useOn(UseOnContext context) {
+      if (context.getLevel().isClientSide) { return InteractionResult.SUCCESS; }
+      ItemStack stack = context.getItemInHand();
+      if (Spawn(context.getPlayer(), stack, context.getLevel(), context.getClickedPos()) == null) { return InteractionResult.FAIL; }
+      if (context.getPlayer() != null && !context.getPlayer().isCreative()) { stack.split(1); }
+      return InteractionResult.SUCCESS;
    }
 
    public static Entity Spawn(Player player, ItemStack stack, Level level, BlockPos pos) {
-      if (level.isClientSide) {
-         return null;
-      } else if (stack.getTag() != null && stack.getTag().contains("Entity", 10)) {
+      if (!level.isClientSide && stack.getTag() != null && stack.getTag().contains("Entity", 10)) {
          CompoundTag compound = stack.getTag().getCompound("Entity");
          Entity entity = EntityType.create(compound, level).orElse(null);
-         if (entity == null) {
-            return null;
-         } else {
+         if (entity != null) {
             entity.setPos(pos.getX() + 0.5D, pos.getY() + 1.2D, pos.getZ() + 0.5D);
             if (entity instanceof EntityNPCInterface npc) {
                npc.ais.setStartPos(pos);
@@ -84,26 +72,20 @@ public class ItemSoulstoneFilled extends Item {
                npc.setPos(pos.getX() + 0.5D, npc.getStartYPos(), pos.getZ() + 0.5D);
                if (npc.role.getType() == 6 && player != null) {
                   PlayerData data = PlayerData.get(player);
-                  if (data.hasCompanion()) {
-                     return null;
-                  }
+                  if (data.hasCompanion()) { return null; }
                   ((RoleCompanion)npc.role).setOwner(player);
                   data.setCompanion(npc);
                }
-               if (npc.role.getType() == 2 && player != null) {
-                  ((RoleFollower)npc.role).setOwner(player);
-               }
+               if (npc.role.getType() == 2 && player != null) { ((RoleFollower) npc.role).setOwner(player); }
             }
             if (!level.addFreshEntity(entity)) {
                if (player != null) { player.sendSystemMessage(Component.translatable("error.failedToSpawn")); }
                return null;
-            } else {
-               return entity;
             }
+            return entity;
          }
-      } else {
-         return null;
       }
+      return null;
    }
 
 }

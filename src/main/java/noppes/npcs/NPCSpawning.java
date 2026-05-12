@@ -64,7 +64,7 @@ public class NPCSpawning {
             int l1 = j1;
             int i2 = k1;
             for(int k2 = 0; k2 < 4; ++k2) {
-               BlockPos pos = getTopNonCollidingPos(level, CustomEntities.entityCustomNpc, j1, k1);
+               BlockPos pos = getTopNonCollidingPos(level, j1, k1);
                if (canCreatureTypeSpawnAtLocation(data, level, pos)) {
                   if (spawnData(data, level, pos)) { break; }
                }
@@ -196,7 +196,7 @@ public class NPCSpawning {
       return false;
    }
 
-   private static BlockPos getTopNonCollidingPos(LevelReader levelReader, EntityType<?> entityType, int x, int z) {
+   private static BlockPos getTopNonCollidingPos(LevelReader levelReader, int x, int z) {
       int i = levelReader.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, x, z);
       MutableBlockPos blockpos$mutable = new MutableBlockPos(x, i, z);
       if (levelReader.dimensionType().hasCeiling()) {

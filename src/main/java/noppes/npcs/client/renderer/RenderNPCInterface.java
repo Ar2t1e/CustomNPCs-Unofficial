@@ -91,12 +91,15 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 		if (showLR) { Packets.sendServerDelayed(new SPacketNpcRarityTitleGet(npc.getId()), npc, 5000); }
 		String title = npc.display.getTitle();
 		String rarityTitle = npc.stats.getRarityTitle();
-		if ((!title.isEmpty()  || (showLR && !rarityTitle.isEmpty())) && nearby) {
-			Component component = Component.literal("<").append(Component.translatable(title)).append(">");
+		if ((!title.isEmpty() || (showLR && !rarityTitle.isEmpty())) && nearby) {
+			Component component;
 			float f3 = 0.6F;
 			matrixStack.translate(0.0F, 4.0F, 0.0F);
 			matrixStack.scale(f3, f3, f3);
-			font.drawInBatch(component, (float)(-font.width(component) / 2), 0.0F, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);
+			if (!title.isEmpty()) {
+				component = Component.literal("<").append(Component.translatable(title)).append(">");
+				font.drawInBatch(component, (float)(-font.width(component) / 2), 0.0F, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);
+			}
 			if (showLR && !rarityTitle.isEmpty()) {
 				component = Component.translatable(rarityTitle);
 				font.drawInBatch(component, (float)(-font.width(component) / 2), -27.0F, color, false, matrix4f, buffer, DisplayMode.NORMAL, backgroundAlpha, light);

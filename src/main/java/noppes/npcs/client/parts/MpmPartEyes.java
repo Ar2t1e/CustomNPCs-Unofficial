@@ -72,10 +72,11 @@ public class MpmPartEyes extends MpmPartAbstractClient {
          offset = (float)(eyeData.eyeSize + 1) * EasingFunctions.easeInCubic(f);
       }
 
-      if (this.type == 0 || this.type == 1) {
+      if (type == 0 || type == 1) {
          if (eyeData.skinType == 1) {
             (eyeData.eyeSize == 0 ? sclera1 : scleraBig1).render(mStack, typeBuffer.getBuffer(RenderType.entityTranslucent(sclera)), lightMapUV, OverlayTexture.NO_OVERLAY, 1.0f);
-         } else if (eyeData.skinType == 2) {
+         }
+         else if (eyeData.skinType == 2) {
             if (eyeData.mirror) {
                (eyeData.eyeSize == 0 ? sclera1M : scleraBig1M).render(mStack, typeBuffer.getBuffer(RenderType.entityTranslucent(eyeData.getUrlTexture())), lightMapUV, OverlayTexture.NO_OVERLAY, 1.0f);
             } else {

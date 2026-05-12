@@ -40,7 +40,7 @@ public class CustomCube {
                 Object vertex6 = constructorVertex.newInstance(-10.0f, 40.0f, -1.0f, 8.0F, 0.0F);
 
                 Field field;
-                try { field = ModelPart.Cube.class.getDeclaredField("polygons"); }
+                try { field = ModelPart.Cube.class.getDeclaredField("f_104341_"); }
                 catch (Exception ignored) { field = ModelPart.Cube.class.getDeclaredField("polygons"); }
                 field.trySetAccessible();
                 Object[] polygons = (Object[]) field.get(cube);
@@ -118,7 +118,7 @@ public class CustomCube {
                 Object vertex6 = constructorVertex.newInstance(-5.0f, 10.0f, -0.98f, 8.0F, 0.0F);
 
                 Field field;
-                try { field = ModelPart.Cube.class.getDeclaredField("polygons"); }
+                try { field = ModelPart.Cube.class.getDeclaredField("f_104341_"); }
                 catch (Exception ignored) { field = ModelPart.Cube.class.getDeclaredField("polygons"); }
                 field.trySetAccessible();
                 Object[] polygons = (Object[]) field.get(cube);

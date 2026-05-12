@@ -17,6 +17,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomParticleTypes;
 import noppes.npcs.client.particles.CustomParticle;
 import noppes.npcs.client.particles.CustomParticleType;
+import noppes.npcs.client.util.ClientRecipeRegister;
 import noppes.npcs.controllers.RecipeController;
 
 import javax.annotation.Nonnull;
@@ -37,7 +38,7 @@ public class ClientRegisterEvents {
     @SubscribeEvent
     public static void cnpcsRegisterRecipe(RegisterRecipeBookCategoriesEvent event) {
         event.registerBookCategories(RecipeController.CRAFTING_CUSTOM_GLOBAL, RecipeBookCategories.CRAFTING_CATEGORIES);
-        event.registerBookCategories(RecipeController.CRAFTING_CUSTOM_ANVIL, RecipeController.CRAFTING_CUSTOM_ANVIL_CATEGORIES);
+        event.registerBookCategories(RecipeController.CRAFTING_CUSTOM_ANVIL, ClientRecipeRegister.CRAFTING_CUSTOM_ANVIL_CATEGORIES);
     }
 
     @OnlyIn(Dist.CLIENT)
