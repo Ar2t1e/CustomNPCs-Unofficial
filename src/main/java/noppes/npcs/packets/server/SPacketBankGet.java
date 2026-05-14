@@ -47,7 +47,7 @@ public class SPacketBankGet extends PacketServerBasic {
 
    public static void sendBank(EntityPlayerMP player, Bank bank, int ceil) {
       Packets.send(player, new PacketGuiData(bank.save()));
-      if (player.openContainer instanceof ContainerManageBanks) { ((ContainerManageBanks) player.openContainer).setBank(bank); }
+      if (player.openContainer instanceof ContainerManageBanks) { ((ContainerManageBanks) player.openContainer).setBank(bank, ceil); }
       player.openContainer.detectAndSendChanges();
    }
 

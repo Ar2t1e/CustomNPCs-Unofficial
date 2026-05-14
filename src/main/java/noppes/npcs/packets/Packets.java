@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.packets.c.PacketNpcInitData;
+import noppes.npcs.packets.client.PacketNpcInitData;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.packets.client.*;
 import noppes.npcs.packets.client.SPacketScriptConsole;
@@ -121,7 +121,6 @@ public class Packets {
         register(PacketBankSave.class);
         register(PacketSaveSchematic.class);
         register(PacketScriptError.class);
-        register(PacketStartBuildSchematic.class);
         register(PacketNpcNavigation.class);
         register(PacketNpcTarget.class);
         register(PacketMenuSave.class);

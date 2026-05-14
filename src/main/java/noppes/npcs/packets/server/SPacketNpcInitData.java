@@ -7,7 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.c.PacketNpcInitData;
+import noppes.npcs.packets.client.PacketNpcInitData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 public class SPacketNpcInitData extends PacketServerBasic {

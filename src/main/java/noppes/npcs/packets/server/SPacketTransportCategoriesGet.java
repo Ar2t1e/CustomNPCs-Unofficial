@@ -1,14 +1,12 @@
 package noppes.npcs.packets.server;
 
-import java.util.HashMap;
-
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.TransportController;
-import noppes.npcs.controllers.data.TransportCategory;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 public class SPacketTransportCategoriesGet extends PacketServerBasic {
@@ -30,14 +28,9 @@ public class SPacketTransportCategoriesGet extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      sendTransportCategoryData(player);
+      TransportController.getInstance().sendTo(player);
+      Packets.send(player, new PacketGuiData(new NBTTagCompound()));
       CustomNpcs.debugData.end("Packets");
-   }
-
-   public static void sendTransportCategoryData(EntityPlayerMP player) {
-      HashMap<String, Integer> map = new HashMap<>();
-      for (TransportCategory category : TransportController.getInstance().categories.values()) { map.put(category.title, category.id); }
-      NoppesUtilServer.sendScrollData(player, map);
    }
 
 }

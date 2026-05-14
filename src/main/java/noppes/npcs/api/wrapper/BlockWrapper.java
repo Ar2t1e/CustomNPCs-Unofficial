@@ -109,7 +109,7 @@ public class BlockWrapper implements IBlock {
 	public BlockWrapper(@Nullable World worldIn, @Nonnull IBlockState stateIn, @Nullable BlockPos posIn) {
 		world = worldIn == null ? null : Objects.requireNonNull(NpcAPI.Instance()).getIWorld(worldIn);
 		state = stateIn;
-		iPos = posIn == null ? BlockPosWrapper.ORIGIN : new BlockPosWrapper(posIn);
+		iPos = posIn == null ? BlockPosWrapper.ORIGIN : new BlockPosWrapper(worldIn, posIn);
         if (world != null) { setTile(world.getMCWorld().getTileEntity(iPos.blockPos)); }
 	}
 

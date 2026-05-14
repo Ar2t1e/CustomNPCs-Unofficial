@@ -104,7 +104,7 @@ public class ScriptContainer {
 		ScriptContainer.Data.put("api", NpcAPI.Instance());
 		ScriptContainer.Data.put("API", NpcAPI.Instance());
 		ScriptContainer.Data.put("cnpcs", CustomNpcs.instance);
-		ScriptContainer.Data.put("PosZero", new BlockPosWrapper(BlockPos.ORIGIN));
+		ScriptContainer.Data.put("PosZero", BlockPosWrapper.ORIGIN);
 	}
 	
 	private static void FillMap(Class<?> c) {
@@ -187,7 +187,7 @@ public class ScriptContainer {
 	public boolean isClient;
 	public boolean errored = false;
 	private String fullscript = null;
-	private boolean canEncryptCode = false;
+	private boolean canEncryptCode;
 	private final IScriptHandler handler;
 	public long lastCreated = 0L;
 	public String script = "";
@@ -393,6 +393,7 @@ public class ScriptContainer {
 		CustomNpcs.debugData.end(key, type);
 	}
 
+	@SuppressWarnings("unused")
 	public void runAsync(String link, String async, String sync, Object arguments) {
 		if (!async.isEmpty()) {
 			if (!link.isEmpty()) {
@@ -572,7 +573,7 @@ public class ScriptContainer {
 		return compound;
 	}
 
-	public void setInit(boolean bo) {
+	public void setInit(boolean ignoredBo) {
 		lastCreated = 0L;
 		canEncryptCode = false;
 		unknownFunctions.clear();

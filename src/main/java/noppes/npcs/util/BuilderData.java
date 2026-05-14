@@ -18,12 +18,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import noppes.npcs.api.IPos;
 import noppes.npcs.api.item.ISpecBuilder;
+import noppes.npcs.api.wrapper.BlockPosWrapper;
 import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.items.ItemBuilder;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSaveSchematic;
-import noppes.npcs.packets.client.PacketStartBuildSchematic;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.schematics.Schematic;
 import noppes.npcs.schematics.SchematicBlockData;
@@ -858,7 +860,33 @@ public class BuilderData {
 		lastWork = System.currentTimeMillis();
 		if (type == 3) {
 			lastWork = System.currentTimeMillis() - size;
-			Packets.send(playerIn, new PacketStartBuildSchematic());
+			if (schema != null) {
+				IPos trPos = ((BlockPosWrapper) schema.schema.getOffset()).rotate(playerIn.getHorizontalFacing());
+				int rot;
+				switch (playerIn.getHorizontalFacing()) {
+					case NORTH: {
+						trPos = trPos.offset(-1, 0, -schema.schema.getWidth());
+						rot = 2;
+						break;
+					}
+					case WEST: {
+						trPos = trPos.offset(-schema.schema.getWidth(), 0, 0);
+						rot = 1;
+						break;
+					}
+					case EAST: {
+						trPos = trPos.offset(0, 0, -1);
+						rot = 3;
+						break;
+					}
+					default: {
+						rot = 0;
+						break;
+					}// SOUTH
+				}
+				schema.init(pos.add(trPos.getMCBlockPos()), player.world, rot * 90);
+				SchematicController.buildBlocks(playerIn, pos, schema);
+			}
 		}
 		else if (type == 4) { saveBlocks(playerIn, pos, size); }
 		else { setBlocks(playerIn, pos); }

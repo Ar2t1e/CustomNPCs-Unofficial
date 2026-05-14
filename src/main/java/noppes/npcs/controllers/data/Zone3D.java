@@ -17,8 +17,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.IPos;
@@ -386,7 +388,9 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 			x /= points.size();
 			z /= points.size();
 		}
-		return new BlockPosWrapper(x, (double) y[0] + ((double) y[1] - (double) y[0]) / 2.0d, z);
+		World world = null;
+		if (CustomNpcs.Server != null) { world = CustomNpcs.Server.getWorld(dimension); }
+		return new BlockPosWrapper(world, x, (double) y[0] + ((double) y[1] - (double) y[0]) / 2.0d, z);
 	}
 
 	@Override

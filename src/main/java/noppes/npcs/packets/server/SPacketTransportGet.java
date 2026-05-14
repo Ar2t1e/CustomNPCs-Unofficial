@@ -41,8 +41,8 @@ public class SPacketTransportGet extends PacketServerBasic {
    }
 
    public static void sendTransportData(EntityPlayerMP player, int categoryid) {
-      TransportCategory category = TransportController.getInstance().categories.get(categoryid);
-      if (category != null) {
+      TransportCategory category = TransportController.getInstance().getCategory(null, categoryid);
+      if (category.id > -1) {
          HashMap<String, Integer> map = new HashMap<>();
          for (TransportLocation transport : category.locations.values()) { map.put(transport.name, transport.id); }
          NoppesUtilServer.sendScrollData(player, map);

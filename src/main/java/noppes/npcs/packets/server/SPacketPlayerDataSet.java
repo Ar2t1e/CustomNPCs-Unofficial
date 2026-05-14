@@ -89,7 +89,7 @@ public class SPacketPlayerDataSet extends PacketServerBasic {
                     }
                     case Bank: {
                         if (playerdata.bankData.lastBank != null && playerdata.bankData.lastBank.bank.id != id) {
-                            playerdata.bankData.lastBank.saveBankData();
+                            playerdata.bankData.lastBank.save();
                         }
                         break;
                     }

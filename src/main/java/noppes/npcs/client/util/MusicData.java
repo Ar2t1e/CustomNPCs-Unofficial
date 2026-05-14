@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
+import net.minecraft.client.audio.PositionedSound;
 import net.minecraft.client.audio.SoundManager;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.entity.player.EntityPlayer;
@@ -26,6 +27,7 @@ import noppes.npcs.api.wrapper.BlockPosWrapper;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.mixin.client.audio.ILibraryMixin;
+import noppes.npcs.mixin.client.audio.IPositionedSoundMixin;
 import noppes.npcs.mixin.client.audio.ISoundSystemMixin;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.NpcAPI;
@@ -168,11 +170,25 @@ public class MusicData {
 			y = sound.getYPosF();
 			z = sound.getZPosF();
 		}
-		return new BlockPosWrapper(x, y, z);
+		return new BlockPosWrapper(null, x, y, z);
 	}
 
 	public boolean playing() { return source != null && source.playing(); }
 
 	public boolean stopped() { return source == null || source.stopped(); }
+
+	public void setPos(float x, float y, float z) {
+		if (source != null) {
+			source.position.x = x;
+			source.position.y = y;
+			source.position.z = z;
+		}
+		if (sound instanceof PositionedSound) {
+			IPositionedSoundMixin posMixSound = (IPositionedSoundMixin) sound;
+			posMixSound.setXPosF(x);
+			posMixSound.setYPosF(y);
+			posMixSound.setZPosF(z);
+		}
+	}
 
 }

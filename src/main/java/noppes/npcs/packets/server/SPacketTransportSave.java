@@ -46,7 +46,7 @@ public class SPacketTransportSave extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      TransportLocation location = TransportController.getInstance().saveLocation(category, data, player, npc);
+      TransportLocation location = TransportController.getInstance().saveLocation(category, data, npc);
       if (location != null && npc.role.getType() == 4) {
          RoleTransporter role = (RoleTransporter) npc.role;
          role.setTransport(location);

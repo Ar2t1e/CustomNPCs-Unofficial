@@ -4,6 +4,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagFloat;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.IPos;
@@ -106,7 +107,11 @@ public class PlayerCompassData implements ICompassData, IPlayerData {
     public String getNPCName() { return npc; }
 
     @Override
-    public IPos getPos() { return new BlockPosWrapper(pos); }
+    public IPos getPos() {
+        World world = null;
+        if (CustomNpcs.Server != null) { world = CustomNpcs.Server.getWorld(dimension); }
+        return new BlockPosWrapper(world, pos);
+    }
 
     @Override
     public int getRange() { return range; }

@@ -1,4 +1,4 @@
-package noppes.npcs.packets.c;
+package noppes.npcs.packets.client;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;

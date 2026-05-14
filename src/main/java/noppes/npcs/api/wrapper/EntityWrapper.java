@@ -220,7 +220,7 @@ public class EntityWrapper<T extends Entity> implements IEntity<T> {
 	public float getPitch() { return entity.rotationPitch; }
 
 	@Override
-	public IPos getPos() { return new BlockPosWrapper(entity.posX, entity.posY, entity.posZ); }
+	public IPos getPos() { return new BlockPosWrapper(entity.world, entity.posX, entity.posY, entity.posZ); }
 
 	@Override
 	public IEntity<?>[] getRiders() {

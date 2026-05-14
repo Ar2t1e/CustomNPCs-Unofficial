@@ -8,12 +8,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = MusicTicker.class, priority = 499)
+@Mixin(value = MusicTicker.class, priority = 498)
 public class MusicTickerMixin {
 
     @Inject(method = "update", at = @At("HEAD"), cancellable = true)
     public void npcs$update(CallbackInfo ci) {
-        if (ClientTickHandler.inGame && !MusicController.Instance.music.isEmpty() && MusicController.Instance.isPlaying(MusicController.Instance.music)) {
+        if (ClientTickHandler.inGame && MusicController.Instance.music != null && MusicController.Instance.isPlaying(MusicController.Instance.music)) {
             ci.cancel();
         }
     }

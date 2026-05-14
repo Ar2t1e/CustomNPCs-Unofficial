@@ -69,6 +69,7 @@ public class TransportController {
 
 	public @Nullable TransportLocation getTransport(int transportId) { return locations.get(transportId); }
 
+	@SuppressWarnings("unused")
 	public @Nullable TransportLocation getTransport(String name) {
 		for (TransportLocation loc : new ArrayList<>(locations.values())) {
 			if (loc.name.equals(name)) { return loc; }

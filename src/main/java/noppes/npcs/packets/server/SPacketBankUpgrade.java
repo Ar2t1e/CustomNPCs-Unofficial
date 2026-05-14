@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.*;
 import noppes.npcs.containers.ContainerNPCBank;
+import noppes.npcs.containers.NpcMiscInventory;
 import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;

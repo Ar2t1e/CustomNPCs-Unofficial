@@ -67,10 +67,10 @@ public class RayTraceVec implements IRayTraceVec {
 	public double getDistance() { return distance; }
 
 	@Override
-	public IPos getStartPos() { return new BlockPosWrapper(sx, sy, sz); }
+	public IPos getStartPos() { return new BlockPosWrapper(null, sx, sy, sz); }
 
 	@Override
-	public IPos getEndPos() { return new BlockPosWrapper(x, y, z); }
+	public IPos getEndPos() { return new BlockPosWrapper(null, x, y, z); }
 
 	@Override
 	public double getX() { return x; }

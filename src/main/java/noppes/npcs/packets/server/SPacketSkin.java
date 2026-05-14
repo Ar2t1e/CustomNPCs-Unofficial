@@ -31,8 +31,8 @@ public class SPacketSkin extends PacketServerBasic {
     @Override
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
-        PlayerSkinController.instance.loadPlayerSkin(data);
-        PlayerSkinController.instance.sendToAll(player.getUniqueID());
+        PlayerSkinController.getInstance().loadPlayerSkin(data);
+        PlayerSkinController.getInstance().sendToAll(player.getUniqueID());
         CustomNpcs.debugData.end("Packets");
     }
 

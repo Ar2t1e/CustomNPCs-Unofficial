@@ -45,12 +45,10 @@ public class CommonProxy implements IGuiHandler {
 
 	public static final Map<EntityPlayer, Availability> availabilityStacks = new HashMap<>();
 
-	public void checkTexture(EntityNPCInterface npc) { }
-
 	@Override
 	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) { return null; }
 
-	public Container getContainer(EnumGuiType gui, EntityPlayer player, FriendlyByteBuf buffer) {
+	public static Container getContainer(EnumGuiType gui, EntityPlayer player, FriendlyByteBuf buffer) {
 		EntityNPCInterface npc = NoppesUtilServer.getEditingNpc(player);
 		switch (gui) {
 			case AvailabilityStack: { return new ContainerAvailabilityInv(player); }
@@ -202,17 +200,6 @@ public class CommonProxy implements IGuiHandler {
 
 	// New from Unofficial (BetaZavr)
 	public void updateKeys() { }
-
-    public void applyRecipe(INpcRecipe recipe, boolean added) {
-		if (recipe == null) { return; }
-		if (!added || recipe.isKnown()) {
-			List<EntityPlayerMP> players = CustomNpcs.Server != null ? CustomNpcs.Server.getPlayerList().getPlayers() : new ArrayList<>();
-			for (EntityPlayerMP player : players) {
-				RecipeBook book = player.getRecipeBook();
-				if (!added) { book.lock((IRecipe) recipe); } else { book.unlock((IRecipe) recipe); }
-			}
-		}
-    }
 
 	public String getTranslateLanguage(EntityPlayer player) {
 		if (!(player instanceof EntityPlayerMP)) { return "en"; }

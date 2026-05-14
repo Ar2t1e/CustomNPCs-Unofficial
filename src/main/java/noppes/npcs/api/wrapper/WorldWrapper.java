@@ -206,7 +206,7 @@ public class WorldWrapper implements IWorld {
 	@Override
 	@Deprecated
 	public IEntity<?> getClosestEntity(int x, int y, int z, int range, int type) {
-		return getClosestEntity(new BlockPosWrapper(new BlockPos(x, y, z)), range, type);
+		return getClosestEntity(new BlockPosWrapper(world, new BlockPos(x, y, z)), range, type);
 	}
 
 	@Override
@@ -293,7 +293,7 @@ public class WorldWrapper implements IWorld {
 	@Override
 	@Deprecated
 	public IEntity<?>[] getNearbyEntities(int x, int y, int z, int range, int type) {
-		return this.getNearbyEntities(new BlockPosWrapper(new BlockPos(x, y, z)), range, type);
+		return this.getNearbyEntities(new BlockPosWrapper(world, new BlockPos(x, y, z)), range, type);
 	}
 
 	@Override

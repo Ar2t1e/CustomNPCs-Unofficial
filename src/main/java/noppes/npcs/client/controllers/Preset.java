@@ -10,7 +10,7 @@ import noppes.npcs.constants.EnumParts;
 public class Preset {
 
 	public static void FillDefault(HashMap<String, Preset> presets) {
-		ModelData data = new ModelData();
+		ModelData data = new ModelData(null);
 		Preset preset = new Preset();
 		preset.name = "Elf Male";
 		preset.data = data;
@@ -19,7 +19,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.BODY).setScale(0.85f, 1.15f);
 		data.getPartConfig(EnumParts.HEAD).setScale(0.85f, 0.95f);
 		presets.put("elf male", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Elf Female";
 		preset.data = data;
@@ -29,7 +29,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.BODY).setScale(0.8f, 1.05f);
 		data.getPartConfig(EnumParts.HEAD).setScale(0.8f, 0.85f);
 		presets.put("elf female", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Dwarf Male";
 		preset.data = data;
@@ -38,7 +38,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.BODY).setScale(1.2f, 0.7f, 1.5f);
 		data.getPartConfig(EnumParts.HEAD).setScale(0.85f, 0.85f);
 		presets.put("dwarf male", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Dwarf Female";
 		preset.data = data;
@@ -48,7 +48,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.BODY).setScale(1.0f, 0.65f, 1.1f);
 		data.getPartConfig(EnumParts.HEAD).setScale(0.85f, 0.85f);
 		presets.put("dwarf female", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Orc Male";
 		preset.data = data;
@@ -57,7 +57,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.BODY).setScale(1.4f, 1.1f, 1.5f);
 		data.getPartConfig(EnumParts.HEAD).setScale(1.2f, 1.1f);
 		presets.put("orc male", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Orc Female";
 		preset.data = data;
@@ -66,12 +66,12 @@ public class Preset {
 		data.getPartConfig(EnumParts.ARM_LEFT).setScale(1.1f, 1.0f);
 		data.getPartConfig(EnumParts.BODY).setScale(1.1f, 1.0f, 1.25f);
 		presets.put("orc female", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Human Male";
 		preset.data = data;
 		presets.put("human male", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Human Female";
 		preset.data = data;
@@ -81,7 +81,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.ARM_LEFT).setScale(0.8f, 0.92f);
 		data.getPartConfig(EnumParts.BODY).setScale(0.92f, 0.92f);
 		presets.put("human female", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Cat Male";
 		preset.data = data;
@@ -95,7 +95,7 @@ public class Preset {
 		tail.type = 0;
 		tail.color = 14263886;
 		presets.put("cat male", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Cat Female";
 		preset.data = data;
@@ -114,7 +114,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.ARM_LEFT).setScale(0.8f, 0.92f);
 		data.getPartConfig(EnumParts.BODY).setScale(0.92f, 0.92f);
 		presets.put("cat female", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Wolf Male";
 		preset.data = data;
@@ -128,7 +128,7 @@ public class Preset {
 		tail.type = 0;
 		tail.color = 6182997;
 		presets.put("wolf male", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Wolf Female";
 		preset.data = data;
@@ -147,7 +147,7 @@ public class Preset {
 		data.getPartConfig(EnumParts.ARM_LEFT).setScale(0.8f, 0.92f);
 		data.getPartConfig(EnumParts.BODY).setScale(0.92f, 0.92f);
 		presets.put("wolf female", preset);
-		data = new ModelData();
+		data = new ModelData(null);
 		preset = new Preset();
 		preset.name = "Enderchibi";
 		preset.data = data;
@@ -159,7 +159,7 @@ public class Preset {
 		presets.put("enderchibi", preset);
 	}
 
-	public ModelData data = new ModelData();
+	public ModelData data = new ModelData(null);
 
 	public String name;
 

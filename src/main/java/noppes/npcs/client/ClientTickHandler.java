@@ -48,7 +48,6 @@ import org.lwjgl.input.Mouse;
 
 public class ClientTickHandler {
 
-
 	private boolean otherContainer = false;
 	private World prevWorld;
 

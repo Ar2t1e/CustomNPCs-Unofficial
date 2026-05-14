@@ -72,8 +72,10 @@ public class DataAI
 
 	public DataAI(EntityNPCInterface npcIn) { npc = npcIn; }
 
+	@SuppressWarnings("unused")
 	public void appendMovingPath(int[] pos) { movingPath.add(pos); }
 
+	@SuppressWarnings("unused")
 	public void clearMovingPath() {
 		movingPath.clear();
 		movingPos = 0;
@@ -152,13 +154,16 @@ public class DataAI
 	@Override
 	public boolean getMovingPathPauses() { return movingPause; }
 
+	@SuppressWarnings("unused")
 	public int[] getMovingPathPos(int m_pos) { return movingPath.get(m_pos); }
 
+	@SuppressWarnings("unused")
 	public int getMovingPathSize() { return movingPath.size(); }
 
 	@Override
 	public int getMovingPathType() { return movingPattern; }
 
+	@SuppressWarnings("unused")
 	public int getMovingPos() { return movingPos; }
 
 	/**
@@ -202,7 +207,7 @@ public class DataAI
 		return new int[] { pos.getX(), pos.getY(), pos.getZ() };
 	}
 
-	public IPos getStartPos() { return new BlockPosWrapper(startPos()); }
+	public IPos getStartPos() { return new BlockPosWrapper(npc == null ? null : npc.world, startPos()); }
 
 	@Override
 	public boolean getStopOnInteract() { return stopAndInteract; }
@@ -329,6 +334,7 @@ public class DataAI
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public void setMovingPathPos(int m_pos, int[] pos) {
 		if (m_pos < 0) { m_pos = 0; }
 		movingPath.set(m_pos, pos);
@@ -341,6 +347,7 @@ public class DataAI
 		movingPause = pauses;
 	}
 
+	@SuppressWarnings("unused")
 	public void setMovingPos(int pos) { movingPos = pos; }
 
 	@Override

@@ -36,8 +36,7 @@ public class EntityLivingWrapper<T extends EntityLiving> extends EntityLivingBas
 	public IPos getNavigationPath() {
 		if (!isNavigating()) { return null; }
 		PathPoint point = Objects.requireNonNull(entity.getNavigator().getPath()).getFinalPathPoint();
-		if (point == null) { return null; }
-		return new BlockPosWrapper(new BlockPos(point.x, point.y, point.z));
+		return point == null ? null : new BlockPosWrapper(entity.world, new BlockPos(point.x, point.y, point.z));
 	}
 
 	@Override

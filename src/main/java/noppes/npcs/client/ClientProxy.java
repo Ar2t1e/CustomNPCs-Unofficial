@@ -127,7 +127,6 @@ import noppes.npcs.entity.EntityProjectile;
 import noppes.npcs.entity.data.DataAnimation;
 import noppes.npcs.items.custom.CustomArmor;
 import noppes.npcs.items.ItemScripted;
-import noppes.npcs.api.mixin.client.gui.recipebook.IRecipeListMixin;
 import noppes.npcs.api.mixin.client.particle.IParticleFlameMixin;
 import noppes.npcs.api.mixin.client.particle.IParticleSmokeNormalMixin;
 import noppes.npcs.mixin.client.resources.II18nMixin;
@@ -265,12 +264,6 @@ public class ClientProxy extends CommonProxy {
 		}
 	}
 
-	@Override
-	public void checkTexture(EntityNPCInterface npc) {
-		//if (npc.display.skinType == 0) { return; }
-		//createPlayerSkin(new ResourceLocation(npc.display.getSkinTexture()));
-	}
-
 	private void createFolders() {
 		File dir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID);
 		if (!dir.exists() && !dir.mkdirs()) {
@@ -304,7 +297,7 @@ public class ClientProxy extends CommonProxy {
 		return getGui(EnumGuiType.values()[ID], NoppesUtilServer.getEditingNpc(player), buffer);
 	}
 
-	public GuiScreen getGui(EnumGuiType gui, EntityNPCInterface npc, FriendlyByteBuf buffer) {
+	public static GuiScreen getGui(EnumGuiType gui, EntityNPCInterface npc, FriendlyByteBuf buffer) {
 		ClientEvent.PreGetGuiCustomNpcs preEvent = new ClientEvent.PreGetGuiCustomNpcs(npc, gui, buffer);
 		MinecraftForge.EVENT_BUS.post(preEvent);
 		if (preEvent.isCanceled()) { return null; }
@@ -785,6 +778,7 @@ public class ClientProxy extends CommonProxy {
 		}
 	}
 
+	// New from Unofficial (BetaZavr)
 	@Override
 	public void updateKeys() {
 		List<KeyBinding> keyBindings = new ArrayList<>(Arrays.asList(Minecraft.getMinecraft().gameSettings.keyBindings));
@@ -817,56 +811,6 @@ public class ClientProxy extends CommonProxy {
 			if (added) { keyBindings.add((KeyBinding) ((KeyConfig) ks).getMCKeyBinding()); }
 		}
 		Minecraft.getMinecraft().gameSettings.keyBindings = keyBindings.toArray(new KeyBinding[0]);
-	}
-
-	@Override
-	public void applyRecipe(INpcRecipe recipe, boolean added) {
-		if (recipe == null) { return; }
-		super.applyRecipe(recipe, added);
-		final RecipeBook book;
-		if (Minecraft.getMinecraft().player != null) { book = Minecraft.getMinecraft().player.getRecipeBook(); }
-		else { book = null; }
-        /*
-		 * Since recipes can be created and deleted during the game,
-		 * the "newRecipeList(CreativeTabs)" method can be ignored.
-		 * Check and create recipe lists for such cases:
-		 */
-		CreativeTabNpcs tab = recipe.isGlobal() ? CustomTabs.TOOLS : CustomTabs.ITEMS;
-		if (!RecipeBookClient.RECIPES_BY_TAB.containsKey(tab)) {
-			RecipeList recipelist = new RecipeList();
-			RecipeBookClient.ALL_RECIPES.add(recipelist);
-			(RecipeBookClient.RECIPES_BY_TAB.computeIfAbsent(tab, (hasRecipeList) -> new ArrayList<>())).add(recipelist);
-			(RecipeBookClient.RECIPES_BY_TAB.computeIfAbsent(CreativeTabs.SEARCH, (hasRecipeList) -> new ArrayList<>())).add(recipelist);
-		}
-		RecipeList recipeList = null;
-		boolean isWork = false; // add or copy or remove
-		for (RecipeList rl : RecipeBookClient.RECIPES_BY_TAB.get(tab)) {
-			if (((IRecipeListMixin) rl).npcs$getGroup().equals(recipe.getNpcGroup())) {
-				isWork = ((IRecipeListMixin) rl).npcs$applyRecipe(recipe, added);
-				recipeList = rl;
-				break;
-			}
-		}
-		if (!isWork) {
-			if (added) {
-				// Create a new recipe list
-				RecipeList newRecipeList = new RecipeList();
-				newRecipeList.add((IRecipe) recipe);
-				RecipeBookClient.RECIPES_BY_TAB.get(tab).add(newRecipeList);
-				RecipeBookClient.ALL_RECIPES.add(newRecipeList);
-				if (book != null) { newRecipeList.updateKnownRecipes(book); }
-			}
-		}
-		else if (!added && recipeList.getRecipes().isEmpty()) {
-			// Removing empty recipe lists
-			RecipeBookClient.RECIPES_BY_TAB.get(tab).remove(recipeList);
-			RecipeBookClient.ALL_RECIPES.remove(recipeList);
-		}
-		if (book != null && (!added || recipe.isKnown())) {
-			// recipe lock / unlock
-			if (!added) { book.lock((IRecipe) recipe); } else { book.unlock((IRecipe) recipe); }
-			RecipeBookClient.ALL_RECIPES.forEach((recipes) -> recipes.updateKnownRecipes(book));
-		}
 	}
 
 	@Override

@@ -11,12 +11,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.*;
+import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.client.renderer.texture.SimpleTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.texture.TextureUtil;
@@ -24,7 +24,7 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.util.ImageBufferDownloadAlt;
+import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.client.network.INetworkPlayerInfoMixin;
 import noppes.npcs.shared.client.util.ResourceDownloader;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -82,6 +82,7 @@ public class SkinUtil {
             return;
         }
         if (skinData.getDefault() != null && location.equals(skinData.getDefault())) { return; }
+        // combine
         skinData.calculateResLoc();
         LogWriter.debug("Create Composite: "+skinData.getLocation()+"; "+skinData);
         if (createdSkins.contains(location)) { return; }
@@ -235,6 +236,18 @@ public class SkinUtil {
             }
         }
         return total;
+    }
+
+    // New from Unofficial (BetaZavr)
+    public static void checkTexture(@Nonnull EntityNPCInterface npc) {
+        if (npc.display.skinType == 0) {
+            ResourceLocation skin = new ResourceLocation(npc.display.getSkinTexture());
+            if (skin.getResourceDomain().equals(CustomNpcs.MODID) &&
+                    (skin.getResourcePath().toLowerCase().contains("textures/entity/custom/female_") ||
+                            skin.getResourcePath().toLowerCase().contains("textures/entity/custom/male_"))) {
+                createPlayerSkin(SkinData.create(MinecraftProfileTexture.Type.SKIN, skin));
+            }
+        }
     }
 
 }

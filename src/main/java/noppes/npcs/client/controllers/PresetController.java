@@ -13,109 +13,87 @@ public class PresetController {
 
 	public static PresetController instance;
 	private final File dir;
-	public HashMap<String, Preset> presets;
+	public HashMap<String, Preset> presets = new HashMap<>();
 
-	public PresetController(File dir) {
-		this.presets = new HashMap<>();
+	public PresetController(File dirIn) {
 		PresetController.instance = this;
-		this.dir = dir;
-		this.load();
+		dir = dirIn;
+		load();
 	}
 
 	public void addPreset(Preset preset) {
 		StringBuilder name = new StringBuilder(preset.name);
-		while (this.presets.containsKey(name.toString().toLowerCase())) {
-			name.append("_");
-		}
+		while (presets.containsKey(name.toString().toLowerCase())) { name.append("_"); }
 		preset.name = name.toString();
-		this.presets.put(preset.name.toLowerCase(), preset);
-		this.save();
+		presets.put(preset.name.toLowerCase(), preset);
+		save();
 	}
 
 	public Preset getPreset(String username) {
-		if (this.presets.isEmpty()) {
-			this.load();
-		}
-		return this.presets.get(username.toLowerCase());
+		if (presets.isEmpty()) { load(); }
+		return presets.get(username.toLowerCase());
 	}
 
 	public void load() {
-		NBTTagCompound compound = this.loadPreset();
-		HashMap<String, Preset> presets = new HashMap<>();
+		NBTTagCompound compound = loadPreset();
+		HashMap<String, Preset> presetsIn = new HashMap<>();
 		if (compound != null) {
 			NBTTagList list = compound.getTagList("Presets", 10);
 			for (int i = 0; i < list.tagCount(); ++i) {
 				NBTTagCompound comp = list.getCompoundTagAt(i);
 				Preset preset = new Preset();
 				preset.load(comp);
-				presets.put(preset.name.toLowerCase(), preset);
+				presetsIn.put(preset.name.toLowerCase(), preset);
 			}
 		}
-		Preset.FillDefault(presets);
-		this.presets = presets;
+		Preset.FillDefault(presetsIn);
+		presets = presetsIn;
 	}
 
 	private NBTTagCompound loadPreset() {
 		String filename = "presets.dat";
 		try {
-			File file = new File(this.dir, filename);
-			if (!file.exists()) {
-				return null;
-			}
-			return CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath()));
-		} catch (Exception e) {
+			File file = new File(dir, filename);
+			if (file.exists()) { return CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())); }
+		}
+		catch (Exception e) {
 			LogWriter.except(e);
 			try {
-				File file = new File(this.dir, filename + "_old");
-				if (!file.exists()) {
-					return null;
-				}
-				return CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath()));
-			} catch (Exception err) {
-				LogWriter.except(err);
-				return null;
+				File file = new File(dir, filename + "_old");
+				if (file.exists()) { return CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())); }
 			}
+			catch (Exception err) { LogWriter.except(err); }
 		}
+		return null;
 	}
 
 	public void removePreset(String preset) {
 		if (preset == null) {
 			return;
 		}
-		this.presets.remove(preset.toLowerCase());
-		this.save();
+		presets.remove(preset.toLowerCase());
+		save();
 	}
 
 	public void save() {
 		NBTTagCompound compound = new NBTTagCompound();
 		NBTTagList list = new NBTTagList();
-		for (Preset preset : this.presets.values()) {
-			list.appendTag(preset.save());
-		}
+		for (Preset preset : presets.values()) { list.appendTag(preset.save()); }
 		compound.setTag("Presets", list);
-		this.savePreset(compound);
+		savePreset(compound);
 	}
 
 	private void savePreset(NBTTagCompound compound) {
 		String filename = "presets.dat";
 		try {
-			File file = new File(this.dir, filename + "_new");
-			File file2 = new File(this.dir, filename + "_old");
-			File file3 = new File(this.dir, filename);
+			File file = new File(dir, filename + "_new");
+			File file1 = new File(dir, filename + "_old");
+			File file2 = new File(dir, filename);
 			CompressedStreamTools.writeCompressed(compound, Files.newOutputStream(file.toPath()));
-			if (file2.exists()) {
-				file2.delete();
-			}
-			file3.renameTo(file2);
-			if (file3.exists()) {
-				file3.delete();
-			}
-			file.renameTo(file3);
-			if (file.exists()) {
-				file.delete();
-			}
-		} catch (Exception e) {
-			LogWriter.except(e);
+			if (file1.exists() && !file1.delete()) { LogWriter.debug("Error delete \"" + file1.getName() + "\" file"); }
+			if (!file2.renameTo(file1) || (file2.exists() && !file2.delete())) { LogWriter.debug("Error delete or rename \"" + file2.getName() + "\" file"); }
+			if (!file.renameTo(file2) || (file.exists() && !file.delete())) { LogWriter.debug("Error delete or rename \"" + file.getName() + "\" file"); }
 		}
+		catch (Exception e) { LogWriter.except(e); }
 	}
 }

@@ -42,7 +42,6 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.pathfinding.*;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -108,6 +107,7 @@ import noppes.npcs.api.wrapper.NPCWrapper;
 import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.api.wrapper.data.DataBlock;
 import noppes.npcs.client.EntityUtil;
+import noppes.npcs.client.SkinUtil;
 import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.model.animation.AnimationFrameConfig;
 import noppes.npcs.client.model.part.ModelData;
@@ -247,10 +247,10 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		setFaction(faction.id);
 		setSize(1.0f, 1.0f);
 		bossInfo.setVisible(false);
-		stepHeight = ais.stepheight;
-		if (!isServerWorld()) { CustomNpcs.proxy.checkTexture(this); }
-		maxHurtResistantTime = ais.getMaxHurtResistantTime();
 		// New from Unofficial (BetaZavr)
+		if (!isServerWorld()) { SkinUtil.checkTexture(this); }
+		maxHurtResistantTime = ais.getMaxHurtResistantTime();
+		stepHeight = ais.stepheight;
 		initTime = System.currentTimeMillis();
 		animation.tryRunAnimation(AnimationKind.INIT);
 		homeDimensionId = world.provider.getDimension();

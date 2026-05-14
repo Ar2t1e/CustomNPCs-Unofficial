@@ -39,9 +39,11 @@ import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nullable;
+
 public class Schematic implements ISchematic {
 
-	public static Schematic create(World world, EnumFacing fase, String name, Map<Integer, BlockPos> schMap) {
+	public static Schematic create(World worldIn, EnumFacing fase, String name, Map<Integer, BlockPos> schMap) {
 		BlockPos p = schMap.get(0); // offset
 		BlockPos m = schMap.get(1); // min
 		BlockPos n = schMap.get(2); // max
@@ -58,6 +60,7 @@ public class Schematic implements ISchematic {
 		int size = height * width * length;
 		schema.blockIdsArray = new short[size];
 		schema.blockMetadataArray = new byte[size];
+		schema.world = worldIn;
 		int rot = 0;
 		switch (fase) {
 		case EAST: {
@@ -101,11 +104,11 @@ public class Schematic implements ISchematic {
 				break;
 			}
 			}
-			IBlockState state = SchematicWrapper.rotationState(world.getBlockState(pos.add(x, y, z)), rot);
+			IBlockState state = SchematicWrapper.rotationState(worldIn.getBlockState(pos.add(x, y, z)), rot);
 			schema.blockIdsArray[i] = (short) Block.REGISTRY.getIDForObject(state.getBlock());
 			schema.blockMetadataArray[i] = (byte) state.getBlock().getMetaFromState(state);
 			if (state.getBlock() instanceof ITileEntityProvider) {
-				TileEntity tile = world.getTileEntity(pos.add(x, y, z));
+				TileEntity tile = worldIn.getTileEntity(pos.add(x, y, z));
 				NBTTagCompound nbtTile = new NBTTagCompound();
 				if (tile != null) {
 					tile.writeToNBT(nbtTile);
@@ -145,7 +148,7 @@ public class Schematic implements ISchematic {
 				bb.maxY + 0.25d, bb.maxZ + 0.25d);
 		List<Entity> list = new ArrayList<>();
 		try {
-			list = world.getEntitiesWithinAABB(Entity.class, bbE);
+			list = worldIn.getEntitiesWithinAABB(Entity.class, bbE);
 		}
 		catch (Exception ignored) { }
 		for (Entity e : list) {
@@ -235,7 +238,7 @@ public class Schematic implements ISchematic {
 		return schema;
 	}
 
-	public static Schematic create(World world, String name, BlockPos pos, short height, short width, short length) {
+	public static Schematic create(World worldIn, String name, BlockPos pos, short height, short width, short length) {
 		CommonUtil.NotifyOPs(new Component("Creating schematic at: " + pos + " might lag slightly").withStyle(TextFormatting.GRAY), false);
 		Schematic schema = new Schematic(name);
 		schema.offset = BlockPos.ORIGIN;
@@ -246,17 +249,18 @@ public class Schematic implements ISchematic {
 		schema.blockIdsArray = new short[size];
 		schema.blockMetadataArray = new byte[size];
 		schema.tileList = new NBTTagList();
+		schema.world = worldIn;
 		for (int i = 0; i < size; ++i) {
 			int x = i % width;
 			int z = (i - x) / width % length;
 			int y = ((i - x) / width - z) / length;
-			IBlockState state = world.getBlockState(pos.add(x, y, z));
+			IBlockState state = worldIn.getBlockState(pos.add(x, y, z));
 			if (state.getBlock() != Blocks.AIR) {
 				if (state.getBlock() != CustomBlocks.copy) {
 					schema.blockIdsArray[i] = (short) Block.REGISTRY.getIDForObject(state.getBlock());
 					schema.blockMetadataArray[i] = (byte) state.getBlock().getMetaFromState(state);
 					if (state.getBlock() instanceof ITileEntityProvider) {
-						TileEntity tile = world.getTileEntity(pos.add(x, y, z));
+						TileEntity tile = worldIn.getTileEntity(pos.add(x, y, z));
 						NBTTagCompound compound = new NBTTagCompound();
                         assert tile != null;
                         tile.writeToNBT(compound);
@@ -282,6 +286,7 @@ public class Schematic implements ISchematic {
 	public String name;
 
 	public BlockPos offset = BlockPos.ORIGIN;
+	private @Nullable World world;
 
 	public Schematic(String name) {
 		this.name = name;
@@ -405,7 +410,7 @@ public class Schematic implements ISchematic {
 	}
 
 	@Override
-	public IPos getOffset() { return new BlockPosWrapper(offset); }
+	public IPos getOffset() { return new BlockPosWrapper(world, offset); }
 
 	@Override
 	public NBTTagCompound getTileEntity(int i) {

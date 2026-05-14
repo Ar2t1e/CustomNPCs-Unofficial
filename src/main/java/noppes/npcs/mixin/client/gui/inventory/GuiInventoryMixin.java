@@ -4,6 +4,7 @@ import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.util.Util;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,7 +30,7 @@ public class GuiInventoryMixin {
             int x = parent.getGuiLeft() + 122;
             int y = parent.getGuiTop() + 61;
             GlStateManager.translate(x, y, 0.0f);
-            parent.mc.getTextureManager().bindTexture(ClientGuiEventHandler.COIN_NPC);
+            parent.mc.getTextureManager().bindTexture(GuiBasic.MONEY);
             float s = 16.0f / 250.f;
             GlStateManager.scale(s, s, s);
             GlStateManager.enableBlend();

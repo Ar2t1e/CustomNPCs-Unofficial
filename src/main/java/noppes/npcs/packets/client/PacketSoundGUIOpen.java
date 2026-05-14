@@ -24,7 +24,7 @@ public class PacketSoundGUIOpen extends PacketBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      try { Minecraft.getMinecraft().displayGuiScreen(new SubGuiSoundSelection("")); }
+      try { Minecraft.getMinecraft().displayGuiScreen(new SubGuiSoundSelection(Minecraft.getMinecraft().currentScreen, 0, null, "")); }
       catch (Exception e) { LogWriter.error(e); }
       CustomNpcs.debugData.end("Packets");
    }

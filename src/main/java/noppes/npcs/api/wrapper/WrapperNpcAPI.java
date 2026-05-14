@@ -245,14 +245,10 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public IPos getIPos(BlockPos posMC) {
-		return new BlockPosWrapper(posMC);
-	}
+	public IPos getIPos(BlockPos posMC) { return new BlockPosWrapper(null, posMC); }
 
 	@Override
-	public IPos getIPos(double x, double y, double z) {
-		return new BlockPosWrapper(x, y, z);
-	}
+	public IPos getIPos(double x, double y, double z) { return new BlockPosWrapper(null, x, y, z); }
 
 	@Override
 	public IWorld getIWorld(String dimension) {

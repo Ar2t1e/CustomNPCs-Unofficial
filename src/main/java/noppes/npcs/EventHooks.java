@@ -283,7 +283,10 @@ public class EventHooks {
 			}
 			return event;
 		}
-		return new NpcEvent.CustomNpcTeleport(npc == null ? null : npc.wrappedNPC, new BlockPosWrapper(portal), new BlockPosWrapper(to), dimId);
+		return new NpcEvent.CustomNpcTeleport(npc == null ? null : npc.wrappedNPC,
+				new BlockPosWrapper(npc == null ? null : npc.world, portal),
+				new BlockPosWrapper(npc == null ? null : npc.world, to),
+				dimId);
 	}
 
 	public static void onNPCTick(EntityNPCInterface npc) {
@@ -414,7 +417,10 @@ public class EventHooks {
 			}
 			return event;
 		}
-		return new PlayerEvent.CustomTeleport(null, new BlockPosWrapper(portal), new BlockPosWrapper(to), dimId);
+		return new PlayerEvent.CustomTeleport(null,
+				new BlockPosWrapper(player == null ? null : player.world, portal),
+				new BlockPosWrapper(player == null ? null : player.world, to),
+				dimId);
 	}
 
 	public static void onPlayerTick(PlayerScriptData handler) {
@@ -545,7 +551,9 @@ public class EventHooks {
 
 	public static void onScriptBlockNeighborChanged(IScriptBlockHandler handler, BlockPos changedPos) {
 		if (handler.isClient()) { return; }
-		EventHooks.onEvent(handler, EnumScriptType.NEIGHBOR_CHANGED,  new BlockEvent.NeighborChangedEvent(handler.getBlock(), new BlockPosWrapper(changedPos)));
+		EventHooks.onEvent(handler, EnumScriptType.NEIGHBOR_CHANGED,
+				new BlockEvent.NeighborChangedEvent(handler.getBlock(),
+						new BlockPosWrapper(handler.getBlock() == null ? null : handler.getBlock().getWorld().getMCWorld(), changedPos)));
 	}
 
 	public static void onScriptBlockRainFill(IScriptBlockHandler handler) {

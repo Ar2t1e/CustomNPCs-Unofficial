@@ -1,6 +1,5 @@
 package noppes.npcs.packets.server;
 
-import io.netty.buffer.Unpooled;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
@@ -55,9 +54,7 @@ public class SPacketQuestOpen extends PacketServerBasic {
       Quest quest = new Quest(null);
       quest.load(data);
       NoppesUtilServer.setEditingQuest(player, quest);
-      FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
-      buffer.writeInt(tackPos);
-      NoppesUtilServer.openContainerGui(player, gui, npc, buffer);
+      NoppesUtilServer.openContainerGui(player, gui, (buf) -> buf.writeInt(tackPos));
       CustomNpcs.debugData.end("Packets");
    }
 

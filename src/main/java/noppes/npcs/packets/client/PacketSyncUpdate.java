@@ -135,13 +135,13 @@ public class PacketSyncUpdate extends PacketBasic {
             break;
          } // change or add IKeySetting
          case 9: {
-            AnimationController.getInstance().clear();
+            if (!data.hasNoTags()) { AnimationController.getInstance().loadAnimation(data); }
             break;
-         } // clear custom animation
+         } // custom animation set
          case 10: {
-            AnimationController.getInstance().loadAnimation(data);
+            if (!data.hasNoTags()) { AnimationController.getInstance().loadEmotion(data); }
             break;
-         } // set custom animation
+         } // custom emotion set
          case 11: {
             DialogController.instance.getGuiSettings().load(data);
             break;

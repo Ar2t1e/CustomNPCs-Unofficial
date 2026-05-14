@@ -1,6 +1,6 @@
 package noppes.npcs.client.controllers;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -11,18 +11,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.mixin.client.audio.IPositionedSoundMixin;
 import noppes.npcs.mixin.client.audio.ISoundHandlerMixin;
 import noppes.npcs.mixin.client.audio.ISoundManagerMixin;
-import noppes.npcs.mixin.client.audio.ISoundSystemMixin;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.ClientTickHandler;
 import noppes.npcs.client.util.MusicData;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.JobBard;
-import paulscode.sound.Library;
-import paulscode.sound.SoundSystem;
-import paulscode.sound.Source;
 
 import javax.annotation.Nullable;
 
@@ -236,42 +230,9 @@ public class MusicController {
 
 	public void setNewPosSong(ResourceLocation resource, float x, float y, float z) {
 		if (resource != null) {
-			SoundManager sm = ((ISoundHandlerMixin) Minecraft.getMinecraft().getSoundHandler()).getSndManager();
-			Map<String, ISound> playingSounds = ((ISoundManagerMixin) sm).getPlayingSounds();
-			if (playingSounds == null) { return; }
-			String uuid = null;
-			for (String id : playingSounds.keySet()) {
-				ISound sound = playingSounds.get(id);
-				if (sound.getSound().getSoundLocation().equals(resource)
-						|| sound.getSoundLocation().equals(resource) && sound instanceof PositionedSound) {
-					((IPositionedSoundMixin) sound).getXPosF(x);
-					((IPositionedSoundMixin) sound).setYPosF(y);
-					((IPositionedSoundMixin) sound).setZPosF(z);
-					uuid = id;
-					break;
-				}
-			}
-			System.out.println("New pos song uuid: \"" + uuid + "\" to [" + (int) x + ", " + (int) y + ", " + (int) z + "]");
-			if (uuid != null) {
-				SoundSystem sndSystem = null;
-				for (Field f : sm.getClass().getDeclaredFields()) {
-					if (f.getType().getName().contains("SoundSystem")) {
-						try {
-							f.setAccessible(true);
-							sndSystem = (SoundSystem) f.get(sm);
-						}
-						catch (IllegalAccessException e) { LogWriter.debug(e.toString()); }
-						break;
-					}
-				}
-				if (sndSystem == null) { return; }
-				Library soundLibrary = ((ISoundSystemMixin) sndSystem).getSoundLibrary();
-				if (soundLibrary == null) { return; }
-				Source source = soundLibrary.getSources().get(uuid);
-				if (source != null && source.position != null) {
-					source.position.x = x;
-					source.position.y = y;
-					source.position.z = z;
+			for (MusicData music : new ArrayList<>(ClientTickHandler.musics)) {
+				if (music.resource.equals(resource) || music.name.equals(resource.toString())) {
+					music.setPos(x, y, z);
 				}
 			}
 		}

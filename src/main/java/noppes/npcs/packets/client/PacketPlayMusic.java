@@ -41,7 +41,7 @@ public class PacketPlayMusic extends PacketBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      if (streaming) { MusicController.Instance.playStreaming(name, player); }
+      if (streaming) { MusicController.Instance.playStreaming(name, player, looping); }
       else { MusicController.Instance.playMusic(name, player, looping); }
       CustomNpcs.debugData.end("Packets");
    }

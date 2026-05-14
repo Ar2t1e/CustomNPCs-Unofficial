@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.SoundCategory;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
+import noppes.npcs.api.IPos;
 import noppes.npcs.api.event.PlayerEvent;
 import noppes.npcs.client.util.MusicData;
 import noppes.npcs.constants.EnumScriptType;
@@ -34,26 +35,12 @@ public class SPacketPlayerSound extends PacketServerBasic {
       resource = md.name;
       category = md.category.getName();
       looping = false;
-      float[] pos = md.getPos();
-      x = pos[0];
-      y = pos[1];
-      z = pos[2];
+      IPos pos = md.getPos();
+      x = pos.getX();
+      y = pos.getY();
+      z = pos.getZ();
       volume = md.sound.getVolume();
       pitch = md.sound.getPitch();
-   }
-
-   public SPacketPlayerSound(boolean isStartIn, String soundIn, String resourceIn, String categoryIn, boolean loopingIn,
-                             double xIn, double yIn, double zIn, float volumeIn, float pitchIn) {
-      isStart = isStartIn;
-      name = soundIn;
-      resource = resourceIn;
-      category = categoryIn;
-      looping = loopingIn;
-      x = xIn;
-      y = yIn;
-      z = zIn;
-      volume = volumeIn;
-      pitch = pitchIn;
    }
 
    @Override

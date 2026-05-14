@@ -1,17 +1,21 @@
 package noppes.npcs.mixin.client.gui.inventory;
 
+import io.netty.buffer.Unpooled;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiButtonImage;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.util.Util;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,11 +26,8 @@ import java.util.List;
 @Mixin(value = GuiContainerCreative.class, priority = 499)
 public class GuiContainerCreativeMixin {
 
-    @Shadow
-    private static int selectedTabIndex;
-
-    @Unique
-    private static final ResourceLocation CREATIVE_TABS = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
+    @Final @Shadow private static ResourceLocation CREATIVE_INVENTORY_TABS;
+    @Shadow private static int selectedTabIndex;
 
     @Inject(method = "initGui", at = @At("TAIL"))
     public void npcs$initGui(CallbackInfo ci) {
@@ -34,13 +35,13 @@ public class GuiContainerCreativeMixin {
             GuiContainerCreative parent = (GuiContainerCreative) (Object) this;
             int x = parent.getGuiLeft() - 30;
             int y = parent.getGuiTop() + 4;
-            parent.buttonList.add(new GuiNpcButton(150, x, y, 32, 28, 0, 128, CREATIVE_TABS));
-            parent.buttonList.add(new GuiNpcButton(151, x, y + 28, 32, 28, 0, 128, CREATIVE_TABS));
+            parent.buttonList.add(new GuiButtonImage(150, x, y, 32, 28, 0, 128, 32, CREATIVE_INVENTORY_TABS));
+            parent.buttonList.add(new GuiButtonImage(151, x, y + 28, 32, 28, 0, 128, 32, CREATIVE_INVENTORY_TABS));
         }
     }
 
     @Inject(method = "drawScreen", at = @At("TAIL"))
-    public void npcs$drawScreenPost(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+    public void npcs$drawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         GuiContainerCreative parent = (GuiContainerCreative) (Object) this;
         if (CustomNpcs.InventoryGuiEnabled) {
             int x = parent.getGuiLeft() - 30;
@@ -50,7 +51,7 @@ public class GuiContainerCreativeMixin {
             GlStateManager.color(2.0f, 2.0f, 2.0f, 1.0f);
 
             GlStateManager.pushMatrix();
-            parent.mc.getTextureManager().bindTexture(CREATIVE_TABS);
+            parent.mc.getTextureManager().bindTexture(CREATIVE_INVENTORY_TABS);
             GlStateManager.translate(x, y + 28, 0.0f);
             GlStateManager.rotate(-90.0f, 0.0f, 0.0f, 1.0f);
             int mx = mouseX - x;
@@ -86,7 +87,7 @@ public class GuiContainerCreativeMixin {
             int x = parent.getGuiLeft() + 129;
             int y = parent.getGuiTop() + 32;
             GlStateManager.translate(x, y, 0.0f);
-            parent.mc.getTextureManager().bindTexture(ClientGuiEventHandler.COIN_NPC);
+            parent.mc.getTextureManager().bindTexture(GuiBasic.MONEY);
             float s = 16.0f / 250.f;
             GlStateManager.scale(s, s, s);
             GlStateManager.enableBlend();
@@ -109,9 +110,16 @@ public class GuiContainerCreativeMixin {
     @Inject(method = "actionPerformed", at = @At("TAIL"))
     protected void npcs$actionPerformed(GuiButton button, CallbackInfo ci) {
         if (CustomNpcs.InventoryGuiEnabled) {
-            GuiContainerCreative parent = (GuiContainerCreative) (Object) this;
-            if (button.id == 150) { CustomNpcs.proxy.openGui(2, 0, 0, EnumGuiType.QuestLog, parent.mc.player); }
-            else if (button.id == 151) { CustomNpcs.proxy.openGui(0, 0, 0, EnumGuiType.QuestLog, parent.mc.player); }
+            if (button.id == 150) {
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                buf.writeInt(2);
+                CustomNpcs.proxy.openGui(null, EnumGuiType.QuestLog, buf);
+            }
+            else if (button.id == 151) {
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                buf.writeInt(0);
+                CustomNpcs.proxy.openGui(null, EnumGuiType.QuestLog, buf);
+            }
         }
     }
 

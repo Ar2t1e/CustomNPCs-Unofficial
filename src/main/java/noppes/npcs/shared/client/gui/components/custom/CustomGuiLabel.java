@@ -64,7 +64,7 @@ public class CustomGuiLabel extends GuiLabel implements IComponentCustomGui {
       int b = (int) ((getY() + height)  / component.getScale());
       isHovered = mouseX >= x && mouseY >= y && mouseX < r && mouseY < b;
       drawBox();
-      GuiButtonNop.renderString(getMessage(), x, y, r, b, textColor, showShadow, centered);
+      GuiButtonNop.renderString(getMessage(), x, y, r, b, textColor, showShadow, centered, customFont);
       GlStateManager.popMatrix();
    }
 

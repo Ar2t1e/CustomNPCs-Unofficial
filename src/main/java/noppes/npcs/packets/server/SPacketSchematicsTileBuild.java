@@ -55,16 +55,19 @@ public class SPacketSchematicsTileBuild extends PacketServerBasic {
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
       TileEntity tile = player.world.getTileEntity(pos);
+      SchematicWrapper wrapper;
       if (tile instanceof TileBuilder && compound.getKeySet().isEmpty()) {
-         SchematicWrapper schem = ((TileBuilder) tile).getSchematic();
-         schem.init(pos.add(1, ((TileBuilder) tile).yOffset, 1), player.world, ((TileBuilder) tile).rotation * 90);
+         wrapper = ((TileBuilder) tile).getSchematic();
+         wrapper.init(pos.add(1, ((TileBuilder) tile).yOffset, 1), player.world, ((TileBuilder) tile).rotation * 90);
          SchematicController.Instance.build(((TileBuilder) tile).getSchematic(), player);
          player.world.setBlockToAir(pos);
       }
       else {
          Schematic schema = new Schematic("");
          schema.load(compound);
-         SchematicController.buildBlocks(player, pos, rotation, schema);
+         wrapper = new SchematicWrapper(schema);
+         wrapper.init(pos.east().south(), player.world, rotation);
+         SchematicController.buildBlocks(player, pos, wrapper);
       }
       CustomNpcs.debugData.start("Packets");
    }
