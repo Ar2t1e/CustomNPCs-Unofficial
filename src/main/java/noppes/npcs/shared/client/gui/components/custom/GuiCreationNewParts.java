@@ -69,7 +69,7 @@ public class GuiCreationNewParts
    private final CustomGuiSlider slider;
    private final CustomGuiEntityDisplay entity;
    private final ModelData data;
-   private final ModelData renderData = new ModelData(null);
+   private final ModelData renderData;
    private final EntityCustomNpc npc;
    private final Minecraft minecraft;
    private final List<GuiCreationNewParts.GuiMpmPart> guiParts = new ArrayList<>();
@@ -80,6 +80,7 @@ public class GuiCreationNewParts
       listener = parentIn;
       setSize(420, 200);
       npc = npcIn;
+      renderData = new ModelData(npc);
       data = npc.modelData;
       minecraft = Minecraft.getInstance();
       String[] menus = MpmPartReader.PARTS.values().stream().map((p) -> p.menu).sorted(new NaturalOrderComparator()).distinct().toArray(String[]::new);

@@ -897,9 +897,8 @@ public class BuilderData {
                         break;
                     }// SOUTH
                 }
-                LogWriter.info("TEST: "+pos+" / "+pos.offset(trPos.getMCBlockPos()));
                 schema.init(pos.offset(trPos.getMCBlockPos()), player.level(), rot * 90);
-                SchematicController.buildBlocks(playerIn, pos, rot, schema);
+                SchematicController.buildBlocks(playerIn, pos, schema);
             }
         }
         else if (type == 4) { saveBlocks(playerIn, pos, size); }

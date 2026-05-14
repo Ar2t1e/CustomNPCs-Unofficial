@@ -1545,6 +1545,7 @@ public class Util implements IMethods {
         return total;
     }
 
+    @SuppressWarnings("unused")
     public void jumpTowards(IEntity<?> iEntity, IPos iPos) { jumpTowards(1.3f, iEntity.getMCEntity(), iPos.getMCVec3()); }
 
     public void jumpTowards(float speed, Entity entity, Vec3 vec) {

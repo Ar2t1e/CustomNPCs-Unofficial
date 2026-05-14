@@ -12,34 +12,28 @@ public class CompanionGuard extends CompanionJobInterface {
 
    public boolean isStanding = false;
 
+   @Override
    public CompoundTag getNBT() {
       CompoundTag compound = new CompoundTag();
-      compound.putBoolean("CompanionGuardStanding", this.isStanding);
+      compound.putBoolean("CompanionGuardStanding", isStanding);
       return compound;
    }
 
-   public void setNBT(CompoundTag compound) {
-      this.isStanding = compound.getBoolean("CompanionGuardStanding");
-   }
+   @Override
+   public void setNBT(CompoundTag compound) { isStanding = compound.getBoolean("CompanionGuardStanding"); }
+
+   @Override
+   public boolean isSelfSufficient() { return isStanding; }
+
+   @Override
+   public EnumCompanionJobs getType() { return EnumCompanionJobs.GUARD; }
 
    public boolean isEntityApplicable(Entity entity) {
       if (!(entity instanceof Player) && !(entity instanceof EntityNPCInterface)) {
-         if (entity instanceof Creeper) {
-            return false;
-         } else {
-            return entity instanceof Monster;
-         }
-      } else {
-         return false;
+         if (entity instanceof Creeper) { return false; }
+         return entity instanceof Monster;
       }
-   }
-
-   public boolean isSelfSufficient() {
-      return this.isStanding;
-   }
-
-   public EnumCompanionJobs getType() {
-      return EnumCompanionJobs.GUARD;
+      return false;
    }
 
 }

@@ -95,7 +95,7 @@ public class ScriptContainer {
       Data.put("api", NpcAPI.Instance());
       Data.put("API", NpcAPI.Instance());
       Data.put("cnpcs", CustomNpcs.instance);
-      Data.put("PosZero", new BlockPosWrapper(BlockPos.ZERO));
+      Data.put("PosZero", BlockPosWrapper.ZERO);
    }
 
    // New from Unofficial (BetaZavr)
@@ -122,6 +122,7 @@ public class ScriptContainer {
       isClient = handlerIn.isClient();
    }
 
+   @SuppressWarnings("unused")
    public ScriptContainer copyTo(IScriptHandler scriptHandler) {
       ScriptContainer scriptContainer = new ScriptContainer(scriptHandler);
       scriptContainer.load(save(new CompoundTag()));
@@ -412,6 +413,7 @@ public class ScriptContainer {
       catch (Throwable ignored) { LogWriter.error("Not put key \"storedData\" to engine"); }
    }
 
+   @SuppressWarnings("unused")
    public void runAsync(String link, String async, String sync, Object arguments) {
       if (!async.isEmpty()) {
          if (!link.isEmpty()) {

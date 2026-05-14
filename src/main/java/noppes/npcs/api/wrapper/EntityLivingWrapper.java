@@ -34,8 +34,8 @@ public class EntityLivingWrapper<T extends Mob> extends EntityLivingBaseWrapper<
       if (!this.isNavigating()) {
          return null;
       }
-      Node point = Objects.requireNonNull(this.entity.getNavigation().getPath()).getEndNode();
-      return point == null ? null : new BlockPosWrapper(new BlockPos(point.x, point.y, point.z));
+      Node point = Objects.requireNonNull(entity.getNavigation().getPath()).getEndNode();
+      return point == null ? null : new BlockPosWrapper(entity.level(), new BlockPos(point.x, point.y, point.z));
    }
 
    public boolean isNavigating() {

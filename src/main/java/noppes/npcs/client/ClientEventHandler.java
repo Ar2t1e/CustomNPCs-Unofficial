@@ -605,47 +605,58 @@ public class ClientEventHandler {
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void cnpcBackgroundRendered(ScreenEvent.Render.Post event) {
-        if (event.getScreen() instanceof InventoryScreen gui && CustomNpcs.ShowMoney) {
-            PlayerData data = CustomNpcs.proxy.getPlayerData(null);
-            long money = data.game.getMoney();
-            long donat = data.game.getDonat();
-            GuiGraphics graphics = event.getGuiGraphics();
-            PoseStack matrixStack = graphics.pose();
-            Font font = gui.getMinecraft().font;
-
-            int x = ((IAbstractContainerScreenMixin) gui).getLeftPos() + 124;
-            int y = ((IAbstractContainerScreenMixin) gui).getTopPos() + 51;
-            // coins
-            matrixStack.pushPose();
-            matrixStack.translate(x, y, 1.0f);
-            float s = 16.0f / 250.f;
-            matrixStack.scale(s, s, s);
-            graphics.blit(GuiBasic.MONEY, 0, 0, 0, 0, 256, 256);
-            matrixStack.translate(0.0f, 256.0f, 0.0f);
-            graphics.blit(GuiBasic.DONAT, 0, 0, 0, 0, 256, 256);
-            matrixStack.popPose();
-            // text
-            matrixStack.pushPose();
-            matrixStack.translate(x + 15.0f, y + 0.5f + (float) font.lineHeight / 2.0f, 1.0f);
-            String text = Util.instance.getTextReducedNumber(money, true, true, false) + CustomNpcs.displayCurrencies;
-            graphics.drawString(font, text, 0, 0, CustomNpcs.LableColor.getRGB(), false);
-            matrixStack.translate(0.0f, 16.0f, 0.0f);
-            text = Util.instance.getTextReducedNumber(donat, true, true, false) + CustomNpcs.displayDonation;
-            graphics.drawString(font, text, 0, 0, CustomNpcs.LableColor.getRGB(), false);
-            matrixStack.popPose();
-            // hover
-            if (event.getMouseX() > x && event.getMouseY() > y && event.getMouseX() < x + 50 && event.getMouseY() < y + 32) {
-                RenderSystem.disableDepthTest();
-                List<Component> hoverText = new ArrayList<>();
-                if (event.getMouseY() < y + 16) {
-                    hoverText.add(Component.translatable("inventory.hover.currency"));
-                    hoverText.add(Component.literal("" + money));
-                } // money
-                else {
-                    hoverText.add(Component.translatable("inventory.hover.donat"));
-                    hoverText.add(Component.literal("" + donat));
-                } // donat
-                GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), event.getMouseX(), event.getMouseY());
+        if (CustomNpcs.ShowMoney) {
+            Font font = null;
+            int x = 0;
+            int y = 0;
+            if (event.getScreen() instanceof InventoryScreen gui) {
+                font = gui.getMinecraft().font;
+                x = ((IAbstractContainerScreenMixin) gui).getLeftPos() + 124;
+                y = ((IAbstractContainerScreenMixin) gui).getTopPos() + 51;
+            }
+            else if (event.getScreen() instanceof CreativeModeInventoryScreen gui && gui.isInventoryOpen()) {
+                font = gui.getMinecraft().font;
+                x = ((IAbstractContainerScreenMixin) gui).getLeftPos() + 124;
+                y = ((IAbstractContainerScreenMixin) gui).getTopPos() + 21;
+            }
+            if (font != null && x !=0 && y != 0) {
+                PlayerData data = CustomNpcs.proxy.getPlayerData(null);
+                long money = data.game.getMoney();
+                long donat = data.game.getDonat();
+                GuiGraphics graphics = event.getGuiGraphics();
+                PoseStack matrixStack = graphics.pose();
+                // coins
+                matrixStack.pushPose();
+                matrixStack.translate(x, y, 1.0f);
+                float s = 16.0f / 250.f;
+                matrixStack.scale(s, s, s);
+                graphics.blit(GuiBasic.MONEY, 0, 0, 0, 0, 256, 256);
+                matrixStack.translate(0.0f, 256.0f, 0.0f);
+                graphics.blit(GuiBasic.DONAT, 0, 0, 0, 0, 256, 256);
+                matrixStack.popPose();
+                // text
+                matrixStack.pushPose();
+                matrixStack.translate(x + 15.0f, y + 0.5f + (float) font.lineHeight / 2.0f, 1.0f);
+                String text = Util.instance.getTextReducedNumber(money, true, true, false) + CustomNpcs.displayCurrencies;
+                graphics.drawString(font, text, 0, 0, CustomNpcs.LableColor.getRGB(), false);
+                matrixStack.translate(0.0f, 16.0f, 0.0f);
+                text = Util.instance.getTextReducedNumber(donat, true, true, false) + CustomNpcs.displayDonation;
+                graphics.drawString(font, text, 0, 0, CustomNpcs.LableColor.getRGB(), false);
+                matrixStack.popPose();
+                // hover
+                if (event.getMouseX() > x && event.getMouseY() > y && event.getMouseX() < x + 50 && event.getMouseY() < y + 32) {
+                    RenderSystem.disableDepthTest();
+                    List<Component> hoverText = new ArrayList<>();
+                    if (event.getMouseY() < y + 16) {
+                        hoverText.add(Component.translatable("inventory.hover.currency"));
+                        hoverText.add(Component.literal("" + money));
+                    } // money
+                    else {
+                        hoverText.add(Component.translatable("inventory.hover.donat"));
+                        hoverText.add(Component.literal("" + donat));
+                    } // donat
+                    GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), event.getMouseX(), event.getMouseY());
+                }
             }
         }
     }
@@ -1646,9 +1657,9 @@ public class ClientEventHandler {
 
     private void processSoundPlay(Event event, String name, SoundInstance sound, Channel channel) {
         if (sound == null || channel.stopped()) { return; }
-        MusicData md = new MusicData(name, sound, channel);
-        ClientTickHandler.musics.add(md);
         Minecraft mc = Minecraft.getInstance();
+        MusicData md = new MusicData(name, sound, channel, mc.level);
+        ClientTickHandler.musics.add(md);
         md.createClientEvent(event, mc.player, 0);
         if (mc.level != null && mc.getConnection() != null) { Packets.sendServer(new SPacketPlayerSound(true, md)); }
     }
@@ -2746,7 +2757,7 @@ public class ClientEventHandler {
                     mmd.name = (String) wc.getDeclaredMethod("getName").invoke(waypoint); // String
                     mmd.type = wc.getDeclaredMethod("getType").invoke(waypoint).toString(); // Normal, Death
                     mmd.icon = (String) wc.getDeclaredMethod("getIcon").invoke(waypoint); // ResourceLocation
-                    mmd.pos = new BlockPosWrapper((BlockPos) wc.getDeclaredMethod("getBlockPos").invoke(waypoint)); // BlockPos
+                    mmd.pos = new BlockPosWrapper(null, (BlockPos) wc.getDeclaredMethod("getBlockPos").invoke(waypoint)); // BlockPos
                     mmd.color = new Color((int) wc.getDeclaredMethod("getR").invoke(waypoint),
                             (int) wc.getDeclaredMethod("getG").invoke(waypoint),
                             (int) wc.getDeclaredMethod("getB").invoke(waypoint)).getRGB();
@@ -2846,7 +2857,7 @@ public class ClientEventHandler {
                                     int x = (int) wc.getDeclaredMethod("getX").invoke(waypoint);
                                     int y = (int) wc.getDeclaredMethod("getY").invoke(waypoint);
                                     int z = (int) wc.getDeclaredMethod("getZ").invoke(waypoint);
-                                    mmd.pos = new BlockPosWrapper(new BlockPos(x, y, z));
+                                    mmd.pos = new BlockPosWrapper(null, new BlockPos(x, y, z));
                                     mmd.color = (int) wc.getDeclaredMethod("getColor").invoke(waypoint);
                                     mmd.isEnable = !((boolean) wc.getDeclaredMethod("isDisabled").invoke(waypoint));
                                     mmd.dimIDs = new ArrayList<>(Collections.singletonList(dimId));

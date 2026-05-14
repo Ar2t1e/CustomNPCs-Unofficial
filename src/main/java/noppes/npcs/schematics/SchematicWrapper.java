@@ -37,6 +37,8 @@ import noppes.npcs.items.ItemPlacer;
 import noppes.npcs.util.BuilderData;
 import noppes.npcs.util.ValueUtil;
 
+import javax.annotation.Nullable;
+
 public class SchematicWrapper {
 
    public static BlockState rotationState(BlockState state, int rotation) {
@@ -127,7 +129,7 @@ public class SchematicWrapper {
    }
 
    protected final TreeMap<Integer, HashMap<ChunkPos, CompoundTag>> tileEntities = new TreeMap<>();
-   protected Level level;
+   protected @Nullable Level level;
    public BlockPos start = BlockPos.ZERO;
 
    public ISchematic schema;

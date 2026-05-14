@@ -68,7 +68,6 @@ public class LogWriter {
         log(Level.FATAL, message.toString());
     }
 
-    @SuppressWarnings("all")
     public static void pathInfo(Object msg, int maxLines) {
         if (msg == null || msg.toString().isEmpty()) { return; }
         StringBuilder message = new StringBuilder(msg + ":");

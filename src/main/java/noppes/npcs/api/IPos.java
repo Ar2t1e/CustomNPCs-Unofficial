@@ -52,8 +52,6 @@ public interface IPos {
 
    IPos offset(@ParamName("direction") int direction, @ParamName("n") double n);
 
-   IPos offset(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
-
    double distanceTo(@ParamName("pos") IPos pos);
 
    // New from Unofficial (BetaZavr)
@@ -62,5 +60,7 @@ public interface IPos {
    Vec3 getMCVec3();
 
    IPos rotate(int rotation);
+
+   IPos offset(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z);
 
 }

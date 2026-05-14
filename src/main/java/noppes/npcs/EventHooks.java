@@ -192,7 +192,9 @@ public class EventHooks {
 
    public static void onScriptBlockNeighborChanged(IScriptBlockHandler handler, BlockPos changedPos) {
       if (handler.isClient()) { return; }
-      EventHooks.onEvent(handler, EnumScriptType.NEIGHBOR_CHANGED,  new BlockEvent.NeighborChangedEvent(handler.getBlock(), new BlockPosWrapper(changedPos)));
+      EventHooks.onEvent(handler, EnumScriptType.NEIGHBOR_CHANGED,
+              new BlockEvent.NeighborChangedEvent(handler.getBlock(),
+                      new BlockPosWrapper(handler.getBlock() == null ? null : handler.getBlock().getWorld().getMCLevel(), changedPos)));
    }
 
    public static void onScriptBlockRedstonePower(IScriptBlockHandler handler, int prevPower, int power) {
@@ -587,7 +589,10 @@ public class EventHooks {
              if (handler.getEnabled()) { EventHooks.onEvent(handler, EnumScriptType.CUSTOM_TELEPORT, event); }
           }
        }
-       return new PlayerEvent.CustomTeleport(null, new BlockPosWrapper(portal), new BlockPosWrapper(to), dimId);
+       return new PlayerEvent.CustomTeleport(null,
+               new BlockPosWrapper(player == null ? null : player.level(), portal),
+               new BlockPosWrapper(player == null ? null : player.level(), to),
+               dimId);
     }
 
    public static NpcEvent.CustomNpcTeleport onNpcTeleport(EntityNPCInterface npc, BlockPos portal, BlockPos to, ResourceKey<Level> dimId) {
@@ -600,7 +605,10 @@ public class EventHooks {
          }
          return event;
       }
-      return new NpcEvent.CustomNpcTeleport(npc == null ? null : npc.wrappedNPC, new BlockPosWrapper(portal), new BlockPosWrapper(to), dimId);
+      return new NpcEvent.CustomNpcTeleport(npc == null ? null : npc.wrappedNPC,
+              new BlockPosWrapper(npc == null ? null : npc.level(), portal),
+              new BlockPosWrapper(npc == null ? null : npc.level(), to),
+              dimId);
    }
 
    public static boolean onPlayerPlace(PlayerScriptData handler, PlayerEvent.PlaceEvent event) {

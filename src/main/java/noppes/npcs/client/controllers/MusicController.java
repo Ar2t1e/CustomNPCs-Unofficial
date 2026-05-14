@@ -33,6 +33,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -294,7 +295,14 @@ public class MusicController {
 
    public void checkBards(LocalPlayer player) { }
 
-   public void setNewPosSong(ResourceLocation mSong, double x, double y, double z) {
-
+   public void setNewPosSong(ResourceLocation resource, double x, double y, double z) {
+      if (resource != null) {
+         for (MusicData music : new ArrayList<>(ClientTickHandler.musics)) {
+            if (music.resource.equals(resource) || music.name.equals(resource.toString())) {
+               music.setPos(x, y, z);
+            }
+         }
+      }
    }
+
 }

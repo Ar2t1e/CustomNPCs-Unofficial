@@ -66,7 +66,7 @@ public class SchematicController {
    }
 
    // New from Unofficial (BetaZavr)
-   public static void buildBlocks(ServerPlayer player, BlockPos pos, int rotation, SchematicWrapper wrapper) { // Schematic
+   public static void buildBlocks(ServerPlayer player, BlockPos pos, SchematicWrapper wrapper) { // Schematic
       if (player != null && pos != null && wrapper != null) {
          long ticks = 3000L + wrapper.size * SchematicController.time + (long) Math.floor((double) wrapper.size / CustomNpcs.MaxBuilderBlocks) * 1000L;
          player.sendSystemMessage(Component.translatable("schematic.info.started", wrapper.schema.getName(),
@@ -109,6 +109,12 @@ public class SchematicController {
       buildingList.add(schema);
    }
 
+   @SuppressWarnings("unused")
+   public SchematicWrapper getSchema(String name) {
+      if (!map.containsKey(name.toLowerCase())) { load(name.toLowerCase()); }
+      return map.get(name.toLowerCase());
+   }
+
    public void info(CommandSourceStack sender) {
       if (buildingList.isEmpty()) {
          sendMessage(sender, Component.translatable("schematic.info.empty"));
@@ -120,7 +126,6 @@ public class SchematicController {
                     Component.translatable(sm.sender == null ? "" : "schematic.info.1").withStyle(ChatFormatting.GRAY)));
          }
       }
-
    }
 
    private void sendMessage(CommandSourceStack sender, Component message) {

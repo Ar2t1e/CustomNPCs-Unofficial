@@ -68,19 +68,13 @@ public class RayTraceRotate implements IRayTraceRotate {
     public double getYaw() { return yaw; }
 
     @Override
-    public double getPitch() {
-        return pitch;
-    }
+    public double getPitch() { return pitch; }
 
     @Override
-    public double getRadiusXZ() {
-        return radiusXZ;
-    }
+    public double getRadiusXZ() { return radiusXZ; }
 
     @Override
-    public double getDistance() {
-        return distance;
-    }
+    public double getDistance() { return distance; }
 
     @Override
     public IPos getStartPos() { return new BlockPosWrapper(null, sx, sy, sz); }

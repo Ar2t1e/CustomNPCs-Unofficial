@@ -9,19 +9,19 @@ import noppes.npcs.constants.EnumGuiType;
 
 public class CompanionTrader extends CompanionJobInterface {
 
-   public CompoundTag getNBT() {
-       return new CompoundTag();
-   }
+   @Override
+   public CompoundTag getNBT() { return new CompoundTag(); }
 
-   public void setNBT(CompoundTag compound) {
-   }
+   @Override
+   public void setNBT(CompoundTag compound) { }
 
-   public void interact(Player player) {
-      NoppesUtilServer.sendOpenGui((ServerPlayer) player, EnumGuiType.CompanionTrader, this.npc);
-   }
+   @Override
+   public EnumCompanionJobs getType() { return EnumCompanionJobs.SHOP; }
 
-   public EnumCompanionJobs getType() {
-      return EnumCompanionJobs.SHOP;
+   public void interact(Player playerIn) {
+      if (playerIn instanceof ServerPlayer player) {
+         NoppesUtilServer.sendOpenGui(player, EnumGuiType.CompanionTrader, npc);
+      }
    }
 
 }

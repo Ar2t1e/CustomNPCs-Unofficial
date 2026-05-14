@@ -16,8 +16,6 @@ public abstract class CompanionJobInterface {
 
    public void onUpdate() {}
 
-   public boolean isSelfSufficient() {
-      return false;
-   }
+   public boolean isSelfSufficient() { return false; }
 
 }

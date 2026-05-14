@@ -40,9 +40,7 @@ public class SPacketTransportGet extends PacketServerBasic {
       TransportCategory category = TransportController.getInstance().getCategory(null, categoryid);
       if (category.id > -1) {
          HashMap<String, Integer> map = new HashMap<>();
-         for (TransportLocation transport : category.locations.values()) {
-            map.put(transport.name, transport.id);
-         }
+         for (TransportLocation transport : category.locations.values()) { map.put(transport.name, transport.id); }
          NoppesUtilServer.sendScrollData(player, map);
       }
    }

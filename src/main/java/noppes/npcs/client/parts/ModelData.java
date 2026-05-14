@@ -15,17 +15,19 @@ import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.util.LogWriter;
 
+import javax.annotation.Nullable;
+
 public class ModelData extends ModelDataShared {
 
    public boolean simpleRender = false;
-   public EntityCustomNpc npc;
+   public @Nullable EntityCustomNpc npc;
 
    // New Unofficial (Goodbird)
    public float elytraRotX;
    public float elytraRotY;
    public float elytraRotZ;
 
-   public ModelData(EntityCustomNpc npcIn) { super(); npc = npcIn; }
+   public ModelData(@Nullable EntityCustomNpc npcIn) { super(); npc = npcIn; }
 
    public LivingEntity getEntity(EntityNPCInterface npc) {
       if (!hasEntity()) { return null; }
@@ -103,7 +105,8 @@ public class ModelData extends ModelDataShared {
       clearEntity();
    }
 
-   public LivingEntity getOwner() { return this.npc; }
+   @Override
+   public LivingEntity getOwner() { return npc; }
 
    public static ModelData get(EntityCustomNpc npc) { return npc.modelData; }
 

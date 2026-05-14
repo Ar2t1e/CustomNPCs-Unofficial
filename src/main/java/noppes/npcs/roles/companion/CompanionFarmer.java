@@ -7,22 +7,20 @@ public class CompanionFarmer extends CompanionJobInterface {
 
    public boolean isStanding = false;
 
+   @Override
    public CompoundTag getNBT() {
       CompoundTag compound = new CompoundTag();
-      compound.putBoolean("CompanionFarmerStanding", this.isStanding);
+      compound.putBoolean("CompanionFarmerStanding", isStanding);
       return compound;
    }
 
-   public void setNBT(CompoundTag compound) {
-      this.isStanding = compound.getBoolean("CompanionFarmerStanding");
-   }
+   @Override
+   public void setNBT(CompoundTag compound) { isStanding = compound.getBoolean("CompanionFarmerStanding"); }
 
-   public EnumCompanionJobs getType() {
-      return EnumCompanionJobs.FARMER;
-   }
+   @Override
+   public EnumCompanionJobs getType() { return EnumCompanionJobs.FARMER; }
 
-   public boolean isSelfSufficient() {
-      return this.isStanding;
-   }
+   @Override
+   public boolean isSelfSufficient() { return isStanding; }
 
 }

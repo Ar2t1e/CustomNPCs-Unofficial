@@ -126,6 +126,7 @@ public class TransportController {
 
    public @Nullable TransportLocation getTransport(int transportId) { return locations.get(transportId); }
 
+   @SuppressWarnings("unused")
    public @Nullable TransportLocation getTransport(String name) {
       for (TransportLocation loc : new ArrayList<>(locations.values())) {
          if (loc.name.equals(name)) { return loc; }
@@ -229,7 +230,7 @@ public class TransportController {
       return false;
    }
 
-   public TransportLocation saveLocation(int categoryId, CompoundTag compound, ServerPlayer ignoredPlayer, EntityNPCInterface npc) {
+   public TransportLocation saveLocation(int categoryId, CompoundTag compound, EntityNPCInterface npc) {
       TransportCategory category = categories.get(categoryId);
       if (category != null && npc.role.getType() == 4) {
          RoleTransporter role = (RoleTransporter)npc.role;

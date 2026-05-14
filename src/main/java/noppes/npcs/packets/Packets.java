@@ -159,7 +159,6 @@ public class Packets {
       register(PacketNpcLookPos.class);
       register(PacketNpcRarityTitleSet.class);
 
-
       // Client -> Server
       register(SPacketBankGet.class);
       register(SPacketBankRemove.class);

@@ -8,41 +8,46 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.Vec3;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.IPos;
-import noppes.npcs.shared.common.util.LogWriter;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class BlockPosWrapper implements IPos {
 
-   public static final BlockPosWrapper ZERO = new BlockPosWrapper(BlockPos.ZERO);
-   protected final BlockPos blockPos;
-   protected @Nullable Level level;
+   public static final BlockPosWrapper ZERO = new BlockPosWrapper(null, BlockPos.ZERO);
+   protected @Nonnull BlockPos blockPos;
    protected final double x;
    protected final double y;
    protected final double z;
 
+   // New from Unofficial (BetaZavr)
+   protected @Nullable Level level;
+
    public BlockPosWrapper(@Nullable Level levelIn, double bx, double by, double bz) {
-      if (levelIn == null) {
-         if (CustomNpcs.Server != null) { levelIn = CustomNpcs.Server.getLevel(Level.OVERWORLD); }
+      level = levelIn;
+      if (level == null) {
+         if (CustomNpcs.Server != null) { level = CustomNpcs.Server.getLevel(Level.OVERWORLD); }
          else {
             Player player = CustomNpcs.proxy.getPlayer();
-            if (player != null) { levelIn = player.level(); }
+            if (player != null) { level = player.level(); }
          }
       }
       x = Math.min(Integer.MAX_VALUE, Math.max(Integer.MIN_VALUE, bx));
-      y = Math.min(levelIn == null ? 320 : levelIn.getMaxBuildHeight(), Math.max(levelIn == null ? -64 : levelIn.getMinBuildHeight(), by));
+      y = Math.min(level == null ? 320 : level.getMaxBuildHeight(), Math.max(level == null ? -64 : level.getMinBuildHeight(), by));
       z = Math.min(Integer.MAX_VALUE, Math.max(Integer.MIN_VALUE, bz));
       blockPos = new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
    }
 
-   @Deprecated
+   public BlockPosWrapper(@Nullable Level level, @Nonnull BlockPos pos) {
+      this(level, pos.getX(), pos.getY(), pos.getZ());
+      blockPos = pos;
+   }
+
    public BlockPosWrapper(double bx, double by, double bz) { this(null, bx, by, bz); }
 
-   public BlockPosWrapper(BlockPos pos) {
+   public BlockPosWrapper(@Nonnull BlockPos pos) {
+      this(null, pos.getX(), pos.getY(), pos.getZ());
       blockPos = pos;
-      x = pos.getX();
-      y = pos.getY();
-      z = pos.getZ();
    }
 
    @Override
@@ -111,6 +116,7 @@ public class BlockPosWrapper implements IPos {
       Direction d = Direction.from3DDataValue(direction);
       return new BlockPosWrapper(level, x + d.getStepX() * n, y + d.getStepY() * n, z + d.getStepZ() * n);
    }
+
    @Override
    public IPos offset(double xIn, double yIn, double zIn) { return new BlockPosWrapper(level, x + xIn, y + yIn, z + zIn); }
 
@@ -138,6 +144,7 @@ public class BlockPosWrapper implements IPos {
       return Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
    }
 
+   // New from Unofficial (BetaZavr)
    @Override
    public Vec3 getMCVec3() { return new Vec3(x, y, z); }
 
@@ -150,6 +157,9 @@ public class BlockPosWrapper implements IPos {
          default -> this;
       };
    }
+
+   @Override
+   public String toString() { return "BlockPosWrapper {pos: [" + x + ", " + y + ", " + z + "]; mcPos: [" + blockPos.getX() + ", " + blockPos.getY() + ", " + blockPos.getZ() + "]}"; }
 
    public IPos rotate(Rotation rotation) {
        return switch (rotation) {
@@ -168,8 +178,5 @@ public class BlockPosWrapper implements IPos {
          default -> this; // SOUTH
       };
    }
-
-   @Override
-   public String toString() { return "BlockPosWrapper{"+x+", "+y+", "+z+"}"; }
 
 }

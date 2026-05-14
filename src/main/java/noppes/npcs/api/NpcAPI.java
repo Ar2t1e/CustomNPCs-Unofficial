@@ -51,8 +51,10 @@ public abstract class NpcAPI {
 
    public static boolean IsAvailable() { return ModList.get().isLoaded(CustomNpcs.MODID); }
 
+   @SuppressWarnings("unused")
    public abstract ICustomNpc<?> createNPC(@ParamName("levelMC") Level levelMC);
 
+   @SuppressWarnings("unused")
    public abstract ICustomNpc<?> spawnNPC(@ParamName("levelMC") Level levelMC, @ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
    public abstract IEntity<?> getIEntity(@ParamName("entityMC") Entity entityMC);
@@ -69,8 +71,10 @@ public abstract class NpcAPI {
 
    public abstract IWorld getIWorld(@ParamName("dimensionName") String dimensionName);
 
+   @SuppressWarnings("unused")
    public abstract IWorld getIWorld(@ParamName("dimensionTypeMC") DimensionType dimensionTypeMC);
 
+   @SuppressWarnings("unused")
    public abstract IWorld[] getIWorlds();
 
    public abstract INbt getINbt(@ParamName("nbtMC") CompoundTag nbtMC);
@@ -89,19 +93,25 @@ public abstract class NpcAPI {
 
    public abstract IDamageSource getIDamageSource(@ParamName("damageMC") DamageSource damageMC);
 
+   @SuppressWarnings("unused")
    public abstract INbt stringToNbt(@ParamName("str") String str);
 
+   @SuppressWarnings("unused")
    public abstract IPlayerMail createMail(@ParamName("sender") String sender, @ParamName("title") String title);
 
+   @SuppressWarnings("unused")
    public abstract ICustomGui createCustomGui(@ParamName("id") int id, @ParamName("width") int width, @ParamName("height") int height,
                                               @ParamName("pauseGame") boolean pauseGame, @ParamName("player") IPlayer<?> player);
 
+   @SuppressWarnings("unused")
    public abstract IOverlay createOverlay(@ParamName("id") int id);
 
    public abstract IEventBus events();
 
+   @SuppressWarnings("unused")
    public abstract File getGlobalDir();
 
+   @SuppressWarnings("unused")
    public abstract File getLevelDir();
 
    public abstract boolean hasPermissionNode(@ParamName("permission") String permission);
@@ -113,40 +123,50 @@ public abstract class NpcAPI {
    // New from Unofficial (BetaZavr)
    public abstract IPlayer<?>[] getAllPlayers();
 
+   @SuppressWarnings("unused")
    public abstract IBorderHandler getBorders();
 
+   @SuppressWarnings("unused")
    public abstract IDimensionHandler getCustomDimension();
 
    public abstract INpcAttribute getIAttribute(@ParamName("attributeMC") AttributeInstance attributeMC);
 
+   @SuppressWarnings("unused")
    public abstract IEntityDamageSource getIDamageSource(@ParamName("name") String name, @ParamName("entity") IEntity<?> entity);
 
    public abstract IKeyBinding getIKeyBinding();
 
+   @SuppressWarnings("unused")
    public abstract IPlayer<?> getIPlayer(@ParamName("nameOrUUID") String nameOrUUID);
 
    public abstract IPos getIPos(@ParamName("posMC") BlockPos posMC);
 
    public abstract IMarcetHandler getMarkets();
 
+   @SuppressWarnings("unused")
    public abstract IMethods getMethods();
 
+   @SuppressWarnings("unused")
    public abstract INbt getRawPlayerData(@ParamName("uuid") String uuid, @ParamName("name") String name);
 
    public abstract ICustomPlayerData getPlayerData(@ParamName("player") IPlayer<?> player);
 
+   @SuppressWarnings("unused")
    public abstract ResourceData getResourceData(@ParamName("texture") ResourceLocation texture, @ParamName("u") int u, @ParamName("v") int v, @ParamName("width") int width, @ParamName("height") int height);
 
    public abstract IData getTempdata();
 
    public abstract IData getStoreddata();
 
+   @SuppressWarnings("unused")
    public abstract IComponent getIComponent(String text);
 
+   @SuppressWarnings("unused")
    public abstract List<?> createList();
 
    public abstract Map<?, ?> createMap();
 
+   @SuppressWarnings("unused")
    public abstract Map<?, ?> createTreeMap();
 
 }

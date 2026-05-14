@@ -405,4 +405,15 @@ public class AnimationController implements IAnimationHandler {
         }
     }
 
+    public void sendEmotionToAll(int id) {
+        if (CustomNpcs.Server != null) {
+            CompoundTag data = emotions.containsKey(id) ? emotions.get(id).save() : null;
+            for (ServerPlayer player : CustomNpcs.Server. getPlayerList().getPlayers()) {
+                if (id < 0) { sendTo(player); }
+                else if (data == null) { Packets.send(player, new PacketSyncRemove(id, 9)); }
+                else { Packets.send(player, new PacketSyncUpdate(0, 9, data)); }
+            }
+        }
+    }
+
 }

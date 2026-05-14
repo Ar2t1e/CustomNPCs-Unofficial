@@ -385,14 +385,7 @@ public class Zone3D implements IBorder, Predicate<LivingEntity> {
             z /= points.size();
         }
         Level level = null;
-        if (CustomNpcs.Server != null) {
-            level = CustomNpcs.Server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
-            if (level == null) { level = CustomNpcs.Server.getLevel(Level.OVERWORLD); }
-        }
-        else {
-            Player player = CustomNpcs.proxy.getPlayer();
-            if (player != null) { level = player.level(); }
-        }
+        if (CustomNpcs.Server != null) { level = CustomNpcs.Server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension)); }
         return new BlockPosWrapper(level, x, (double) y[0] + ((double) y[1] - (double) y[0]) / 2.0d, z);
     }
 

@@ -2,11 +2,13 @@ package noppes.npcs.client.util;
 
 import com.mojang.blaze3d.audio.Channel;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.eventbus.api.Event;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.IPos;
@@ -18,10 +20,14 @@ import noppes.npcs.api.mixin.com.mojang.blaze3d.audio.IChannelMixin;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.mixin.client.resources.sounds.IAbstractSoundInstanceMixin;
+import org.lwjgl.openal.AL10;
+import org.lwjgl.system.MemoryStack;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -35,13 +41,15 @@ public class MusicData {
     public final String name;
     public final ResourceLocation resource;
     public final SoundSource category;
+    private final ClientLevel level;
 
-    public MusicData(String nameIn, SoundInstance soundIn, Channel channelIn) {
+    public MusicData(String nameIn, SoundInstance soundIn, Channel channelIn, ClientLevel levelIn) {
         name = nameIn;
         sound = soundIn;
         resource = sound.getSound().getLocation();
         category = sound.getSource();
         channel = channelIn;
+        level = levelIn;
         if (!durations.containsKey(resource)) {
             try {
                 Optional<Resource> res = Minecraft.getInstance().getResourceManager().getResource(sound.getSound().getPath());
@@ -100,7 +108,7 @@ public class MusicData {
         if (api != null) {
             IEntity<?> iEntity = api.getIEntity(player);
             if (iEntity instanceof IPlayer<?> p) { iPlayer = p; }
-            pos = api.getIPos(sound.getX(), sound.getY(), sound.getZ());
+            pos = getPos();
         }
         EnumScriptType sType;
         ForgeEvent ev;
@@ -123,6 +131,37 @@ public class MusicData {
         }
         if (EventHooks.onEvent(ScriptController.Instance.clientScripts, sType, ev)) {
             channel.stopped();
+        }
+    }
+
+    public IPos getPos() {
+        double x, y, z;
+        if (channel != null) {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                FloatBuffer buffer = stack.mallocFloat(3);
+                AL10.alGetSourcefv(((IChannelMixin) channel).npcs$getSource(), AL10.AL_POSITION, buffer);
+                x = buffer.get(0);
+                y = buffer.get(1);
+                z = buffer.get(2);
+            }
+            catch (Exception e) { x = 0; y = 0; z = 0; }
+        }
+        else {
+            x = sound.getX();
+            y = sound.getY();
+            z = sound.getZ();
+        }
+        return new BlockPosWrapper(level, x, y, z);
+    }
+
+    public void setPos(double x, double y, double z) {
+        if (channel != null) {
+            channel.setSelfPosition(new Vec3(x, y, z));
+        }
+        if (sound instanceof IAbstractSoundInstanceMixin posMixSound) {
+            posMixSound.setX(x);
+            posMixSound.setY(y);
+            posMixSound.setZ(z);
         }
     }
 

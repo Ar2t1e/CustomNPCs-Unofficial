@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.*;
+import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -26,6 +27,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.PlayerSkinController;
 import noppes.npcs.controllers.data.SkinData;
+import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.multiplayer.IPlayerInfoMixin;
 import noppes.npcs.shared.client.util.ImageDownloadAlt;
 import noppes.npcs.shared.client.util.ResourceDownloader;
@@ -234,6 +236,18 @@ public class SkinUtil {
          }
       }
       return total;
+   }
+
+   // New from Unofficial (BetaZavr)
+   public static void checkTexture(@Nonnull EntityNPCInterface npc) {
+      if (npc.display.skinType == 0) {
+         ResourceLocation skin = new ResourceLocation(npc.display.getSkinTexture());
+         if (skin.getNamespace().equals(CustomNpcs.MODID) &&
+                 (skin.getPath().toLowerCase().contains("textures/entity/custom/female_") ||
+                         skin.getPath().toLowerCase().contains("textures/entity/custom/male_"))) {
+            createPlayerSkin(SkinData.create(MinecraftProfileTexture.Type.SKIN, skin));
+         }
+      }
    }
 
 }

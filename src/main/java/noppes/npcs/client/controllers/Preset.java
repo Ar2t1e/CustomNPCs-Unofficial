@@ -12,14 +12,14 @@ public class Preset {
 
    public CompoundTag save() {
       CompoundTag compound = new CompoundTag();
-      compound.putString("PresetName", this.name);
-      compound.put("PresetData", this.data.save());
+      compound.putString("PresetName", name);
+      compound.put("PresetData", data.save());
       return compound;
    }
 
    public void load(CompoundTag compound) {
-      this.name = compound.getString("PresetName");
-      this.data.load(compound.getCompound("PresetData"));
+      name = compound.getString("PresetName");
+      data.load(compound.getCompound("PresetData"));
    }
 
    public static void FillDefault(HashMap<String, Preset> presets) {

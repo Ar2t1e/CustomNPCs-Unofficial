@@ -59,7 +59,7 @@ public class SPacketSchematicsTileBuild extends PacketServerBasic {
          schema.load(compound);
          wrapper = new SchematicWrapper(schema);
          wrapper.init(pos.east().south(), player.level(), rotation);
-         SchematicController.buildBlocks(player, pos, rotation, wrapper);
+         SchematicController.buildBlocks(player, pos, wrapper);
       }
       CustomNpcs.debugData.start("Packets");
    }

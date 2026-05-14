@@ -32,9 +32,11 @@ import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nullable;
+
 public class Schematic implements ISchematic {
 
-   public static Schematic create(Level level, Direction rotate, String name, Map<Integer, BlockPos> schMap) {
+   public static Schematic create(Level levelIn, Direction rotate, String name, Map<Integer, BlockPos> schMap) {
       CommonUtil.NotifyOPs("Generating the \"" + name + "\" schema may be a little late");
       BlockPos p = schMap.get(0); // offset
       BlockPos m = schMap.get(1); // min
@@ -49,6 +51,7 @@ public class Schematic implements ISchematic {
       schema.length = (rotate == Direction.EAST || rotate == Direction.WEST) ? width : length;
       int size = height * width * length;
       schema.blockStates = new BlockState[size];
+      schema.level = levelIn;
       int rot = switch (rotate) {
          case EAST -> 1;
          case NORTH -> 2;
@@ -58,7 +61,7 @@ public class Schematic implements ISchematic {
       int x;
       int y;
       int z;
-IPos iPos = new BlockPosWrapper(level, bb.minX, bb.minY, bb.minZ);
+IPos iPos = new BlockPosWrapper(levelIn, bb.minX, bb.minY, bb.minZ);
 LogWriter.info("TEST: bb: "+bb);
 LogWriter.info("TEST: iPos "+iPos);
       for (int i = 0; i < size; ++i) {
@@ -87,10 +90,10 @@ LogWriter.info("TEST: iPos "+iPos);
          }
 
          BlockPos pos = iPos.offset(x, y, z).getMCBlockPos();
-         LogWriter.info("TEST: xyz["+i+"] = "+x+"; "+y+"; "+z+" - "+level.getBlockState(pos));
-         schema.blockStates[i] = SchematicWrapper.rotationState(level.getBlockState(pos), rot);
+         LogWriter.info("TEST: xyz["+i+"] = "+x+"; "+y+"; "+z+" - "+ levelIn.getBlockState(pos));
+         schema.blockStates[i] = SchematicWrapper.rotationState(levelIn.getBlockState(pos), rot);
          if (schema.blockStates[i].getBlock() instanceof EntityBlock) {
-            BlockEntity tile = level.getBlockEntity(pos);
+            BlockEntity tile = levelIn.getBlockEntity(pos);
             CompoundTag compound = new CompoundTag();
             if (tile != null) { compound = tile.saveWithFullMetadata(); }
             compound.putInt("x", x);
@@ -100,14 +103,14 @@ LogWriter.info("TEST: iPos "+iPos);
          }
       }
       // Added by mod
-      schema.offset = new BlockPosWrapper(level, (int) Math.floor(bb.minX - p.getX()), (int) Math.floor(bb.minY - p.getY()), (int) Math.floor(bb.minZ - p.getZ()))
+      schema.offset = new BlockPosWrapper(levelIn, (int) Math.floor(bb.minX - p.getX()), (int) Math.floor(bb.minY - p.getY()), (int) Math.floor(bb.minZ - p.getZ()))
               .rotate(rotate);
       LogWriter.info("TEST: rotate: "+rotate);
       LogWriter.info("TEST: offset 0: "+p);
       LogWriter.info("TEST: offset 1: "+schema.offset);
       // Get Entitys:
       try {
-         for (Entity e : level.getEntitiesOfClass(Entity.class,
+         for (Entity e : levelIn.getEntitiesOfClass(Entity.class,
                  new AABB(bb.minX - 0.25d, bb.minY - 0.25d, bb.minZ - 0.25d,
                          bb.maxX + 0.25d, bb.maxY + 0.25d, bb.maxZ + 0.25d),
                  (entity) -> !(entity instanceof Projectile || entity instanceof Arrow || entity instanceof Player))) {
@@ -196,7 +199,9 @@ LogWriter.info("TEST: iPos "+iPos);
    public short length;
    public ListTag tileList = new ListTag();
    public BlockState[] blockStates;
+   private @Nullable Level level;
 
+   @SuppressWarnings("unused")
    private static <T extends Comparable<T>> BlockState setValue(BlockState state, Property<T> prop, String val) {
       Optional<T> optional = prop.getValue(val);
       return optional.map(t -> state.setValue(prop, t)).orElse(state);
@@ -214,7 +219,7 @@ LogWriter.info("TEST: iPos "+iPos);
       entityList = compound.getList("Entities", 10);
       tileList = compound.getList("TileEntities", 10);
       offset = BlockPosWrapper.ZERO;
-      if (compound.contains("Offset", 4)) { offset = new BlockPosWrapper(BlockPos.of(compound.getLong("Offset"))); }
+      if (compound.contains("Offset", 4)) { offset = new BlockPosWrapper(level, BlockPos.of(compound.getLong("Offset"))); }
    }
 
    @Override

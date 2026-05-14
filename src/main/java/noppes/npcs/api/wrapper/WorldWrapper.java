@@ -87,7 +87,7 @@ public class WorldWrapper implements IWorld {
    }
 
    public IEntity<?>[] getNearbyEntities(int x, int y, int z, double range, int type) {
-      return getNearbyEntities(new BlockPosWrapper(new BlockPos(x, y, z)), range, type);
+      return getNearbyEntities(new BlockPosWrapper(level, new BlockPos(x, y, z)), range, type);
    }
 
    @SuppressWarnings("unchecked")
@@ -124,7 +124,7 @@ public class WorldWrapper implements IWorld {
    }
 
    public IEntity<?> getClosestEntity(int x, int y, int z, double range, int type) {
-      return getClosestEntity(new BlockPosWrapper(new BlockPos(x, y, z)), range, type);
+      return getClosestEntity(new BlockPosWrapper(level, new BlockPos(x, y, z)), range, type);
    }
 
    @SuppressWarnings("unchecked")

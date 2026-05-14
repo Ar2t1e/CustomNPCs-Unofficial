@@ -123,6 +123,7 @@ import noppes.npcs.api.wrapper.NPCWrapper;
 import noppes.npcs.api.wrapper.data.DataBlock;
 import noppes.npcs.client.EntityUtil;
 import noppes.npcs.client.ISynchedEntityData;
+import noppes.npcs.client.SkinUtil;
 import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.model.animation.AnimationFrameConfig;
 import noppes.npcs.client.parts.ModelData;
@@ -146,7 +147,6 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.*;
 import noppes.npcs.packets.server.SPacketNpcInitData;
 import noppes.npcs.roles.*;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.GameProfileAlt;
 import noppes.npcs.util.Util;
@@ -248,6 +248,7 @@ public abstract class EntityNPCInterface
       bossInfo = new ServerBossEvent(getDisplayName(), BossBarColor.PURPLE, BossBarOverlay.PROGRESS);
       bossInfo.setVisible(false);
       // New from Unofficial (BetaZavr)
+      if (isClientSide()) { SkinUtil.checkTexture(this); }
       initTime = System.currentTimeMillis();
       animation.tryRunAnimation(AnimationKind.INIT);
       homeDimensionId = level.dimension();
@@ -1637,8 +1638,7 @@ public abstract class EntityNPCInterface
       return fac == null ? FactionController.instance.getFaction(FactionController.instance.getFirstFactionId()) : fac;
    }
 
-   public boolean isClientSide() {
-       return level().isClientSide; }
+   public boolean isClientSide() { return level().isClientSide; }
 
    public void setFaction(int id) {
       if (id >= 0 && !isClientSide()) { entityData.set(FactionData, id); }

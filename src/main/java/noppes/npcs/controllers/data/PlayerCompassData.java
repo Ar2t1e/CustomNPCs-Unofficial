@@ -117,7 +117,11 @@ public class PlayerCompassData implements ICompassData, IPlayerData {
     public String getNPCName() { return npc; }
 
     @Override
-    public IPos getPos() { return new BlockPosWrapper(pos); }
+    public IPos getPos() {
+        Level level = null;
+        if (CustomNpcs.Server != null) { level = CustomNpcs.Server.getLevel(dimension); }
+        return new BlockPosWrapper(level, pos);
+    }
 
     @Override
     public int getRange() { return range; }

@@ -208,31 +208,31 @@ public class DataAI implements INPCAi {
       return list.get(pos);
    }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public void clearMovingPath() {
       movingPath.clear();
       movingPos = 0;
    }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public void setMovingPathPos(int m_pos, int[] pos) {
       if (m_pos < 0) { m_pos = 0; }
       movingPath.set(m_pos, pos);
    }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public int[] getMovingPathPos(int m_pos) { return movingPath.get(m_pos); }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public void appendMovingPath(int[] pos) { movingPath.add(pos); }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public int getMovingPos() { return movingPos; }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public void setMovingPos(int pos) { movingPos = pos; }
 
-   @SuppressWarnings("all")
+   @SuppressWarnings("unused")
    public int getMovingPathSize() { return movingPath.size(); }
 
    public void incrementMovingPath() {
@@ -265,7 +265,7 @@ public class DataAI implements INPCAi {
       return npc.distanceToSqr(pos[0] + 0.5D, pos[1], pos[2] + 0.5D);
    }
 
-   public IPos getStartPos() { return new BlockPosWrapper(startPos()); }
+   public IPos getStartPos() { return new BlockPosWrapper(npc == null ? null : npc.level(), startPos()); }
 
    public void setStartPos(BlockPos pos) {
       startPos = pos;

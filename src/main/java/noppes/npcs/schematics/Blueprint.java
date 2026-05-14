@@ -17,7 +17,6 @@ import noppes.npcs.api.NpcAPI;
 public class Blueprint implements ISchematic {
 
    private final List<String> requiredMods;
-   private final BlockPos offset = BlockPos.ZERO;
    private final short sizeX;
    private final short sizeY;
    private final short sizeZ;
@@ -27,6 +26,9 @@ public class Blueprint implements ISchematic {
    private String[] architects;
    private final short[][][] structure;
    private final CompoundTag[] tileEntities;
+
+   // New from Unofficial (BetaZavr)
+   private final BlockPos offset = BlockPos.ZERO;
 
    public Blueprint(short sizeXIn, short sizeYIn, short sizeZIn, short paletteSizeIn, BlockState[] paletteIn,
                     short[][][] structureIn, CompoundTag[] tileEntitiesIn, List<String> requiredModsIn) {

@@ -5,6 +5,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
+import noppes.npcs.api.IPos;
 import noppes.npcs.api.event.PlayerEvent;
 import noppes.npcs.client.util.MusicData;
 import noppes.npcs.constants.EnumScriptType;
@@ -32,9 +33,10 @@ public class SPacketPlayerSound extends PacketServerBasic {
       resource = md.name;
       category = md.category.getName();
       looping = md.sound.isLooping();
-      x = md.sound.getX();
-      y = md.sound.getY();
-      z = md.sound.getZ();
+      IPos pos = md.getPos();
+      x = pos.getX();
+      y = pos.getY();
+      z = pos.getZ();
       volume = md.sound.getVolume();
       pitch = md.sound.getPitch();
    }
