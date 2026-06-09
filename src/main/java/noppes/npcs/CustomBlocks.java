@@ -38,46 +38,28 @@ import noppes.npcs.util.Util;
 import java.io.File;
 import java.util.*;
 
-@GameRegistry.ObjectHolder(CustomNpcs.MODID)
 public class CustomBlocks {
 
-    @GameRegistry.ObjectHolder("npcborder")
-    public static Block border = null;
-    @GameRegistry.ObjectHolder("npcbuilderblock")
-    public static Block builder = null;
-    @GameRegistry.ObjectHolder("npccarpentybench")
-    public static Block carpenty = null;
-    @GameRegistry.ObjectHolder("npccopyblock")
-    public static Block copy = null;
-    @GameRegistry.ObjectHolder("npcmailbox")
-    public static Block mailbox = null;
-    @GameRegistry.ObjectHolder("npcredstoneblock")
-    public static Block redstoneBlock = null;
-    @GameRegistry.ObjectHolder("npcscripted")
-    public static Block scripted = null;
-    @GameRegistry.ObjectHolder("npcscripteddoor")
-    public static Block scripted_door = null;
-    @GameRegistry.ObjectHolder("npcwaypoint")
-    public static Block waypoint = null;
+    public static Block border;
+    public static Block builder;
+    public static Block carpenty;
+    public static Block copy;
+    public static Block mailbox;
+    public static Block redstoneBlock;
+    public static Block scripted;
+    public static Block scripted_door;
+    public static Block waypoint;
     // items
-    @GameRegistry.ObjectHolder("redstone_item")
     public static ItemNpcBlock redstone_item;
-    @GameRegistry.ObjectHolder("waypoint_item")
     public static ItemNpcBlock waypoint_item;
-    @GameRegistry.ObjectHolder("border_item")
     public static ItemNpcBlock border_item;
-    @GameRegistry.ObjectHolder("scripted_item")
     public static ItemNpcBlock scripted_item;
-    @GameRegistry.ObjectHolder("builder_item")
     public static ItemNpcBlock builder_item;
-    @GameRegistry.ObjectHolder("copy_item")
     public static ItemNpcBlock copy_item;
-    @GameRegistry.ObjectHolder("carpentry_item")
-    public static Item carpentry_item = null;
-    @GameRegistry.ObjectHolder("mailbox_item")
-    public static Item mailbox_item = null;
-    @GameRegistry.ObjectHolder("scripted_door_item")
-    public static ItemScriptedDoor scripted_door_item = null;
+    public static Item carpentry_item;
+    public static Item mailbox_item;
+    public static ItemScriptedDoor scripted_door_item;
+
     // custom
     public static final Map<ICustomElement, Item> customblocks = new HashMap<>();
     public static final List<CustomBlockPortal> portals = new ArrayList<>();
@@ -247,16 +229,16 @@ public class CustomBlocks {
         ModelLoader.setCustomStateMapper(scripted_door, new StateMap.Builder().ignore(BlockDoor.POWERED).build());
         ModelLoader.setCustomStateMapper(builder, new StateMap.Builder().ignore(BlockBuilder.ROTATION).build());
         ModelLoader.setCustomStateMapper(carpenty, new StateMap.Builder().ignore(BlockCarpentryBench.ROTATION).build());
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(redstoneBlock), 0, new ModelResourceLocation(Objects.requireNonNull(redstoneBlock.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(redstone_item, 0, new ModelResourceLocation(Objects.requireNonNull(redstoneBlock.getRegistryName()), "inventory"));
         ModelLoader.setCustomModelResourceLocation(mailbox_item, 0, new ModelResourceLocation(Objects.requireNonNull(mailbox.getRegistryName()), "inventory"));
         ModelLoader.setCustomModelResourceLocation(mailbox_item, 1, new ModelResourceLocation(mailbox.getRegistryName(), "inventory"));
         ModelLoader.setCustomModelResourceLocation(mailbox_item, 2, new ModelResourceLocation(mailbox.getRegistryName(), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(waypoint), 0, new ModelResourceLocation(Objects.requireNonNull(waypoint.getRegistryName()), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(border), 0, new ModelResourceLocation(Objects.requireNonNull(border.getRegistryName()), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(scripted), 0, new ModelResourceLocation(Objects.requireNonNull(scripted.getRegistryName()), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(scripted_door), 0, new ModelResourceLocation(Objects.requireNonNull(scripted_door.getRegistryName()), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(builder), 0, new ModelResourceLocation(Objects.requireNonNull(builder.getRegistryName()), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(copy), 0, new ModelResourceLocation(Objects.requireNonNull(copy.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(waypoint_item, 0, new ModelResourceLocation(Objects.requireNonNull(waypoint.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(border_item, 0, new ModelResourceLocation(Objects.requireNonNull(border.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(scripted_item, 0, new ModelResourceLocation(Objects.requireNonNull(scripted.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(scripted_door_item, 0, new ModelResourceLocation(Objects.requireNonNull(scripted_door.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(builder_item, 0, new ModelResourceLocation(Objects.requireNonNull(builder.getRegistryName()), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(copy_item, 0, new ModelResourceLocation(Objects.requireNonNull(copy.getRegistryName()), "inventory"));
         ModelLoader.setCustomModelResourceLocation(carpentry_item, 0, new ModelResourceLocation(Objects.requireNonNull(carpenty.getRegistryName()), "inventory"));
         for (ICustomElement element : customblocks.keySet()) {
             if (element instanceof Block) {

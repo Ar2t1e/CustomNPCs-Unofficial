@@ -245,7 +245,7 @@ public class CommonProxy implements IGuiHandler {
 				recipes.add((RecipeCarpentry) iRecipe);
 			}
 		}
-		for (IRecipe r : recipes) { manager.register(r); }
+		//for (IRecipe r : recipes) { manager.register(r); }
 		if (CustomNpcs.Server != null) {
 			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
 		}

@@ -12,8 +12,8 @@ import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NBTTags;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IPlayer;
+import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
@@ -140,8 +140,8 @@ extends BaseScriptData {
 		PlayerScriptData.console.remove(key);
 	}
 
-	public IPlayer<?> getPlayer() {
-		if (playerAPI == null) { playerAPI = (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player); }
+	public IPlayer<?> getIPlayer() {
+		if (playerAPI == null && player != null) { playerAPI = new PlayerWrapper<>(player); }
 		return playerAPI;
 	}
 

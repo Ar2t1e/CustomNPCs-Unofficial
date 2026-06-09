@@ -2,7 +2,6 @@ package noppes.npcs.client;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -10,25 +9,18 @@ import java.nio.file.Files;
 import java.util.*;
 
 import net.minecraft.block.Block;
-import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.LanguageManager;
-import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.ICustomElement;
-import noppes.npcs.api.INbt;
 import noppes.npcs.blocks.custom.*;
 import noppes.npcs.client.particles.CustomParticleSettings;
 import noppes.npcs.items.custom.*;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketGuiOpen;
-import noppes.npcs.potions.CustomPotion;
 import noppes.npcs.potions.PotionData;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.util.NBTJsonUtil;
 import org.lwjgl.Sys;
 
 import net.minecraft.client.Minecraft;
@@ -38,7 +30,6 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.util.Util;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.entity.EntityNPCInterface;
 
 import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
@@ -211,7 +202,7 @@ public class NoppesUtil {
 
 
 		// directories
-		File texturesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/item");
+		File texturesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/items");
 		File armorDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/models/armor");
 		File trimsItemsDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/trims/items");
 		File textEntityDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/entity");
@@ -269,7 +260,7 @@ public class NoppesUtil {
 								case CHEST: part = "ac"; break;
 								case LEGS: part = "al"; break;
 								default: part = "ab"; break;
-							};
+							}
 							File slotFile = new File(texturesDir, name + "_" + slot + ".png");
 							File slotTrimFile = new File(trimsItemsDir, name + "_" + slot + "_trim.png");
 							if (!slotFile.exists() || !slotTrimFile.exists()) {
@@ -355,7 +346,7 @@ public class NoppesUtil {
 		}
 
 		// textures
-		File textBlocksDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/block");
+		File textBlocksDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/blocks");
 		File textEntityDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/entity");
 		File textChestDir = new File(textEntityDir, "chest");
 		File textItemDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/item");

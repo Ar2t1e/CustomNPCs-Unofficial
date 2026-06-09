@@ -6,16 +6,15 @@ import noppes.npcs.api.mixin.util.text.IStyleMixin;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
 @IgnoreForAPI
 public class Component implements ICustomTextComponent {
 
-    private static final Component EMPTY = new Component("", true);
+    public static Component from(ITextComponent component) { return new Component(component); }
 
-    public static Component empty() { return EMPTY; }
+    public static Component empty() { return new Component("", true); }
 
     public static Component literal(String message) { return new Component(message, true); }
 
@@ -27,19 +26,6 @@ public class Component implements ICustomTextComponent {
         return new Component(ITextComponent.Serializer.jsonToComponent(ITextComponent.Serializer.componentToJson(parent)));
     }
 
-    public static class Serializer {
-
-        public static String toJson(Component component) { return toJson(component.parent); }
-
-        public static String toJson(ITextComponent component) { return ITextComponent.Serializer.componentToJson(component); }
-
-        public static @Nullable Component fromJson(String content) {
-            ITextComponent iText = ITextComponent.Serializer.jsonToComponent(content);
-            return iText != null ? new Component(iText) : null;
-        }
-
-    }
-
     private final ITextComponent parent;
 
     public Component(String message, boolean isSimple) {
@@ -49,7 +35,7 @@ public class Component implements ICustomTextComponent {
 
     public Component(String message, Object... objects) { parent = new TextComponentTranslation(message, objects); }
 
-    public Component (ITextComponent label) { parent = label; }
+    public Component(ITextComponent label) { parent = label; }
 
     @Override
     public @Nonnull ITextComponent setStyle(@Nonnull Style style) { return parent.setStyle(style); }
@@ -120,8 +106,26 @@ public class Component implements ICustomTextComponent {
 
     public ITextComponent getContents() {
         List<ITextComponent> list = parent.getSiblings();
-        if (list.isEmpty()) { return Component.EMPTY.parent; }
+        if (list.isEmpty()) { return new TextComponentString(""); }
         return list.get(0);
+    }
+
+    public ITextComponent getParent() { return parent; }
+
+    public static class Serializer {
+
+        public static String componentToJson(Component component) {
+            return component.getString().isEmpty() ? "" : componentToJson(component.parent);
+        }
+
+        public static String componentToJson(ITextComponent component) { return ITextComponent.Serializer.componentToJson(component); }
+
+        public static @Nonnull Component jsonToComponent(String content) {
+            if (content == null || content.isEmpty()) { return Component.empty(); }
+            ITextComponent iText = ITextComponent.Serializer.jsonToComponent(content);
+            return iText != null ? new Component(iText) : Component.empty();
+        }
+
     }
 
 }

@@ -5,13 +5,10 @@ import java.util.GregorianCalendar;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
-
-import javax.annotation.Nonnull;
 
 public class SubGuiDataSend extends GuiNPCInterface implements ITextfieldListener {
 

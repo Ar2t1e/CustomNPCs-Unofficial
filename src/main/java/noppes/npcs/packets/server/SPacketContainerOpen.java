@@ -1,6 +1,5 @@
 package noppes.npcs.packets.server;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;

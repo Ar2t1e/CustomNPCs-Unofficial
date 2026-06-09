@@ -5,7 +5,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.math.BlockPos;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.shared.common.PacketBasic;
 

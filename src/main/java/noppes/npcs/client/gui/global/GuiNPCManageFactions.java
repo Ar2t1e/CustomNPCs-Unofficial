@@ -208,7 +208,7 @@ public class GuiNpcManageFactions
 				break;
 			} // select frend factions
 			case 8: {
-				setSubGui(new GuiTextAreaScreen(0, Component.Serializer.toJson(faction.description)));
+				setSubGui(new GuiTextAreaScreen(0, Component.Serializer.componentToJson(faction.description)));
 				break;
 			} // description set
 			case 9: {
@@ -363,7 +363,7 @@ public class GuiNpcManageFactions
 			initGui();
 		}
 		if (subgui instanceof GuiTextAreaScreen) {
-			faction.description = Component.Serializer.fromJson(((GuiTextAreaScreen) subgui).text);
+			faction.description = Component.Serializer.jsonToComponent(((GuiTextAreaScreen) subgui).text);
 		}
 		else if (subgui instanceof SubGuiColorSelector) {
 			faction.color = ((SubGuiColorSelector) subgui).color;

@@ -122,7 +122,13 @@ public class LayerCustomArmor<T extends ModelBase> extends LayerArmorBase<ModelB
 	}
 
 	protected void setModelVisible(ModelBiped model) {
-		model.setVisible(false);
+		model.bipedHead.showModel = false;
+		model.bipedHeadwear.showModel = false;
+		model.bipedBody.showModel = false;
+		model.bipedRightArm.showModel = false;
+		model.bipedLeftArm.showModel = false;
+		model.bipedRightLeg.showModel = false;
+		model.bipedLeftLeg.showModel = false;
 	}
 
 }

@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 @Mixin(value = GuiMainMenu.class, priority = 499)
@@ -22,7 +24,7 @@ public class GuiMainMenuMixin {
     @Shadow private ResourceLocation backgroundTexture;
 
     @Unique public int cnpc$variant = new Random().nextInt(CustomNpcs.PanoramaNumbers);
-    @Unique private final String[] cnpc$names = new String[] { "MC", "1", "2", "3", "4" };
+    @Unique private static final List<String> cnpc$names = Arrays.asList("MC", "1", "2", "3", "4");
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void npcs$onConstructor(CallbackInfo ci) {
@@ -37,7 +39,7 @@ public class GuiMainMenuMixin {
     @Inject(method = "initGui", at = @At("TAIL"))
     public void npcs$initGui(CallbackInfo ci) {
         if (CustomNpcs.ReplaceCustomBackground && CustomNpcs.ShowButtonsInGuiMenu) {
-            ((GuiScreen) (Object) this).buttonList.add(new GuiButton(150, 3, 3, 20, 16, cnpc$names[cnpc$variant]));
+            ((GuiScreen) (Object) this).buttonList.add(new GuiButton(150, 3, 3, 20, 16, cnpc$names.get(cnpc$variant)));
         }
         if (!CustomNpcs.ReplaceCustomBackground && cnpc$variant > 0) {
             cnpc$variant = 0;
@@ -49,8 +51,8 @@ public class GuiMainMenuMixin {
     protected void npcs$actionPerformed(GuiButton button, CallbackInfo ci) {
         if (button.id == 150 && CustomNpcs.ReplaceCustomBackground && CustomNpcs.ShowButtonsInGuiMenu) {
             cnpc$variant++;
-            cnpc$variant = cnpc$variant % cnpc$names.length;
-            button.displayString = cnpc$names[cnpc$variant];
+            cnpc$variant = cnpc$variant % cnpc$names.size();
+            button.displayString = cnpc$names.get(cnpc$variant);
             for(int i = 0; i < 6; ++i) {
                 if (cnpc$variant == 0) { TITLE_PANORAMA_PATHS[i] = new ResourceLocation("textures/gui/title/background/panorama_" + i + ".png"); }
                 else { TITLE_PANORAMA_PATHS[i] = new ResourceLocation(CustomNpcs.MODID, "textures/gui/title/background/" + (cnpc$variant - 1) + "/panorama_" + i + ".png"); }

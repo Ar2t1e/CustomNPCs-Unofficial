@@ -76,7 +76,7 @@ public class PlayerFactionData implements IPlayerData {
 			Faction faction = FactionController.instance.getFaction(factionId);
 			if (faction != null) {
 				PlayerScriptData handler = PlayerData.get(player).scriptData;
-				PlayerEvent.FactionUpdateEvent event = new PlayerEvent.FactionUpdateEvent(handler.getPlayer(), faction, points, false);
+				PlayerEvent.FactionUpdateEvent event = new PlayerEvent.FactionUpdateEvent(handler.getIPlayer(), faction, points, false);
 				EventHooks.onPlayerFactionChange(handler, event);
 				if (event.faction != null) {
 					factionId = event.faction.getId();

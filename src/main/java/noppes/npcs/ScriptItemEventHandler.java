@@ -16,7 +16,7 @@ public class ScriptItemEventHandler {
 		CustomNpcs.debugData.start(null);
 		EntityItem entity = (EntityItem) event.getEntity();
 		ItemStack stack = entity.getItem();
-		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripted_item) && EventHooks.onScriptItemSpawn(ItemScripted.GetWrapper(stack), entity)) {
+		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripter_item) && EventHooks.onScriptItemSpawn(ItemScripted.GetWrapper(stack), entity)) {
 			event.setCanceled(true);
 		}
 		CustomNpcs.debugData.end(null);
@@ -28,7 +28,7 @@ public class ScriptItemEventHandler {
 		CustomNpcs.debugData.start(null);
 		EntityItem entity = event.getEntityItem();
 		ItemStack stack = entity.getItem();
-		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripted_item) && EventHooks.onScriptItemTossed(ItemScripted.GetWrapper(stack), event.getPlayer(), entity)) {
+		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripter_item) && EventHooks.onScriptItemTossed(ItemScripted.GetWrapper(stack), event.getPlayer(), entity)) {
 			event.setCanceled(true);
 		}
 		CustomNpcs.debugData.end(null);
@@ -40,7 +40,7 @@ public class ScriptItemEventHandler {
 		CustomNpcs.debugData.start(null);
 		EntityItem entity = event.getItem();
 		ItemStack stack = entity.getItem();
-		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripted_item)) {
+		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripter_item)) {
 			EventHooks.onScriptItemPickedUp(ItemScripted.GetWrapper(stack), event.getEntityPlayer(), entity);
 		}
 		CustomNpcs.debugData.end(null);

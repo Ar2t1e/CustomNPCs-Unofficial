@@ -205,14 +205,12 @@ public class ModelNpcAlt extends ModelPlayer {
         if (Minecraft.getMinecraft().currentScreen == null && editAnimDataSelect.part != -1) { editAnimDataSelect.clear(); }
         Map<EnumParts, Boolean> ba = new HashMap<>();
         Map<EnumParts, Boolean> bAW = new HashMap<>();
-
         editAnimDataSelect.isNPC = entityIn.equals(editAnimDataSelect.displayNpc);
         float r = 1.0f, g = 1.0f, b = 1.0f;
         int animID = -1;
         boolean showWear = true;
         if (entityIn instanceof EntityPlayer) {
-            PlayerData data = PlayerData.get((EntityPlayer) entityIn);
-            if (data != null) { ba.putAll(data.animation.showParts); }
+            ba.putAll(PlayerData.get((EntityPlayer) entityIn).animation.showParts);
             IEntityPlayerMixin playerMixin = (IEntityPlayerMixin) entityIn;
             if (playerMixin.npcs$getAnimation().isAnimated()) {
                 animID = playerMixin.npcs$getAnimation().getAnimation().id;
@@ -333,7 +331,6 @@ public class ModelNpcAlt extends ModelPlayer {
                 modelRenderer.render(scale);
             }
         }
-
         if (ba.get(EnumParts.HEAD) && bAW.get(EnumParts.HEAD) && bipedHead.showModel) {
             ((ModelRendererAlt) bipedHead).checkBacklightColor(r, g, b);
             if (isChild) {

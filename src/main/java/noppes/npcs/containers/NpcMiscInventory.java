@@ -163,7 +163,7 @@ public class NpcMiscInventory extends InventoryBasic {
 	@Override
 	public void setInventorySlotContents(int slotId, @Nonnull ItemStack stack) {
 		if (slotId >= getSizeInventory()) { return; }
-		setInventorySlotContents(slotId, stack);
+		super.setInventorySlotContents(slotId, stack);
 	}
 
 }

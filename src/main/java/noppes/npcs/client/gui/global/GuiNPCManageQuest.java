@@ -37,16 +37,16 @@ public class GuiNpcManageQuest
 		implements ICustomScrollListener {
 
 	public static GuiNPCInterface Instance;
-	protected HashMap<net.minecraft.network.chat.Component, QuestCategory> categoryData = new HashMap<>();
-	protected HashMap<net.minecraft.network.chat.Component, Quest> questData = new HashMap<>();
+	protected HashMap<Component, QuestCategory> categoryData = new HashMap<>();
+	protected HashMap<Component, Quest> questData = new HashMap<>();
 	protected GuiCustomScrollNop scrollCategories;
 	protected GuiCustomScrollNop scrollQuests;
 
 	// New from Unofficial (BetaZavr)
 	private static boolean sortByName = true;
 	private Quest copyQuest = null;
-	private net.minecraft.network.chat.Component selectedCategory = net.minecraft.network.chat.Component.empty();
-	private net.minecraft.network.chat.Component selectedQuest = Component.empty();
+	private Component selectedCategory = Component.empty();
+	private Component selectedQuest = Component.empty();
 
 	public GuiNpcManageQuest(EntityNPCInterface npc) {
 		super(npc);

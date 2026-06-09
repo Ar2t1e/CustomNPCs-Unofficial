@@ -3,7 +3,6 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.shared.common.PacketServerBasic;
 

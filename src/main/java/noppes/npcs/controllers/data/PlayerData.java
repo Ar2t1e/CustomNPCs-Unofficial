@@ -33,8 +33,8 @@ import javax.annotation.Nullable;
 public class PlayerData implements IPlayerDataHandler, ICapabilityProvider, ICustomPlayerData {
 
 	@CapabilityInject(IPlayerDataHandler.class)
-	public static Capability<IPlayerDataHandler> PLAYERDATA_CAPABILITY = null;
-	private static final PlayerData backup = new PlayerData();
+	public static Capability<IPlayerDataHandler> PLAYERDATA_CAPABILITY;
+
 	protected static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "playerdata");
 
 	protected EntityNPCInterface activeCompanion = null;
@@ -175,13 +175,15 @@ public class PlayerData implements IPlayerDataHandler, ICapabilityProvider, ICus
 		world.spawnEntity(npc);
 	}
 
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) { return capability == PlayerData.PLAYERDATA_CAPABILITY; }
+	public boolean hasCapability(@Nullable Capability<?> capability, EnumFacing facing) {
+		return capability != null && capability == PLAYERDATA_CAPABILITY;
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getCapability(@Nonnull Capability<T> capability, EnumFacing facing) {
 		if (hasCapability(capability, facing)) { return (T) this; }
-		return (T) backup;
+		return null;
 	}
 
 	public static void register(AttachCapabilitiesEvent<Entity> event) {
@@ -248,10 +250,13 @@ public class PlayerData implements IPlayerDataHandler, ICapabilityProvider, ICus
 		return new NBTTagCompound();
 	}
 
-	public static PlayerData get(@Nullable EntityPlayer player) {
+	public static @Nonnull PlayerData get(@Nullable EntityPlayer player) {
 		if (player == null || player.world == null || player.world.isRemote) { return CustomNpcs.proxy.getPlayerData(player); }
-		PlayerData data = (PlayerData) player.getCapability(PlayerData.PLAYERDATA_CAPABILITY, null);
-		if (data == null) { data = backup; }
+		PlayerData data = (PlayerData) player.getCapability(PLAYERDATA_CAPABILITY, null);
+		if (data == null) {
+			LogWriter.warn("Hmmm. Why is a new \"PlayerData\" being created?");
+			data = new PlayerData();
+		}
 		if (data.player == null) {
 			data.player = player;
 			data.playerLevel = player.experienceLevel;

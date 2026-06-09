@@ -13,8 +13,7 @@ public interface IPositionedSoundMixin {
     @Accessor
     void setSound(@Nonnull Sound newSound);
 
-    @Accessor
-    float getXPosF(float x);
+    @Accessor float getXPosF();
 
     @Accessor
     void setXPosF(float newXPosF);

@@ -109,7 +109,7 @@ public class SPacketQuestCompletionCheck extends PacketServerBasic {
                }
                createRewardItems.clear();
             }
-            QuestEvent.QuestTurnedInEvent event = new QuestEvent.QuestTurnedInEvent(data.scriptData.getPlayer(), quest, itemRewards);
+            QuestEvent.QuestTurnedInEvent event = new QuestEvent.QuestTurnedInEvent(data.scriptData.getIPlayer(), quest, itemRewards);
             event.expReward = quest.rewardExp;
             event.moneyReward = quest.rewardMoney;
             event.factionOptions = quest.factionOptions;

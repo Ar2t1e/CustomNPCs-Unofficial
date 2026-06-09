@@ -27,7 +27,7 @@ public class LogWriter {
 
 	public static void debug(String msg) {
 		if (!CustomNpcs.VerboseDebug || msg == null || msg.trim().isEmpty()) { return; }
-		log(Level.INFO, msg);
+		log(Level.DEBUG, msg);
 	}
 
 	public static void error(Object msg) {

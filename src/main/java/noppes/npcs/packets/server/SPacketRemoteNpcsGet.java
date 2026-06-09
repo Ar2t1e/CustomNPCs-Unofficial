@@ -22,8 +22,6 @@ import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.packets.client.PacketGuiScrollSelected;
 import noppes.npcs.util.CustomNPCsScheduler;
 
-import javax.annotation.Nonnull;
-
 public class SPacketRemoteNpcsGet extends PacketServerBasic {
 
    protected static int channelId;

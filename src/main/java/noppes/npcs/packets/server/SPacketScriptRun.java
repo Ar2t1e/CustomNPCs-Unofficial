@@ -49,7 +49,7 @@ public class SPacketScriptRun extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         PlayerScriptData handler = PlayerData.get(player).scriptData;
         if (Objects.requireNonNull(type) == EnumScriptType.QUEST_LOG_BUTTON) {
-            EventHooks.onEvent(handler, type, new QuestEvent.QuestExtraButtonEvent(handler.getPlayer(), QuestController.instance.get(data)));
+            EventHooks.onEvent(handler, type, new QuestEvent.QuestExtraButtonEvent(handler.getIPlayer(), QuestController.instance.get(data)));
         } // player compass data
         CustomNpcs.debugData.end("Packets");
     }

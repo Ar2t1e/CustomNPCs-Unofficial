@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.network.chat.Component;
-import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleBank;
 import noppes.npcs.roles.RoleCompanion;

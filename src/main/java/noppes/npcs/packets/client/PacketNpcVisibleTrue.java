@@ -7,11 +7,9 @@ import net.minecraftforge.fml.common.network.internal.EntitySpawnMessageHelper;
 import net.minecraftforge.fml.common.network.internal.FMLMessage;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.client.ClientProxy;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.PacketBasic;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 

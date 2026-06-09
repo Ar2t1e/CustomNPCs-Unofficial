@@ -108,7 +108,7 @@ public class NoppesUtilServer {
 		// New from Unofficial (BetaZavr)
 		CustomNPCsScheduler.runTack(() -> {
 			for (QuestData qData : playerdata.questData.activeQuests.values()) {
-				for (IQuestObjective obj : qData.quest.getObjectives(playerdata.scriptData.getPlayer())) {
+				for (IQuestObjective obj : qData.quest.getObjectives(playerdata.scriptData.getIPlayer())) {
 					if (obj.getType() != EnumQuestTask.DIALOG.ordinal()) { continue; }
 					playerdata.questData.checkQuestCompletion(player, qData);
 				}
@@ -183,7 +183,7 @@ public class NoppesUtilServer {
 		try {
 			final FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
 			extraDataWriter.accept(buffer);
-			Container container = CustomNpcs.proxy.getContainer(gui, player, buffer.copy());
+			Container container = CommonProxy.getContainer(gui, player, buffer.copy());
 			if (container != null) {
 				player.getNextWindowId();
 				player.closeContainer();
@@ -495,184 +495,187 @@ public class NoppesUtilServer {
 		File blockObjModelsDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/models/block/obj");
 		File itemModelsDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/models/item");
 
-		if ((blockStatesDir.exists() || blockStatesDir.mkdirs()) &&
-				(blockModelsDir.exists() || blockModelsDir.mkdirs()) &&
-				(itemModelsDir.exists() || itemModelsDir.mkdirs()) &&
-				(blockObjModelsDir.exists() || blockObjModelsDir.mkdirs())) {
-			boolean isExample = name.contains("example");
-			// Standard orientable base block:
+		// Standard orientable base block:
+		if (blockModelsDir.exists() || blockModelsDir.mkdirs()) {
 			File orientable = new File(blockModelsDir, "orientable.json");
-			if (!orientable.exists() && Util.instance.saveFile(orientable, Util.instance.getDataFile("ort.dat"))) { LogWriter.debug("Create Orientable Block Model for \"orientable\" block"); }
-			// Standard chest base block:
-			File chestFile = new File(blockModelsDir, "chest.json");
-			if (!chestFile.exists() && Util.instance.saveFile(chestFile, Util.instance.getDataFile("jch.dat"))) { LogWriter.debug("Create Chest Block Model for \"custom chest\" block"); }
-
-			File blockstate = new File(blockStatesDir, fileName + ".json"); // state
-			File blockModel = new File(blockModelsDir, fileName + ".json"); // block model
-			File itemFile = new File(itemModelsDir, fileName + ".json"); // item model
-			Map<File, String> stateDatas = new HashMap<>();
-			Map<File, String> modelDatas = new HashMap<>();
-			if (customblock.getCustomNbt().getBoolean("IsOBJModel")) {
-				File objFile = new File(blockObjModelsDir, fileName + ".obj");
-				File mtlFile = new File(blockObjModelsDir, fileName + ".mtl");
-				if (!isExample || !blockstate.exists() || !itemFile.exists() || !blockModel.exists() || !objFile.exists() || !mtlFile.exists()) {
-					stateDatas.put(blockstate, getDataFile("jb.dat", fileName, name));
-					modelDatas.put(blockModel, getDataFile("bmo.dat", fileName, name));
-					modelDatas.put(objFile, getDataFile("bmc_o.dat", fileName, name));
-					modelDatas.put(mtlFile, getDataFile("bmc_m.dat", fileName, name));
-					modelDatas.put(itemFile, getDataFile("bmio.dat", fileName, name));
-				}
+			if (!orientable.exists() && Util.instance.saveFile(orientable, Util.instance.getDataFile("ort.dat"))) {
+				LogWriter.debug("Create Orientable Block Model for \"orientable\" block");
 			}
-			else {
-				switch (customblock.getElementType()) {
-					case 1: {
-						blockstate = new File(blockStatesDir, fileName + ".json");
-						File bucketFile = new File(itemModelsDir, fileName + "_bucket.json"); // Bucket item
-						if (!isExample || !blockstate.exists() || !blockModel.exists() || !bucketFile.exists()) {
-							stateDatas.put(blockstate, getDataFile("jlq.dat", fileName, name));
-							modelDatas.put(blockModel, getDataFile("bml.dat", fileName, name));
-							modelDatas.put(bucketFile, getDataFile("iml.dat", fileName, name));
-						}
-						if (customblock.getCustomNbt().getBoolean("AddCauldron")) {
-							File cauldronStateFile = new File(blockStatesDir, fileName + "_cauldron.json");
-							File fullFile = new File(blockModelsDir, fileName + "_cauldron_full.json");
-							File level1File = new File(blockModelsDir, fileName + "_cauldron_level1.json");
-							File level2File = new File(blockModelsDir, fileName + "_cauldron_level2.json");
-							if (!isExample || !cauldronStateFile.exists() || !fullFile.exists() || !level1File.exists() || !level2File.exists()) {
-								stateDatas.put(cauldronStateFile, getDataFile("jlqc.dat", fileName, name));
-								modelDatas.put(fullFile, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_full"));
-								modelDatas.put(level1File, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_level1"));
-								modelDatas.put(level2File, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_level2"));
+			if ((blockStatesDir.exists() || blockStatesDir.mkdirs()) &&
+					(itemModelsDir.exists() || itemModelsDir.mkdirs()) &&
+					(blockObjModelsDir.exists() || blockObjModelsDir.mkdirs())) {
+				boolean isExample = name.contains("example");
+				// Standard chest base block:
+				File chestFile = new File(blockModelsDir, "chest.json");
+				if (!chestFile.exists() && Util.instance.saveFile(chestFile, Util.instance.getDataFile("jch.dat"))) { LogWriter.debug("Create Chest Block Model for \"custom chest\" block"); }
+
+				File blockstate = new File(blockStatesDir, fileName + ".json"); // state
+				File blockModel = new File(blockModelsDir, fileName + ".json"); // block model
+				File itemFile = new File(itemModelsDir, fileName + ".json"); // item model
+				Map<File, String> stateDatas = new HashMap<>();
+				Map<File, String> modelDatas = new HashMap<>();
+				if (customblock.getCustomNbt().getBoolean("IsOBJModel")) {
+					File objFile = new File(blockObjModelsDir, fileName + ".obj");
+					File mtlFile = new File(blockObjModelsDir, fileName + ".mtl");
+					if (!isExample || !blockstate.exists() || !itemFile.exists() || !blockModel.exists() || !objFile.exists() || !mtlFile.exists()) {
+						stateDatas.put(blockstate, getDataFile("jb.dat", fileName, name));
+						modelDatas.put(blockModel, getDataFile("bmo.dat", fileName, name));
+						modelDatas.put(objFile, getDataFile("bmc_o.dat", fileName, name));
+						modelDatas.put(mtlFile, getDataFile("bmc_m.dat", fileName, name));
+						modelDatas.put(itemFile, getDataFile("bmio.dat", fileName, name));
+					}
+				}
+				else {
+					switch (customblock.getElementType()) {
+						case 1: {
+							blockstate = new File(blockStatesDir, fileName + ".json");
+							File bucketFile = new File(itemModelsDir, fileName + "_bucket.json"); // Bucket item
+							if (!isExample || !blockstate.exists() || !blockModel.exists() || !bucketFile.exists()) {
+								stateDatas.put(blockstate, getDataFile("jlq.dat", fileName, name));
+								modelDatas.put(blockModel, getDataFile("bml.dat", fileName, name));
+								modelDatas.put(bucketFile, getDataFile("iml.dat", fileName, name));
 							}
-						}
-						break;
-					} // Liquid
-					case 2: {
-						if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
-							boolean isChest = ((CustomChest) customblock).isChest;
-							stateDatas.put(blockstate, getDataFile("jb" + (isChest ? "h" : "") + ".dat", fileName, name));
-							modelDatas.put(blockModel, getDataFile("bm" + (isChest ? "h" : "") + ".dat", fileName, name));
-							modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
-						}
-						break;
-					} // Chest
-					case 3: {
-						File innerFile = new File(blockModelsDir, fileName + "_inner.json");
-						File outerFile = new File(blockModelsDir, fileName + "_outer.json");
-						if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !innerFile.exists() || !outerFile.exists()) {
-							stateDatas.put(blockstate, getDataFile("jbs.dat", fileName, name));
-							String data = getDataFile("bms.dat", fileName, name);
-							modelDatas.put(blockModel, data.replace("{type}", ""));
-							modelDatas.put(innerFile, data.replace("{type}", "inner_"));
-							modelDatas.put(outerFile, data.replace("{type}", "outer_"));
-							modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
-						}
-						break;
-					} // Stairs
-					case 4: {
-						File slabFile = new File(blockModelsDir, fileName + "_slab.json");
-						File topFile = new File(blockModelsDir, fileName + "_slab_top.json");
-						if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !slabFile.exists() || !topFile.exists()) {
-							stateDatas.put(blockstate, getDataFile("jss.dat", fileName, name));
-							String data = getDataFile("bmss.dat", fileName, name);
-							modelDatas.put(blockModel, getDataFile("bmfc.dat", fileName, name)); // double
-							modelDatas.put(slabFile, data.replace("{type}", ""));
-							modelDatas.put(topFile, data.replace("{type}", "_top"));
-							modelDatas.put(itemFile, getDataFile("bmi.dat", fileName + "_slab", name));
-						}
-						break;
-					} // Slab
-					case 5: {
-						if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
-							stateDatas.put(blockstate, getDataFile("jbp.dat", fileName, name));
-							modelDatas.put(blockModel, getDataFile("bmp.dat", name, name));
-							modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
-						}
-						break;
-					} // Portal
-					case 6: {
-						File bottomLeftFile = new File(blockModelsDir, fileName + "_bottom_left.json");
-						File bottomLeftOpenFile = new File(blockModelsDir, fileName + "_bottom_left_open.json");
-						File bottomRightFile = new File(blockModelsDir, fileName + "_bottom_right.json");
-						File bottomRightOpenFile = new File(blockModelsDir, fileName + "_bottom_right_open.json");
-						File topLeftFile = new File(blockModelsDir, fileName + "_top_left.json");
-						File topLeftOpenFile = new File(blockModelsDir, fileName + "_top_left_open.json");
-						File topRightFile = new File(blockModelsDir, fileName + "_top_right.json");
-						File topRightOpenFile = new File(blockModelsDir, fileName + "_top_right_open.json");
-						if (!isExample || !blockstate.exists() || !itemFile.exists() ||
-								!bottomLeftFile.exists() || !bottomLeftOpenFile.exists() ||
-								!bottomRightFile.exists() || !bottomRightOpenFile.exists() ||
-								!topLeftFile.exists() || !topLeftOpenFile.exists() ||
-								!topRightFile.exists() || !topRightOpenFile.exists()) {
-							stateDatas.put(blockstate, getDataFile("jbd.dat", fileName, name));
-							String data = getDataFile("bmd.dat", fileName, name);
-							modelDatas.put(bottomLeftFile, data.replace("{type}", "_bottom_left"));
-							modelDatas.put(bottomLeftOpenFile, data.replace("{type}", "_bottom_left_open"));
-							modelDatas.put(bottomRightFile, data.replace("{type}", "_bottom_right"));
-							modelDatas.put(bottomRightOpenFile, data.replace("{type}", "_bottom_right_open"));
-							modelDatas.put(topLeftFile, data.replace("{type}", "_top_left"));
-							modelDatas.put(topLeftOpenFile, data.replace("{type}", "_top_left_open"));
-							modelDatas.put(topRightFile, data.replace("{type}", "_top_right"));
-							modelDatas.put(topRightOpenFile, data.replace("{type}", "_top_right_open"));
-							modelDatas.put(itemFile, getDataFile("bmid.dat", fileName, name));
-						}
-						break;
-					} // Door
-					default: {
-						if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
-							if (customblock instanceof CustomBlock && ((CustomBlock) customblock).hasProperty()) {
-								CustomBlock block = (CustomBlock) customblock;
-								NBTTagCompound data = customblock.getCustomNbt().getMCNBT().getCompoundTag("Property");
-								String state = getDataFile("jpr.dat", fileName, name);
-								StringBuilder variants = new StringBuilder();
-								if (block.BO != null) {
-									variants.append("    \"").append(data.getString("Name")).append("=true\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("_true\" },").append((char) 10);
-									variants.append("    \"").append(data.getString("Name")).append("=false\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("_false\" }");
-									stateDatas.put(blockstate, state.replace("{type}", "Boolean").replace("{variants}", variants.toString()));
+							if (customblock.getCustomNbt().getBoolean("AddCauldron")) {
+								File cauldronStateFile = new File(blockStatesDir, fileName + "_cauldron.json");
+								File fullFile = new File(blockModelsDir, fileName + "_cauldron_full.json");
+								File level1File = new File(blockModelsDir, fileName + "_cauldron_level1.json");
+								File level2File = new File(blockModelsDir, fileName + "_cauldron_level2.json");
+								if (!isExample || !cauldronStateFile.exists() || !fullFile.exists() || !level1File.exists() || !level2File.exists()) {
+									stateDatas.put(cauldronStateFile, getDataFile("jlqc.dat", fileName, name));
+									modelDatas.put(fullFile, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_full"));
+									modelDatas.put(level1File, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_level1"));
+									modelDatas.put(level2File, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_level2"));
+								}
+							}
+							break;
+						} // Liquid
+						case 2: {
+							if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
+								boolean isChest = ((CustomChest) customblock).isChest;
+								stateDatas.put(blockstate, getDataFile("jb" + (isChest ? "h" : "") + ".dat", fileName, name));
+								modelDatas.put(blockModel, getDataFile("bm" + (isChest ? "h" : "") + ".dat", fileName, name));
+								modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
+							}
+							break;
+						} // Chest
+						case 3: {
+							File innerFile = new File(blockModelsDir, fileName + "_inner.json");
+							File outerFile = new File(blockModelsDir, fileName + "_outer.json");
+							if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !innerFile.exists() || !outerFile.exists()) {
+								stateDatas.put(blockstate, getDataFile("jbs.dat", fileName, name));
+								String data = getDataFile("bms.dat", fileName, name);
+								modelDatas.put(blockModel, data.replace("{type}", ""));
+								modelDatas.put(innerFile, data.replace("{type}", "inner_"));
+								modelDatas.put(outerFile, data.replace("{type}", "outer_"));
+								modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
+							}
+							break;
+						} // Stairs
+						case 4: {
+							File slabFile = new File(blockModelsDir, "bottom_" + fileName + ".json");
+							File topFile = new File(blockModelsDir, "upper_" + fileName + ".json");
+							if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !slabFile.exists() || !topFile.exists()) {
+								stateDatas.put(blockstate, getDataFile("jss.dat", fileName, name));
+								String data = getDataFile("bmss.dat", fileName, name);
+								modelDatas.put(blockModel, getDataFile("bmfc.dat", fileName, name)); // double
+								modelDatas.put(slabFile, data.replace("{type}", ""));
+								modelDatas.put(topFile, data.replace("{type}", "_top"));
+								modelDatas.put(itemFile, getDataFile("bmi.dat", fileName + "_slab", name));
+							}
+							break;
+						} // Slab
+						case 5: {
+							if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
+								stateDatas.put(blockstate, getDataFile("jbp.dat", fileName, name));
+								modelDatas.put(blockModel, getDataFile("bmp.dat", name, name));
+								modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
+							}
+							break;
+						} // Portal
+						case 6: {
+							File bottomLeftFile = new File(blockModelsDir, fileName + "_bottom_left.json");
+							File bottomLeftOpenFile = new File(blockModelsDir, fileName + "_bottom_left_open.json");
+							File bottomRightFile = new File(blockModelsDir, fileName + "_bottom_right.json");
+							File bottomRightOpenFile = new File(blockModelsDir, fileName + "_bottom_right_open.json");
+							File topLeftFile = new File(blockModelsDir, fileName + "_top_left.json");
+							File topLeftOpenFile = new File(blockModelsDir, fileName + "_top_left_open.json");
+							File topRightFile = new File(blockModelsDir, fileName + "_top_right.json");
+							File topRightOpenFile = new File(blockModelsDir, fileName + "_top_right_open.json");
+							if (!isExample || !blockstate.exists() || !itemFile.exists() ||
+									!bottomLeftFile.exists() || !bottomLeftOpenFile.exists() ||
+									!bottomRightFile.exists() || !bottomRightOpenFile.exists() ||
+									!topLeftFile.exists() || !topLeftOpenFile.exists() ||
+									!topRightFile.exists() || !topRightOpenFile.exists()) {
+								stateDatas.put(blockstate, getDataFile("jbd.dat", fileName, name));
+								String data = getDataFile("bmd.dat", fileName, name);
+								modelDatas.put(bottomLeftFile, data.replace("{type}", "_bottom_left"));
+								modelDatas.put(bottomLeftOpenFile, data.replace("{type}", "_bottom_left_open"));
+								modelDatas.put(bottomRightFile, data.replace("{type}", "_bottom_right"));
+								modelDatas.put(bottomRightOpenFile, data.replace("{type}", "_bottom_right_open"));
+								modelDatas.put(topLeftFile, data.replace("{type}", "_top_left"));
+								modelDatas.put(topLeftOpenFile, data.replace("{type}", "_top_left_open"));
+								modelDatas.put(topRightFile, data.replace("{type}", "_top_right"));
+								modelDatas.put(topRightOpenFile, data.replace("{type}", "_top_right_open"));
+								modelDatas.put(itemFile, getDataFile("bmid.dat", fileName, name));
+							}
+							break;
+						} // Door
+						default: {
+							if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
+								if (customblock instanceof CustomBlock && ((CustomBlock) customblock).hasProperty()) {
+									CustomBlock block = (CustomBlock) customblock;
+									NBTTagCompound data = customblock.getCustomNbt().getMCNBT().getCompoundTag("Property");
+									String state = getDataFile("jpr.dat", fileName, name);
+									StringBuilder variants = new StringBuilder();
+									if (block.BO != null) {
+										variants.append("    \"").append(data.getString("Name")).append("=true\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("_true\" },").append((char) 10);
+										variants.append("    \"").append(data.getString("Name")).append("=false\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("_false\" }");
+										stateDatas.put(blockstate, state.replace("{type}", "Boolean").replace("{variants}", variants.toString()));
+										modelDatas.put(blockModel, getDataFile("bm.dat", fileName, name));
+									} // boolean
+									else if (block.INT != null) {
+										for (int i = data.getInteger("Min"); i <= data.getInteger("Max"); i++) {
+											variants.append("    \"").append(data.getString("Name")).append("=").append(i).append("\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("_").append(i).append("\" }");
+											if (i < data.getInteger("Max") - 1) { variants.append(",").append((char) 10); }
+										}
+										stateDatas.put(blockstate, state.replace("{type}", "Integer").replace("{variants}", variants.toString()));
+										modelDatas.put(blockModel, getDataFile("bm.dat", fileName, name));
+									} // int
+									else if (block.FACING != null) {
+										int i = 0;
+										for (EnumFacing ef : EnumFacing.values()) {
+											if (ef == EnumFacing.DOWN || ef == EnumFacing.UP) { continue; }
+											variants.append("    \"").append(data.getString("Name")).append("=").append(ef.getName()).append("\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("\"");
+											if (ef == EnumFacing.SOUTH) { variants.append(", \"y\": 180"); }
+											else if (ef == EnumFacing.WEST) { variants.append(", \"y\": 270"); }
+											else if (ef == EnumFacing.EAST) { variants.append(", \"y\": 90"); }
+											variants.append(" }");
+											if (i < 3) { variants.append(",").append((char) 10); }
+											i++;
+										}
+										stateDatas.put(blockstate, state.replace("{type}", "Fasing").replace("{variants}", variants.toString()));
+										modelDatas.put(blockModel, getDataFile("bmf.dat", fileName, name));
+									} // facing
+								}
+								else {
+									stateDatas.put(blockstate, getDataFile("jb.dat", fileName, name));
 									modelDatas.put(blockModel, getDataFile("bm.dat", fileName, name));
-								} // boolean
-								else if (block.INT != null) {
-									for (int i = data.getInteger("Min"); i <= data.getInteger("Max"); i++) {
-										variants.append("    \"").append(data.getString("Name")).append("=").append(i).append("\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("_").append(i).append("\" }");
-										if (i < data.getInteger("Max") - 1) { variants.append(",").append((char) 10); }
-									}
-									stateDatas.put(blockstate, state.replace("{type}", "Integer").replace("{variants}", variants.toString()));
-									modelDatas.put(blockModel, getDataFile("bm.dat", fileName, name));
-								} // int
-								else if (block.FACING != null) {
-									int i = 0;
-									for (EnumFacing ef : EnumFacing.values()) {
-										if (ef == EnumFacing.DOWN || ef == EnumFacing.UP) { continue; }
-										variants.append("    \"").append(data.getString("Name")).append("=").append(ef.getName()).append("\": { \"model\": \"").append(CustomNpcs.MODID).append(":block/").append(fileName).append("\"");
-										if (ef == EnumFacing.SOUTH) { variants.append(", \"y\": 180"); }
-										else if (ef == EnumFacing.WEST) { variants.append(", \"y\": 270"); }
-										else if (ef == EnumFacing.EAST) { variants.append(", \"y\": 90"); }
-										variants.append(" }");
-										if (i < 3) { variants.append(",").append((char) 10); }
-										i++;
-									}
-									stateDatas.put(blockstate, state.replace("{type}", "Fasing").replace("{variants}", variants.toString()));
-									modelDatas.put(blockModel, getDataFile("bmf.dat", fileName, name));
-								} // facing
+								}
+								modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
 							}
-							else {
-								stateDatas.put(blockstate, getDataFile("jb.dat", fileName, name));
-								modelDatas.put(blockModel, getDataFile("bm.dat", fileName, name));
-							}
-							modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
 						}
 					}
 				}
-			}
-			// Write
-			for (Map.Entry<File, String> entry : stateDatas.entrySet()) {
-				if (Util.instance.saveFile(entry.getKey(), entry.getValue())) {
-					LogWriter.debug("Create Default Blockstate for \"" + entry.getKey().getName() + "\" block");
+				// Write
+				for (Map.Entry<File, String> entry : stateDatas.entrySet()) {
+					if (Util.instance.saveFile(entry.getKey(), entry.getValue())) {
+						LogWriter.debug("Create Default Blockstate for \"" + entry.getKey().getName() + "\" block");
+					}
 				}
-			}
-			for (Map.Entry<File, String> entry : modelDatas.entrySet()) {
-				if (Util.instance.saveFile(entry.getKey(), entry.getValue())) {
-					LogWriter.debug("Create Default Block Model for \"" + entry.getKey().getName() + "\" variant");
+				for (Map.Entry<File, String> entry : modelDatas.entrySet()) {
+					if (Util.instance.saveFile(entry.getKey(), entry.getValue())) {
+						LogWriter.debug("Create Default Block Model for \"" + entry.getKey().getName() + "\" variant");
+					}
 				}
 			}
 		}

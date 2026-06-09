@@ -82,7 +82,7 @@ public class SPacketPlayerSound extends PacketServerBasic {
       CustomNpcs.debugData.start("Packets");
       PlayerScriptData handler = PlayerData.get(player).scriptData;
       EventHooks.onEvent(handler, isStart ? EnumScriptType.PLAY_SOUND : EnumScriptType.STOP_SOUND,
-              new PlayerEvent.PlayerSound(handler.getPlayer(), name, resource, category, looping, x, y, z, volume, pitch));
+              new PlayerEvent.PlayerSound(handler.getIPlayer(), name, resource, category, looping, x, y, z, volume, pitch));
       CustomNpcs.debugData.end("Packets");
    }
 

@@ -12,15 +12,9 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(value = ModelBox.class, priority = 499)
 public class ModelBoxMixin implements IModelBoxMixin {
 
-    @Final
-    @Shadow
-    private PositionTextureVertex[] vertexPositions;
+    @Mutable @Final @Shadow private PositionTextureVertex[] vertexPositions;
 
-    @Mutable
-    @Final
-    @Shadow
-    protected TexturedQuad[] quadList;
-
+    @Mutable @Final @Shadow protected TexturedQuad[] quadList;
 
     @Override
     public PositionTextureVertex[] npcs$getVertexPositions() { return vertexPositions; }

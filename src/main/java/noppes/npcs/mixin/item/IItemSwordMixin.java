@@ -9,14 +9,10 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = ItemSword.class, priority = 502)
 public interface IItemSwordMixin {
 
-    @Accessor
-    float getAttackDamage();
+    @Accessor("attackDamage") float getEntityDamage();
 
-    @Mutable
-    @Accessor
-    void setAttackDamage(float newAttackDamage);
+    @Mutable @Accessor("attackDamage") void setEntityDamage(float newAttackDamage);
 
-    @Accessor
-    Item.ToolMaterial getMaterial();
+    @Accessor Item.ToolMaterial getMaterial();
 
 }

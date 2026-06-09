@@ -23,7 +23,6 @@ import javax.annotation.Nonnull;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class GuiCustomWindowNop extends GuiBasic
         implements IComponentGui, ICustomScrollListener, ISliderListener, ITextfieldListener, ITextChangeListener {

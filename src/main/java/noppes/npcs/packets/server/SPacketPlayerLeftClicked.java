@@ -36,11 +36,11 @@ public class SPacketPlayerLeftClicked extends PacketServerBasic {
       if (CustomNpcs.EnableScripting && !ScriptController.Instance.languages.isEmpty()) {
          ItemStack item = player.getHeldItemMainhand();
          PlayerScriptData handler = PlayerData.get(player).scriptData;
-         PlayerEvent.AttackEvent ev = new PlayerEvent.AttackEvent(handler.getPlayer(), 0, null);
+         PlayerEvent.AttackEvent ev = new PlayerEvent.AttackEvent(handler.getIPlayer(), 0, null);
          EventHooks.onPlayerAttack(handler, ev);
-         if (item.getItem() == CustomItems.scripted_item) {
+         if (item.getItem() == CustomItems.scripter_item) {
             ItemScriptedWrapper isw = ItemScripted.GetWrapper(item);
-            ItemEvent.AttackEvent eve = new ItemEvent.AttackEvent(isw, handler.getPlayer(), 0, null);
+            ItemEvent.AttackEvent eve = new ItemEvent.AttackEvent(isw, handler.getIPlayer(), 0, null);
             EventHooks.onScriptItemAttack(isw, eve);
          }
       }

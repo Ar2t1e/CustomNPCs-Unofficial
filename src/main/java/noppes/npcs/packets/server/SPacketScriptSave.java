@@ -32,7 +32,7 @@ public class SPacketScriptSave extends PacketServerBasic {
    @Override
    public boolean toolAllowed(ItemStack item) {
       return item.getItem() == CustomItems.scripter || item.getItem() == CustomBlocks.scripted_door_item ||
-              item.getItem() == CustomItems.wand || item.getItem() == CustomItems.scripted_item || item.getItem() == CustomBlocks.scripted_item;
+              item.getItem() == CustomItems.wand || item.getItem() == CustomItems.scripter_item || item.getItem() == CustomBlocks.scripted_item;
    }
 
    @Override

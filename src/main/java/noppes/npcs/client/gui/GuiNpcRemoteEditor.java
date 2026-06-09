@@ -209,7 +209,7 @@ public class GuiNpcRemoteEditor
 		for (int i = 0; i < nbtList.tagCount(); ++i) {
 			NBTTagCompound nbt = nbtList.getCompoundTagAt(i);
 			int id = nbt.getInteger("Id");
-			Component name = Component.Serializer.fromJson(nbt.getString("Name"));
+			Component name = Component.Serializer.jsonToComponent(nbt.getString("Name"));
 			TextFormatting type;
 			switch (nbt.getInteger("Type")) {
 				case 1: type = TextFormatting.GREEN; break;

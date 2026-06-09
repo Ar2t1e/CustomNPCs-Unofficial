@@ -45,7 +45,7 @@ public class ForgeEvent extends CustomNPCsEvent {
 		IBlock iBlock = null;
 		IEntity<?> iEntity = null;
 		IPlayer<?> iPlayer = null;
-		if (API != null) {
+		if (eventIn != null && API != null) {
 			if (eventIn instanceof net.minecraftforge.event.entity.EntityEvent) {
 				net.minecraftforge.event.entity.EntityEvent event = (net.minecraftforge.event.entity.EntityEvent) eventIn;
 				iEntity = event.getEntity() != null ? API.getIEntity(event.getEntity()) : null;

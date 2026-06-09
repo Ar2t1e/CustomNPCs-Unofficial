@@ -3,15 +3,12 @@ package noppes.npcs.client.gui;
 import java.util.*;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.Resistances;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketGetResistances;
-import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiSliderNop;
@@ -21,8 +18,6 @@ import noppes.npcs.shared.client.gui.listeners.IScrollData;
 import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.util.Util;
-
-import javax.annotation.Nonnull;
 
 public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 		implements ICustomScrollListener, ISliderListener, IScrollData, ITextfieldListener {

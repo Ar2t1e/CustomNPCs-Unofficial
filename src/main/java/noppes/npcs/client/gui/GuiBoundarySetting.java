@@ -43,7 +43,7 @@ import javax.annotation.Nonnull;
 public class GuiBoundarySetting extends GuiNPCInterface
 		implements ICustomScrollListener, ITextfieldListener, GuiSelectionListener {
 
-	protected final TreeMap<Integer, net.minecraft.network.chat.Component> dataRegions = new TreeMap<>();
+	protected final TreeMap<Integer, Component> dataRegions = new TreeMap<>();
 	protected final TreeMap<Integer, Component> dataPoints = new TreeMap<>();
 	protected GuiCustomScrollNop regions;
 	protected GuiCustomScrollNop points;

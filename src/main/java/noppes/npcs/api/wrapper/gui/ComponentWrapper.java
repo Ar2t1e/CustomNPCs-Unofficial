@@ -66,6 +66,6 @@ public class ComponentWrapper implements IComponent {
     public String getFormattedText() { return component.getFormattedText(); }
 
     @Override
-    public String toJson() { return Component.Serializer.toJson(component); }
+    public String toJson() { return Component.Serializer.componentToJson(component); }
 
 }

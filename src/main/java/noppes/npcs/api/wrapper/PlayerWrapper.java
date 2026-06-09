@@ -59,9 +59,6 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 
 	private Object pixelmonPCStorage;
 
-	// New from Unofficial (BetaZavr)
-	public static WrapperEntityData clientWrapperPlayerData;
-
 	public PlayerWrapper(T player) { super(player); }
 
 	@Override

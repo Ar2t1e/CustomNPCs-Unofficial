@@ -37,7 +37,6 @@ import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
-import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.client.gui.player.GuiMailmanWrite;
 import noppes.npcs.client.gui.player.GuiOpenCase;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
@@ -754,7 +753,8 @@ public class ClientEventHandler extends Gui {
 					GlStateManager.pushMatrix();
 					if (yP >= -0.25d && yP <= 0.25d) {
 						GlStateManager.translate(0.0d, yP, 0.0d);
-					} else {
+					}
+					else {
 						if (yP > 0.25d) {
 							GlStateManager.translate(0.0d, 0.275d, 0.0d);
 						} else if (yP < -0.25d) {
@@ -776,11 +776,13 @@ public class ClientEventHandler extends Gui {
 						if (COMPASS_ARROW_21 == null) { COMPASS_ARROW_21 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
 								Collections.singletonList("arrow_21"), GuiBasic.TEXTURES_COMPASS,  false, 0, false); }
 						ModelBuffer.render(COMPASS_ARROW_21);
-					} else if (yP < -0.25d) {
+					}
+					else if (yP < -0.25d) {
 						if (COMPASS_ARROW_22 == null) { COMPASS_ARROW_22 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
 								Collections.singletonList("arrow_22"), GuiBasic.TEXTURES_COMPASS,  false, 0, false); }
 						ModelBuffer.render(COMPASS_ARROW_22);
-					} else {
+					}
+					else {
 						if (COMPASS_ARROW_20 == null) { COMPASS_ARROW_20 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
 								Collections.singletonList("arrow_20"), GuiBasic.TEXTURES_COMPASS,  false, 0, false); }
 						ModelBuffer.render(COMPASS_ARROW_20);
@@ -995,10 +997,9 @@ public class ClientEventHandler extends Gui {
 			data.player = mc.player;
 			data.name = mc.player.getName();
 			data.uuid = mc.player.getUniqueID().toString();
-			PlayerWrapper.clientWrapperPlayerData = null;
 			miniMapLoaded = false;
 			updateMiniMaps(true);
-			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.LOGIN, new PlayerEvent.LoginEvent(data.scriptData.getPlayer()));
+			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.LOGIN, new PlayerEvent.LoginEvent(data.scriptData.getIPlayer()));
 			LogWriter.debug("Client Player: Start game");
 		}
 		// Schematics builder blocks
@@ -1181,10 +1182,12 @@ public class ClientEventHandler extends Gui {
 	private void processSoundPlay(Event event, ISound sound, String uuid) {
 		if (sound == null) { return; }
 		mc = Minecraft.getMinecraft();
-		MusicData md = new MusicData(sound, uuid, ((ISoundHandlerMixin) mc.getSoundHandler()).getSndManager());
-		ClientTickHandler.musics.add(md);
-		md.createClientEvent(event, mc.player, 0);
-		if (mc.world != null && mc.getConnection() != null) { Packets.sendServer(new SPacketPlayerSound(true, md)); }
+		if (mc.world != null && mc.getConnection() != null) {
+			MusicData md = new MusicData(sound, uuid, ((ISoundHandlerMixin) mc.getSoundHandler()).getSndManager());
+			ClientTickHandler.musics.add(md);
+			md.createClientEvent(event, mc.player, 0);
+			Packets.sendServer(new SPacketPlayerSound(true, md));
+		}
 	}
 
 	private BlockPos getPos(RayTraceResult result) {

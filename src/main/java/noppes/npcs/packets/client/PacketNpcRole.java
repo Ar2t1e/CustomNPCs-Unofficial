@@ -7,7 +7,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.PacketBasic;
 

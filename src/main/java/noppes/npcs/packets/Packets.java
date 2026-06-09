@@ -22,8 +22,11 @@ import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Packets {
@@ -36,6 +39,31 @@ public class Packets {
 
     // New Unofficial (BetaZavr)
     private static final Map<Object, Long> delaySendMap = new HashMap<>();
+    private static final List<Class<? extends PacketBasic>> ignoredDebug = new ArrayList<>();
+    static {
+        ignoredDebug.add(SPacketNpcInitData.class);
+        ignoredDebug.add(SPacketPlayerMousePressed.class);
+        ignoredDebug.add(SPacketPlayerKeyPressed.class);
+        ignoredDebug.add(SPacketPlayerSound.class);
+        ignoredDebug.add(SPacketPlayerIsMoved.class);
+        ignoredDebug.add(SPacketPlayerScreen.class);
+        ignoredDebug.add(SPacketScriptConsole.class);
+        ignoredDebug.add(SPacketScriptText.class);
+        ignoredDebug.add(SPacketGetMovingPath.class);
+        ignoredDebug.add(SPacketNpcRarityTitleGet.class);
+
+        ignoredDebug.add(PacketNpcInitData.class);
+        ignoredDebug.add(PacketNpcUpdate.class);
+        ignoredDebug.add(PacketScriptConsole.class);
+        ignoredDebug.add(PacketScriptText.class);
+        ignoredDebug.add(PacketSyncUpdate.class);
+        ignoredDebug.add(PacketEyeBlink.class);
+        ignoredDebug.add(PacketMenuSave.class);
+        ignoredDebug.add(PacketNpcNavigation.class);
+        ignoredDebug.add(PacketNpcTarget.class);
+        ignoredDebug.add(PacketNpcRarityTitleSet.class);
+        ignoredDebug.add(PacketSync.class);
+    }
 
     public static void register() {
         totalIndex = 0;
@@ -357,7 +385,6 @@ public class Packets {
 
     }
 
-    @SuppressWarnings("unchecked")
     private static <MSG extends PacketBasic> void register(Class<MSG> packetClass) {
         if (index > 0xFF) { index = 0; channelId++; }
         if (!CHANNELS.containsKey(channelId)) {
@@ -367,20 +394,27 @@ public class Packets {
             Field channel = packetClass.getDeclaredField("channelId");
             channel.setAccessible(true);
             channel.set(null, channelId);
-            LogWriter.debug(totalIndex + " -register packet["+index+"]; channel["+channelId+"] "+packetClass.getSimpleName()+"; Side: "
-                    + (PacketServerBasic.class.isAssignableFrom(packetClass) ? "Server" : "Client"));
-            CHANNELS.get(channelId).registerMessage((Class<? extends IMessageHandler<MSG, IMessage>>) InnerHandler.class,
-                    packetClass, index++,
-                    PacketServerBasic.class.isAssignableFrom(packetClass) ? Side.SERVER : Side.CLIENT);
+
+            Side side = PacketServerBasic.class.isAssignableFrom(packetClass) ? Side.SERVER : Side.CLIENT;
+
+            LogWriter.debug(totalIndex + " -register packet["+index+"]; channel["+channelId+"] "+packetClass.getSimpleName()+"; Side: " + side);
+
+            Method register = SimpleNetworkWrapper.class.getMethod("registerMessage",
+                    Class.class, Class.class, int.class, Side.class);
+
+            register.invoke(CHANNELS.get(channelId), InnerHandler.class, packetClass, index++, side);
+            totalIndex++;
         }
         catch (Exception e) {
-            LogWriter.error("Error register packet["+index+"/"+totalIndex+"]: " + packetClass.getSimpleName()+
-                    "; channelId: "+channelId+"; Side: "+(PacketServerBasic.class.isAssignableFrom(packetClass) ? "Server" : "Client"), e);
+            LogWriter.error("Error register packet["+index+"/"+totalIndex+"]: " + packetClass.getSimpleName(), e);
+            if (e instanceof InvocationTargetException && e.getCause() != null) {
+                LogWriter.error("Real cause: ", e.getCause());
+            }
             throw new RuntimeException("Error register " + CustomNpcs.MODNAME + " packet " + packetClass.getSimpleName());
         }
     }
 
-    private static class InnerHandler<MSG extends PacketBasic> implements IMessageHandler<MSG, IMessage> {
+    public static class InnerHandler<MSG extends PacketBasic> implements IMessageHandler<MSG, IMessage> {
         @Override
         public IMessage onMessage(MSG msg, MessageContext ctx) {
             msg.ctx = ctx;
@@ -421,11 +455,16 @@ public class Packets {
     }
 
     private static <MSG extends IMessage> void logged(MSG msg) {
-        StringBuilder message = new StringBuilder(("" + Util.instance.getSide()).replace("DEDICATED_", "")+" send packet: "+msg.getClass().getSimpleName() + ". At: ");
-        String line = Thread.currentThread().getStackTrace()[3].toString();
-        if (line.contains("noppes.npcs")) { line = line.substring(line.indexOf("noppes.npcs")); }
-        message.append(line);
-        LogWriter.debug(message.toString());
+        if (!ignoredDebug.contains(msg.getClass())) {
+            StringBuilder message = new StringBuilder(("" + Util.instance.getSide()));
+            message.append(" send packet: ")
+                    .append(msg.getClass().getSimpleName())
+                    .append("; Channel ID:").append(((PacketBasic) msg).getChannelId());
+            String line = Thread.currentThread().getStackTrace()[3].toString();
+            if (line.contains("noppes.npcs")) { line = line.substring(line.indexOf("noppes.npcs")); }
+            message.append("; At: ").append(line);
+            LogWriter.debug(message.toString());
+        }
     }
 
     public static <MSG extends IMessage> void sendServerDelayed(MSG msg, Object key, long delay) {

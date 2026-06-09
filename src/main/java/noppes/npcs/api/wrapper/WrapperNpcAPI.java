@@ -220,7 +220,7 @@ public class WrapperNpcAPI extends NpcAPI {
 	@Override
 	public IItemStack getIItemStack(ItemStack stackMC) {
 		if (NoppesUtilServer.isItemStackNull(stackMC)) { return ItemStackWrapper.AIR; }
-		IItemStackWrapperHandler iStack = stackMC.getCapability(ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY, null);
+		IItemStackWrapperHandler iStack = stackMC.getCapability(ItemStackWrapper.ITEMSTACK_CAPABILITY, null);
 		return iStack != null ? (IItemStack) iStack : ItemStackWrapper.AIR;
 	}
 

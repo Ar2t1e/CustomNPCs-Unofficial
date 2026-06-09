@@ -5,8 +5,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
-import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.event.PlayerEvent;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.data.PlayerData;
@@ -38,7 +36,7 @@ public class SPacketCustomNBT extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         PlayerData pd = PlayerData.get(player);
         if (pd != null) {
-            EventHooks.onEvent(pd.scriptData, EnumScriptType.PACKAGE_FROM, new PlayerEvent.PlayerPackage(pd.scriptData.getPlayer(), data));
+            EventHooks.onEvent(pd.scriptData, EnumScriptType.PACKAGE_FROM, new PlayerEvent.PlayerPackage(pd.scriptData.getIPlayer(), data));
         }
         CustomNpcs.debugData.end("Packets");
     }

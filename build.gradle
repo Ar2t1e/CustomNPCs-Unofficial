@@ -34,7 +34,10 @@ def getCustomVersion() {
 }
 
 // Set Java compatibility to version
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 // launch in DEV environment
 minecraft {
@@ -50,6 +53,7 @@ minecraft {
             properties 'mixin.env.remapRefMap': 'true'
             property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
             property "mixin.debug", 'true'
+            property "mixin.debug.verify", 'false'
             args '--username=BetaZavr', '--tweakClass', 'org.spongepowered.asm.launch.MixinTweaker', '--mixin', mod_id + ".mixins.json"
         }
         server {
@@ -60,6 +64,7 @@ minecraft {
             properties 'mixin.env.remapRefMap': 'true'
             property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
             property "mixin.debug", 'true'
+            property "mixin.debug.verify", 'false'
             args '--tweakClass', 'org.spongepowered.asm.launch.MixinTweaker', '--mixin', mod_id + ".mixins.json"//, 'nogui'
         }
     }
@@ -113,7 +118,7 @@ processResources {
 // JAR file manifest settings
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
-    config mod_id + ".mixins.json"
+    config "${mod_id}.mixins.json"
 }
 
 // Creating a JAR file
@@ -130,7 +135,8 @@ jar {
                 "FMLAT"                      : "deobfuscation.cfg",
                 "TweakClass"                 : "org.spongepowered.asm.launch.MixinTweaker",
                 "MixinConfigs"               : mod_id + ".mixins.json",
-                "ForceLoadAsMod"             : "true"
+                "ForceLoadAsMod"             : "true",
+                "CertificateFingerprint"     : project.findProperty('certificateFingerprint') ?: "",
         ])
     }
     // Reobfuscate field and method names
@@ -144,10 +150,6 @@ idea {
         downloadJavadoc = true
         downloadSources = true
     }
-}
-
-subprojects {
-    apply plugin: 'idea'
 }
 
 tasks.register('prepareAssets', Copy) {

@@ -51,7 +51,7 @@ public class CustomWeapon extends ItemSword implements ICustomElement {
 		double attackSpeed = -2.4d;
 		if (nbtItem.hasKey("SpeedAttack", 6)) { attackSpeed = nbtItem.getDouble("SpeedAttack"); }
 		if (nbtItem.hasKey("EntityDamage", 6)) {
-			((IItemSwordMixin) this).setAttackDamage((float) nbtItem.getDouble("EntityDamage"));
+			((IItemSwordMixin) this).setEntityDamage((float) nbtItem.getDouble("EntityDamage"));
 		}
 		if (nbtItem.getInteger("MaxStackDamage") > 1) {
 			setMaxDamage(nbtItem.getInteger("MaxStackDamage"));
@@ -94,7 +94,7 @@ public class CustomWeapon extends ItemSword implements ICustomElement {
 	}
 
 	@Override
-	public float getAttackDamage() { return ((IItemSwordMixin) this).getAttackDamage(); }
+	public float getAttackDamage() { return ((IItemSwordMixin) this).getEntityDamage(); }
 
 	@Override
 	public float getDestroySpeed(@Nonnull ItemStack stack, @Nonnull IBlockState state) {

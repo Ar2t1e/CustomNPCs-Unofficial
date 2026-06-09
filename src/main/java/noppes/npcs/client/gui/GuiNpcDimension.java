@@ -7,11 +7,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.gui.IDimensionGetter;
-import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
@@ -20,10 +17,6 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
-import noppes.npcs.shared.client.gui.listeners.IScrollData;
-import org.lwjgl.input.Keyboard;
-
-import javax.annotation.Nonnull;
 
 public class GuiNpcDimension extends GuiNPCInterface
 		implements IDimensionGetter, IGuiData, ICustomScrollListener {

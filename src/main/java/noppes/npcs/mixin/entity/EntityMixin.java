@@ -2,12 +2,6 @@ package noppes.npcs.mixin.entity;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import noppes.npcs.api.mixin.entity.IEntityIMixin;
 import noppes.npcs.api.wrapper.data.Data;
 import noppes.npcs.entity.EntityNPCInterface;

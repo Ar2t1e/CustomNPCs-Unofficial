@@ -81,7 +81,7 @@ public class PlayerQuestController {
 		PlayerData data = PlayerData.get(player);
 		if (data == null) { return; }
 		PlayerQuestData questData = data.questData;
-		if (skipBeAccepted || data.scriptData.getPlayer().canQuestBeAccepted(quest.id)) {
+		if (skipBeAccepted || data.scriptData.getIPlayer().canQuestBeAccepted(quest.id)) {
 			if (EventHooks.onQuestStarted(data.scriptData, quest)) { return; }
 			questData.activeQuests.put(quest.id, new QuestData(quest));
 			Packets.send((EntityPlayerMP) player, new PacketAchievement(Component.translatable("quest.newquest"), Component.translatable(quest.title), 2, new NBTTagCompound()));

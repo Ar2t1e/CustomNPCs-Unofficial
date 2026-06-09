@@ -3,10 +3,8 @@ package noppes.npcs.packets.client;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.ClientProxy;
 import noppes.npcs.controllers.BankController;
 import noppes.npcs.controllers.data.Bank;
-import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketBankSave extends PacketBasic {

@@ -1,7 +1,5 @@
 package noppes.npcs.client.gui.roles;
 
-import java.util.HashMap;
-
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;

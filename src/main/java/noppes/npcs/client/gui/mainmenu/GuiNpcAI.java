@@ -82,7 +82,7 @@ public class GuiNpcAI extends GuiNPCInterface2 implements ITextfieldListener, IG
 		addButton(10, x1, y, false, npc.ais.directLOS.ordinal(), directs)
 				.setSize(60, 20)
 				.setIsEnabled(!ai.aiDisabled)
-				.setHoverTexts(net.minecraft.network.chat.Component.translatable("ai.hover.found.target")
+				.setHoverTexts(Component.translatable("ai.hover.found.target")
 						.append("<br>").append(Component.translatable("ai.hover.direct."+npc.ais.directLOS.name().toLowerCase())));
 		addLabel(lId++, x0, (y += hStep) + 7, "stats.attackInvisible")
 				.setSize(w, 10);

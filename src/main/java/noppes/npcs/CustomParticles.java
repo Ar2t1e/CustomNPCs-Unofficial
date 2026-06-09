@@ -42,7 +42,10 @@ public class CustomParticles {
             catch (Exception e) { LogWriter.error(e); }
         }
         if (field != null) {
-            try { particles = (Map<Integer, EnumParticleTypes>) field.get(EnumParticleTypes.class); }
+            try {
+                field.setAccessible(true);
+                particles = (Map<Integer, EnumParticleTypes>) field.get(EnumParticleTypes.class);
+            }
             catch (Exception e) { LogWriter.error(e); }
 
         }
@@ -53,7 +56,10 @@ public class CustomParticles {
             catch (Exception e) { LogWriter.error(e); }
         }
         if (field != null) {
-            try { byName = (Map<String, EnumParticleTypes>) field.get(EnumParticleTypes.class); }
+            try {
+                field.setAccessible(true);
+                byName = (Map<String, EnumParticleTypes>) field.get(EnumParticleTypes.class);
+            }
             catch (Exception e) { LogWriter.error(e); }
 
         }

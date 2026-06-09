@@ -1,19 +1,16 @@
 package noppes.npcs.client.gui.player;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.util.ITooltipFlag.TooltipFlags;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.controllers.TransportController;
 import noppes.npcs.controllers.data.TransportLocation;
@@ -26,9 +23,6 @@ import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IScrollData;
 import noppes.npcs.util.Util;
-import org.lwjgl.input.Keyboard;
-
-import javax.annotation.Nonnull;
 
 public class GuiTransportSelection extends GuiNPCInterface
 		implements IScrollData, ICustomScrollListener {

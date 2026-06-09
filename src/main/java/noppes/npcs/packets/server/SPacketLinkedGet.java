@@ -2,9 +2,6 @@ package noppes.npcs.packets.server;
 
 import java.util.Vector;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.LinkedNpcController;

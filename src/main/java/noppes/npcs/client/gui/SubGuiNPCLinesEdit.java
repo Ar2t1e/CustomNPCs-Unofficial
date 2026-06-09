@@ -4,8 +4,6 @@ import java.util.*;
 
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.gui.select.SubGuiSoundSelection;

@@ -23,6 +23,8 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.ClientProxy;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.handler.capability.IWrapperEntityDataHandler;
@@ -31,31 +33,32 @@ import noppes.npcs.entity.EntityProjectile;
 import noppes.npcs.mixin.entity.IEntityMixin;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class WrapperEntityData implements IWrapperEntityDataHandler, ICapabilityProvider {
 
 	@CapabilityInject(IWrapperEntityDataHandler.class)
-	public static Capability<IWrapperEntityDataHandler> WRAPPER_ENTITY_DATA_CAPABILITY = null;
+	public static Capability<IWrapperEntityDataHandler> ENTITYDATA_CAPABILITY;
 	private static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "entitydata");
-	private static final WrapperEntityData backup = new WrapperEntityData(null);
 
 	public static IEntity<?> get(Entity entity) {
 		if (entity == null || entity.world == null) {
 			return null;
 		}
-		if (entity instanceof EntityPlayer && entity.world.isRemote && PlayerWrapper.clientWrapperPlayerData != null) {
-			return PlayerWrapper.clientWrapperPlayerData.base;
-		}
-		WrapperEntityData data = (WrapperEntityData) entity.getCapability(WrapperEntityData.WRAPPER_ENTITY_DATA_CAPABILITY, null);
-		if (data == null) { data = backup; }
-		if (data == backup) {
-			if (!entity.world.isRemote) { LogWriter.warn("Unable to get EntityData for " + entity); }
-			data = getData(entity);
-		}
-		if (data != null && entity instanceof EntityPlayer  && entity.world.isRemote && PlayerWrapper.clientWrapperPlayerData == null) {
-			PlayerWrapper.clientWrapperPlayerData = data;
-		}
-		if (data == null) {
+		WrapperEntityData data = (WrapperEntityData) entity.getCapability(ENTITYDATA_CAPABILITY, null);
+		if (data == null || data.base == null) {
+			if (entity instanceof EntityPlayer) {
+				PlayerData playerData = PlayerData.get((EntityPlayer) entity);
+				if (playerData == null || playerData.scriptData == null) {
+					if (ClientProxy.iPlayer == null) { ClientProxy.iPlayer = new PlayerWrapper<>((EntityPlayer) entity); }
+					if (data != null && data.base == null) { data.base = ClientProxy.iPlayer; }
+					return ClientProxy.iPlayer;
+				}
+				else {
+					if (data != null && data.base == null) { data.base = playerData.scriptData.getIPlayer(); }
+					return playerData.scriptData.getIPlayer();
+				}
+			}
 			LogWriter.warn("Unable to get EntityData for " + entity);
 			WrapperEntityData ret = WrapperEntityData.getData(entity);
 			CapabilityDispatcher capabilities = ((IEntityMixin) entity).getCapabilities();
@@ -81,7 +84,8 @@ public class WrapperEntityData implements IWrapperEntityDataHandler, ICapability
 					}
 					catch (Exception e) { LogWriter.error(e); }
 				}
-			} else {
+			}
+			else {
 				Map<ResourceLocation, ICapabilityProvider> m = new HashMap<>();
 				m.put(WrapperEntityData.key, ret);
 				((IEntityMixin) entity).setCapabilities(new CapabilityDispatcher(m, null));
@@ -96,39 +100,39 @@ public class WrapperEntityData implements IWrapperEntityDataHandler, ICapability
 			return null;
 		}
 		if (entity instanceof EntityPlayer) {
-			return new WrapperEntityData(new PlayerWrapper<EntityPlayer>((EntityPlayer) entity));
+			return new WrapperEntityData(new PlayerWrapper<>((EntityPlayer) entity));
 		}
 		if (PixelmonHelper.isPixelmon(entity)) {
-			return new WrapperEntityData(new PixelmonWrapper<EntityTameable>((EntityTameable) entity));
+			return new WrapperEntityData(new PixelmonWrapper<>((EntityTameable) entity));
 		}
 		if (entity instanceof EntityVillager) {
-			return new WrapperEntityData(new VillagerWrapper<EntityVillager>((EntityVillager) entity));
+			return new WrapperEntityData(new VillagerWrapper<>((EntityVillager) entity));
 		}
 		if (entity instanceof EntityAnimal) {
-			return new WrapperEntityData(new AnimalWrapper<EntityAnimal>((EntityAnimal) entity));
+			return new WrapperEntityData(new AnimalWrapper<>((EntityAnimal) entity));
 		}
 		if (entity instanceof EntityMob) {
-			return new WrapperEntityData(new MonsterWrapper<EntityMob>((EntityMob) entity));
+			return new WrapperEntityData(new MonsterWrapper<>((EntityMob) entity));
 		}
 		if (entity instanceof EntityLiving) {
-			return new WrapperEntityData(new EntityLivingWrapper<EntityLiving>((EntityLiving) entity));
+			return new WrapperEntityData(new EntityLivingWrapper<>((EntityLiving) entity));
 		}
 		if (entity instanceof EntityLivingBase) {
-			return new WrapperEntityData(new EntityLivingBaseWrapper<EntityLivingBase>((EntityLivingBase) entity));
+			return new WrapperEntityData(new EntityLivingBaseWrapper<>((EntityLivingBase) entity));
 		}
 		if (entity instanceof EntityItem) {
-			return new WrapperEntityData(new EntityItemWrapper<EntityItem>((EntityItem) entity));
+			return new WrapperEntityData(new EntityItemWrapper<>((EntityItem) entity));
 		}
 		if (entity instanceof EntityProjectile) {
-			return new WrapperEntityData(new ProjectileWrapper<EntityProjectile>((EntityProjectile) entity));
+			return new WrapperEntityData(new ProjectileWrapper<>((EntityProjectile) entity));
 		}
 		if (entity instanceof EntityThrowable) {
-			return new WrapperEntityData(new ThrowableWrapper<EntityThrowable>((EntityThrowable) entity));
+			return new WrapperEntityData(new ThrowableWrapper<>((EntityThrowable) entity));
 		}
 		if (entity instanceof EntityArrow) {
-			return new WrapperEntityData(new ArrowWrapper<EntityArrow>((EntityArrow) entity));
+			return new WrapperEntityData(new ArrowWrapper<>((EntityArrow) entity));
 		}
-		return new WrapperEntityData(new EntityWrapper<Entity>(entity));
+		return new WrapperEntityData(new EntityWrapper<>(entity));
 	}
 
 	public static void register(AttachCapabilitiesEvent<Entity> event) {
@@ -157,9 +161,7 @@ public class WrapperEntityData implements IWrapperEntityDataHandler, ICapability
 
 	@SuppressWarnings("unchecked")
 	public <T> T getCapability(@Nonnull Capability<T> capability, EnumFacing facing) {
-		if (this.hasCapability(capability, facing)) {
-			return (T) this;
-		}
+		if (hasCapability(capability, facing)) {return (T) this;}
 		return null;
 	}
 
@@ -168,8 +170,8 @@ public class WrapperEntityData implements IWrapperEntityDataHandler, ICapability
 		return new NBTTagCompound();
 	}
 
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) {
-		return capability == WrapperEntityData.WRAPPER_ENTITY_DATA_CAPABILITY;
+	public boolean hasCapability(@Nullable Capability<?> capability, EnumFacing facing) {
+		return capability != null && capability == ENTITYDATA_CAPABILITY;
 	}
 
 	@Override

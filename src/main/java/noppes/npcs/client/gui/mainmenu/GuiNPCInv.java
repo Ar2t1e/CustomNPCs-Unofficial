@@ -43,7 +43,7 @@ public class GuiNpcInv extends GuiContainerNPCInterface2<ContainerNPCInv>
 		implements ICustomScrollListener, IGuiData, ITextfieldListener {
 
 	protected final ContainerNPCInv container;
-	protected final Map<net.minecraft.network.chat.Component, DropSet> dropsData = new HashMap<>();
+	protected final Map<Component, DropSet> dropsData = new HashMap<>();
 	protected final EntityNPCInterface displayNpc;
 	protected final DataInventory inventory;
 	protected GuiCustomScrollNop scrollTemplate;

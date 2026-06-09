@@ -3,7 +3,6 @@ package noppes.npcs.client.gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.select.SubGuiSoundSelection;
-import noppes.npcs.client.gui.util.*;
 import noppes.npcs.entity.data.DataRanged;
 import noppes.npcs.entity.data.DataStats;
 import noppes.npcs.shared.client.gui.GuiBasic;
@@ -11,9 +10,6 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
-import noppes.npcs.util.Util;
-
-import javax.annotation.Nonnull;
 
 public class SubGuiNpcRangeProperties extends GuiBasic implements ITextfieldListener {
 

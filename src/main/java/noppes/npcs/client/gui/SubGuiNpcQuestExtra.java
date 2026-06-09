@@ -66,7 +66,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		List<net.minecraft.network.chat.Component> tempHoverText = getHoverText();
+		List<Component> tempHoverText = getHoverText();
 		hoverText.clear();
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		int u = guiLeft + 182;
@@ -112,7 +112,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 			GlStateManager.popMatrix();
 
 			// Name
-			net.minecraft.network.chat.Component name = net.minecraft.network.chat.Component.empty().append(Component.literal(quest.completer != null ? quest.completer.getName() : "Empty"));
+			Component name = Component.empty().append(Component.literal(quest.completer != null ? quest.completer.getName() : "Empty"));
 			u += 1;
 			v += 51;
 			GlStateManager.pushMatrix();

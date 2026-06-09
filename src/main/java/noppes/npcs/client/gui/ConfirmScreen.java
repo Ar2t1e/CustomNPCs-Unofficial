@@ -1,12 +1,8 @@
 package noppes.npcs.client.gui;
 
-import com.google.common.collect.Lists;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.ITextComponent;
-
-import java.util.List;
 
 public class ConfirmScreen extends GuiScreen {
 
@@ -29,11 +25,9 @@ public class ConfirmScreen extends GuiScreen {
     protected final ITextComponent title;
     protected final ITextComponent yesButton;
     protected final ITextComponent noButton;
-    private final List<String> listLines = Lists.<String>newArrayList();
     protected String confirmButtonText;
     protected String cancelButtonText;
     protected int parentButtonClickedId;
-    private int ticksUntilEnable;
     protected final BooleanConsumer callback;
 
     public ConfirmScreen(BooleanConsumer callbackIn, ITextComponent messageLine1In, ITextComponent messageLine2In) {

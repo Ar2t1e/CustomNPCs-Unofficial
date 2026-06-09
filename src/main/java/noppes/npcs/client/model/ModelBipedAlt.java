@@ -3,6 +3,7 @@ package noppes.npcs.client.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import noppes.npcs.mixin.client.model.IModelPlayerMixin;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.renderer.GlStateManager;
@@ -95,6 +96,12 @@ public class ModelBipedAlt extends ModelNpcAlt {
 		((ModelRendererAlt) bipedLeftLeg).setBox(-2.2F, 0.0F, -2.1F, 4.0f, 5.5f, 3.5f, 3.0f, 4, modelSize);
 		bipedLeftLeg.setRotationPoint(2.0F, 12.0F, 0.0F);
 		((ModelRendererAlt) bipedLeftLeg).isArmor = true;
+
+		bipedCape = new ModelRendererAlt(this, EnumParts.BODY, 0, 0, true);
+		bipedCape.setTextureSize(64, 64);
+		bipedCape.setBox(0.0F, 0.0F, 0.0F, 0, 0, 0, 0, 0, modelSize);
+		bipedCape.setRotationPoint(0.0F, 0.0F, 0.0F);
+		((IModelPlayerMixin) this).setBipedCape(bipedCape);
 	}
 
 	@Override
@@ -113,10 +120,8 @@ public class ModelBipedAlt extends ModelNpcAlt {
 		}
 		if (entityIn instanceof EntityPlayer) {
 			PlayerData data = PlayerData.get((EntityPlayer) entityIn);
-			if (data != null) {
-				ba = data.animation.showParts;
-				baArmor = data.animation.showArmorParts;
-			}
+			ba = data.animation.showParts;
+			baArmor = data.animation.showArmorParts;
 		}
 		else if (entityIn instanceof EntityNPCInterface) {
 			EntityNPCInterface npc = (EntityNPCInterface) entityIn;

@@ -16,7 +16,6 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.api.ICustomElement;
@@ -32,51 +31,32 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.*;
 
-@GameRegistry.ObjectHolder(CustomNpcs.MODID)
 public class CustomItems {
 
-    @GameRegistry.ObjectHolder("npcwand")
     public static ItemNpcWand wand;
-    @GameRegistry.ObjectHolder("npcmobcloner")
     public static ItemNpcCloner cloner;
-    @GameRegistry.ObjectHolder("npcscripter")
     public static ItemNpcScripter scripter;
-    @GameRegistry.ObjectHolder("npcmovingpath")
     public static ItemNpcMovingPath moving;
-    @GameRegistry.ObjectHolder("npcmounter")
     public static ItemMounter mount;
-    @GameRegistry.ObjectHolder("npcteleporter")
     public static Item teleporter;
-    @GameRegistry.ObjectHolder("scripted_item")
-    public static ItemScripted scripted_item;
-    @GameRegistry.ObjectHolder("nbt_book")
+    public static ItemScripted scripter_item;
     public static ItemNbtBook nbt_book;
-    @GameRegistry.ObjectHolder("npcsoulstoneempty")
     public static ItemSoulstoneEmpty soulstoneEmpty;
-    @GameRegistry.ObjectHolder("npcsoulstonefilled")
     public static ItemSoulstoneFilled soulstoneFull;
+
     // New from Unofficial (BetaZavr)
-    @GameRegistry.ObjectHolder("npcboundary")
     public static ItemBoundary npcboundary;
-    @GameRegistry.ObjectHolder("npcbuilder")
     public static ItemBuilder npcbuilder;
-    @GameRegistry.ObjectHolder("npcremover")
     public static ItemRemover npcremover;
-    @GameRegistry.ObjectHolder("npcplacer")
     public static ItemPlacer npcplacer;
-    @GameRegistry.ObjectHolder("npcreplacer")
     public static ItemReplacer npcreplacer;
-    @GameRegistry.ObjectHolder("npcsaver")
     public static ItemSaver npcsaver;
     // new
-    @GameRegistry.ObjectHolder("itemPotion")
     public static ItemPotion itemPotion = null;
-    @GameRegistry.ObjectHolder("itemSplashPotion")
     public static ItemPotion itemSplashPotion = null;
-    @GameRegistry.ObjectHolder("itemLingeringPotion")
     public static ItemPotion itemLingeringPotion = null;
-    @GameRegistry.ObjectHolder("itemTippedArrow")
     public static ItemTippedArrow itemTippedArrow = null;
+
     // custom
     public static List<ICustomElement> customitems = new ArrayList<>();
 
@@ -91,7 +71,7 @@ public class CustomItems {
         items.add(teleporter = new ItemTeleporter());
         items.add(soulstoneEmpty = new ItemSoulstoneEmpty());
         items.add(soulstoneFull = new ItemSoulstoneFilled());
-        items.add(CustomTabs.ITEMS.item = scripted_item = new ItemScripted());
+        items.add(CustomTabs.ITEMS.item = scripter_item = new ItemScripted());
         items.add(nbt_book = new ItemNbtBook());
         items.add(npcboundary = new ItemBoundary());
         items.add(npcbuilder = new ItemBuilder());
@@ -270,7 +250,7 @@ public class CustomItems {
         ModelLoader.setCustomModelResourceLocation(teleporter, 0, new ModelResourceLocation(CustomNpcs.MODID + ":npcteleporter", "inventory"));
         ModelLoader.setCustomModelResourceLocation(soulstoneEmpty, 0, new ModelResourceLocation(CustomNpcs.MODID + ":npcsoulstoneempty", "inventory"));
         ModelLoader.setCustomModelResourceLocation(soulstoneFull, 0, new ModelResourceLocation(CustomNpcs.MODID + ":npcsoulstonefilled", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(scripted_item, 0, new ModelResourceLocation(CustomNpcs.MODID + ":scripted_item", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(scripter_item, 0, new ModelResourceLocation(CustomNpcs.MODID + ":scripted_item", "inventory"));
         ModelLoader.setCustomModelResourceLocation(nbt_book, 0, new ModelResourceLocation(CustomNpcs.MODID + ":nbt_book", "inventory"));
         ModelLoader.setCustomModelResourceLocation(npcboundary, 0, new ModelResourceLocation(CustomNpcs.MODID + ":npcboundary", "inventory"));
         ModelLoader.setCustomModelResourceLocation(npcbuilder, 0, new ModelResourceLocation(CustomNpcs.MODID + ":npcbuilder", "inventory"));
@@ -313,7 +293,7 @@ public class CustomItems {
         items.add(item);
         customitems.add((ICustomElement) item);
         names.add(location);
-        if (location.endsWith(":custom_itemexample") || CustomTabs.ITEMS.item == scripted_item) { CustomTabs.ITEMS.item = item; }
+        if (location.endsWith(":custom_itemexample") || CustomTabs.ITEMS.item == scripter_item) { CustomTabs.ITEMS.item = item; }
     }
 
 }

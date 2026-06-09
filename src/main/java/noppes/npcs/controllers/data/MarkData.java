@@ -22,6 +22,7 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketMarkData;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 
@@ -76,15 +77,18 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 	}
 
 	@CapabilityInject(IMarkDataHandler.class)
-	public static Capability<IMarkDataHandler> CNPCS_MARKDATA_CAPABILITY = null;
+	public static Capability<IMarkDataHandler> MARKDATA_CAPABILITY;
+
 	private static final ResourceLocation CNPCS_CAPKEY = new ResourceLocation(CustomNpcs.MODID, "markdata");
 	private static final String NBT_KEY = "cnpcmarkdata";
 	private static final MarkData backup = new MarkData();
 
-	public static void register(AttachCapabilitiesEvent<Entity> event) { event.addCapability(MarkData.CNPCS_CAPKEY, new MarkData()); }
+	public static void register(AttachCapabilitiesEvent<Entity> event) {
+		event.addCapability(MarkData.CNPCS_CAPKEY, new MarkData());
+	}
 
 	public static MarkData get(EntityLivingBase entity) {
-		MarkData data = (MarkData) entity.getCapability(MarkData.CNPCS_MARKDATA_CAPABILITY, null);
+		MarkData data = (MarkData) entity.getCapability(MARKDATA_CAPABILITY, null);
 		if (data == null) { data = backup; }
 		if (data != null && data.entity == null) {
 			data.entity = entity;
@@ -130,7 +134,9 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 		return compound;
 	}
 
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) { return capability == MarkData.CNPCS_MARKDATA_CAPABILITY; }
+	public boolean hasCapability(@Nullable Capability<?> capability, EnumFacing facing) {
+		return capability != null && capability == MARKDATA_CAPABILITY;
+	}
 
 	public void save() { entity.getEntityData().setTag(NBT_KEY, getNBT()); }
 

@@ -2,9 +2,6 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.shared.common.PacketServerBasic;

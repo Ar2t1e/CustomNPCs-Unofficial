@@ -167,8 +167,8 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	public DataInventory inventory;
 	public DataAdvanced advanced;
 	public DataScript script;
-	public JobInterface job;
-	public RoleInterface role;
+	public RoleInterface role = RoleInterface.NONE;
+	public JobInterface job = JobInterface.NONE;
 	public int animationStart = 0;
 	public int currentAnimation = 0;
 	public float baseWidth = 0.6f;

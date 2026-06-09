@@ -15,10 +15,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.PlayerSkinController;
 import noppes.npcs.controllers.data.SkinData;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.constants.EnumGuiType;
@@ -41,20 +39,6 @@ public class CmdPlayers extends CommandNoppesBase {
 
 	public int getRequiredPermissionLevel() { return 2; }
 
-	private Object[] getPlayerData(MinecraftServer server, ICommandSender sender, String playername) {
-		EntityPlayerMP player = null;
-		try {
-			player = CommandBase.getPlayer(server, sender, playername);
-		} catch (Exception e) { LogWriter.error(e); }
-		PlayerData playerdata;
-		if (player != null) {
-			playerdata = PlayerData.get(player);
-		} else {
-			playerdata = PlayerDataController.instance.getDataFromUsername(server, playername);
-		}
-		return new Object[] { playerdata, player };
-	}
-
 	private static PlayerData getData(@Nonnull MinecraftServer server, @Nullable String player) throws CommandException {
 		if (player == null) { throw new PlayerNotFoundException("commands.generic.player.notFound", "NULL"); }
 		PlayerData data = PlayerDataController.instance.getDataFromUsername(server, player);
@@ -65,21 +49,25 @@ public class CmdPlayers extends CommandNoppesBase {
 	@SubCommand(desc = "Apply to all players", usage = "<action> <action_name>", permission = 4)
 	public void all(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length < 2) { throw new CommandException("Usage " + "<action> <action_name>"); }
-		switch (args[0]) {
-			case "clear": {
-				PlayerSkinController sData = PlayerSkinController.getInstance();
-				int type;
-				switch (args[1]) {
-					case "skins": type = 0; break;
-					case "capes": type = 1; break;
-					case "elytras": type = 2; break;
-					default: throw new CommandException("Usage " + "clear <action_name>");
-				}
-				sData.clear(null, type);
-				sender.sendMessage(Component.translatable("command.player.clear.skin.all."+type));
-				break;
-			}
-		}
+        if (args[0].equals("clear")) {
+            PlayerSkinController sData = PlayerSkinController.getInstance();
+            int type;
+            switch (args[1]) {
+                case "skins":
+                    type = 0;
+                    break;
+                case "capes":
+                    type = 1;
+                    break;
+                case "elytras":
+                    type = 2;
+                    break;
+                default:
+                    throw new CommandException("Usage " + "clear <action_name>");
+            }
+            sData.clear(null, type);
+            sender.sendMessage(Component.translatable("command.player.clear.skin.all." + type));
+        }
 	}
 
 	@SubCommand(desc = "Show the store window to the player", usage = "<playername> <marcetID>", permission = 2)

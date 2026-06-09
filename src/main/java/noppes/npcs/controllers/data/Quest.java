@@ -596,7 +596,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 				if (chance != 100.0d) {
 					NBTTagCompound compound = stack.getOrCreateSubCompound("display");
 					NBTTagList tagList = compound.getTagList("Lore", 8);
-					tagList.appendTag(new NBTTagString(Component.Serializer.toJson(
+					tagList.appendTag(new NBTTagString(Component.Serializer.componentToJson(
 							Component.translatable("inv.dropChance").append(": " + (Math.round(chance * 10.0d) / 10.0d) + "%"))));
 					compound.setTag("Lore", tagList);
 				}

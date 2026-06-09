@@ -53,17 +53,17 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemScripted;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 @SuppressWarnings("rawtypes")
 public class ItemStackWrapper
 implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilitySerializable {
 
+	@CapabilityInject(IItemStackWrapperHandler.class)
+	public static Capability<IItemStackWrapperHandler> ITEMSTACK_CAPABILITY;
+	public static ItemStackWrapper AIR = new ItemStackWrapper(ItemStack.EMPTY);
 	protected static final EntityEquipmentSlot[] VALID_EQUIPMENT_SLOTS = new EntityEquipmentSlot[] { EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET };
 	protected static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "itemscripteddata");
-
-	@CapabilityInject(IItemStackWrapperHandler.class)
-	public static Capability<IItemStackWrapperHandler> ITEMSCRIPTEDDATA_CAPABILITY = null;
-	public static ItemStackWrapper AIR = new ItemStackWrapper(ItemStack.EMPTY);
 
 	protected final Data tempdata;
 	protected final Data storeddata;
@@ -324,14 +324,12 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 		return false;
 	}
 
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) {
-		return capability == ItemStackWrapper.ITEMSCRIPTEDDATA_CAPABILITY;
+	public boolean hasCapability(@Nullable Capability<?> capability, EnumFacing facing) {
+		return capability != null && capability == ITEMSTACK_CAPABILITY;
 	}
 
 	@Override
-	public boolean hasCustomName() {
-		return this.item.hasDisplayName();
-	}
+	public boolean hasCustomName() { return this.item.hasDisplayName(); }
 
 	@Override
 	public boolean hasEnchant(int id) {

@@ -113,6 +113,7 @@ public class EntityAIReturn extends EntityAIBase {
 	}
 
 	private boolean isTooFar() {
+		if (endPos == null) { return false; }
 		if (npc.homeDimensionId != npc.world.provider.getDimension()) { return true; }
 		int allowedDistance = npc.stats.aggroRange * 2;
 		if (npc.ais.getMovingType() == 1) { allowedDistance += npc.ais.walkingRange; }

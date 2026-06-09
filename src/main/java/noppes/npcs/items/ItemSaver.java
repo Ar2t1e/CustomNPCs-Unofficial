@@ -16,8 +16,6 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTabs;
-import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.data.PlayerData;

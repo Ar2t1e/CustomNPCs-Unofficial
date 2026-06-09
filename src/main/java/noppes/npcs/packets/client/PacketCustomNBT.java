@@ -5,7 +5,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.event.PlayerEvent;
-import noppes.npcs.client.ClientProxy;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.shared.common.PacketBasic;
 
@@ -31,7 +30,7 @@ public class PacketCustomNBT extends PacketBasic {
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
         EventHooks.onEvent(CustomNpcs.proxy.getPlayerData(player).scriptData, EnumScriptType.PACKAGE_FROM,
-                new PlayerEvent.PlayerPackage(CustomNpcs.proxy.getPlayerData(player).scriptData.getPlayer(), data));
+                new PlayerEvent.PlayerPackage(CustomNpcs.proxy.getPlayerData(player).scriptData.getIPlayer(), data));
         CustomNpcs.debugData.end("Packets");
     }
 }

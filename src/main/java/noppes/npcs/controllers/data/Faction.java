@@ -59,7 +59,7 @@ public class Faction implements IFaction {
 		// New from Unofficial (BetaZavr)
 		frendFactions.addAll(NBTTags.getIntegerSet(compound.getTagList("FrendFactions", 10)));
 		if (compound.hasKey("Flag", 8)) { setFlag(compound.getString("Flag")); }
-		if (compound.hasKey("Description", 8)) { description = Component.Serializer.fromJson(compound.getString("Description")); }
+		if (compound.hasKey("Description", 8)) { description = Component.Serializer.jsonToComponent(compound.getString("Description")); }
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class Faction implements IFaction {
 
 		// New from Unofficial (BetaZavr)
 		compound.setString("Flag", flag != null ? flag.toString() : "");
-		compound.setString("Description", Component.Serializer.toJson(description));
+		compound.setString("Description", Component.Serializer.componentToJson(description));
 		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(frendFactions));
 		return compound;
 	}

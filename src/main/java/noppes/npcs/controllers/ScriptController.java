@@ -15,7 +15,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTBase;
@@ -24,11 +23,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagLongArray;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -77,7 +72,6 @@ public class ScriptController {
 	// key create in CommonProxy.getAgreementKey() and in ClientEventHandler.cnpcOpenGUIEvent()
 	private final List<String> agreements = new ArrayList<>();
 	private final List<ScriptContainer> errors = new ArrayList<>();
-	private final List<EntityPlayer> opPlayers = new ArrayList<>();
 	private final Map<Integer,List<Object>> elements = new TreeMap<>();
 
 	public ForgeScriptData forgeScripts = new ForgeScriptData();
@@ -881,10 +875,7 @@ public class ScriptController {
 		playerScripts.load(compound);
 		if (CustomNpcs.Server != null) {
 			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-				PlayerData data = PlayerData.get(player);
-				if (data != null) {
-					data.scriptData.load(compound);
-				}
+				PlayerData.get(player).scriptData.load(compound);
 			}
 		}
 		try {
@@ -1024,7 +1015,7 @@ public class ScriptController {
 			if (type == 0 && obj instanceof TileScripted) {
 				TileScripted tile = ((TileScripted) obj);
 				pos = tile.getPos();
-				if (tile.getWorld() == null || tile.getWorld().getTileEntity(pos) != tile) {
+                if (tile.getWorld().getTileEntity(pos) != tile) {
 					pos = null;
 					elements.get(type).remove(obj);
 				}
@@ -1033,7 +1024,7 @@ public class ScriptController {
 			else if (type == 1 && obj instanceof TileScriptedDoor) {
 				TileScriptedDoor tile = ((TileScriptedDoor) obj);
 				pos = tile.getPos();
-				if (tile.getWorld() == null || tile.getWorld().getTileEntity(pos) != tile) {
+				if (tile.getWorld().getTileEntity(pos) != tile) {
 					pos = null;
 					elements.get(type).remove(obj);
 				}

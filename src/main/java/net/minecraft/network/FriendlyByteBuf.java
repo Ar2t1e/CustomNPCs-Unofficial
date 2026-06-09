@@ -598,7 +598,7 @@ public class FriendlyByteBuf extends ByteBuf {
 
     // in 1.20.1
     public Component readComponent() {
-        Component component = Component.Serializer.fromJson(readUtf(262144));
+        Component component = Component.Serializer.jsonToComponent(readUtf(262144));
         if (component == null) {
             throw new DecoderException("Received unexpected null component");
         }
@@ -606,7 +606,10 @@ public class FriendlyByteBuf extends ByteBuf {
     }
 
     public void writeComponent(ITextComponent component) {
-        writeUtf(Component.Serializer.toJson(component), 262144);
+        String content;
+        if (component instanceof Component) { content = Component.Serializer.componentToJson(component); }
+        else { content = ITextComponent.Serializer.componentToJson(component); }
+        writeUtf(content, 262144);
     }
 
     @SuppressWarnings("unused")

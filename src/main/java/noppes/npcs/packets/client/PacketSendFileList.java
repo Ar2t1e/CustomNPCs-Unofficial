@@ -2,9 +2,6 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.ClientTickHandler;

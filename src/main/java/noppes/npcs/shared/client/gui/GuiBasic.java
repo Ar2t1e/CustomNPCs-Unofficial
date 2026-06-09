@@ -18,7 +18,6 @@ import net.minecraftforge.common.MinecraftForge;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.ClientProxy;
-import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.event.ClientEvent;

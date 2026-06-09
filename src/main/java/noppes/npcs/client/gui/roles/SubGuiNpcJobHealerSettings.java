@@ -1,16 +1,12 @@
 package noppes.npcs.client.gui.roles;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.roles.data.HealerSettings;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
-
-import javax.annotation.Nonnull;
 
 public class SubGuiNpcJobHealerSettings
 		extends GuiNPCInterface

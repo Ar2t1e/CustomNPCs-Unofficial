@@ -8,4 +8,5 @@ public interface IWrapperEntityDataHandler {
 	NBTTagCompound getNBT();
 
 	void setNBT(@ParamName("compound") NBTTagCompound compound);
+
 }

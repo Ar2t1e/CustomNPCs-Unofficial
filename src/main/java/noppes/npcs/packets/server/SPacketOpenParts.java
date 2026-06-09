@@ -3,7 +3,6 @@ package noppes.npcs.packets.server;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
-import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 public class SPacketOpenParts extends PacketServerBasic {

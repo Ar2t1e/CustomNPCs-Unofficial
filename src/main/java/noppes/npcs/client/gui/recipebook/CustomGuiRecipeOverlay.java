@@ -6,7 +6,6 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.recipebook.GuiRecipeOverlay;
 import net.minecraft.client.gui.recipebook.RecipeList;
@@ -21,11 +20,9 @@ import net.minecraft.stats.RecipeBook;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.crafting.IShapedRecipe;
-import net.minecraftforge.fml.client.config.GuiUtils;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.handler.data.INpcRecipe;
 import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.recipebook.PlaceRecipe;
 

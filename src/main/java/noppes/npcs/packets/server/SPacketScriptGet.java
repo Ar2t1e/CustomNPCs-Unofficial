@@ -34,7 +34,7 @@ public class SPacketScriptGet extends PacketServerBasic {
 
    @Override
    public boolean toolAllowed(ItemStack item) {
-      return item.getItem() == CustomItems.scripted_item || item.getItem() == CustomItems.scripter || item.getItem() == CustomItems.wand ||
+      return item.getItem() == CustomItems.scripter_item || item.getItem() == CustomItems.scripter || item.getItem() == CustomItems.wand ||
               item.getItem() == CustomBlocks.scripted_door_item || item.getItem() == CustomBlocks.scripted_item;
    }
 

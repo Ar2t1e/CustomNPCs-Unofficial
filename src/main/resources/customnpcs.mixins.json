@@ -2,6 +2,7 @@
   "compatibilityLevel": "JAVA_8",
   "package": "noppes.npcs.mixin",
   "refmap": "customnpcs.refmap.json",
+  "priority": 1000,
   "mixins": [
     "block.IBlockMixin",
     "block.properties.IPropertyIntegerMixin",
@@ -43,6 +44,7 @@
     "util.IServerRecipeBookHelperMixin",
     "util.ISoundEventMixin",
     "util.ServerRecipeBookHelperMixin",
+    "util.text.ITextComponentSerializerMixin",
     "util.text.ITextFormattingMixin",
     "util.text.StyleMixin",
     "util.text.translation.LanguageMapMixin",

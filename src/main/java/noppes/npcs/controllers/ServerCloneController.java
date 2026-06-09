@@ -6,16 +6,12 @@ import java.util.*;
 
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NBTTags;
 import noppes.npcs.packets.server.SPacketToolMobSpawner;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CustomNPCsException;

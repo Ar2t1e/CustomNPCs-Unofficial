@@ -44,7 +44,7 @@ public class ItemSoulstoneFilled extends Item {
 			Component name = Component.translatable(compound.getString("Name"));
 			if (compound.hasKey("DisplayName")) {
 				String key = compound.getString("DisplayName");
-				Component displayName = Component.Serializer.fromJson(key);
+				Component displayName = Component.Serializer.jsonToComponent(key);
 				if (displayName == null) { displayName = Component.translatable(key); }
 				name = displayName.append(" (").append(name).append(")");
 			}

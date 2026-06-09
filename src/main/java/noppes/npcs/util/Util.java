@@ -360,8 +360,7 @@ public class Util implements IMethods {
 						list.addAll(getFiles(f, index));
 						if (temp instanceof Object[] && ((Object[]) temp).length > 3 && ((Object[]) temp)[0] == directory) {
 							((Object[]) temp)[2] = ((int) ((Object[]) temp)[2]) + 1;
-							LogWriter.debug(ticksToElapsedTime(System.currentTimeMillis() - (long) ((Object[]) temp)[1], true, false, false) +
-									" ... process found files["+((Object[]) temp)[2]+"/"+((Object[]) temp)[3]+"] in \"" + ((Object[]) temp)[0] + "\"; now: \""+f+"\"");
+							//LogWriter.debug(ticksToElapsedTime(System.currentTimeMillis() - (long) ((Object[]) temp)[1], true, false, false) + " ... process found files["+((Object[]) temp)[2]+"/"+((Object[]) temp)[3]+"] in \"" + ((Object[]) temp)[0] + "\"; now: \""+f+"\"");
 						}
 					}
 					else {
@@ -887,7 +886,7 @@ public class Util implements IMethods {
 		if (fileName == null || fileName.isEmpty() || fileName.lastIndexOf(".") == -1) {
 			return null;
 		}
-		LogWriter.debug("Getting a list of mod files by key \"" + fileName + "\"");
+		//LogWriter.debug("Getting a list of mod files by key \"" + fileName + "\"");
 		InputStream inputStream = null;
 		for (ModContainer mod : Loader.instance().getModList()) {
 			if (mod.getSource().exists() && (mod.getModId().equals(CustomNpcs.MODID) || mod.getSource().getName().endsWith("bin") || mod.getSource().getName().endsWith("main"))) {
@@ -972,7 +971,7 @@ public class Util implements IMethods {
 	@Override
 	public String getDataFile(String fileName) {
 		if (fileName == null) { return ""; }
-		LogWriter.debug("Trying to get text from mod data file \"" + fileName + "\"");
+		//LogWriter.debug("Trying to get text from mod data file \"" + fileName + "\"");
 		InputStream inputStream = getModInputStream(fileName);
 		String text = "";
 		try {
@@ -983,9 +982,7 @@ public class Util implements IMethods {
 			}
 			text = result.toString("UTF-8");
 		}
-		catch (Throwable t) {
-			LogWriter.error("Error get text from mod data file: \"" + fileName + "\"; InputStream: " + inputStream, t);
-		}
+		catch (Throwable t) { LogWriter.error("Error get text from mod data file: \"" + fileName + "\"; InputStream: " + inputStream, t); }
 		return text;
 	}
 

@@ -5,7 +5,7 @@ import noppes.npcs.api.NpcAPI;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-@Mixin(value = Event.class, remap = false, priority = 499)
+@Mixin(value = Event.class, remap = false)
 public class EventMixin {
 
     @Unique

@@ -52,6 +52,7 @@ import noppes.npcs.*;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.client.IMinecraft;
 import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.event.ClientEvent;
 import noppes.npcs.api.handler.data.IKeySetting;
 import noppes.npcs.api.handler.data.INpcRecipe;
@@ -144,7 +145,7 @@ import javax.annotation.Nullable;
 
 public class ClientProxy extends CommonProxy {
 
-	public static void removeKeyFromMAP(Object parent) {
+    public static void removeKeyFromMAP(Object parent) {
 		if (parent instanceof KeyBinding) {
 			((IKeyBindingMixin) parent).getMap().removeKey((KeyBinding) parent);
 		}
@@ -228,6 +229,7 @@ public class ClientProxy extends CommonProxy {
     }
 
 	protected static PlayerData playerData = new PlayerData();
+	public static IPlayer<?> iPlayer;
 	public static KeyBinding QuestLog = new KeyBinding("key.quest.log", 38, "key.categories.gameplay"), Scene1, Scene2, Scene3, SceneReset;
 	public static FontContainer Font;
 	public static FontContainer LogFont;
@@ -633,11 +635,11 @@ public class ClientProxy extends CommonProxy {
 		mc.getItemColors().registerItemColorHandler((stack, tintIndex) -> 9127187, CustomItems.mount, CustomItems.cloner, CustomItems.moving, CustomItems.scripter, CustomItems.wand, CustomItems.teleporter);
 		mc.getItemColors().registerItemColorHandler((stack, tintIndex) -> {
 			IItemStack item = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
-			if (stack.getItem() == CustomItems.scripted_item) {
+			if (stack.getItem() == CustomItems.scripter_item) {
 				return ((IItemScripted) item).getColor();
 			}
 			return -1;
-		}, CustomItems.scripted_item);
+		}, CustomItems.scripter_item);
 		checkLocalization();
 		ClientRegisterEvents.load();
 	}
@@ -726,9 +728,9 @@ public class ClientProxy extends CommonProxy {
 	public void reloadItemTextures() {
 		for (Map.Entry<Integer, String> entry : ItemScripted.Resources.entrySet()) {
 			ModelResourceLocation mrl = new ModelResourceLocation(entry.getValue(), "inventory");
-			Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CustomItems.scripted_item,
+			Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CustomItems.scripter_item,
 					entry.getKey(), mrl);
-			ModelLoader.setCustomModelResourceLocation(CustomItems.scripted_item, entry.getKey(), mrl);
+			ModelLoader.setCustomModelResourceLocation(CustomItems.scripter_item, entry.getKey(), mrl);
 		}
 	}
 
@@ -899,7 +901,6 @@ public class ClientProxy extends CommonProxy {
 				}
 				RECIPES_BY_TAB.put(isGlobal ? ClientRegisterEvents.CRAFTING_CUSTOM_GLOBAL_CATEGORY : ClientRegisterEvents.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
 			}
-			((IRecipeBookClientMixin) cBook).setCollectionsByTab(RECIPES_BY_TAB);
 		}
 	}
 

@@ -14,10 +14,4 @@ public interface IRecipeBookClientMixin {
 
     @Accessor("RECIPES_BY_TAB") Map<CreativeTabs, List<RecipeList>> getCollectionsByTab();
 
-    @Accessor("RECIPES_BY_TAB") void setCollectionsByTab(Map<CreativeTabs, List<RecipeList>> newCollectionsByTab);
-
-    @Accessor("ALL_RECIPES") List<RecipeList> getAllRecipes();
-
-    @Accessor("ALL_RECIPES") void setAllRecipes(List<RecipeList> newAllRecipes);
-
 }

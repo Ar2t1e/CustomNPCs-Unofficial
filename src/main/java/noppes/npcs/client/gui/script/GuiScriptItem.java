@@ -13,7 +13,7 @@ public class GuiScriptItem extends GuiScriptInterface {
 
 	public GuiScriptItem() {
 		super(2);
-		handler = item = new ItemScriptedWrapper(new ItemStack(CustomItems.scripted_item));
+		handler = item = new ItemScriptedWrapper(new ItemStack(CustomItems.scripter_item));
 		Packets.sendServer(new SPacketScriptGet(type));
 	}
 

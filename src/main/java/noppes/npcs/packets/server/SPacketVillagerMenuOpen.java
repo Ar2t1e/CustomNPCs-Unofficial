@@ -2,12 +2,10 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.EntityVillager;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.shared.common.PacketServerBasic;
 

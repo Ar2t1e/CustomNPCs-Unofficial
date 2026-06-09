@@ -323,11 +323,11 @@ public class EventHooks {
 	}
 
 	public static void onPlayerContainerClose(PlayerScriptData handler, Container container) {
-		EventHooks.onEvent(handler, EnumScriptType.CONTAINER_CLOSED, new PlayerEvent.ContainerClosed(handler.getPlayer(), Objects.requireNonNull(NpcAPI.Instance()).getIContainer(container)));
+		EventHooks.onEvent(handler, EnumScriptType.CONTAINER_CLOSED, new PlayerEvent.ContainerClosed(handler.getIPlayer(), Objects.requireNonNull(NpcAPI.Instance()).getIContainer(container)));
 	}
 
 	public static void onPlayerContainerOpen(PlayerScriptData handler, Container container) {
-		EventHooks.onEvent(handler, EnumScriptType.CONTAINER_OPEN, new PlayerEvent.ContainerOpen(handler.getPlayer(), Objects.requireNonNull(NpcAPI.Instance()).getIContainer(container)));
+		EventHooks.onEvent(handler, EnumScriptType.CONTAINER_OPEN, new PlayerEvent.ContainerOpen(handler.getIPlayer(), Objects.requireNonNull(NpcAPI.Instance()).getIContainer(container)));
 	}
 
 	public static boolean onPlayerDamaged(PlayerScriptData handler, PlayerEvent.DamagedEvent event) {
@@ -339,7 +339,7 @@ public class EventHooks {
 	}
 
 	public static void onPlayerDeath(PlayerScriptData handler, DamageSource source, Entity entity) {
-		EventHooks.onEvent(handler, EnumScriptType.DIED, new PlayerEvent.DiedEvent(handler.getPlayer(), source, entity));
+		EventHooks.onEvent(handler, EnumScriptType.DIED, new PlayerEvent.DiedEvent(handler.getIPlayer(), source, entity));
 	}
 
 	public static void onPlayerFactionChange(PlayerScriptData handler, PlayerEvent.FactionUpdateEvent event) {
@@ -348,7 +348,7 @@ public class EventHooks {
 	}
 
 	public static void onPlayerInit(PlayerScriptData handler) {
-		EventHooks.onEvent(handler, EnumScriptType.INIT, new PlayerEvent.InitEvent(handler.getPlayer()));
+		EventHooks.onEvent(handler, EnumScriptType.INIT, new PlayerEvent.InitEvent(handler.getIPlayer()));
 	}
 
 	public static boolean onPlayerInteract(PlayerScriptData handler, PlayerEvent.InteractEvent event) {
@@ -361,7 +361,7 @@ public class EventHooks {
 		if (kb != null) {
 			PlayerScriptData handler = PlayerData.get(player).scriptData;
 			if (handler.getEnabled()) {
-				EventHooks.onEvent(handler, EnumScriptType.KEY_ACTIVE, new PlayerEvent.KeyActive(handler.getPlayer(), kb));
+				EventHooks.onEvent(handler, EnumScriptType.KEY_ACTIVE, new PlayerEvent.KeyActive(handler.getIPlayer(), kb));
 			}
 		}
 	}
@@ -369,37 +369,37 @@ public class EventHooks {
 
 	public static void onPlayerKeyEvent(EntityPlayerMP player, int button, boolean isCtrlPressed, boolean isShiftPressed, boolean isAltPressed, boolean isMetaPressed, boolean pressed, String openGui) {
 		PlayerScriptData handler = PlayerData.get(player).scriptData;
-		Event event = new PlayerEvent.KeyPressedEvent(handler.getPlayer(), button, isCtrlPressed, isAltPressed, isShiftPressed, isMetaPressed, openGui);
+		Event event = new PlayerEvent.KeyPressedEvent(handler.getIPlayer(), button, isCtrlPressed, isAltPressed, isShiftPressed, isMetaPressed, openGui);
 		EventHooks.onEvent(handler, pressed ? EnumScriptType.KEY_PRESSED : EnumScriptType.KEY_RELEASED, event);
 	}
 
 	public static void onPlayerKills(PlayerScriptData handler, EntityLivingBase entityLiving) {
-		EventHooks.onEvent(handler, EnumScriptType.KILL, new PlayerEvent.KilledEntityEvent(handler.getPlayer(), entityLiving));
+		EventHooks.onEvent(handler, EnumScriptType.KILL, new PlayerEvent.KilledEntityEvent(handler.getIPlayer(), entityLiving));
 	}
 
 	public static void onPlayerLevelUp(PlayerScriptData handler, int change) {
-		EventHooks.onEvent(handler, EnumScriptType.LEVEL_UP, new PlayerEvent.LevelUpEvent(handler.getPlayer(), change));
+		EventHooks.onEvent(handler, EnumScriptType.LEVEL_UP, new PlayerEvent.LevelUpEvent(handler.getIPlayer(), change));
 	}
 
 	public static void onPlayerLogin(PlayerScriptData handler) {
-		EventHooks.onEvent(handler, EnumScriptType.LOGIN, new PlayerEvent.LoginEvent(handler.getPlayer()));
+		EventHooks.onEvent(handler, EnumScriptType.LOGIN, new PlayerEvent.LoginEvent(handler.getIPlayer()));
 	}
 
 	public static void onPlayerLogout(PlayerScriptData handler) {
-		EventHooks.onEvent(handler, EnumScriptType.LOGOUT, new PlayerEvent.LogoutEvent(handler.getPlayer()));
+		EventHooks.onEvent(handler, EnumScriptType.LOGOUT, new PlayerEvent.LogoutEvent(handler.getIPlayer()));
 	}
 
 	public static void onPlayerMouseEvent(EntityPlayerMP player, int button, boolean isDown, double scrolledIn,
 											boolean isCtrlPressed, boolean isShiftPressed, boolean isAltPressed, boolean isMetaPressed,
 										  String openGui) {
 		PlayerScriptData handler = PlayerData.get(player).scriptData;
-		Event event = new PlayerEvent.KeyPressedEvent(handler.getPlayer(), button, isCtrlPressed, isAltPressed, isShiftPressed, isMetaPressed, openGui);
+		Event event = new PlayerEvent.KeyPressedEvent(handler.getIPlayer(), button, isCtrlPressed, isAltPressed, isShiftPressed, isMetaPressed, openGui);
 		EventHooks.onEvent(handler, scrolledIn != 0.0d ? EnumScriptType.MOUSE_SCROLLED :
 				isDown ? EnumScriptType.MOUSE_PRESSED : EnumScriptType.MOUSE_RELEASED, event);
 	}
 
 	public static boolean onPlayerPickUp(PlayerScriptData handler, EntityItem entityItem) {
-		return EventHooks.onEvent(handler, EnumScriptType.PICKUP, new PlayerEvent.PickUpEvent(handler.getPlayer(),
+		return EventHooks.onEvent(handler, EnumScriptType.PICKUP, new PlayerEvent.PickUpEvent(handler.getIPlayer(),
 				Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(entityItem.getItem())));
 	}
 
@@ -425,18 +425,18 @@ public class EventHooks {
 
 	public static void onPlayerTick(PlayerScriptData handler) {
 		if (handler.isClient()) {
-			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.TICK, new PlayerEvent.UpdateEvent(handler.getPlayer()));
+			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.TICK, new PlayerEvent.UpdateEvent(handler.getIPlayer()));
 			return;
 		}
-		EventHooks.onEvent(handler, EnumScriptType.TICK, new PlayerEvent.UpdateEvent(handler.getPlayer()));
+		EventHooks.onEvent(handler, EnumScriptType.TICK, new PlayerEvent.UpdateEvent(handler.getIPlayer()));
 	}
 
 	public static void onPlayerTimer(PlayerData data, int id) {
-		EventHooks.onEvent(data.scriptData, EnumScriptType.TIMER, new PlayerEvent.TimerEvent(data.scriptData.getPlayer(), id));
+		EventHooks.onEvent(data.scriptData, EnumScriptType.TIMER, new PlayerEvent.TimerEvent(data.scriptData.getIPlayer(), id));
 	}
 
 	public static boolean onPlayerToss(PlayerScriptData handler, EntityItem entityItem) {
-		return EventHooks.onEvent(handler, EnumScriptType.TOSS, new PlayerEvent.TossEvent(handler.getPlayer(), Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(entityItem.getItem())));
+		return EventHooks.onEvent(handler, EnumScriptType.TOSS, new PlayerEvent.TossEvent(handler.getIPlayer(), Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(entityItem.getItem())));
 	}
 
 	public static void onPlayerScreen(EntityPlayerMP player, String newGUI, String oldGUI) {
@@ -448,7 +448,7 @@ public class EventHooks {
 		PlayerData data = PlayerData.get(player);
 		data.overlay.currentGUI = newGUI;
 		if (!data.scriptData.getEnabled()) { return; }
-		EventHooks.onEvent(data.scriptData, EnumScriptType.GUI_OPEN, new PlayerEvent.OpenGUI(data.scriptData.getPlayer(), newGUI, oldGUI));
+		EventHooks.onEvent(data.scriptData, EnumScriptType.GUI_OPEN, new PlayerEvent.OpenGUI(data.scriptData.getIPlayer(), newGUI, oldGUI));
 	}
 
 	public static void onPotionInit(PotionScriptData handler) {
@@ -479,17 +479,17 @@ public class EventHooks {
 			return false;
 		}
 		return EventHooks.onEvent(handler, EnumScriptType.QUEST_CANCELED,
-				new QuestEvent.QuestCanceledEvent(handler.getPlayer(), quest));
+				new QuestEvent.QuestCanceledEvent(handler.getIPlayer(), quest));
 	}
 
 	public static void onQuestFinished(PlayerScriptData handler, Quest quest) {
 		if (handler.isClient()) { return; }
-		EventHooks.onEvent(handler, EnumScriptType.QUEST_COMPLETED,  new QuestEvent.QuestCompletedEvent(handler.getPlayer(), quest));
+		EventHooks.onEvent(handler, EnumScriptType.QUEST_COMPLETED,  new QuestEvent.QuestCompletedEvent(handler.getIPlayer(), quest));
 	}
 
 	public static boolean onQuestStarted(PlayerScriptData handler, Quest quest) {
 		if (handler.isClient()) { return false; }
-		return EventHooks.onEvent(handler, EnumScriptType.QUEST_START,  new QuestEvent.QuestStartEvent(handler.getPlayer(), quest));
+		return EventHooks.onEvent(handler, EnumScriptType.QUEST_START,  new QuestEvent.QuestStartEvent(handler.getIPlayer(), quest));
 	}
 
 	public static void onQuestTurnedIn(PlayerScriptData handler, QuestEvent.QuestTurnedInEvent event) {
@@ -595,7 +595,7 @@ public class EventHooks {
 	public static void onScriptItemPickedUp(ItemScriptedWrapper handler, EntityPlayer player, EntityItem entity) {
 		if (handler.isClient()) { return; }
 		EventHooks.onEvent(handler, EnumScriptType.PICKEDUP, new ItemEvent.PickedUpEvent(handler,
-				PlayerData.get(player).scriptData.getPlayer(), (IEntityItem<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity)));
+				PlayerData.get(player).scriptData.getIPlayer(), (IEntityItem<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity)));
 	}
 
 	public static boolean onScriptItemSpawn(ItemScriptedWrapper handler, EntityItem entity) {
@@ -606,15 +606,15 @@ public class EventHooks {
 	public static boolean onScriptItemTossed(ItemScriptedWrapper handler, EntityPlayer player, EntityItem entity) {
 		if (handler.isClient()) { return false; }
 		return EventHooks.onEvent(handler, EnumScriptType.TOSSED, new ItemEvent.TossedEvent(handler,
-				PlayerData.get(player).scriptData.getPlayer(), (IEntityItem<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity)));
+				PlayerData.get(player).scriptData.getIPlayer(), (IEntityItem<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity)));
 	}
 
 	public static void onScriptItemUpdate(ItemScriptedWrapper handler, EntityPlayer player) {
 		if (handler.isClient()) {
-			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.TICK, new ItemEvent.UpdateEvent(handler, PlayerData.get(player).scriptData.getPlayer()));
+			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.TICK, new ItemEvent.UpdateEvent(handler, PlayerData.get(player).scriptData.getIPlayer()));
 			return;
 		}
-		EventHooks.onEvent(handler, EnumScriptType.TICK, new ItemEvent.UpdateEvent(handler, PlayerData.get(player).scriptData.getPlayer()));
+		EventHooks.onEvent(handler, EnumScriptType.TICK, new ItemEvent.UpdateEvent(handler, PlayerData.get(player).scriptData.getIPlayer()));
 	}
 
 	public static void onScriptTriggerEvent(int id, IWorld level, IPos pos, IEntity<?> entity, Object[] arguments) {

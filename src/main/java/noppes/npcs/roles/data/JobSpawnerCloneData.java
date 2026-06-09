@@ -63,7 +63,7 @@ public class JobSpawnerCloneData implements IJobSpawner.IJobSpawnerData {
     public void load(@Nonnull NBTTagCompound nbt) {
         tab = nbt.getInteger("tab");
         name = nbt.getString("name");
-        title = Component.Serializer.fromJson(nbt.getString("title"));
+        title = Component.Serializer.jsonToComponent(nbt.getString("title"));
         if (title.getString().isEmpty()) { title = Component.literal(nbt.getString("title")).withStyle(TextFormatting.RESET); }
     }
 
@@ -71,7 +71,7 @@ public class JobSpawnerCloneData implements IJobSpawner.IJobSpawnerData {
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setInteger("tab", tab);
         nbt.setString("name", name);
-        nbt.setString("title", Component.Serializer.toJson(title));
+        nbt.setString("title", Component.Serializer.componentToJson(title));
         return nbt;
     }
 

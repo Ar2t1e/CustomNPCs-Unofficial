@@ -7,12 +7,11 @@ import noppes.npcs.constants.EnumAbilityType;
 import noppes.npcs.entity.EntityNPCInterface;
 
 public class AbilityEventHandler {
+
 	@SubscribeEvent
 	public void invoke(NpcEvent.DamagedEvent event) {
-		IAbilityDamaged ab = (IAbilityDamaged) ((EntityNPCInterface) event.npc.getMCEntity()).abilities
-				.getAbility(EnumAbilityType.ATTACKED);
-		if (ab != null) {
-			ab.handleEvent(event);
-		}
+		IAbilityDamaged ab = (IAbilityDamaged) ((EntityNPCInterface) event.npc.getMCEntity()).abilities.getAbility(EnumAbilityType.ATTACKED);
+		if (ab != null) { ab.handleEvent(event); }
 	}
+
 }
