@@ -112,6 +112,7 @@ public class EntityAIReturn extends Goal {
    }
 
    private boolean isTooFar() {
+      if (endPos == null) { return false; }
       if (!npc.level().dimension().equals(npc.homeDimensionId)) { return true; }
       int allowedDistance = npc.stats.aggroRange * 2;
       if (npc.ais.getMovingType() == 1) { allowedDistance += npc.ais.walkingRange; }
