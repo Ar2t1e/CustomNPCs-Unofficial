@@ -4,11 +4,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.event.PlayerEvent;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.controllers.data.PlayerScriptData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketCustomNBT extends PacketServerBasic {
 
@@ -18,6 +22,12 @@ public class SPacketCustomNBT extends PacketServerBasic {
     public SPacketCustomNBT() { }
 
     public SPacketCustomNBT(NBTTagCompound dataIn) { data = dataIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }
@@ -34,10 +44,8 @@ public class SPacketCustomNBT extends PacketServerBasic {
     @Override
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
-        PlayerData pd = PlayerData.get(player);
-        if (pd != null) {
-            EventHooks.onEvent(pd.scriptData, EnumScriptType.PACKAGE_FROM, new PlayerEvent.PlayerPackage(pd.scriptData.getIPlayer(), data));
-        }
+        PlayerScriptData handler = PlayerData.get(player).scriptData;
+        EventHooks.onEvent(handler, EnumScriptType.PACKAGE_FROM, new PlayerEvent.PlayerPackage(handler.getIPlayer(), data));
         CustomNpcs.debugData.end("Packets");
     }
 

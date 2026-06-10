@@ -5,9 +5,12 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
+
+import java.util.List;
 
 public class SPacketTileEntityGet extends PacketServerBasic {
 
@@ -17,6 +20,12 @@ public class SPacketTileEntityGet extends PacketServerBasic {
    public SPacketTileEntityGet() { }
 
    public SPacketTileEntityGet(BlockPos posIn) { pos = posIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

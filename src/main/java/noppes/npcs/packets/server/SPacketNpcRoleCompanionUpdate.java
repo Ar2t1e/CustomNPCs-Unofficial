@@ -1,12 +1,17 @@
 package noppes.npcs.packets.server;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.constants.EnumCompanionStage;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.roles.RoleCompanion;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketNpcRoleCompanionUpdate extends PacketServerBasic {
 
@@ -18,10 +23,13 @@ public class SPacketNpcRoleCompanionUpdate extends PacketServerBasic {
    public SPacketNpcRoleCompanionUpdate(EnumCompanionStage stageIn) { stage = stageIn; }
 
    @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
    public boolean requiresNpc() { return true; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.NPC_ADVANCED; }
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_ADVANCED); }
 
    @Override
    public void encode(FriendlyByteBuf buf) { buf.writeEnum(stage); }

@@ -10,15 +10,21 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiOpen;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketOpenEditClientScript extends PacketServerBasic {
 
     protected static int channelId;
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.EDIT_CLIENT_SCRIPT; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.EDIT_CLIENT_SCRIPT); }
 
     @Override
     public void encode(FriendlyByteBuf buf) { }

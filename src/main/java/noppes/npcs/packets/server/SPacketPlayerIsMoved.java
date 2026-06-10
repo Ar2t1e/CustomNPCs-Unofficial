@@ -3,8 +3,11 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketPlayerIsMoved extends PacketServerBasic {
 
@@ -14,6 +17,12 @@ public class SPacketPlayerIsMoved extends PacketServerBasic {
     public SPacketPlayerIsMoved() { }
 
     public SPacketPlayerIsMoved(boolean isMovedIn) { isMoved = isMovedIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

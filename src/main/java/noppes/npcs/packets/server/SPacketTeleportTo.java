@@ -5,7 +5,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class SPacketTeleportTo extends PacketServerBasic {
 
@@ -18,6 +22,16 @@ public class SPacketTeleportTo extends PacketServerBasic {
     public SPacketTeleportTo(int dimensionIdIn, BlockPos posIn) {
         dimensionId = dimensionIdIn;
         pos = posIn;
+    }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() {
+        return Arrays.asList(CustomNpcsPermissions.TOOL_BUILDERS,
+                CustomNpcsPermissions.GLOBAL_TRANSPORT,
+                CustomNpcsPermissions.GLOBAL_QUEST);
     }
 
     @Override
@@ -39,6 +53,7 @@ public class SPacketTeleportTo extends PacketServerBasic {
     public int getChannelId() { return channelId; }
 
     @Override
+    @SuppressWarnings("ConstantConditions")
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
         if (player.getServer() != null) {

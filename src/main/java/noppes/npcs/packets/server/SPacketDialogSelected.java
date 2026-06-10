@@ -4,9 +4,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.EventHooks;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.*;
 import noppes.npcs.api.constants.OptionType;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.controllers.DialogController;
@@ -20,6 +18,8 @@ import noppes.npcs.packets.client.PacketGuiClose;
 import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.roles.RoleDialog;
 
+import java.util.List;
+
 public class SPacketDialogSelected extends PacketServerBasic {
 
    protected static int channelId;
@@ -32,6 +32,9 @@ public class SPacketDialogSelected extends PacketServerBasic {
       dialogId = dialogIdIn;
       optionId = optionIdIn;
    }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

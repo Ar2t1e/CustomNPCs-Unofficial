@@ -4,10 +4,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.roles.JobSpawner;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketNpcJobSpawnerRemove extends PacketServerBasic {
 
@@ -21,6 +24,12 @@ public class SPacketNpcJobSpawnerRemove extends PacketServerBasic {
         slot = slotIn;
         isDead = isDeadIn;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

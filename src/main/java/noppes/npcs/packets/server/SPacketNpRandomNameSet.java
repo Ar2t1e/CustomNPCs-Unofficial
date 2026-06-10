@@ -1,12 +1,17 @@
 package noppes.npcs.packets.server;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketNpRandomNameSet extends PacketServerBasic {
 
@@ -22,10 +27,13 @@ public class SPacketNpRandomNameSet extends PacketServerBasic {
    }
 
    @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
    public boolean requiresNpc() { return true; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.NPC_DISPLAY; }
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_DISPLAY); }
 
    @Override
    public void encode(FriendlyByteBuf buf) {

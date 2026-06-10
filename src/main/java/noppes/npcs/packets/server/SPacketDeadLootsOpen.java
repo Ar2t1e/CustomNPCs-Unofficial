@@ -6,10 +6,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.math.BlockPos;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiClose;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketDeadLootsOpen extends PacketServerBasic {
 
@@ -19,6 +22,12 @@ public class SPacketDeadLootsOpen extends PacketServerBasic {
     public SPacketDeadLootsOpen() { }
 
     public SPacketDeadLootsOpen(String nameIn) { name = nameIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

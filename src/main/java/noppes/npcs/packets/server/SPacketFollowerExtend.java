@@ -5,6 +5,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.event.RoleEvent;
@@ -21,6 +22,7 @@ import noppes.npcs.roles.RoleFollower;
 import noppes.npcs.util.Util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SPacketFollowerExtend extends PacketServerBasic {
@@ -31,6 +33,9 @@ public class SPacketFollowerExtend extends PacketServerBasic {
    public SPacketFollowerExtend() { }
 
    public SPacketFollowerExtend(int posIn) { pos = posIn; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

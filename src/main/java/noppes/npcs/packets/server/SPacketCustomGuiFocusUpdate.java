@@ -1,5 +1,7 @@
 package noppes.npcs.packets.server;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import net.minecraft.item.ItemStack;
@@ -25,12 +27,15 @@ public class SPacketCustomGuiFocusUpdate extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() {
+   public List<CustomNpcsPermissions.Permission> getPermission() {
       if (player.openContainer instanceof ContainerCustomGui) {
-         return ((ContainerCustomGui) player.openContainer).activeGui.getPermission();
+         return Collections.singletonList(((ContainerCustomGui) player.openContainer).activeGui.getPermission());
       }
       return null;
    }

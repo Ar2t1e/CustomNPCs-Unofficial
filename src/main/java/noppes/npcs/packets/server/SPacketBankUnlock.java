@@ -3,7 +3,10 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketBankUnlock extends PacketServerBasic {
 
@@ -13,7 +16,10 @@ public class SPacketBankUnlock extends PacketServerBasic {
    public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
-   public boolean requiresNpc() { return true;}
+   public boolean requiresNpc() { return true; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public void encode(FriendlyByteBuf buf) { }

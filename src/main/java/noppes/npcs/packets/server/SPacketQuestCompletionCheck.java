@@ -12,9 +12,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.common.util.FakePlayer;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.EventHooks;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.*;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.event.QuestEvent;
 import noppes.npcs.api.item.IItemStack;
@@ -48,6 +46,12 @@ public class SPacketQuestCompletionCheck extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
@@ -66,6 +70,7 @@ public class SPacketQuestCompletionCheck extends PacketServerBasic {
    public int getChannelId() { return channelId; }
 
    @Override
+   @SuppressWarnings("ConstantConditions")
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
       PlayerData data = PlayerData.get(player);

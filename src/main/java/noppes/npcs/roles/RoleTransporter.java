@@ -27,6 +27,8 @@ import noppes.npcs.packets.server.SPacketDimensionTeleport;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nullable;
+
 public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 
 	protected int ticks = 10;
@@ -161,7 +163,7 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 	}
 
 	@Override
-	public TransportLocation getLocation() {
+	public @Nullable TransportLocation getLocation() {
 		return TransportController.getInstance().getTransport(transportId);
 	}
 

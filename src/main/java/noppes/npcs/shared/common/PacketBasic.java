@@ -32,10 +32,10 @@ public abstract class PacketBasic implements IMessage {
 
     public abstract int getChannelId();
 
-    protected abstract void handle();
-
     public abstract void decode(FriendlyByteBuf buf);
 
     public abstract void encode(FriendlyByteBuf buf);
+
+    protected abstract void handle();
 
 }

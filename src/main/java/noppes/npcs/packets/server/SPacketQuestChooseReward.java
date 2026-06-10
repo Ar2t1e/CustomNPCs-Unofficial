@@ -6,6 +6,7 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumRewardType;
 import noppes.npcs.controllers.QuestController;
@@ -28,6 +29,12 @@ public class SPacketQuestChooseReward extends PacketServerBasic {
     public SPacketQuestChooseReward(int idIn) { id = idIn; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
@@ -40,6 +47,7 @@ public class SPacketQuestChooseReward extends PacketServerBasic {
     public int getChannelId() { return channelId; }
 
     @Override
+    @SuppressWarnings("ConstantConditions")
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
         Quest quest = QuestController.instance.get(id);

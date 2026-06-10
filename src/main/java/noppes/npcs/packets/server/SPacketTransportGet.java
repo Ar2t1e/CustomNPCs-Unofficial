@@ -1,11 +1,13 @@
 package noppes.npcs.packets.server;
 
 import java.util.HashMap;
+import java.util.List;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.TransportController;
 import noppes.npcs.controllers.data.TransportCategory;
@@ -20,6 +22,12 @@ public class SPacketTransportGet extends PacketServerBasic {
    public SPacketTransportGet() { }
 
    public SPacketTransportGet(int idIn) { id = idIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

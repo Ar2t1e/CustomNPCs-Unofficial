@@ -8,9 +8,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.CustomTeleporter;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.List;
 import java.util.Objects;
 
 public class SPacketDimensionTeleport extends PacketServerBasic {
@@ -21,6 +23,12 @@ public class SPacketDimensionTeleport extends PacketServerBasic {
    public SPacketDimensionTeleport() { }
 
    public SPacketDimensionTeleport(int idIn) { id = idIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.teleporter; }
@@ -51,6 +59,7 @@ public class SPacketDimensionTeleport extends PacketServerBasic {
       CustomNpcs.debugData.end("Packets");
    }
 
+   @SuppressWarnings("ConstantConditions")
    public static void teleportPlayer(EntityPlayerMP player, int dimension, double x, double y, double z, float yaw, float pitch) {
       if (player.dimension != dimension) {
          MinecraftServer server = player.getServer();

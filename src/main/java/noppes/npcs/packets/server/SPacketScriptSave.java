@@ -14,6 +14,8 @@ import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class SPacketScriptSave extends PacketServerBasic {
@@ -39,7 +41,7 @@ public class SPacketScriptSave extends PacketServerBasic {
    public boolean requiresNpc() { return type == 0; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.TOOL_SCRIPTER; }
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_SCRIPTER); }
 
    @Override
    public void encode(FriendlyByteBuf buf) {
@@ -112,7 +114,7 @@ public class SPacketScriptSave extends PacketServerBasic {
                ScriptController.Instance.setClientScripts(data);
                handler = ScriptController.Instance.clientScripts;
             }
-            else { warn(CustomNpcsPermissions.EDIT_CLIENT_SCRIPT); }
+            else { warn(CustomNpcsPermissions.EDIT_CLIENT_SCRIPT.getNodeName()); }
             break;
          } // Client
          case 7: {

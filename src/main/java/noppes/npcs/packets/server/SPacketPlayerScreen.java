@@ -3,8 +3,11 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.EventHooks;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketPlayerScreen extends PacketServerBasic {
 
@@ -18,6 +21,12 @@ public class SPacketPlayerScreen extends PacketServerBasic {
         newScreen = newScreenName;
         oldScreen = oldScreenName;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }

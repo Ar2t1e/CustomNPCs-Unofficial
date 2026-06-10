@@ -8,6 +8,8 @@ import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.entity.data.Resistances;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -16,10 +18,13 @@ public class SPacketGetResistances extends PacketServerBasic {
     protected static int channelId;
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item){ return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.NPC_STATS; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_STATS); }
 
     @Override
     public void encode(FriendlyByteBuf buf) { }

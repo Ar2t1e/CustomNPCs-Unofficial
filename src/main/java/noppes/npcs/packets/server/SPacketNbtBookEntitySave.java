@@ -9,6 +9,9 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketNbtBookEntitySave extends PacketServerBasic {
 
    protected static int channelId;
@@ -23,10 +26,13 @@ public class SPacketNbtBookEntitySave extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.nbt_book; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.TOOL_NBTBOOK; }
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_NBTBOOK); }
 
    @Override
    public void encode(FriendlyByteBuf buf) {

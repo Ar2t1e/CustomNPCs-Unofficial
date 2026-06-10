@@ -4,7 +4,10 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketItemChange extends PacketServerBasic {
 
@@ -20,6 +23,12 @@ public class SPacketItemChange extends PacketServerBasic {
         slot = slotId;
         stack = stackIn;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }
@@ -42,13 +51,12 @@ public class SPacketItemChange extends PacketServerBasic {
     public int getChannelId() { return channelId; }
 
     @Override
+    @SuppressWarnings("ConstantConditions")
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
         if (player.openContainer.getClass().getSimpleName().equals(container)) {
             Slot slotIn = player.openContainer.getSlot(slot);
-            if (slotIn != null) {
-                slotIn.putStack(stack);
-            }
+            if (slotIn != null) { slotIn.putStack(stack); }
         }
         CustomNpcs.debugData.end("Packets");
     }

@@ -10,6 +10,9 @@ import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketQuestOpen extends PacketServerBasic {
 
    protected static int channelId;
@@ -26,10 +29,13 @@ public class SPacketQuestOpen extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_DIALOG; }
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_DIALOG); }
 
    @Override
    public void encode(FriendlyByteBuf buf) {

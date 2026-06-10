@@ -1,13 +1,18 @@
 package noppes.npcs.packets.server;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.SpawnController;
 import noppes.npcs.controllers.data.SpawnData;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
+
+import java.util.List;
 
 public class SPacketNaturalSpawnGet extends PacketServerBasic {
 
@@ -17,6 +22,15 @@ public class SPacketNaturalSpawnGet extends PacketServerBasic {
    public SPacketNaturalSpawnGet() { }
 
    public SPacketNaturalSpawnGet(int idIn) { id = idIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public void encode(FriendlyByteBuf buf) { buf.writeInt(id); }

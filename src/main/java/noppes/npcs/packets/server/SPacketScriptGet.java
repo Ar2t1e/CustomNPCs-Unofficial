@@ -33,6 +33,9 @@ public class SPacketScriptGet extends PacketServerBasic {
    public SPacketScriptGet(int typeIn) { type = typeIn; }
 
    @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) {
       return item.getItem() == CustomItems.scripter_item || item.getItem() == CustomItems.scripter || item.getItem() == CustomItems.wand ||
               item.getItem() == CustomBlocks.scripted_door_item || item.getItem() == CustomBlocks.scripted_item;

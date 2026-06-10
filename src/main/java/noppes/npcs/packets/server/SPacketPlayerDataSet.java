@@ -1,15 +1,20 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumPlayerData;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketPlayerDataSet extends PacketServerBasic {
 
@@ -29,7 +34,13 @@ public class SPacketPlayerDataSet extends PacketServerBasic {
     }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_PLAYERDATA; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_PLAYERDATA); }
 
     @Override
     public void encode(FriendlyByteBuf buf) {

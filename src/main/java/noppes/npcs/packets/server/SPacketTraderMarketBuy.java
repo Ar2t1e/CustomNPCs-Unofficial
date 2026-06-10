@@ -8,9 +8,7 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.EventHooks;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.*;
 import noppes.npcs.api.event.RoleEvent;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.controllers.data.Deal;
@@ -47,6 +45,12 @@ public class SPacketTraderMarketBuy extends PacketServerBasic {
     }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
@@ -69,6 +73,7 @@ public class SPacketTraderMarketBuy extends PacketServerBasic {
     public int getChannelId() { return channelId; }
 
     @Override
+    @SuppressWarnings("ConstantConditions")
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
         Marcet marcet = MarcetController.getInstance().getMarcet(marcetID);

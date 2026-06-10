@@ -4,11 +4,14 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumMenuType;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketMenuSave;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketGetMovingPath extends PacketServerBasic {
 
@@ -18,6 +21,12 @@ public class SPacketGetMovingPath extends PacketServerBasic {
     public SPacketGetMovingPath() { }
 
     public SPacketGetMovingPath(int npcIdIn) { npcId = npcIdIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

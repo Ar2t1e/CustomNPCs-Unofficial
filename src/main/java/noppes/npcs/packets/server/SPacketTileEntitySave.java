@@ -9,7 +9,10 @@ import net.minecraft.util.math.BlockPos;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketTileEntitySave extends PacketServerBasic {
 
@@ -20,6 +23,13 @@ public class SPacketTileEntitySave extends PacketServerBasic {
 
    public SPacketTileEntitySave(NBTTagCompound nbtTileIn) { nbtTile = nbtTileIn; }
 
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) {
       return item.getItem() == CustomItems.wand || item.getItem() == CustomBlocks.border_item || item.getItem() == CustomBlocks.copy_item ||
               item.getItem() == CustomBlocks.redstone_item || item.getItem() == CustomBlocks.scripted_item || item.getItem() == CustomBlocks.waypoint_item;

@@ -1,10 +1,15 @@
 package noppes.npcs.packets.server;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumCompanionTalent;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.roles.RoleCompanion;
+
+import java.util.List;
 
 public class SPacketCompanionTalentExp extends PacketServerBasic {
 
@@ -18,6 +23,12 @@ public class SPacketCompanionTalentExp extends PacketServerBasic {
       talent = talentIn;
       exp = expIn;
    }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean requiresNpc() { return true; }

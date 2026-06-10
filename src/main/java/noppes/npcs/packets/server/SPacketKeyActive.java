@@ -3,8 +3,11 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.EventHooks;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketKeyActive extends PacketServerBasic {
 
@@ -14,6 +17,12 @@ public class SPacketKeyActive extends PacketServerBasic {
     public SPacketKeyActive() { }
 
     public SPacketKeyActive(int idIn) { id = idIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

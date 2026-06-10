@@ -7,6 +7,9 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.entity.data.DataScenes;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketSceneStart extends PacketServerBasic {
 
    protected static int channelId;
@@ -17,7 +20,10 @@ public class SPacketSceneStart extends PacketServerBasic {
    public SPacketSceneStart(int sceneIn) { scene = sceneIn; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.SCENES; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.SCENES); }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

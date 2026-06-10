@@ -13,6 +13,7 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.Util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SPacketBankUpgrade extends PacketServerBasic {
@@ -36,6 +37,12 @@ public class SPacketBankUpgrade extends PacketServerBasic {
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public void encode(FriendlyByteBuf buf) {

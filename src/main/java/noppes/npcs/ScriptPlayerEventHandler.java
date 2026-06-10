@@ -950,7 +950,10 @@ public class ScriptPlayerEventHandler {
 					}
 				} catch (Exception e) { LogWriter.error(e); }
 			}
-		} catch (Exception e) { LogWriter.error(e); }
+		}
+		catch (Exception e) {
+			LogWriter.error(e);
+		}
 		LogWriter.info("CustomNpcs: Registered [Client:" + ForgeEventHandler.clientEventNames.size() + "; Server: " + ForgeEventHandler.eventNames.size() + "] Forge Events out of [" + listClasses.size() + "] classes");
 		CustomNpcs.debugData.end(null);
 		return this;

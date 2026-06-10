@@ -30,10 +30,13 @@ public class SPacketGetFirstID extends PacketServerBasic {
     }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_FACTION; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_FACTION); }
 
     @Override
     public void encode(FriendlyByteBuf buf) {

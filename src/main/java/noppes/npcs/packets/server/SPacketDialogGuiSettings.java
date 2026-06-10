@@ -10,6 +10,9 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSync;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketDialogGuiSettings extends PacketServerBasic {
 
     protected static int channelId;
@@ -20,10 +23,13 @@ public class SPacketDialogGuiSettings extends PacketServerBasic {
     public SPacketDialogGuiSettings(NBTTagCompound compoundIn) { compound = compoundIn; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item){ return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_DIALOG; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_DIALOG); }
 
     @Override
     public void encode(FriendlyByteBuf buf) { buf.writeNbt(compound); }

@@ -52,7 +52,6 @@ import noppes.npcs.*;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.client.IMinecraft;
 import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.event.ClientEvent;
 import noppes.npcs.api.handler.data.IKeySetting;
 import noppes.npcs.api.handler.data.INpcRecipe;
@@ -229,7 +228,6 @@ public class ClientProxy extends CommonProxy {
     }
 
 	protected static PlayerData playerData = new PlayerData();
-	public static IPlayer<?> iPlayer;
 	public static KeyBinding QuestLog = new KeyBinding("key.quest.log", 38, "key.categories.gameplay"), Scene1, Scene2, Scene3, SceneReset;
 	public static FontContainer Font;
 	public static FontContainer LogFont;

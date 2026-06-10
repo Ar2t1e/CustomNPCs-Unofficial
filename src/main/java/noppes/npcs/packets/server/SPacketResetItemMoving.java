@@ -7,6 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumMenuType;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemNpcMovingPath;
@@ -15,6 +16,7 @@ import noppes.npcs.packets.client.PacketMenuSave;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 
+import java.util.List;
 import java.util.UUID;
 
 public class SPacketResetItemMoving extends PacketServerBasic {
@@ -22,6 +24,12 @@ public class SPacketResetItemMoving extends PacketServerBasic {
     protected static int channelId;
 
     public SPacketResetItemMoving() { }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }
@@ -71,6 +79,7 @@ public class SPacketResetItemMoving extends PacketServerBasic {
                 }
             }
             else {
+                @SuppressWarnings("ConstantConditions")
                 Entity entity = player.world.getEntityByID(compound.getInteger("NPCID"));
                 if (entity instanceof EntityNPCInterface) { npcIn = (EntityNPCInterface) entity; }
             }

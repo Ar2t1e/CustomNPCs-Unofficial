@@ -7,17 +7,23 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.containers.ContainerCustomGui;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketCustomGuiSubGuiClosed extends PacketServerBasic {
 
    protected static int channelId;
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() {
+   public List<CustomNpcsPermissions.Permission> getPermission() {
       if (player.openContainer instanceof ContainerCustomGui) {
-         return ((ContainerCustomGui) player.openContainer).activeGui.getPermission();
+         return Collections.singletonList(((ContainerCustomGui) player.openContainer).activeGui.getPermission());
       }
       return null;
    }

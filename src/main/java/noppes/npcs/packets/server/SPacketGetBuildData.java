@@ -3,6 +3,7 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.controllers.SyncController;
 import noppes.npcs.items.ItemBuilder;
@@ -10,6 +11,8 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.BuilderData;
+
+import java.util.List;
 
 public class SPacketGetBuildData extends PacketServerBasic {
 
@@ -23,6 +26,12 @@ public class SPacketGetBuildData extends PacketServerBasic {
         id = idIn;
         type = typeIn;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

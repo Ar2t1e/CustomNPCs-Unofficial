@@ -4,6 +4,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.SoundCategory;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.event.PlayerEvent;
@@ -12,6 +13,8 @@ import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerScriptData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketPlayerSound extends PacketServerBasic {
 
@@ -42,6 +45,12 @@ public class SPacketPlayerSound extends PacketServerBasic {
       volume = md.sound.getVolume();
       pitch = md.sound.getPitch();
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

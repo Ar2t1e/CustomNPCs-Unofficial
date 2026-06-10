@@ -15,15 +15,21 @@ import noppes.npcs.packets.client.PacketSync;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketDimensionsGet extends PacketServerBasic {
 
     protected static int channelId;
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.teleporter; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.TOOL_TELEPORTER; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_TELEPORTER); }
 
     @Override
     public void  encode(FriendlyByteBuf buf) { }

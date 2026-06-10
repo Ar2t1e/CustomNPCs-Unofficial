@@ -1,13 +1,17 @@
 package noppes.npcs.packets.server;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
@@ -33,7 +37,13 @@ public class SPacketPlayerDataGet extends PacketServerBasic {
    }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_PLAYERDATA; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_PLAYERDATA); }
 
    @Override
    public void encode(FriendlyByteBuf buf) {

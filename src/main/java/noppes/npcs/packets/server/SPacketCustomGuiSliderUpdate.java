@@ -1,10 +1,12 @@
 package noppes.npcs.packets.server;
 
+import java.util.List;
 import java.util.UUID;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.api.gui.ICustomGuiComponent;
 import noppes.npcs.api.wrapper.gui.CustomGuiSliderWrapper;
 import noppes.npcs.containers.ContainerCustomGui;
@@ -22,6 +24,12 @@ public class SPacketCustomGuiSliderUpdate extends PacketServerBasic {
       id = idIn;
       value = valueIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

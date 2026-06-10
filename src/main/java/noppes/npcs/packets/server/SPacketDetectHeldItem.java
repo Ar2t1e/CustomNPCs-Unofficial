@@ -7,6 +7,9 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketDetectHeldItem extends PacketServerBasic {
 
     protected static int channelId;
@@ -17,10 +20,13 @@ public class SPacketDetectHeldItem extends PacketServerBasic {
     public SPacketDetectHeldItem(ItemStack stackIn) { stack = stackIn; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.TOOL_NBTBOOK; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_NBTBOOK); }
 
     @Override
     public void encode(FriendlyByteBuf buf) { buf.writeItemStack(stack, false); }

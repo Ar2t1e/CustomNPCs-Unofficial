@@ -8,10 +8,13 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
+
+import java.util.List;
 
 public class SPacketCloneList extends PacketServerBasic {
 
@@ -21,6 +24,12 @@ public class SPacketCloneList extends PacketServerBasic {
    public SPacketCloneList() { }
 
    public SPacketCloneList(int tabIn) { tab = tabIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

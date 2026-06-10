@@ -11,6 +11,9 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketMailsSave extends PacketServerBasic {
 
     protected static int channelId;
@@ -21,10 +24,13 @@ public class SPacketMailsSave extends PacketServerBasic {
     public SPacketMailsSave(NBTTagCompound compoundIn) { compound = compoundIn; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.GLOBAL_MAIL; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_MAIL); }
 
     @Override
     public void encode(FriendlyByteBuf buf) { buf.writeNbt(compound); }

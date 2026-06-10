@@ -5,15 +5,14 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.CustomBlocks;
-import noppes.npcs.CustomItems;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.*;
 import noppes.npcs.blocks.tiles.TileBuilder;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
+
+import java.util.List;
 
 public class SPacketSchematicsTileGet extends PacketServerBasic {
 
@@ -23,6 +22,12 @@ public class SPacketSchematicsTileGet extends PacketServerBasic {
    public SPacketSchematicsTileGet() { }
 
    public SPacketSchematicsTileGet(BlockPos posIn) { pos = posIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

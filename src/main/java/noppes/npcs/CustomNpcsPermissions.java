@@ -86,6 +86,7 @@ public class CustomNpcsPermissions {
 	public static final Permission NPC_AI = new Permission(CustomNpcs.MODID + ".npc.ai");
 
 	// New from Unofficial (BetaZavr)
+	public static final Permission TOOL_BUILDERS = new Permission(CustomNpcs.MODID + ".tool.builders");
 	public static final Permission TOOL_TELEPORTER = new Permission(CustomNpcs.MODID + ".tool.teleporter");
 	public static final Permission EDIT_PERMISSION = new Permission(CustomNpcs.MODID + ".edit.permission", false);
 	public static final Permission EDIT_CLIENT_SCRIPT = new Permission(CustomNpcs.MODID + ".edit.client.script", false);

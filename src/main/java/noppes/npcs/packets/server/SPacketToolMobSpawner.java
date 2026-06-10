@@ -25,6 +25,8 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketToolMobSpawner extends PacketServerBasic {
 
@@ -48,11 +50,14 @@ public class SPacketToolMobSpawner extends PacketServerBasic {
    }
 
    @Override
-   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.cloner; }
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() {
-      return createSpawner ? CustomNpcsPermissions.SPAWNER_CREATE : CustomNpcsPermissions.SPAWNER_MOB;
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() {
+      return Collections.singletonList(createSpawner ? CustomNpcsPermissions.SPAWNER_CREATE : CustomNpcsPermissions.SPAWNER_MOB);
    }
 
    @Override

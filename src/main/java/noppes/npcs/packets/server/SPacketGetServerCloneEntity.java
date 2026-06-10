@@ -14,6 +14,9 @@ import noppes.npcs.roles.data.JobSpawnerCloneData;
 import noppes.npcs.roles.data.JobSpawnerNbtData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketGetServerCloneEntity extends PacketServerBasic {
 
     protected static int channelId;
@@ -32,7 +35,10 @@ public class SPacketGetServerCloneEntity extends PacketServerBasic {
     }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.NPC_ADVANCED; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_ADVANCED); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

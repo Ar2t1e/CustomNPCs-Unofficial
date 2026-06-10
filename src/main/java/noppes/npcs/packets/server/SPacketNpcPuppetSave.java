@@ -1,11 +1,15 @@
 package noppes.npcs.packets.server;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -19,10 +23,13 @@ public class SPacketNpcPuppetSave extends PacketServerBasic {
     public SPacketNpcPuppetSave(NBTTagCompound dataIn) { data = dataIn; }
 
     @Override
+    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+    @Override
     public boolean requiresNpc() { return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.NPC_ADVANCED; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_ADVANCED); }
 
     @Override
     public void encode(FriendlyByteBuf buf) { buf.writeNbt(data); }

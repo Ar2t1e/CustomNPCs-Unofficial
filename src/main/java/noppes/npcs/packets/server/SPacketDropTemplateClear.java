@@ -7,15 +7,21 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.DropController;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketDropTemplateClear extends PacketServerBasic {
 
     protected static int channelId;
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.NPC_INVENTORY; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_INVENTORY); }
 
     @Override
     public void encode(FriendlyByteBuf buf) { }

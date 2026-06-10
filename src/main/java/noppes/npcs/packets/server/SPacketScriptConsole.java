@@ -1,4 +1,4 @@
-package noppes.npcs.packets.client;
+package noppes.npcs.packets.server;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
@@ -7,11 +7,8 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.IScriptHandler;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.shared.common.PacketServerBasic;
-import noppes.npcs.packets.server.SPacketScriptText;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class SPacketScriptConsole extends PacketServerBasic {
 
@@ -37,10 +34,13 @@ public class SPacketScriptConsole extends PacketServerBasic {
     }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.TOOL_SCRIPTER; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_SCRIPTER); }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
@@ -70,7 +70,7 @@ public class SPacketScriptConsole extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         if (SPacketScriptText.handlers.containsKey(type)) {
             if (type == 6 && !CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.EDIT_CLIENT_SCRIPT)) {
-                warn(CustomNpcsPermissions.EDIT_CLIENT_SCRIPT);
+                warn(CustomNpcsPermissions.EDIT_CLIENT_SCRIPT.getNodeName());
             } else {
                 IScriptHandler handler = SPacketScriptText.handlers.get(type);
                 if (!data.containsKey(tab)) { data.put(tab, new LinkedHashMap<>()); }

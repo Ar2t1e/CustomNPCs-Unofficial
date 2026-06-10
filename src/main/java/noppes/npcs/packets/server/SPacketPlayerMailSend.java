@@ -3,9 +3,7 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.EventHooks;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.*;
 import noppes.npcs.api.event.RoleEvent;
 import noppes.npcs.containers.ContainerMail;
 import noppes.npcs.controllers.PlayerDataController;
@@ -13,6 +11,8 @@ import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerMail;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketPlayerMailSend extends PacketServerBasic {
 
@@ -28,6 +28,12 @@ public class SPacketPlayerMailSend extends PacketServerBasic {
       compound = compoundIn;
       cost = costIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

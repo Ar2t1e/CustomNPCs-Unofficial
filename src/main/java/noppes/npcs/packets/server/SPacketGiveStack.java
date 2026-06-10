@@ -7,6 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.play.server.SPacketSetSlot;
 import net.minecraft.util.SoundCategory;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerQuestData;
@@ -15,6 +16,8 @@ import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 
+import java.util.List;
+
 public class SPacketGiveStack extends PacketServerBasic {
 
     protected static int channelId;
@@ -22,7 +25,13 @@ public class SPacketGiveStack extends PacketServerBasic {
 
     public SPacketGiveStack() { }
 
-    public SPacketGiveStack(NBTTagCompound stackNBT) { data = stackNBT;}
+    public SPacketGiveStack(NBTTagCompound stackNBT) { data = stackNBT; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }

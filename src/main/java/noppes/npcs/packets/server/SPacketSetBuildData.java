@@ -5,12 +5,15 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.controllers.SyncController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.BuilderData;
+
+import java.util.List;
 
 public class SPacketSetBuildData extends PacketServerBasic {
 
@@ -20,6 +23,12 @@ public class SPacketSetBuildData extends PacketServerBasic {
     public SPacketSetBuildData() { }
 
     public SPacketSetBuildData(NBTTagCompound compoundIn) { compound = compoundIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }
@@ -59,7 +68,7 @@ public class SPacketSetBuildData extends PacketServerBasic {
                     case 3: stack = new ItemStack(CustomItems.npcplacer); break;
                     case 4: stack = new ItemStack(CustomItems.npcsaver); break;
                     default: stack = new ItemStack(CustomItems.npcremover); break;
-                };
+                }
             }
             else { stack = stack.copy(); }
             stack.setTagCompound(nbtStack);

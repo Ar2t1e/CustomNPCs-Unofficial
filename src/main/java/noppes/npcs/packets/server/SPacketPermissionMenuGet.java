@@ -8,9 +8,17 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketPermissionMenu;
 
+import java.util.List;
+
 public class SPacketPermissionMenuGet extends PacketServerBasic {
 
     protected static int channelId;
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

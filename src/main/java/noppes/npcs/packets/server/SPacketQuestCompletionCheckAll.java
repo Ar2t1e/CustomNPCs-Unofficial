@@ -3,15 +3,24 @@ package noppes.npcs.packets.server;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.QuestData;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 
+import java.util.List;
+
 public class SPacketQuestCompletionCheckAll extends PacketServerBasic {
 
    protected static int channelId;
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

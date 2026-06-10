@@ -5,10 +5,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketNpcRarityTitleSet;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketNpcRarityTitleGet extends PacketServerBasic {
 
@@ -18,6 +21,12 @@ public class SPacketNpcRarityTitleGet extends PacketServerBasic {
     public SPacketNpcRarityTitleGet() { }
 
     public SPacketNpcRarityTitleGet(int npcIdIn) { npcId = npcIdIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

@@ -13,7 +13,7 @@ import noppes.npcs.NBTTags;
 import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.mixin.nbt.INBTTagLongArrayMixin;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.client.SPacketScriptConsole;
+import noppes.npcs.packets.server.SPacketScriptConsole;
 import noppes.npcs.packets.server.SPacketSaveClientScripts;
 import noppes.npcs.packets.server.SPacketScriptEncrypt;
 import noppes.npcs.packets.server.SPacketScriptSave;
@@ -487,7 +487,9 @@ public class GuiScriptInterface extends GuiNPCInterface
 			save();
 			NBTTagCompound nbt = new NBTTagCompound();
 			nbt.setString("Name", gui.getTextField(0).getValue() + gui.ext);
-			nbt.setString("Path", path.replaceAll("\\\\", "/") + "/" + nbt.getString("Name"));
+			String p = path.replaceAll("\\\\", "/") + "/" + nbt.getString("Name");
+			if (p.contains("/scripts")) { p = p.substring(p.indexOf("/scripts") + 8); }
+			nbt.setString("Path", p);
 			nbt.setInteger("Tab", activeTab - 1);
 			nbt.setBoolean("OnlyTab", gui.onlyTab);
 			Packets.sendServer(new SPacketScriptEncrypt(type, nbt));

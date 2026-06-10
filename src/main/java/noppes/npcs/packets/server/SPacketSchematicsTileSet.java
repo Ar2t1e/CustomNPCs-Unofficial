@@ -7,11 +7,14 @@ import net.minecraft.util.math.BlockPos;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.blocks.tiles.TileBuilder;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
+
+import java.util.List;
 
 public class SPacketSchematicsTileSet extends PacketServerBasic {
 
@@ -25,6 +28,12 @@ public class SPacketSchematicsTileSet extends PacketServerBasic {
       pos = posIn;
       name = nameIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

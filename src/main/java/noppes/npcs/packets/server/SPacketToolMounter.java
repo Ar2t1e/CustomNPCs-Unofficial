@@ -11,10 +11,15 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.api.NpcAPI;
 import noppes.npcs.client.EntityUtil;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class SPacketToolMounter extends PacketServerBasic {
 
@@ -45,10 +50,13 @@ public class SPacketToolMounter extends PacketServerBasic {
    public SPacketToolMounter() { type = 3; }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.mount; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.TOOL_MOUNTER; }
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_MOUNTER); }
 
    @Override
    public void encode(FriendlyByteBuf buf) {
@@ -84,12 +92,10 @@ public class SPacketToolMounter extends PacketServerBasic {
             }
          }
          else if (type == 1) {
-            entity = EntityList.createEntityFromNBT(ServerCloneController.Instance.getCloneData(player, name, tab), player.world);
-            if (entity != null) {
-               entity.setPosition(data.mounted.posX, data.mounted.posY, data.mounted.posZ);
-               player.world.spawnEntity(entity);
-               entity.startRiding(data.mounted, true);
-            }
+            entity = (Entity) ServerCloneController.Instance.spawn(data.mounted.posX, data.mounted.posY, data.mounted.posZ,
+                    tab, name,
+                    Objects.requireNonNull(NpcAPI.Instance()).getIWorld(player.world));
+            if (entity != null) { entity.startRiding(data.mounted, true); }
          }
          else if (type == 2) {
             ResourceLocation loc = EntityUtil.getAllEntities(player.world, false).get(name);

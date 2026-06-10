@@ -12,6 +12,9 @@ import noppes.npcs.controllers.data.MarkData;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketMenuSave extends PacketServerBasic {
 
    protected static int channelId;
@@ -34,17 +37,19 @@ public class SPacketMenuSave extends PacketServerBasic {
    public boolean requiresNpc() { return true; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() {
+   public List<CustomNpcsPermissions.Permission> getPermission() {
+      CustomNpcsPermissions.Permission permission;
       switch (type) {
          case ADVANCED:
          case MARK:
-         case TRANSFORM: return CustomNpcsPermissions.NPC_ADVANCED;
-         case STATS: return CustomNpcsPermissions.NPC_STATS;
-         case INVENTORY: return CustomNpcsPermissions.NPC_INVENTORY;
-         case AI: return CustomNpcsPermissions.NPC_AI;
-         case MOVING_PATH: return CustomNpcsPermissions.TOOL_PATHER;
-         default: return CustomNpcsPermissions.NPC_DISPLAY;
+         case TRANSFORM: permission = CustomNpcsPermissions.NPC_ADVANCED; break;
+         case STATS: permission = CustomNpcsPermissions.NPC_STATS; break;
+         case INVENTORY: permission = CustomNpcsPermissions.NPC_INVENTORY; break;
+         case AI: permission = CustomNpcsPermissions.NPC_AI; break;
+         case MOVING_PATH: permission = CustomNpcsPermissions.TOOL_PATHER; break;
+         default: permission = CustomNpcsPermissions.NPC_DISPLAY; break;
       }
+      return Collections.singletonList(permission);
    }
 
    @Override

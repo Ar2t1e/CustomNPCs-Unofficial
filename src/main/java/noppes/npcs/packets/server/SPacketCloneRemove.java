@@ -8,6 +8,9 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketCloneRemove extends PacketServerBasic {
 
    protected static int channelId;
@@ -22,10 +25,13 @@ public class SPacketCloneRemove extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.cloner; }
 
    @Override
-   public CustomNpcsPermissions.Permission getPermission() { return CustomNpcsPermissions.NPC_CLONE; }
+   public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_CLONE); }
 
    @Override
    public void encode(FriendlyByteBuf buf) {

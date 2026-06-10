@@ -4,10 +4,12 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public class SPacketContainerOpen extends PacketServerBasic {
@@ -23,6 +25,12 @@ public class SPacketContainerOpen extends PacketServerBasic {
         buffer = new FriendlyByteBuf(Unpooled.buffer());
         consumer.accept(buffer);
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }
