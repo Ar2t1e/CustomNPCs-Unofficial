@@ -1,16 +1,17 @@
 package noppes.npcs.packets.server;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Vector;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.LinkedNpcController;
 import noppes.npcs.shared.common.PacketServerBasic;
-import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.client.PacketGuiScrollList;
 
 public class SPacketLinkedAdd extends PacketServerBasic {
 
@@ -20,7 +21,13 @@ public class SPacketLinkedAdd extends PacketServerBasic {
    public SPacketLinkedAdd(String nameIn) { name = nameIn; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_LINKED; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_LINKED); }
 
    public static void encode(SPacketLinkedAdd msg, FriendlyByteBuf buf) { buf.writeUtf(msg.name); }
 

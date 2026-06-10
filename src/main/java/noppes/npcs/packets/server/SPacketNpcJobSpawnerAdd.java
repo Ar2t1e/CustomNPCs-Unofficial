@@ -3,6 +3,7 @@ package noppes.npcs.packets.server;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.entity.data.role.IJobSpawner;
 import noppes.npcs.packets.Packets;
@@ -11,6 +12,8 @@ import noppes.npcs.roles.JobSpawner;
 import noppes.npcs.roles.data.JobSpawnerCloneData;
 import noppes.npcs.roles.data.JobSpawnerNbtData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketNpcJobSpawnerAdd extends PacketServerBasic {
 
@@ -26,6 +29,12 @@ public class SPacketNpcJobSpawnerAdd extends PacketServerBasic {
         name = nameIn;
         spawnerData = compoundIn;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

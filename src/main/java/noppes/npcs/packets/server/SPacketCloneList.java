@@ -6,6 +6,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.ServerCloneController;
@@ -13,12 +14,20 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 
+import java.util.List;
+
 public class SPacketCloneList extends PacketServerBasic {
 
    protected static int channelId;
    private final int tab;
 
    public SPacketCloneList(int tabIn) { tab = tabIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

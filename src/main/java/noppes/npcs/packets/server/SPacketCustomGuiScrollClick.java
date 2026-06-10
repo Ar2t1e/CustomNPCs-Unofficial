@@ -1,6 +1,7 @@
 package noppes.npcs.packets.server;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,11 +29,14 @@ public class SPacketCustomGuiScrollClick extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() {
-      if (player.containerMenu instanceof ContainerCustomGui container) { return container.activeGui.getPermission(); }
+   public List<PermissionNode<Boolean>> getPermission() {
+      if (player.containerMenu instanceof ContainerCustomGui container) { return Collections.singletonList(container.activeGui.getPermission()); }
       return null;
    }
 

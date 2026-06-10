@@ -11,6 +11,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NoppesUtilServer;
@@ -43,6 +44,12 @@ public class SPacketQuestCompletionCheck extends PacketServerBasic {
       questId = questIdIn;
       selectStack = selectStackIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

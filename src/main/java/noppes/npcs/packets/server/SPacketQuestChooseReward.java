@@ -4,6 +4,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumRewardType;
@@ -23,6 +24,12 @@ public class SPacketQuestChooseReward extends PacketServerBasic {
     private final int id;
 
     public SPacketQuestChooseReward(int idIn) { id = idIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

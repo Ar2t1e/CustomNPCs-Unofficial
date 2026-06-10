@@ -82,7 +82,6 @@ import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
-import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.blocks.tiles.TileBuilder;
 import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.GuiNbtBook;
@@ -1454,7 +1453,6 @@ public class ClientEventHandler {
             data.player = mc.player;
             data.name = mc.player.getName().getString();
             data.uuid = mc.player.getUUID().toString();
-            PlayerWrapper.clientWrapperPlayerData = null;
             miniMapLoaded = false;
             updateMiniMaps(true);
             YDEController.getInstance().getLevelData(ScriptController.getLevelKey());

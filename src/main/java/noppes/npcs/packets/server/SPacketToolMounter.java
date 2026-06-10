@@ -11,11 +11,15 @@ import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.api.NpcAPI;
 import noppes.npcs.client.EntityUtil;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class SPacketToolMounter extends PacketServerBasic {
@@ -55,10 +59,13 @@ public class SPacketToolMounter extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.mount; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.TOOL_MOUNTER; }
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_MOUNTER); }
 
    public static void encode(SPacketToolMounter msg, FriendlyByteBuf buf) {
       buf.writeInt(msg.type);
@@ -90,13 +97,10 @@ public class SPacketToolMounter extends PacketServerBasic {
             }
          }
          else if (type == 1) {
-            Optional<Entity> t = EntityType.create(ServerCloneController.Instance.getCloneData(player.createCommandSourceStack(), name, tab), player.level());
-            if (t.isPresent()) {
-               entity = t.get();
-               entity.setPos(data.mounted.getX(), data.mounted.getY(), data.mounted.getZ());
-               player.level().addFreshEntity(entity);
-               entity.startRiding(data.mounted, true);
-            }
+            entity = (Entity) ServerCloneController.Instance.spawn(data.mounted.getX(), data.mounted.getY(), data.mounted.getZ(),
+                    tab, name,
+                    Objects.requireNonNull(NpcAPI.Instance()).getIWorld(player.level()));
+            if (entity != null) { entity.startRiding(data.mounted, true); }
          }
          else if (type == 2) {
             ResourceLocation loc = EntityUtil.getAllEntities(player.level(), false).get(name);

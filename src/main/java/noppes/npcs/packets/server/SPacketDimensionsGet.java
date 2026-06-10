@@ -9,18 +9,17 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.DimensionController;
-import noppes.npcs.controllers.data.DimensionData;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSync;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SPacketDimensionsGet extends PacketServerBasic {
@@ -28,10 +27,13 @@ public class SPacketDimensionsGet extends PacketServerBasic {
    protected static int channelId;
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.teleporter; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.TOOL_TELEPORTER; }
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_TELEPORTER); }
 
    public static void encode(SPacketDimensionsGet ignoredMsg, FriendlyByteBuf ignoredBuf) { }
 

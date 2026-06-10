@@ -4,6 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.shared.common.PacketServerBasic;
@@ -17,6 +18,12 @@ public class SPacketDeadLootsGet extends PacketServerBasic {
     protected static int channelId;
 
     public SPacketDeadLootsGet() {  }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

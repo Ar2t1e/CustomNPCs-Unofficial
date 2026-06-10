@@ -9,6 +9,9 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketMarcetSave extends PacketServerBasic {
 
     protected static int channelId;
@@ -17,10 +20,13 @@ public class SPacketMarcetSave extends PacketServerBasic {
     public SPacketMarcetSave(CompoundTag dataIn) { data = dataIn; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_MARKETS; }
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_MARKETS); }
 
     public static void encode(SPacketMarcetSave msg, FriendlyByteBuf buf) { buf.writeNbt(msg.data); }
 

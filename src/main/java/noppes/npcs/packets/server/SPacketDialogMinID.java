@@ -23,10 +23,13 @@ public class SPacketDialogMinID extends PacketServerBasic {
     public SPacketDialogMinID(int idIn) { id = idIn; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item){ return true; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_DIALOG; }
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_DIALOG); }
 
     public static void encode(SPacketDialogMinID msg, FriendlyByteBuf buf) { buf.writeInt(msg.id); }
 

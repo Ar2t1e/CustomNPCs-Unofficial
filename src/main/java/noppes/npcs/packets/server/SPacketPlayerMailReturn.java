@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.PlayerDataController;
 import noppes.npcs.controllers.data.PlayerData;
@@ -14,12 +15,20 @@ import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.Util;
 
+import java.util.List;
+
 public class SPacketPlayerMailReturn extends PacketServerBasic {
 
     protected static int channelId;
     private final long id;
 
     public SPacketPlayerMailReturn(long idIn) { id = idIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

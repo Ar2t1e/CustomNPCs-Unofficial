@@ -12,6 +12,9 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketCloneNameCheck extends PacketServerBasic {
 
    protected static int channelId;
@@ -24,10 +27,13 @@ public class SPacketCloneNameCheck extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.cloner; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_CLONE; }
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_CLONE); }
 
    public static void encode(SPacketCloneNameCheck msg, FriendlyByteBuf buf) {
       buf.writeUtf(msg.name);

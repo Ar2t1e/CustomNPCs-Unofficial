@@ -2,9 +2,12 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketBankResetCeil extends PacketServerBasic {
 
@@ -19,6 +22,15 @@ public class SPacketBankResetCeil extends PacketServerBasic {
         ceilsUpdate = ceilsUpdateIn;
     }
 
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return true; }
+
     public static void encode(SPacketBankResetCeil msg, FriendlyByteBuf buf) {
         buf.writeInt(msg.bankId);
         buf.writeInt(msg.ceilPos);
@@ -29,9 +41,6 @@ public class SPacketBankResetCeil extends PacketServerBasic {
 
     @Override
     public int getChannelId() { return channelId; }
-
-    @Override
-    public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
     protected void handle() {

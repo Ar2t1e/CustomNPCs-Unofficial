@@ -23,10 +23,13 @@ public class SPacketQuestMinID extends PacketServerBasic {
     public SPacketQuestMinID(int questIdIn) { questId = questIdIn; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item){ return true; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_QUEST; }
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_QUEST); }
 
     public static void encode(SPacketQuestMinID msg, FriendlyByteBuf buf) { buf.writeInt(msg.questId); }
 

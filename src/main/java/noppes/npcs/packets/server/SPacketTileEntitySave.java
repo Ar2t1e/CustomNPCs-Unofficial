@@ -6,10 +6,13 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketTileEntitySave extends PacketServerBasic {
 
@@ -17,6 +20,12 @@ public class SPacketTileEntitySave extends PacketServerBasic {
    private final CompoundTag nbtTile;
 
    public SPacketTileEntitySave(CompoundTag nbtTileIn) { nbtTile = nbtTileIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

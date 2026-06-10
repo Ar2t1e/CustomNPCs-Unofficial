@@ -2,12 +2,15 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSendFilePart;
 import noppes.npcs.util.TempFile;
+
+import java.util.List;
 
 public class SPacketGetFilePart extends PacketServerBasic {
 
@@ -19,6 +22,12 @@ public class SPacketGetFilePart extends PacketServerBasic {
         partId = partIdIn;
         name = nameIn;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

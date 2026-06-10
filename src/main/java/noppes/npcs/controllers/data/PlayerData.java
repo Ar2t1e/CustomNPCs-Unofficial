@@ -38,7 +38,6 @@ public class PlayerData
 implements ICapabilityProvider, ICustomPlayerData {
 
    private static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "playerdata");
-   private static final PlayerData backup = new PlayerData();
    public static Capability<PlayerData> PLAYERDATA_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() { });
 
    private final LazyOptional<PlayerData> instance;
@@ -261,9 +260,11 @@ implements ICapabilityProvider, ICustomPlayerData {
       return new CompoundTag();
    }
 
-   public static PlayerData get(@Nullable Player player) {
+   public static @Nonnull PlayerData get(@Nullable Player player) {
       if (player == null || player.level().isClientSide) { return CustomNpcs.proxy.getPlayerData(player); }
-      PlayerData data = player.getCapability(PLAYERDATA_CAPABILITY, null).orElse(backup);
+      LazyOptional<PlayerData> liz = player.getCapability(PLAYERDATA_CAPABILITY, null);
+      if (!liz.isPresent()) { LogWriter.warn("Hmmm. Why is a new \"PlayerData\" being created?"); }
+      PlayerData data = liz.orElse(new PlayerData());
       if (data.player == null) {
          data.player = player;
          data.playerLevel = player.experienceLevel;

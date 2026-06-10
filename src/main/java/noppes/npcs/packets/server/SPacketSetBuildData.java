@@ -3,6 +3,7 @@ package noppes.npcs.packets.server;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.item.ISpecBuilder;
@@ -12,6 +13,8 @@ import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.BuilderData;
 
+import java.util.List;
+
 public class SPacketSetBuildData extends PacketServerBasic {
 
     protected static int channelId;
@@ -19,15 +22,21 @@ public class SPacketSetBuildData extends PacketServerBasic {
 
     public SPacketSetBuildData(CompoundTag compoundIn) { compound = compoundIn; }
 
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return true; }
+
     public static void encode(SPacketSetBuildData msg, FriendlyByteBuf buf) { buf.writeNbt(msg.compound); }
 
     public static SPacketSetBuildData decode(FriendlyByteBuf buf) { return new SPacketSetBuildData(buf.readAnySizeNbt()); }
 
     @Override
     public int getChannelId() { return channelId; }
-
-    @Override
-    public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
     public void handle() {

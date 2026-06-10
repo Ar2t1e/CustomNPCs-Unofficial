@@ -1,10 +1,12 @@
 package noppes.npcs.packets.server;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.FactionController;
@@ -14,6 +16,12 @@ import noppes.npcs.shared.common.PacketServerBasic;
 public class SPacketFactionsGet extends PacketServerBasic {
 
    protected static int channelId;
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

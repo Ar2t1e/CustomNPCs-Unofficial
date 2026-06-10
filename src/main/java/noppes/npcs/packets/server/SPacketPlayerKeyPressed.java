@@ -2,12 +2,15 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerOverlayData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketPlayerKeyPressed extends PacketServerBasic {
 
@@ -32,6 +35,12 @@ public class SPacketPlayerKeyPressed extends PacketServerBasic {
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    public static void encode(SPacketPlayerKeyPressed msg, FriendlyByteBuf buf) {
       buf.writeInt(msg.button);
@@ -65,7 +74,7 @@ public class SPacketPlayerKeyPressed extends PacketServerBasic {
          return;
       }
       if (pressed) { data.keyPress.add(button); }
-      else if (data.hasOrKeysPressed(button)) { data.keyPress.remove((Integer) button); }
+      else if (data.hasOrKeysPressed(button)) { data.keyPress.remove(button); }
       if (CustomNpcs.EnableScripting && !ScriptController.Instance.languages.isEmpty()) {
          EventHooks.onPlayerKeyEvent(player, button, ctrlDown, shiftDown, altDown, metaDown, pressed, openGui);
       }

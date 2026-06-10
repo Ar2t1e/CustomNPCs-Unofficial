@@ -29,10 +29,13 @@ public class SPacketGetFirstID extends PacketServerBasic {
     }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_FACTION; }
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_FACTION); }
 
     public static void encode(SPacketGetFirstID msg, FriendlyByteBuf buf) {
         buf.writeInt(msg.type);

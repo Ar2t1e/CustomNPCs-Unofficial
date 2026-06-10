@@ -14,7 +14,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -32,7 +34,13 @@ public class SPacketRemoteNpcsGet extends PacketServerBasic {
    public SPacketRemoteNpcsGet(boolean all) { isAll = all; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_GUI; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_GUI); }
 
    public static void encode(SPacketRemoteNpcsGet msg, FriendlyByteBuf buf) { buf.writeBoolean(msg.isAll); }
 

@@ -14,6 +14,8 @@ import noppes.npcs.entity.data.DropSet;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketDealDropSetSave extends PacketServerBasic {
 
@@ -29,7 +31,10 @@ public class SPacketDealDropSetSave extends PacketServerBasic {
     }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_MARKETS; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_MARKETS); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

@@ -2,9 +2,12 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketPlayerScreen extends PacketServerBasic {
 
@@ -18,7 +21,13 @@ public class SPacketPlayerScreen extends PacketServerBasic {
     }
 
     @Override
-    public boolean toolAllowed(ItemStack item){ return true; }
+    public boolean toolAllowed(ItemStack item) { return true; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     public static void encode(SPacketPlayerScreen msg, FriendlyByteBuf buf) {
         buf.writeUtf(msg.newScreen);

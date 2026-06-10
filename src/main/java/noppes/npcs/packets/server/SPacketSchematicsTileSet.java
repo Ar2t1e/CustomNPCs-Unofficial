@@ -1,9 +1,9 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
@@ -12,7 +12,8 @@ import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
-import noppes.npcs.shared.common.util.LogWriter;
+
+import java.util.List;
 
 public class SPacketSchematicsTileSet extends PacketServerBasic {
 
@@ -24,6 +25,12 @@ public class SPacketSchematicsTileSet extends PacketServerBasic {
       pos = posIn;
       name = nameIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

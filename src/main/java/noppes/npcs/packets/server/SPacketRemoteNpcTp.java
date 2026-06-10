@@ -2,9 +2,14 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketRemoteNpcTp extends PacketServerBasic {
 
@@ -12,6 +17,15 @@ public class SPacketRemoteNpcTp extends PacketServerBasic {
    private final int entityId;
 
    public SPacketRemoteNpcTp(int entityIdIn) { entityId = entityIdIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    public static void encode(SPacketRemoteNpcTp msg, FriendlyByteBuf buf) { buf.writeInt(msg.entityId); }
 

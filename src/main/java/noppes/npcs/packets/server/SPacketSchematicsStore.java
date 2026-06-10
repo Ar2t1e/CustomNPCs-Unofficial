@@ -4,12 +4,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.blocks.tiles.TileCopy;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketSchematicsStore extends PacketServerBasic {
 
@@ -23,6 +26,12 @@ public class SPacketSchematicsStore extends PacketServerBasic {
       name = nameIn;
       data = dataIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

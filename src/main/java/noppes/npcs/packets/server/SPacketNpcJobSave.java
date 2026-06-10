@@ -1,10 +1,14 @@
 package noppes.npcs.packets.server;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
@@ -17,10 +21,13 @@ public class SPacketNpcJobSave extends PacketServerBasic {
    public SPacketNpcJobSave(CompoundTag dataIn) { data = dataIn; }
 
    @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
    public boolean requiresNpc() { return true; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_ADVANCED; }
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_ADVANCED); }
 
    public static void encode(SPacketNpcJobSave msg, FriendlyByteBuf buf) { buf.writeNbt(msg.data); }
 

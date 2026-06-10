@@ -13,10 +13,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTeleporter;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketDimensionTeleport extends PacketServerBasic {
 
@@ -24,6 +27,12 @@ public class SPacketDimensionTeleport extends PacketServerBasic {
    private final ResourceLocation id;
 
    public SPacketDimensionTeleport(ResourceLocation idIn) { id = idIn; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.teleporter; }

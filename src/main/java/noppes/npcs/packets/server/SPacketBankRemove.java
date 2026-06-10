@@ -1,11 +1,15 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.BankController;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketBankRemove extends PacketServerBasic {
 
@@ -15,7 +19,13 @@ public class SPacketBankRemove extends PacketServerBasic {
    public SPacketBankRemove(int bankIdIn) { bankId = bankIdIn; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_BANK; }
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_BANK); }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return true; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
 
    public static void encode(SPacketBankRemove msg, FriendlyByteBuf buf) { buf.writeInt(msg.bankId); }
 

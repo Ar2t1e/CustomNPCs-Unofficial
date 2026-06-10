@@ -10,19 +10,25 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketMailsGet extends PacketServerBasic {
 
     protected static int channelId;
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_MAIL; }
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_MAIL); }
 
-    public static void encode(SPacketMailsGet msg, FriendlyByteBuf buf) { }
+    public static void encode(SPacketMailsGet ignoredMsg, FriendlyByteBuf ignoredBuf) { }
 
-    public static SPacketMailsGet decode(FriendlyByteBuf buf) { return new SPacketMailsGet(); }
+    public static SPacketMailsGet decode(FriendlyByteBuf ignoredBuf) { return new SPacketMailsGet(); }
 
     @Override
     public int getChannelId() { return channelId; }

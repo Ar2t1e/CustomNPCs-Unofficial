@@ -4,7 +4,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumPlayerData;
@@ -13,6 +15,8 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.Util;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class SPacketPlayerDataCleaning extends PacketServerBasic {
@@ -23,7 +27,13 @@ public class SPacketPlayerDataCleaning extends PacketServerBasic {
     public SPacketPlayerDataCleaning(long timeIn) { time = timeIn; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_PLAYERDATA; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_PLAYERDATA); }
 
     public static void encode(SPacketPlayerDataCleaning msg, FriendlyByteBuf buf) { buf.writeLong(msg.time); }
 

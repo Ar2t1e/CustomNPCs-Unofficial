@@ -1,12 +1,14 @@
 package noppes.npcs.packets.server;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.item.INPCToolItem;
@@ -34,6 +36,14 @@ public class SPacketGuiOpen extends PacketServerBasic {
       pos = posIn;
    }
 
+   @Override
+   public boolean requiresNpc() { return false; }
+
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) {
       return item.getItem() instanceof INPCToolItem || (item.getItem() instanceof ISpecBuilder && player.isCreative());
    }
@@ -81,24 +91,21 @@ public class SPacketGuiOpen extends PacketServerBasic {
          RoleTransporter role = (RoleTransporter)npc.role;
          ArrayList<String> list = new ArrayList<>();
          TransportLocation location = role.getLocation();
-         String name = role.getLocation().name;
-         for (TransportLocation loc : location.category.getDefaultLocations()) {
-            if (!list.contains(loc.name)) {
-               list.add(loc.name);
+         if (location != null) {
+            String name = location.name;
+            for (TransportLocation loc : location.category.getDefaultLocations()) {
+               if (!list.contains(loc.name)) { list.add(loc.name); }
             }
-         }
-         PlayerTransportData playerdata = PlayerData.get(player).transportData;
-         for (int i : playerdata.transports) {
-            TransportLocation loc = TransportController.getInstance().getTransport(i);
-            if (loc != null && location.category.locations.containsKey(loc.id) && !list.contains(loc.name)) {
-               list.add(loc.name);
+            PlayerTransportData playerdata = PlayerData.get(player).transportData;
+            for (int i : playerdata.transports) {
+               TransportLocation loc = TransportController.getInstance().getTransport(i);
+               if (loc != null && location.category.locations.containsKey(loc.id) && !list.contains(loc.name)) { list.add(loc.name); }
             }
+            list.remove(name);
          }
-         list.remove(name);
          return list;
-      } else {
-         return null;
       }
+      return null;
    }
 
 }

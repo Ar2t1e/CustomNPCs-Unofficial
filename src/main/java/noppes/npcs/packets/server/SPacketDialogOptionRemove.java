@@ -1,13 +1,18 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketDialogOptionRemove extends PacketServerBasic {
 
@@ -17,7 +22,13 @@ public class SPacketDialogOptionRemove extends PacketServerBasic {
     public SPacketDialogOptionRemove(int slotIn) { slot = slotIn; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_DIALOG; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_DIALOG); }
 
     public static void encode(SPacketDialogOptionRemove msg, FriendlyByteBuf buf) { buf.writeInt(msg.slot); }
 

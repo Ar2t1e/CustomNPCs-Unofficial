@@ -1,6 +1,5 @@
 package noppes.npcs.api.wrapper;
 
-import java.lang.reflect.Field;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -18,7 +17,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityProvider;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
@@ -27,17 +25,16 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityProjectile;
+import noppes.npcs.mixin.minecraftforge.common.capabilities.ICapabilityProviderMixin;
 import noppes.npcs.shared.common.util.LogWriter;
 import org.jetbrains.annotations.NotNull;
 
 public class WrapperEntityData implements ICapabilityProvider {
 
-   private static final Field capField;
    public static Capability<WrapperEntityData> ENTITYDATA_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
    private final LazyOptional<WrapperEntityData> instance = LazyOptional.of(() -> this);
    public IEntity<?> base;
-   private static final WrapperEntityData backup = new WrapperEntityData(null);
-   private static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "entitydata");
+   private static final ResourceLocation CNPCS_CAPKEY = new ResourceLocation(CustomNpcs.MODID, "entitydata");
 
    public WrapperEntityData(IEntity<?> base) {
       this.base = base;
@@ -50,33 +47,28 @@ public class WrapperEntityData implements ICapabilityProvider {
    public static IEntity<?> get(Entity entity) {
       if (entity == null || entity.position() == Vec3.ZERO) { return null; }
       try {
-         CapabilityDispatcher dispatcher = (CapabilityDispatcher) capField.get(entity);
+         CapabilityDispatcher dispatcher = ((ICapabilityProviderMixin) entity).getCapas();
          if (dispatcher == null) {
             LogWriter.warn("Unable to get EntityData for " + entity);
             return getData(entity).base;
          }
          else {
-            if (entity instanceof Player && entity.level().isClientSide() && PlayerWrapper.clientWrapperPlayerData != null) {
-               return PlayerWrapper.clientWrapperPlayerData.base;
+            LazyOptional<WrapperEntityData> liz = dispatcher.getCapability(ENTITYDATA_CAPABILITY, null);
+            boolean error = !liz.isPresent() && !entity.level().isClientSide();
+            WrapperEntityData data = liz.orElse(getData(entity));
+            if (error || data.base == null) {
+               LogWriter.warn("Unable to get EntityData for " + entity);
+               if (data.base == null) { data = getData(entity); }
             }
-            WrapperEntityData data = dispatcher.getCapability(ENTITYDATA_CAPABILITY, null).orElse(backup);
-            if (data == backup) {
-               if (!entity.level().isClientSide()) { LogWriter.warn("Unable to get EntityData for " + entity); }
-               data = getData(entity);
-            }
-            if (data != null && entity instanceof Player  && entity.level().isClientSide() && PlayerWrapper.clientWrapperPlayerData == null) {
-               PlayerWrapper.clientWrapperPlayerData = data;
-            }
-            return data == null ? null : data.base;
+            return data.base;
          }
-      } catch (IllegalAccessException e) {
-         LogWriter.error(e);
       }
+      catch (Exception e) { LogWriter.error(e); }
       return null;
    }
 
    public static void register(AttachCapabilitiesEvent<Entity> event) {
-      event.addCapability(key, getData(event.getObject()));
+      event.addCapability(CNPCS_CAPKEY, getData(event.getObject()));
    }
 
    private static WrapperEntityData getData(Entity entity) {
@@ -106,16 +98,6 @@ public class WrapperEntityData implements ICapabilityProvider {
          }
       }
       else { return null; }
-   }
-
-   static {
-      Field f = null;
-      try {
-         f = CapabilityProvider.class.getDeclaredField("capabilities");
-         f.trySetAccessible();
-      }
-      catch (NoSuchFieldException e) { LogWriter.error(e); }
-      capField = f;
    }
 
 }

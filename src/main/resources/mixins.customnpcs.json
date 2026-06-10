@@ -9,6 +9,7 @@
     "client.model.obj.ObjModelMixin",
     "core.INonNullListMixin",
     "minecraftforge.common.capabilities.CapabilityDispatcherMixin",
+    "minecraftforge.common.capabilities.ICapabilityProviderMixin",
     "minecraftforge.event.entity.living.ILivingAttackEventMixin",
     "minecraftforge.resource.IDelegatingPackResourcesMixin",
     "nbt.IListTagMixin",

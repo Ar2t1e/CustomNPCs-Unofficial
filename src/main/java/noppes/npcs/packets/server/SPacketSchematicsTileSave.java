@@ -4,12 +4,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.blocks.tiles.TileBuilder;
 import noppes.npcs.shared.common.PacketServerBasic;
-import noppes.npcs.shared.common.util.LogWriter;
+
+import java.util.List;
 
 public class SPacketSchematicsTileSave extends PacketServerBasic {
 
@@ -21,6 +23,12 @@ public class SPacketSchematicsTileSave extends PacketServerBasic {
       pos = posIn;
       data = dataIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

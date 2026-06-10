@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NoppesUtilServer;
@@ -20,6 +21,8 @@ import noppes.npcs.packets.client.PacketGuiClose;
 import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.roles.RoleDialog;
 
+import java.util.List;
+
 public class SPacketDialogSelected extends PacketServerBasic {
 
    protected static int channelId;
@@ -30,6 +33,9 @@ public class SPacketDialogSelected extends PacketServerBasic {
       dialogId = dialogIdIn;
       optionId = optionIdIn;
    }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

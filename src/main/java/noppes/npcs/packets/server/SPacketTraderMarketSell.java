@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NoppesUtilServer;
@@ -21,6 +22,7 @@ import noppes.npcs.packets.client.PacketUpdateMarcetGui;
 import noppes.npcs.util.Util;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SPacketTraderMarketSell extends PacketServerBasic {
@@ -37,6 +39,12 @@ public class SPacketTraderMarketSell extends PacketServerBasic {
         npcID = npcIDIn;
         count = countIn;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

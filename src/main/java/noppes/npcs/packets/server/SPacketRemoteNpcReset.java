@@ -2,23 +2,32 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketRemoteNpcReset extends PacketServerBasic {
 
    protected static int channelId;
    private final int entityId;
 
-   public SPacketRemoteNpcReset(int entityIdIn) {
-      entityId = entityIdIn;
-   }
+   public SPacketRemoteNpcReset(int entityIdIn) { entityId = entityIdIn; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_RESET; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_RESET); }
 
    public static void encode(SPacketRemoteNpcReset msg, FriendlyByteBuf buf) { buf.writeInt(msg.entityId); }
 

@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.*;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.wrapper.ItemScriptedWrapper;
@@ -28,6 +29,9 @@ public class SPacketScriptGet extends PacketServerBasic {
    private final int type;
 
    public SPacketScriptGet(int typeIn) { type = typeIn; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

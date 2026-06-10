@@ -2,7 +2,9 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.DialogController;
@@ -11,12 +13,21 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSync;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketDialogCategoryGet extends PacketServerBasic {
 
     protected static int channelId;
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_DIALOG; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_DIALOG); }
 
     public static void encode(SPacketDialogCategoryGet ignoredMsg, FriendlyByteBuf ignoredBuf) { }
 

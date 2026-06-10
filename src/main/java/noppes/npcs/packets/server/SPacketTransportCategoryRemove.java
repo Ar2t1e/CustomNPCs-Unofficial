@@ -2,13 +2,18 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.TransportController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketTransportCategoryRemove extends PacketServerBasic {
 
@@ -18,7 +23,13 @@ public class SPacketTransportCategoryRemove extends PacketServerBasic {
    public SPacketTransportCategoryRemove(int idIn) { id = idIn; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_TRANSPORT; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_TRANSPORT); }
 
    public static void encode(SPacketTransportCategoryRemove msg, FriendlyByteBuf buf) {
       buf.writeInt(msg.id);

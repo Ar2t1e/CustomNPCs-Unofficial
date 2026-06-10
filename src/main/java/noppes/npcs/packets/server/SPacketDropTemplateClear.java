@@ -8,12 +8,18 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.DropController;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketDropTemplateClear extends PacketServerBasic {
 
     protected static int channelId;
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_INVENTORY; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_INVENTORY); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

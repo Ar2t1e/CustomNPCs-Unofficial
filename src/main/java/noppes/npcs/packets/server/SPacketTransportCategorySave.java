@@ -2,11 +2,16 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.TransportController;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketTransportCategorySave extends PacketServerBasic {
 
@@ -16,7 +21,13 @@ public class SPacketTransportCategorySave extends PacketServerBasic {
    public SPacketTransportCategorySave(CompoundTag compoundIn) { compound = compoundIn; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_TRANSPORT; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_TRANSPORT); }
 
    public static void encode(SPacketTransportCategorySave msg, FriendlyByteBuf buf) { buf.writeNbt(msg.compound); }
 

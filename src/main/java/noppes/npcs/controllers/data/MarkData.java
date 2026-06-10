@@ -75,12 +75,11 @@ public class MarkData implements ICapabilityProvider {
    public static Capability<MarkData> CNPCS_MARKDATA_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
    private static final ResourceLocation CNPCS_CAPKEY = new ResourceLocation(CustomNpcs.MODID, "markdata");
    private static final String NBT_KEY = "cnpcmarkdata";
-   private static final MarkData backup = new MarkData();
 
    public static void register(AttachCapabilitiesEvent<Entity> event) { event.addCapability(CNPCS_CAPKEY, new MarkData()); }
 
    public static MarkData get(LivingEntity entity) {
-      MarkData data = entity.getCapability(CNPCS_MARKDATA_CAPABILITY, null).orElse(backup);
+      MarkData data = entity.getCapability(CNPCS_MARKDATA_CAPABILITY, null).orElse(new MarkData());
       if (data.entity == null) {
          data.entity = entity;
          data.setNBT(entity.getPersistentData().getCompound(NBT_KEY));

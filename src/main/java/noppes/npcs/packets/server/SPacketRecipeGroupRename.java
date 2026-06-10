@@ -10,6 +10,9 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketRecipeGroupRename extends PacketServerBasic {
 
     protected static int channelId;
@@ -24,10 +27,13 @@ public class SPacketRecipeGroupRename extends PacketServerBasic {
     }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_RECIPE; }
+    public List<PermissionNode<Boolean>>  getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_RECIPE); }
 
     public static void encode(SPacketRecipeGroupRename msg, FriendlyByteBuf buf) {
         buf.writeBoolean(msg.isGlobal);

@@ -62,9 +62,6 @@ public class PlayerWrapper<T extends Player> extends EntityLivingBaseWrapper<T> 
    private Object pixelmonPCStorage;
    private PlayerData data;
 
-   // New from Unofficial (BetaZavr)
-   public static WrapperEntityData clientWrapperPlayerData;
-
    public PlayerWrapper(T player) { super(player); }
 
    @Override
@@ -356,6 +353,7 @@ public class PlayerWrapper<T extends Player> extends EntityLivingBaseWrapper<T> 
       return false;
    }
 
+   @SuppressWarnings("all")
    public boolean hasAchievement(String achievement) { return hasAdvancement(achievement); }
 
    @Override

@@ -2,13 +2,15 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.controllers.BankController;
 import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;
-import noppes.npcs.shared.common.util.LogWriter;
+
+import java.util.List;
 
 public class SPacketBankOpen extends PacketServerBasic {
 
@@ -26,6 +28,9 @@ public class SPacketBankOpen extends PacketServerBasic {
       ceilsUpdate = ceilsUpdateIn;
       bankId = bankIdIn;
    }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

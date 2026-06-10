@@ -5,11 +5,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiClose;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketDeadLootsOpen extends PacketServerBasic {
 
@@ -17,6 +20,12 @@ public class SPacketDeadLootsOpen extends PacketServerBasic {
     private final String name;
 
     public SPacketDeadLootsOpen(String nameIn) { name = nameIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

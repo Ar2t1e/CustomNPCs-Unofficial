@@ -10,6 +10,9 @@ import noppes.npcs.controllers.DropController;
 import noppes.npcs.controllers.data.DropsTemplate;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketDropTemplateSave extends PacketServerBasic {
 
     protected static int channelId;
@@ -18,7 +21,10 @@ public class SPacketDropTemplateSave extends PacketServerBasic {
     public SPacketDropTemplateSave(CompoundTag compoundIn) { compound = compoundIn; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_INVENTORY; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_INVENTORY); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

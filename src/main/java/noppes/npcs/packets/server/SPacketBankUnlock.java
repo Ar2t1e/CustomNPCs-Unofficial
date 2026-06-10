@@ -2,8 +2,11 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketBankUnlock extends PacketServerBasic {
 
@@ -14,6 +17,9 @@ public class SPacketBankUnlock extends PacketServerBasic {
 
    @Override
    public boolean requiresNpc() { return true; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    public static void encode(SPacketBankUnlock ignoredMsg, FriendlyByteBuf ignoredBuf) { }
 

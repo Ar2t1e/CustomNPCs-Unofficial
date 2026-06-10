@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
@@ -12,6 +13,8 @@ import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.schematics.Schematic;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.schematics.SchematicWrapper;
+
+import java.util.List;
 
 public class SPacketSchematicsTileBuild extends PacketServerBasic {
 
@@ -25,6 +28,12 @@ public class SPacketSchematicsTileBuild extends PacketServerBasic {
       rotation = rotationIn;
       compound = compoundIn;
    }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) {

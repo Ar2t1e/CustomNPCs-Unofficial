@@ -95,6 +95,8 @@ public class CustomNpcsPermissions {
            (player, id, context) -> inData(CustomNpcs.MODID + ".scenes", player));
 
    // New from Unofficial (BetaZavr)
+   public static final PermissionNode<Boolean> TOOL_BUILDERS = new PermissionNode<>(CustomNpcs.MODID, "tool.builders", PermissionTypes.BOOLEAN,
+           (player, id, context) -> inData(CustomNpcs.MODID + ".tool.builders", player));
    public static final PermissionNode<Boolean> TOOL_TELEPORTER = new PermissionNode<>(CustomNpcs.MODID, "tool.teleporter", PermissionTypes.BOOLEAN,
            (player, id, context) -> inData(CustomNpcs.MODID + ".tool.teleporter", player));
    public static final PermissionNode<Boolean> EDIT_PERMISSION = new PermissionNode<>(CustomNpcs.MODID, "edit.permission", PermissionTypes.BOOLEAN,

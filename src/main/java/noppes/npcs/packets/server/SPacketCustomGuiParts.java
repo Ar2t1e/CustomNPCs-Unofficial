@@ -8,6 +8,9 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.containers.ContainerCustomGui;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketCustomGuiParts extends PacketServerBasic {
 
    protected static int channelId;
@@ -16,11 +19,14 @@ public class SPacketCustomGuiParts extends PacketServerBasic {
    public SPacketCustomGuiParts(CompoundTag dataIn) { data = dataIn; }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() {
-      if (player.containerMenu instanceof ContainerCustomGui container) { return container.activeGui.getPermission(); }
+   public List<PermissionNode<Boolean>> getPermission() {
+      if (player.containerMenu instanceof ContainerCustomGui container) { return Collections.singletonList(container.activeGui.getPermission()); }
       return null;
    }
 

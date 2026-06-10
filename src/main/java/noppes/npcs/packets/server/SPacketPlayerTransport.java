@@ -2,10 +2,12 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.roles.RoleTransporter;
+
+import java.util.List;
 
 public class SPacketPlayerTransport extends PacketServerBasic {
 
@@ -13,6 +15,9 @@ public class SPacketPlayerTransport extends PacketServerBasic {
    private final int id;
 
    public SPacketPlayerTransport(int idIn) { id = idIn; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

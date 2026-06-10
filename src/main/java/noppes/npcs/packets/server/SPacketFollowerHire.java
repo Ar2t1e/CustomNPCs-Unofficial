@@ -2,6 +2,7 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.event.RoleEvent;
@@ -15,6 +16,7 @@ import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.util.Util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SPacketFollowerHire extends PacketServerBasic {
@@ -23,6 +25,9 @@ public class SPacketFollowerHire extends PacketServerBasic {
    private final int pos;
 
    public SPacketFollowerHire(int posIn) { pos = posIn; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

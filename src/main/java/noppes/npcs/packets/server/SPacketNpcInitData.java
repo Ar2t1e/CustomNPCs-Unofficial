@@ -4,11 +4,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketNpcInitData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketNpcInitData extends PacketServerBasic {
 
@@ -16,6 +19,12 @@ public class SPacketNpcInitData extends PacketServerBasic {
     private final int npcId;
 
     public SPacketNpcInitData(int npcIdIn) { npcId = npcIdIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

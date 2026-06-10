@@ -1,5 +1,6 @@
 package noppes.npcs.shared.common;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -9,13 +10,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent.Context;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
-import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomNPCsScheduler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,11 +27,11 @@ public abstract class PacketServerBasic extends PacketBasic {
    public PlayerWrapper<?> iPlayer;
    public EntityNPCInterface npc;
 
-   public boolean requiresNpc() { return false; }
+   public abstract boolean requiresNpc();
 
-   public PermissionNode<Boolean> getPermission() { return null; }
+   public abstract List<PermissionNode<Boolean>>  getPermission();
 
-   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+   public abstract boolean toolAllowed(ItemStack item);
 
    public static <MSG> void handle(MSG msg, Supplier<Context> ctx) {
       ctx.get().enqueueWork(() -> {
@@ -45,28 +46,50 @@ public abstract class PacketServerBasic extends PacketBasic {
          parent.npc = NoppesUtilServer.getEditingNpc(parent.player);
          try {
             if (!parent.requiresNpc() || parent.npc != null) {
-               if (parent.getPermission() == null || CustomNpcsPermissions.hasPermission(parent.player, parent.getPermission())) {
-                  if (!parent.toolAllowed(parent.player.getInventory().getSelected())) { parent.warn(parent.getPermission()); }
-                  else { parent.handle(); }
+               List<PermissionNode<Boolean>> permissions = parent.getPermission();
+               StringBuilder prs = new StringBuilder();
+               if (permissions != null) {
+                  boolean isAccess = permissions.isEmpty();
+                  for (PermissionNode<Boolean> permission : permissions) {
+                     if (!prs.isEmpty()) { prs.append(", "); }
+                     prs.append(permission.getNodeName());
+                     if (CustomNpcsPermissions.hasPermission(parent.player, permission)) { isAccess = true; }
+                  }
+                  if (!isAccess) { parent.permission(prs.toString()); }
                }
-               else { parent.permission(parent.getPermission(), parent.getClass().getSimpleName()); }
+               if (prs.isEmpty()) {
+                  CustomNPCsScheduler.runTack(()-> {
+                     if (!parent.toolAllowed(parent.player.getInventory().getSelected())) { parent.warn(prs.toString()); }
+                     else { parent.handle(); }
+                  });
+               }
             }
          } catch (Exception e) { LOGGER.error(e); }
       });
       ctx.get().setPacketHandled(true);
    }
 
-   protected void permission(PermissionNode<Boolean> permission, String className) {
-      LOGGER.warn("{}: attempted to use a mechanism that was prohibited to him. Permission: {}", player.getName().getString(), permission.getNodeName());
-      player.sendSystemMessage(Component.translatable("availability.permission")
-              .append(ChatFormatting.RED + ": " + ChatFormatting.RESET + className));
+   protected void permission(String permissions) {
+      LOGGER.warn("Player: \"{}\" attempted to use a mechanism that was prohibited to him. Packet: \"{}\". Permissions: [{}]",
+              player == null ? "NULL" : player.getName().getString(),
+              getClass().getSimpleName(),
+              permissions == null || permissions.isEmpty() ? "NULL" : permissions);
+      sendNotAccess();
    }
 
-   protected void warn(PermissionNode<Boolean> permission) {
-      LOGGER.warn("{}: tried to use custom npcs without a tool in hand, possibly a hacker - {}, permission - {}",
-              player == null ? "NULL" : player.getName().getString(), this,
-              permission == null ? "ItemStack" : permission.getNodeName());
-      if (player != null)  { player.sendSystemMessage(Component.translatable("availability.permission")); }
+   protected void warn(String permissions) {
+      LOGGER.warn("Player: \"{}\" tried to use custom npcs without a tool in hand, possibly a hacker. Packet: \"{}\". Permission: [{}]",
+              player == null ? "NULL" : player.getName().getString(),
+              getClass().getSimpleName(),
+              permissions == null || permissions.isEmpty() ? "NULL" : permissions);
+      sendNotAccess();
+   }
+
+   private void sendNotAccess() {
+      if (player != null) {
+         player.sendSystemMessage(Component.translatable("availability.permission")
+                 .append(ChatFormatting.RED + ": " + ChatFormatting.RESET + getClass().getSimpleName()));
+      }
    }
 
 }

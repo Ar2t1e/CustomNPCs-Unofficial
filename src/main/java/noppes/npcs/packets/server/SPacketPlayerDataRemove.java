@@ -8,7 +8,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.constants.EnumPlayerData;
@@ -32,7 +34,13 @@ public class SPacketPlayerDataRemove extends PacketServerBasic {
    }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_PLAYERDATA; }
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_PLAYERDATA); }
 
    public static void encode(SPacketPlayerDataRemove msg, FriendlyByteBuf buf) {
       buf.writeEnum(msg.type);

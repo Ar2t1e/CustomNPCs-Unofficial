@@ -10,6 +10,9 @@ import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketCloneSave extends PacketServerBasic {
 
    protected static int channelId;
@@ -22,10 +25,13 @@ public class SPacketCloneSave extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.cloner; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_CLONE; }
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_CLONE); }
 
    public static void encode(SPacketCloneSave msg, FriendlyByteBuf buf) {
       buf.writeUtf(msg.name);

@@ -4,6 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.*;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.containers.inventories.NpcMiscInventory;
@@ -13,6 +14,7 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.Util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SPacketBankUpgrade extends PacketServerBasic {
@@ -32,6 +34,15 @@ public class SPacketBankUpgrade extends PacketServerBasic {
       ceilPos = ceilPosIn;
    }
 
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return true; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
+
    public static void encode(SPacketBankUpgrade msg, FriendlyByteBuf buf) {
       buf.writeInt(msg.bankId);
       buf.writeInt(msg.ceil);
@@ -46,9 +57,6 @@ public class SPacketBankUpgrade extends PacketServerBasic {
 
    @Override
    public int getChannelId() { return channelId; }
-
-   @Override
-   public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
    protected void handle() {

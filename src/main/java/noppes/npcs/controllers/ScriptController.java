@@ -206,7 +206,7 @@ public class ScriptController {
    public static void setLevelKey(String levelKey) { currentAgreement = levelKey != null ? levelKey : ""; }
 
    public void loadCategories() {
-      dir = new File(CustomNpcs.getLevelSaveDirectory(), "scripts");
+      dir = CustomNpcs.getLevelSaveDirectory("scripts");
       localDir = CustomNpcs.getLevelSaveDirectory("scripts", true);
       if (!dir.exists() && !dir.mkdirs()) { return; }
       clientDir = new File(dir, "client");

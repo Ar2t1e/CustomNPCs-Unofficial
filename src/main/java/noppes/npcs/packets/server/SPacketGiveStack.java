@@ -1,11 +1,11 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
@@ -16,12 +16,20 @@ import noppes.npcs.controllers.data.QuestData;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 
+import java.util.List;
+
 public class SPacketGiveStack extends PacketServerBasic {
 
     protected static int channelId;
     private final CompoundTag data;
 
     public SPacketGiveStack(CompoundTag stackNBT) { data = stackNBT;}
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }

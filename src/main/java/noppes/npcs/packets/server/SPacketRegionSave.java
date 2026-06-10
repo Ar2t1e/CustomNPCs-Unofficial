@@ -3,10 +3,15 @@ package noppes.npcs.packets.server;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.BorderController;
 import noppes.npcs.controllers.data.Zone3D;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketRegionSave extends PacketServerBasic {
 
@@ -14,6 +19,12 @@ public class SPacketRegionSave extends PacketServerBasic {
     private final CompoundTag data;
 
     public SPacketRegionSave(CompoundTag dataIn) { data = dataIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_BUILDERS); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

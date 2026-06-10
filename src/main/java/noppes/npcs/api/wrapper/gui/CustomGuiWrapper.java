@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
-import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.gui.ICustomGui;

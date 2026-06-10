@@ -12,6 +12,9 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketMenuGet extends PacketServerBasic {
 
    protected static int channelId;
@@ -29,11 +32,9 @@ public class SPacketMenuGet extends PacketServerBasic {
    public boolean requiresNpc() { return true; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_GUI; }
+   public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_GUI); }
 
-   public static void encode(SPacketMenuGet msg, FriendlyByteBuf buf) {
-      buf.writeEnum(msg.type);
-   }
+   public static void encode(SPacketMenuGet msg, FriendlyByteBuf buf) { buf.writeEnum(msg.type); }
 
    public static SPacketMenuGet decode(FriendlyByteBuf buf) { return new SPacketMenuGet(buf.readEnum(EnumMenuType.class)); }
 

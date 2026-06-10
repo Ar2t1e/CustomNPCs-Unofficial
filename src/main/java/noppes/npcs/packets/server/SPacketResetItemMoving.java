@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.constants.EnumMenuType;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -18,11 +19,19 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
 
+import java.util.List;
+
 public class SPacketResetItemMoving extends PacketServerBasic {
 
     protected static int channelId;
 
     public SPacketResetItemMoving() { }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

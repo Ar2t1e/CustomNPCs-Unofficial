@@ -11,6 +11,9 @@ import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.roles.JobSpawner;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketNpcJobSpawnerRemove extends PacketServerBasic {
 
     protected static int channelId;
@@ -22,7 +25,10 @@ public class SPacketNpcJobSpawnerRemove extends PacketServerBasic {
         isDead = isDeadIn;
     }
 
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_ADVANCED; }
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_ADVANCED); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

@@ -3,6 +3,7 @@ package noppes.npcs.packets.server;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.IPos;
@@ -12,6 +13,8 @@ import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerScriptData;
 import noppes.npcs.shared.common.PacketServerBasic;
+
+import java.util.List;
 
 public class SPacketPlayerSound extends PacketServerBasic {
 
@@ -57,6 +60,12 @@ public class SPacketPlayerSound extends PacketServerBasic {
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    public static void encode(SPacketPlayerSound msg, FriendlyByteBuf buf) {
       buf.writeBoolean(msg.isStart);

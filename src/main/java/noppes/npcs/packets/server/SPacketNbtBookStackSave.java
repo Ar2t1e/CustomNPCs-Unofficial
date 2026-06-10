@@ -1,7 +1,6 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
@@ -18,6 +17,9 @@ import noppes.npcs.controllers.data.QuestData;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketNbtBookStackSave extends PacketServerBasic {
 
     protected static int channelId;
@@ -26,10 +28,13 @@ public class SPacketNbtBookStackSave extends PacketServerBasic {
     public SPacketNbtBookStackSave(CompoundTag stackNBT) { data = stackNBT; }
 
     @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.TOOL_NBTBOOK; }
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_NBTBOOK); }
 
     public static void encode(SPacketNbtBookStackSave msg, FriendlyByteBuf buf) {buf.writeNbt(msg.data); }
 

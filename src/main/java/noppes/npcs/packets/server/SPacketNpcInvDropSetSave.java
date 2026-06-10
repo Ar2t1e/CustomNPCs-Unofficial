@@ -13,6 +13,9 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiData;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SPacketNpcInvDropSetSave extends PacketServerBasic {
 
     protected static int channelId;
@@ -29,7 +32,10 @@ public class SPacketNpcInvDropSetSave extends PacketServerBasic {
     }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.NPC_INVENTORY; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.NPC_INVENTORY); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

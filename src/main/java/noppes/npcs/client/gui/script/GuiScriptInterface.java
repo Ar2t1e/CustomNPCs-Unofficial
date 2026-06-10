@@ -492,7 +492,9 @@ public class GuiScriptInterface
          save();
          CompoundTag nbt = new CompoundTag();
          nbt.putString("Name", gui.getTextField(0).getValue() + gui.ext);
-         nbt.putString("Path", path.replaceAll("\\\\", "/") + "/" + nbt.getString("Name"));
+         String p = path.replaceAll("\\\\", "/") + "/" + nbt.getString("Name");
+         if (p.contains("/scripts")) { p = p.substring(p.indexOf("/scripts") + 8); }
+         nbt.putString("Path", p);
          nbt.putInt("Tab", activeTab - 1);
          nbt.putBoolean("OnlyTab", gui.onlyTab);
          Packets.sendServer(new SPacketScriptEncrypt(type, nbt));

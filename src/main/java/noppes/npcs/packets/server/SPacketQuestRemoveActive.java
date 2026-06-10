@@ -3,6 +3,7 @@ package noppes.npcs.packets.server;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.controllers.PlayerQuestController;
@@ -13,12 +14,20 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiUpdate;
 
+import java.util.List;
+
 public class SPacketQuestRemoveActive extends PacketServerBasic {
 
     protected static int channelId;
     private final int questId;
 
     public SPacketQuestRemoveActive(int questIdIn) { questId = questIdIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }
@@ -36,14 +45,12 @@ public class SPacketQuestRemoveActive extends PacketServerBasic {
         Quest quest = QuestController.instance.get(questId);
         if (quest != null) {
             PlayerData data = PlayerData.get(player);
-            if (data != null) {
-                boolean bo = EventHooks.onQuestCanceled(data.scriptData, quest);
-                if (!bo && PlayerQuestController.getRemoveActiveQuest(player, questId)) {
-                    player.sendSystemMessage(Component.translatable("quest.removequest", quest.getTitle()));
-                    Packets.send(player, new PacketGuiUpdate());
-                }
-                else { player.sendSystemMessage(Component.translatable("quest.removequest.not", quest.getTitle())); }
+            boolean bo = EventHooks.onQuestCanceled(data.scriptData, quest);
+            if (!bo && PlayerQuestController.getRemoveActiveQuest(player, questId)) {
+                player.sendSystemMessage(Component.translatable("quest.removequest", quest.getTitle()));
+                Packets.send(player, new PacketGuiUpdate());
             }
+            else { player.sendSystemMessage(Component.translatable("quest.removequest.not", quest.getTitle())); }
         }
         CustomNpcs.debugData.end("Packets");
     }

@@ -1,5 +1,7 @@
 package noppes.npcs.packets.server;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -48,11 +50,14 @@ public class SPacketToolMobSpawner extends PacketServerBasic {
    }
 
    @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.cloner; }
 
    @Override
-   public PermissionNode<Boolean> getPermission() {
-      return createSpawner ? CustomNpcsPermissions.SPAWNER_CREATE : CustomNpcsPermissions.SPAWNER_MOB;
+   public List<PermissionNode<Boolean>> getPermission() {
+      return Collections.singletonList(createSpawner ? CustomNpcsPermissions.SPAWNER_CREATE : CustomNpcsPermissions.SPAWNER_MOB);
    }
 
    public static void encode(SPacketToolMobSpawner msg, FriendlyByteBuf buf) {

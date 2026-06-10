@@ -32,17 +32,18 @@ public class CmdMark {
       command.then(Commands.argument("entities", EntityArgument.entities())
               .then((Commands.argument("type", IntegerArgumentType.integer(0)).executes((context) -> {
                          Collection<? extends Entity> entities = EntityArgument.getEntities(context, "entities");
-                         if (!entities.isEmpty()) {
-                            int type = IntegerArgumentType.getInteger(context, "type");
-                            for (Entity entity : entities) {
-                               if (entity instanceof LivingEntity) {
-                                  MarkData data = MarkData.get((LivingEntity) entity);
-                                  data.marks.clear();
-                                  data.addMark(type, new Color(0xFFFFFF).getRGB());
-                               }
-                            }
-                         }
-                         return 1;
+                          if (!entities.isEmpty()) {
+                              int type = IntegerArgumentType.getInteger(context, "type");
+                              for (Entity entity : entities) {
+                                  if (entity instanceof LivingEntity) {
+                                      MarkData data = MarkData.get((LivingEntity) entity);
+                                      data.marks.clear();
+                                      MarkData.Mark mark = data.addMark(type, 0);
+                                      mark.setColor(new Color(0xFFFFFF).getRGB());
+                                  }
+                              }
+                          }
+                          return 1;
                       })
                       .then(Commands.argument("color", StringArgumentType.word()))).executes((context) -> {
                  Collection<? extends Entity> entities = EntityArgument.getEntities(context, "entities");

@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.attribute.UserPrincipal;
-import java.security.SecureRandom;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
@@ -24,8 +22,6 @@ import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.ClientScriptData;
 
 public class ScriptEncryption {
-
-    private final static int SALT_LENGTH = 8; // Salt length (in bytes)
 
     public static boolean encryptScript(File outputFile, String fileName, String scriptCode, boolean onlyTab,ScriptContainer sContainer, IScriptHandler handler) {
         if (handler instanceof ClientScriptData) {
@@ -106,11 +102,7 @@ public class ScriptEncryption {
     }
 
     private static SecretKey generateSecretKey() {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[SALT_LENGTH];
-        random.nextBytes(salt);
-        byte[] hashedPass = DigestUtils.md5(CustomNpcs.ScriptPassword.getBytes());
-        return new SecretKeySpec(hashedPass, "AES");
+        return new SecretKeySpec(DigestUtils.md5(CustomNpcs.ScriptPassword.getBytes()), "AES");
     }
 
 }

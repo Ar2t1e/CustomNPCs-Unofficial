@@ -2,6 +2,7 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
@@ -14,9 +15,17 @@ import noppes.npcs.controllers.data.PlayerScriptData;
 import noppes.npcs.items.ItemScripted;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.List;
+
 public class SPacketPlayerLeftClicked extends PacketServerBasic {
 
    protected static int channelId;
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }

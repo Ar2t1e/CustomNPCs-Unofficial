@@ -3,6 +3,7 @@ package noppes.npcs.packets.server;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.data.PlayerData;
@@ -11,12 +12,20 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.List;
+
 public class SPacketPlayerMailRansom extends PacketServerBasic {
 
     protected static int channelId;
     private final long id;
 
     public SPacketPlayerMailRansom(long idIn) { id = idIn; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

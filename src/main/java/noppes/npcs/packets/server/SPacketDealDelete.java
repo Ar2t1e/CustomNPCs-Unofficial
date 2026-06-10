@@ -1,13 +1,18 @@
 package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncRemove;
+
+import java.util.Collections;
+import java.util.List;
 
 public class SPacketDealDelete extends PacketServerBasic {
 
@@ -17,7 +22,13 @@ public class SPacketDealDelete extends PacketServerBasic {
     public SPacketDealDelete(int dealIDIn) { dealId = dealIDIn; }
 
     @Override
-    public PermissionNode<Boolean> getPermission() { return CustomNpcsPermissions.GLOBAL_MARKETS; }
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return Collections.singletonList(CustomNpcsPermissions.GLOBAL_MARKETS); }
 
     public static void encode(SPacketDealDelete msg, FriendlyByteBuf buf) { buf.writeInt(msg.dealId); }
 

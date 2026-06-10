@@ -4,10 +4,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketRemoteNpcsEntity;
+
+import java.util.List;
 
 public class SPacketRemoteNpcsEntity extends PacketServerBasic {
 
@@ -15,6 +18,12 @@ public class SPacketRemoteNpcsEntity extends PacketServerBasic {
     private final int id;
 
     public SPacketRemoteNpcsEntity(int entityId) { id = entityId; }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }

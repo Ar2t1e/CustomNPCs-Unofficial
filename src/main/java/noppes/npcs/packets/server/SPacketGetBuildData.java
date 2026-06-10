@@ -2,6 +2,7 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.controllers.SyncController;
@@ -10,6 +11,8 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.BuilderData;
+
+import java.util.List;
 
 public class SPacketGetBuildData extends PacketServerBasic {
 
@@ -22,6 +25,15 @@ public class SPacketGetBuildData extends PacketServerBasic {
         type = typeIn;
     }
 
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
+
+    @Override
+    public boolean toolAllowed(ItemStack item) { return true; }
+
     public static void encode(SPacketGetBuildData msg, FriendlyByteBuf buf) {
         buf.writeInt(msg.id);
         buf.writeInt(msg.type);
@@ -31,9 +43,6 @@ public class SPacketGetBuildData extends PacketServerBasic {
 
     @Override
     public int getChannelId() { return channelId; }
-
-    @Override
-    public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
     protected void handle() {

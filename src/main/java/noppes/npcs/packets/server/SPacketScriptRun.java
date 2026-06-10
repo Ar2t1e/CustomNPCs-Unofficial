@@ -2,10 +2,9 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
-import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.event.QuestEvent;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.QuestController;
@@ -13,6 +12,7 @@ import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerScriptData;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.List;
 import java.util.Objects;
 
 public class SPacketScriptRun extends PacketServerBasic {
@@ -25,6 +25,12 @@ public class SPacketScriptRun extends PacketServerBasic {
         type = typeIn;
         data = dataIn;
     }
+
+    @Override
+    public boolean requiresNpc() { return false; }
+
+    @Override
+    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }

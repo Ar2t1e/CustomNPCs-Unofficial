@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.event.RoleEvent;
@@ -15,12 +16,17 @@ import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.roles.RoleFollower;
 
+import java.util.List;
+
 public class SPacketFollowerState extends PacketServerBasic {
 
    protected static int channelId;
    private final boolean isWaiting;
 
    public SPacketFollowerState(boolean isWaitingIn) { isWaiting = isWaitingIn; }
+
+   @Override
+   public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
    public boolean toolAllowed(ItemStack item) { return true; }
@@ -48,10 +54,8 @@ public class SPacketFollowerState extends PacketServerBasic {
             EventHooks.onNPCRole(npc, event);
             role.owner.sendSystemMessage(Component.translatable(NoppesStringUtils.formatText(role.dialogFired, role.owner, npc)));
             PlayerData data = PlayerData.get(player);
-            if (data != null) {
-               PlayerGameData.FollowerSet fs = data.game.getFollower(role.npc);
-               if (fs != null) { data.game.removeFollower(role.npc); }
-            }
+            PlayerGameData.FollowerSet fs = data.game.getFollower(role.npc);
+            if (fs != null) { data.game.removeFollower(role.npc); }
             role.killed();
          }
       }
