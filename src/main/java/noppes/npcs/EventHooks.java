@@ -457,9 +457,7 @@ public class EventHooks {
 
 	public static void onProjectileImpact(EntityProjectile projectile, ProjectileEvent.ImpactEvent event) {
 		for (ScriptContainer script : projectile.scripts) {
-			if (script.isValid()) {
-				script.run(EnumScriptType.PROJECTILE_IMPACT.function, event);
-			}
+			if (script.isValid()) { script.run(EnumScriptType.PROJECTILE_IMPACT.function, event); }
 		}
 		WrapperNpcAPI.EVENT_BUS.post(event);
 	}

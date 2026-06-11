@@ -16,6 +16,7 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.api.mixin.entity.IEntityLivingBaseIMixin;
 import noppes.npcs.api.mixin.entity.player.IEntityPlayerMixin;
+import noppes.npcs.api.mixin.fml.common.eventhandler.IEventBusMixin;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
@@ -67,8 +68,6 @@ import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
 import net.minecraftforge.event.world.GetCollisionBoxesEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.GenericEvent;
@@ -830,9 +829,6 @@ public class ScriptPlayerEventHandler {
 			// Get Maim mod Method for All Events
 			Method m = handler.getClass().getMethod("forgeEntity", Event.class);
 			// Get Registration Method for Event Methods
-			Method register = MinecraftForge.EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
-			register.setAccessible(true);
-
 			for (String forgeEventClassPath : pathsToForgeEventClasses) {
 				Class<?> event;
 				try { event = Class.forName(forgeEventClassPath); } catch (ClassNotFoundException e) { continue; }
@@ -913,11 +909,11 @@ public class ScriptPlayerEventHandler {
 						if (!isClient) {
 							ForgeEventHandler.eventNames.put(c, eventName);
 							ForgeEventHandler.clientEventNames.put(c, eventName);
-							register.invoke(MinecraftForge.EVENT_BUS, c, handler, m, Loader.instance().activeModContainer());
+							((IEventBusMixin) MinecraftForge.EVENT_BUS).npcs$Register(c, handler, m);
 						}
 						else {
 							ForgeEventHandler.clientEventNames.put(c, eventName);
-							if (threadIsClient) { register.invoke(MinecraftForge.EVENT_BUS, c, handler, m, Loader.instance().activeModContainer()); }
+							if (threadIsClient) { ((IEventBusMixin) MinecraftForge.EVENT_BUS).npcs$Register(c, handler, m); }
 						}
 						LogWriter.debug("Add Forge "+(isClient ? "client" : "common")+" Event " +c.getName());
 					}
@@ -943,7 +939,7 @@ public class ScriptPlayerEventHandler {
 							String eventName = ForgeEventHandler.getEventName(c2);
 							if (ForgeEventHandler.eventNames.containsValue(eventName)) { continue; }
 							// Add
-							register.invoke(PixelmonHelper.EVENT_BUS, c2, handler, m, Loader.instance().activeModContainer());
+							((IEventBusMixin) PixelmonHelper.EVENT_BUS).npcs$Register(c2, handler, m);
 							ForgeEventHandler.eventNames.put(c2, eventName);
 							LogWriter.debug("Add Pixelmon Event[" + ForgeEventHandler.eventNames.size() + "]; " + c2.getName());
 						}

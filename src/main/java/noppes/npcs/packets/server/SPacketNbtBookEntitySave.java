@@ -8,6 +8,7 @@ import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +54,12 @@ public class SPacketNbtBookEntitySave extends PacketServerBasic {
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
       Entity entity = player.world.getEntityByID(id);
-      if (entity != null) { entity.readFromNBT(data); }
+      if (entity != null) {
+         entity.readFromNBT(data);
+         LogWriter.info(player.getName() + " edited NBT of Entity:\"" + entity.getName() +
+                 "\" UUID:\"" + entity.getUniqueID() +
+                 "\" in dimension ID:\"" + player.world.provider.getDimension() + "\" at " + entity.getPosition());
+      }
       CustomNpcs.debugData.end("Packets");
    }
 

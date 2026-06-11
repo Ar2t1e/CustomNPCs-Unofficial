@@ -16,6 +16,7 @@ import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SPacketGiveStack extends PacketServerBasic {
@@ -31,7 +32,9 @@ public class SPacketGiveStack extends PacketServerBasic {
     public boolean requiresNpc() { return false; }
 
     @Override
-    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+    public List<CustomNpcsPermissions.Permission> getPermission() {
+        return Arrays.asList(CustomNpcsPermissions.TOOL_NBTBOOK, CustomNpcsPermissions.GLOBAL_FACTION);
+    }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }

@@ -13,7 +13,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import noppes.npcs.api.event.WorldEvent;
-import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerGameData;
@@ -189,8 +188,10 @@ public class ServerTickHandler {
 			EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayers().get(0);
 			if (player != null) { EventHooks.onEvent(PlayerData.get(player).scriptData, "worldtick", new WorldEvent.ServerTickEvent(event)); }
 		}
-		if (ticks % 1200 == 0) { BankController.getInstance().update(); }
-		if (ticks % 60 == 0) { BlockWrapper.checkClearCache(); }
+		if (ticks % 1200 == 0) {
+			BankController.getInstance().update();
+			Packets.clearDelaySendMap();
+		}
 		CustomNpcs.debugData.end(null);
 	}
 

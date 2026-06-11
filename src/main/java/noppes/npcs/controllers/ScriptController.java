@@ -46,7 +46,6 @@ import noppes.npcs.util.*;
 
 public class ScriptController {
 
-	public static final Map<String, TempFile> downloadableFiles = new HashMap<>();
 	private static final boolean isClient = Thread.currentThread().getName().toLowerCase().contains("client");
 	public static boolean HasStart = false;
 	public static ScriptController Instance;
@@ -212,20 +211,22 @@ public class ScriptController {
 		return factory.getScriptEngine();
 	}
 
+	/**
+	 * GraalJSScriptEngine.create((Engine)null, Context.newBuilder("js")
+	 * .allowExperimentalOptions(true)
+	 * .allowHostClassLookup((s) -> true)
+	 * .allowCreateProcess(true)
+	 * .allowHostClassLoading(true)
+	 * .allowNativeAccess(true)
+	 * .allowAllAccess(true)
+	 * .allowIO(true)
+	 * .allowHostAccess(ScriptConstants.hostAccess)
+	 * .allowCreateProcess(true)
+	 * .option("js.ecmascript-version", "2022")
+	 * .option("js.nashorn-compat", "true"));
+	 */
 	private ScriptEngine getNewGraalEngine() {
 		try {
-			/*GraalJSScriptEngine.create((Engine)null, Context.newBuilder("js")
-					.allowExperimentalOptions(true)
-					.allowHostClassLookup((s) -> true)
-					.allowCreateProcess(true)
-					.allowHostClassLoading(true)
-					.allowNativeAccess(true)
-					.allowAllAccess(true)
-					.allowIO(true)
-					.allowHostAccess(ScriptConstants.hostAccess)
-					.allowCreateProcess(true)
-					.option("js.ecmascript-version", "2022")
-					.option("js.nashorn-compat", "true"));*/
 			Class<?> graal = Class.forName("com.oracle.truffle.js.scriptengine.GraalJSScriptEngine");
 			Method create = null;
 			for (Method m : graal.getMethods()) {
@@ -379,7 +380,6 @@ public class ScriptController {
 		WorldWrapper.clearTempdata();
 		scripts.clear();
 		sizes.clear();
-		for (String key : clients.keySet()) { downloadableFiles.remove(key); }
 		clients.clear();
 		clientSizes.clear();
 		for (String language : languages.keySet()) {
@@ -490,7 +490,7 @@ public class ScriptController {
 				list.appendTag(new NBTTagString("function getField(key,object) { try { var f = dump(object).getField(key); if (f) { return f.getValue(); } } catch (error) { log('Error: \"'+key+'\" is not a Field or not found in \"'+object.getClass().getName()+'\"');} return null; }"));
 				list.appendTag(new NBTTagString("function setField(value,object,key) { try { var f = dump(object).getField(key); if (f) { return f.setValue(value); } } catch (error) { log('Error: \"'+key+'\" is not a Field or not found, or not type mismatch in \"'+object.getClass().getName()+'\". Error: ' + error); } return false; }"));
 				list.appendTag(new NBTTagString("function invoke(value,object,key) { try { var m = dump(object).getMethod(key); if (m) { var jo = Java.type('java.lang.Object[]'); if (value!=jo) { try { if (value.length>=0) { var v = new jo(value.length); for (var i=0; i<value.length; i++) { v[i] = value[i]; } return m.invoke(v); } } catch (err) { } var v = new jo(1); v[0] = value; return m.invoke(v); } else { return m.invoke(value); } } } catch (error) { log('Error: \"'+key+'\" is not a Method or not found, or not type mismatch in \"'+object.getClass().getName()+'\"'); } return null; }"));
-				list.appendTag(new NBTTagString("var HashMap = Java.type('java.util.HashMap'); var EMPTY_FUNCTION = new Function('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'return;'); function getFunction(name) { var error; var key = 'custom_functions'; try { var fhm = api.getTempdata().get(key); if (fhm instanceof HashMap && fhm.containsKey(name)) { return fhm.get(name); } var dir = api.getLWorldDir().toPath().resolve('scripts').resolve('functions'); var file = dir.resolve('example.json'); if (!file.toFile().exists()) { api.getMethods().saveFile(file.toFile(), 'args=agr0, agr1\\nbody=agr0 += 4.2;\\nreturn agr0 * agr1;'); } file = dir.resolve(name+'.json'); if (dir.toFile().exists()) { if (file.toFile().exists()) { var contex = api.getMethods().loadFile(file.toFile()); if (contex.contains('args=') && contex.contains('body=')) { var i = contex.indexOf('args='); var args = contex.substring(i + 5, contex.indexOf('\\n', i)).replace('\t', '').replace(' ', '').split(','); i = contex.indexOf('body='); var body = contex.substring(i + 5); var func = new Function(args, body); if (!(fhm instanceof HashMap)) { fhm = new HashMap(); } fhm.put(name, func); api.getTempdata().put(key, fhm); return func; } } } } catch (e) { error = e; } if (error) { log(error); } else { log('Error: Custom function \"' + name + '\" - not found'); } return EMPTY_FUNCTION; }"));
+				list.appendTag(new NBTTagString("var HashMap = Java.type('java.util.HashMap'); var EMPTY_FUNCTION = new Function('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'return;'); function getFunction(name) { var error; var key = 'custom_functions'; try { var fhm = api.getTempdata().get(key); if (fhm instanceof HashMap && fhm.containsKey(name)) { return fhm.get(name); } var dir = api.getLWorldDir().toPath().resolve('scripts').resolve('functions'); var file = dir.resolve('example.json'); if (!file.toFile().exists()) { api.getMethods().saveFile(file.toFile(), 'args=agr0, agr1\\nbody=agr0 += 4.2;\\nreturn agr0 * agr1;'); } file = dir.resolve(name+'.json'); if (dir.toFile().exists()) { if (file.toFile().exists()) { var context = api.getMethods().loadFile(file.toFile()); if (context.contains('args=') && context.contains('body=')) { var i = context.indexOf('args='); var args = context.substring(i + 5, context.indexOf('\\n', i)).replace('\t', '').replace(' ', '').split(','); i = context.indexOf('body='); var body = context.substring(i + 5); var func = new Function(args, body); if (!(fhm instanceof HashMap)) { fhm = new HashMap(); } fhm.put(name, func); api.getTempdata().put(key, fhm); return func; } } } } catch (e) { error = e; } if (error) { log(error); } else { log('Error: Custom function \"' + name + '\" - not found'); } return EMPTY_FUNCTION; }"));
 				constants.setTag("Constants", new NBTTagCompound());
 				constants.setTag("Functions", new NBTTagCompound());
 				constants.getCompoundTag("Constants").setTag("ecmascript", nbtC);
@@ -835,10 +835,11 @@ public class ScriptController {
 
 		NBTTagList list = new NBTTagList();
 		for (String key : clients.keySet()) {
-			if (!downloadableFiles.containsKey(key)) {
-				downloadableFiles.put(key, new TempFile(key, 0, 1, clientSizes.get(key)));
+			PlayerData data = PlayerData.get(player);
+			if (!data.clientScriptFiles.containsKey(key)) {
+				data.clientScriptFiles.put(key, new TempFile(key, 0, 1, clientSizes.get(key)));
 			}
-			TempFile file = downloadableFiles.get(key);
+			TempFile file = data.clientScriptFiles.get(key);
 			if (!file.isLoad()) {
 				file.size = -1;
 				file.saveType = 1;

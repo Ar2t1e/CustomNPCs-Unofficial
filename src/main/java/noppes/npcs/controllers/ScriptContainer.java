@@ -26,7 +26,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.controllers.data.ClientScriptData;
 import noppes.npcs.mixin.nbt.INBTTagLongArrayMixin;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
@@ -87,6 +86,8 @@ public class ScriptContainer {
 	private static final Executor executor = Executors.newFixedThreadPool(16);
 	public static final ConcurrentSkipListMap<Long, ScriptEngine> contexts = new ConcurrentSkipListMap<>();
 	private static final ConcurrentSkipListMap<String, ExecutorService> links = new ConcurrentSkipListMap<>();
+	private static final int MAX_CONTEXTS = 32;
+	private static final int MAX_LINKS = 16;
 	
 	static {
 		FillMap(AnimationKind.class);
@@ -187,16 +188,20 @@ public class ScriptContainer {
 	public boolean isClient;
 	public boolean errored = false;
 	private String fullscript = null;
-	private boolean canEncryptCode;
+	private boolean canEncryptCode = false;
 	private final IScriptHandler handler;
 	public long lastCreated = 0L;
 	public String script = "";
 	public List<String> scripts = new ArrayList<>();
-	private HashSet<String> unknownFunctions = new HashSet<>();
+	private final HashSet<String> unknownFunctions = new HashSet<>();
+	private final HashSet<String> knownFunctions = new HashSet<>();
+
+	// New from Unofficial (GoodBird)
+	private static final String lock = "cnpcslock";
+	private boolean init = false;
 
 	public ScriptContainer(IScriptHandler handlerIn) {
 		handler = handlerIn;
-		canEncryptCode = handlerIn instanceof ClientScriptData;
 		isClient = handlerIn.isClient();
 	}
 
@@ -243,13 +248,11 @@ public class ScriptContainer {
 		scripts.clear();
 	}
 
-	private String getTotalCode() {
-		if (fullscript == null) {
+	private String getFullCode() {
+		if (!init) {
 			canEncryptCode = script != null && !script.isEmpty();
 			fullscript = script;
-			if (!fullscript.isEmpty()) {
-				fullscript += "\n";
-			}
+			if (!fullscript.isEmpty()) { fullscript += "\n"; }
 			ScriptController sData = ScriptController.Instance;
 			Map<String, String> map = isClient ? sData.clients : sData.scripts;
 
@@ -269,7 +272,8 @@ public class ScriptContainer {
 			}
 			fullscript += sbCode.toString();
 			if (map.containsKey("all.js")) { fullscript = map.get("all.js") + "\n" + fullscript; }
-			unknownFunctions = new HashSet<>();
+			unknownFunctions.clear();
+			knownFunctions.clear();
 		}
 		return fullscript;
 	}
@@ -285,17 +289,7 @@ public class ScriptContainer {
 		return false;
 	}
 
-	public boolean hasScriptCode() {
-		return !getTotalCode().isEmpty();
-	}
-
-	public boolean isInit() {
-		return fullscript != null;
-	}
-
-	public boolean isValid() {
-		return isInit() && !errored;
-	}
+	public boolean isValid() { return init && !errored; }
 
 	public void load(NBTTagCompound compound) {
 		TreeMap<Long, String> tempMap = NBTTags.getLongStringMap(compound.getTagList("Console", 10));
@@ -319,88 +313,110 @@ public class ScriptContainer {
 		if (isClient) { errored = false; }
 	}
 
-	public void run(String type, Event event) {
+	public boolean run(String type, Event event) {
 		Object key = event instanceof BlockEvent ? "Block"
 				: event instanceof PlayerEvent ? "Player"
 				: event instanceof ItemEvent ? "Item" : event instanceof NpcEvent ? "Npc" : null;
 		CustomNpcs.debugData.start(key, type);
-		if (engine == null) { setEngine(handler.getLanguage()); }
+		boolean isNewRun = false;
 		if (errored && console.isEmpty()) {
 			errored = false;
 			fullscript = null;
 		}
-		if (errored || !hasScriptCode() || unknownFunctions.contains(type) || !CustomNpcs.EnableScripting || engine == null) {
-			CustomNpcs.debugData.end(key, type);
-			return;
-		}
-		if (ScriptController.Instance.lastLoaded > lastCreated) {
-			lastCreated = ScriptController.Instance.lastLoaded;
-			fullscript = null;
-			canEncryptCode = false;
-		}
-		synchronized ("lock") {
-			ScriptContainer.Current = this;
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			try {
-				engine.getContext().setWriter(pw);
-				engine.getContext().setErrorWriter(pw);
-				if (engine.get("dump") == null) { fillEngine(engine); }
-				else if (isClient && (engine.get("mc") == null || engine.get("storedData") == null)) { fillEngineClient(engine); }
-				if (fullscript == null) { engine.eval(getTotalCode()); }
-				if (engine.getFactory().getLanguageName().equals("lua")) {
-					Object ob = engine.get(type);
-					if (ob != null) {
-						if (ScriptContainer.luaCoerce == null) {
-							ScriptContainer.luaCoerce = Class.forName("org.luaj.vm2.lib.jse.CoerceJavaToLua").getMethod("coerce", Object.class);
-							ScriptContainer.luaCall = ob.getClass().getMethod("call", Class.forName("org.luaj.vm2.LuaValue"));
+		if (!errored && hasCode() && !unknownFunctions.contains(type) && CustomNpcs.EnableScripting) {
+			if (engine == null) { setEngine(handler.getLanguage()); }
+			if (engine != null) {
+				if (ScriptController.Instance.lastLoaded > lastCreated) {
+					lastCreated = ScriptController.Instance.lastLoaded;
+					init = false;
+					canEncryptCode = false;
+				}
+				synchronized(lock) {
+					Current = this;
+					StringWriter sw = new StringWriter();
+					PrintWriter pw = new PrintWriter(sw);
+					try {
+						engine.getContext().setWriter(pw);
+						engine.getContext().setErrorWriter(pw);
+						if (engine.get("dump") == null) { fillEngine(engine); }
+						else if (isClient && (engine.get("mc") == null || engine.get("storedData") == null)) { fillEngineClient(engine); }
+						if (!init || fullscript == null) {
+							engine.eval(getFullCode());
+							init = true;
 						}
-						ScriptContainer.luaCall.invoke(ob, ScriptContainer.luaCoerce.invoke(null, event));
+						if (engine.getFactory().getLanguageName().equals("lua")) {
+							Object ob = engine.get(type);
+							if (ob != null) {
+								if (luaCoerce == null) {
+									luaCoerce = Class.forName("org.luaj.vm2.lib.jse.CoerceJavaToLua").getMethod("coerce", Object.class);
+									luaCall = ob.getClass().getMethod("call", Class.forName("org.luaj.vm2.LuaValue"));
+								}
+								luaCall.invoke(ob, luaCoerce.invoke(null, event));
+							}
+							else {
+								unknownFunctions.add(type);
+							}
+						}
+						else {
+							((Invocable) engine).invokeFunction(type, event);
+							if (!knownFunctions.contains(type)) {
+								isNewRun = true;
+								knownFunctions.add(type);
+							}
+						}
 					}
-					else { unknownFunctions.add(type); }
-				}
-				else { ((Invocable) engine).invokeFunction(type, event); }
-			}
-			catch (NoSuchMethodException notFunction) { unknownFunctions.add(type); }
-			catch (Throwable t) {
-				errored = true;
-				Component notice = handler.noticeString(type, event);
-				String noticeToLog = Util.instance.deleteColor(notice.getString());
-				pw.write(noticeToLog + "\n");
-				t.printStackTrace(pw);
-				Throwable cause = t.getCause();
-				String errorText = cause != null ? cause.getLocalizedMessage().replaceAll("" + ((char) 13), "") : t.toString();
-				StringBuilder error = new StringBuilder();
-				if (errorText.contains("" + (char) 10)) {
-					for (int c = 0; c < errorText.length(); c++) {
-						error.append(errorText.charAt(c));
-						if (errorText.charAt(c) == 10) { error.append((char) 167).append("8"); }
+					catch (NoSuchMethodException notFunction) { unknownFunctions.add(type); }
+					catch (Throwable t) {
+						errored = true;
+						Component notice = handler.noticeString(type, event);
+						String noticeToLog = Util.instance.deleteColor(notice.getString());
+						pw.write(noticeToLog + "\n");
+						t.printStackTrace(pw);
+						Throwable cause = t.getCause();
+						String errorText = cause != null ? cause.getLocalizedMessage().replaceAll("" + ((char) 13), "") : t.toString();
+						StringBuilder error = new StringBuilder();
+						if (errorText.contains("" + (char) 10)) {
+							for (int c = 0; c < errorText.length(); c++) {
+								error.append(errorText.charAt(c));
+								if (errorText.charAt(c) == 10) { error.append((char) 167).append("8"); }
+							}
+						}
+						else { error = new StringBuilder(((char) 167) + "8" + t); }
+						Component errInfo = Component.literal("Script " + (cause != null ? cause.getClass().getSimpleName() : "") + ": " + error);
+						errInfo.setStyle(errInfo.getStyle().setColor(TextFormatting.DARK_GRAY));
+						CommonUtil.NotifyOPs(notice.append("\n").append(errInfo), true);
+						LogWriter.error(noticeToLog + " ", t);
+					}
+					finally {
+						appendConsole(sw.getBuffer().toString().trim());
+						pw.close();
+						Current = null;
 					}
 				}
-				else { error = new StringBuilder(((char) 167) + "8" + t); }
-				Component errInfo = Component.literal("Script " + (cause != null ? cause.getClass().getSimpleName() : "") + ": " + error);
-				errInfo.setStyle(errInfo.getStyle().setColor(TextFormatting.DARK_GRAY));
-				CommonUtil.NotifyOPs(notice.append("\n").append(errInfo), true);
-				LogWriter.error(noticeToLog + " ", t);
-			}
-			finally {
-				appendConsole(sw.getBuffer().toString().trim());
-				pw.close();
-				ScriptContainer.Current = null;
 			}
 		}
 		if (!console.isEmpty()) { ScriptController.Instance.tryAddErrored(this); }
 		CustomNpcs.debugData.end(key, type);
+		return isNewRun;
 	}
 
 	@SuppressWarnings("unused")
 	public void runAsync(String link, String async, String sync, Object arguments) {
 		if (!async.isEmpty()) {
 			if (!link.isEmpty()) {
-				if (!links.containsKey(link)) {
-					links.put(link, Executors.newSingleThreadExecutor());
+				ExecutorService service = links.get(link);
+				if (service == null || service.isShutdown()) {
+					while (links.size() >= MAX_LINKS) {
+						Map.Entry<String, ExecutorService> oldest = links.firstEntry();
+						if (oldest != null) {
+							oldest.getValue().shutdown();
+							links.remove(oldest.getKey());
+						}
+					}
+					service = Executors.newSingleThreadExecutor();
+					links.put(link, service);
 				}
-				links.get(link).execute(() -> generateAsyncContext(async, sync, arguments));
+				service.execute(() -> generateAsyncContext(async, sync, arguments));
 			}
 			else { executor.execute(() -> generateAsyncContext(async, sync, arguments)); }
 		}
@@ -410,14 +426,21 @@ public class ScriptContainer {
 	private void generateAsyncContext(String async, String sync, Object arguments) {
 		try {
 			ScriptEngine engine;
-			if (!contexts.containsKey(Thread.currentThread().getId())) {
+			long threadId = Thread.currentThread().getId();
+			while (contexts.size() >= MAX_CONTEXTS) {
+				Map.Entry<Long, ScriptEngine> oldest = contexts.firstEntry();
+				if (oldest != null) {
+					contexts.remove(oldest.getKey());
+				}
+			}
+			if (!contexts.containsKey(threadId)) {
 				engine = ScriptController.Instance.getEngineByName(handler.getLanguage());
 				fillEngine(engine);
 				Map<String, String> map = isClient ? ScriptController.Instance.clients : ScriptController.Instance.scripts;
 				engine.eval(map.get("all.js") + "\n");
-				contexts.put(Thread.currentThread().getId(), engine);
+				contexts.put(threadId, engine);
 			}
-			engine = contexts.get(Thread.currentThread().getId());
+			engine = contexts.get(threadId);
 			engine.eval("var asyncFunction = (" + async + ");");
 			Object result = ((Invocable) engine).invokeFunction("asyncFunction", arguments);
 			if (!sync.isEmpty()) { runSync(sync, result); }
@@ -573,7 +596,10 @@ public class ScriptContainer {
 		return compound;
 	}
 
-	public void setInit(boolean ignoredBo) {
+	public boolean hasCode() { return !getFullCode().isEmpty(); }
+
+	public void setInit(boolean bo) {
+		init = bo;
 		lastCreated = 0L;
 		canEncryptCode = false;
 		unknownFunctions.clear();

@@ -17,6 +17,7 @@
     "entity.ai.IEntityAITasksMixin",
     "entity.item.IEntityItemMixin",
     "entity.player.EntityPlayerMixin",
+    "fml.common.eventhandler.EventBusMixin",
     "fml.common.eventhandler.EventMixin",
     "init.ItemsMixin",
     "inv.ContainerMixin",

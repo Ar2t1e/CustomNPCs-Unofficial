@@ -41,6 +41,7 @@ public class PlayerSkinController {
 
 	public PlayerSkinController() { loadPlayerSkins(); }
 
+	@SuppressWarnings("ConstantConditions")
 	public void update(SkinData skinDataIn) {
 		if (skinDataIn == null || CustomNpcs.Server == null) { return; }
 		for (UUID uuid : data.keySet()) {
@@ -54,7 +55,7 @@ public class PlayerSkinController {
 		}
 	}
 
-	public void loadPlayerSkins() {
+	private void loadPlayerSkins() {
 		CustomNpcs.debugData.start("Mod");
 		try {
 			File saveDir = CustomNpcs.getWorldSaveDirectory();
@@ -248,6 +249,7 @@ public class PlayerSkinController {
 
 	public boolean hasData(UUID uuid) { return data.containsKey(uuid); }
 
+	@SuppressWarnings("ConstantConditions")
 	public void clear(String uuid, int type) {
 		Type t = getType(type);
 		for (UUID id : data.keySet()) {

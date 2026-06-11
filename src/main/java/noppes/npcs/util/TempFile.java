@@ -39,9 +39,7 @@ public class TempFile {
 
 	public String getDataText() {
 		StringBuilder text = new StringBuilder();
-		for (String str : data.values()) {
-			text.append(str);
-		}
+		for (String str : data.values()) { text.append(str); }
 		return text.toString();
 	}
 

@@ -151,6 +151,7 @@ public class EntityProjectile extends EntityThrowable {
         return (float) Math.atan2(var5, var2) * 180.0f / 3.141592653589793f;
 	}
 
+	@Override
 	public float getBrightness() {
 		return dataManager.get(EntityProjectile.Glows) ? 1.0f : super.getBrightness();
 	}
@@ -638,6 +639,7 @@ public class EntityProjectile extends EntityThrowable {
 
 	public boolean sticksToWalls() { return is3D() && dataManager.get(EntityProjectile.Sticks); }
 
+	@Override
 	public void writeEntityToNBT(@Nonnull NBTTagCompound par1NBTTagCompound) {
 		par1NBTTagCompound.setShort("xTile", (short) tilePos.getX());
 		par1NBTTagCompound.setShort("yTile", (short) tilePos.getY());
@@ -671,4 +673,11 @@ public class EntityProjectile extends EntityThrowable {
 		par1NBTTagCompound.setBoolean("Sticks", dataManager.get(EntityProjectile.Sticks));
 		par1NBTTagCompound.setInteger("accuracy", accuracy);
 	}
+
+	@Override
+	public void setDead() {
+		super.setDead();
+		scripts.clear();
+	}
+
 }

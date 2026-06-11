@@ -23,7 +23,7 @@ import noppes.npcs.util.Util;
 import noppes.npcs.util.NBTJsonUtil;
 
 public class ClientScriptData
-extends BaseScriptData {
+		extends BaseScriptData {
 
 	public boolean loadDefault = false;
 	public final Data storedData = new Data();
@@ -49,7 +49,9 @@ extends BaseScriptData {
 					runScript(EnumScriptType.INIT.function, new PlayerEvent.InitEvent(iPlayer));
 				}
 			}
-			for (ScriptContainer script : scripts) { script.run(type, event); }
+			for (ScriptContainer script : scripts) {
+				if (script.run(type, event)) { LogWriter.info("Client script executed: " + type + "; Event: " + event + "..."); }
+			}
 		} catch (Exception e) { LogWriter.error("Error:", e); }
 	}
 

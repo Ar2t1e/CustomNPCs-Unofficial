@@ -569,8 +569,8 @@ color.yellow=Жёлтый
 
 command.debug.clear=§7Удалены данные мониторинга для отладки мода CustomNpcs Unofficial
 command.debug.false=§7Отладка мода CustomNpcs Unofficial - §fотключено
-command.debug.show=§7Отладка информация отладки мода CustomNpcs Unofficial размещена в консоли...
 command.debug.true=§7Отладка мода CustomNpcs Unofficial -§f включено
+command.debug.show=§7Информация отладки мода CustomNpcs Unofficial размещена в консоли...
 command.hover.text=Текст команды<br>§6/§7 в начале команды не обязателен<br>§6@dp§7 - попытка применить на игрока, который активировал это событие<br>§7максимальная длина в символах: %s
 command.money.add.donat=§7Вам выдан§9 донат§7:§r %s§7. Теперь ваш баланс составляет:§r %s%s
 command.money.add.donat.player=§7Игроку: \"§r%s§7\" выдан§9 донат§7:§r %s§7. Теперь его баланс составляет:§r %s%s
@@ -1945,10 +1945,8 @@ message.dimensions.tp.isdelete=§e[§2CustomNPCs§e]§6: Вы были пере�
 message.error.create.mob.spawner=В настоящее время невозможно создать спавнер для лошадей, это ошибка Minecraft
 message.mod.error=§cУпс. Что-то изъявило желание пофилонить. Обратитесь к Разработчику с этой проблемой: %s
 message.clone.not.found.file=Не удалось найти файл клона. Вкладка #%s, Название клона "%s"
-message.pather.add=Добавлена позиция x:%s y:%s z:%s для NPC "%s"
 message.pather.home=Изменена домашняя позиция x:%s y:%s z:%s для NPC "%s"
 message.pather.register=Зарегистрирован "%s" на ваш %s
-message.pather.warn.add=§cПредупреждение§r: новая позиция слишком далеко от предыдущей. Максимальная дистанция (в блоках) для перемещения: %s
 
 minimap.set.points.1=§f[§2CustomNpcs§f]:§8 Система обновила позиции для мини-карты: %s
 minimap.set.points.2=§f[§2CustomNpcs§f]:§c Системе не удалось обновить позиции для мини-карты: %s

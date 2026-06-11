@@ -73,7 +73,7 @@ public class CustomGuiTimer extends GuiLabel implements IComponentCustomGui {
         long time = System.currentTimeMillis() - component.now;
         time /= 50L;
         if (component.reverse) { time = component.start - time; }
-        if (time < 0 || (!component.reverse && time > component.end)) { Packets.sendServerDelayed(new SPacketHudTimerEnd(component.getOffsetType(), id), this, 250L); }
+        if (time < 0 || (!component.reverse && time > component.end)) { Packets.sendServerDelayed(new SPacketHudTimerEnd(component.getOffsetType(), id), this, 250); }
         if (component.reverse) { time += 20; }
         return Component.literal(Util.instance.ticksToElapsedTime(time, false, false, false));
     }

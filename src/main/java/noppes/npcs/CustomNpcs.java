@@ -58,18 +58,9 @@ import nikedemos.markovnames.generators.MarkovWelsh;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.event.CustomParticleEvent;
 import noppes.npcs.api.event.CustomPotionEvent;
-import noppes.npcs.api.handler.capability.IItemStackWrapperHandler;
-import noppes.npcs.api.handler.capability.IMarkDataHandler;
-import noppes.npcs.api.handler.capability.IPlayerDataHandler;
-import noppes.npcs.api.handler.capability.IWrapperEntityDataHandler;
-import noppes.npcs.api.wrapper.DataObject;
-import noppes.npcs.api.wrapper.ItemStackWrapper;
-import noppes.npcs.api.wrapper.WrapperEntityData;
-import noppes.npcs.api.wrapper.WrapperNpcAPI;
-import noppes.npcs.capability.ItemStackWrapperStorage;
-import noppes.npcs.capability.MarkDataStorage;
-import noppes.npcs.capability.PlayerDataStorage;
-import noppes.npcs.capability.WrapperEntityDataStorage;
+import noppes.npcs.api.handler.capability.*;
+import noppes.npcs.api.wrapper.*;
+import noppes.npcs.capability.*;
 import noppes.npcs.command.CmdMoney;
 import noppes.npcs.command.CmdSchematics;
 import noppes.npcs.command.CommandNoppes;
@@ -292,7 +283,6 @@ public class CustomNpcs {
 	public static CommandNoppes NoppesCommand = new CommandNoppes();
 	public static MarkovGenerator[] MARKOV_GENERATOR = new MarkovGenerator[10];
 	public static MinecraftServer Server;
-	public static boolean DebugMonitoring = false;
 	public static DataDebug debugData = new DataDebug();
 	public static boolean FreezeNPCs = false;
 	public static File Dir;
@@ -314,9 +304,9 @@ public class CustomNpcs {
 		try {
 			File dir = new File(".");
 			if (EnableExternalSaving && !local) { dir = Dir; }
-			if (CustomNpcs.Server != null) {
+			if (Server != null) {
 				if (!Server.isDedicatedServer()) { dir = new File(Minecraft.getMinecraft().mcDataDir, "saves"); }
-				dir = new File(new File(dir, CustomNpcs.Server.getFolderName()), CustomNpcs.MODID);
+				dir = new File(new File(dir, Server.getFolderName()), MODID);
 			}
 			if (s != null) { dir = new File(dir, s); }
 			if (dir.exists() || dir.mkdirs()) { return dir; }
@@ -329,8 +319,8 @@ public class CustomNpcs {
 	@Mod.EventHandler
 	public static void postload(FMLPostInitializationEvent ev) {
 		new Util();
-		for (ModContainer mod : Loader.instance().getModList()) {
-			if (mod.getModId().equals(CustomNpcs.MODID)) { CustomNpcs.mod = mod; }
+		for (ModContainer modIn : Loader.instance().getModList()) {
+			if (modIn.getModId().equals(MODID)) { mod = modIn; }
 		}
 		ForgeEventHandler.clientEventNames.put(CustomParticleEvent.CreateEvent.class, CustomParticleEvent.CREATE);
 		ForgeEventHandler.clientEventNames.put(CustomParticleEvent.RenderEvent.class, CustomParticleEvent.RENDER);
@@ -340,20 +330,18 @@ public class CustomNpcs {
 		ForgeEventHandler.clientEventNames.put(CustomPotionEvent.IsReadyEvent.class, EnumScriptType.POTION_IS_READY.function);
 		ForgeEventHandler.clientEventNames.put(CustomPotionEvent.EndEffect.class, EnumScriptType.POTION_IS_READY.function);
 
-		CustomNpcs.proxy.postload();
+		proxy.postload();
 		LogWriter.info("Mod loaded ^_^ Have a good game!");
 	}
 
-	public CustomNpcs() {
-		CustomNpcs.instance = this;
-	}
+	public CustomNpcs() { instance = this; }
 
 	@Mod.EventHandler
 	public void load(FMLInitializationEvent ev) {
 		PixelmonHelper.load();
 		Packets.register();
 		ScriptController controller = new ScriptController();
-		if (CustomNpcs.EnableScripting && !controller.languages.isEmpty()) {
+		if (EnableScripting && !controller.languages.isEmpty()) {
 			MinecraftForge.EVENT_BUS.register(controller);
 			MinecraftForge.EVENT_BUS.register(new ForgeEventHandler());
 			MinecraftForge.EVENT_BUS.register(new ScriptPlayerEventHandler().registerForgeEvents(ev.getSide()));
@@ -361,27 +349,27 @@ public class CustomNpcs {
 		}
 		ForgeModContainer.fullBoundingBoxLadders = true;
 		RecipeController.getInstance();
-		CustomNpcs.MARKOV_GENERATOR[0] = new MarkovRoman(3);
-		CustomNpcs.MARKOV_GENERATOR[1] = new MarkovJapanese(4);
-		CustomNpcs.MARKOV_GENERATOR[2] = new MarkovSlavic(3);
-		CustomNpcs.MARKOV_GENERATOR[3] = new MarkovWelsh(3);
-		CustomNpcs.MARKOV_GENERATOR[4] = new MarkovSaami(3);
-		CustomNpcs.MARKOV_GENERATOR[5] = new MarkovOldNorse(4);
-		CustomNpcs.MARKOV_GENERATOR[6] = new MarkovAncientGreek(3);
-		CustomNpcs.MARKOV_GENERATOR[7] = new MarkovAztec(3);
-		CustomNpcs.MARKOV_GENERATOR[8] = new MarkovCustomNPCsClassic(3);
-		CustomNpcs.MARKOV_GENERATOR[9] = new MarkovSpanish(3);
-		CustomNpcs.proxy.load();
+		MARKOV_GENERATOR[0] = new MarkovRoman(3);
+		MARKOV_GENERATOR[1] = new MarkovJapanese(4);
+		MARKOV_GENERATOR[2] = new MarkovSlavic(3);
+		MARKOV_GENERATOR[3] = new MarkovWelsh(3);
+		MARKOV_GENERATOR[4] = new MarkovSaami(3);
+		MARKOV_GENERATOR[5] = new MarkovOldNorse(4);
+		MARKOV_GENERATOR[6] = new MarkovAncientGreek(3);
+		MARKOV_GENERATOR[7] = new MarkovAztec(3);
+		MARKOV_GENERATOR[8] = new MarkovCustomNPCsClassic(3);
+		MARKOV_GENERATOR[9] = new MarkovSpanish(3);
+		proxy.load();
 	}
 
 	@Mod.EventHandler
 	public void preload(FMLPreInitializationEvent ev) {
-		CustomNpcs.Dir = new File(new File(ev.getModConfigurationDirectory(), ".."), MODID);
-		if (!CustomNpcs.Dir.exists() && !CustomNpcs.Dir.mkdir()) {
+		Dir = new File(new File(ev.getModConfigurationDirectory(), ".."), MODID);
+		if (!Dir.exists() && !Dir.mkdir()) {
 			throw new RuntimeException("Impossible error: Failed to create sections important for the " + MODNAME + " mod!");
 		}
-		CustomNpcs.Config = new ConfigLoader(ev.getModConfigurationDirectory());
-		if (CustomNpcs.NpcNavRange < 16) { CustomNpcs.NpcNavRange = 16; }
+		Config = new ConfigLoader(ev.getModConfigurationDirectory());
+		if (NpcNavRange < 16) { NpcNavRange = 16; }
 		MinecraftForge.EVENT_BUS.register(new CustomBlocks());
 		MinecraftForge.EVENT_BUS.register(new CustomItems());
 		MinecraftForge.EVENT_BUS.register(new CustomEntities());
@@ -393,16 +381,16 @@ public class CustomNpcs {
 		CapabilityManager.INSTANCE.register(IWrapperEntityDataHandler.class, new WrapperEntityDataStorage(), WrapperEntityData::new);
 		CapabilityManager.INSTANCE.register(IItemStackWrapperHandler.class, new ItemStackWrapperStorage(), ItemStackWrapper::new);
 
-		NetworkRegistry.INSTANCE.registerGuiHandler(this, CustomNpcs.proxy);
+		NetworkRegistry.INSTANCE.registerGuiHandler(this, proxy);
 
 		MinecraftForge.EVENT_BUS.register(new ServerEventsHandler());
 		MinecraftForge.EVENT_BUS.register(new ServerTickHandler());
-		MinecraftForge.EVENT_BUS.register(CustomNpcs.proxy);
+		MinecraftForge.EVENT_BUS.register(proxy);
 		Objects.requireNonNull(NpcAPI.Instance()).events().register(new AbilityEventHandler());
 		ForgeChunkManager.setForcedChunkLoadingCallback(this,
                 new ChunkController());
-		CustomNpcs.customDimensionType = DimensionType.register("CustomDimensions", "CustomNpcs", "CustomDimensions".hashCode(), CustomWorldProvider.class, false);
-		CustomNpcs.proxy.preload();
+		customDimensionType = DimensionType.register("CustomDimensions", "CustomNpcs", "CustomDimensions".hashCode(), CustomWorldProvider.class, false);
+		proxy.preload();
 		RangedAttributeReflection.setMaxValue((RangedAttribute) SharedMonsterAttributes.MAX_HEALTH, Double.MAX_VALUE);
 		DataObject.load();
 	}
@@ -410,18 +398,18 @@ public class CustomNpcs {
 	@Mod.EventHandler
 	public void serverStart(FMLServerStartingEvent event) {
 		LogWriter.info("Mod starting");
-		event.registerServerCommand(CustomNpcs.NoppesCommand);
+		event.registerServerCommand(NoppesCommand);
 		event.registerServerCommand(new CmdMoney()); // New from Unofficial (BetaZavr)
 		EntityNPCInterface.ChatEventPlayer = new FakePlayer(event.getServer().getWorld(0), EntityNPCInterface.ChatEventProfile);
 		EntityNPCInterface.CommandPlayer = new FakePlayer(event.getServer().getWorld(0), EntityNPCInterface.CommandProfile);
 		EntityNPCInterface.GenericPlayer = new FakePlayer(event.getServer().getWorld(0), EntityNPCInterface.GenericProfile);
-		for (WorldServer world : CustomNpcs.Server.worlds) {
+		for (WorldServer world : Server.worlds) {
 			ServerScoreboard board = (ServerScoreboard) world.getScoreboard();
 			board.addDirtyRunnable(() -> {
                 for (String s : Availability.scores) {
                     ScoreObjective so = board.getObjective(s);
                     if (so != null) {
-                        for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
+                        for (EntityPlayerMP player : Server.getPlayerList().getPlayers()) {
                             if (!board.entityHasObjective(player.getName(), so) && board.getObjectiveDisplaySlotCount(so) == 0) {
                                 player.connection.sendPacket(new SPacketScoreboardObjective(so, 0));
                             }
@@ -437,7 +425,7 @@ public class CustomNpcs {
 	@Mod.EventHandler
 	public void setAboutToStart(FMLServerAboutToStartEvent event) {
 		LogWriter.info("Load map_world datas");
-		CustomNpcs.Server = event.getServer();
+		Server = event.getServer();
 		Availability.scores.clear();
 		MarkovGenerator.load();
 		ChunkController.instance.clear();
@@ -453,24 +441,17 @@ public class CustomNpcs {
 		CmdSchematics.names.clear();
 		CmdSchematics.names.addAll(SchematicController.Instance.list());
 		// New from Unofficial (BetaZavr)
-		PlayerSkinController.getInstance().loadPlayerSkins();
+		PlayerSkinController.getInstance();
 		DropController.getInstance().loadFile();
 		KeyController.getInstance().loadKeys();
 		AnimationController.getInstance().loadAnimations();
 		CustomNpcsPermissions.getInstance();
-		new TransportController();
-		new PlayerDataController();
-		new GlobalDataController();
-		new SpawnController();
-		new LinkedNpcController();
-		new PlayerSkinController();
-		WrapperNpcAPI.clearCache();
 		Set<ResourceLocation> names = Block.REGISTRY.getKeys();
 		for (ResourceLocation name : names) {
 			Block block = Block.REGISTRY.getObject(name);
-			if (block instanceof BlockLeaves) { block.setTickRandomly(CustomNpcs.LeavesDecayEnabled); }
-			if (block instanceof BlockVine) { block.setTickRandomly(CustomNpcs.VineGrowthEnabled); }
-			if (block instanceof BlockIce) { block.setTickRandomly(CustomNpcs.IceMeltsEnabled); }
+			if (block instanceof BlockLeaves) { block.setTickRandomly(LeavesDecayEnabled); }
+			if (block instanceof BlockVine) { block.setTickRandomly(VineGrowthEnabled); }
+			if (block instanceof BlockIce) { block.setTickRandomly(IceMeltsEnabled); }
 		}
 		// Remove old Entities
 		File dir = getWorldSaveDirectory();
@@ -503,9 +484,9 @@ public class CustomNpcs {
 
 	@Mod.EventHandler
 	public void started(FMLServerStartedEvent event) {
-		if (CustomNpcs.Server != null) {
+		if (Server != null) {
 			debugData.started = System.currentTimeMillis();
-			debugData.startedTicks = CustomNpcs.Server.getWorld(0).getTotalWorldTime();
+			debugData.startedTicks = Server.getWorld(0).getTotalWorldTime();
 		}
 		new BankController();
 		new MarcetController();
@@ -519,7 +500,8 @@ public class CustomNpcs {
 
 	@Mod.EventHandler
 	public void stopped(FMLServerStoppedEvent event) {
-		CustomNpcs.Config.config.save();
+		debugData.start("Mod");
+		Config.config.save();
 		ServerCloneController.Instance = null;
 
 		// New from Unofficial (BetaZavr)
@@ -532,15 +514,16 @@ public class CustomNpcs {
 		KeyController.getInstance().save();
 		DropController.getInstance().save();
 		MarcetController.getInstance().save();
-
-		CustomNpcs.Server = null;
+		WrapperNpcAPI.clearCache();
+		Server = null;
+		debugData.end("Mod");
 	}
 
 	public static void resetChars(String currencies, String donations) {
-		try { CustomNpcs.displayCurrencies = "" + ((char) Integer.parseInt(currencies, 16)); }
-		catch (Exception e) { CustomNpcs.displayCurrencies = "" + currencies.charAt(0); }
-		try { CustomNpcs.displayDonation = "" + ((char) Integer.parseInt(donations, 16)); }
-		catch (Exception e) { CustomNpcs.displayDonation = "" + donations.charAt(0); }
+		try { displayCurrencies = "" + ((char) Integer.parseInt(currencies, 16)); }
+		catch (Exception e) { displayCurrencies = "" + currencies.charAt(0); }
+		try { displayDonation = "" + ((char) Integer.parseInt(donations, 16)); }
+		catch (Exception e) { displayDonation = "" + donations.charAt(0); }
 	}
 
 }

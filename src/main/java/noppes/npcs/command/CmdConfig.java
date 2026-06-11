@@ -1,7 +1,6 @@
 package noppes.npcs.command;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import net.minecraft.block.Block;
@@ -14,17 +13,14 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketConfigFont;
-import noppes.npcs.packets.client.PacketDebug;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.ChunkController;
-import noppes.npcs.util.CustomNPCsScheduler;
 
 import javax.annotation.Nonnull;
 
@@ -44,7 +40,6 @@ public class CmdConfig extends CommandNoppesBase {
 		return "config";
 	}
 
-	@SuppressWarnings("all")
 	@SubCommand(desc = "Set how many active chunkloaders you can have", usage = "<number>", permission = 4)
 	public void chunkloaders(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length == 0) {
@@ -59,39 +54,38 @@ public class CmdConfig extends CommandNoppesBase {
 			int size = ChunkController.instance.size();
 			if (size > CustomNpcs.ChuckLoaders) {
 				ChunkController.instance.unload(size - CustomNpcs.ChuckLoaders);
-				this.sendMessage(sender, size - CustomNpcs.ChuckLoaders + " chunksloaders unloaded");
+				this.sendMessage(sender, size - CustomNpcs.ChuckLoaders + " chunks loaders unloaded");
 			}
 			this.sendMessage(sender, "ChunkLoaders: " + ChunkController.instance.size() + "/" + CustomNpcs.ChuckLoaders);
 		}
 	}
 
-	@SubCommand(desc = "Add debug info to log", usage = "<true/false>", permission = 4)
-	public void debug(MinecraftServer server, ICommandSender sender, String[] args) {
-		CustomNpcs.VerboseDebug = Boolean.parseBoolean(args[0]);
-		sender.sendMessage(new TextComponentTranslation("command.debug." + CustomNpcs.VerboseDebug));
+	@SubCommand(desc = "Add debug info to log", usage = "<true/false> or <start/stop>", permission = 4)
+	public void debug(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+		if (args.length == 0) {
+			CustomNpcs.VerboseDebug = !CustomNpcs.VerboseDebug;
+			sender.sendMessage(new TextComponentTranslation("command.debug." + CustomNpcs.VerboseDebug));
+		}
+		else {
+			if (args[0].equals("start")) {
+				CustomNpcs.debugData.startDebugging(sender);
+			} else if (args[0].equals("stop")) {
+				CustomNpcs.debugData.stopDebugging(sender);
+			} else {
+				try {
+					CustomNpcs.VerboseDebug = Boolean.getBoolean(args[0]);
+					sender.sendMessage(new TextComponentTranslation("command.debug." + CustomNpcs.VerboseDebug));
+				} catch (Exception e) {
+					throw new CommandException("\""+args[0]+"\" is not a subcommand or boolean value");
+                }
+            }
+		}
 	}
 
-	@SubCommand(desc = "Delete monitoring data", permission = 4)
-	public void clear(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		CustomNpcs.debugData.clear();
-		if (sender instanceof EntityPlayerMP) {
-			Packets.send((EntityPlayerMP) sender, new PacketDebug(false));
-		}
-		sender.sendMessage(new TextComponentTranslation("command.debug.clear"));
-	}
 
 	@SubCommand(desc = "Will display the current mod debug report", permission = 2)
 	public void report(MinecraftServer server, ICommandSender sender, String[] args) {
-		List<String> list = CustomNpcs.debugData.logging();
-		if (!list.isEmpty()) {
-			sender.sendMessage(new TextComponentTranslation("Server info:"));
-			for (String str : list) { sender.sendMessage(new TextComponentString(str)); }
-		}
-		if (sender instanceof EntityPlayerMP && (CustomNpcs.Server == null || !CustomNpcs.Server.isSinglePlayer())) {
-			sender.sendMessage(new TextComponentString("Client info:"));
-			Packets.send((EntityPlayerMP) sender, new PacketDebug(true));
-		}
-		CustomNPCsScheduler.runTack(() -> sender.sendMessage(new TextComponentTranslation("command.debug.show")), 1000);
+
 	}
 
 	@SubCommand(desc = "Get/Set font", usage = "[type] [size]", permission = 2)

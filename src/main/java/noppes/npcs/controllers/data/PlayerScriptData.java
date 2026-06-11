@@ -83,6 +83,7 @@ extends BaseScriptData {
 					script.console.clear();
 				}
 			}
+			while (console.size() > 40) { console.remove(console.firstKey()); }
 		}
 	}
 

@@ -1,6 +1,8 @@
 package noppes.npcs.controllers.data;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -26,6 +28,7 @@ import noppes.npcs.entity.data.DataTimers;
 import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.NBTJsonUtil;
+import noppes.npcs.util.TempFile;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -70,6 +73,7 @@ public class PlayerData implements IPlayerDataHandler, ICapabilityProvider, ICus
 	public final PlayerCompassData compass = new PlayerCompassData();
 	public final PlayerMiniMapData minimap = new PlayerMiniMapData();
 	public final PlayerOverlayData overlay = new PlayerOverlayData();
+	public final Map<String, TempFile> clientScriptFiles = new HashMap<>();
 
 	@Override
 	public void setNBT(NBTTagCompound compound) {

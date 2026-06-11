@@ -1028,6 +1028,10 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	}
 
 	public boolean isInteracting() {
+		if (!interactingEntities.isEmpty() && ticksExisted % 20 == 0) { // раз в секунду
+			interactingEntities.removeIf(e -> e == null || !e.isEntityAlive() ||
+					(e instanceof EntityPlayerMP && ((EntityPlayerMP)e).connection == null));
+		}
 		return ticksExisted - lastInteract < 40
 				|| (!isServerWorld() && dataManager.get(EntityNPCInterface.Interacting))
 				|| (ais.stopAndInteract && !interactingEntities.isEmpty()
@@ -1128,6 +1132,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	public void onDeath(@Nonnull DamageSource damagesource) {
 		setSprinting(false);
 		getNavigator().clearPath();
@@ -1233,6 +1238,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		else { super.onDeathUpdate(); }
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	public void onLivingUpdate() {
 		if (CustomNpcs.FreezeNPCs) { return; }
 		if (!hitboxRiding.isEmpty()) {
@@ -1284,7 +1290,27 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		else {
 			++totalTicksAlive;
 			updateArmSwingProgress();
-			if (totalTicksAlive % 20 == 0) { faction = getFaction(); }
+			if (totalTicksAlive % 20 == 0) {
+				faction = getFaction();
+				if (!interactingEntities.isEmpty()) {
+					interactingEntities.removeIf(entity -> entity == null || entity.isDead ||
+                            (entity instanceof EntityPlayerMP && ((EntityPlayerMP) entity).connection == null));
+				}
+				if (!hitboxRiding.isEmpty()) {
+					hitboxRiding.entrySet().removeIf(entry -> {
+						Entity entity = entry.getKey();
+						return entity == null || entity.isDead ||
+								(entity instanceof EntityPlayerMP && ((EntityPlayerMP) entity).connection == null);
+					});
+				}
+				if (!tracking.isEmpty()) {
+					tracking.removeIf(id -> {
+						Entity entity = world.getEntityByID(id); // или level().getEntity(id)
+						return entity == null || entity.isDead ||
+								(entity instanceof EntityPlayerMP && ((EntityPlayerMP) entity).connection == null);
+					});
+				}
+			}
 			if (isServerWorld()) {
 				if (!ais.aiDisabled) {
 					if (aiAttackTarget != null) { aiAttackTarget.update(); }

@@ -8,7 +8,6 @@ import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import noppes.npcs.*;
 import noppes.npcs.api.handler.data.IKeySetting;
-import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.client.renderer.ModelBuffer;
 import noppes.npcs.constants.*;
 import noppes.npcs.controllers.KeyController;
@@ -16,6 +15,7 @@ import noppes.npcs.controllers.PlayerSkinController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.mixin.client.gui.IGuiYesNoMixin;
 import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.SPacketRemoveLoadFile;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.common.util.LogWriter;
 import org.lwjgl.input.Keyboard;
@@ -80,6 +80,7 @@ public class ClientTickHandler {
 			}
 			if (!isDel.isEmpty()) {
 				ClientProxy.loadFiles.remove(isDel);
+				Packets.sendServer(new SPacketRemoveLoadFile(isDel));
 				loadFiles();
 			}
 		}
@@ -178,7 +179,6 @@ public class ClientTickHandler {
 		}
 		// clear hash
 		if (ticks % 60 == 0) {
-			BlockWrapper.checkClearCache();
 			ModelBuffer.clear();
 		}
 		// mails

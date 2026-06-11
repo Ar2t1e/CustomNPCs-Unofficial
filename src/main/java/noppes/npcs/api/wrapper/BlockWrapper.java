@@ -35,6 +35,7 @@ import noppes.npcs.blocks.BlockScriptedDoor;
 import noppes.npcs.blocks.tiles.TileNpcEntity;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.CustomNPCsScheduler;
+import noppes.npcs.util.LRUHashMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,24 +48,25 @@ public class BlockWrapper implements IBlock {
 	 * When checking vision when an NPC is looking at a target
 	 * Mod events and scripts
 	 */
-	public static volatile ConcurrentHashMap<Long, BlockWrapper> blockCache = new ConcurrentHashMap<>(2500);
+	private static final Map<Integer, LRUHashMap<Long, BlockWrapper>> dimensionCaches = new ConcurrentHashMap<>();
+	private static final int MAX_PER_DIMENSION = 16384;
+
 	public static BlockWrapper AIR = new BlockWrapper(null, Blocks.AIR.getDefaultState(), null);
-	public static void clearCache() { blockCache.clear(); }
-	public static void checkClearCache() {
-		if (blockCache.size() > 2500) {
-			blockCache.keySet().stream()
-					.limit(blockCache.size() - 2500)
-					.forEach(blockCache::remove);
-		}
-	}
+	public static void clearCache() { dimensionCaches.clear(); } // clear worlds cache
 	public static BlockWrapper createNew(@Nullable World world, @Nullable BlockPos pos, @Nonnull IBlockState state) {
-		Long key = makeKey(world, state, pos);
-		BlockWrapper wrapper = blockCache.get(key);
-		if (wrapper == null) {
-			wrapper = createBlockWrapper(world, state, pos);
-			blockCache.put(key, wrapper);
+		if (world == null || pos == null) { return createBlockWrapper(world, state, pos); }
+		int dimId = world.provider.getDimension();
+		long key = pos.toLong();
+		LRUHashMap<Long, BlockWrapper> cache = dimensionCaches.computeIfAbsent(
+				dimId, k -> new LRUHashMap<>(MAX_PER_DIMENSION)
+		);
+		BlockWrapper wrapper = cache.get(key);
+		if (wrapper != null && !wrapper.isStale(world, pos, state)) {
+			return wrapper;
 		}
-        return wrapper;
+		wrapper = createBlockWrapper(world, state, pos);
+		cache.put(key, wrapper);
+		return wrapper;
 	}
 	private static BlockWrapper createBlockWrapper(@Nullable World world, @Nonnull IBlockState state, @Nullable BlockPos pos) {
 		Block block = state.getBlock();
@@ -90,11 +92,6 @@ public class BlockWrapper implements IBlock {
 		else if (block instanceof BlockScriptedDoor) { return new BlockScriptedDoorWrapper(world, state, pos); }
 		else if (block instanceof IFluidBlock) { return new BlockFluidContainerWrapper(world, state, pos); }
 		return new BlockWrapper(world, state, pos);
-	}
-	private static Long makeKey(@Nullable World world, @Nonnull IBlockState state, @Nullable BlockPos pos) {
-		return (pos == null ? 0 : pos.toLong() << 32) |
-				(world == null ? 0 : world.provider.getDimension()) |
-				state.getBlock().hashCode();
 	}
 
 	protected final @Nullable IWorld world;
@@ -183,6 +180,7 @@ public class BlockWrapper implements IBlock {
 	}
 
 	@Override
+	@SuppressWarnings("ConstantConditions")
 	public BlockWrapper setBlock(String name) {
 		if (world != null) {
 			Block block = Block.REGISTRY.getObject(new ResourceLocation(name));
@@ -310,10 +308,18 @@ public class BlockWrapper implements IBlock {
 	public int getMetadata() { return getMCBlock().getMetaFromState(getMCBlockState()); }
 
 	@Override
+	@SuppressWarnings("all")
 	public void setMetadata(int i) {
 		if (world != null) {
 			world.getMCWorld().setBlockState(iPos.blockPos, getMCBlock().getStateFromMeta(i), 3);
 		}
+	}
+
+	public boolean isStale(@Nullable World worldIn, @Nullable BlockPos pos, @Nonnull IBlockState state) {
+		if (worldIn == null || world == null) { return false; }
+		if (world.getMCWorld() != worldIn) { return true; }
+		if (pos != null && !iPos.blockPos.equals(pos)) { return true; }
+		return !worldIn.getBlockState(iPos.blockPos).equals(state);
 	}
 
 }
