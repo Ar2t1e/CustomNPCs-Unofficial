@@ -8,6 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
@@ -38,6 +39,7 @@ import noppes.npcs.blocks.BlockScriptedDoor;
 import noppes.npcs.blocks.tiles.TileNpcEntity;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.world.entity.IEntityMixin;
+import noppes.npcs.shared.common.util.LRUHashMap;
 import noppes.npcs.util.CustomNPCsScheduler;
 
 import javax.annotation.Nonnull;
@@ -51,23 +53,22 @@ public class BlockWrapper implements IBlock {
     * When checking vision when an NPC is looking at a target
     * Mod events and scripts
     */
-   public static volatile ConcurrentHashMap<Long, BlockWrapper> blockCache = new ConcurrentHashMap<>(2500);
+   private static final Map<ResourceKey<Level>, LRUHashMap<Long, BlockWrapper>> dimensionCaches = new ConcurrentHashMap<>();
+   private static final int MAX_PER_DIMENSION = 16384;
+
    public static BlockWrapper AIR = new BlockWrapper(null, Blocks.AIR.defaultBlockState(), null);
-   public static void clearCache() { blockCache.clear(); }
-   public static void checkClearCache() {
-      if (blockCache.size() > 2500) {
-         blockCache.keySet().stream()
-                 .limit(blockCache.size() - 2500)
-                 .forEach(blockCache::remove);
-      }
-   }
+   public static void clearCache() { dimensionCaches.clear(); }
    public static BlockWrapper createNew(@Nullable Level level, @Nullable BlockPos pos, @Nonnull BlockState state) {
-      Long key = makeKey(level, state, pos);
-      BlockWrapper wrapper = blockCache.get(key);
-      if (wrapper == null) {
-         wrapper = createBlockWrapper(level, state, pos);
-         blockCache.put(key, wrapper);
+      if (level == null || pos == null) { return createBlockWrapper(level, state, pos); }
+      ResourceKey<Level> dimId = level.dimension();
+      long key = pos.asLong();
+      LRUHashMap<Long, BlockWrapper> cache = dimensionCaches.computeIfAbsent(dimId, k -> new LRUHashMap<>(MAX_PER_DIMENSION));
+      BlockWrapper wrapper = cache.get(key);
+      if (wrapper != null && !wrapper.isStale(level, pos, state)) {
+         return wrapper;
       }
+      wrapper = createBlockWrapper(level, state, pos);
+      cache.put(key, wrapper);
       return wrapper;
    }
    private static BlockWrapper createBlockWrapper(@Nullable Level level, @Nonnull BlockState state, @Nullable BlockPos pos) {
@@ -91,11 +92,6 @@ public class BlockWrapper implements IBlock {
       else if (block instanceof BlockScriptedDoor) { return new BlockScriptedDoorWrapper(level, state, pos); }
       else if (block instanceof IFluidBlock) { return new BlockFluidContainerWrapper(level, state, pos); }
       return new BlockWrapper(level, state, pos);
-   }
-   private static Long makeKey(@Nullable Level level, @Nonnull BlockState state, @Nullable BlockPos pos) {
-      return (pos == null ? 0 : pos.asLong() << 32) |
-              (level == null ? 0 : level.dimension().hashCode()) |
-              state.getBlock().hashCode();
    }
 
    protected final @Nullable IWorld level;
@@ -303,6 +299,13 @@ public class BlockWrapper implements IBlock {
       CompoundTag compound = NbtUtils.writeBlockState(getMCBlockState());
       compound.putLong("BlockPos", iPos.blockPos.asLong());
       return compound;
+   }
+
+   public boolean isStale(@Nullable Level levelIn, @Nullable BlockPos pos, @Nonnull BlockState state) {
+      if (levelIn == null || level == null) { return false; }
+      if (level.getMCLevel() != levelIn) { return true; }
+      if (pos != null && !iPos.blockPos.equals(pos)) { return true; }
+      return !levelIn.getBlockState(iPos.blockPos).equals(state);
    }
 
 }

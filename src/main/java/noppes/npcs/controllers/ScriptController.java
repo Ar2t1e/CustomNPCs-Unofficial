@@ -56,7 +56,6 @@ public class ScriptController {
 
    // New fields from Unofficial (BetaZavr)
    private static final boolean isClient = Util.instance.getSide().isClient();
-   public static final Map<String, TempFile> downloadableFiles = new HashMap<>();
 
    public final Map<String, Long> sizes = new TreeMap<>();
    public final Map<String, Long> clientSizes = new TreeMap<>();
@@ -215,7 +214,6 @@ public class ScriptController {
       WorldWrapper.clearTempdata();
       scripts.clear();
       sizes.clear();
-      for (String key : clients.keySet()) { downloadableFiles.remove(key); }
       clients.clear();
       clientSizes.clear();
       for (String language : languages.keySet()) {
@@ -442,10 +440,11 @@ public class ScriptController {
 
       ListTag list = new ListTag();
       for (String key : clients.keySet()) {
-         if (!downloadableFiles.containsKey(key)) {
-            downloadableFiles.put(key, new TempFile(key, 0, 1, clientSizes.get(key)));
+         PlayerData data = PlayerData.get(player);
+         if (!data.clientScriptFiles.containsKey(key)) {
+            data.clientScriptFiles.put(key, new TempFile(key, 0, 1, clientSizes.get(key)));
          }
-         TempFile file = downloadableFiles.get(key);
+         TempFile file = data.clientScriptFiles.get(key);
          if (!file.isLoad()) {
             file.size = -1;
             file.saveType = 1;
@@ -632,20 +631,22 @@ public class ScriptController {
 
    public File constantScriptsFile() { return new File(dir, "constant_scripts.json"); }
 
+   /**
+    * GraalJSScriptEngine.create((Engine)null, Context.newBuilder("js")
+    * .allowExperimentalOptions(true)
+    * .allowHostClassLookup((s) -> true)
+    * .allowCreateProcess(true)
+    * .allowHostClassLoading(true)
+    * .allowNativeAccess(true)
+    * .allowAllAccess(true)
+    * .allowIO(true)
+    * .allowHostAccess(ScriptConstants.hostAccess)
+    * .allowCreateProcess(true)
+    * .option("js.ecmascript-version", "2022")
+    * .option("js.nashorn-compat", "true"));
+    */
    private ScriptEngine getNewGraalEngine() {
       try {
-         /*GraalJSScriptEngine.create((Engine)null, Context.newBuilder("js")
-                 .allowExperimentalOptions(true)
-                 .allowHostClassLookup((s) -> true)
-                 .allowCreateProcess(true)
-                 .allowHostClassLoading(true)
-                 .allowNativeAccess(true)
-                 .allowAllAccess(true)
-                 .allowIO(true)
-                 .allowHostAccess(ScriptConstants.hostAccess)
-                 .allowCreateProcess(true)
-                 .option("js.ecmascript-version", "2022")
-                 .option("js.nashorn-compat", "true"));*/
          Class<?> graal = Class.forName("com.oracle.truffle.js.scriptengine.GraalJSScriptEngine");
          Method create = null;
          for (Method m : graal.getMethods()) {

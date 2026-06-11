@@ -254,7 +254,6 @@ public class CustomNpcs {
 
    // New fields from Unofficial (BetaZavr)
    public static int colorAnimHoverPart = new Color(0xFFFA7800).getRGB();
-   public static boolean DebugMonitoring = false;
    public static DataDebug debugData = new DataDebug();
    public static int PanoramaNumbers = 4;
    public static Component prefix = Component.empty()
@@ -265,7 +264,7 @@ public class CustomNpcs {
 
    static {
       File dir = new File(FMLPaths.CONFIGDIR.get().toFile(), "..");
-      Dir = new File(dir, CustomNpcs.MODID);
+      Dir = new File(dir, MODID);
       if (!Dir.exists() && !Dir.mkdir()) { LogWriter.error("Error create config directory"); }
    }
 
@@ -321,7 +320,7 @@ public class CustomNpcs {
 
    @SubscribeEvent
    public void setAboutToStart(ServerAboutToStartEvent event) {
-      CustomNpcs.debugData.start("Mod");
+      debugData.start("Mod");
       LogWriter.info("Load map_world datas");
       Server = event.getServer();
       Availability.scores.clear();
@@ -340,16 +339,16 @@ public class CustomNpcs {
       CmdSchematics.names.addAll(SchematicController.Instance.list());
 
       // New from Unofficial (BetaZavr)
-      PlayerSkinController.getInstance().loadPlayerSkins();
+      PlayerSkinController.getInstance();
       DropController.getInstance().loadFile();
       KeyController.getInstance().loadKeys();
       AnimationController.getInstance().loadAnimations();
-      CustomNpcs.debugData.end("Mod");
+      debugData.end("Mod");
    }
 
    @SubscribeEvent
    public void started(ServerStartedEvent event) {
-      CustomNpcs.debugData.start("Mod");
+      debugData.start("Mod");
       RecipeController.getInstance().load();
       new BankController();
       new MarcetController();
@@ -357,12 +356,12 @@ public class CustomNpcs {
       QuestController.instance.load();
       ScriptController.HasStart = true;
       ServerCloneController.Instance = new ServerCloneController();
-      CustomNpcs.debugData.end("Mod");
+      debugData.end("Mod");
    }
 
    @SubscribeEvent
    public void stopped(ServerStoppedEvent event) {
-      CustomNpcs.debugData.start("Mod");
+      debugData.start("Mod");
       ServerCloneController.Instance = null;
 
       // New from Unofficial (BetaZavr)
@@ -373,14 +372,14 @@ public class CustomNpcs {
       KeyController.getInstance().save();
       DropController.getInstance().save();
       MarcetController.getInstance().save();
-
+      WrapperNpcAPI.clearCache();
       Server = null;
-      CustomNpcs.debugData.end("Mod");
+      debugData.end("Mod");
    }
 
    @SubscribeEvent
    public void serverStart(ServerStartingEvent event) {
-      CustomNpcs.debugData.start("Mod");
+      debugData.start("Mod");
       ServerLevel level;
       level = event.getServer().getLevel(Level.OVERWORLD);
       if (level != null) {
@@ -397,7 +396,7 @@ public class CustomNpcs {
                Objective so;
                do {
                   if (!var1.hasNext()) {
-                     CustomNpcs.debugData.end("Mod");
+                     debugData.end("Mod");
                      return;
                   }
                   String objective = var1.next();
@@ -420,14 +419,14 @@ public class CustomNpcs {
             }
          });
       }
-      CustomNpcs.debugData.end("Mod");
+      debugData.end("Mod");
    }
 
    @SubscribeEvent
    public void registerCommand(RegisterCommandsEvent e) {
-      CustomNpcs.debugData.start("Mod");
+      debugData.start("Mod");
       CmdNoppes.register(e.getDispatcher());
-      CustomNpcs.debugData.end("Mod");
+      debugData.end("Mod");
    }
 
    public static @Nullable File getLevelSaveDirectory() { return getLevelSaveDirectory(null); }
@@ -441,7 +440,7 @@ public class CustomNpcs {
          else if (Server != null) {
             // Synchronizing access to server
             MinecraftServer finalServer = Server;
-            synchronized (finalServer) { dir = finalServer.getWorldPath(new LevelResource(CustomNpcs.MODID)).toFile(); }
+            synchronized (finalServer) { dir = finalServer.getWorldPath(new LevelResource(MODID)).toFile(); }
          }
          if (s != null && !s.isEmpty()) { dir = new File(dir, s); }
          if (dir.exists() || dir.mkdirs()) { return dir; }
@@ -462,10 +461,10 @@ public class CustomNpcs {
    }
 
    public static void resetChars(String currencies, String donations) {
-      try { CustomNpcs.displayCurrencies = "" + ((char) Integer.parseInt(currencies, 16)); }
-      catch (Exception e) { CustomNpcs.displayCurrencies = "" + currencies.charAt(0); }
-      try { CustomNpcs.displayDonation = "" + ((char) Integer.parseInt(donations, 16)); }
-      catch (Exception e) { CustomNpcs.displayDonation = "" + donations.charAt(0); }
+      try { displayCurrencies = "" + ((char) Integer.parseInt(currencies, 16)); }
+      catch (Exception e) { displayCurrencies = "" + currencies.charAt(0); }
+      try { displayDonation = "" + ((char) Integer.parseInt(donations, 16)); }
+      catch (Exception e) { displayDonation = "" + donations.charAt(0); }
    }
 
 }

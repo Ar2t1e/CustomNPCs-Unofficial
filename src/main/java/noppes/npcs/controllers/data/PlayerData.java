@@ -1,6 +1,8 @@
 package noppes.npcs.controllers.data;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,6 +32,7 @@ import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.NBTJsonUtil;
+import noppes.npcs.util.TempFile;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -73,6 +76,7 @@ implements ICapabilityProvider, ICustomPlayerData {
    public PlayerCompassData compass = new PlayerCompassData();
    public PlayerMiniMapData minimap = new PlayerMiniMapData();
    public PlayerOverlayData overlay = new PlayerOverlayData();
+   public final Map<String, TempFile> clientScriptFiles = new HashMap<>();
 
    public PlayerData() {
       instance = LazyOptional.of(() -> this);

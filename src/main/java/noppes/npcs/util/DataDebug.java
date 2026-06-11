@@ -2,6 +2,7 @@ package noppes.npcs.util;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -10,6 +11,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.ClientTickHandler;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketDebug;
 import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
@@ -18,6 +21,8 @@ import java.lang.management.MemoryUsage;
 import java.util.*;
 
 public class DataDebug {
+
+    private static boolean DebugMonitoring = false;
 
     public static class Debug {
 
@@ -76,7 +81,7 @@ public class DataDebug {
     public void end(Object target) { end(target, ""); }
 
     public void end(Object target, String addedToMethodName) {
-        if (!CustomNpcs.DebugMonitoring) { return; }
+        if (!DebugMonitoring) { return; }
         StackTraceElement caller = Thread.currentThread().getStackTrace()[3];
         String obj = caller.getClassName();
         Dist side = caller.getMethodName().equals("findChunksForSpawning") || caller.getMethodName().equals("performWorldGenSpawning") ?
@@ -96,7 +101,7 @@ public class DataDebug {
     public void start(Object target) { start(target, ""); }
 
     public void start(Object target, String addedToMethodName) {
-        if (!CustomNpcs.DebugMonitoring) { return; }
+        if (!DebugMonitoring) { return; }
         StackTraceElement caller = Thread.currentThread().getStackTrace()[3];
         String obj = caller.getClassName();
         Dist side = caller.getMethodName().equals("findChunksForSpawning") || caller.getMethodName().equals("performWorldGenSpawning") ?
@@ -129,7 +134,7 @@ public class DataDebug {
     public DataDebug() { clear(); }
 
     public void stop() {
-        if (!CustomNpcs.DebugMonitoring) { return; }
+        if (!DebugMonitoring) { return; }
         for (Dist side : data.keySet()) {
             for (String k : data.get(side).starters.keySet()) {
                 data.get(side).end(k.substring(0, k.indexOf(':')), k.substring(k.indexOf(':') + 1));
@@ -306,6 +311,34 @@ public class DataDebug {
 
         LogWriter.info(maxInfo);
         return list;
+    }
+
+    public void startDebugging(CommandSourceStack sender) {
+        if (!DebugMonitoring) {
+            DebugMonitoring = true;
+            CustomNPCsScheduler.runTack(() -> stopDebugging(sender), 50000); // 5 min max
+        }
+    }
+
+    public void stopDebugging(CommandSourceStack sender) {
+        DebugMonitoring = false;
+        if (sender != null) {
+            List<String> list = CustomNpcs.debugData.logging();
+            if (!list.isEmpty()) {
+                sender.sendSuccess(() -> Component.literal("Server info:"), false);
+                for (String str : list) { sender.sendSuccess(() -> Component.literal(str), false); }
+            }
+            if (sender.getPlayer() != null && (CustomNpcs.Server == null || !CustomNpcs.Server.isSingleplayer())) {
+                sender.sendSuccess(() -> Component.literal("Client info:"), false);
+                Packets.send(sender.getPlayer(), new PacketDebug(true));
+            }
+            if (sender.getPlayer() != null) {
+                Packets.send(sender.getPlayer(), new PacketDebug(false));
+            }
+            CustomNPCsScheduler.runTack(() -> sender.sendSuccess(() -> Component.translatable("command.debug.show"), false), 1000);
+            sender.sendSuccess(() -> Component.translatable("command.debug.clear"), false);
+        }
+        clear();
     }
 
 }

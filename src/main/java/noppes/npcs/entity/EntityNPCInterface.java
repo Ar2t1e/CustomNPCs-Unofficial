@@ -449,7 +449,18 @@ public abstract class EntityNPCInterface
       else {
          ++totalTicksAlive;
          updateSwingTime();
-         if (tickCount % 20 == 0) { faction = getFaction(); }
+         if (tickCount % 20 == 0) {
+            faction = getFaction();
+            if (!interactingEntities.isEmpty()) {
+               interactingEntities.removeIf(entity -> entity == null || (entity instanceof ServerPlayer sp && sp.hasDisconnected()));
+            }
+            if (!tracking.isEmpty()) {
+               tracking.removeIf(id -> {
+                  Entity entity = level().getEntity(id);
+                  return entity == null || (entity instanceof ServerPlayer sp && sp.hasDisconnected());
+               });
+            }
+         }
          if (!isClientSide()) {
             if (!ais.aiDisabled) {
                if (aiAttackTarget != null) { aiAttackTarget.update(); }

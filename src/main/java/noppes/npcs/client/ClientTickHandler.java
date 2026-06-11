@@ -22,7 +22,6 @@ import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.event.PlayerEvent;
 import noppes.npcs.api.handler.data.IKeySetting;
-import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.gui.player.GuiLog;
 import noppes.npcs.client.renderer.RenderNPCInterface;
@@ -57,7 +56,7 @@ public class ClientTickHandler {
    public static void loadFiles() {
       if (!ClientProxy.loadFiles.isEmpty()) {
          String isDel = "";
-         for (String key : ClientProxy.loadFiles.keySet()) {
+         for (String key : new ArrayList<>(ClientProxy.loadFiles.keySet())) {
             TempFile file = ClientProxy.loadFiles.get(key);
             if (file.lastLoad == 0) {
                Packets.sendServer(new SPacketGetFilePart(file.getNextPart(), key));
@@ -77,6 +76,7 @@ public class ClientTickHandler {
          }
          if (!isDel.isEmpty()) {
             ClientProxy.loadFiles.remove(isDel);
+            Packets.sendServer(new SPacketRemoveLoadFile(isDel));
             loadFiles();
          }
       }
@@ -170,7 +170,6 @@ public class ClientTickHandler {
       }
       // clear hash
       if (ticks % 60 == 0) {
-         BlockWrapper.checkClearCache();
          ModelBuffer.clear();
       }
       // mails

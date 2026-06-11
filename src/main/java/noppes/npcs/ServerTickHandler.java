@@ -13,7 +13,6 @@ import net.minecraftforge.event.TickEvent.ServerTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import noppes.npcs.api.event.WorldEvent;
-import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -187,8 +186,10 @@ public class ServerTickHandler {
          ServerPlayer player = CustomNpcs.Server.getPlayerList().getPlayers().get(0);
          if (player != null) { EventHooks.onEvent(PlayerData.get(player).scriptData, "worldtick", new WorldEvent.ServerTickEvent(event)); }
       }
-      if (ticks % 1200 == 0) { BankController.getInstance().update(); }
-      if (ticks % 60 == 0) { BlockWrapper.checkClearCache(); }
+      if (ticks % 1200 == 0) {
+         BankController.getInstance().update();
+         Packets.clearDelaySendMap();
+      }
       CustomNpcs.debugData.end("Mod");
    }
 

@@ -59,6 +59,8 @@ import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.entity.data.DataRanged;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
+
 public class EntityProjectile extends ThrowableProjectile {
 
    private static final EntityDataAccessor<Boolean> Gravity = SynchedEntityData.defineId(EntityProjectile.class, EntityDataSerializers.BOOLEAN);
@@ -617,6 +619,16 @@ public class EntityProjectile extends ThrowableProjectile {
 
    public interface IProjectileCallback {
       boolean onImpact(EntityProjectile var1, BlockPos var2, Entity var3);
+   }
+
+   @Override
+   public void remove(@Nonnull RemovalReason reason) {
+      super.remove(reason);
+      if (reason == RemovalReason.KILLED ||
+              reason == RemovalReason.DISCARDED ||
+              reason == RemovalReason.UNLOADED_WITH_PLAYER) {
+         scripts.clear();
+      }
    }
 
 }

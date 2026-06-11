@@ -20,12 +20,12 @@ import javax.annotation.Nullable;
 
 public class PlayerScriptData extends BaseScriptData {
 
+   private static final TreeMap<Long, String> console = new TreeMap<>();
+   private static final List<Integer> errored = new ArrayList<>();
+
    private final @Nullable Player player;
    private IPlayer<?> playerAPI;
    private long lastPlayerUpdate = 0L;
-   public boolean hadInteract = true;
-   private static final TreeMap<Long, String> console = new TreeMap<>();
-   private static final List<Integer> errored = new ArrayList<>();
 
    public PlayerScriptData(@Nullable Player playerIn) { player = playerIn; }
 
@@ -82,6 +82,7 @@ public class PlayerScriptData extends BaseScriptData {
                script.console.clear();
             }
          }
+         while (console.size() > 40) { console.remove(console.firstKey()); }
       }
    }
 

@@ -2,6 +2,7 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.CustomNpcs;
@@ -71,6 +72,9 @@ public class PacketScriptText extends PacketBasic {
                     container.script = total.toString();
                     container.setInit(false);
                     ScriptController.Instance.clientScripts.init();
+                    if (ScriptController.Instance.clientScripts.isEnabled()) {
+                        player.sendSystemMessage(Component.translatable("scripts.client.received.server"));
+                    }
                 }
             }
             data.remove(tab);

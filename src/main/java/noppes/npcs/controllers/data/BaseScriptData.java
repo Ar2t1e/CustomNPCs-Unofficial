@@ -28,6 +28,7 @@ public abstract class BaseScriptData implements IScriptHandler {
     protected String scriptLanguage = "ECMAScript";
     protected boolean enabled = false;
     public long lastInited = -1L;
+    public boolean hadInteract = true;
 
     public void clear() { scripts.clear(); }
 

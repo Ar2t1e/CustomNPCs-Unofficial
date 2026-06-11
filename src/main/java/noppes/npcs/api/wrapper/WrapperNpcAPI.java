@@ -6,6 +6,7 @@ import java.util.*;
 import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -56,7 +57,7 @@ public class WrapperNpcAPI extends NpcAPI {
 
    private static NpcAPI instance = null;
 
-   public static final Map<DimensionType, WorldWrapper> worldCache = new LRUHashMap<>(10);
+   public static final Map<ResourceKey<Level>, WorldWrapper> worldCache = new LRUHashMap<>(300);
    public static final IEventBus EVENT_BUS = BusBuilder.builder().build();
    private final List<Level> levels = Lists.newArrayList();
 
@@ -136,11 +137,11 @@ public class WrapperNpcAPI extends NpcAPI {
 
    @Override
    public IWorld getIWorld(Level level) {
-      WorldWrapper w = worldCache.get(level.dimensionType());
+      WorldWrapper w = worldCache.get(level.dimension());
       if (w != null) {
          w.level = level;
       } else {
-         worldCache.put(level.dimensionType(), w = WorldWrapper.createNew(level));
+         worldCache.put(level.dimension(), w = WorldWrapper.createNew(level));
       }
       return w;
    }

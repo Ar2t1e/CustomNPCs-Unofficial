@@ -60,7 +60,6 @@ public class ScriptContainer {
       }
    }
 
-   private static final String lock = "cnpcslock";
    public static ScriptContainer Current;
    public static final Map<String, Object> Data = new HashMap<>();
    private static Method luaCoerce;
@@ -74,8 +73,12 @@ public class ScriptContainer {
    public long lastCreated = 0L;
    public String script = "";
    public List<String> scripts = new ArrayList<>();
-   private HashSet<String> unknownFunctions = new HashSet<>();
+   private final HashSet<String> unknownFunctions = new HashSet<>();
+   private final HashSet<String> knownFunctions = new HashSet<>();
    private String currentScriptLanguage = null;
+
+   // New from Unofficial (GoodBird)
+   private static final String lock = "cnpcslock";
    private boolean init = false;
 
    static {
@@ -104,6 +107,8 @@ public class ScriptContainer {
    private static final Executor executor = Executors.newFixedThreadPool(16);
    public static final ConcurrentSkipListMap<Long, ScriptEngine> contexts = new ConcurrentSkipListMap<>();
    private static final ConcurrentSkipListMap<String, ExecutorService> links = new ConcurrentSkipListMap<>();
+   private static final int MAX_CONTEXTS = 32;
+   private static final int MAX_LINKS = 16;
 
    private static void FillMap(Class<?> c) {
       if (!c.isEnum()) { return; }
@@ -195,18 +200,24 @@ public class ScriptContainer {
          }
          fullscript += sbCode.toString();
          if (map.containsKey("all.js")) { fullscript = map.get("all.js") + "\n" + fullscript; }
-         unknownFunctions = new HashSet<>();
+         unknownFunctions.clear();
+         knownFunctions.clear();
       }
       return fullscript;
    }
 
-   public void run(String type, Object event) {
+   public boolean run(String type, Object event) {
       Object key = event instanceof BlockEvent ? "Block"
               : event instanceof PlayerEvent ? "Player"
               : event instanceof ItemEvent ? "Item" : event instanceof NpcEvent ? "Npc" : null;
       CustomNpcs.debugData.start(key, type);
+      boolean isNewRun = false;
+      if (errored && console.isEmpty()) {
+         errored = false;
+         fullscript = null;
+      }
       if (!errored && hasCode() && !unknownFunctions.contains(type) && CustomNpcs.EnableScripting) {
-         setEngine(handler.getLanguage());
+         if (engine == null) { setEngine(handler.getLanguage()); }
          if (engine != null) {
             if (ScriptController.Instance.lastLoaded > lastCreated) {
                lastCreated = ScriptController.Instance.lastLoaded;
@@ -217,9 +228,11 @@ public class ScriptContainer {
                Current = this;
                StringWriter sw = new StringWriter();
                PrintWriter pw = new PrintWriter(sw);
-               engine.getContext().setWriter(pw);
-               engine.getContext().setErrorWriter(pw);
                try {
+                  engine.getContext().setWriter(pw);
+                  engine.getContext().setErrorWriter(pw);
+                  if (engine.get("dump") == null) { fillEngine(engine); }
+                  else if (isClient && (engine.get("mc") == null || engine.get("storedData") == null)) { fillEngineClient(engine); }
                   if (!init || fullscript == null) {
                      engine.eval(getFullCode());
                      init = true;
@@ -237,7 +250,13 @@ public class ScriptContainer {
                         unknownFunctions.add(type);
                      }
                   }
-                  else { ((Invocable) engine).invokeFunction(type, event); }
+                  else {
+                     ((Invocable) engine).invokeFunction(type, event);
+                     if (!knownFunctions.contains(type)) {
+                        isNewRun = true;
+                        knownFunctions.add(type);
+                     }
+                  }
                }
                catch (NoSuchMethodException notFunction) { unknownFunctions.add(type); }
                catch (Throwable t) {
@@ -260,7 +279,8 @@ public class ScriptContainer {
                   errInfo.setStyle(errInfo.getStyle().withColor(ChatFormatting.DARK_GRAY));
                   CommonUtil.NotifyOPs(notice.append("\n").append(errInfo), true);
                   LogWriter.error(noticeToLog + " ", t);
-               } finally {
+               }
+               finally {
                   appendConsole(sw.getBuffer().toString().trim());
                   pw.close();
                   Current = null;
@@ -268,7 +288,9 @@ public class ScriptContainer {
             }
          }
       }
+      if (!console.isEmpty()) { ScriptController.Instance.tryAddErrored(this); }
       CustomNpcs.debugData.end(key, type);
+      return isNewRun;
    }
 
    public void appendConsole(String message) {
@@ -417,10 +439,19 @@ public class ScriptContainer {
    public void runAsync(String link, String async, String sync, Object arguments) {
       if (!async.isEmpty()) {
          if (!link.isEmpty()) {
-            if (!links.containsKey(link)) {
-               links.put(link, Executors.newSingleThreadExecutor());
+            ExecutorService service = links.get(link);
+            if (service == null || service.isShutdown()) {
+               while (links.size() >= MAX_LINKS) {
+                  Map.Entry<String, ExecutorService> oldest = links.firstEntry();
+                  if (oldest != null) {
+                     oldest.getValue().shutdown();
+                     links.remove(oldest.getKey());
+                  }
+               }
+               service = Executors.newSingleThreadExecutor();
+               links.put(link, service);
             }
-            links.get(link).execute(() -> generateAsyncContext(async, sync, arguments));
+            service.execute(() -> generateAsyncContext(async, sync, arguments));
          }
          else { executor.execute(() -> generateAsyncContext(async, sync, arguments)); }
       }
@@ -430,14 +461,21 @@ public class ScriptContainer {
    private void generateAsyncContext(String async, String sync, Object arguments) {
       try {
          ScriptEngine engine;
-         if (!contexts.containsKey(Thread.currentThread().getId())) {
+         long threadId = Thread.currentThread().getId();
+         while (contexts.size() >= MAX_CONTEXTS) {
+            Map.Entry<Long, ScriptEngine> oldest = contexts.firstEntry();
+            if (oldest != null) {
+               contexts.remove(oldest.getKey());
+            }
+         }
+         if (!contexts.containsKey(threadId)) {
             engine = ScriptController.Instance.getEngineByName(handler.getLanguage());
             fillEngine(engine);
-            Map<String, String> map = Util.instance.getSide().isClient() ? ScriptController.Instance.clients : ScriptController.Instance.scripts;
+            Map<String, String> map = isClient ? ScriptController.Instance.clients : ScriptController.Instance.scripts;
             engine.eval(map.get("all.js") + "\n");
-            contexts.put(Thread.currentThread().getId(), engine);
+            contexts.put(threadId, engine);
          }
-         engine = contexts.get(Thread.currentThread().getId());
+         engine = contexts.get(threadId);
          engine.eval("var asyncFunction = (" + async + ");");
          Object result = ((Invocable) engine).invokeFunction("asyncFunction", arguments);
          if (!sync.isEmpty()) { runSync(sync, result); }

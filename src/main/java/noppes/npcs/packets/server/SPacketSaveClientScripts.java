@@ -48,6 +48,7 @@ public class SPacketSaveClientScripts extends PacketServerBasic {
             compound.remove("Languages");
             compound.remove("WorldName");
             NBTJsonUtil.SaveFile(file, compound);
+            LogWriter.info("Client scripts saved by: " + player.getName());
         }
         catch (Exception e) { LogWriter.error(e); }
         if (CustomNpcs.Server != null) {

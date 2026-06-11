@@ -80,6 +80,7 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.api.mixin.entity.ILivingEntityMixin;
+import noppes.npcs.api.mixin.minecraftforge.eventbus.IEventBusMixin;
 import noppes.npcs.api.mixin.world.level.block.entity.ITileEntityBanner;
 import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.api.wrapper.ItemScriptedWrapper;
@@ -755,8 +756,6 @@ public class ScriptPlayerEventHandler {
       ForgeEventHandler handler = new ForgeEventHandler();
       try {
          Method m = handler.getClass().getMethod("forgeEntity", Event.class);
-         Method register = MinecraftForge.EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class);
-         register.setAccessible(true);
          Iterator<Class<?>> iteratorClasses = getClasses("net.minecraftforge.event.").iterator();
          Class<?> c;
          Dist side = Util.instance.getSide();
@@ -771,12 +770,12 @@ public class ScriptPlayerEventHandler {
                              !className.contains("render") &&
                              !className.contains("itemtooltipevent") &&
                              !ForgeEventHandler.eventNames.containsKey(c)) {
-                        register.invoke(MinecraftForge.EVENT_BUS, c, handler, m);
+                        ((IEventBusMixin) MinecraftForge.EVENT_BUS).npcs$Register(c, handler, m);
                         ForgeEventHandler.eventNames.put(c, eventName);
                      }
                   }
                   else if (!ForgeEventHandler.clientEventNames.containsKey(c)) {
-                     register.invoke(MinecraftForge.EVENT_BUS, c, handler, m);
+                     ((IEventBusMixin) MinecraftForge.EVENT_BUS).npcs$Register(c, handler, m);
                      ForgeEventHandler.eventNames.put(c, eventName);
                      ForgeEventHandler.clientEventNames.put(c, eventName);
                   }
@@ -788,7 +787,7 @@ public class ScriptPlayerEventHandler {
                iteratorClasses = getClasses("com.pixelmonmod.pixelmon.api.events.").iterator();
                while(iteratorClasses.hasNext()) {
                   c = iteratorClasses.next();
-                  register.invoke(PixelmonHelper.EVENT_BUS, c, handler, m);
+                  ((IEventBusMixin) PixelmonHelper.EVENT_BUS).npcs$Register(c, handler, m);
                   ForgeEventHandler.eventNames.put(c, ForgeEventHandler.getEventName(c));
                }
             } catch (Throwable tPX) {

@@ -2768,6 +2768,7 @@
 	"script.target_lost": "Target Lost",
 	"script.toggled": "Toggled",
 	"script.update": "Update",
+	"scripts.client.received.server": "New client scripts have been received and installed from the server...",
 	"snout.beak": "Beak",
 	"snout.bunny": "Bunny",
 	"snout.large": "Large",

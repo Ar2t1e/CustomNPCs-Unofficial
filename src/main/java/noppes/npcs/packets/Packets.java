@@ -371,6 +371,7 @@ public class Packets {
       register(SPacketDeadLootsGet.class);
       register(SPacketDeadLootsOpen.class);
       register(SPacketNpcRarityTitleGet.class);
+      register(SPacketRemoveLoadFile.class);
 
    }
 
@@ -469,17 +470,19 @@ public class Packets {
       }
    }
 
-   public static <MSG> void sendServerDelayed(MSG msg, Object key, long delay) {
-      ClientPacketListener connection = Minecraft.getInstance().getConnection();
-      if (connection != null) {
-         if (delaySendMap.containsKey(key) && delaySendMap.get(key) > System.currentTimeMillis()) { return; }
-         logged(msg);
-         CHANNELS.get(((PacketBasic) msg).getChannelId()).sendToServer(msg);
-         for (Object k : new ArrayList<>(delaySendMap.keySet())) {
-            if (delaySendMap.get(k) <= System.currentTimeMillis()) { delaySendMap.remove(k); }
-         }
-         delaySendMap.put(key, System.currentTimeMillis() + delay);
-      }
+   public static <MSG> void sendServerDelayed(MSG msg, Object key, int delay) {
+      Long existing = delaySendMap.get(key);
+      long now = System.currentTimeMillis();
+      if (delaySendMap.size() > 1000) { delaySendMap.entrySet().removeIf(entry -> entry.getValue() <= now); }
+      if (existing != null && existing > now) { return; }
+      logged(msg);
+      CHANNELS.get(((PacketBasic) msg).getChannelId()).sendToServer(msg);
+      delaySendMap.put(key, now + delay);
+   }
+
+   public static void clearDelaySendMap() {
+      long now = System.currentTimeMillis();
+      delaySendMap.entrySet().removeIf(entry -> entry.getValue() <= now);
    }
 
 }

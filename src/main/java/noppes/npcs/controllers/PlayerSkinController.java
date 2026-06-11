@@ -39,6 +39,8 @@ public class PlayerSkinController {
     private final Map<UUID, String> playerNames = new HashMap<>();
     private final Map<UUID, Map<Type, SkinData>> data = new HashMap<>();
 
+    public PlayerSkinController() { loadPlayerSkins(); }
+
     public void update(SkinData skinDataIn) {
         if (skinDataIn == null || CustomNpcs.Server == null) { return; }
         for (UUID uuid : data.keySet()) {
@@ -52,7 +54,7 @@ public class PlayerSkinController {
         }
     }
 
-    public void loadPlayerSkins() {
+    private void loadPlayerSkins() {
         CustomNpcs.debugData.start("Mod");
         try {
             File saveDir = CustomNpcs.getLevelSaveDirectory();

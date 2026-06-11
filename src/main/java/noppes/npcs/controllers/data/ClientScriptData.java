@@ -23,7 +23,8 @@ import noppes.npcs.util.Util;
 import java.io.File;
 import java.util.Objects;
 
-public class ClientScriptData extends BaseScriptData {
+public class ClientScriptData
+        extends BaseScriptData {
 
     public boolean loadDefault = false;
     public final Data storedData = new Data();
@@ -49,7 +50,9 @@ public class ClientScriptData extends BaseScriptData {
                     runScript(EnumScriptType.INIT.function, new PlayerEvent.InitEvent(iPlayer));
                 }
             }
-            for (ScriptContainer script : scripts) { script.run(type, event); }
+            for (ScriptContainer script : scripts) {
+                if (script.run(type, event)) { LogWriter.info("Client script executed: " + type + "; Event: " + event + "..."); }
+            }
         } catch (Exception e) { LogWriter.error("Error:", e); }
     }
 

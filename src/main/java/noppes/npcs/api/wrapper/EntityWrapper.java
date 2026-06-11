@@ -70,11 +70,11 @@ public class EntityWrapper<T extends Entity> implements IEntity<T> {
          levelWrapper = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(entity.level());
       }
       else if (entity.level() != null) {
-         WorldWrapper w = WrapperNpcAPI.worldCache.get(entity.level().dimensionType());
+         WorldWrapper w = WrapperNpcAPI.worldCache.get(entity.level().dimension());
          if (w != null) {
             if (w.level == null) { w.level = entity.level(); }
          } else {
-            WrapperNpcAPI.worldCache.put(entity.level().dimensionType(), w = WorldWrapper.createNew(entity.level()));
+            WrapperNpcAPI.worldCache.put(entity.level().dimension(), w = WorldWrapper.createNew(entity.level()));
          }
          levelWrapper = w;
       }

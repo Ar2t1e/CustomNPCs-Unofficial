@@ -2690,6 +2690,8 @@
 	"script.openfolder": "Отрыть папку Скриптов",
 	"script.scripts": "Скрипты",
 	"script.show.functions": "Показать функции",
+	"script.update": "Обновить",
+	"scripts.client.received.server": "С сервера получены и установлены новые клиентские скрипты...",
 	"snout.beak": "Клюв",
 	"snout.bunny": "Кролик",
 	"snout.large": "Большой",

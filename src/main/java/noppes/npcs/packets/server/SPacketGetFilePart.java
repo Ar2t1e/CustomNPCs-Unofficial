@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSendFilePart;
@@ -45,10 +45,11 @@ public class SPacketGetFilePart extends PacketServerBasic {
     @Override
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
-        if (!ScriptController.downloadableFiles.containsKey(name)) {
+        PlayerData data = PlayerData.get(player);
+        if (!data.clientScriptFiles.containsKey(name)) {
             Packets.send(player, new PacketSendFilePart(true, 0, name, ""));
         } else {
-            TempFile file = ScriptController.downloadableFiles.get(name);
+            TempFile file = data.clientScriptFiles.get(name);
             Packets.send(player, new PacketSendFilePart(false, partId, name, String.valueOf(file.data.get(partId))));
         }
         CustomNpcs.debugData.end("Packets");

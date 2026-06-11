@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.constants.EnumQuestTask;
@@ -29,7 +30,9 @@ public class SPacketGiveStack extends PacketServerBasic {
     public boolean requiresNpc() { return false; }
 
     @Override
-    public List<PermissionNode<Boolean>> getPermission() { return null; }
+    public List<PermissionNode<Boolean>> getPermission() {
+        return List.of(CustomNpcsPermissions.TOOL_NBTBOOK, CustomNpcsPermissions.GLOBAL_FACTION);
+    }
 
     @Override
     public boolean toolAllowed(ItemStack item){ return true; }
