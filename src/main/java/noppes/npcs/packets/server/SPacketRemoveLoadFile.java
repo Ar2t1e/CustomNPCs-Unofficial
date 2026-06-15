@@ -1,4 +1,4 @@
-package noppes.npcs.packets;
+package noppes.npcs.packets.server;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;

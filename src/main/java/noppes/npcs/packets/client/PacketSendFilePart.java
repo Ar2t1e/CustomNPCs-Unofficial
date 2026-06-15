@@ -5,7 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.SPacketRemoveLoadFile;
+import noppes.npcs.packets.server.SPacketRemoveLoadFile;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.ClientTickHandler;

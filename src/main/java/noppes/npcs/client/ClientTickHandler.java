@@ -15,7 +15,7 @@ import noppes.npcs.controllers.PlayerSkinController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.mixin.client.gui.IGuiYesNoMixin;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.SPacketRemoveLoadFile;
+import noppes.npcs.packets.server.SPacketRemoveLoadFile;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.common.util.LogWriter;
 import org.lwjgl.input.Keyboard;

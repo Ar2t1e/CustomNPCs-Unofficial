@@ -307,7 +307,7 @@ public class DataDebug {
 	public void startDebugging(ICommandSender sender) {
 		if (!DebugMonitoring) {
 			DebugMonitoring = true;
-			CustomNPCsScheduler.runTack(() -> stopDebugging(sender), 50000); // 5 min max
+			CustomNPCsScheduler.runTack(() -> stopDebugging(sender), 300000); // 5 min max
 		}
 	}
 

@@ -78,6 +78,7 @@ public class NoppesUtil {
 	public static void clickSound() { Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0f)); }
 
 	// New from Unofficial (BetaZavr)
+	@SuppressWarnings("ConstantConditions")
 	private static void setLocalization(String key, String value) {
 		File langDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/lang");
 		if (!langDir.exists() && !langDir.mkdirs()) { return; }
@@ -162,8 +163,9 @@ public class NoppesUtil {
 			for (int u = 0; u < bufferedImage.getWidth(); u++) {
 				for (int v = 0; v < bufferedImage.getHeight(); v++) {
 					int i = bufferedImage.getRGB(u, v);
-					if (i == 16777215 || i == -1) { continue; }
-					Color c = new Color(bufferedImage.getRGB(u, v));
+					int alpha = (i >>> 24) & 0xFF;
+					if (alpha == 0) { continue; }
+					Color c = new Color(i, true);
 					float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
 					float hue = hsb[0] + hueShift;
 					while (hue > 1.0f) { hue -= 1.0f; }
