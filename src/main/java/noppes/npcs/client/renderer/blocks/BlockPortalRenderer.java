@@ -8,21 +8,23 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.blocks.custom.CustomBlockPortal;
+import noppes.npcs.client.ClientRegisterEvents;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
-import noppes.npcs.shared.common.util.LogWriter;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
-// TheEndPortalRenderer
 @OnlyIn(Dist.CLIENT)
 public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends BlockRendererInterface<T> {
 
+    // Кэш RenderType по комбинации текстур
     protected static final Map<String, RenderType> cash = new HashMap<>();
 
     public BlockPortalRenderer(BlockEntityRendererProvider.Context dispatcher) {
@@ -32,97 +34,117 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends Block
     @Override
     public void render(@Nonnull T te, float partialTicks, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
         Matrix4f matrix = pose.last().pose();
-        VertexConsumer consumer = buffer.getBuffer(getRenderType(te));
-        renderFaces(te, matrix, consumer, Direction.SOUTH, packedLight, packedOverlay);
-        renderFaces(te, matrix, consumer, Direction.NORTH, packedLight, packedOverlay);
-        renderFaces(te, matrix, consumer, Direction.EAST, packedLight, packedOverlay);
-        renderFaces(te, matrix, consumer, Direction.WEST, packedLight, packedOverlay);
-        renderFaces(te, matrix, consumer, Direction.DOWN, packedLight, packedOverlay);
-        renderFaces(te, matrix, consumer, Direction.UP, packedLight, packedOverlay);
+        if (te.getBlockState().getBlock() instanceof CustomBlockPortal portal) {
+            RenderType renderType = getRenderType(portal.getCustomName(), te.getSkyTexture(), te.getPortalTexture());
+            VertexConsumer consumer = buffer.getBuffer(renderType);
+            renderFaces(te, matrix, consumer, Direction.SOUTH, packedLight, packedOverlay);
+            renderFaces(te, matrix, consumer, Direction.NORTH, packedLight, packedOverlay);
+            renderFaces(te, matrix, consumer, Direction.EAST, packedLight, packedOverlay);
+            renderFaces(te, matrix, consumer, Direction.WEST, packedLight, packedOverlay);
+            renderFaces(te, matrix, consumer, Direction.DOWN, packedLight, packedOverlay);
+            renderFaces(te, matrix, consumer, Direction.UP, packedLight, packedOverlay);
+        }
     }
 
     protected void renderFaces(T te, Matrix4f matrix, VertexConsumer consumer, Direction face, int light, int overlay) {
         if (te.shouldRenderFace(face)) {
-            if (face == Direction.SOUTH) {
-                consumer.vertex(matrix, 0.0f, 0.0f, 0.75F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay)
-                        .normal(0, 0, 1).endVertex();
-                consumer.vertex(matrix, 1.0F, 0.0f, 0.75F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, 0, 1).endVertex();
-                consumer.vertex(matrix, 1.0F, 1.0F, 0.75F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, 0, 1).endVertex();
-                consumer.vertex(matrix, 0.0f, 1.0F, 0.75F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, 0, 1).endVertex();
-            }
-            if (face == Direction.NORTH) {
-                consumer.vertex(matrix, 0.0f, 1.0F, 0.375F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, 0, -1).endVertex();
-                consumer.vertex(matrix, 1.0F, 1.0F, 0.375F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, 0, -1).endVertex();
-                consumer.vertex(matrix, 1.0F, 0.0f, 0.375F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, 0, -1).endVertex();
-                consumer.vertex(matrix, 0.0f, 0.0f, 0.375F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(0, 0, -1).endVertex();
-            }
-            if (face == Direction.EAST) {
-                consumer.vertex(matrix, 0.75F, 1.0F, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(1, 0, 0).endVertex();
-                consumer.vertex(matrix, 0.75F, 1.0F, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(1, 0, 0).endVertex();
-                consumer.vertex(matrix, 0.75F, 0.0f, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(1, 0, 0).endVertex();
-                consumer.vertex(matrix, 0.75F, 0.0f, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(1, 0, 0).endVertex();
-            }
-            if (face == Direction.WEST) {
-                consumer.vertex(matrix, 0.375F, 0.0f, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(-1, 0, 0).endVertex();
-                consumer.vertex(matrix, 0.375F, 0.0f, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(-1, 0, 0).endVertex();
-                consumer.vertex(matrix, 0.375F, 1.0F, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(-1, 0, 0).endVertex();
-                consumer.vertex(matrix, 0.375F, 1.0F, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(-1, 0, 0).endVertex();
-            }
-            if (face == Direction.DOWN) {
-                consumer.vertex(matrix, 0.0f, 0.375F, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(0, -1, 0).endVertex();
-                consumer.vertex(matrix, 1.0F, 0.375F, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, -1, 0).endVertex();
-                consumer.vertex(matrix, 1.0F, 0.375F, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, -1, 0).endVertex();
-                consumer.vertex(matrix, 0.0f, 0.375F, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, -1, 0).endVertex();
-            }
-            if (face == Direction.UP) {
-                consumer.vertex(matrix, 0.0f, 0.75F, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 1).uv2(light, overlay).normal(0, 1, 0).endVertex();
-                consumer.vertex(matrix, 1.0F, 0.75F, 1.0F)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 1).uv2(light, overlay).normal(0, 1, 0).endVertex();
-                consumer.vertex(matrix, 1.0F, 0.75F, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(1, 0).uv2(light, overlay).normal(0, 1, 0).endVertex();
-                consumer.vertex(matrix, 0.0f, 0.75F, 0.0f)
-                        .color(1.0F, 1.0F, 1.0F, 0.75F).uv(0, 0).uv2(light, overlay).normal(0, 1, 0).endVertex();
+            float r = 1.0F, g = 1.0F, b = 1.0F, a = 0.5F;
+            switch (face) {
+                case SOUTH -> {
+                    vertex(consumer, matrix, 0.0f, 0.0f, 0.75F, r, g, b, a, 0, 0, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 0.0f, 0.75F, r, g, b, a, 1, 0, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 1.0F, 0.75F, r, g, b, a, 1, 1, light, overlay);
+                    vertex(consumer, matrix, 0.0f, 1.0F, 0.75F, r, g, b, a, 0, 1, light, overlay);
+                }
+                case NORTH -> {
+                    vertex(consumer, matrix, 0.0f, 1.0F, 0.375F, r, g, b, a, 0, 1, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 1.0F, 0.375F, r, g, b, a, 1, 1, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 0.0f, 0.375F, r, g, b, a, 1, 0, light, overlay);
+                    vertex(consumer, matrix, 0.0f, 0.0f, 0.375F, r, g, b, a, 0, 0, light, overlay);
+                }
+                case EAST -> {
+                    vertex(consumer, matrix, 0.75F, 1.0F, 0.0f, r, g, b, a, 0, 0, light, overlay);
+                    vertex(consumer, matrix, 0.75F, 1.0F, 1.0F, r, g, b, a, 1, 0, light, overlay);
+                    vertex(consumer, matrix, 0.75F, 0.0f, 1.0F, r, g, b, a, 1, 1, light, overlay);
+                    vertex(consumer, matrix, 0.75F, 0.0f, 0.0f, r, g, b, a, 0, 1, light, overlay);
+                }
+                case WEST -> {
+                    vertex(consumer, matrix, 0.375F, 0.0f, 0.0f, r, g, b, a, 0, 1, light, overlay);
+                    vertex(consumer, matrix, 0.375F, 0.0f, 1.0F, r, g, b, a, 1, 1, light, overlay);
+                    vertex(consumer, matrix, 0.375F, 1.0F, 1.0F, r, g, b, a, 1, 0, light, overlay);
+                    vertex(consumer, matrix, 0.375F, 1.0F, 0.0f, r, g, b, a, 0, 0, light, overlay);
+                }
+                case UP -> {
+                    vertex(consumer, matrix, 0.0f, 0.75F, 1.0F, r, g, b, a, 0, 1, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 0.75F, 1.0F, r, g, b, a, 1, 1, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 0.75F, 0.0f, r, g, b, a, 1, 0, light, overlay);
+                    vertex(consumer, matrix, 0.0f, 0.75F, 0.0f, r, g, b, a, 0, 0, light, overlay);
+                }
+                case DOWN -> {
+                    vertex(consumer, matrix, 0.0f, 0.375F, 0.0f, r, g, b, a, 0, 0, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 0.375F, 0.0f, r, g, b, a, 1, 0, light, overlay);
+                    vertex(consumer, matrix, 1.0F, 0.375F, 1.0F, r, g, b, a, 1, 1, light, overlay);
+                    vertex(consumer, matrix, 0.0f, 0.375F, 1.0F, r, g, b, a, 0, 1, light, overlay);
+                }
             }
         }
     }
 
-    protected RenderType getRenderType(T te) {
-        ResourceLocation sky = te.getSkyTexture();
-        ResourceLocation texture = te.getPortalTexture();
-        String key = sky + "_" + texture;
-        if (!cash.containsKey(key)) {
-            cash.put(key, RenderType.create(key,
-                    DefaultVertexFormat.POSITION,
+    public static void vertex(VertexConsumer consumer, Matrix4f matrix, float x, float y, float z,
+                        float r, float g, float b, float a, int u, int v,
+                              int light, int overlay) {
+        consumer.vertex(matrix, x, y, z)
+                .color(r, g, b, a)
+                .uv(u, v)
+                .uv2(light, overlay)
+                .endVertex();
+    }
+
+    public static RenderType getRenderType(String name, ResourceLocation sky, ResourceLocation portal) {
+        String key = name + "_" + sky + "_" + portal;
+        return cash.computeIfAbsent(key, k -> CustomPortalRenderType.create(name, sky, portal));
+    }
+
+    private static class CustomPortalRenderType extends RenderType {
+
+        private CustomPortalRenderType(String name, VertexFormat format, VertexFormat.Mode mode,
+                                       int bufferSize, boolean affectsCrumbling, boolean sortOnUpload,
+                                       Runnable setupState, Runnable clearState) {
+            super(name, format, mode, bufferSize, affectsCrumbling, sortOnUpload, setupState, clearState);
+        }
+
+        static RenderType create(String name, ResourceLocation sky, ResourceLocation texture) {
+            Supplier<ShaderInstance> shaderSupplier;
+            ResourceLocation location = new ResourceLocation(CustomNpcs.MODID, "position_color_tex_lightmap/rendertype_" + name);
+            if (ClientRegisterEvents.hasShader(location)) { shaderSupplier = () -> ClientRegisterEvents.getShader(location); }
+            else { shaderSupplier = GameRenderer::getRendertypeEndPortalShader; }
+
+            RenderType.CompositeState state = RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(shaderSupplier))
+                    .setTextureState(RenderStateShard.MultiTextureStateShard.builder()
+                            .add(sky, false, false)
+                            .add(texture, false, false).build())
+                    .setTransparencyState(TransparencyStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setLightmapState(new RenderStateShard.LightmapStateShard(true))
+                    .createCompositeState(false);
+            return create(name + "_" + sky.getPath() + "_" + texture.getPath(),
+                    DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
+                    VertexFormat.Mode.QUADS, 256, false, false, state);
+            /*
+            return create(name + "_" + sky.getPath() + "_" + texture.getPath(),
+                    DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
                     VertexFormat.Mode.QUADS,
                     256, false, false,
-                    RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEndPortalShader))
+                    RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(
+                                    shaderSupplier))
                             .setTextureState(RenderStateShard.MultiTextureStateShard.builder()
                                     .add(sky, false, false)
                                     .add(texture, false, false).build())
-                            .createCompositeState(false)));
+                            .setTransparencyState(TransparencyStateShard.TRANSLUCENT_TRANSPARENCY)
+                            .setOutputState(RenderStateShard.TRANSLUCENT_TARGET)
+                            .createCompositeState(false));
+            /**/
         }
-        return cash.getOrDefault(key, RenderType.endPortal());
     }
 
 }

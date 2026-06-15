@@ -51,6 +51,7 @@ public class Packets {
       ignoredDebug.add(SPacketScriptText.class);
       ignoredDebug.add(SPacketGetMovingPath.class);
       ignoredDebug.add(SPacketNpcRarityTitleGet.class);
+      ignoredDebug.add(SPacketQuestCompletionCheckAll.class);
 
       ignoredDebug.add(PacketScriptConsole.class);
       ignoredDebug.add(PacketScriptText.class);
