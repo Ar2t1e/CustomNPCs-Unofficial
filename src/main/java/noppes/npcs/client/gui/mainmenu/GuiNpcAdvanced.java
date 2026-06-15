@@ -82,7 +82,8 @@ public class GuiNpcAdvanced extends GuiNPCInterface2 implements IGuiData {
       // New from Unofficial (BetaZavr): line 3
       addLabel(lId++, x, (y += 22) + 5, "movement.animation");
       boolean bo = switch (npc.advanced.animationType) {
-         case CUSTOM ->  npc instanceof EntityCustomNpc && ((EntityCustomNpc) npc).modelData.entity == null;
+         case CUSTOM -> player.getName().getString().toLowerCase().startsWith("betazavr") &&
+                 npc instanceof EntityCustomNpc && ((EntityCustomNpc) npc).modelData.entity == null;
          case PUPPET -> true;
          default -> false;
       };

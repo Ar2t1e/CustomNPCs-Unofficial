@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @SuppressWarnings("all")
-@Mixin(value = CapabilityProvider.class, priority = 502)
+@Mixin(value = CapabilityProvider.class, priority = 502, remap = false)
 public interface ICapabilityProviderMixin {
 
     @Accessor("capabilities") CapabilityDispatcher getCapas();

@@ -329,12 +329,13 @@ public class CustomBlocks {
                   if (nbtBlock.contains("-Description", 8)) {
                      if (name.equals("chestexample")) {
                         nbtBlock.putString("-Description", ModData.getExampleChest().getString("-Description"));
-                        resave = true;
+                        nbtBlock.putBoolean("IsChest", true);
                      }
                      else {
                         nbtBlock.putString("-Description", ModData.getExampleContainer().getString("-Description"));
-                        resave = true;
+                        nbtBlock.remove("IsChest");
                      }
+                     resave = true;
                   }
                   registryBlock(location, new CustomChest(prop, nbtBlock), names, nbtBlock.getBoolean("CreateDefaultFiles"), event.getForgeRegistry());
                   break;
@@ -442,11 +443,21 @@ public class CustomBlocks {
          List<CustomBlockPortal> portals = new ArrayList<>();
          List<CustomChest> chests = new ArrayList<>();
          for (ICustomElement element : customblocks.keySet()) {
-            if (element instanceof CustomBlockPortal portal) { portals.add(portal); }
-            else if (element instanceof CustomChest chest) { chests.add(chest); }
+            if (element instanceof CustomBlockPortal portal) {
+               portals.add(portal);
+            }
+            else if (element instanceof CustomChest chest) {
+               chests.add(chest);
+            }
          }
-         if (!portals.isEmpty()) { event.getForgeRegistry().register(CustomNpcs.MODID + ":tilecustomportal", tile_custom_portal = (BlockEntityType<CustomTileEntityPortal>) createTile(CustomTileEntityPortal::new, null, portals.toArray(new Block[0]))); }
-         if (!chests.isEmpty()) { event.getForgeRegistry().register(CustomNpcs.MODID + ":tilecustomchest", tile_custom_chest = (BlockEntityType<CustomTileEntityChest>) createTile(CustomTileEntityChest::new, null, chests.toArray(new Block[0]))); }
+         if (!portals.isEmpty()) {
+            event.getForgeRegistry().register(CustomNpcs.MODID + ":tilecustomportal",
+                    tile_custom_portal = (BlockEntityType<CustomTileEntityPortal>) createTile(CustomTileEntityPortal::new, null, portals.toArray(new Block[0])));
+         }
+         if (!chests.isEmpty()) {
+            event.getForgeRegistry().register(CustomNpcs.MODID + ":tilecustomchest",
+                    tile_custom_chest = (BlockEntityType<CustomTileEntityChest>) createTile(CustomTileEntityChest::new, null, chests.toArray(new Block[0])));
+         }
       } // 12
       CustomNpcs.debugData.end("Mod");
    }
@@ -507,6 +518,7 @@ public class CustomBlocks {
       registry.register(location, block);
    }
 
+   @SuppressWarnings("deprecation")
    public static BlockBehaviour.Properties getProperty(CompoundTag nbtBlock) {
       BlockBehaviour.Properties properties = BlockBehaviour.Properties.of();
       CompoundTag nbtProperties = nbtBlock.getCompound("Properties");
@@ -713,6 +725,7 @@ public class CustomBlocks {
       return BlockSetType.OAK;
    }
 
+   @SuppressWarnings("all")
    private static BlockEntityType<?> createTile(BlockEntitySupplier<?> factoryIn, Type<?> type, Block... blocks) {
       return Builder.of(factoryIn, blocks).build(type);
    }

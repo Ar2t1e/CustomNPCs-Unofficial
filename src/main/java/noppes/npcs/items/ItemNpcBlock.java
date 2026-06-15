@@ -1,13 +1,16 @@
 package noppes.npcs.items;
 
 import java.util.function.Consumer;
+
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import noppes.npcs.api.item.INPCToolItem;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.client.CustomTileEntityItemStackRenderer;
 
-public class ItemNpcBlock extends BlockItem implements INPCToolItem {
+import javax.annotation.Nonnull;
+
+public class ItemNpcBlock extends BlockItem {
 
    public final Block block;
 
@@ -16,8 +19,11 @@ public class ItemNpcBlock extends BlockItem implements INPCToolItem {
       block = blockIn;
    }
 
-   public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-      consumer.accept(CustomTileEntityItemStackRenderer.itemRenderProperties);
+   @Override
+   public void initializeClient(@Nonnull Consumer<IClientItemExtensions> consumer) {
+      if (CustomBlocks.registryNbt != null && CustomBlocks.registryNbt.getByte("BlockType") == (byte) 5) {
+         consumer.accept(CustomTileEntityItemStackRenderer.itemPortalRenderProperties);
+      } else { consumer.accept(CustomTileEntityItemStackRenderer.itemRenderProperties); }
    }
 
 }

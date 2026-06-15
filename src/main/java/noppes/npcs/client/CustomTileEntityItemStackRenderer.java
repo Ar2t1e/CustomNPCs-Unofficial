@@ -14,8 +14,8 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import noppes.npcs.client.renderer.items.BlockCustomPortalItemRenderer;
 import noppes.npcs.items.ItemNpcBlock;
-import noppes.npcs.shared.common.util.LogWriter;
 import org.jetbrains.annotations.NotNull;
 
 public class CustomTileEntityItemStackRenderer extends BlockEntityWithoutLevelRenderer {
@@ -25,6 +25,10 @@ public class CustomTileEntityItemStackRenderer extends BlockEntityWithoutLevelRe
       public BlockEntityWithoutLevelRenderer getCustomRenderer() {
          return CustomTileEntityItemStackRenderer.instance();
       }
+   };
+   public static IClientItemExtensions itemPortalRenderProperties = new IClientItemExtensions() {
+      @Override
+      public BlockEntityWithoutLevelRenderer getCustomRenderer() { return new BlockCustomPortalItemRenderer(); }
    };
    private final HashMap<Block, BlockEntity> data = new HashMap<>();
    private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;

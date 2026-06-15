@@ -325,6 +325,7 @@ public class CustomItems {
       return compound;
    }
 
+   @SuppressWarnings("deprecation")
    private static Properties getProperty(CompoundTag nbtItem) {
       Properties properties = new Properties();
       CompoundTag nbtProperties = nbtItem.getCompound("Properties");

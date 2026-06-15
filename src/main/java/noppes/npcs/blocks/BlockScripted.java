@@ -61,24 +61,21 @@ public class BlockScripted
    @Override
    public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new TileScripted(pos, state); }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public @Nonnull VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
       return AABB;
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public @Nonnull VoxelShape getCollisionShape(@Nonnull BlockState blockState, BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
       TileScripted tile = (TileScripted)level.getBlockEntity(pos);
       return tile != null && tile.isPassable ? Shapes.empty() : AABB;
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public @Nonnull InteractionResult use(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult ray) {
       if (level.isClientSide) { return InteractionResult.SUCCESS; }
       ItemStack currentItem = player.getInventory().getSelected();
@@ -107,9 +104,8 @@ public class BlockScripted
       }
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public void entityInside(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull Entity entityIn) {
       if (!level.isClientSide) {
          TileScripted tile = (TileScripted)level.getBlockEntity(pos);
@@ -134,9 +130,8 @@ public class BlockScripted
       }
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public void attack(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull Player player) {
       if (!level.isClientSide) {
          TileScripted tile = (TileScripted)level.getBlockEntity(pos);
@@ -144,9 +139,8 @@ public class BlockScripted
       }
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public void onRemove(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull BlockState newState, boolean isMoving) {
       if (!level.isClientSide) {
          TileScripted tile = (TileScripted)level.getBlockEntity(pos);
@@ -166,9 +160,8 @@ public class BlockScripted
       return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public @Nonnull List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull Builder builder) {
       return Collections.emptyList();
    }
@@ -185,9 +178,8 @@ public class BlockScripted
       super.onBlockExploded(state, level, pos, explosion);
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public void neighborChanged(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull Block neighborBlock, @Nonnull BlockPos pos2, boolean isMoving) {
       if (!level.isClientSide) {
          TileScripted tile = (TileScripted)level.getBlockEntity(pos);
@@ -204,21 +196,18 @@ public class BlockScripted
       }
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public boolean isSignalSource(@Nonnull BlockState state) { return true; }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public int getSignal(@Nonnull BlockState state, @Nonnull BlockGetter worldIn, @Nonnull BlockPos pos, @Nonnull Direction side) {
       return this.getDirectSignal(state, worldIn, pos, side);
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public int getDirectSignal(@Nonnull BlockState state, BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction side) {
       TileScripted tile = (TileScripted)level.getBlockEntity(pos);
       return tile != null ? tile.activePowering : 0;
@@ -241,9 +230,8 @@ public class BlockScripted
       return tile == null ? 0 : tile.lightValue;
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public boolean isPathfindable(@Nonnull BlockState state, BlockGetter level, @Nonnull BlockPos pos, @Nonnull PathComputationType type) {
       TileScripted tile = (TileScripted)level.getBlockEntity(pos);
       return tile != null && tile.isPassable;
@@ -254,9 +242,8 @@ public class BlockScripted
       return super.canEntityDestroy(state, level, pos, entity);
    }
 
-   /** @deprecated */
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public float getDestroyProgress(@Nonnull BlockState state, @Nonnull Player player, BlockGetter level, @Nonnull BlockPos pos) {
       TileScripted tile = (TileScripted)level.getBlockEntity(pos);
       float f = -1.0F;
@@ -290,11 +277,13 @@ public class BlockScripted
    }
 
    @Override
+   @SuppressWarnings("deprecation")
    public @Nonnull FluidState getFluidState(@Nonnull BlockState state) {
       return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
    }
 
    @Override
+   @SuppressWarnings("deprecation")
    public @Nonnull BlockState updateShape(BlockState state_0, @Nonnull Direction side, @Nonnull BlockState state_1, @Nonnull LevelAccessor level, @Nonnull BlockPos pos_0, @Nonnull BlockPos pos_1) {
       if (state_0.getValue(WATERLOGGED)) {
          level.scheduleTick(pos_0, Fluids.WATER, Fluids.WATER.getTickDelay(level));

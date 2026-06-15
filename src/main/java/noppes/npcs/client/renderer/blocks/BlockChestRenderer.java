@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.blockentity.BrightnessCombiner;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
@@ -28,7 +27,6 @@ public class BlockChestRenderer<T extends CustomTileEntityChest> extends BlockRe
 
     public BlockChestRenderer(BlockEntityRendererProvider.Context dispatcher) {
         super(dispatcher);
-
         ModelPart modelpart = dispatcher.bakeLayer(ModelLayers.CHEST);
         bottom = modelpart.getChild("bottom");
         lid = modelpart.getChild("lid");
@@ -36,13 +34,15 @@ public class BlockChestRenderer<T extends CustomTileEntityChest> extends BlockRe
     }
 
     @Override
-    public void render(@Nonnull T te, float partialTicks, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    public void render(@Nonnull CustomTileEntityChest te, float partialTicks, @Nonnull PoseStack pose,
+                       @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
         Level level = te.getLevel();
         boolean hasLevel = level != null;
-        BlockState blockstate = hasLevel ? te.getBlockState() : te.block.defaultBlockState().setValue(CustomChest.FACING, Direction.SOUTH);
+        BlockState blockstate = hasLevel ? te.getBlockState()
+                : te.block.defaultBlockState().setValue(CustomChest.FACING, Direction.SOUTH);
 
         Block block = blockstate.getBlock();
-        if (block instanceof AbstractChestBlock<?>) {
+        if (block instanceof CustomChest chest && chest.isChest) {
             pose.pushPose();
             float f = blockstate.getValue(CustomChest.FACING).toYRot();
             pose.translate(0.5F, 0.5F, 0.5F);
@@ -52,7 +52,10 @@ public class BlockChestRenderer<T extends CustomTileEntityChest> extends BlockRe
             float f1 = te.getOpenNess(partialTicks);
             f1 = 1.0F - f1;
             f1 = 1.0F - f1 * f1 * f1;
-            VertexConsumer vertexconsumer = Sheets.CHEST_LOCATION.buffer(buffer, RenderType::entityCutout);
+
+            VertexConsumer vertexconsumer;
+            if (te.chestTexture == null) { vertexconsumer = Sheets.CHEST_LOCATION.buffer(buffer, RenderType::entityCutout); }
+            else { vertexconsumer = buffer.getBuffer(RenderType.entityCutout(te.chestTexture)); }
 
             lid.xRot = -(f1 * ((float) Math.PI / 2F));
             lock.xRot = lid.xRot;

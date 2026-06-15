@@ -57,7 +57,7 @@ public class WrapperNpcAPI extends NpcAPI {
 
    private static NpcAPI instance = null;
 
-   public static final Map<ResourceKey<Level>, WorldWrapper> worldCache = new LRUHashMap<>(300);
+   public static final LRUHashMap<ResourceKey<Level>, WorldWrapper> worldCache = new LRUHashMap<>(300);
    public static final IEventBus EVENT_BUS = BusBuilder.builder().build();
    private final List<Level> levels = Lists.newArrayList();
 

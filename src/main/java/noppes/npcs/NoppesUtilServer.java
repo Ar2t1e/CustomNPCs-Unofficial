@@ -654,7 +654,7 @@ public class NoppesUtilServer {
                      boolean isChest = ((CustomChest) customblock).isChest;
                      stateDatas.put(blockstate, getDataFile("jb" + (isChest ? "h" : "") + ".dat", fileName, name));
                      modelDatas.put(blockModel, getDataFile("bm" + (isChest ? "h" : "") + ".dat", fileName, name));
-                     modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
+                     modelDatas.put(itemFile, getDataFile((isChest ? "imh" : "bmi") + ".dat", fileName, name));
                   }
                   break;
                } // Chest
@@ -688,7 +688,7 @@ public class NoppesUtilServer {
                   if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
                      stateDatas.put(blockstate, getDataFile("jbp.dat", fileName, name));
                      modelDatas.put(blockModel, getDataFile("bmp.dat", name, name));
-                     modelDatas.put(itemFile, getDataFile("bmi.dat", fileName, name));
+                     modelDatas.put(itemFile, getDataFile("imp.dat", fileName, name));
                   }
                   break;
                } // Portal

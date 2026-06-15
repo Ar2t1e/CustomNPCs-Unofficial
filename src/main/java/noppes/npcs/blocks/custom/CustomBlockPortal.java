@@ -73,8 +73,6 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
     public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
         return new CustomTileEntityPortal(pos, state);
     }
-    /** @deprecated */
-    @Deprecated
     @Override
     public @Nonnull VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
         return switch (state.getValue(TYPE)) {
@@ -82,6 +80,11 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
             case 2 -> SHAPE_2;
             default -> SHAPE;
         };
+    }
+
+    @SuppressWarnings("deprecation")
+    public @Nonnull VoxelShape getCollisionShape(@Nonnull BlockState blockState, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
+        return Shapes.empty();
     }
 
     @Override

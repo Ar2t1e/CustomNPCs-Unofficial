@@ -50,6 +50,7 @@ public class NoppesUtil {
    public static void clickSound() { Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)); }
 
    // New from Unofficial (BetaZavr)
+   @SuppressWarnings("ConstantConditions")
    private static synchronized void setLocalization(String key, String value) {
       File langDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/lang");
       if (!langDir.exists() && !langDir.mkdirs()) { return; }
@@ -130,13 +131,14 @@ public class NoppesUtil {
       if (write) { LogWriter.debug("Create Default Localization key \"" + key + "\""); }
    }
 
-   private static @Nonnull BufferedImage getBufferImageOffset(@Nonnull BufferedImage bufferedImage, float hueShift) {
+   public static @Nonnull BufferedImage getBufferImageOffset(@Nonnull BufferedImage bufferedImage, float hueShift) {
       try {
          for (int u = 0; u < bufferedImage.getWidth(); u++) {
             for (int v = 0; v < bufferedImage.getHeight(); v++) {
                int i = bufferedImage.getRGB(u, v);
-               if (i == 16777215 || i == -1) { continue; }
-               Color c = new Color(bufferedImage.getRGB(u, v));
+               int alpha = (i >>> 24) & 0xFF;
+               if (alpha == 0) { continue; }
+               Color c = new Color(i, true);
                float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
                float hue = hsb[0] + hueShift;
                while (hue > 1.0f) { hue -= 1.0f; }
@@ -148,7 +150,7 @@ public class NoppesUtil {
       return bufferedImage;
    }
 
-   private static BufferedImage getBufferedImage(String name, int width, int height) {
+   public static BufferedImage getBufferedImage(String name, int width, int height) {
       try { return ImageIO.read(Util.instance.getModInputStream(name)); }
       catch (Exception e) { LogWriter.error("Not found file data \"" + name +"\"", e); }
       return new BufferedImage(width, height, 6);
@@ -364,10 +366,8 @@ public class NoppesUtil {
                } // Liquid
                case 2: {
                   if (customblock instanceof CustomChest chest && chest.isChest) {
-                     File textureFile = new File(textBlocksDir, name + ".png");
                      File chestFile = new File(textChestDir, name + ".png");
-                     if (!textureFile.exists() || !chestFile.exists()) {
-                        textures.put(textureFile, getBufferImageOffset(getBufferedImage("ht.png", 16, 16), offsetColor));
+                     if (!chestFile.exists()) {
                         textures.put(chestFile, getBufferImageOffset(getBufferedImage("hc.png", 64, 64), offsetColor));
                      }
                   } // chest

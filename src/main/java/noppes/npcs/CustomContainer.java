@@ -16,6 +16,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.network.IContainerFactory;
 import net.minecraftforge.registries.RegisterEvent;
 import net.minecraftforge.registries.ForgeRegistries.Keys;
+import noppes.npcs.blocks.custom.tiles.CustomTileEntityChest;
 import noppes.npcs.containers.*;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -92,7 +93,10 @@ public class CustomContainer {
          }));
          event.getForgeRegistry().register(CustomNpcs.MODID + ":container_custom_chest", container_custom_chest = createContainer((containerId, inv, buffer) -> {
             BlockPos pos = buffer.readBlockPos();
-            return new ContainerChestCustom(containerId, inv, (Container) inv.player.level().getBlockEntity(pos));
+            if (inv.player.level().getBlockEntity(pos) instanceof CustomTileEntityChest chest) {
+               return new ContainerChestCustom(containerId, inv, chest);
+            }
+            return null;
          }));
          event.getForgeRegistry().register(CustomNpcs.MODID + ":container_npc_dead", container_npc_dead = createContainer((containerId, inv, buffer) -> {
             int sizeInventory = buffer.readInt();
