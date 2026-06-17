@@ -21,7 +21,6 @@ import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.common.SoundActions;
-import net.minecraftforge.fluids.FluidType;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
@@ -63,7 +62,7 @@ public abstract class CustomFluid extends FlowingFluid implements ICustomElement
     public @Nonnull ResourceLocation getLocation() { return location; }
 
     @Override
-    public @Nonnull FluidType getFluidType() { return fluidType; }
+    public @Nonnull CustomFluidType getFluidType() { return fluidType; }
 
     @Override
     public @Nonnull Fluid getFlowing() { return flowing; }

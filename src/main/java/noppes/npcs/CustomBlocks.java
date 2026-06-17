@@ -2,6 +2,7 @@ package noppes.npcs;
 
 import com.mojang.datafixers.types.Type;
 import net.minecraft.core.Direction;
+import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
@@ -105,9 +106,9 @@ public class CustomBlocks {
    public static BlockEntityType<TileScripted> tile_scripted;
    public static BlockEntityType<TileScriptedDoor> tile_scripteddoor;
    public static BlockEntityType<TileWaypoint> tile_waypoint;
+   // custom
    public static BlockEntityType<CustomTileEntityPortal> tile_custom_portal;
    public static BlockEntityType<CustomTileEntityChest> tile_custom_chest;
-   // custom
    public static final Map<ICustomElement, Item> customblocks = new LinkedHashMap<>();
    public static final Map<String, ICustomElement> customfluid = new TreeMap<>();
    public static CompoundTag registryNbt;
@@ -224,7 +225,6 @@ public class CustomBlocks {
                           slopeFindDistance, levelDecreasePerBlock, explosionResistance, tickRate);
                   CustomFluid flowing = new CustomFluid.Flowing(new ResourceLocation(CustomNpcs.MODID, "flowing_" + location.getPath()), nbtBlock,
                           fluidType, slopeFindDistance, levelDecreasePerBlock, explosionResistance, tickRate);
-
                   BucketItem item = new BucketItem(() -> source, (new Item.Properties()).craftRemainder(Items.BUCKET).stacksTo(1));
                   CustomLiquidBlock block = new CustomLiquidBlock(location, () -> source, getProperty(nbtBlock), nbtBlock);
                   flowing.setLinks(source, flowing, block, item);
@@ -306,6 +306,10 @@ public class CustomBlocks {
                   ICustomElement element = customfluid.get(CustomNpcs.MODID + ":custom_fluid_" + name);
                   if (element instanceof CustomFluid fluid && fluid.getBlock() != null) {
                      registryBlock(location, fluid.getBlock(), names, nbtBlock.getBoolean("CreateDefaultFiles"), event.getForgeRegistry());
+                     registryBlock(location + "_cauldron",
+                             new CustomCauldronBlock(BlockBehaviour.Properties.copy(Blocks.WATER_CAULDRON),
+                                     CauldronInteraction.newInteractionMap(), fluid, nbtBlock),
+                             names, nbtBlock.getBoolean("CreateDefaultFiles"), event.getForgeRegistry());
                   }
                   break;
                } // Liquid
@@ -443,12 +447,8 @@ public class CustomBlocks {
          List<CustomBlockPortal> portals = new ArrayList<>();
          List<CustomChest> chests = new ArrayList<>();
          for (ICustomElement element : customblocks.keySet()) {
-            if (element instanceof CustomBlockPortal portal) {
-               portals.add(portal);
-            }
-            else if (element instanceof CustomChest chest) {
-               chests.add(chest);
-            }
+            if (element instanceof CustomBlockPortal portal) { portals.add(portal); }
+            else if (element instanceof CustomChest chest) { chests.add(chest); }
          }
          if (!portals.isEmpty()) {
             event.getForgeRegistry().register(CustomNpcs.MODID + ":tilecustomportal",
@@ -464,15 +464,16 @@ public class CustomBlocks {
 
    public static CompoundTag getBlocksNbt(File file) {
       CompoundTag compound = ModData.getExampleBlocks().copy();
+      ListTag listBlocks = compound.getList("Blocks", 10);
+
       CompoundTag nbtInFile = new CompoundTag();
-      try { if (file.exists()) { compound = NBTJsonUtil.LoadFile(file); } }
+      boolean resave = false;
+      try { if (file.exists()) { nbtInFile = NBTJsonUtil.LoadFile(file); } }
       catch (Exception e) { LogWriter.error("Try Load " + file.getName() + ": ", e); }
 
       List<String> names = new ArrayList<>();
-      ListTag listInFile = nbtInFile.getList("Items", 10);
-      ListTag listBlocks = compound.getList("Items", 10);
+      ListTag listInFile = nbtInFile.getList("Blocks", 10);
       ListTag exampleBlocks = listBlocks.copy();
-      boolean resave = false;
       for (int i = 0; i < listInFile.size(); i++) {
          CompoundTag nbtBlock = listInFile.getCompound(i);
          String name = nbtBlock.getString("RegistryName");
@@ -719,7 +720,7 @@ public class CustomBlocks {
          SoundEvent buttonClickOn = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(blockSetType.getString("SoundButtonClickOn")));
          if (buttonClickOn == null) { buttonClickOn = SoundEvents.WOODEN_BUTTON_CLICK_ON; }
          return new BlockSetType(name,
-                 !blockSetType.contains("CanOpenByHand") || blockSetType.getBoolean("CanOpenByHand"),
+                 !blockSetType.contains("CanOpenByHand", 1) || blockSetType.getBoolean("CanOpenByHand"),
                  soundType, doorClose, doorOpen, trapDoorClose, trapDoorOpen, plateClickOff, plateClickOn, buttonClickOff, buttonClickOn);
       }
       return BlockSetType.OAK;

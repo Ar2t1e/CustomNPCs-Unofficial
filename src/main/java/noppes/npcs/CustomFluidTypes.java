@@ -164,11 +164,12 @@ public class CustomFluidTypes {
                 ResourceLocation location = new ResourceLocation(CustomNpcs.MODID, name);
                 if (!fluidTypes.containsKey(location.getPath())) { // register fluid type
                     CompoundTag nbtType = nbtBlock.getCompound("FluidType");
-                    Color c = new Color(nbtType.contains("fogColor", 3) ? nbtType.getInt("fogColor") : 0x3C6EDC);
-                    CustomFluidType fluidType = new CustomFluidType(new ResourceLocation(CustomNpcs.MODID, "block/" + name + "_still"),
-                            new ResourceLocation(CustomNpcs.MODID, "block/" + name + "_flow"),
-                            new ResourceLocation(CustomNpcs.MODID, "block/" + name),
-                            nbtType.contains("tintColor", 3) ? nbtType.getInt("tintColor") : 0xA1E038D0,
+                    Color c = new Color(nbtType.contains("fogColor", 3) ? nbtType.getInt("fogColor") : 0xFF822BD9, true);
+                    String textureName = name.substring("custom_fluid_".length());
+                    CustomFluidType fluidType = new CustomFluidType(new ResourceLocation(CustomNpcs.MODID, "block/" + textureName + "_still"),
+                            new ResourceLocation(CustomNpcs.MODID, "block/" + textureName + "_flow"),
+                            new ResourceLocation(CustomNpcs.MODID, "block/" + textureName),
+                            nbtType.contains("tintColor", 3) ? nbtType.getInt("tintColor") : 0xFF822BD9,
                             new Vector3f((float) c.getRed() / 255.0F, (float) c.getGreen() / 255.0F, (float) c.getBlue() / 255.0F),
                             getFluidTypeProperty(nbtBlock), nbtBlock);
                     RegistryObject<FluidType> key = RegistryObject.createOptional(location, ForgeRegistries.Keys.FLUID_TYPES.location(), CustomNpcs.MODID);

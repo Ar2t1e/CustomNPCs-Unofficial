@@ -1,1 +1,1 @@
-{  "textures": {    "particle": "{mod_id}:block/{name}_still"  }}
+{  "textures": {    "particle": "{mod_id}:block/{name}_still",    "still": "{mod_id}:block/{name}_still",    "flowing": "{mod_id}:block/{name}_flow"  }}

@@ -104,6 +104,7 @@
     "client.renderer.CubeMapMixin",
     "client.renderer.ICubeMapMixin",
     "client.renderer.ItemModelMesherMixin",
+    "client.renderer.block.BlockModelShaperMixin",
     "client.renderer.blockentity.BannerRendererMixin",
     "client.renderer.entity.FishingHookRendererMixin",
     "client.renderer.entity.IEntityRendererMixin",

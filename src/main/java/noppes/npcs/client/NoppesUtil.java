@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.ICustomElement;
@@ -21,6 +22,7 @@ import noppes.npcs.blocks.custom.*;
 import noppes.npcs.client.particles.CustomParticleType;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.blocks.custom.CustomLiquidBlock;
+import noppes.npcs.fluids.CustomFluid;
 import noppes.npcs.items.custom.*;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketGuiOpen;
@@ -35,6 +37,24 @@ import javax.imageio.ImageIO;
 public class NoppesUtil {
 
    private static final Random rnd = new Random();
+   private static final float[] baseHsb = Color.RGBtoHSB(21, 80, 169, null);
+   private static final float[][] hsbOffsets = new float[][] {
+           new float[] { 0.022087f, 0.098399f, 0.110818f },
+           new float[] { -0.108162f, -7.4E-4f, -0.568627f },
+           new float[] { -0.100225f, -0.14497f, -0.560784f },
+           new float[] { -0.090421f, -0.289533f, -0.54902f },
+           new float[] { -0.164328f, -0.442406f, -0.545098f },
+           new float[] { 0.003941f, -0.37574f, -0.537255f },
+           new float[] { 0.008108f, -0.399549f, -0.498039f },
+           new float[] { -0.287725f, -0.465483f, -0.509804f },
+           new float[] { 0.022963f, -0.41574f, -0.466667f },
+           new float[] { 0.044702f, -0.396573f, -0.47451f },
+           new float[] { 0.024775f, -0.770476f, -0.513726f },
+           new float[] { -0.107801f, -0.166062f, -0.419608f },
+           new float[] { 0.189249f, -0.530285f, -0.447059f },
+           new float[] { -0.095463f, -0.022081f, -0.341176f },
+           new float[] { -0.178239f, -0.400992f, -0.27451f }
+   };
    public static final Map<String, String> jsonMap = new TreeMap<>();
 
    public static void requestOpenGUI(EnumGuiType gui) { requestOpenGUI(gui, BlockPos.ZERO); }
@@ -140,14 +160,67 @@ public class NoppesUtil {
                if (alpha == 0) { continue; }
                Color c = new Color(i, true);
                float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
-               float hue = hsb[0] + hueShift;
-               while (hue > 1.0f) { hue -= 1.0f; }
-               while (hue < 0.0f) { hue += 1.0f; }
-               bufferedImage.setRGB(u, v, Color.HSBtoRGB(hue, hsb[1], hsb[2])); // HSBtoRGB(hue, saturation, brightness)
+               bufferedImage.setRGB(u, v, Color.HSBtoRGB(hsbOffset(hsb[0], hueShift), hsb[1], hsb[2])); // HSBtoRGB(hue, saturation, brightness)
             }
          }
       } catch (Exception e) { LogWriter.error(e); }
       return bufferedImage;
+   }
+
+   /**
+    * Applies a tint color to a BufferedImage.
+    * The brightness (grayscale) of the source pixel determines the tint intensity.
+    * A black pixel = fully transparent/black, a white pixel = full tintColor.
+    *
+    * @param bufferedImage : Source image (brush, grayscale)
+    * @param tintColor : Color in ARGB format (int from NBT)
+    * @return : New image with the tint applied
+    */
+   public static BufferedImage getBufferImageTint(BufferedImage bufferedImage, int tintColor) {
+      if (bufferedImage == null) return null;
+      int width = bufferedImage.getWidth();
+      int height = bufferedImage.getHeight();
+      BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+      Color tint = new Color(tintColor, true);
+      float[] hsb = Color.RGBtoHSB(tint.getRed(), tint.getGreen(), tint.getBlue(), null);
+      for (int u = 0; u < width; u++) {
+         for (int v = 0; v < height; v++) {
+            int i = bufferedImage.getRGB(u, v);
+            int alpha = (i >>> 24) & 0xFF;
+            if (alpha == 0) { continue; }
+            Color c = new Color(i, true);
+            float brightness = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null)[2];
+            result.setRGB(u, v, (alpha << 24) | (Color.HSBtoRGB(hsb[0], hsb[1], brightness) & 0x00FFFFFF));
+         }
+      }
+
+      return result;
+   }
+
+   /**
+    * Blends the foreground over the background, taking the alpha channel into account.
+    * Works like alpha-blending: result = fg * fgAlpha + bg * (1 - fgAlpha)
+    *
+    * @param background : Primary image (wbb.png)
+    * @param foreground : Blended image (tinted brush)
+    * @return : Blended result
+    */
+   public static BufferedImage combineBuffer(BufferedImage background, BufferedImage foreground) {
+      if (background == null) return foreground;
+      if (foreground == null) return background;
+
+      int width = Math.max(background.getWidth(), foreground.getWidth());
+      int height = Math.max(background.getHeight(), foreground.getHeight());
+
+      BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g = result.createGraphics();
+
+      g.drawImage(background, 0, 0, null);
+      g.drawImage(foreground, 0, 0, null);
+
+      g.dispose();
+      return result;
    }
 
    public static BufferedImage getBufferedImage(String name, int width, int height) {
@@ -356,11 +429,17 @@ public class NoppesUtil {
                      Util.instance.saveFile(stillMCmetaFile, NoppesUtilServer.getDataFile("wms.dat", fileName, name));
                      Util.instance.saveFile(flowMCmetaFile, NoppesUtilServer.getDataFile("wmf.dat", fileName, name));
                      // images
-                     textures.put(textureFile, getBufferImageOffset(getBufferedImage("wo.png", 8, 8), offsetColor));
-                     textures.put(flowFile, getBufferImageOffset(getBufferedImage("wf.png", 32, 512), offsetColor));
-                     textures.put(stillFile, getBufferImageOffset(getBufferedImage("ws.png", 16, 320), offsetColor));
+                     ICustomElement element = CustomBlocks.customfluid.get(CustomNpcs.MODID + ":custom_fluid_" + name);
+                     int tint = customblock.getCustomNbt().getCompound("FluidType").getInteger("tintColor");
+                     if (element instanceof CustomFluid fluid && fluid.getBlock() != null) {
+                        tint = fluid.getFluidType().getTintColor();
+                     }
+                     textures.put(textureFile, getBufferImageTint(getBufferedImage("wo.png", 8, 8), tint));
+                     textures.put(flowFile, getBufferedImage("wf.png", 32, 512));
+                     textures.put(stillFile, getBufferedImage("ws.png", 16, 320));
                      // bucket
-                     textures.put(bucketFile, getBufferImageOffset(getBufferedImage("wb.png", 16, 16), offsetColor));
+                     textures.put(bucketFile, combineBuffer(getBufferedImage("wb.png", 16, 16),
+                             getBufferImageTint(getBufferedImage("wc.png", 16, 16), tint)));
                   }
                   break;
                } // Liquid
@@ -393,13 +472,36 @@ public class NoppesUtil {
                   break;
                } // Slab
                case 5: {
-                  File textureFile = new File(textBlocksDir, name + ".png");
-                  File skyFile = new File(textEnvironmentDir, name + "_sky.png");
-                  File portalFile = new File(textEntityDir, name + "_portal.png");
-                  if (!textureFile.exists() || !skyFile.exists() || !portalFile.exists()) {
-                     textures.put(textureFile, getBufferImageOffset(bb, offsetColor));
-                     textures.put(skyFile, getBufferImageOffset(getBufferedImage("es.png", 256, 256), offsetColor));
-                     textures.put(portalFile, getBufferImageOffset(getBufferedImage("ep.png", 256, 256), offsetColor));
+                  File shaderDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/shaders/core");
+                  if (shaderDir.exists() || shaderDir.mkdirs()) {
+                     File textureFile = new File(textBlocksDir, name + ".png");
+                     File skyFile = new File(textEnvironmentDir, name + "_sky.png");
+                     File portalFile = new File(textEntityDir, name + "_portal.png");
+                     File shaderJsonFile = new File(shaderDir, fileName + ".json");
+                     File shaderVertexFile = new File(shaderDir, fileName + ".vsh");
+                     File shaderFaseFile = new File(shaderDir, fileName + ".fsh");
+                     if (!textureFile.exists() || !skyFile.exists() || !portalFile.exists() ||
+                             !shaderJsonFile.exists() || !shaderVertexFile.exists() || !shaderFaseFile.exists()) {
+                        textures.put(textureFile, getBufferImageOffset(bb, offsetColor));
+                        textures.put(skyFile, getBufferImageOffset(getBufferedImage("es.png", 256, 256), offsetColor));
+                        textures.put(portalFile, getBufferedImage("ep.png", 256, 256));
+                        // shader
+                        Util.instance.saveFile(shaderJsonFile, NoppesUtilServer.getDataFile("shj.dat", fileName, name));
+                        Util.instance.saveFile(shaderVertexFile, NoppesUtilServer.getDataFile("shv.dat", fileName, name));
+                        String content = NoppesUtilServer.getDataFile("shf.dat", fileName, name);
+                        float[] hsb = new float[] { hsbOffset(baseHsb[0], offsetColor), baseHsb[1], baseHsb[2] };
+                        for (int i = 0; i < hsbOffsets.length; i++) {
+                           if (i == 0) {
+                              content = content.replace("color_" + i + "_0", hsbOffsets[i][0] + "")
+                                      .replace("color_" + i + "_1", hsbOffsets[i][1] + "")
+                                      .replace("color_" + i + "_2", hsbOffsets[i][2] + "");
+                           }
+                           content = content.replace("color_" + i + "_0", hsbOffset(hsb[0], hsbOffsets[i][0]) + "")
+                                   .replace("color_" + i + "_1", hsbOffset(hsb[1], hsbOffsets[i][1]) + "")
+                                   .replace("color_" + i + "_2", hsbOffset(hsb[2], hsbOffsets[i][2]) + "");
+                        }
+                        Util.instance.saveFile(shaderFaseFile, content);
+                     }
                   }
                   break;
                } // Portal
@@ -536,6 +638,13 @@ public class NoppesUtil {
             catch (Exception e) { LogWriter.error("Error create default texture for \"" + name + "\" potion", e); }
          }
       }
+   }
+
+   public static float hsbOffset(float base, float offset) {
+      float f0 = base + offset;
+      while (f0 < 0.0f) { f0 += 1.0f; }
+      while (f0 > 1.0f) { f0 -= 1.0f; }
+      return Math.round(f0 * 1000000.0f) / 1000000.0f;
    }
 
 }

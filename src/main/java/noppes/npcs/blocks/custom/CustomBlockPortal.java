@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -24,6 +25,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -36,6 +38,7 @@ import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.event.NpcEvent;
 import noppes.npcs.api.event.PlayerEvent;
+import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
 import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -45,12 +48,14 @@ import noppes.npcs.util.CustomNPCsScheduler;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
+import java.util.Random;
 
 public class CustomBlockPortal extends EndPortalBlock implements ICustomElement {
 
-    public static IntegerProperty TYPE = IntegerProperty.create("type", 0, 2);
+    private static final Random rnd = new Random();
     protected static final VoxelShape SHAPE_1 = Block.box(0.0D, 0.0D, 6.0D, 16.0D, 16.0D, 12.0D);
     protected static final VoxelShape SHAPE_2 = Block.box(6.0D, 0.0D, 0.0D, 12.0D, 16.0D, 16.0D);
+    public static IntegerProperty TYPE = IntegerProperty.create("type", 0, 2);
 
     protected final @Nonnull CompoundTag nbtData;
 
@@ -101,11 +106,6 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
             if (nbtData.contains("RenderData", 10)
                     && nbtData.getCompound("RenderData").contains("SecondSpeed", 5)) {
                 CompoundTag nbtRender = nbtData.getCompound("RenderData");
-                if (nbtRender.contains("SecondSpeed", 5)) {
-                    tile.speed = nbtRender.getFloat("SecondSpeed");
-                    if (tile.speed < 10.0f) { tile.speed = 10.0f; }
-                    else if (tile.speed > 10000.0f) { tile.speed = 10000.0f; }
-                }
                 if (nbtRender.contains("Transparency", 5)) {
                     tile.alpha = nbtRender.getFloat("Transparency");
                     if (tile.alpha < 0.15f) { tile.alpha = 0.15f; }
@@ -135,7 +135,6 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
 
                         aTile.dimensionId = parent.dimensionId;
                         aTile.homeDimensionId = parent.homeDimensionId;
-                        aTile.speed = parent.speed;
                         aTile.alpha = parent.alpha;
                         aTile.updateToClient();
                     }
@@ -148,6 +147,9 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
     @Override
     public void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entityIn) {
         if (level instanceof ServerLevel sLevel && entityIn.canChangeDimensions() && Shapes.joinIsNotEmpty(Shapes.create(entityIn.getBoundingBox().move(-pos.getX(), -pos.getY(), -pos.getZ())), state.getShape(sLevel, pos), BooleanOp.AND)) {
+            if (entityIn instanceof ServerPlayer player && player.getMainHandItem().getItem() instanceof INPCToolItem) {
+                return;
+            }
             ResourceKey<Level> id = Level.OVERWORLD;
             ResourceKey<Level> homeId = Level.OVERWORLD;
             if (nbtData.contains("DimensionID", 8)) {
@@ -196,8 +198,9 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
         }
     }
 
+    @Override
     public void animateTick(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull RandomSource rndSource) {
-        if (nbtData.contains("RenderData", 10)) {
+        if (nbtData.contains("RenderData", 10) && rnd.nextFloat() < 0.1f) {
             double d0 = (double) pos.getX() + rndSource.nextDouble();
             double d1 = (double) pos.getY() + 0.8D;
             double d2 = (double) pos.getZ() + rndSource.nextDouble();
@@ -206,6 +209,11 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
             if (ept instanceof SimpleParticleType p) { particle = p; }
             level.addParticle(particle, d0, d1, d2, 0.0D, 0.0D, 0.0D);
         }
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
+        return new ItemStack(this);
     }
 
     private boolean hasDimension(MinecraftServer server, ResourceKey<Level> dimensionId) {

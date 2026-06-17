@@ -19,6 +19,7 @@ import noppes.npcs.blocks.custom.CustomBlockPortal;
 import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketTileEntitySave;
+import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
 
@@ -30,7 +31,6 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
     public BlockPos posHomeTp = new BlockPos(0, -1, 0);
     public ResourceKey<Level> dimensionId = Level.OVERWORLD;
     public ResourceKey<Level> homeDimensionId = Level.OVERWORLD;
-    public float speed = 800.0f;
     public float alpha = 0.5f;
     public int type;
 
@@ -113,9 +113,9 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
         }
         dimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("DimensionID")));
         homeDimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("HomeDimensionID")));
-        speed = compound.getFloat("SecondSpeed");
         posHomeTp = BlockPos.of(compound.getLong("HomePosition"));
         posTp = BlockPos.of(compound.getLong("TpPosition"));
+        alpha = ValueUtil.correctFloat(compound.getFloat("Alpha"), 0.15f, 1.0f);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
         super.saveAdditional(compound);
         compound.putString("DimensionID", dimensionId.location().toString());
         compound.putString("HomeDimensionID", homeDimensionId.location().toString());
-        compound.putFloat("SecondSpeed", speed);
+        compound.putFloat("Alpha", alpha);
         compound.putLong("HomePosition", posHomeTp.asLong());
         compound.putLong("TpPosition", posTp.asLong());
     }

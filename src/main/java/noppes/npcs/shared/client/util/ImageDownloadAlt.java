@@ -109,6 +109,7 @@ public class ImageDownloadAlt extends SimpleTexture {
          if (newUrl != null && !newUrl.trim().isEmpty()) {
             load(newUrl, true);
          }
+         logger.debug("Downloading http texture done");
       } catch (Exception e) {
          logger.error("Couldn't download http texture", e);
       } finally {
@@ -116,7 +117,6 @@ public class ImageDownloadAlt extends SimpleTexture {
             connection.disconnect();
          }
       }
-
    }
 
    public NativeImage parseUserSkin(NativeImage image) {

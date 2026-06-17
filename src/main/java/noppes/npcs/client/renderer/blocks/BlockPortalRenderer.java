@@ -14,6 +14,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.blocks.custom.CustomBlockPortal;
 import noppes.npcs.client.ClientRegisterEvents;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
+import noppes.npcs.client.util.ShaderData;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
@@ -24,7 +25,6 @@ import java.util.function.Supplier;
 @OnlyIn(Dist.CLIENT)
 public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends BlockRendererInterface<T> {
 
-    // Кэш RenderType по комбинации текстур
     protected static final Map<String, RenderType> cash = new HashMap<>();
 
     public BlockPortalRenderer(BlockEntityRendererProvider.Context dispatcher) {
@@ -48,7 +48,7 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends Block
 
     protected void renderFaces(T te, Matrix4f matrix, VertexConsumer consumer, Direction face, int light, int overlay) {
         if (te.shouldRenderFace(face)) {
-            float r = 1.0F, g = 1.0F, b = 1.0F, a = 0.5F;
+            float r = 1.0F, g = 1.0F, b = 1.0F, a = te.alpha;
             switch (face) {
                 case SOUTH -> {
                     vertex(consumer, matrix, 0.0f, 0.0f, 0.75F, r, g, b, a, 0, 0, light, overlay);
@@ -114,36 +114,25 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends Block
         }
 
         static RenderType create(String name, ResourceLocation sky, ResourceLocation texture) {
-            Supplier<ShaderInstance> shaderSupplier;
-            ResourceLocation location = new ResourceLocation(CustomNpcs.MODID, "position_color_tex_lightmap/rendertype_" + name);
-            if (ClientRegisterEvents.hasShader(location)) { shaderSupplier = () -> ClientRegisterEvents.getShader(location); }
-            else { shaderSupplier = GameRenderer::getRendertypeEndPortalShader; }
-
-            RenderType.CompositeState state = RenderType.CompositeState.builder()
-                    .setShaderState(new RenderStateShard.ShaderStateShard(shaderSupplier))
-                    .setTextureState(RenderStateShard.MultiTextureStateShard.builder()
-                            .add(sky, false, false)
-                            .add(texture, false, false).build())
-                    .setTransparencyState(TransparencyStateShard.TRANSLUCENT_TRANSPARENCY)
-                    .setLightmapState(new RenderStateShard.LightmapStateShard(true))
-                    .createCompositeState(false);
+            Supplier<ShaderInstance> shaderSupplier = GameRenderer::getRendertypeEndPortalShader;
+            VertexFormat vertexFormat = DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP;
+            ShaderData shaderData = ClientRegisterEvents.getShader(new ResourceLocation(CustomNpcs.MODID, "custom_" + name));
+            if (shaderData != null) {
+                shaderSupplier = () -> shaderData.shader;
+                vertexFormat = shaderData.format;
+            }
             return create(name + "_" + sky.getPath() + "_" + texture.getPath(),
-                    DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
-                    VertexFormat.Mode.QUADS, 256, false, false, state);
-            /*
-            return create(name + "_" + sky.getPath() + "_" + texture.getPath(),
-                    DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
-                    VertexFormat.Mode.QUADS,
-                    256, false, false,
-                    RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(
-                                    shaderSupplier))
+                    vertexFormat,
+                    VertexFormat.Mode.QUADS, 256, false, false,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(new RenderStateShard.ShaderStateShard(shaderSupplier))
                             .setTextureState(RenderStateShard.MultiTextureStateShard.builder()
                                     .add(sky, false, false)
-                                    .add(texture, false, false).build())
+                                    .add(texture, false, false)
+                                    .build())
                             .setTransparencyState(TransparencyStateShard.TRANSLUCENT_TRANSPARENCY)
-                            .setOutputState(RenderStateShard.TRANSLUCENT_TARGET)
+                            .setLightmapState(new RenderStateShard.LightmapStateShard(true))
                             .createCompositeState(false));
-            /**/
         }
     }
 

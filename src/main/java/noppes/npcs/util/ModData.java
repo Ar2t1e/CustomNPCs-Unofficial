@@ -179,6 +179,7 @@ public class ModData {
         compound.putFloat("Resistance", 100.0f);
         compound.putString("SoundAmbientFlowing", "block.water.ambient");
         compound.putString("SoundBucketFill", "item.bucket.fill");
+        compound.putString("SoundBucketEmpty", "item.bucket.empty");
         compound.putString("ParticleUnderFluid", "underwater");
         compound.putString("ParticleDripParticle", "dripping_water");
 
@@ -199,8 +200,8 @@ public class ModData {
         nbtFluidType.putInt("slopeFindDistance", 4);
         nbtFluidType.putInt("levelDecreasePerBlock", 4);
 
-        nbtFluidType.putInt("fogColor", 0xFFFFFF);
-        nbtFluidType.putInt("tintColor", 0xFFFFFF);
+        nbtFluidType.putInt("fogColor", 0xFF822BD9);
+        nbtFluidType.putInt("tintColor", 0xFF822BD9);
 
         nbtFluidType.putInt("lightLevel", 5);
         nbtFluidType.putInt("density", 1100);
@@ -219,18 +220,19 @@ public class ModData {
                 t + "13 key 'Resistance'; type: 'Float'; format: '1.17549435E-38f'<>'0.000000f'<>'3.4028235e+38f'; min: '0.0f'; max: '3.4028235e+38f'; default: '100.0f'; des - 'Can be excluded' Resistance of the fluid block to being pushed by entities; maps to 'explosionResistance' in FluidType;\n" +
                 t + "14 key 'SoundAmbientFlowing'; type: 'String'; format: '\"value\"'; default: 'block.water.ambient'; des - 'Can be excluded' Registered key of the ambient flowing sound; example: 'block.water.ambient';\n" +
                 t + "15 key 'SoundBucketFill'; type: 'String'; format: '\"value\"'; default: 'item.bucket.fill'; des - 'Can be excluded' Registered key of the bucket fill sound; example: 'item.bucket.fill';\n" +
-                t + "16 key 'ParticleUnderFluid'; type: 'String'; format: '\"value\"'; default: 'underwater'; des - 'Can be excluded' Particle type shown when under the fluid; example: 'underwater', 'bubble';\n" +
-                t + "17 key 'ParticleDripParticle'; type: 'String'; format: '\"value\"'; default: 'dripping_water'; des - 'Can be excluded' Particle type for dripping from the fluid; example: 'dripping_water', 'dripping_lava';\n" +
-                t + "18 key 'FluidType'; type: 'CompoundTag'; format: '{}'; des - 'Can be excluded' Fluid type properties for Forge fluid system:\n" +
-                t + " 18.01 key 'tickRate'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; min: 1; max: 100; default: 5; des - 'Can be excluded' Tick rate for fluid updates;\n" +
-                t + " 18.02 key 'slopeFindDistance'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; min: 1; max: 16; default: 4; des - 'Can be excluded' Same as 'SlopeFindDistance' above;\n" +
-                t + " 18.03 key 'levelDecreasePerBlock'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; min: 1; max: 16; default: 4; des - 'Can be excluded' Fluid level decrease per horizontal block;\n" +
-                t + " 18.04 key 'fogColor'; type: 'Integer'; format: '0'<>'16777215'; default: 0xFFFFFF; des - 'Can be excluded' Fog color when submerged in fluid (hex);\n" +
-                t + " 18.05 key 'tintColor'; type: 'Integer'; format: '0'<>'16777215'; default: 0xFFFFFF; des - 'Can be excluded' Tint color for the fluid texture (hex);\n" +
-                t + " 18.06 key 'lightLevel'; type: 'Integer'; format: '0'<>'15'; default: 5; des - 'Can be excluded' Light level emitted by the fluid block;\n" +
-                t + " 18.07 key 'density'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; default: 1100; des - 'Can be excluded' Fluid density in kg/m3;\n" +
-                t + " 18.08 key 'viscosity'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; default: 900; des - 'Can be excluded' Fluid viscosity; higher = slower flow;\n" +
-                t + " 18.09 key 'temperature'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; default: 300; des - 'Can be excluded' Fluid temperature in Kelvin; affects interactions;";
+                t + "16 key 'SoundBucketEmpty'; type: 'String'; format: '\"value\"'; default: 'item.bucket.empty'; des - 'Can be excluded' Registered key of the bucket empty sound; example: 'item.bucket.empty';\n" +
+                t + "17 key 'ParticleUnderFluid'; type: 'String'; format: '\"value\"'; default: 'underwater'; des - 'Can be excluded' Particle type shown when under the fluid; example: 'underwater', 'bubble';\n" +
+                t + "18 key 'ParticleDripParticle'; type: 'String'; format: '\"value\"'; default: 'dripping_water'; des - 'Can be excluded' Particle type for dripping from the fluid; example: 'dripping_water', 'dripping_lava';\n" +
+                t + "19 key 'FluidType'; type: 'CompoundTag'; format: '{}'; des - 'Can be excluded' Fluid type properties for Forge fluid system:\n" +
+                t + " 19.01 key 'tickRate'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; min: 1; max: 100; default: 5; des - 'Can be excluded' Tick rate for fluid updates;\n" +
+                t + " 19.02 key 'slopeFindDistance'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; min: 1; max: 16; default: 4; des - 'Can be excluded' Same as 'SlopeFindDistance' above;\n" +
+                t + " 19.03 key 'levelDecreasePerBlock'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; min: 1; max: 16; default: 4; des - 'Can be excluded' Fluid level decrease per horizontal block;\n" +
+                t + " 19.04 key 'fogColor'; type: 'Integer'; format: '0'<>'16777215'; default: 0xFFFFFF; des - 'Can be excluded' Fog color when submerged in fluid (hex);\n" +
+                t + " 19.05 key 'tintColor'; type: 'Integer'; format: '0'<>'16777215'; default: 0xFFFFFF; des - 'Can be excluded' Tint color for the fluid texture (hex);\n" +
+                t + " 19.06 key 'lightLevel'; type: 'Integer'; format: '0'<>'15'; default: 5; des - 'Can be excluded' Light level emitted by the fluid block;\n" +
+                t + " 19.07 key 'density'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; default: 1100; des - 'Can be excluded' Fluid density in kg/m3;\n" +
+                t + " 19.08 key 'viscosity'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; default: 900; des - 'Can be excluded' Fluid viscosity; higher = slower flow;\n" +
+                t + " 19.09 key 'temperature'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; default: 300; des - 'Can be excluded' Fluid temperature in Kelvin; affects interactions;";
         compound.putString("-Description", sb);
         return compound;
     }
@@ -350,7 +352,6 @@ public class ModData {
         compound.put("Properties", nbtProperties);
 
         CompoundTag nbtRender = new CompoundTag();
-        nbtRender.putFloat("SecondSpeed", 800.0f);
         nbtRender.putString("SpawnParticle", "CRIT");
         nbtRender.putFloat("Transparency", 0.5f);
         compound.put("RenderData", nbtRender);
@@ -361,9 +362,8 @@ public class ModData {
                 t + "8 key 'DimensionID'; type: 'String'; format: '\"value\"'; default: 'minecraft:overworld'; des - 'Required' Target dimension ResourceLocation for teleportation; example: 'minecraft:the_nether', 'customnpcs:custom_dimension';\n" +
                 t + "9 key 'HomeDimensionID'; type: 'String'; format: '\"value\"'; default: 'minecraft:overworld'; des - 'Can be excluded' Return dimension ResourceLocation (0 = Overworld, -1 = Nether, 1 = End); example: 'minecraft:overworld';\n" +
                 t + "10 key 'RenderData'; type: 'CompoundTag'; format: '{}'; des - 'Can be excluded' Visual effect settings for the portal:\n" +
-                t + " 10.01 key 'SecondSpeed'; type: 'Float'; format: '10.0f'<>'10000.0f'; min: '10.0f'; max: '10000.0f'; default: '800.0f'; des - 'Can be excluded' Animation speed of portal texture; values below 10.0 clamped to 10.0, above 10000.0 clamped to 10000.0;\n" +
-                t + " 10.02 key 'SpawnParticle'; type: 'String'; format: '\"value\"'; default: 'CRIT'; des - 'Can be excluded' Particle type spawned inside portal; options: CRIT, PORTAL, ENCHANT, END_ROD, etc. (any registered SimpleParticleType);\n" +
-                t + " 10.03 key 'Transparency'; type: 'Float'; format: '0.15f'<>'1.0f'; min: '0.15f'; max: '1.0f'; default: '0.5f'; des - 'Can be excluded' Portal block transparency (0.15 = nearly invisible, 1.0 = opaque); values clamped to range;";
+                t + " 10.01 key 'SpawnParticle'; type: 'String'; format: '\"value\"'; default: 'CRIT'; des - 'Can be excluded' Particle type spawned inside portal; options: CRIT, PORTAL, ENCHANT, END_ROD, etc. (any registered SimpleParticleType);\n" +
+                t + " 10.02 key 'Transparency'; type: 'Float'; format: '0.15f'<>'1.0f'; min: '0.15f'; max: '1.0f'; default: '0.5f'; des - 'Can be excluded' Portal block transparency (0.15 = nearly invisible, 1.0 = opaque); values clamped to range;";
         compound.putString("-Description", sb);
         return compound;
     }
@@ -374,7 +374,6 @@ public class ModData {
         compound.putByte("BlockType", (byte) 6);
 
         CompoundTag nbtProperties = new CompoundTag();
-        nbtProperties.putBoolean("noOcclusion", true);
         nbtProperties.putBoolean("ignitedByLava", true);
         nbtProperties.putFloat("destroyTime", 3.0f);
         nbtProperties.putFloat("explosionResistance", 3.0f);
@@ -384,7 +383,7 @@ public class ModData {
         compound.put("Properties", nbtProperties);
 
         CompoundTag blockSetType = new CompoundTag();
-        blockSetType.putString("Name", "iron");
+        blockSetType.putString("Name", "custom");
         blockSetType.putString("SoundType", "WOOD");
         blockSetType.putString("SoundDoorClose", "block.wooden_door.close");
         blockSetType.putString("SoundDoorOpen", "block.wooden_door.open");

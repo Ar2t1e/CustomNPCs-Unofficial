@@ -170,7 +170,8 @@ public class MarcetController implements IMarcetHandler {
 
     private void load(File file) throws IOException {
         DataInputStream stream = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file))));
-        load(NbtIo.read(stream));
+        try { load(NbtIo.readCompressed(stream)); }
+        catch (Exception e) { load(NbtIo.read(stream)); }
         stream.close();
     }
 
