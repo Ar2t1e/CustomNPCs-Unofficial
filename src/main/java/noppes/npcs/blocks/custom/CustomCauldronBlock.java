@@ -15,8 +15,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionUtils;
-import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
@@ -30,6 +28,7 @@ import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.fluids.CustomFluid;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -90,10 +89,12 @@ public class CustomCauldronBlock extends AbstractCauldronBlock implements ICusto
         };
         interactions.put(fluid.getBucket(), fillingBucket);
         CauldronInteraction.EMPTY.put(fluid.getBucket(), fillingBucket);
-        // 3. Taking liquid from the boiler (empty bottle)
+        // 3. Taking liquid from the boiler (empty bottle) → получаем КАСТОМНЫЙ бутылёк
         interactions.put(Items.GLASS_BOTTLE, (state, level, pos, player, hand, stack) -> {
             if (!level.isClientSide) {
-                player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER)));
+                LogWriter.info("[DEBUG] "+fluid.getBottle());
+                ItemStack filledBottle = new ItemStack(fluid.getBottle());
+                player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, filledBottle));
                 player.awardStat(Stats.USE_CAULDRON);
                 player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
                 int value = state.getValue(LayeredCauldronBlock.LEVEL);
@@ -101,12 +102,30 @@ public class CustomCauldronBlock extends AbstractCauldronBlock implements ICusto
                         Blocks.CAULDRON.defaultBlockState() :
                         state.setValue(LayeredCauldronBlock.LEVEL, value - 1);
                 level.setBlockAndUpdate(pos, blockstate);
-                level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(blockstate));
                 level.playSound(null, pos, SoundEvents.BOTTLE_FILL, SoundSource.BLOCKS, 1.0F, 1.0F);
                 level.gameEvent(null, GameEvent.FLUID_PICKUP, pos);
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         });
+        // 4. FILLING the boiler (custom bottle → empty bottle)
+        CauldronInteraction fillingBottle = (state, level, pos, player, hand, stack) -> {
+            if (stack.getItem() != fluid.getBottle()) return InteractionResult.PASS;
+            if (state.getBlock() == Blocks.CAULDRON || defaultBlockState().getValue(LayeredCauldronBlock.LEVEL) < LayeredCauldronBlock.MAX_FILL_LEVEL) {
+                int value = state.getBlock() == Blocks.CAULDRON ? 0 : state.getValue(LayeredCauldronBlock.LEVEL);
+                if (!level.isClientSide && value < LayeredCauldronBlock.MAX_FILL_LEVEL) {
+                    player.setItemInHand(hand, ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)));
+                    player.awardStat(Stats.FILL_CAULDRON);
+                    player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
+                    level.setBlockAndUpdate(pos, defaultBlockState().setValue(LayeredCauldronBlock.LEVEL, value + 1));
+                    level.playSound(null, pos, emptySound, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    level.gameEvent(null, GameEvent.FLUID_PLACE, pos);
+                }
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            }
+            return InteractionResult.PASS;
+        };
+        interactions.put(fluid.getBottle(), fillingBottle);
+        CauldronInteraction.EMPTY.put(fluid.getBottle(), fillingBottle);
 
         registerDefaultState(stateDefinition.any().setValue(LayeredCauldronBlock.LEVEL, LayeredCauldronBlock.MIN_FILL_LEVEL));
     }

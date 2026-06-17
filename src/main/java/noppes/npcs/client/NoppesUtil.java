@@ -388,6 +388,7 @@ public class NoppesUtil {
       }
       else if (customblock instanceof CustomLiquidBlock) {
          setLocalization("item." + CustomNpcs.MODID + "." + fileName + "_bucket", n);
+         setLocalization("item." + CustomNpcs.MODID + "." + fileName + "_bottle", n);
          setLocalization("fluid." + fileName, n);
       }
 
@@ -423,23 +424,27 @@ public class NoppesUtil {
                   File flowFile = new File(textBlocksDir, name + "_flow.png");
                   File stillFile = new File(textBlocksDir, name + "_still.png");
                   File bucketFile = new File(textItemDir, name + "_bucket.png");
+                  File bottleFile = new File(textItemDir, name + "_bottle.png");
+
                   if (!stillMCmetaFile.exists() || !flowMCmetaFile.exists() ||
-                          !textureFile.exists() || !flowFile.exists() || !stillFile.exists() || !bucketFile.exists()) {
+                          !textureFile.exists() || !flowFile.exists() || !stillFile.exists() ||
+                          !bucketFile.exists() || !bottleFile.exists()) {
                      // mc_metas
                      Util.instance.saveFile(stillMCmetaFile, NoppesUtilServer.getDataFile("wms.dat", fileName, name));
                      Util.instance.saveFile(flowMCmetaFile, NoppesUtilServer.getDataFile("wmf.dat", fileName, name));
                      // images
                      ICustomElement element = CustomBlocks.customfluid.get(CustomNpcs.MODID + ":custom_fluid_" + name);
                      int tint = customblock.getCustomNbt().getCompound("FluidType").getInteger("tintColor");
-                     if (element instanceof CustomFluid fluid && fluid.getBlock() != null) {
-                        tint = fluid.getFluidType().getTintColor();
-                     }
+                     if (element instanceof CustomFluid fluid && fluid.getBlock() != null) { tint = fluid.getFluidType().getTintColor(); }
                      textures.put(textureFile, getBufferImageTint(getBufferedImage("wo.png", 8, 8), tint));
                      textures.put(flowFile, getBufferedImage("wf.png", 32, 512));
                      textures.put(stillFile, getBufferedImage("ws.png", 16, 320));
                      // bucket
                      textures.put(bucketFile, combineBuffer(getBufferedImage("wb.png", 16, 16),
                              getBufferImageTint(getBufferedImage("wc.png", 16, 16), tint)));
+                     // bottle
+                     textures.put(bottleFile, combineBuffer(getBufferImageTint(getBufferedImage("wl.png", 16, 16), tint),
+                             getBufferedImage("wt.png", 16, 16)));
                   }
                   break;
                } // Liquid

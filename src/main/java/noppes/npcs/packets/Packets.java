@@ -459,7 +459,7 @@ public class Packets {
 
    // New from Unofficial (BetaZavr)
    private static <MSG> void logged(MSG msg) {
-      if (!ignoredDebug.contains(msg.getClass())) {
+      if (CustomNpcs.VerboseDebug && !ignoredDebug.contains(msg.getClass())) {
          StringBuilder message = new StringBuilder(("" + Util.instance.getSide()).replace("DEDICATED_", ""));
          message.append(" send packet: ")
                  .append(msg.getClass().getSimpleName())

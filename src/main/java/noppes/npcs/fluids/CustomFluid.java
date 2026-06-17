@@ -25,6 +25,7 @@ import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.blocks.custom.CustomLiquidBlock;
+import noppes.npcs.items.custom.CustomBottleItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public abstract class CustomFluid extends FlowingFluid implements ICustomElement
     protected CustomFluid flowing;
     protected CustomFluid source;
     protected @Nullable BucketItem bucket;
+    protected @Nullable CustomBottleItem bottle;
     protected @Nullable CustomLiquidBlock block;
 
     protected final int tickRate;
@@ -73,11 +75,15 @@ public abstract class CustomFluid extends FlowingFluid implements ICustomElement
     @Override
     public @Nonnull Item getBucket() { return bucket != null ? bucket : Items.AIR; }
 
-    public void setLinks(@Nonnull CustomFluid sourceIn, @Nonnull CustomFluid fluidIn, @Nonnull CustomLiquidBlock blockIn, @Nonnull BucketItem bucketIn) {
+    public @Nonnull Item getBottle() { return bottle != null ? bottle : Items.AIR; }
+
+    public void setLinks(@Nonnull CustomFluid sourceIn, @Nonnull CustomFluid fluidIn, @Nonnull CustomLiquidBlock blockIn,
+                         @Nonnull BucketItem bucketIn, @Nonnull CustomBottleItem bottleIn) {
         if (source == null) { source = sourceIn; }
         if (flowing == null) { flowing = fluidIn; }
         if (block == null) { block = blockIn; }
         if (bucket == null) { bucket = bucketIn; }
+        if (bottle == null) { bottle = bottleIn; }
     }
 
     @Override

@@ -45,9 +45,10 @@ public class FishingHookRendererMixin {
     @Inject(method = "render(Lnet/minecraft/world/entity/projectile/FishingHook;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At("HEAD"),
             cancellable = true)
+    @SuppressWarnings("ConstantConditions")
     private void npcs$render(FishingHook hook, float partialTicks, float aimRot, PoseStack pose, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
         CustomFishingRod item = npcs$getCustomFishingRodData(hook);
-        if (item != null && item.getFishingLineColor() != 0) {
+        if (item != null && (item.getFishingLineColor() != 0 || item.getFishingHookTexture() != null)) {
             Player player = hook.getPlayerOwner();
             if (player != null) {
                 ci.cancel();

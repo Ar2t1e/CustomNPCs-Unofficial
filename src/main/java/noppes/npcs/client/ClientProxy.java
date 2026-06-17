@@ -403,7 +403,7 @@ public class ClientProxy extends CommonProxy {
       Minecraft minecraft = Minecraft.getInstance();
       if (player.level().isClientSide()) {
          if (guiscreen instanceof Screen screen) {
-            ClientEvent.NextToGuiCustomNpcs event = new ClientEvent.NextToGuiCustomNpcs(NoppesUtilServer.getEditingNpc(Minecraft.getInstance().player), minecraft.screen, screen);
+            ClientEvent.NextToGuiCustomNpcs event = new ClientEvent.NextToGuiCustomNpcs(NoppesUtilServer.getEditingNpc(player), minecraft.screen, screen);
             MinecraftForge.EVENT_BUS.post(event);
             if (event.returnGui != null && !event.isCanceled()) { minecraft.setScreen(event.returnGui); }
          }

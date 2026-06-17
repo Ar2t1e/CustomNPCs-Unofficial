@@ -629,11 +629,15 @@ public class NoppesUtilServer {
             switch (customblock.getElementType()) {
                case 1: {
                   blockstate = new File(blockStatesDir, fileName + ".json");
-                  File bucketFile = new File(itemModelsDir, fileName + "_bucket.json"); // Bucket item
-                  if (!isExample || !blockstate.exists() || !blockModel.exists() || !bucketFile.exists()) {
+                  File bucketFile = new File(itemModelsDir, fileName + "_bucket.json");
+                  File bottleFile = new File(itemModelsDir, fileName + "_bottle.json");
+                  if (!isExample || !blockstate.exists() || !blockModel.exists() ||
+                          !bucketFile.exists() || !bottleFile.exists()) {
                      stateDatas.put(blockstate, getDataFile("jlq.dat", fileName, name));
                      modelDatas.put(blockModel, getDataFile("bml.dat", fileName, name));
-                     modelDatas.put(bucketFile, getDataFile("iml.dat", fileName, name));
+                     String fileData = getDataFile("iml.dat", fileName, name);
+                     modelDatas.put(bucketFile, fileData.replace("{part}", "bucket"));
+                     modelDatas.put(bottleFile, fileData.replace("{part}", "bottle"));
                   }
                   if (customblock.getCustomNbt().getBoolean("AddCauldron")) {
                      File cauldronStateFile = new File(blockStatesDir, fileName + "_cauldron.json");

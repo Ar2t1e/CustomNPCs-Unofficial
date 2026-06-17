@@ -275,8 +275,13 @@ public class CustomItems {
          }
          // custom fluids
          for (Map.Entry<String, ICustomElement> entry : CustomBlocks.customfluid.entrySet()) {
-            if (entry.getValue() instanceof CustomFluid fluid && fluid.getBucket() instanceof BucketItem bucket) {
-               event.getForgeRegistry().register(entry.getKey().replace("fluid_", "") + "_bucket", bucket);
+            if (entry.getValue() instanceof CustomFluid fluid) {
+               if (fluid.getBucket() instanceof BucketItem bucket) {
+                  event.getForgeRegistry().register(entry.getKey().replace("fluid_", "") + "_bucket", bucket);
+               }
+               if (fluid.getBottle() instanceof CustomBottleItem bottle) {
+                  event.getForgeRegistry().register(entry.getKey().replace("fluid_", "") + "_bottle", bottle);
+               }
             }
          }
          // Sorting:

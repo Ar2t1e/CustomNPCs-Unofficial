@@ -57,6 +57,7 @@ import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
 import noppes.npcs.fluids.CustomFluid;
 import noppes.npcs.fluids.CustomFluidType;
 import noppes.npcs.items.ItemNpcBlock;
+import noppes.npcs.items.custom.CustomBottleItem;
 import noppes.npcs.mixin.world.level.block.state.IBlockBehaviourPropertiesMixin;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ModData;
@@ -225,13 +226,14 @@ public class CustomBlocks {
                           slopeFindDistance, levelDecreasePerBlock, explosionResistance, tickRate);
                   CustomFluid flowing = new CustomFluid.Flowing(new ResourceLocation(CustomNpcs.MODID, "flowing_" + location.getPath()), nbtBlock,
                           fluidType, slopeFindDistance, levelDecreasePerBlock, explosionResistance, tickRate);
-                  BucketItem item = new BucketItem(() -> source, (new Item.Properties()).craftRemainder(Items.BUCKET).stacksTo(1));
+                  BucketItem bucket = new BucketItem(() -> source, (new Item.Properties()).craftRemainder(Items.BUCKET).stacksTo(1));
+                  CustomBottleItem bottle = new CustomBottleItem(source, (new Item.Properties()).craftRemainder(Items.GLASS_BOTTLE).stacksTo(LayeredCauldronBlock.MAX_FILL_LEVEL));
                   CustomLiquidBlock block = new CustomLiquidBlock(location, () -> source, getProperty(nbtBlock), nbtBlock);
-                  flowing.setLinks(source, flowing, block, item);
-                  source.setLinks(source, flowing, block, item);
-                  LogWriter.debug("Load Custom Fluid: " + location);
+                  flowing.setLinks(source, flowing, block, bucket, bottle);
+                  source.setLinks(source, flowing, block, bucket, bottle);
                   event.getForgeRegistry().register(flowing.getLocation(), flowing);
                   event.getForgeRegistry().register(source.getLocation(), source);
+                  LogWriter.debug("Load Custom Fluid: \"" + location + "\"");
                   customfluid.put(location.toString(), source);
                }
             } // Liquid
@@ -310,6 +312,7 @@ public class CustomBlocks {
                              new CustomCauldronBlock(BlockBehaviour.Properties.copy(Blocks.WATER_CAULDRON),
                                      CauldronInteraction.newInteractionMap(), fluid, nbtBlock),
                              names, nbtBlock.getBoolean("CreateDefaultFiles"), event.getForgeRegistry());
+
                   }
                   break;
                } // Liquid
