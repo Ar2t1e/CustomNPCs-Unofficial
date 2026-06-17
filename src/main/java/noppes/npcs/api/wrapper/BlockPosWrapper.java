@@ -25,7 +25,9 @@ public class BlockPosWrapper implements IPos {
 	public BlockPosWrapper(@Nullable World worldIn, double bx, double by, double bz) {
 		world = worldIn;
 		if (world == null) {
-			if (CustomNpcs.Server != null) { world = CustomNpcs.Server.getWorld(0); }
+			if (CustomNpcs.Server != null) {
+				try { world = CustomNpcs.Server.getWorld(0); } catch (Exception ignored) { }
+            }
 			else {
 				EntityPlayer player = CustomNpcs.proxy.getPlayer();
 				if (player != null) { world = player.world; }

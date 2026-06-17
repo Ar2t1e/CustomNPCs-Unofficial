@@ -1014,6 +1014,8 @@ public class ModData {
         compound.setTag("RepairItem", (new ItemStack(Items.STICK)).writeToNBT(new NBTTagCompound()));
         compound.setInteger("MaxStackDamage", 150);
         compound.setInteger("Enchantability", 5);
+        compound.setInteger("FishingLineColor", 0xFF00EA);
+        compound.setString("FishingHookTexture", "custom_fishing_hook");
 
         String sb = "Tags for creating a fishing rod item:\n" +
                 t + "- key names must match exactly (even the case of the characters);\n" +

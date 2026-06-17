@@ -10,23 +10,16 @@ import noppes.npcs.CustomItems;
 import noppes.npcs.CustomParticles;
 import noppes.npcs.client.particles.CustomParticle;
 import noppes.npcs.client.particles.CustomParticleSettings;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.creativetab.CustomCreativeTabs;
 
 public class ClientRegisterEvents {
 
-    public static final CreativeTabs CRAFTING_CUSTOM_GLOBAL_CATEGORY = new CreativeTabs("CRAFTING_CUSTOM_GLOBAL_CATEGORY") {
-        @Override
-        public @Nonnull ItemStack getTabIconItem() { return new ItemStack(CustomItems.wand); }
-    };
-    public static final CreativeTabs CRAFTING_CUSTOM_ANVIL_CATEGORY = new CreativeTabs("CRAFTING_CUSTOM_ANVIL_CATEGORY") {
-        @Override
-        public @Nonnull ItemStack getTabIconItem() { return new ItemStack(CustomBlocks.carpenty); }
-    };
+    public static final CreativeTabs CRAFTING_CUSTOM_GLOBAL_CATEGORY = new CustomCreativeTabs("CRAFTING_CUSTOM_GLOBAL_CATEGORY",
+            new ItemStack(CustomItems.wand));
+    public static final CreativeTabs CRAFTING_CUSTOM_ANVIL_CATEGORY = new CustomCreativeTabs("CRAFTING_CUSTOM_ANVIL_CATEGORY",
+            new ItemStack(CustomBlocks.carpenty));
 
-    public static void load() {
-        cnpcsRegisterParticle();
-    }
+    public static void load() { cnpcsRegisterParticle(); }
 
     public static void cnpcsRegisterParticle() {
         ParticleManager manager =  Minecraft.getMinecraft().effectRenderer;

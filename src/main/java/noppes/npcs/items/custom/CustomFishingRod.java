@@ -5,6 +5,7 @@ import net.minecraft.item.ItemFishingRod;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTabs;
 import noppes.npcs.api.ICustomElement;
@@ -21,6 +22,9 @@ public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 	protected final int enchantability;
 	protected final ItemStack repairItemStack;
 
+	protected final int fishingLineColor;
+	protected final ResourceLocation fishingLineTexture;
+
 	public CustomFishingRod(NBTTagCompound nbtItem) {
 		super();
 		nbtData = nbtItem;
@@ -34,6 +38,10 @@ public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 		else { enchantability = 1; }
 		if (nbtItem.getInteger("MaxStackDamage") > 1) { setMaxDamage(nbtItem.getInteger("MaxStackDamage")); }
 		setCreativeTab(CustomTabs.ITEMS);
+
+		fishingLineColor = nbtData.hasKey("FishingLineColor", 3) ? nbtData.getInteger("FishingLineColor") : 0;
+		fishingLineTexture = nbtData.hasKey("FishingHookTexture", 8) ?
+				new ResourceLocation(CustomNpcs.MODID, "textures/entity/" + nbtData.getString("FishingHookTexture") + ".png") : null;
 	}
 
 	@Override
@@ -41,8 +49,7 @@ public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 		if (this.repairItemStack.isEmpty()) {
 			return super.getIsRepairable(toRepair, repair);
 		}
-		ItemStack mat = this.repairItemStack;
-		if (net.minecraftforge.oredict.OreDictionary.itemMatches(mat, repair, false)) {
+        if (net.minecraftforge.oredict.OreDictionary.itemMatches(repairItemStack, repair, false)) {
 			return true;
 		}
 		return super.getIsRepairable(toRepair, repair);
@@ -73,5 +80,9 @@ public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 
 	@Override
 	public boolean showInCreative() { return !nbtData.hasKey("ShowInCreative", 1) || nbtData.getBoolean("ShowInCreative"); }
+
+	public int getFishingLineColor() { return fishingLineColor; }
+
+	public ResourceLocation getFishingHookTexture() { return fishingLineTexture; }
 
 }

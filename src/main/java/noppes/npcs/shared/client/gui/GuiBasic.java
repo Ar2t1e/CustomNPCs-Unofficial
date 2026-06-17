@@ -294,7 +294,11 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public void focusedPrevComponent() { wrapper.focusedPrevComponent(); }
 
     @Override
-    public void onClose() { onGuiClosed(); }
+    public void onClose() {
+        onGuiClosed();
+        setScreen(null);
+        mc.setIngameFocus();
+    }
 
     @Override
     public void onGuiClosed() {

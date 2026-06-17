@@ -87,6 +87,7 @@
     "client.network.NetHandlerPlayClientMixin",
     "client.particle.ParticleFlameMixin",
     "client.particle.ParticleSmokeNormalMixin",
+    "client.renderer.entity.RenderFishMixin",
     "client.renderer.entity.RenderLivingBaseLayersMixin",
     "client.renderer.entity.RenderLivingBaseMixin",
     "client.renderer.texture.ITextureMapMixin",

@@ -279,8 +279,8 @@ public class CustomBlocks {
         catch (Exception e) { LogWriter.error("Try Load " + file.getName() + ": ", e); }
 
         List<String> names = new ArrayList<>();
-        NBTTagList listInFile = nbtInFile.getTagList("Items", 10);
-        NBTTagList listBlocks = compound.getTagList("Items", 10);
+        NBTTagList listInFile = nbtInFile.getTagList("Blocks", 10);
+        NBTTagList listBlocks = compound.getTagList("Blocks", 10);
         NBTTagList exampleBlocks = listBlocks.copy();
         boolean resave = false;
         for (int i = 0; i < listInFile.tagCount(); i++) {

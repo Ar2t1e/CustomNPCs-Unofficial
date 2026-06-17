@@ -37,7 +37,7 @@ import java.util.Set;
 @SideOnly(Side.CLIENT)
 public class GuiButtonNop extends Gui implements IComponentGui {
 
-    public static final ResourceLocation WIDGETS_LOCATION = new ResourceLocation(CustomNpcs.MODID, "textures/gui/widgets.png");
+    public static final ResourceLocation WIDGETS_LOCATION = new ResourceLocation("textures/gui/widgets.png");
     protected static final OnPress clicked = (button) -> button.listener.buttonEvent(button);
     protected static float level;
 

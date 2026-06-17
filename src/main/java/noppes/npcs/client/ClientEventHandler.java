@@ -410,7 +410,7 @@ public class ClientEventHandler extends Gui {
 				default: newGUI = "GuiInventoryLog"; break;
 			}
 		}
-		LogWriter.debug(((event.getGui() == null ? "Close GUI " : "Open GUI - " + newGUI) + "; OLD - " + oldScreenName));
+		LogWriter.debug(((event.getGui() == null ? "Close GUI " : "Open GUI - " + event.getGui().getClass().getName()) + "; OLD - " + oldScreenName));
 		Packets.sendServer(new SPacketPlayerScreen(newGUI, oldScreenName));
 		if (mc.currentScreen instanceof GuiNpcPather) { movingPath.clear(); }
 		else if (event.getGui() instanceof GuiInventory) {

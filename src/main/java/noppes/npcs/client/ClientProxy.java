@@ -656,11 +656,14 @@ public class ClientProxy extends CommonProxy {
 	@Override
 	public void openGui(EntityPlayer player, Object guiscreen) {
 		Minecraft minecraft = Minecraft.getMinecraft();
-		if (player.world.isRemote && guiscreen instanceof GuiScreen) {
-			ClientEvent.NextToGuiCustomNpcs event = new ClientEvent.NextToGuiCustomNpcs(NoppesUtilServer.getEditingNpc(player), minecraft.currentScreen, (GuiScreen) guiscreen);
-			MinecraftForge.EVENT_BUS.post(event);
-			if (event.returnGui != null && !event.isCanceled()) {
-				minecraft.displayGuiScreen(event.returnGui);
+		if (player.world.isRemote) {
+			if (guiscreen instanceof GuiScreen) {
+				ClientEvent.NextToGuiCustomNpcs event = new ClientEvent.NextToGuiCustomNpcs(NoppesUtilServer.getEditingNpc(player), minecraft.currentScreen, (GuiScreen) guiscreen);
+				MinecraftForge.EVENT_BUS.post(event);
+				if (event.returnGui != null && !event.isCanceled()) { minecraft.displayGuiScreen(event.returnGui); }
+			}
+			else if (guiscreen instanceof EnumGuiType) {
+				openGui(null, (EnumGuiType) guiscreen, null);
 			}
 		}
     }

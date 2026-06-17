@@ -454,7 +454,7 @@ public class Packets {
     }
 
     private static <MSG extends IMessage> void logged(MSG msg) {
-        if (!ignoredDebug.contains(msg.getClass())) {
+        if (CustomNpcs.VerboseDebug && !ignoredDebug.contains(msg.getClass())) {
             StringBuilder message = new StringBuilder(("" + Util.instance.getSide()));
             message.append(" send packet: ")
                     .append(msg.getClass().getSimpleName())
