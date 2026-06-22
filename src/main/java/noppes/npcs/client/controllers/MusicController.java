@@ -1,24 +1,37 @@
 package noppes.npcs.client.controllers;
 
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.*;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
+import noppes.npcs.client.TranslateUtil;
 import noppes.npcs.mixin.client.audio.ISoundHandlerMixin;
 import noppes.npcs.mixin.client.audio.ISoundManagerMixin;
 import noppes.npcs.client.ClientTickHandler;
 import noppes.npcs.client.util.MusicData;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.JobBard;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomNPCsScheduler;
+import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.SourceDataLine;
 
 public class MusicController {
 
@@ -236,6 +249,54 @@ public class MusicController {
 				}
 			}
 		}
+	}
+
+	public void speak(String languageKey, String text, float volume) {
+		CustomNPCsScheduler.runTack(() -> {
+			try {
+				EntityPlayerSP player = Minecraft.getMinecraft().player;
+				if (player == null) { return; }
+				URLConnection connection = new URL(String.format(TranslateUtil.AudioUrl, URLEncoder.encode(text, "UTF-8"), languageKey)).openConnection();
+				connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+				connection.setRequestProperty("User-Agent", "Chrome/99.0.4844.51");
+				connection.setConnectTimeout(10000);
+				InputStream stream = connection.getInputStream();
+
+				// Reading all bytes from a stream
+				byte[] audioBytes = IOUtils.toByteArray(stream);
+				// Using SourceDataLine to Play Sound
+				AudioFormat format = new AudioFormat(
+						16000f, // Sampling frequency
+						16, // Bit depth
+						1, // Number of channels (mono)
+						true, // Signed PCM
+						false // Little-endian
+				);
+				DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+				SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem.getLine(info);
+				sourceDataLine.open(format);
+				sourceDataLine.start();
+
+				// Applying Volume and Pitch
+				// Adjusting Volume by Changing Signal Amplitude
+				float adjustedVolume = Math.min(Math.max(volume, 0f), 1f);  // Limit the volume value within [0, 1]
+				for (int i = 0; i < audioBytes.length; i++) {
+					// Apply a loudness factor to each sample
+					audioBytes[i] = (byte) ((float) audioBytes[i] * adjustedVolume);
+				}
+
+				// Let's start playback
+				sourceDataLine.write(audioBytes, 0, audioBytes.length);
+				sourceDataLine.drain();
+				sourceDataLine.stop();
+				sourceDataLine.close();
+
+				// Closing Streams
+				stream.close();
+			} catch (Exception e) {
+				LogWriter.error("Error while playing translation \"" + languageKey + "\"", e);
+			}
+		});
 	}
 
 }

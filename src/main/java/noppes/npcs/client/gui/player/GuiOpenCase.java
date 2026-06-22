@@ -12,7 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.controllers.data.Deal;

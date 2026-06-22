@@ -270,7 +270,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     }
 
     protected boolean clicked(double mouseX, double mouseY) {
-        return visible && active && mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
+        return visible && enabled && mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
     }
 
     @Override
@@ -337,8 +337,13 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
                 int left = width / 2;
                 int right = width - left;
-                drawTexturedModalRect(x, y, 0, 46 + state * 20, left, height);
-                drawTexturedModalRect(x + left, y, 200 - right, 46 + state * 20, right, height);
+                int v = 46 + state * 20;
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(x, y, 0.0f);
+                GlStateManager.scale(1.0f, (float) height / 22.0f, 1.0f);
+                drawTexturedModalRect(0, 0, 0, v, left, 20);
+                drawTexturedModalRect(left, 0, 200 - right, v, right, 20);
+                GlStateManager.popMatrix();
             }
             else {
                 GlStateManager.pushMatrix();
@@ -375,14 +380,14 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         GlStateManager.pushMatrix();
         @Nonnull Component label = getMessage();
         String text = label.getString();
-        if (active && (text.equals("<") || text.equals(">") || text.equals("<<") || text.equals("<<<") || text.equals(">>") || text.equals(">>>"))) {
+        if (enabled && (text.equals("<") || text.equals(">") || text.equals("<<") || text.equals("<<<") || text.equals(">>") || text.equals(">>>"))) {
             int w = mc.fontRenderer.getStringWidth(text);
             float wm = width - 4 + 2 * w;
             float ox = (float) (System.currentTimeMillis() % 2000L) / 2000.0f * wm;
             if (text.equals("<") || text.equals("<<") || text.equals("<<<")) { GlStateManager.translate((width + w) / 2.0f - ox, 0.0f, 0.0f); }
             else { GlStateManager.translate((width + w) / -2.0f + ox, 0.0f, 0.0f); }
         }
-        if (!active) { GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F); }
+        if (!enabled) { GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F); }
         int color = getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24;
         if (isScissor) {
             renderString(label, x + 2, y, x + width - 2, y + height, color, showShadow, true, customFont);
@@ -449,8 +454,10 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public ItemStack getRenderStack() { return renderStack; }
 
+    @SuppressWarnings("unused")
     public int getRenderStackId() { return renderStackId; }
 
     @SideOnly(Side.CLIENT)
@@ -459,8 +466,8 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     }
 
     public int getFGColor() {
-        if (packedFGColor != -1) { return packedFGColor; }
-        else if (!active) { return CustomNpcs.NotEnableColor.getRGB(); }
+        if (packedFGColor != 0) { return packedFGColor; }
+        else if (!enabled) { return CustomNpcs.NotEnableColor.getRGB(); }
         else if (isHovered) { return CustomNpcs.HoverColor.getRGB(); }
         return CustomNpcs.ButtonColor.getRGB();
     }
@@ -475,7 +482,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     public int getId() { return id; }
 
     @Override
-    public boolean isEnabled() { return active; }
+    public boolean isEnabled() { return enabled; }
 
     @Override
     public boolean isVisible() { return visible; }
@@ -521,7 +528,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     @Override
     public GuiButtonNop setIsEnabled(boolean isEnabled) {
-        active = isEnabled;
+        enabled = isEnabled;
         return this;
     }
 
@@ -557,24 +564,24 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         boolean lbm = Mouse.isButtonDown(0);
         if (texture == null) {
             int i = 1;
-            if (!active) { i = 0; }
-            else if (isHoveredOrFocused() && (listener == null || !listener.hasSubGui())) { i = lbm ? 0 : 2; }
-            return 46 + i * 20;
+            if (!enabled) { i = 0; }
+            else if (lbm && isHoveredOrFocused() && (listener == null || !listener.hasSubGui())) { i = 2; }
+            return i;
         }
         if (isAnim) {
-            if (!active) { return 1; }
+            if (!enabled) { return 1; }
             return isHoveredOrFocused() && (listener == null || !listener.hasSubGui()) ? lbm ? 3 : 2 : 0;
         }
         if (isSimple) {
             int i = 0;
-            if (!active) { i = 2; }
+            if (!enabled) { i = 2; }
             else if (isHoveredOrFocused() && (listener == null || !listener.hasSubGui())) { i = lbm ? 2 : 1; }
             return i;
         }
         if (isHoveredOrFocused() && (listener == null || !listener.hasSubGui())) {
-            return (active ? 1 : 4) + (lbm ? 1 : 0);
+            return (enabled ? 1 : 4) + (lbm ? 1 : 0);
         }
-        return active ? 0 : 3;
+        return enabled ? 0 : 3;
     }
 
     public GuiButtonNop setColor(int color) {
@@ -625,6 +632,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public void offsetHover(int x, int y) {
         offsetHoverX = x;
         offsetHoverY = y;
@@ -634,9 +642,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     public boolean isActive() { return visible && active; }
 
     @SideOnly(Side.CLIENT)
-    public interface OnPress {
-        void onPress(GuiButtonNop button);
-    }
+    public interface OnPress { void onPress(GuiButtonNop button); }
 
     public boolean isHoveredOrFocused() { return isHovered || focused; }
 
@@ -658,9 +664,8 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (active && visible) {
+        if (enabled && visible) {
             if (isValidClickButton(mouseButton)) {
-                focused = true;
                 boolean flag = clicked(mouseX, mouseY);
                 if (flag) {
                     onClick(mouseX, mouseY);

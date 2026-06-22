@@ -15,9 +15,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketBorderData;
 import noppes.npcs.packets.client.PacketGuiUpdate;
 import noppes.npcs.packets.client.SPacketBorderClear;
-import noppes.npcs.packets.client.SPacketBorderData;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.handler.IBorderHandler;
@@ -196,7 +196,7 @@ public class BorderController implements IBorderHandler {
 			}
 			NBTTagCompound nbtRegion = new NBTTagCompound();
 			regions.get(id).save(nbtRegion);
-			Packets.send(player, new SPacketBorderData(nbtRegion));
+			Packets.send(player, new PacketBorderData(nbtRegion));
 		}
 		Packets.send(player, new PacketGuiUpdate());
 	}
@@ -217,7 +217,7 @@ public class BorderController implements IBorderHandler {
 				NBTTagCompound nbtRegion = new NBTTagCompound();
 				regions.get(i).save(nbtRegion);
 				for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-					Packets.send(player, new SPacketBorderData(nbtRegion));
+					Packets.send(player, new PacketBorderData(nbtRegion));
 					Packets.send(player, new PacketGuiUpdate());
 				}
 			}
@@ -226,7 +226,7 @@ public class BorderController implements IBorderHandler {
 			NBTTagCompound nbtRegion = new NBTTagCompound();
 			regions.get(id).save(nbtRegion);
 			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-				Packets.send(player, new SPacketBorderData(nbtRegion));
+				Packets.send(player, new PacketBorderData(nbtRegion));
 				Packets.send(player, new PacketGuiUpdate());
 			}
 		}

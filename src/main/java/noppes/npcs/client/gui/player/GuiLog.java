@@ -53,7 +53,7 @@ import noppes.npcs.api.event.QuestEvent.QuestExtraButtonEvent;
 import noppes.npcs.api.handler.data.IQuestObjective;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.controllers.MusicController;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumQuestCompletion;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.QuestController;

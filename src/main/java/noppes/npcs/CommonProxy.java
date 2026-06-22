@@ -36,8 +36,8 @@ import noppes.npcs.controllers.data.*;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataInventory;
+import noppes.npcs.mixin.entity.player.IEntityPlayerMPMixin;
 import noppes.npcs.mixin.stats.IRecipeBookMixin;
-import noppes.npcs.reflection.entity.player.EntityPlayerMPReflection;
 
 import javax.annotation.Nullable;
 
@@ -202,20 +202,19 @@ public class CommonProxy implements IGuiHandler {
 	public void updateKeys() { }
 
 	public String getTranslateLanguage(EntityPlayer player) {
-		if (!(player instanceof EntityPlayerMP)) { return "en"; }
-		String lang = EntityPlayerMPReflection.getLanguage((EntityPlayerMP) player);
+		String lang = getLanguage(player);
 		if (lang.contains("_")) { lang = lang.substring(0, lang.indexOf("_")); }
 		return lang;
+	}
+
+	public String getLanguage(EntityPlayer player) {
+		if (player instanceof EntityPlayerMP) { return ((IEntityPlayerMPMixin) player).getLanguage(); }
+		return "en_en";
 	}
 
     public void loadAnimationModel(AnimationConfig animation) { }
 
     public void updatePlayerPos() { }
-
-    public String getLanguage(EntityPlayer entity) {
-		if (entity instanceof EntityPlayerMP) { return EntityPlayerMPReflection.getLanguage((EntityPlayerMP) entity); }
-		return "en_en";
-    }
 
 	public void createAllFiles(ICustomElement customElement) {
 		if (customElement instanceof Block) { NoppesUtilServer.createBlockFiles(customElement); }
@@ -245,7 +244,7 @@ public class CommonProxy implements IGuiHandler {
 				recipes.add((RecipeCarpentry) iRecipe);
 			}
 		}
-		//for (IRecipe r : recipes) { manager.register(r); }
+		for (IRecipe r : recipes) { manager.register(r); }
 		if (CustomNpcs.Server != null) {
 			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
 		}

@@ -73,21 +73,14 @@ public class GuiMenuSideButton extends GuiButtonNop {
     // New from Unofficial (BetaZavr)
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (visible && isHovered && mouseButton == 0) {
+        if (visible && isHovered && enabled && mouseButton == 0) {
             if (display != null && display.length != 0) { setDisplay((displayValue + 1) % display.length); }
             if (hasSound) { Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F)); }
             if (onPress != null) { onPress(); }
             else if (listener != null) { listener.buttonEvent(this); }
             return true;
         }
-        return !active && super.mouseClicked(mouseX, mouseY, mouseButton);
-    }
-
-    @Override
-    public int getFGColor() {
-        if (packedFGColor != -1) { return packedFGColor; }
-        else if (isHovered) { return CustomNpcs.HoverColor.getRGB(); }
-        return CustomNpcs.ButtonColor.getRGB();
+        return enabled && super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package noppes.npcs.client.renderer;
+package noppes.npcs.client.renderer.obj;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -22,8 +22,6 @@ import net.minecraftforge.client.model.obj.OBJLoader;
 import net.minecraftforge.client.model.obj.OBJModel;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.model.ModelOBJPlayerArmor;
-import noppes.npcs.client.renderer.obj.CustomOBJState;
-import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.custom.CustomArmor;
@@ -82,7 +80,7 @@ public class ModelBuffer {
 														   List<String> visibleMeshes,
 														   Map<String, ResourceLocation> materialTextures,
 														   boolean reverseNormals, int colorMask, boolean isDynamic) {
-		if (NOT_FOUND.contains(modelLocation)) { return null; }
+		if (modelLocation == null || NOT_FOUND.contains(modelLocation)) { return null; }
 		ParameterizedModel model = new ParameterizedModel(modelLocation, visibleMeshes, materialTextures, reverseNormals, colorMask, isDynamic);
 		boolean found = false;
 		for (ParameterizedModel pm : ModelBuffer.MODELS) {

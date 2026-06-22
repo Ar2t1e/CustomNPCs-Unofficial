@@ -20,7 +20,7 @@ import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.handler.data.IDeal;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.containers.ContainerNPCTrader;
 import noppes.npcs.controllers.MarcetController;

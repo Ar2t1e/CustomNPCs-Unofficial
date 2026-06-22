@@ -125,8 +125,8 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 
 	@Override
 	protected @Nonnull BlockStateContainer createBlockState() {
-		if (CustomBlocks.registryBlockNbt.hasKey("Property", 10)) {
-			NBTTagCompound nbtProperty = CustomBlocks.registryBlockNbt.getCompoundTag("Property");
+		if (CustomBlocks.registryNbt.hasKey("Property", 10)) {
+			NBTTagCompound nbtProperty = CustomBlocks.registryNbt.getCompoundTag("Property");
 			switch (nbtProperty.getByte("Type")) {
 				case (byte) 1: {
 					BO = PropertyBool.create(nbtProperty.getString("Name"));
@@ -153,7 +153,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	public @Nonnull BlockRenderLayer getBlockLayer() {
 		String name = "";
 		if (nbtData == null) {
-			if (CustomBlocks.registryBlockNbt != null && CustomBlocks.registryBlockNbt.hasKey("BlockLayer", 8)) { name = CustomBlocks.registryBlockNbt.getString("BlockLayer"); }
+			if (CustomBlocks.registryNbt != null && CustomBlocks.registryNbt.hasKey("BlockLayer", 8)) { name = CustomBlocks.registryNbt.getString("BlockLayer"); }
 		}
 		else if (nbtData.hasKey("BlockLayer", 8)) { name = nbtData.getString("BlockLayer"); }
 		while (name.contains(" ")) { name = name.replace(" ", "_"); }
@@ -166,6 +166,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
 		if (FACING != null) {
 			EnumFacing v = state.getValue(FACING);
@@ -177,9 +178,10 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nullable AxisAlignedBB getCollisionBoundingBox(@Nonnull IBlockState blockState, @Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos) {
 		if (nbtData == null) {
-			if (CustomBlocks.registryBlockNbt != null && CustomBlocks.registryBlockNbt.getBoolean("IsPassable")) { return NULL_AABB; }
+			if (CustomBlocks.registryNbt != null && CustomBlocks.registryNbt.getBoolean("IsPassable")) { return NULL_AABB; }
 		}
 		else {
 			if (nbtData.getBoolean("IsPassable")) { return NULL_AABB; }
@@ -213,6 +215,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState getStateFromMeta(int meta) {
 		IBlockState state = getDefaultState();
 		if (FACING != null) {
@@ -234,12 +237,14 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	public boolean hasProperty() { return BO != null || INT != null || FACING != null; }
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public boolean hasTileEntity() { return false; }
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isFullCube(@Nonnull IBlockState state) {
 		if (nbtData == null) {
-			return CustomBlocks.registryBlockNbt == null || !CustomBlocks.registryBlockNbt.hasKey("IsFullCube") || CustomBlocks.registryBlockNbt.getBoolean("IsFullCube");
+			return CustomBlocks.registryNbt == null || !CustomBlocks.registryNbt.hasKey("IsFullCube") || CustomBlocks.registryNbt.getBoolean("IsFullCube");
 		}
 		return !nbtData.hasKey("IsFullCube") || nbtData.getBoolean("IsFullCube");
 	}
@@ -247,15 +252,16 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	@Override
 	public boolean isLadder(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EntityLivingBase entity) {
 		if (nbtData == null) {
-			return CustomBlocks.registryBlockNbt != null && !CustomBlocks.registryBlockNbt.getBoolean("IsLadder");
+			return CustomBlocks.registryNbt != null && !CustomBlocks.registryNbt.getBoolean("IsLadder");
 		}
 		return nbtData.getBoolean("IsLadder");
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isOpaqueCube(@Nonnull IBlockState state) {
 		if (nbtData == null) {
-			return CustomBlocks.registryBlockNbt == null || !CustomBlocks.registryBlockNbt.hasKey("IsOpaqueCube") || CustomBlocks.registryBlockNbt.getBoolean("IsOpaqueCube");
+			return CustomBlocks.registryNbt == null || !CustomBlocks.registryNbt.hasKey("IsOpaqueCube") || CustomBlocks.registryNbt.getBoolean("IsOpaqueCube");
 		}
 		return !nbtData.hasKey("IsOpaqueCube") || nbtData.getBoolean("IsOpaqueCube");
 	}
@@ -263,7 +269,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	@Override
 	public boolean isPassable(@Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos) {
 		if (nbtData == null) {
-			return CustomBlocks.registryBlockNbt == null || !CustomBlocks.registryBlockNbt.hasKey("IsPassable", 3) ? !blockMaterial.blocksMovement() : CustomBlocks.registryBlockNbt.getBoolean("IsPassable");
+			return CustomBlocks.registryNbt == null || !CustomBlocks.registryNbt.hasKey("IsPassable", 3) ? !blockMaterial.blocksMovement() : CustomBlocks.registryNbt.getBoolean("IsPassable");
 		}
 		return !nbtData.hasKey("IsPassable", 3) ? !blockMaterial.blocksMovement() : nbtData.getBoolean("IsPassable");
 	}
@@ -342,7 +348,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 
 	@Override
 	public String getCustomName() {
-		if (nbtData == null) { return CustomBlocks.registryBlockNbt.getString("RegistryName"); }
+		if (nbtData == null) { return CustomBlocks.registryNbt.getString("RegistryName"); }
 		return nbtData.getString("RegistryName");
 	}
 
@@ -352,7 +358,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	@Override
 	public int getElementType() {
 		if (nbtData == null) {
-			return CustomBlocks.registryBlockNbt == null || !CustomBlocks.registryBlockNbt.hasKey("BlockType", 1) ? 0 : CustomBlocks.registryBlockNbt.getByte("BlockType");
+			return CustomBlocks.registryNbt == null || !CustomBlocks.registryNbt.hasKey("BlockType", 1) ? 0 : CustomBlocks.registryNbt.getByte("BlockType");
 		}
 		return !nbtData.hasKey("BlockType", 1) ? 0 : nbtData.getByte("BlockType");
 	}
@@ -360,7 +366,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	@Override
 	public boolean showInCreative() {
 		if (nbtData == null) {
-			return CustomBlocks.registryBlockNbt == null || !CustomBlocks.registryBlockNbt.hasKey("ShowInCreative", 1) || CustomBlocks.registryBlockNbt.getBoolean("ShowInCreative");
+			return CustomBlocks.registryNbt == null || !CustomBlocks.registryNbt.hasKey("ShowInCreative", 1) || CustomBlocks.registryNbt.getBoolean("ShowInCreative");
 		}
 		return !nbtData.hasKey("ShowInCreative", 1) || nbtData.getBoolean("ShowInCreative");
 	}

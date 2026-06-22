@@ -6,8 +6,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.CustomBlocks;
-import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
@@ -30,10 +28,7 @@ public class SPacketTileEntitySave extends PacketServerBasic {
    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
 
    @Override
-   public boolean toolAllowed(ItemStack item) {
-      return item.getItem() == CustomItems.wand || item.getItem() == CustomBlocks.border_item || item.getItem() == CustomBlocks.copy_item ||
-              item.getItem() == CustomBlocks.redstone_item || item.getItem() == CustomBlocks.scripted_item || item.getItem() == CustomBlocks.waypoint_item;
-   }
+   public boolean toolAllowed(ItemStack item) { return true; }
 
    @Override
    public void encode(FriendlyByteBuf buf) { buf.writeNbt(nbtTile); }

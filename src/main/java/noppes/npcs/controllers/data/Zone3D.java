@@ -37,6 +37,8 @@ import noppes.npcs.controllers.BorderController;
 import noppes.npcs.controllers.PlayerQuestController;
 import noppes.npcs.controllers.QuestController;
 import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketBorderData;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
@@ -992,8 +994,8 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 
 	public void update(WorldServer world) {
 		if (update) {
-			entitiesWithinRegion.clear();
 			BorderController.getInstance().update(id);
+			Packets.sendAll(new PacketBorderData(save(new NBTTagCompound())));
 			update = false;
 		}
 		if (points.isEmpty() || dimension != world.provider.getDimension()) { return; }
@@ -1078,7 +1080,7 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 		if (!message.isEmpty()) { player.sendMessage(Component.translatable(message)); }
 	}
 
-	public void save(NBTTagCompound nbtRegion) {
+	public NBTTagCompound save(NBTTagCompound nbtRegion) {
 		nbtRegion.setInteger("ID", id);
 		nbtRegion.setString("Name", name);
 		nbtRegion.setInteger("DimensionID", dimension);
@@ -1102,6 +1104,7 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 		nbtRegion.setTag("AddData", addData);
 
 		fix();
+		return nbtRegion;
 	}
 
 	public AxisAlignedBB getAxisAlignedBB() {

@@ -100,8 +100,8 @@ public class GuiNpcRemoteEditor
 	}
 
 	@Override
-	public void buttonEvent(GuiButtonNop guiButton) {
-		switch (guiButton.id) {
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 0: tryEditEntity(); break; // edit entity
 			case 1: {
 				if (!dataIDs.containsKey(scroll.getNormalSelected()) || minecraft == null || minecraft.world == null) { return; }
@@ -136,7 +136,7 @@ public class GuiNpcRemoteEditor
 				break;
 			} // reset all
 			case 6: {
-				GuiNpcRemoteEditor.all = ((GuiCheckBoxNop) guiButton).selected();
+				GuiNpcRemoteEditor.all = ((GuiCheckBoxNop) button).selected();
 				Packets.sendServer(new SPacketRemoteNpcsGet(all));
 				break;
 			} // change all type

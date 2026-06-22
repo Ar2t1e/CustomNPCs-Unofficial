@@ -15,7 +15,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.api.client.IRenderSystem;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 
 import java.util.HashMap;
 import java.util.List;

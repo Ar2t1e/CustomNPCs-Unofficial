@@ -2,10 +2,6 @@ package noppes.npcs.util;
 
 import java.awt.*;
 import java.io.*;
-import java.net.SocketTimeoutException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
@@ -21,8 +17,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.internal.LinkedTreeMap;
 import net.minecraft.entity.*;
 import net.minecraft.nbt.*;
@@ -68,6 +62,7 @@ import noppes.npcs.api.util.IRayTraceResults;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.NBTWrapper;
+import noppes.npcs.client.TranslateUtil;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.MarkData;
@@ -105,11 +100,8 @@ public class Util implements IMethods {
 		put(1000, "M");
 	}};
 	public static final Util instance = new Util();
-	private static final Map<String, String> translateDate = new HashMap<>();
 	private static final Gson gson = new Gson();
 	public static Object temp;
-
-	public static boolean hasInternet = false;
 
 	static {
 		steps[0] = new NumInfo(-24, "y", "d");  // yocto
@@ -370,8 +362,15 @@ public class Util implements IMethods {
 				}
 			}
 		}
-		if (temp instanceof Object[] && ((Object[]) temp).length > 0 && ((Object[]) temp)[0] == directory) { temp = null; }
-		return list;
+		try {
+			if (temp instanceof Object[] &&
+					((Object[]) temp).length > 0 &&
+					((Object[]) temp)[0] == directory)
+			{ temp = null; }
+		} catch (Exception e) {
+			LogWriter.info("[DEBUG] "+temp);
+        }
+        return list;
 	}
 
 	public Map<ItemStack, Boolean> getInventoryItemCount(EntityPlayer player, IInventory inventory) {
@@ -531,9 +530,10 @@ public class Util implements IMethods {
 		if (!found) {
 			String power = "+";
 			if (value < Math.pow(10, -24)) { power = "-"; }
-			if (String.valueOf(value).contains("e" + power) || String.valueOf(value).contains("E" + power)) {
+			boolean contains = String.valueOf(value).contains("E" + power);
+			if (String.valueOf(value).contains("e" + power) || contains) {
 				String index = "e" + power;
-				if (String.valueOf(value).contains("E" + power)) { index = "E" + power; }
+				if (contains) { index = "E" + power; }
 				exp = Integer.parseInt(String.valueOf(value).substring(String.valueOf(value).indexOf(index) + 2));
 				corr = Math.round(Integer.parseInt(String.valueOf(value).substring(0, String.valueOf(value).indexOf(index))) * 1000.0d) / 1000.0d;
 			}
@@ -575,7 +575,7 @@ public class Util implements IMethods {
 	@Override
 	public boolean removeFile(File directory) {
 		if (directory == null) { return false; }
-		//LogWriter.debug("Trying remove file \"" + directory + "\"");
+		LogWriter.debug("Trying remove file \"" + directory + "\"");
 		if (!directory.isDirectory()) {
 			return directory.delete();
 		}
@@ -751,6 +751,7 @@ public class Util implements IMethods {
 		return time;
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	public Entity travelAndCopyEntity(MinecraftServer server, Entity entity, int dimension) {
 		if (server != null) {
 			if (entity instanceof EntityPlayerMP) {
@@ -1544,101 +1545,13 @@ public class Util implements IMethods {
 		return target;
 	}
 
-    public String getResourceName(String name) {
-		if (name == null) { return null; }
-		String preName = deleteColor(name);
-		StringBuilder newName = new StringBuilder();
-		for (int i = 0; i < preName.length(); i++) {
-			char c = preName.charAt(i);
-			if (c == '.' || c == ' ' || c == 9 || c == 10) { c = '_'; }
-			if (Character.isDigit(c) && i == 0) { newName.append('_').append(c); }
-			else if (Character.isLetterOrDigit(c) || c == '_') {
-				newName.append(c);
-			}
-		}
-		return newName.toString().toLowerCase();
-    }
-
-	@Override
-	public String translateGoogle(String textLanguageKey, String translationLanguageKey, String originalText) {
-		if (translationLanguageKey == null || translationLanguageKey.isEmpty() || originalText == null || originalText.isEmpty()) { return originalText; }
-		if (textLanguageKey == null || textLanguageKey.isEmpty()) { textLanguageKey = "auto"; }
-		String key = textLanguageKey+"_"+translationLanguageKey+"_"+originalText;
-		if (translateDate.containsKey(key)) { return translateDate.get(key); }
-		if (!hasInternet) { return originalText; }
-		if (originalText.length() <= 5000) {
-			translateDate.put(key, translate(textLanguageKey, translationLanguageKey, originalText));
-			return translateDate.get(key);
-		}
-		String type = " "; // simple words
-		if (originalText.contains("\n")) { type = "\n"; } // some code
-		else if (originalText.contains(". ")) { type = ". "; } // suggestions
-		List<String> translatedParts = new ArrayList<>();
-		for (String part : originalText.split(type)) {
-			if (part.length() <= 5000) {
-				translatedParts.add(translate(textLanguageKey, translationLanguageKey, part));
-			}
-			else if (!type.equals(" ")) {
-				List<String> translatedSubParts = new ArrayList<>();
-				for (String subPart : part.split(" ")) {
-					if (subPart.length() <= 5000) { translatedSubParts.add(translate(textLanguageKey, translationLanguageKey, subPart)); }
-					else { translatedSubParts.add(subPart) ; }
-				}
-				StringBuilder subText = new StringBuilder();
-				for (String subTranslatedPart : translatedSubParts) {
-					subText.append(subTranslatedPart).append(" ");
-				}
-				translatedParts.add(subText.toString());
-			} else {
-				translatedParts.add(part);
-			}
-		}
-		StringBuilder text = new StringBuilder();
-		for (String translatedPart : translatedParts) {
-			text.append(translatedPart).append(type);
-		}
-		translateDate.put(key, translate(textLanguageKey, translationLanguageKey, text.toString()));
-		return translateDate.get(key);
-	}
-
 	public String translateGoogle(EntityPlayer player, String originalText) {
 		return translateGoogle("en", CustomNpcs.proxy.getTranslateLanguage(player), originalText);
 	}
 
-	private String translate(String textLanguageKey, String translationLanguageKey, String originalText) {
-		if (!hasInternet) { return originalText; }
-		try {
-			URLConnection connection = new URL(String.format("https://translate.google.com/translate_a/single?client=gtx&sl=%s&tl=%s&dt=t&q=%s", textLanguageKey, translationLanguageKey,
-					URLEncoder.encode(originalText, String.valueOf(StandardCharsets.UTF_8)))).openConnection();
-			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-			connection.setRequestProperty("User-Agent", "Chrome/99.0.4844.51");
-			connection.setConnectTimeout(10000);
-
-			// Читаем текст с явным указанием кодировки
-			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
-			StringBuilder text = new StringBuilder();
-			String line;
-			while ((line = reader.readLine()) != null) {
-				text.append(line).append("\n");
-			}
-			reader.close();
-
-			Gson gson = new Gson();
-			JsonElement element = gson.fromJson(text.toString(), JsonElement.class);
-			JsonArray outerArray = element.getAsJsonArray();
-			JsonArray innerArray = outerArray.get(0).getAsJsonArray();
-			JsonArray firstPair = innerArray.get(0).getAsJsonArray();
-			String translatedText = firstPair.get(0).getAsString();
-
-			hasInternet = true;
-			return translatedText;
-		} catch (SocketTimeoutException se) {
-			hasInternet = false;
-			LogWriter.error("Error: No internet connection", se);
-		} catch (Exception e) {
-			LogWriter.error("Error trying to translate via Google", e);
-		}
-		return originalText;
+	@Override
+	public String translateGoogle(String textLanguageKey, String translationLanguageKey, String originalText) {
+		return TranslateUtil.translate(textLanguageKey, translationLanguageKey, originalText);
 	}
 
 	public boolean canMoveEntityToEntity(EntityNPCInterface entity, EntityLivingBase entityTo) {
@@ -1650,6 +1563,7 @@ public class Util implements IMethods {
 		return Math.abs(entityTo.posX - (double) pos.x) <= 1.0 && Math.abs(entityTo.posY - (double) pos.y) < 2.0d && Math.abs(entityTo.posZ - (double) pos.z) <= 1.0d;
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	public float getCurrentXZSpeed(EntityLivingBase entity) {
 		IAttributeInstance movementAttribute = entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
 		float speed = 1.0f;
@@ -1661,6 +1575,7 @@ public class Util implements IMethods {
 		return ValueUtil.correctFloat(speed, 0.25f, 1.0f);
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	public boolean isMoving(EntityLivingBase entity) {
 		if (entity instanceof EntityLiving && !((EntityLiving) entity).getNavigator().noPath()) { return true; }
 		IAttributeInstance movementAttribute = entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
@@ -1747,9 +1662,7 @@ public class Util implements IMethods {
 	}
 
 	public Side getSide() {
-		if ((FMLCommonHandler.instance().getSidedDelegate() != null && FMLCommonHandler.instance().getSide().isClient())
-				|| Thread.currentThread().getName().toLowerCase().contains("client")) { return Side.CLIENT; }
-		return Side.SERVER;
+		return FMLCommonHandler.instance().getEffectiveSide();
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -1780,6 +1693,7 @@ public class Util implements IMethods {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public void jumpTowards(IEntity<?> iEntity, IPos iPos) { jumpTowards(1.3f, iEntity.getMCEntity(), iPos.getMCVec3()); }
 
 	public void jumpTowards(float speed, Entity entity, Vec3d vec) {

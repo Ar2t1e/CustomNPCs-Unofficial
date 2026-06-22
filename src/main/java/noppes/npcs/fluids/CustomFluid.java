@@ -4,8 +4,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.Fluid;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.ICustomElement;
+import noppes.npcs.api.INbt;
+import noppes.npcs.api.NpcAPI;
 
-public class CustomFluid extends Fluid {
+import java.util.Objects;
+
+public class CustomFluid extends Fluid implements ICustomElement {
 
 	private int mapColor;
 
@@ -37,5 +42,20 @@ public class CustomFluid extends Fluid {
 		mapColor = parColor;
 		return this;
 	}
+
+	@Override
+	public String getCustomName() { return nbtData.getString("RegistryName"); }
+
+	@Override
+	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+
+	@Override
+	public int getElementType() {
+		if (nbtData.hasKey("BlockType", 1)) { return nbtData.getByte("BlockType"); }
+		return 1;
+	}
+
+	@Override
+	public boolean showInCreative() { return !nbtData.hasKey("ShowInCreative", 1) || nbtData.getBoolean("ShowInCreative"); }
 
 }

@@ -16,7 +16,7 @@ import noppes.npcs.CustomItems;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.model.ModelNpcAlt;
 import noppes.npcs.client.model.part.LayerModel;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.entity.EntityCustomNpc;
 

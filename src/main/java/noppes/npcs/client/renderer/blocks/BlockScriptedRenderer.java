@@ -18,7 +18,7 @@ import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.client.TextBlockClient;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 
 import javax.annotation.Nonnull;

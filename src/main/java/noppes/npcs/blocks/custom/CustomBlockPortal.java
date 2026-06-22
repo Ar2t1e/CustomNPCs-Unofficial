@@ -38,11 +38,13 @@ import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.event.NpcEvent.CustomNpcTeleport;
 import noppes.npcs.api.event.PlayerEvent.CustomTeleport;
+import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.items.ItemNpcBlock;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
 import noppes.npcs.util.Util;
-import noppes.npcs.util.CustomNPCsScheduler;
+import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -108,6 +110,7 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState getStateFromMeta(int meta) {
 		return getDefaultState().withProperty(TYPE, meta % 3);
 	}
@@ -121,71 +124,61 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 	}
 
 	@Override
+	@SuppressWarnings("ConstantConditions")
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nullable EntityLivingBase placer, @Nonnull ItemStack stack) {
 		TileEntity tile = world.getTileEntity(pos);
 		if (tile instanceof CustomTileEntityPortal) {
-			int type = 0;
-			if (placer != null) {
-				type = placer.rotationPitch < -45 || placer.rotationPitch > 45 ? 0 : 1;
-				if (type == 1 && (placer.getHorizontalFacing() == EnumFacing.EAST || placer.getHorizontalFacing() == EnumFacing.WEST)) { type = 2; }
-			}
-			world.setBlockState(pos, state.withProperty(CustomBlockPortal.TYPE, type));
-			((CustomTileEntityPortal) tile).type = type;
-			if (nbtData.hasKey("RenderData", 10)
-					&& nbtData.getCompoundTag("RenderData").hasKey("SecondSpeed", 5)) {
+			CustomTileEntityPortal portalTile = (CustomTileEntityPortal) tile;
+			if (nbtData.hasKey("RenderData", 10)) {
 				NBTTagCompound nbtRender = nbtData.getCompoundTag("RenderData");
-				if (nbtRender.hasKey("SecondSpeed", 5)) {
-					((CustomTileEntityPortal) tile).speed = nbtRender.getFloat("SecondSpeed");
-					if (((CustomTileEntityPortal) tile).speed < 10.0f) {
-						((CustomTileEntityPortal) tile).speed = 10.0f;
-					} else if (((CustomTileEntityPortal) tile).speed > 10000.0f) {
-						((CustomTileEntityPortal) tile).speed = 10000.0f;
-					}
-				}
 				if (nbtRender.hasKey("Transparency", 5)) {
-					((CustomTileEntityPortal) tile).alpha = nbtRender.getFloat("Transparency");
-					if (((CustomTileEntityPortal) tile).alpha < 0.15f) {
-						((CustomTileEntityPortal) tile).alpha = 0.15f;
-					} else if (((CustomTileEntityPortal) tile).alpha > 1.0f) {
-						((CustomTileEntityPortal) tile).alpha = 1.0f;
-					}
+					portalTile.setAlpha(nbtRender.getFloat("Transparency"));
 				}
 			}
 			CustomTileEntityPortal adjacent = null;
-			for (int i = 0; i < 6; i++) {
-				switch (i) {
-					case 0: adjacent = getTile(world, pos.south()); break;
-					case 1: adjacent = getTile(world, pos.north()); break;
-					case 2: adjacent = getTile(world, pos.east()); break;
-					case 3: adjacent = getTile(world, pos.west()); break;
-					case 4: adjacent = getTile(world, pos.up()); break;
-					case 5: adjacent = getTile(world, pos.down()); break;
-				}
-				if (adjacent != null) { break; }
+			for (EnumFacing facing : EnumFacing.VALUES) {
+				adjacent = getAdjacentTile(world, pos.offset(facing));
+				if (adjacent != null) break;
 			}
 			if (adjacent != null) {
-				final CustomTileEntityPortal parent = adjacent;
-				CustomNPCsScheduler.runTack(() -> {
-					TileEntity t = world.getTileEntity(pos);
-					if (t instanceof CustomTileEntityPortal) {
-						CustomTileEntityPortal aTile = (CustomTileEntityPortal) t;
-						if (parent.posTp.getY() > -1) { aTile.posTp = new BlockPos(parent.posTp); }
-						if (parent.posHomeTp.getY() > -1) { aTile.posHomeTp = new BlockPos(parent.posHomeTp); }
-						aTile.dimensionId = parent.dimensionId;
-						aTile.homeDimensionId = parent.homeDimensionId;
-						aTile.speed = parent.speed;
-						aTile.alpha = parent.alpha;
-						aTile.updateToClient();
-					}
-				}, 250);
+				portalTile.type = adjacent.type;
+				if (adjacent.posTp.getY() > -1) { portalTile.posTp = new BlockPos(adjacent.posTp); }
+				if (adjacent.posHomeTp.getY() > -1) { portalTile.posHomeTp = new BlockPos(adjacent.posHomeTp); }
+				portalTile.dimensionId = adjacent.dimensionId;
+				portalTile.homeDimensionId = adjacent.homeDimensionId;
+				portalTile.setAlpha(adjacent.getAlpha());
+			}
+			else {
+				portalTile.type = placer == null || placer.rotationPitch < -45 || placer.rotationPitch > 45 ? 0 : 1;
+				if (portalTile.type == 1 && (placer.getHorizontalFacing() == EnumFacing.EAST || placer.getHorizontalFacing() == EnumFacing.WEST)) { portalTile.type = 2; }
+			}
+
+			NBTTagCompound nbt = new NBTTagCompound();
+			portalTile.writeToNBT(nbt);
+			IBlockState newState = state.withProperty(CustomBlockPortal.TYPE, portalTile.type);
+			world.setBlockState(pos, newState, 3);
+			TileEntity newTile = world.getTileEntity(pos);
+			if (newTile instanceof CustomTileEntityPortal) {
+				newTile.readFromNBT(nbt);
+				newTile.markDirty();
 			}
 		}
 		super.onBlockPlacedBy(world, pos, state, placer, stack);
 	}
 
 	@Override
+	@SuppressWarnings("ConstantConditions")
 	public void onEntityCollidedWithBlock(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Entity entityIn) {
-		if (!worldIn.isRemote && !entityIn.isRiding() && !entityIn.isBeingRidden() && entityIn.isNonBoss() && entityIn.getEntityBoundingBox().intersects(state.getBoundingBox(worldIn, pos).offset(pos))) {
+		if (!worldIn.isRemote && !entityIn.isRiding() && !entityIn.isBeingRidden() && entityIn.isNonBoss() &&
+				entityIn.getEntityBoundingBox().intersects(state.getBoundingBox(worldIn, pos).offset(pos))) {
+			if (entityIn instanceof EntityPlayerMP) {
+				EntityPlayerMP player = (EntityPlayerMP) entityIn;
+				if (player.getHeldItemMainhand().getItem() instanceof INPCToolItem ||
+						(player.getHeldItemMainhand().getItem() instanceof ItemNpcBlock &&
+								((ItemNpcBlock) player.getHeldItemMainhand().getItem()).getBlock() instanceof CustomBlockPortal)) {
+					return;
+				}
+			}
 			int id = nbtData.hasKey("DimensionID", 3) ? nbtData.getInteger("DimensionID") : 0;
 			int homeId = nbtData.hasKey("HomeDimensionID", 3) ? nbtData.getInteger("HomeDimensionID") : 0;
 			TileEntity blockTile = worldIn.getTileEntity(pos);
@@ -228,7 +221,8 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 					dimension = event.dimension;
 					if (DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
 				}
-				entityIn = Util.instance.travelEntity(worldIn.getMinecraftServer(), entityIn, dimension);
+				WorldServer world = Objects.requireNonNull(worldIn.getMinecraftServer()).getWorld(isHome ? homeId : id);
+				if (world != null && entityIn.world.provider.getDimension() != dimension) { entityIn = entityIn.changeDimension(dimension); }
 				if (entityIn != null) { entityIn.setPosition(p.getX() + 0.5d, p.getY(), p.getZ() + 0.5d); }
 			}
 		}
@@ -237,21 +231,26 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 	@SideOnly(Side.CLIENT)
 	public void randomDisplayTick(@Nonnull IBlockState stateIn, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull Random rand) {
 		if (nbtData.hasKey("RenderData", 10)) {
-			double d0 = (float) pos.getX() + rand.nextFloat();
-			double d1 = (float) pos.getY() + 0.8F;
-			double d2 = (float) pos.getZ() + rand.nextFloat();
-			EnumParticleTypes p = EnumParticleTypes.CRIT;
-			for (EnumParticleTypes ept : EnumParticleTypes.values()) {
-				if (ept.name().equalsIgnoreCase(nbtData.getCompoundTag("RenderData").getString("SpawnParticle"))) {
-					p = ept;
-					break;
+			NBTTagCompound compound = nbtData.getCompoundTag("RenderData");
+			float f0 = compound.hasKey("ChanceParticle", 3) ?
+					ValueUtil.correctInt(compound.getInteger("ChanceParticle"), 0, 100) / 100.0f : 0.1f;
+			if (Math.random() < f0) {
+				double d0 = (float) pos.getX() + rand.nextFloat();
+				double d1 = (float) pos.getY() + 0.8F;
+				double d2 = (float) pos.getZ() + rand.nextFloat();
+				EnumParticleTypes p = EnumParticleTypes.CRIT;
+				for (EnumParticleTypes ept : EnumParticleTypes.values()) {
+					if (ept.name().equalsIgnoreCase(compound.getString("SpawnParticle"))) {
+						p = ept;
+						break;
+					}
 				}
+				worldIn.spawnParticle(p, d0, d1, d2, 0.0D, 0.0D, 0.0D);
 			}
-			worldIn.spawnParticle(p, d0, d1, d2, 0.0D, 0.0D, 0.0D);
 		}
 	}
 
-	private CustomTileEntityPortal getTile(World world, BlockPos pos) {
+	private CustomTileEntityPortal getAdjacentTile(World world, BlockPos pos) {
 		TileEntity tile = world.getTileEntity(pos);
 		Block block = world.getBlockState(pos).getBlock();
 		if (tile instanceof CustomTileEntityPortal && block instanceof CustomBlockPortal

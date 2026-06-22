@@ -1,1 +1,1 @@
-{	"_comment": "Custom Item Block created by default",	"parent": "minecraft:item/generated",	"textures": {		"layer0": "{mod_id}:items/{file_name}"	}}
+{	"_comment": "Custom Item Block created by default",	"parent": "minecraft:item/generated",	"textures": {		"layer0": "{mod_id}:item/{file_name}"	}}

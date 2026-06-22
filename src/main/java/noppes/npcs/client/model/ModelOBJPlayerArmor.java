@@ -15,7 +15,7 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.client.model.part.ModelOBJPart;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.items.custom.CustomArmor;
 import noppes.npcs.reflection.client.renderer.entity.RenderPlayerReflection;

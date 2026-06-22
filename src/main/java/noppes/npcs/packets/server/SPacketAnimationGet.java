@@ -46,7 +46,7 @@ public class SPacketAnimationGet extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         Entity e = player.world.getEntityByID(npcId);
         if (e instanceof EntityNPCInterface) {
-            Packets.sendServer(new PacketGuiData(npc.animation.save(new NBTTagCompound())));
+            Packets.send(player, new PacketGuiData(npc.animation.save(new NBTTagCompound())));
             AnimationController.getInstance().sendTo(player);
         }
         CustomNpcs.debugData.end("Packets");

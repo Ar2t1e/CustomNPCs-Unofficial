@@ -24,6 +24,7 @@ import noppes.npcs.blocks.custom.*;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityChest;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
 import noppes.npcs.blocks.tiles.*;
+import noppes.npcs.client.CustomTileEntityItemStackRenderer;
 import noppes.npcs.client.renderer.blocks.*;
 import noppes.npcs.client.renderer.item.ItemCarpentryBenchRenderer;
 import noppes.npcs.client.renderer.item.ItemMailboxRenderer;
@@ -61,10 +62,12 @@ public class CustomBlocks {
     public static ItemScriptedDoor scripted_door_item;
 
     // custom
+    private static final List<Item> items = new ArrayList<>();
     public static final Map<ICustomElement, Item> customblocks = new HashMap<>();
+    public static final Map<String, ICustomElement> customfluid = new TreeMap<>();
     public static final List<CustomBlockPortal> portals = new ArrayList<>();
     public static final List<CustomChest> chests = new ArrayList<>();
-    public static NBTTagCompound registryBlockNbt;
+    public static NBTTagCompound registryNbt;
 
     @SubscribeEvent
     public void registerBlocks(RegistryEvent.Register<Block> event) {
@@ -121,7 +124,7 @@ public class CustomBlocks {
 
             String location = CustomNpcs.MODID + ":custom_" + valid;
             String addLocation = CustomNpcs.MODID + ":custom_double_" + valid;
-            registryBlockNbt = nbtBlock;
+            registryNbt = nbtBlock;
             switch (nbtBlock.getByte("BlockType")) {
                 case (byte) 1: {
                     CustomFluid fluid = new CustomFluid(nbtBlock);
@@ -133,7 +136,8 @@ public class CustomBlocks {
                     FluidRegistry.addBucketForFluid(fluid);
                     registryBlock(location, new CustomLiquid(fluid, CustomItem.getMaterial(nbtBlock.getString("Material")), nbtBlock),
                             names, blocks, nbtBlock.getBoolean("CreateDefaultFiles"));
-                    LogWriter.info("Load Custom Fluid \"" + CustomNpcs.MODID + ":" + FluidRegistry.getFluidName(fluid) + "\"");
+                    LogWriter.debug("Load Custom Fluid: \"" + location + "\"");
+                    customfluid.put(location, fluid);
                     break;
                 } // Liquid
                 case (byte) 2: {
@@ -190,13 +194,12 @@ public class CustomBlocks {
             }
         }
         if (resave) { Util.instance.saveFile(blocksFile, nbtBlocks); }
-        registryBlockNbt = null;
+        registryNbt = null;
         event.getRegistry().registerAll(blocks.toArray(new Block[0]));
     }
 
     @SubscribeEvent
     public void registerItems(RegistryEvent.Register<Item> event) {
-        List<Item> items = new ArrayList<>();
         items.add(scripted_door_item = new ItemScriptedDoor(scripted_door));
         items.add(carpentry_item = createItem(carpenty));
         items.add(mailbox_item = createItem(mailbox).setHasSubtypes(true));
@@ -270,6 +273,14 @@ public class CustomBlocks {
         // Item Block model renders
         carpentry_item.setTileEntityItemStackRenderer(new ItemCarpentryBenchRenderer());
         mailbox_item.setTileEntityItemStackRenderer(new ItemMailboxRenderer());
+        for (Item item : items) {
+            if (item instanceof ItemNpcBlock) {
+                item.setTileEntityItemStackRenderer(((ItemNpcBlock) item).getBlock() instanceof CustomBlockPortal ?
+                        CustomTileEntityItemStackRenderer.itemPortalRenderer :
+                        CustomTileEntityItemStackRenderer.itemRenderer);
+            }
+        }
+        items.clear();
     }
 
     private static NBTTagCompound getBlocksNbt(File file) {

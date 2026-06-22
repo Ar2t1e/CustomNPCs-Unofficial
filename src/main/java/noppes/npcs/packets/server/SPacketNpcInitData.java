@@ -47,7 +47,7 @@ public class SPacketNpcInitData extends PacketServerBasic {
         if (e instanceof EntityNPCInterface) {
             NBTTagCompound compound = new NBTTagCompound();
             e.writeToNBT(compound);
-            Packets.sendServer(new PacketNpcInitData(npcId, compound));
+            Packets.send(player, new PacketNpcInitData(npcId, compound));
         }
         CustomNpcs.debugData.end("Packets");
     }

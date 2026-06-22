@@ -19,8 +19,6 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.blocks.custom.CustomChest;
 import noppes.npcs.containers.ContainerChestCustom;
 import noppes.npcs.mixin.util.ISoundEventMixin;
-import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.server.SPacketTileEntitySave;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
@@ -106,12 +104,7 @@ public class CustomTileEntityChest extends TileEntityLockableLoot implements ITi
 	@Override
 	public void readFromNBT(@Nonnull NBTTagCompound compound) {
 		super.readFromNBT(compound);
-		if (!compound.hasKey("Items", 9)) {
-			if (world != null && !world.isRemote) {
-				Packets.sendAll(new SPacketTileEntitySave(writeToNBT(new NBTTagCompound())));
-			}
-			return;
-		}
+		if (!compound.hasKey("Items", 9)) { return; }
 		isChest = compound.getBoolean("IsChest");
 		guiColor = -1;
 		guiColorArr = null;
@@ -174,12 +167,6 @@ public class CustomTileEntityChest extends TileEntityLockableLoot implements ITi
 
 	@Override
 	public void update() {
-		if ((items.isEmpty() || chestTexture == null) && world != null && world.isRemote) {
-			if (world.getTotalWorldTime() % 20 == 0) {
-				Packets.sendAll(new SPacketTileEntitySave(writeToNBT(new NBTTagCompound())));
-			}
-			return;
-		}
 		if (numPlayersUsing < 0) { numPlayersUsing = 0; }
         if (world != null && !world.isRemote && numPlayersUsing != 0
 				&& (world.getTotalWorldTime() + pos.getX() + pos.getY() + pos.getZ()) % 20 == 0) {

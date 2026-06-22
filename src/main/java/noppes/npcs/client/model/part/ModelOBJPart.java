@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import noppes.npcs.client.model.ModelOBJPlayerArmor;
 import noppes.npcs.client.model.ModelRendererAlt;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.constants.EnumParts;
 

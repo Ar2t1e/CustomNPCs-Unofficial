@@ -56,7 +56,7 @@ public class SPacketQuestMinID extends PacketServerBasic {
         }
         NBTTagCompound compound = new NBTTagCompound();
         compound.setInteger("MinimumID", id);
-        Packets.sendServer(new PacketGuiData(compound));
+        Packets.send(player, new PacketGuiData(compound));
         CustomNpcs.debugData.end("Packets");
     }
 

@@ -14,7 +14,7 @@ public class ITextComponentSerializerMixin {
             at = @At("HEAD"),
             argsOnly = true
     )
-    private ITextComponent unwrapComponent(ITextComponent component) {
+    private ITextComponent npcs$serialize(ITextComponent component) {
         return component instanceof Component ? ((Component) component).getParent() : component;
     }
 

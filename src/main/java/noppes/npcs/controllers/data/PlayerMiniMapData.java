@@ -203,7 +203,7 @@ public class PlayerMiniMapData implements IPlayerData, IPlayerMiniMap {
 		}
 		if (needSend) {
 			update = false;
-			Packets.sendServer(new PacketSyncUpdate(0, 6, save(new NBTTagCompound())));
+			Packets.send(player, new PacketSyncUpdate(0, 6, save(new NBTTagCompound())));
 		}
 	}
 

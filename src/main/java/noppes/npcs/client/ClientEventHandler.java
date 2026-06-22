@@ -9,9 +9,7 @@ import java.util.List;
 import net.minecraft.block.BlockAir;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.client.audio.ISound;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiChat;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.*;
 import net.minecraft.entity.Entity;
@@ -40,7 +38,7 @@ import noppes.npcs.api.wrapper.BlockPosWrapper;
 import noppes.npcs.client.gui.player.GuiMailmanWrite;
 import noppes.npcs.client.gui.player.GuiOpenCase;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.client.util.CrashesData;
 import noppes.npcs.client.util.MusicData;
@@ -1033,7 +1031,8 @@ public class ClientEventHandler extends Gui {
 		NBTTagCompound nbtMP = null;
 		ItemStack mainStack = mc.player.getHeldItemMainhand();
 		ItemStack offStack = mc.player.getHeldItemOffhand();
-		if (CustomNpcs.ShowHitboxWhenHoldTools && mainStack.getItem() instanceof INPCToolItem || offStack.getItem() instanceof INPCToolItem) {
+		if (CustomNpcs.ShowHitboxWhenHoldTools && mainStack.getItem() instanceof INPCToolItem ||
+				offStack.getItem() instanceof INPCToolItem) {
 			AxisAlignedBB aabb = new AxisAlignedBB(-5.0, -5.0, -5.0, 5.0, 5.0, 5.0).offset(mc.player.getPosition());
 			List<Entity> list = new ArrayList<>();
 			try { list = mc.player.world.getEntitiesWithinAABB(Entity.class, aabb); } catch (Exception ignored) { }
@@ -1056,7 +1055,7 @@ public class ClientEventHandler extends Gui {
 					AxisAlignedBB col= e.getCollisionBoundingBox();
 					if (col == null) { col = new AxisAlignedBB(-w, 0.0, -w, w, e.height, w); }
 					GlStateManager.pushMatrix();
-					//GlStateManager.translate(e.posX, e.posY,  e.posZ);
+					GlStateManager.translate(e.posX, e.posY,  e.posZ);
 					RenderGlobal.drawSelectionBoundingBox(col,  0.8f, 0.8f, 0.8f, 0.8f);
 					if (e.equals(rayTrE)) { // hover entity
 						GlStateManager.glLineWidth(3.0F);
@@ -1122,7 +1121,7 @@ public class ClientEventHandler extends Gui {
 	}
 
 	@SubscribeEvent
-	public void npcRenderHand(RenderSpecificHandEvent event) {
+	public void cnpcRenderHand(RenderSpecificHandEvent event) {
 		if (event != null) {
 			mc = Minecraft.getMinecraft();
 			event.setCanceled(mc.currentScreen instanceof GuiOpenCase);
@@ -1182,13 +1181,16 @@ public class ClientEventHandler extends Gui {
 	private void processSoundPlay(Event event, ISound sound, String uuid) {
 		if (sound == null) { return; }
 		mc = Minecraft.getMinecraft();
-		if (mc.world != null && mc.getConnection() != null) {
-			MusicData md = new MusicData(sound, uuid, ((ISoundHandlerMixin) mc.getSoundHandler()).getSndManager());
-			ClientTickHandler.musics.add(md);
-			md.createClientEvent(event, mc.player, 0);
-			Packets.sendServer(new SPacketPlayerSound(true, md));
+		try {
+			if (mc.world != null && mc.getConnection() != null) {
+				MusicData md = new MusicData(sound, uuid, ((ISoundHandlerMixin) mc.getSoundHandler()).getSndManager());
+				ClientTickHandler.musics.add(md);
+				md.createClientEvent(event, mc.player, 0);
+				Packets.sendServer(new SPacketPlayerSound(true, md));
+			}
 		}
-	}
+		catch (Exception ignored) { }
+    }
 
 	private BlockPos getPos(RayTraceResult result) {
 		int x = result.getBlockPos().getX();
@@ -1744,13 +1746,15 @@ public class ClientEventHandler extends Gui {
 			float x = p.getX() + 0.5f;
 			float y = p.getY() + 0.5f;
 			float z = p.getZ() + 0.5f;
-			switch (mc.objectMouseOver.entityHit.getHorizontalFacing()) {
-				case UP: y += 0.55f; break;
-				case NORTH: z -= 0.55f; break;
-				case SOUTH: z += 0.55f; break;
-				case WEST: x -= 0.55f; break;
-				case EAST: x += 0.55f; break;
-				default: y -= 0.55f; break;
+			if (mc.objectMouseOver.entityHit != null) {
+				switch (mc.objectMouseOver.entityHit.getHorizontalFacing()) {
+					case UP: y += 0.55f; break;
+					case NORTH: z -= 0.55f; break;
+					case SOUTH: z += 0.55f; break;
+					case WEST: x -= 0.55f; break;
+					case EAST: x += 0.55f; break;
+					default: y -= 0.55f; break;
+				}
 			}
 			renderVertex(x, y, z, 1.0f, 1.0f, 0.0f);
 			// Bound
@@ -2402,6 +2406,65 @@ public class ClientEventHandler extends Gui {
 			mm.points.clear();
 			mm.points.addAll(points);
 			Packets.sendServer(new SPacketSyncUpdate(6, mm.save(new NBTTagCompound())));
+		}
+	}
+
+	public static void renderBalance(GuiScreen parent, int mouseX, int mouseY, int x, int y) {
+		if ((CustomNpcs.ShowMoney || CustomNpcs.ShowDonat) && parent != null && x !=0 && y != 0) {
+			PlayerData data = CustomNpcs.proxy.getPlayerData(null);
+			long money = data.game.getMoney();
+			long donat = data.game.getDonat();
+			int yM = y - (CustomNpcs.ShowMoney && CustomNpcs.ShowDonat ? 6 : 0);
+			int yD = !CustomNpcs.ShowMoney ? y : yM + 12;
+			// coins
+			GlStateManager.pushMatrix();
+			RenderHelper.enableGUIStandardItemLighting();
+			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+			GlStateManager.translate(x, yM, 0.0f);
+			float s = 16.0f / 256.0f;
+			GlStateManager.scale(s, s, s);
+			if (CustomNpcs.ShowMoney) {
+				parent.mc.getTextureManager().bindTexture(GuiBasic.MONEY);
+				parent.drawTexturedModalRect(0, 0, 0, 0, 256, 256);
+				if (CustomNpcs.ShowDonat) { GlStateManager.translate(0.0f, 192.0f, 0.0f); }
+			}
+			if (CustomNpcs.ShowDonat) {
+				parent.mc.getTextureManager().bindTexture(GuiBasic.DONAT);
+				parent.drawTexturedModalRect(0, 0, 0, 0, 256, 256);
+			}
+			GlStateManager.popMatrix();
+			// text
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(x + 16.0f, yM + (float) parent.mc.fontRenderer.FONT_HEIGHT / 2.0f, 1.0f);
+			String text;
+			if (CustomNpcs.ShowMoney) {
+				text = Util.instance.getTextReducedNumber(money, true, true, false) + CustomNpcs.displayCurrencies;
+				parent.mc.fontRenderer.drawString(text, 0, 0, CustomNpcs.LableColor.getRGB(), false);
+				if (CustomNpcs.ShowDonat) { GlStateManager.translate(0.0f, 12.0f, 0.0f); }
+			}
+			if (CustomNpcs.ShowDonat) {
+				text = Util.instance.getTextReducedNumber(donat, true, true, false) + CustomNpcs.displayDonation;
+				parent.mc.fontRenderer.drawString(text, 0, 0, CustomNpcs.LableColor.getRGB(), false);
+			}
+			GlStateManager.popMatrix();
+			// hover
+			if (mouseX > x && mouseY > yM + 2 && mouseX < x + 50 && mouseY < yM + 34) {
+				List<String> hoverText = new ArrayList<>();
+				if (CustomNpcs.ShowMoney && mouseY < yM + 14) {
+					hoverText.add(Component.translatable("inventory.hover.currency").getFormattedText());
+					hoverText.add("" + money);
+				} // money
+				else if (CustomNpcs.ShowDonat && mouseY >= yD  && mouseY < yD + 14) {
+					hoverText.add(Component.translatable("inventory.hover.donat").getFormattedText());
+					hoverText.add("" + donat);
+				} // donat
+				if (!hoverText.isEmpty()) {
+					GlStateManager.pushMatrix();
+					GlStateManager.disableDepth();
+					parent.drawHoveringText(hoverText, mouseX, mouseY);
+					GlStateManager.popMatrix();
+				}
+			}
 		}
 	}
 	

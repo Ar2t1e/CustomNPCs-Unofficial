@@ -94,7 +94,7 @@ import noppes.npcs.client.model.ModelNpcSlime;
 import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.client.parts.ModelPartData;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.RenderCustomNpc;
 import noppes.npcs.client.renderer.RenderNPCInterface;
 import noppes.npcs.client.renderer.RenderNPCPony;
@@ -817,10 +817,8 @@ public class ClientProxy extends CommonProxy {
 	}
 
 	@Override
-	public String getTranslateLanguage(EntityPlayer player) {
-		String lang = Minecraft.getMinecraft().getLanguageManager().getCurrentLanguage().getLanguageCode();
-		if (lang.contains("_")) { lang = lang.substring(0, lang.indexOf("_")); }
-		return lang;
+	public String getLanguage(EntityPlayer entity) {
+		return Minecraft.getMinecraft().getLanguageManager().getCurrentLanguage().getLanguageCode();
 	}
 
 	public void loadAnimationModel(AnimationConfig animation) {
@@ -836,15 +834,10 @@ public class ClientProxy extends CommonProxy {
 	}
 
 	@Override
-	public String getLanguage(EntityPlayer entity) {
-		return Minecraft.getMinecraft().getLanguageManager().getCurrentLanguage().getLanguageCode();
-	}
-
-	@Override
 	public void createAllFiles(ICustomElement customElement) {
 		super.createAllFiles(customElement);
-		if (customElement instanceof Block) { NoppesUtil.createBlockFiles(customElement); }
-		else if (customElement instanceof Item) { NoppesUtil.createItemFiles(customElement); }
+		if (customElement instanceof Block) { NoppesUtil.createAllBlockFiles(customElement); }
+		else if (customElement instanceof Item) { NoppesUtil.createAllItemFiles(customElement); }
 		else if (customElement instanceof CustomParticleSettings) { NoppesUtil.createParticleFiles((CustomParticleSettings) customElement); }
 		else if (customElement instanceof PotionData) { NoppesUtil.createAllPotionFiles((PotionData) customElement); }
 	}

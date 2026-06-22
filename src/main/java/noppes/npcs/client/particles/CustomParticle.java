@@ -15,7 +15,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.ICustomElement;
@@ -156,6 +156,7 @@ public class CustomParticle extends Particle implements ICustomElement, ICustomP
 	public double posZ() { return posZ; }
 
 	@Override
+	@SuppressWarnings("ConstantConditions")
 	public void renderParticle(@Nonnull BufferBuilder buffer, @Nonnull Entity entity, float partialTicks, float rotationX, float rotationZ,
 							   float rotationYZ, float rotationXY, float rotationXZ) {
 		CustomParticleEvent.RenderEvent event = new CustomParticleEvent.RenderEvent(this, buffer, entity, partialTicks, rotationX, rotationZ, rotationYZ, rotationXY, rotationXZ);

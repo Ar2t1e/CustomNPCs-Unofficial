@@ -12,10 +12,12 @@ import net.minecraft.block.Block;
 import net.minecraft.client.resources.LanguageManager;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
+import noppes.npcs.CustomBlocks;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.blocks.custom.*;
 import noppes.npcs.client.particles.CustomParticleSettings;
+import noppes.npcs.fluids.CustomFluid;
 import noppes.npcs.items.custom.*;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketGuiOpen;
@@ -36,8 +38,25 @@ import javax.imageio.ImageIO;
 
 public class NoppesUtil {
 
-
 	private static final Random rnd = new Random();
+	public static final float[][] hsbColors = new float[][] {
+			new float[]{ 0.523327f, 0.800691f, 0.110818f },
+			new float[]{ 0.487229f, 0.876027f, 0.095924f },
+			new float[]{ 0.496932f, 0.728230f, 0.100326f },
+			new float[]{ 0.512096f, 0.594524f, 0.114838f },
+			new float[]{ 0.435262f, 0.448571f, 0.097189f },
+			new float[]{ 0.602282f, 0.484326f, 0.123646f },
+			new float[]{ 0.611133f, 0.490221f, 0.166380f },
+			new float[]{ 0.316351f, 0.409136f, 0.091064f },
+			new float[]{ 0.619886f, 0.456163f, 0.195191f },
+			new float[]{ 0.643453f, 0.478067f, 0.187229f },
+			new float[]{ 0.613987f, 0.101399f, 0.148582f },
+			new float[]{ 0.492750f, 0.712303f, 0.243332f },
+			new float[]{ 0.791711f, 0.334412f, 0.214696f },
+			new float[]{ 0.504024f, 0.853151f, 0.321970f },
+			new float[]{ 0.420914f, 0.475206f, 0.390010f },
+			new float[]{ 0.599526f, 0.877617f, 0.661491f }
+	};
 	public static final Map<String, String> jsonMap = new TreeMap<>();
 
 	public static void requestOpenGUI(EnumGuiType gui) { requestOpenGUI(gui, BlockPos.ORIGIN); }
@@ -115,12 +134,8 @@ public class NoppesUtil {
 				else if (currentLanguage.equals("zh_tw")) { language = "zh_TW"; }
 				else { language = currentLanguage.substring(0, currentLanguage.indexOf("_")); }
 			}
-			if (isExample) {
-				translateValue = noppes.npcs.util.Util.instance.translateGoogle("en", language, value);
-				if (translateValue.equals(value)) { return; }
-				isTranslate = true;
-			}
-			else { value = noppes.npcs.util.Util.instance.translateGoogle(language, "en", translateValue); }
+			translateValue = noppes.npcs.util.Util.instance.translateGoogle("en", language, value);
+			isTranslate = !translateValue.equals(value);
 		}
 		boolean write = false;
 		for (int i = 0; i < 2; i++) {
@@ -140,7 +155,7 @@ public class NoppesUtil {
 					catch (Exception e) { LogWriter.error(e); }
 				}
 			}
-			if (!jsonMap.containsKey(key) || isExample || isTranslate) { jsonMap.put(key, (i == 0 ? value : translateValue)); }
+			if (!jsonMap.containsKey(key) || isExample) { jsonMap.put(key, (isTranslate ? translateValue : value)); }
             try (BufferedWriter writer = Files.newBufferedWriter(lang.toPath())) {
                 StringBuilder jsonStr = new StringBuilder();
                 String str = "";
@@ -153,9 +168,66 @@ public class NoppesUtil {
                 writer.write(jsonStr.toString());
                 writer.close();
                 write = true;
-            } catch (Exception e) { LogWriter.error(e); }
+            }
+			catch (Exception e) { LogWriter.error(e); }
         }
 		if (write) { LogWriter.debug("Create Default Localization key \"" + key + "\""); }
+	}
+
+	/**
+	 * Applies a tint color to a BufferedImage.
+	 * The brightness (grayscale) of the source pixel determines the tint intensity.
+	 * A black pixel = fully transparent/black, a white pixel = full tintColor.
+	 *
+	 * @param bufferedImage : Source image (brush, grayscale)
+	 * @param tintColor : Color in ARGB format (int from NBT)
+	 * @return : New image with the tint applied
+	 */
+	public static BufferedImage getBufferImageTint(BufferedImage bufferedImage, int tintColor) {
+		if (bufferedImage == null) return null;
+		int width = bufferedImage.getWidth();
+		int height = bufferedImage.getHeight();
+		BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+		Color tint = new Color(tintColor, true);
+		float[] hsb = Color.RGBtoHSB(tint.getRed(), tint.getGreen(), tint.getBlue(), null);
+		for (int u = 0; u < width; u++) {
+			for (int v = 0; v < height; v++) {
+				int i = bufferedImage.getRGB(u, v);
+				int alpha = (i >>> 24) & 0xFF;
+				if (alpha == 0) { continue; }
+				Color c = new Color(i, true);
+				float brightness = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null)[2];
+				result.setRGB(u, v, (alpha << 24) | (Color.HSBtoRGB(hsb[0], hsb[1], brightness) & 0x00FFFFFF));
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Blends the foreground over the background, taking the alpha channel into account.
+	 * Works like alpha-blending: result = fg * fgAlpha + bg * (1 - fgAlpha)
+	 *
+	 * @param background : Primary image (wbb.png)
+	 * @param foreground : Blended image (tinted brush)
+	 * @return : Blended result
+	 */
+	public static BufferedImage combineBuffer(BufferedImage background, BufferedImage foreground) {
+		if (background == null) return foreground;
+		if (foreground == null) return background;
+
+		int width = Math.max(background.getWidth(), foreground.getWidth());
+		int height = Math.max(background.getHeight(), foreground.getHeight());
+
+		BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = result.createGraphics();
+
+		g.drawImage(background, 0, 0, null);
+		g.drawImage(foreground, 0, 0, null);
+
+		g.dispose();
+		return result;
 	}
 
 	private static @Nonnull BufferedImage getBufferImageOffset(@Nonnull BufferedImage bufferedImage, float hueShift) {
@@ -173,7 +245,8 @@ public class NoppesUtil {
 					bufferedImage.setRGB(u, v, Color.HSBtoRGB(hue, hsb[1], hsb[2])); // HSBtoRGB(hue, saturation, brightness)
 				}
 			}
-		} catch (Exception e) { LogWriter.error(e); }
+		}
+		catch (Exception e) { LogWriter.error(e); }
 		return bufferedImage;
 	}
 
@@ -183,7 +256,7 @@ public class NoppesUtil {
 		return new BufferedImage(width, height, 6);
 	}
 
-	public static void createItemFiles(ICustomElement customitem) {
+	public static void createAllItemFiles(ICustomElement customitem) {
 		String name = customitem.getCustomName();
 		String fileName = "custom_" + customitem.getCustomName();
 		NBTTagCompound nbtData = customitem.getCustomNbt().getMCNBT();
@@ -204,7 +277,7 @@ public class NoppesUtil {
 
 
 		// directories
-		File texturesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/items");
+		File texturesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/item");
 		File armorDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/models/armor");
 		File trimsItemsDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/trims/items");
 		File textEntityDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/entity");
@@ -326,7 +399,7 @@ public class NoppesUtil {
 		}
 	}
 
-	public static void createBlockFiles(ICustomElement customblock) {
+	public static void createAllBlockFiles(ICustomElement customblock) {
 		String name = customblock.getCustomName().toLowerCase();
 		String fileName = Objects.requireNonNull(((Block) customblock).getRegistryName()).getResourcePath().toLowerCase();
 
@@ -348,7 +421,7 @@ public class NoppesUtil {
 		}
 
 		// textures
-		File textBlocksDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/blocks");
+		File textBlocksDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/block");
 		File textEntityDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/entity");
 		File textChestDir = new File(textEntityDir, "chest");
 		File textItemDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/item");
@@ -378,17 +451,26 @@ public class NoppesUtil {
 						File flowFile = new File(textBlocksDir, name + "_flow.png");
 						File stillFile = new File(textBlocksDir, name + "_still.png");
 						File bucketFile = new File(textItemDir, name + "_bucket.png");
+						File bottleFile = new File(textItemDir, name + "_bottle.png");
+
 						if (!stillMCmetaFile.exists() || !flowMCmetaFile.exists() ||
 								!textureFile.exists() || !flowFile.exists() || !stillFile.exists() || !bucketFile.exists()) {
 							// mc_metas
 							noppes.npcs.util.Util.instance.saveFile(stillMCmetaFile, NoppesUtilServer.getDataFile("wms.dat", fileName, name));
 							noppes.npcs.util.Util.instance.saveFile(flowMCmetaFile, NoppesUtilServer.getDataFile("wmf.dat", fileName, name));
 							// images
+							ICustomElement element = CustomBlocks.customfluid.get(CustomNpcs.MODID + ":custom_fluid_" + name);
+							int tint = customblock.getCustomNbt().getCompound("FluidType").getInteger("tintColor");
+							if (element instanceof CustomFluid && ((CustomFluid) element).getBlock() != null) { tint = ((CustomFluid) element).getColor(); }
 							textures.put(textureFile, getBufferImageOffset(getBufferedImage("wo.png", 8, 8), offsetColor));
 							textures.put(flowFile, getBufferImageOffset(getBufferedImage("wf.png", 32, 512), offsetColor));
 							textures.put(stillFile, getBufferImageOffset(getBufferedImage("ws.png", 16, 320), offsetColor));
 							// bucket
-							textures.put(bucketFile, getBufferImageOffset(getBufferedImage("wb.png", 16, 16), offsetColor));
+							textures.put(bucketFile, combineBuffer(getBufferedImage("wb.png", 16, 16),
+									getBufferImageTint(getBufferedImage("wc.png", 16, 16), tint)));
+							// bottle
+							textures.put(bottleFile, combineBuffer(getBufferImageTint(getBufferedImage("wl.png", 16, 16), tint),
+									getBufferedImage("wt.png", 16, 16)));
 						}
 						break;
 					} // Liquid
@@ -423,13 +505,33 @@ public class NoppesUtil {
 						break;
 					} // Slab
 					case 5: {
-						File textureFile = new File(textBlocksDir, name + ".png");
-						File skyFile = new File(textEnvironmentDir, name + "_sky.png");
-						File portalFile = new File(textEntityDir, name + "_portal.png");
-						if (!textureFile.exists() || !skyFile.exists() || !portalFile.exists()) {
-							textures.put(textureFile, getBufferImageOffset(bb, offsetColor));
-							textures.put(skyFile, getBufferImageOffset(getBufferedImage("es.png", 256, 256), offsetColor));
-							textures.put(portalFile, getBufferImageOffset(getBufferedImage("ep.png", 256, 256), offsetColor));
+						File shaderDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/shaders/core");
+						if (shaderDir.exists() || shaderDir.mkdirs()) {
+							File textureFile = new File(textBlocksDir, name + ".png");
+							File skyFile = new File(textEnvironmentDir, name + "_sky.png");
+							File portalFile = new File(textEntityDir, name + "_portal.png");
+							File shaderVertexFile = new File(shaderDir, name + ".vsh");
+							File shaderFaseFile = new File(shaderDir, name + ".fsh");
+							if (!textureFile.exists() || !skyFile.exists() || !portalFile.exists()) {
+								textures.put(textureFile, getBufferImageOffset(bb, offsetColor));
+								textures.put(skyFile, getBufferImageOffset(getBufferedImage("es.png", 256, 256), offsetColor));
+								textures.put(portalFile, getBufferImageOffset(getBufferedImage("ep.png", 256, 256), offsetColor));
+								// shader
+								noppes.npcs.util.Util.instance.saveFile(shaderVertexFile, NoppesUtilServer.getDataFile("shv.dat", fileName, name));
+								String content = NoppesUtilServer.getDataFile("shf.dat", fileName, name);
+								for (int i = 0; i < NoppesUtil.hsbColors.length; i++) {
+									float[] shifted = new float[] {
+											NoppesUtil.hsbOffset(NoppesUtil.hsbColors[i][0], offsetColor),
+											NoppesUtil.hsbColors[i][1],
+											NoppesUtil.hsbColors[i][2]
+									};
+									String[] values = NoppesUtil.HSBtoColorSting(shifted);
+									content = content.replace("color_" + i + "_0", values[0])
+											.replace("color_" + i + "_1", values[1])
+											.replace("color_" + i + "_2", values[2]);
+								}
+								noppes.npcs.util.Util.instance.saveFile(shaderFaseFile, content);
+							}
 						}
 						break;
 					} // Portal
@@ -567,6 +669,24 @@ public class NoppesUtil {
 				catch (Exception e) { LogWriter.error("Error create default texture for \"" + name + "\" potion", e); }
 			}
 		}
+	}
+
+	public static float hsbOffset(float base, float offset) {
+		float f0 = base + offset;
+		while (f0 < 0.0f) { f0 += 1.0f; }
+		while (f0 > 1.0f) { f0 -= 1.0f; }
+		return Math.round(f0 * 1000000.0f) / 1000000.0f;
+	}
+
+	public static String[] HSBtoColorSting(float[] hsbColor) {
+		Color c = new Color(Color.HSBtoRGB(hsbColor[0], hsbColor[1], hsbColor[2]));
+		StringBuilder v0 = new StringBuilder(String.valueOf(Math.round(c.getRed() / 255.0f * 1000000.0f) / 1000000.0f));
+		while (v0.length() < 8) { v0.append("0"); }
+		StringBuilder v1 = new StringBuilder(String.valueOf(Math.round(c.getGreen() / 255.0f * 1000000.0f) / 1000000.0f));
+		while (v1.length() < 8) { v1.append("0"); }
+		StringBuilder v2 = new StringBuilder(String.valueOf(Math.round(c.getBlue() / 255.0f * 1000000.0f) / 1000000.0f));
+		while (v2.length() < 8) { v2.append("0"); }
+		return new String[] { v0.toString(), v1.toString(), v2.toString() };
 	}
 
 }

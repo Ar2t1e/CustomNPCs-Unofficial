@@ -1,1 +1,1 @@
-newmtl materialKd 0.200000 0.050000 0.010000d 1.000000map_Kd {mod_id}:block/{file_name}newmtl topKd 1.000000 1.000000 1.000000d 1.000000map_Kd {mod_id}:block/{file_name}_top
+newmtl materialKd 0.200000 0.050000 0.010000d 1.000000map_Kd {mod_id}:block/{name}newmtl topKd 1.000000 1.000000 1.000000d 1.000000map_Kd {mod_id}:block/{name}_top

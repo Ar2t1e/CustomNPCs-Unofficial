@@ -58,14 +58,14 @@ public class GuiCheckBoxNop extends GuiButtonNop {
     @Override
     public int getFGColor() {
         if (packedFGColor != -1) { return packedFGColor; }
-        else if (!active) { return CustomNpcs.NotEnableColor.getRGB(); }
+        else if (!enabled) { return CustomNpcs.NotEnableColor.getRGB(); }
         else if (isHovered) { return CustomNpcs.HoverColor.getRGB(); }
         return CustomNpcs.LableColor.getRGB();
     }
 
     @Override
     protected void onClick(double x, double y) {
-        if (active && (listener == null || !listener.hasSubGui())) {
+        if (enabled && (listener == null || !listener.hasSubGui())) {
             if (display != null && display.length != 0) { setDisplay((displayValue + 1) % display.length); }
             if (hasSound) { Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F)); }
             selected = !selected;

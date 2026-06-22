@@ -85,8 +85,8 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public GuiWrapper wrapper = new GuiWrapper(this);
 
     // Mod Resources
-    public static final ResourceLocation MONEY = new ResourceLocation(CustomNpcs.MODID, "textures/item/coin_gold.png");
-    public static final ResourceLocation DONAT = new ResourceLocation(CustomNpcs.MODID, "textures/item/coin_donat.png");
+    public static final ResourceLocation MONEY = new ResourceLocation(CustomNpcs.MODID, "textures/items/coin_gold.png");
+    public static final ResourceLocation DONAT = new ResourceLocation(CustomNpcs.MODID, "textures/items/coin_donat.png");
     public static final ResourceLocation INFO = new ResourceLocation(CustomNpcs.MODID, "textures/gui/info.png");
     public static final ResourceLocation RESOURCE_SLOT = new ResourceLocation(CustomNpcs.MODID, "textures/gui/slot.png");
     public static final ResourceLocation MENU_BUTTON = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menubutton.png");

@@ -220,6 +220,8 @@ public class CustomNpcs {
 	public static boolean ShowLR = true;
 	@ConfigProp(info = "Display player balance in inventory", def = "true")
 	public static boolean ShowMoney = true;
+	@ConfigProp(info = "Display player donat balance in inventory", def = "false")
+	public static boolean ShowDonat = false;
 	@ConfigProp(info = "Type display player Quest Compass", def = "0", min = "0", max = "4")
 	public static int TypeShowQuestCompass = 0;
 	@ConfigProp(info = "Display hitbox of nearby NPCs when holding mod tools", def = "true")

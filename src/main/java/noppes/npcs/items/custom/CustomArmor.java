@@ -26,7 +26,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.util.Util;
 
@@ -264,6 +264,7 @@ public class CustomArmor extends ItemArmor implements ICustomElement {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private void createCameraData() {
 		cameraData.clear();
 		NBTTagCompound display = nbtData.hasKey("Display", 10) ? nbtData.getCompoundTag("Display") : new NBTTagCompound();

@@ -64,7 +64,7 @@ public class GuiMenuTopButton extends GuiButtonNop {
 
     @Override
     public GuiMenuTopButton setIsEnabled(boolean bo) {
-        active = bo;
+        enabled = bo;
         return this;
     }
 

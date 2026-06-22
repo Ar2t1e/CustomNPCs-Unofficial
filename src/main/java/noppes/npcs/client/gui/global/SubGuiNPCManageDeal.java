@@ -19,7 +19,7 @@ import noppes.npcs.client.gui.availability.SubGuiNpcAvailability;
 import noppes.npcs.client.gui.drop.SubGuiDropEdit;
 import noppes.npcs.client.gui.select.SubGuiColorSelector;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.containers.ContainerNPCTraderSetup;

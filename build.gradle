@@ -4,9 +4,9 @@ import java.time.LocalDateTime
 buildscript {
     repositories {
         mavenLocal()
+        mavenCentral()
         flatDir { dirs 'libs' }
         //maven { url = 'https://maven.minecraftforge.net/' }
-        mavenCentral()
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.14'

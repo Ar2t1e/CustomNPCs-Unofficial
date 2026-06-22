@@ -11,7 +11,7 @@ import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.client.ClientProxy;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.util.ResourceData;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
@@ -670,6 +670,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
 
     public GuiCustomScrollNop setSuffixes(List<Component> newSuffixes) { suffixes = newSuffixes; return this; }
 
+    @SuppressWarnings("all")
     public GuiCustomScrollNop setPrefixes(List<ResourceData> newPrefixes) { prefixes = newPrefixes; return this; }
 
     private void drawStacks() {
@@ -732,6 +733,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
 
     public List<Component> getNormalList() { return list; }
 
+    @SuppressWarnings("unused")
     public boolean hasSearch() { return hasSearch; }
 
     @Override
@@ -784,8 +786,10 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
 
     public String getSearchValue() { return textField.getValue(); }
 
+    @SuppressWarnings("unused")
     public void setSearchValue(String text) { textField.setValue(text); }
 
+    @SuppressWarnings("unused")
     public GuiCustomScrollNop setIgnoreSelected(ArrayList<Component> list) {
         ignoreSelected.clear();
         if (list != null) { ignoreSelected.addAll(list); }

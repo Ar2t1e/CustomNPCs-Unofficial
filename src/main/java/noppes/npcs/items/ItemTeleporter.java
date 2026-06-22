@@ -30,12 +30,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.CustomTabs;
+import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiOpen;
 import noppes.npcs.shared.common.util.LogWriter;
 
-public class ItemTeleporter extends Item {
+public class ItemTeleporter extends Item implements INPCToolItem {
 
 	public ItemTeleporter() {
 		setRegistryName(CustomNpcs.MODID, "npcteleporter");

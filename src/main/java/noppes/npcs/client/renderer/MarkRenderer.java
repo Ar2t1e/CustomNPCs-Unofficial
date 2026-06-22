@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import noppes.npcs.api.constants.MarkType;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.entity.EntityNPCInterface;
 
 import net.minecraft.client.Minecraft;

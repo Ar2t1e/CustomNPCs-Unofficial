@@ -24,7 +24,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.model.animation.AddedPartConfig;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.entity.data.DataAnimation;
 import noppes.npcs.items.custom.CustomArmor;

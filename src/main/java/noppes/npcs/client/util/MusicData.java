@@ -173,9 +173,15 @@ public class MusicData {
 		return new BlockPosWrapper(null, x, y, z);
 	}
 
-	public boolean playing() { return source != null && source.playing(); }
+	public boolean playing() {
+		try { return source != null && source.playing(); } catch (Exception ignored) { }
+		return false;
+    }
 
-	public boolean stopped() { return source == null || source.stopped(); }
+	public boolean stopped() {
+		try { return source == null || source.stopped(); } catch (Exception ignored) { }
+		return false;
+	}
 
 	public void setPos(float x, float y, float z) {
 		if (source != null) {

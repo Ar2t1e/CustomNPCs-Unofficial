@@ -82,7 +82,7 @@ public class Component implements ICustomTextComponent {
 
     @Override
     public @Nonnull Component append(@Nonnull ITextComponent component) {
-        parent.appendSibling(component);
+        parent.appendSibling(component instanceof Component ? ((Component) component).parent : component);
         return this;
     }
 
@@ -122,8 +122,14 @@ public class Component implements ICustomTextComponent {
 
         public static @Nonnull Component jsonToComponent(String content) {
             if (content == null || content.isEmpty()) { return Component.empty(); }
-            ITextComponent iText = ITextComponent.Serializer.jsonToComponent(content);
-            return iText != null ? new Component(iText) : Component.empty();
+            try {
+                ITextComponent iText = ITextComponent.Serializer.jsonToComponent(content);
+                return iText != null ? new Component(iText) : Component.empty();
+            }
+            catch (Exception e) {
+                //LogWriter.warn("Not json to component \""+content+"\"");
+                return new Component(content);
+            }
         }
 
     }

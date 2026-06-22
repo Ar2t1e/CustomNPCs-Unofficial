@@ -230,9 +230,9 @@ public class ModData {
         compound.setByte("BlockType", (byte) 5);
         compound.setString("Material", "PORTAL");
             NBTTagCompound nbtRender = new NBTTagCompound();
-            nbtRender.setFloat("SecondSpeed", 800.0f);
             nbtRender.setString("SpawnParticle", "CRIT");
-            nbtRender.setFloat("Transparency", 0.5f);
+            nbtRender.setFloat("Transparency", 0.75f);
+            nbtRender.setInteger("ChanceParticle", 10);
         compound.setTag("RenderData", nbtRender);
         compound.setInteger("DimensionID", 100);
         compound.setInteger("HomeDimensionID", 0);

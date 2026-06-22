@@ -101,11 +101,13 @@ public class CustomChest extends BlockInterface implements ICustomElement {
 	public TileEntity createNewTileEntity(@Nonnull World worldIn, int meta) { return new CustomTileEntityChest(); }
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull BlockFaceShape getBlockFaceShape(@Nonnull IBlockAccess worldIn, @Nonnull IBlockState state, @Nonnull BlockPos pos, @Nonnull EnumFacing face) {
 		return BlockFaceShape.UNDEFINED;
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
 		if (isChest) { return CHEST_AABB; }
 		return FULL_BLOCK_AABB;
@@ -123,11 +125,13 @@ public class CustomChest extends BlockInterface implements ICustomElement {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState getStateForPlacement(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ, int meta, @Nonnull EntityLivingBase placer) {
 		return getDefaultState().withProperty(FACING, placer.getHorizontalFacing().getOpposite());
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState getStateFromMeta(int meta) {
 		EnumFacing enumfacing = EnumFacing.getFront(meta);
 		if (enumfacing.getAxis() == EnumFacing.Axis.Y) {
@@ -138,12 +142,15 @@ public class CustomChest extends BlockInterface implements ICustomElement {
 
 	@Override
 	@SideOnly(Side.CLIENT)
+	@SuppressWarnings("deprecation")
 	public boolean hasCustomBreakingProgress(@Nonnull IBlockState state) { return true; }
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isFullCube(@Nonnull IBlockState state) { return false; }
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isOpaqueCube(@Nonnull IBlockState state) { return false; }
 
 	@Override
@@ -233,11 +240,13 @@ public class CustomChest extends BlockInterface implements ICustomElement {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState withMirror(@Nonnull IBlockState state, @Nonnull Mirror mirrorIn) {
 		return state.withRotation(mirrorIn.toRotation(state.getValue(CustomChest.FACING)));
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState withRotation(@Nonnull IBlockState state, @Nonnull Rotation rot) {
 		return state.withProperty(CustomChest.FACING, rot.rotate(state.getValue(CustomChest.FACING)));
 	}

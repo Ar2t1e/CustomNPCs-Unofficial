@@ -22,7 +22,7 @@ public class PlayerOverlayData implements IPlayerData {
     public final Set<Integer> keyPress = new HashSet<>();
     public final Set<Integer> mousePress = new HashSet<>();
 
-    public String currentGUI;
+    public String currentGUI = "";
     public boolean isMoved;
 
     public boolean updateClient; // ServerTickHandler.cnpcPlayerTick()

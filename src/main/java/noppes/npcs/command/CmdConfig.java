@@ -48,7 +48,7 @@ public class CmdConfig extends CommandNoppesBase {
 			try {
 				CustomNpcs.ChuckLoaders = Integer.parseInt(args[0]);
 			} catch (NumberFormatException ex) {
-				throw new CommandException("Didn't get a number");
+				throw new CommandException("Didn't get a number: " + args[0]);
 			}
 			CustomNpcs.Config.updateConfig();
 			int size = ChunkController.instance.size();
@@ -60,7 +60,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Add debug info to log", usage = "<true/false> or <start/stop>", permission = 4)
+	@SubCommand(desc = "Add debug info to log", usage = "<true/false>", permission = 4)
 	public void debug(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length == 0) {
 			CustomNpcs.VerboseDebug = !CustomNpcs.VerboseDebug;

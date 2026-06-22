@@ -96,7 +96,7 @@ public class SPacketNpcInvDropSetSave extends PacketServerBasic {
             DropController.getInstance().sendTo(player);
             DropController.getInstance().save();
         }
-        Packets.sendServer(new PacketGuiData(npc.inventory.save(new NBTTagCompound())));
+        Packets.send(player, new PacketGuiData(npc.inventory.save(new NBTTagCompound())));
         CustomNpcs.debugData.end("Packets");
     }
 

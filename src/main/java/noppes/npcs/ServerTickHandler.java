@@ -90,7 +90,8 @@ public class ServerTickHandler {
 		}
 		// mail and quest check
 		if (player.world.getTotalWorldTime() % 200L == resTime % 200L) {
-			if (data.overlay.currentGUI.equalsIgnoreCase("guichat") || data.overlay.currentGUI.equalsIgnoreCase("guiingame")) {
+			if (data.overlay.currentGUI.equalsIgnoreCase("guichat") ||
+					data.overlay.currentGUI.equalsIgnoreCase("guiingame")) {
 				CustomNPCsScheduler.runTack(() -> {
 					for (QuestData questData : data.questData.activeQuests.values()) {
 						data.questData.checkQuestCompletion(player, questData);

@@ -1,32 +1,19 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.BorderController;
-import noppes.npcs.shared.common.PacketServerBasic;
+import noppes.npcs.shared.common.PacketBasic;
 
-import java.util.List;
-
-public class SPacketBorderData extends PacketServerBasic {
+public class PacketBorderData extends PacketBasic {
 
     protected static int channelId;
     private NBTTagCompound data;
 
-    public SPacketBorderData() { }
+    public PacketBorderData() { }
 
-    public SPacketBorderData(NBTTagCompound dataIn) { data = dataIn; }
-
-    @Override
-    public boolean requiresNpc() { return false; }
-
-    @Override
-    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
-
-    @Override
-    public boolean toolAllowed(ItemStack item) { return true; }
+    public PacketBorderData(NBTTagCompound dataIn) { data = dataIn; }
 
     @Override
     public void encode(FriendlyByteBuf buf) { buf.writeNbt(data); }

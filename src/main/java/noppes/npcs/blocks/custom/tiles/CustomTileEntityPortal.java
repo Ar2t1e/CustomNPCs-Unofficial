@@ -2,6 +2,8 @@ package noppes.npcs.blocks.custom.tiles;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntityEndPortal;
 import net.minecraft.util.EnumFacing;
@@ -14,20 +16,20 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.custom.CustomBlockPortal;
-import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.server.SPacketTileEntitySave;
+import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class CustomTileEntityPortal extends TileEntityEndPortal {
 
 	protected ResourceLocation SKY_TEXTURE;
 	protected ResourceLocation PORTAL_TEXTURE;
+	protected float alpha = 0.0f;
 	public int dimensionId = 100;
 	public int homeDimensionId = 0;
-	public int type = 3;
-	public float speed = 800.0f;
-	public float alpha = 0.5f;
+	public int type = 0;
+
 	public BlockPos posTp = new BlockPos(0, -1, 0);
 	public BlockPos posHomeTp = new BlockPos(0, -1, 0);
 
@@ -35,22 +37,40 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 		if (PORTAL_TEXTURE == null && world != null) {
 			IBlockState state = world.getBlockState(pos);
 			if (state.getBlock() instanceof CustomBlockPortal) {
-				PORTAL_TEXTURE = new ResourceLocation(CustomNpcs.MODID, "textures/environment/custom_"
+				PORTAL_TEXTURE = new ResourceLocation(CustomNpcs.MODID, "textures/entity/"
 						+ ((CustomBlockPortal) state.getBlock()).getCustomName() + "_portal.png");
 			}
 		}
-		return PORTAL_TEXTURE != null ? PORTAL_TEXTURE : new ResourceLocation("textures/entity/end_portal.png");
+		if (PORTAL_TEXTURE == null) { PORTAL_TEXTURE = new ResourceLocation("textures/entity/end_portal.png"); }
+		return PORTAL_TEXTURE;
 	}
 
 	public ResourceLocation getSkyTexture() {
 		if (SKY_TEXTURE == null && world != null) {
 			IBlockState state = world.getBlockState(pos);
 			if (state.getBlock() instanceof CustomBlockPortal) {
-				SKY_TEXTURE = new ResourceLocation(CustomNpcs.MODID, "textures/environment/custom_"
+				SKY_TEXTURE = new ResourceLocation(CustomNpcs.MODID, "textures/environment/"
 						+ ((CustomBlockPortal) state.getBlock()).getCustomName() + "_sky.png");
 			}
 		}
-		return SKY_TEXTURE != null ? SKY_TEXTURE : new ResourceLocation("textures/environment/end_sky.png");
+		if (SKY_TEXTURE == null) { SKY_TEXTURE = new ResourceLocation("textures/environment/end_sky.png"); }
+		return SKY_TEXTURE;
+	}
+
+	public float getAlpha() {
+		if (alpha == 0.0f && world != null) {
+			IBlockState state = world.getBlockState(pos);
+			if (state.getBlock() instanceof CustomBlockPortal && ((CustomBlockPortal) state.getBlock()).getCustomNbt().has("RenderData", 10) &&
+					((CustomBlockPortal) state.getBlock()).getCustomNbt().getCompound("RenderData").has("Transparency", 5)) {
+				setAlpha(((CustomBlockPortal) state.getBlock()).getCustomNbt().getCompound("RenderData").getFloat("Transparency"));
+			}
+		}
+		if (alpha == 0.0f) { setAlpha(0.75f); }
+		return alpha;
+	}
+
+	public void setAlpha(float transparency) {
+		alpha = ValueUtil.correctFloat(transparency, 0.15f, 1.0f);
 	}
 
 	public BlockPos getPosTp(boolean isHome) {
@@ -76,19 +96,9 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 		return NoppesUtilServer.getSafeTpPos(sLevel, pos, 253, 1);
 	}
 
-	public void updateToClient() {
-		if (world != null && !world.isRemote) {
-			Packets.sendAll(new SPacketTileEntitySave(writeToNBT(new NBTTagCompound())));
-		}
-	}
-
 	@Override
 	@SideOnly(Side.CLIENT)
 	public boolean shouldRenderFace(@Nonnull EnumFacing facing) {
-		if (type == 3 && world != null) {
-			IBlockState state = world.getBlockState(pos);
-			if (state.getBlock() instanceof CustomBlockPortal) { type = state.getBlock().getMetaFromState(state); }
-		}
 		switch (type) {
 			case 1: return facing == EnumFacing.SOUTH || facing == EnumFacing.NORTH;
 			case 2: return facing == EnumFacing.WEST || facing == EnumFacing.EAST;
@@ -97,15 +107,26 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 	}
 
 	@Override
+	@Nonnull
+	public NBTTagCompound getUpdateTag() {
+		return writeToNBT(new NBTTagCompound());
+	}
+
+	@Override
+	@Nullable
+	public SPacketUpdateTileEntity getUpdatePacket() {
+		return new SPacketUpdateTileEntity(pos, 0, writeDisplay(new NBTTagCompound()));
+	}
+
+	@Override
+	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
+		readDisplay(pkt.getNbtCompound());
+	}
+
+	@Override
 	public void readFromNBT(@Nonnull NBTTagCompound compound) {
 		super.readFromNBT(compound);
-		if (!compound.hasKey("DimensionID", 3)) {
-			updateToClient();
-			return;
-		}
-		dimensionId = compound.getInteger("DimensionID");
-		homeDimensionId = compound.getInteger("HomeDimensionID");
-		speed = compound.getFloat("SecondSpeed");
+		readDisplay(compound);
 		if (compound.hasKey("HomePosition", 11)) {
 			int[] p = compound.getIntArray("HomePosition");
 			if (p.length >= 3) { posHomeTp = new BlockPos(p[0], p[1], p[2]); }
@@ -121,11 +142,24 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 	@Override
 	public @Nonnull NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
 		super.writeToNBT(compound);
-		compound.setInteger("DimensionID", dimensionId);
-		compound.setInteger("HomeDimensionID", homeDimensionId);
-		compound.setFloat("SecondSpeed", speed);
+		writeDisplay(compound);
 		compound.setLong("HomePosition", posHomeTp.toLong());
 		compound.setLong("TpPosition", posTp.toLong());
+		return compound;
+	}
+
+	private void readDisplay(NBTTagCompound compound) {
+		dimensionId = compound.getInteger("DimensionID");
+		homeDimensionId = compound.getInteger("HomeDimensionID");
+		type = compound.getInteger("Type");
+		setAlpha(compound.getFloat("Alpha"));
+	}
+
+	private NBTTagCompound writeDisplay(NBTTagCompound compound) {
+		compound.setInteger("DimensionID", dimensionId);
+		compound.setInteger("HomeDimensionID", homeDimensionId);
+		compound.setInteger("Type", type);
+		compound.setFloat("Alpha", alpha);
 		return compound;
 	}
 

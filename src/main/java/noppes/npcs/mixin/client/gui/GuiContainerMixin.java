@@ -1,10 +1,7 @@
 package noppes.npcs.mixin.client.gui;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.nbt.NBTTagCompound;
@@ -26,11 +23,11 @@ public class GuiContainerMixin {
 
     @Unique
     private static final ResourceLocation[] NPCS$RARITY_LOCATIONS = new ResourceLocation[] {
-            new ResourceLocation(CustomNpcs.MODID, "textures/item/rarity/0.png"),
-            new ResourceLocation(CustomNpcs.MODID, "textures/item/rarity/1.png"),
-            new ResourceLocation(CustomNpcs.MODID, "textures/item/rarity/2.png"),
-            new ResourceLocation(CustomNpcs.MODID, "textures/item/rarity/3.png"),
-            new ResourceLocation(CustomNpcs.MODID, "textures/item/rarity/4.png")
+            new ResourceLocation(CustomNpcs.MODID, "textures/items/rarity/0.png"),
+            new ResourceLocation(CustomNpcs.MODID, "textures/items/rarity/1.png"),
+            new ResourceLocation(CustomNpcs.MODID, "textures/items/rarity/2.png"),
+            new ResourceLocation(CustomNpcs.MODID, "textures/items/rarity/3.png"),
+            new ResourceLocation(CustomNpcs.MODID, "textures/items/rarity/4.png")
     };
 
     @Inject(at = {@At("RETURN")}, method = {"getSlotAtPosition"}, cancellable = true)
@@ -97,23 +94,9 @@ public class GuiContainerMixin {
                 GlStateManager.enableAlpha();
                 GlStateManager.enableBlend();
                 GlStateManager.translate(slotIn.xPos, slotIn.yPos, 1.0F);
-                GlStateManager.scale(0.5f, 0.5f, 1.0f);
+                GlStateManager.scale(0.0625f, 0.0625f, 1.0f); // 0.0625f = 16 / 256
                 GlStateManager.color(color[0], color[1], color[2], color[3]);
-
                 GuiNpcUtil.drawTexturedModalRect(NPCS$RARITY_LOCATIONS[type], 0, 0, 256, 256, 256.0f);
-
-                Tessellator tessellator = Tessellator.getInstance();
-                BufferBuilder bufferbuilder = tessellator.getBuffer();
-                bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-                float f = 0.00390625f;
-                float f0 = type * f * 32.0f;
-                float f1 = (1.0f + type) * f * 32.0f;
-                bufferbuilder.pos(0.0d, 32.0d, 0.0d).tex(0.734375f, f1).endVertex(); // [188, 32]
-                bufferbuilder.pos(32.0d, 32.0d, 0.0d).tex(0.859375f, f1).endVertex(); // [188 + 32, 32]
-                bufferbuilder.pos(32.0d, 0.0d, 0.0d).tex(0.859375f, f0).endVertex(); // [188 + 32, 0]
-                bufferbuilder.pos(0.0d, 0.0d, 0.0d).tex(0.734375f, f0).endVertex(); // [188, 0]
-                tessellator.draw();
-
                 GlStateManager.disableAlpha();
                 GlStateManager.disableBlend();
                 GlStateManager.popMatrix();
