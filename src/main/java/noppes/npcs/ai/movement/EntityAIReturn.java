@@ -4,7 +4,6 @@ import java.util.EnumSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
-import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -86,7 +85,7 @@ public class EntityAIReturn extends Goal {
       stuckTicks = 0;
       totalTicks = 0;
       stuckCount = 0;
-      navigate(false);
+      if (!isAtHome()) { navigate(false); }
    }
 
    @Override
@@ -98,14 +97,18 @@ public class EntityAIReturn extends Goal {
    @Override
    public void tick() {
       ++totalTicks;
-      if (totalTicks > MaxTotalTicks) { tryBackHome(endPos); }
+      if (totalTicks > MaxTotalTicks) { forceBackHome(); }
+      else if (isAtHome()) { npc.getNavigation().stop(); }
       else {
          if (stuckTicks > 0) { --stuckTicks; }
          else if (npc.getNavigation().isDone()) {
             ++stuckCount;
             stuckTicks = 10;
             if ((totalTicks <= 30 || !wasAttacked || !isTooFar()) && stuckCount <= 5) { navigate(stuckCount % 2 == 1); }
-            else { tryBackHome(endPos); }
+            else {
+               stuckCount = 0;
+               navigate(false);
+            }
          }
          else { stuckCount = 0; }
       }
@@ -133,27 +136,24 @@ public class EntityAIReturn extends Goal {
             if (pos == null) { pos = endPos; }
          }
       }
-      tryBackHome(pos);
+      npc.getNavigation().moveTo(pos.x, pos.y, pos.z, 2.0d);
    }
 
    // New from Unofficial (BetaZavr)
-   protected void tryBackHome(Vec3 pos) {
+   private boolean isAtHome() {
+      if (!wasAttacked) { return npc.isVeryNearAssignedPlace(); }
+      if (preAttackPos == null) return false;
+      double dist = npc.distanceToSqr(preAttackPos.x, preAttackPos.y, preAttackPos.z);
+      return dist < 4.0D;
+   }
+
+   protected void forceBackHome() {
       if (wasAttacked) { npc.setTarget(null); }
-      if (pos.equals(endPos) && npc.position().equals(pos)) {
-         endPos = preAttackPos = pos = new Vec3(npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
-      }
       npc.getNavigation().stop();
       if (!npc.homeDimensionId.equals(npc.level().dimension())) {
          Util.instance.teleportEntity(npc.getServer(), npc, npc.homeDimensionId, npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
       }
-      else {
-         Path path = npc.getNavigation().createPath(pos.x, pos.y, pos.z, 1);
-         npc.getNavigation().moveTo(path, 2.0D);
-         if (path == null || path.getNodeCount() == 1) {
-            npc.setPos(pos);
-            npc.getNavigation().stop();
-         }
-      }
+      else { npc.setPos(endPos.x, endPos.y, endPos.z); }
    }
 
 }

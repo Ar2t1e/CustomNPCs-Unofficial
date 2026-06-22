@@ -39,7 +39,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import noppes.npcs.CustomEntities;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilPlayer;
@@ -125,6 +125,7 @@ public class Util implements IMethods {
     @Override
     public boolean removeFile(File directory) {
         if (directory == null || !directory.exists()) { return false; }
+        LogWriter.debug("Trying remove file \"" + directory + "\"");
         if (!directory.isDirectory()) { return directory.delete(); }
         File[] list = directory.listFiles();
         if (list != null) {
@@ -175,7 +176,6 @@ public class Util implements IMethods {
         if (nbt == null || nbt.getMCNBT() == null) { return false; }
         return saveFile(file, NBTJsonUtil.Convert(nbt.getMCNBT()));
     }
-
 
     public String translateGoogle(Player player, String originalText) {
         return translateGoogle("en", CustomNpcs.proxy.getTranslateLanguage(player), originalText);
@@ -848,8 +848,13 @@ public class Util implements IMethods {
     }
 
     public Dist getSide() {
-        if (FMLLoader.getDist().isClient() || Thread.currentThread().getName().toLowerCase().contains("client")) { return Dist.CLIENT; }
-        return Dist.DEDICATED_SERVER;
+        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+            return Dist.DEDICATED_SERVER;
+        }
+        if ("Server thread".equals(Thread.currentThread().getName())) {
+            return Dist.DEDICATED_SERVER;
+        }
+        return Dist.CLIENT;
     }
 
     @Override
@@ -1419,7 +1424,7 @@ public class Util implements IMethods {
         return Math.sqrt(Math.pow(entity.getDeltaMovement().x, 2.0d) + Math.pow(entity.getDeltaMovement().z, 2.0d)) > speed;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"JavaReflectionMemberAccess", "unchecked"})
     public @Nullable Entity getEntityByUUID(UUID uuid, Level startWorld, boolean onlyInLevel) {
         if (startWorld != null) {
             Entity entity = null;

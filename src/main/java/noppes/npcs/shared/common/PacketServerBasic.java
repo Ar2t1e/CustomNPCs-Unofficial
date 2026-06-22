@@ -55,14 +55,15 @@ public abstract class PacketServerBasic extends PacketBasic {
                      prs.append(permission.getNodeName());
                      if (CustomNpcsPermissions.hasPermission(parent.player, permission)) { isAccess = true; }
                   }
-                  if (!isAccess) { parent.permission(prs.toString()); }
+                  if (!isAccess) {
+                     parent.permission(prs.toString());
+                     return;
+                  }
                }
-               if (prs.isEmpty()) {
-                  CustomNPCsScheduler.runTack(()-> {
-                     if (!parent.toolAllowed(parent.player.getInventory().getSelected())) { parent.warn(prs.toString()); }
-                     else { parent.handle(); }
-                  });
-               }
+               CustomNPCsScheduler.runTack(()-> {
+                  if (!parent.toolAllowed(parent.player.getInventory().getSelected())) { parent.warn(prs.toString()); }
+                  else { parent.handle(); }
+               });
             }
          } catch (Exception e) { LOGGER.error(e); }
       });

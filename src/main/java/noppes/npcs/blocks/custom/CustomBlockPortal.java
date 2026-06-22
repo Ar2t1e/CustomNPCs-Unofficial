@@ -42,17 +42,16 @@ import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
 import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.items.ItemNpcBlock;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
-import noppes.npcs.util.CustomNPCsScheduler;
+import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
-import java.util.Random;
 
 public class CustomBlockPortal extends EndPortalBlock implements ICustomElement {
 
-    private static final Random rnd = new Random();
     protected static final VoxelShape SHAPE_1 = Block.box(0.0D, 0.0D, 6.0D, 16.0D, 16.0D, 12.0D);
     protected static final VoxelShape SHAPE_2 = Block.box(6.0D, 0.0D, 0.0D, 12.0D, 16.0D, 16.0D);
     public static IntegerProperty TYPE = IntegerProperty.create("type", 0, 2);
@@ -94,51 +93,38 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
 
     @Override
     public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack item) {
-        BlockEntity blockTile = level.getBlockEntity(pos);
-        if (blockTile instanceof CustomTileEntityPortal tile) {
-            int type = 0;
-            if (placer != null) {
-                type = placer.getXRot() < -45 || placer.getXRot() > 45 ? 0 : 1;
-                if (type == 1 && (placer.getDirection() == Direction.EAST || placer.getDirection() == Direction.WEST)) { type = 2; }
-            }
-            level.setBlock(pos, state.setValue(CustomBlockPortal.TYPE, type), 3);
-            tile.type = type;
-            if (nbtData.contains("RenderData", 10)
-                    && nbtData.getCompound("RenderData").contains("SecondSpeed", 5)) {
+        if (level.getBlockEntity(pos) instanceof CustomTileEntityPortal portalTile) {
+            if (nbtData.contains("RenderData", 10)) {
                 CompoundTag nbtRender = nbtData.getCompound("RenderData");
                 if (nbtRender.contains("Transparency", 5)) {
-                    tile.alpha = nbtRender.getFloat("Transparency");
-                    if (tile.alpha < 0.15f) { tile.alpha = 0.15f; }
-                    else if (tile.alpha > 1.0f) { tile.alpha = 1.0f; }
+                    portalTile.setAlpha(nbtRender.getFloat("Transparency"));
                 }
             }
             CustomTileEntityPortal adjacent = null;
-            for (int i = 0; i < 6; i++) {
-                adjacent = switch (i) {
-                    case 0 ->  getTile(level, pos.south());
-                    case 1 ->  getTile(level, pos.north());
-                    case 2 ->  getTile(level, pos.east());
-                    case 3 ->  getTile(level, pos.west());
-                    case 4 ->  getTile(level, pos.above());
-                    case 5 ->  getTile(level, pos.below());
-                    default -> null;
-                };
-                if (adjacent != null) { break; }
+            for (Direction facing : Direction.values()) {
+                adjacent = getAdjacentTile(level, pos.relative(facing));
+                if (adjacent != null) break;
             }
             if (adjacent != null) {
-                final CustomTileEntityPortal parent = adjacent;
-                CustomNPCsScheduler.runTack(() -> {
-                    BlockEntity t = level.getBlockEntity(pos);
-                    if (t instanceof CustomTileEntityPortal aTile) {
-                        if (parent.posTp.getY() > -1) { aTile.posTp = new BlockPos(parent.posTp); }
-                        if (parent.posHomeTp.getY() > -1) { aTile.posHomeTp = new BlockPos(parent.posHomeTp); }
+                portalTile.type = adjacent.type;
+                if (adjacent.posTp.getY() > -1) { portalTile.posTp = new BlockPos(adjacent.posTp); }
+                if (adjacent.posHomeTp.getY() > -1) { portalTile.posHomeTp = new BlockPos(adjacent.posHomeTp); }
+                portalTile.dimensionId = adjacent.dimensionId;
+                portalTile.homeDimensionId = adjacent.homeDimensionId;
+                portalTile.setAlpha(adjacent.getAlpha());
+            }
+            else {
+                portalTile.type = placer == null || placer.getXRot() < -45 || placer.getXRot() > 45 ? 0 : 1;
+                if (portalTile.type == 1 && (placer.getDirection() == Direction.EAST || placer.getDirection() == Direction.WEST)) { portalTile.type = 2; }
+            }
 
-                        aTile.dimensionId = parent.dimensionId;
-                        aTile.homeDimensionId = parent.homeDimensionId;
-                        aTile.alpha = parent.alpha;
-                        aTile.updateToClient();
-                    }
-                }, 250);
+            CompoundTag nbt = new CompoundTag();
+            portalTile.saveAdditional(nbt);
+            level.setBlock(pos, state.setValue(TYPE, portalTile.type), 3);
+            BlockEntity newTile = level.getBlockEntity(pos);
+            if (newTile instanceof CustomTileEntityPortal newPortal) {
+                newPortal.load(nbt);
+                newPortal.setChanged();
             }
         }
         super.setPlacedBy(level, pos, state, placer, item);
@@ -147,9 +133,11 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
     @Override
     public void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entityIn) {
         if (level instanceof ServerLevel sLevel && entityIn.canChangeDimensions() && Shapes.joinIsNotEmpty(Shapes.create(entityIn.getBoundingBox().move(-pos.getX(), -pos.getY(), -pos.getZ())), state.getShape(sLevel, pos), BooleanOp.AND)) {
-            if (entityIn instanceof ServerPlayer player && player.getMainHandItem().getItem() instanceof INPCToolItem) {
-                return;
-            }
+            if (entityIn instanceof ServerPlayer player && (player.getMainHandItem().getItem() instanceof INPCToolItem ||
+                    (player.getMainHandItem().getItem() instanceof ItemNpcBlock itemBlock &&
+                            itemBlock.getBlock() instanceof CustomBlockPortal)))
+            { return; }
+
             ResourceKey<Level> id = Level.OVERWORLD;
             ResourceKey<Level> homeId = Level.OVERWORLD;
             if (nbtData.contains("DimensionID", 8)) {
@@ -200,14 +188,20 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
 
     @Override
     public void animateTick(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull RandomSource rndSource) {
-        if (nbtData.contains("RenderData", 10) && rnd.nextFloat() < 0.1f) {
-            double d0 = (double) pos.getX() + rndSource.nextDouble();
-            double d1 = (double) pos.getY() + 0.8D;
-            double d2 = (double) pos.getZ() + rndSource.nextDouble();
-            SimpleParticleType particle = ParticleTypes.CRIT;
-            ParticleType<?> ept = ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(nbtData.getCompound("RenderData").getString("SpawnParticle")));
-            if (ept instanceof SimpleParticleType p) { particle = p; }
-            level.addParticle(particle, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+        if (nbtData.contains("RenderData", 10)) {
+            CompoundTag compound = nbtData.getCompound("RenderData");
+            float f0 = compound.contains("ChanceParticle", 3) ?
+                    ValueUtil.correctInt(compound.getInt("ChanceParticle"), 0, 100) / 100.0f : 0.1f;
+            if (Math.random() < f0) {
+                double d0 = (double) pos.getX() + rndSource.nextDouble();
+                double d1 = (double) pos.getY() + 0.8D;
+                double d2 = (double) pos.getZ() + rndSource.nextDouble();
+                SimpleParticleType particle = ParticleTypes.CRIT;
+                ParticleType<?> ept = ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(compound.getString("SpawnParticle")));
+                if (ept instanceof SimpleParticleType p) { particle = p; }
+                level.addParticle(particle, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+            }
+
         }
     }
 
@@ -220,7 +214,7 @@ public class CustomBlockPortal extends EndPortalBlock implements ICustomElement 
         return dimensionId != null && ((server != null && server.getLevel(dimensionId) != null) || DimensionController.has(dimensionId.location()));
     }
 
-    private @Nullable CustomTileEntityPortal getTile(Level level, BlockPos pos) {
+    private @Nullable CustomTileEntityPortal getAdjacentTile(Level level, BlockPos pos) {
         BlockEntity t = level.getBlockEntity(pos);
         Block block = level.getBlockState(pos).getBlock();
         if (t instanceof CustomTileEntityPortal tile && block instanceof CustomBlockPortal pBlock && pBlock.getCustomName().equals(getCustomName())) {

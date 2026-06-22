@@ -4,8 +4,8 @@
         "srcrgb": "srcalpha",
         "dstrgb": "1-srcalpha"
     },
-    "vertex": "{mod_id}:{file_name}",
-    "fragment": "{mod_id}:{file_name}",
+    "vertex": "{mod_id}:{name}",
+    "fragment": "{mod_id}:{name}",
     "vertexFormat": "POSITION_COLOR_TEX_LIGHTMAP",
     "attributes": [
         "Position",

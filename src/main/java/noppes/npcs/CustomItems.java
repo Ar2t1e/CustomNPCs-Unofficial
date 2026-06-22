@@ -83,7 +83,7 @@ public class CustomItems {
          event.getForgeRegistry().register(CustomNpcs.MODID + ":npcscripteddoortool", CustomBlocks.scripted_door_item = new ItemScriptedDoor(CustomBlocks.scripted_door));
          event.getForgeRegistry().register(CustomNpcs.MODID + ":npcbuilderblock", CustomBlocks.builder_item = createItem(CustomBlocks.builder));
          event.getForgeRegistry().register(CustomNpcs.MODID + ":npccopyblock", CustomBlocks.copy_item = createItem(CustomBlocks.copy));
-         event.getForgeRegistry().register(CustomNpcs.MODID + ":npccarpentybench", CustomBlocks.carpentry_item = createItem(CustomBlocks.carpenty));
+         event.getForgeRegistry().register(CustomNpcs.MODID + ":npccarpentybench", CustomBlocks.carpenty_item = createItem(CustomBlocks.carpenty));
          // mod items
          event.getForgeRegistry().register(CustomNpcs.MODID + ":npcwand", wand = new ItemNpcWand());
          event.getForgeRegistry().register(CustomNpcs.MODID + ":npcmobcloner", cloner = new ItemNpcCloner());

@@ -45,7 +45,7 @@ public class CustomTabs {
                 output.accept(CustomBlocks.scripted_door_item.getDefaultInstance());
                 output.accept(CustomBlocks.builder_item.getDefaultInstance());
                 output.accept(CustomBlocks.copy_item.getDefaultInstance());
-                output.accept(CustomBlocks.carpentry_item.getDefaultInstance());
+                output.accept(CustomBlocks.carpenty_item.getDefaultInstance());
                 output.accept(CustomBlocks.mailbox_item.getDefaultInstance());
                 output.accept(CustomBlocks.mailbox2_item.getDefaultInstance());
                 output.accept(CustomBlocks.mailbox3_item.getDefaultInstance());

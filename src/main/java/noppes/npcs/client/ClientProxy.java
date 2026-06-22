@@ -523,21 +523,14 @@ public class ClientProxy extends CommonProxy {
 
    // New from Unofficial (BetaZavr)
    @Override
-   public String getTranslateLanguage(Player player) {
-      String lang = Minecraft.getInstance().getLanguageManager().getSelected();
-      if (lang.contains("_")) { lang = lang.substring(0, lang.indexOf("_")); }
-      return lang;
+   public String getLanguage(Player entity) {
+      return Minecraft.getInstance().getLanguageManager().getSelected();
    }
 
    @Override
    public void init() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.screen instanceof IGuiInterface) { mc.screen.init(mc, mc.screen.width, mc.screen.height); }
-   }
-
-   @Override
-   public String getLanguage(Player entity) {
-      return Minecraft.getInstance().getLanguageManager().getSelected();
    }
 
    @Override
@@ -639,7 +632,9 @@ public class ClientProxy extends CommonProxy {
                   list.add(recipeCollection);
                }
             }
-            collectionsByTab.put(isGlobal ? ClientRecipeRegister.CRAFTING_CUSTOM_GLOBAL_CATEGORY : ClientRecipeRegister.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
+            collectionsByTab.put(isGlobal ?
+                    ClientRecipeRegister.CRAFTING_CUSTOM_GLOBAL_CATEGORY :
+                    ClientRecipeRegister.CRAFTING_CUSTOM_ANVIL_CATEGORY, list);
          }
          ((IClientRecipeBookMixin) cBook).setCollectionsByTab(ImmutableMap.copyOf(collectionsByTab));
       }

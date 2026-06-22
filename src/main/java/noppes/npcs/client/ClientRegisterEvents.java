@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
@@ -20,6 +21,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomParticleTypes;
 import noppes.npcs.api.ICustomElement;
@@ -29,7 +31,9 @@ import noppes.npcs.client.util.ClientRecipeRegister;
 import noppes.npcs.client.util.ShaderData;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.fluids.CustomFluid;
+import noppes.npcs.mixin.client.IRecipeBookCategoriesMixin;
 import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
@@ -84,9 +88,27 @@ public class ClientRegisterEvents {
     }
 
     @SubscribeEvent
+    @SuppressWarnings("ConstantConditions")
     public static void cnpcsRegisterRecipe(RegisterRecipeBookCategoriesEvent event) {
         event.registerBookCategories(RecipeController.CRAFTING_CUSTOM_GLOBAL, RecipeBookCategories.CRAFTING_CATEGORIES);
         event.registerBookCategories(RecipeController.CRAFTING_CUSTOM_ANVIL, ClientRecipeRegister.CRAFTING_CUSTOM_ANVIL_CATEGORIES);
+        CustomNPCsScheduler.runTack(() -> {
+            while (true) {
+                if (CustomItems.wand != null && CustomItems.cloner != null && CustomBlocks.carpenty_item != null) {
+                    try {
+                        ((IRecipeBookCategoriesMixin) (Object) ClientRecipeRegister.CRAFTING_CUSTOM_GLOBAL_CATEGORY).setItemIcons(
+                                ImmutableList.of(new ItemStack(CustomItems.wand), new ItemStack(CustomItems.cloner))
+                        );
+                        ((IRecipeBookCategoriesMixin) (Object) ClientRecipeRegister.CRAFTING_CUSTOM_ANVIL_CATEGORY).setItemIcons(
+                                ImmutableList.of(new ItemStack(CustomBlocks.carpenty_item))
+                        );
+                    } catch (Exception e) {
+                        LogWriter.error(e);
+                    }
+                    break;
+                }
+            }
+        });
     }
 
     @OnlyIn(Dist.CLIENT)

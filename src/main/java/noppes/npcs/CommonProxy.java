@@ -53,20 +53,17 @@ public class CommonProxy {
 
    // New from Unofficial (BetaZavr)
    public String getTranslateLanguage(Player player) {
-      if (player instanceof ServerPlayer sPlayer) {
-         String lang = sPlayer.getLanguage();
-         if (lang.contains("_")) { lang = lang.substring(0, lang.indexOf("_")); }
-         return lang;
-      }
-      return "en";
+      String lang = getLanguage(player);
+      if (lang.contains("_")) { lang = lang.substring(0, lang.indexOf("_")); }
+      return lang;
+   }
+
+   public String getLanguage(Player entity) {
+      if (entity instanceof ServerPlayer player) { return player.getLanguage(); }
+      return "en_en";
    }
 
    public void init() { }
-
-   public String getLanguage(Player entity) {
-      if (entity instanceof ServerPlayer) { return ((ServerPlayer) entity).getLanguage(); }
-      return "en_en";
-   }
 
    public void updateKeys() { }
 

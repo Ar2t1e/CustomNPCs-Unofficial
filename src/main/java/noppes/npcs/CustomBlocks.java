@@ -96,7 +96,7 @@ public class CustomBlocks {
    public static Block copy;
    public static Item copy_item;
    public static Block carpenty;
-   public static Item carpentry_item;
+   public static Item carpenty_item;
 
    public static BlockEntityType<TileBlockAnvil> tile_anvil;
    public static BlockEntityType<TileBorder> tile_border;

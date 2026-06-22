@@ -27,6 +27,7 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketGuiOpen;
@@ -35,7 +36,7 @@ import noppes.npcs.shared.common.util.LogWriter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ItemTeleporter extends Item {
+public class ItemTeleporter extends Item implements INPCToolItem {
 
    public ItemTeleporter() { super((new Properties()).stacksTo(1)); }
 

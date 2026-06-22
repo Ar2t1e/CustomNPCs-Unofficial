@@ -37,23 +37,23 @@ import javax.imageio.ImageIO;
 public class NoppesUtil {
 
    private static final Random rnd = new Random();
-   private static final float[] baseHsb = Color.RGBtoHSB(21, 80, 169, null);
-   private static final float[][] hsbOffsets = new float[][] {
-           new float[] { 0.022087f, 0.098399f, 0.110818f },
-           new float[] { -0.108162f, -7.4E-4f, -0.568627f },
-           new float[] { -0.100225f, -0.14497f, -0.560784f },
-           new float[] { -0.090421f, -0.289533f, -0.54902f },
-           new float[] { -0.164328f, -0.442406f, -0.545098f },
-           new float[] { 0.003941f, -0.37574f, -0.537255f },
-           new float[] { 0.008108f, -0.399549f, -0.498039f },
-           new float[] { -0.287725f, -0.465483f, -0.509804f },
-           new float[] { 0.022963f, -0.41574f, -0.466667f },
-           new float[] { 0.044702f, -0.396573f, -0.47451f },
-           new float[] { 0.024775f, -0.770476f, -0.513726f },
-           new float[] { -0.107801f, -0.166062f, -0.419608f },
-           new float[] { 0.189249f, -0.530285f, -0.447059f },
-           new float[] { -0.095463f, -0.022081f, -0.341176f },
-           new float[] { -0.178239f, -0.400992f, -0.27451f }
+   public static final float[][] hsbColors = new float[][] {
+           new float[]{ 0.523327f, 0.800691f, 0.110818f },
+           new float[]{ 0.487229f, 0.876027f, 0.095924f },
+           new float[]{ 0.496932f, 0.728230f, 0.100326f },
+           new float[]{ 0.512096f, 0.594524f, 0.114838f },
+           new float[]{ 0.435262f, 0.448571f, 0.097189f },
+           new float[]{ 0.602282f, 0.484326f, 0.123646f },
+           new float[]{ 0.611133f, 0.490221f, 0.166380f },
+           new float[]{ 0.316351f, 0.409136f, 0.091064f },
+           new float[]{ 0.619886f, 0.456163f, 0.195191f },
+           new float[]{ 0.643453f, 0.478067f, 0.187229f },
+           new float[]{ 0.613987f, 0.101399f, 0.148582f },
+           new float[]{ 0.492750f, 0.712303f, 0.243332f },
+           new float[]{ 0.791711f, 0.334412f, 0.214696f },
+           new float[]{ 0.504024f, 0.853151f, 0.321970f },
+           new float[]{ 0.420914f, 0.475206f, 0.390010f },
+           new float[]{ 0.599526f, 0.877617f, 0.661491f }
    };
    public static final Map<String, String> jsonMap = new TreeMap<>();
 
@@ -107,12 +107,8 @@ public class NoppesUtil {
             else if (currentLanguage.equals("zh_tw")) { language = "zh_TW"; }
             else { language = currentLanguage.substring(0, currentLanguage.indexOf("_")); }
          }
-         if (isExample) {
-            translateValue = Util.instance.translateGoogle("en", language, value);
-            if (translateValue.equals(value)) { return; }
-            isTranslate = true;
-         }
-         else { value = Util.instance.translateGoogle(language, "en", translateValue); }
+         translateValue = Util.instance.translateGoogle("en", language, value);
+         isTranslate = !translateValue.equals(value);
       }
       boolean write = false;
       for (int i = 0; i < 2; i++) {
@@ -130,7 +126,7 @@ public class NoppesUtil {
                catch (Exception e) { LogWriter.error(e); }
             }
          }
-         if (!jsonMap.containsKey(key) || isExample || isTranslate) { jsonMap.put(key, (i == 0 ? value : translateValue)); }
+         if (!jsonMap.containsKey(key) || isExample) { jsonMap.put(key, (isTranslate ? translateValue : value)); }
          try (BufferedWriter writer = Files.newBufferedWriter(lang.toPath())) {
             CompoundTag nbt = new CompoundTag();
             StringBuilder jsonStr = new StringBuilder("{" + ((char) 10));
@@ -482,9 +478,9 @@ public class NoppesUtil {
                      File textureFile = new File(textBlocksDir, name + ".png");
                      File skyFile = new File(textEnvironmentDir, name + "_sky.png");
                      File portalFile = new File(textEntityDir, name + "_portal.png");
-                     File shaderJsonFile = new File(shaderDir, fileName + ".json");
-                     File shaderVertexFile = new File(shaderDir, fileName + ".vsh");
-                     File shaderFaseFile = new File(shaderDir, fileName + ".fsh");
+                     File shaderJsonFile = new File(shaderDir, name + ".json");
+                     File shaderVertexFile = new File(shaderDir, name + ".vsh");
+                     File shaderFaseFile = new File(shaderDir, name + ".fsh");
                      if (!textureFile.exists() || !skyFile.exists() || !portalFile.exists() ||
                              !shaderJsonFile.exists() || !shaderVertexFile.exists() || !shaderFaseFile.exists()) {
                         textures.put(textureFile, getBufferImageOffset(bb, offsetColor));
@@ -494,18 +490,18 @@ public class NoppesUtil {
                         Util.instance.saveFile(shaderJsonFile, NoppesUtilServer.getDataFile("shj.dat", fileName, name));
                         Util.instance.saveFile(shaderVertexFile, NoppesUtilServer.getDataFile("shv.dat", fileName, name));
                         String content = NoppesUtilServer.getDataFile("shf.dat", fileName, name);
-                        float[] hsb = new float[] { hsbOffset(baseHsb[0], offsetColor), baseHsb[1], baseHsb[2] };
-                        for (int i = 0; i < hsbOffsets.length; i++) {
-                           if (i == 0) {
-                              content = content.replace("color_" + i + "_0", hsbOffsets[i][0] + "")
-                                      .replace("color_" + i + "_1", hsbOffsets[i][1] + "")
-                                      .replace("color_" + i + "_2", hsbOffsets[i][2] + "");
-                           }
-                           content = content.replace("color_" + i + "_0", hsbOffset(hsb[0], hsbOffsets[i][0]) + "")
-                                   .replace("color_" + i + "_1", hsbOffset(hsb[1], hsbOffsets[i][1]) + "")
-                                   .replace("color_" + i + "_2", hsbOffset(hsb[2], hsbOffsets[i][2]) + "");
+                        for (int i = 0; i < NoppesUtil.hsbColors.length; i++) {
+                           float[] shifted = new float[] {
+                                   NoppesUtil.hsbOffset(NoppesUtil.hsbColors[i][0], offsetColor),
+                                   NoppesUtil.hsbColors[i][1],
+                                   NoppesUtil.hsbColors[i][2]
+                           };
+                           String[] values = NoppesUtil.HSBtoColorSting(shifted);
+                           content = content.replace("color_" + i + "_0", values[0])
+                                   .replace("color_" + i + "_1", values[1])
+                                   .replace("color_" + i + "_2", values[2]);
                         }
-                        Util.instance.saveFile(shaderFaseFile, content);
+                        noppes.npcs.util.Util.instance.saveFile(shaderFaseFile, content);
                      }
                   }
                   break;
@@ -645,11 +641,23 @@ public class NoppesUtil {
       }
    }
 
+
    public static float hsbOffset(float base, float offset) {
       float f0 = base + offset;
       while (f0 < 0.0f) { f0 += 1.0f; }
       while (f0 > 1.0f) { f0 -= 1.0f; }
       return Math.round(f0 * 1000000.0f) / 1000000.0f;
+   }
+
+   public static String[] HSBtoColorSting(float[] hsbColor) {
+      Color c = new Color(Color.HSBtoRGB(hsbColor[0], hsbColor[1], hsbColor[2]));
+      StringBuilder v0 = new StringBuilder(String.valueOf(Math.round(c.getRed() / 255.0f * 1000000.0f) / 1000000.0f));
+      while (v0.length() < 8) { v0.append("0"); }
+      StringBuilder v1 = new StringBuilder(String.valueOf(Math.round(c.getGreen() / 255.0f * 1000000.0f) / 1000000.0f));
+      while (v1.length() < 8) { v1.append("0"); }
+      StringBuilder v2 = new StringBuilder(String.valueOf(Math.round(c.getBlue() / 255.0f * 1000000.0f) / 1000000.0f));
+      while (v2.length() < 8) { v2.append("0"); }
+      return new String[] { v0.toString(), v1.toString(), v2.toString() };
    }
 
 }

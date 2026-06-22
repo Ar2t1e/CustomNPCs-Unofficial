@@ -158,6 +158,7 @@ public class Packets {
       register(PacketNpcInitData.class);
       register(PacketNpcLookPos.class);
       register(PacketNpcRarityTitleSet.class);
+      register(PacketBorderData.class);
 
       // Client -> Server
       register(SPacketBankGet.class);
@@ -322,7 +323,6 @@ public class Packets {
       register(SPacketPermissionGlobalGet.class);
       register(SPacketPlayerFactionsGet.class);
       register(SPacketBorderClear.class);
-      register(SPacketBorderData.class);
       register(SPacketRegionRemove.class);
       register(SPacketRegionSave.class);
       register(SPacketRegionSetOnItem.class);
@@ -422,43 +422,56 @@ public class Packets {
       }
    }
 
-   public static <MSG> void send(ServerPlayer player, MSG msg) {
-      logged(msg);
-      CHANNELS.get(((PacketBasic) msg).getChannelId()).send(PacketDistributor.PLAYER.with(() -> player), msg);
+   public static <MSG extends PacketBasic> void send(ServerPlayer player, MSG msg) {
+      logged(msg, true);
+      CHANNELS.get(msg.getChannelId()).send(PacketDistributor.PLAYER.with(() -> player), msg);
    }
 
-   public static <MSG> void sendDelayed(ServerPlayer player, MSG msg, int delay) {
-      logged(msg);
-      CustomNPCsScheduler.runTack(() -> CHANNELS.get(((PacketBasic) msg).getChannelId())
+   public static <MSG extends PacketBasic> void sendDelayed(ServerPlayer player, MSG msg, int delay) {
+      logged(msg, true);
+      CustomNPCsScheduler.runTack(() -> CHANNELS.get(msg.getChannelId())
               .send(PacketDistributor.PLAYER.with(() -> player), msg), delay);
    }
 
-   public static <MSG> void sendNearby(Level level, BlockPos pos, int range, MSG msg) {
-      logged(msg);
-      CHANNELS.get(((PacketBasic) msg).getChannelId()).send(PacketDistributor.NEAR
+   public static <MSG extends PacketBasic> void sendNearby(Level level, BlockPos pos, int range, MSG msg) {
+      logged(msg, true);
+      CHANNELS.get(msg.getChannelId()).send(PacketDistributor.NEAR
               .with(() -> new TargetPoint(pos.getX(), pos.getY(), pos.getZ(), range, level.dimension())), msg);
    }
 
-   public static <MSG> void sendNearby(Entity entity, MSG msg) {
-      logged(msg);
-      CHANNELS.get(((PacketBasic) msg).getChannelId()).send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), msg);
+   public static <MSG extends PacketBasic> void sendNearby(Entity entity, MSG msg) {
+      logged(msg, true);
+      CHANNELS.get(msg.getChannelId()).send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), msg);
    }
 
-   public static <MSG> void sendAll(MSG msg) {
-      logged(msg);
-      CHANNELS.get(((PacketBasic) msg).getChannelId()).send(PacketDistributor.ALL.noArg(), msg);
+   public static <MSG extends PacketBasic> void sendAll(MSG msg) {
+      logged(msg, true);
+      CHANNELS.get(msg.getChannelId()).send(PacketDistributor.ALL.noArg(), msg);
    }
 
-   public static <MSG> void sendServer(MSG msg) {
+   public static <MSG extends PacketServerBasic> void sendServer(MSG msg) {
       ClientPacketListener connection = Minecraft.getInstance().getConnection();
       if (connection != null) {
-         logged(msg);
-         CHANNELS.get(((PacketBasic) msg).getChannelId()).sendToServer(msg);
+         logged(msg, false);
+         CHANNELS.get(msg.getChannelId()).sendToServer(msg);
       }
    }
 
    // New from Unofficial (BetaZavr)
-   private static <MSG> void logged(MSG msg) {
+   public static <MSG extends PacketServerBasic> void sendServerDelayed(MSG msg, Object key, int delay) {
+      Long existing = delaySendMap.get(key);
+      long now = System.currentTimeMillis();
+      if (delaySendMap.size() > 1000) { delaySendMap.entrySet().removeIf(entry -> entry.getValue() <= now); }
+      if (existing != null && existing > now) { return; }
+      logged(msg, false);
+      CHANNELS.get(msg.getChannelId()).sendToServer(msg);
+      delaySendMap.put(key, now + delay);
+   }
+
+   private static <MSG> void logged(MSG msg, boolean onClients) {
+      if (onClients == msg instanceof PacketServerBasic) {
+         LogWriter.warn("Packet \"" + msg.getClass().getSimpleName() + "\" is sent from the wrong side!");
+      }
       if (CustomNpcs.VerboseDebug && !ignoredDebug.contains(msg.getClass())) {
          StringBuilder message = new StringBuilder(("" + Util.instance.getSide()).replace("DEDICATED_", ""));
          message.append(" send packet: ")
@@ -469,16 +482,6 @@ public class Packets {
          message.append("; At: ").append(line);
          LogWriter.debug(message.toString());
       }
-   }
-
-   public static <MSG> void sendServerDelayed(MSG msg, Object key, int delay) {
-      Long existing = delaySendMap.get(key);
-      long now = System.currentTimeMillis();
-      if (delaySendMap.size() > 1000) { delaySendMap.entrySet().removeIf(entry -> entry.getValue() <= now); }
-      if (existing != null && existing > now) { return; }
-      logged(msg);
-      CHANNELS.get(((PacketBasic) msg).getChannelId()).sendToServer(msg);
-      delaySendMap.put(key, now + delay);
    }
 
    public static void clearDelaySendMap() {

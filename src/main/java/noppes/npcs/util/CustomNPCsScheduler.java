@@ -20,9 +20,13 @@ public class CustomNPCsScheduler {
       if (!executor.isShutdown()) {
          executor.shutdown();
          try {
-            if (!executor.awaitTermination(5L, TimeUnit.SECONDS)) { executor.shutdownNow(); }
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+               executor.shutdownNow();
+            }
+         } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
          }
-         catch (InterruptedException var1) { executor.shutdownNow(); }
       }
    }
 

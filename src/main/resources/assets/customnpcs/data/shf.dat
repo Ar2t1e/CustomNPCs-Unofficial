@@ -11,50 +11,50 @@ uniform int PortalLayers;
 in vec4 texProj0;
 
 const vec3[] COLORS = vec3[](
-    vec3(color_0_0, color_0_1, color_0_2),
-    vec3(0.011892, 0.095924, 0.089485),
-    vec3(0.027636, 0.101689, 0.100326),
-    vec3(0.046564, 0.109883, 0.114838),
-    vec3(0.064901, 0.117696, 0.097189),
-    vec3(0.063761, 0.086895, 0.123646),
-    vec3(0.084817, 0.111994, 0.166380),
-    vec3(0.097489, 0.154120, 0.091064),
-    vec3(0.106152, 0.131144, 0.195191),
-    vec3(0.097721, 0.110188, 0.187229),
-    vec3(0.133516, 0.138278, 0.148582),
-    vec3(0.070006, 0.243332, 0.235792),
-    vec3(0.196766, 0.142899, 0.214696),
-    vec3(0.047281, 0.315338, 0.321970),
-    vec3(0.204675, 0.390010, 0.302066),
-    vec3(0.080955, 0.314821, 0.661491)
+  vec3(color_0_0, color_0_1, color_0_2),
+  vec3(color_1_0, color_1_1, 0.color_1_2),
+  vec3(color_2_0, color_2_1, color_2_2),
+  vec3(color_3_0, color_3_1, color_3_2),
+  vec3(color_4_0, color_4_1, color_4_2),
+  vec3(color_5_0, color_5_1, color_5_2),
+  vec3(color_6_0, color_6_1, color_6_2),
+  vec3(color_7_0, color_7_1, color_7_2),
+  vec3(color_8_0, color_8_1, color_8_2),
+  vec3(color_9_0, color_9_1, color_9_2),
+  vec3(color_10_0, color_10_1, color_10_2),
+  vec3(color_11_0, color_11_1, color_11_2),
+  vec3(color_12_0, color_12_1, color_12_2),
+  vec3(color_13_0, color_13_1, color_13_2),
+  vec3(color_14_0, color_14_1, color_14_2),
+  vec3(color_15_0, color_15_1, color_15_2)
 );
 
 const mat4 SCALE_TRANSLATE = mat4(
-    0.5, 0.0, 0.0, 0.25,
-    0.0, 0.5, 0.0, 0.25,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0
+  0.5, 0.0, 0.0, 0.25,
+  0.0, 0.5, 0.0, 0.25,
+  0.0, 0.0, 1.0, 0.0,
+  0.0, 0.0, 0.0, 1.0
 );
 
 mat4 portal_layer(float layer) {
-    mat4 translate = mat4(
-        1.0, 0.0, 0.0, 17.0 / layer,
-        0.0, 1.0, 0.0, (2.0 + layer / 1.5) * (GameTime * 1.5),
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
-    );
-    mat2 rotate = mat2_rotate_z(radians((layer * layer * 4321.0 + layer * 9.0) * 2.0));
-    mat2 scale = mat2((4.5 - layer / 4.0) * 2.0);
-    return mat4(scale * rotate) * translate * SCALE_TRANSLATE;
+  mat4 translate = mat4(
+    1.0, 0.0, 0.0, 17.0 / layer,
+    0.0, 1.0, 0.0, (2.0 + layer / 1.5) * (GameTime * 1.5),
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+  );
+  mat2 rotate = mat2_rotate_z(radians((layer * layer * 4321.0 + layer * 9.0) * 2.0));
+  mat2 scale = mat2((4.5 - layer / 4.0) * 2.0);
+  return mat4(scale * rotate) * translate * SCALE_TRANSLATE;
 }
 
 out vec4 fragColor;
 in vec4 vertexColor;
 
 void main() {
-    vec3 color = textureProj(Sampler0, texProj0).rgb * COLORS[0];
-    for (int i = 0; i < PortalLayers; i++) {
-        color += textureProj(Sampler1, texProj0 * portal_layer(float(i + 1))).rgb * COLORS[i];
-    }
-    fragColor = vec4(color, vertexColor.a);
+  vec3 color = textureProj(Sampler0, texProj0).rgb * COLORS[0];
+  for (int i = 0; i < PortalLayers; i++) {
+    color += textureProj(Sampler1, texProj0 * portal_layer(float(i + 1))).rgb * COLORS[i];
+  }
+  fragColor = vec4(color, vertexColor.a);
 }

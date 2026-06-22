@@ -18,6 +18,7 @@ import noppes.npcs.client.util.ShaderData;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -32,11 +33,11 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends Block
     }
 
     @Override
-    public void render(@Nonnull T te, float partialTicks, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        Matrix4f matrix = pose.last().pose();
-        if (te.getBlockState().getBlock() instanceof CustomBlockPortal portal) {
+    public void render(@Nullable T te, float partialTicks, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (te != null && te.getBlockState().getBlock() instanceof CustomBlockPortal portal) {
             RenderType renderType = getRenderType(portal.getCustomName(), te.getSkyTexture(), te.getPortalTexture());
             VertexConsumer consumer = buffer.getBuffer(renderType);
+            Matrix4f matrix = pose.last().pose();
             renderFaces(te, matrix, consumer, Direction.SOUTH, packedLight, packedOverlay);
             renderFaces(te, matrix, consumer, Direction.NORTH, packedLight, packedOverlay);
             renderFaces(te, matrix, consumer, Direction.EAST, packedLight, packedOverlay);
@@ -48,7 +49,7 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends Block
 
     protected void renderFaces(T te, Matrix4f matrix, VertexConsumer consumer, Direction face, int light, int overlay) {
         if (te.shouldRenderFace(face)) {
-            float r = 1.0F, g = 1.0F, b = 1.0F, a = te.alpha;
+            float r = 1.0F, g = 1.0F, b = 1.0F, a = te.getAlpha();
             switch (face) {
                 case SOUTH -> {
                     vertex(consumer, matrix, 0.0f, 0.0f, 0.75F, r, g, b, a, 0, 0, light, overlay);
@@ -116,7 +117,7 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends Block
         static RenderType create(String name, ResourceLocation sky, ResourceLocation texture) {
             Supplier<ShaderInstance> shaderSupplier = GameRenderer::getRendertypeEndPortalShader;
             VertexFormat vertexFormat = DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP;
-            ShaderData shaderData = ClientRegisterEvents.getShader(new ResourceLocation(CustomNpcs.MODID, "custom_" + name));
+            ShaderData shaderData = ClientRegisterEvents.getShader(new ResourceLocation(CustomNpcs.MODID, name));
             if (shaderData != null) {
                 shaderSupplier = () -> shaderData.shader;
                 vertexFormat = shaderData.format;

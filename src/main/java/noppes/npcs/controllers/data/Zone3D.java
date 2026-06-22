@@ -41,7 +41,7 @@ import noppes.npcs.controllers.PlayerQuestController;
 import noppes.npcs.controllers.QuestController;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.client.SPacketBorderData;
+import noppes.npcs.packets.client.PacketBorderData;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
@@ -985,7 +985,7 @@ public class Zone3D implements IBorder, Predicate<LivingEntity> {
     public void update(ServerLevel level) {
         if (update) {
             BorderController.getInstance().update(id);
-            Packets.sendAll(new SPacketBorderData(save(new CompoundTag())));
+            Packets.sendAll(new PacketBorderData(save(new CompoundTag())));
             update = false;
         }
         if (!points.isEmpty() && dimension.equals(level.dimension().location())) {

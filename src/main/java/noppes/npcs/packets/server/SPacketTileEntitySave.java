@@ -7,8 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
-import noppes.npcs.CustomBlocks;
-import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.PacketServerBasic;
 
@@ -28,9 +26,7 @@ public class SPacketTileEntitySave extends PacketServerBasic {
    public List<PermissionNode<Boolean>> getPermission() { return null; }
 
    @Override
-   public boolean toolAllowed(ItemStack item) {
-      return item.getItem() == CustomItems.wand || item.getItem() == CustomBlocks.border_item || item.getItem() == CustomBlocks.copy_item || item.getItem() == CustomBlocks.redstone_item || item.getItem() == CustomBlocks.scripted_item || item.getItem() == CustomBlocks.waypoint_item;
-   }
+   public boolean toolAllowed(ItemStack item) { return true; }
 
    public static void encode(SPacketTileEntitySave msg, FriendlyByteBuf buf) { buf.writeNbt(msg.nbtTile); }
 

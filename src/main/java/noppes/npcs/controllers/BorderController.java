@@ -14,8 +14,8 @@ import noppes.npcs.api.IPos;
 import noppes.npcs.api.handler.IBorderHandler;
 import noppes.npcs.controllers.data.Zone3D;
 import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketBorderData;
 import noppes.npcs.packets.client.SPacketBorderClear;
-import noppes.npcs.packets.client.SPacketBorderData;
 import noppes.npcs.packets.client.PacketGuiUpdate;
 import noppes.npcs.shared.common.util.LogWriter;
 
@@ -201,7 +201,7 @@ public class BorderController implements IBorderHandler {
             if (id < 0 || regions.get(id).getId() < 0) { continue; }
             CompoundTag nbtRegion = new CompoundTag();
             regions.get(id).save(nbtRegion);
-            Packets.send(player, new SPacketBorderData(nbtRegion));
+            Packets.send(player, new PacketBorderData(nbtRegion));
         }
         Packets.send(player, new PacketGuiUpdate());
     }
@@ -220,7 +220,7 @@ public class BorderController implements IBorderHandler {
                 CompoundTag nbtRegion = new CompoundTag();
                 regions.get(i).save(nbtRegion);
                 for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-                    Packets.send(player, new SPacketBorderData(nbtRegion));
+                    Packets.send(player, new PacketBorderData(nbtRegion));
                     Packets.send(player, new PacketGuiUpdate());
                 }
             }
@@ -229,7 +229,7 @@ public class BorderController implements IBorderHandler {
             CompoundTag nbtRegion = new CompoundTag();
             regions.get(id).save(nbtRegion);
             for (ServerPlayer player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-                Packets.send(player, new SPacketBorderData(nbtRegion));
+                Packets.send(player, new PacketBorderData(nbtRegion));
                 Packets.send(player, new PacketGuiUpdate());
             }
         }

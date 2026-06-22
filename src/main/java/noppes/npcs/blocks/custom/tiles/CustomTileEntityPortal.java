@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -17,21 +19,20 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.custom.CustomBlockPortal;
 import noppes.npcs.controllers.DimensionController;
-import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.server.SPacketTileEntitySave;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 
 public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
 
     protected ResourceLocation SKY_TEXTURE;
     protected ResourceLocation PORTAL_TEXTURE;
+    protected float alpha = 0.0f;
     public BlockPos posTp = new BlockPos(0, -1, 0);
     public BlockPos posHomeTp = new BlockPos(0, -1, 0);
     public ResourceKey<Level> dimensionId = Level.OVERWORLD;
     public ResourceKey<Level> homeDimensionId = Level.OVERWORLD;
-    public float alpha = 0.5f;
     public int type;
 
     public CustomTileEntityPortal(@Nonnull BlockPos pos, @Nonnull BlockState state) {
@@ -40,6 +41,9 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
         if (state.getBlock() instanceof CustomBlockPortal portal) {
             SKY_TEXTURE = new ResourceLocation(CustomNpcs.MODID, "textures/environment/" + portal.getCustomName() + "_sky.png");
             PORTAL_TEXTURE = new ResourceLocation(CustomNpcs.MODID, "textures/entity/" + portal.getCustomName() + "_portal.png");
+            if (portal.getCustomNbt().has("RenderData", 10) && portal.getCustomNbt().getCompound("RenderData").has("Transparency", 5)) {
+                alpha = ValueUtil.correctFloat(portal.getCustomNbt().getCompound("RenderData").getFloat("Transparency"), 0.15f, 1.0f);
+            }
         }
     }
 
@@ -61,6 +65,23 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
             }
         }
         return SKY_TEXTURE != null ? SKY_TEXTURE : TheEndPortalRenderer.END_SKY_LOCATION;
+    }
+
+    public float getAlpha() {
+        if (alpha == 0.0f && level != null) {
+            BlockState state = level.getBlockState(worldPosition);
+            if (state.getBlock() instanceof CustomBlockPortal portal &&
+                    portal.getCustomNbt().has("RenderData", 10) &&
+                    portal.getCustomNbt().getCompound("RenderData").has("Transparency", 5)) {
+                setAlpha(portal.getCustomNbt().getCompound("RenderData").getFloat("Transparency"));
+            }
+        }
+        if (alpha == 0.0f) { setAlpha(0.75f); }
+        return alpha;
+    }
+
+    public void setAlpha(float transparency) {
+        alpha = ValueUtil.correctFloat(transparency, 0.15f, 1.0f);
     }
 
     public BlockPos getPosTp(boolean isHome) {
@@ -87,14 +108,6 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
         return dimensionId != null && ((server != null && server.getLevel(dimensionId) != null) || DimensionController.has(dimensionId.location()));
     }
 
-    public void updateToClient() {
-        if (level != null && !level.isClientSide()) {
-            CompoundTag compound = new CompoundTag();
-            saveAdditional(compound);
-            Packets.sendAll(new SPacketTileEntitySave(compound));
-        }
-    }
-
     @Override
     public boolean shouldRenderFace(@Nonnull Direction facing) {
         return switch (type) {
@@ -105,27 +118,52 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
     }
 
     @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) { handleUpdateTag(Objects.requireNonNull(pkt.getTag())); }
+
+    @Override
+    public void handleUpdateTag(CompoundTag compound) { readDisplay(compound); }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
+
+    @Override
+    public @Nonnull CompoundTag getUpdateTag() {
+        CompoundTag compound = writeDisplay(new CompoundTag());
+        compound.putInt("x", worldPosition.getX());
+        compound.putInt("y", worldPosition.getY());
+        compound.putInt("z", worldPosition.getZ());
+        return compound;
+    }
+
+    @Override
     public void load(@Nonnull CompoundTag compound) {
         super.load(compound);
-        if (!compound.contains("DimensionID", 3)) {
-            updateToClient();
-            return;
-        }
-        dimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("DimensionID")));
-        homeDimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("HomeDimensionID")));
+        readDisplay(compound);
         posHomeTp = BlockPos.of(compound.getLong("HomePosition"));
         posTp = BlockPos.of(compound.getLong("TpPosition"));
-        alpha = ValueUtil.correctFloat(compound.getFloat("Alpha"), 0.15f, 1.0f);
     }
 
     @Override
     public void saveAdditional(@Nonnull CompoundTag compound) {
         super.saveAdditional(compound);
-        compound.putString("DimensionID", dimensionId.location().toString());
-        compound.putString("HomeDimensionID", homeDimensionId.location().toString());
-        compound.putFloat("Alpha", alpha);
+        writeDisplay(compound);
         compound.putLong("HomePosition", posHomeTp.asLong());
         compound.putLong("TpPosition", posTp.asLong());
+    }
+
+    private void readDisplay(CompoundTag compound) {
+        dimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("DimensionID")));
+        homeDimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("HomeDimensionID")));
+        type = compound.getInt("Type");
+        setAlpha(compound.getFloat("Alpha"));
+    }
+
+    private CompoundTag writeDisplay(CompoundTag compound) {
+        compound.putString("DimensionID", dimensionId.location().toString());
+        compound.putString("HomeDimensionID", homeDimensionId.location().toString());
+        compound.putInt("Type", type);
+        compound.putFloat("Alpha", alpha);
+        return compound;
     }
 
 }

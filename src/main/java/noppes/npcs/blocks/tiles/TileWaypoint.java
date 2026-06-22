@@ -27,6 +27,8 @@ import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.util.CustomNPCsScheduler;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
+
 public class TileWaypoint extends TileNpcEntity {
 
    public String name = "";
@@ -39,17 +41,17 @@ public class TileWaypoint extends TileNpcEntity {
       super(CustomBlocks.tile_waypoint, pos, state);
    }
 
+   @Override
    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) { handleUpdateTag(Objects.requireNonNull(pkt.getTag())); }
 
-   public void handleUpdateTag(CompoundTag compound) {
-      range = compound.getInt("range");
-   }
+   @Override
+   public void handleUpdateTag(CompoundTag compound) { range = compound.getInt("range"); }
 
-   public ClientboundBlockEntityDataPacket getUpdatePacket() {
-      return ClientboundBlockEntityDataPacket.create(this);
-   }
+   @Override
+   public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
 
-   public @NotNull CompoundTag getUpdateTag() {
+   @Override
+   public @Nonnull CompoundTag getUpdateTag() {
       CompoundTag compound = new CompoundTag();
       compound.putInt("x", worldPosition.getX());
       compound.putInt("y", worldPosition.getY());

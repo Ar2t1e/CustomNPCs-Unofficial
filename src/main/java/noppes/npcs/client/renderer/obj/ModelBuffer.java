@@ -74,7 +74,7 @@ public class ModelBuffer {
                                                            List<String> visibleMeshes,
                                                            Map<String, ResourceLocation> materialTextures,
                                                            boolean reverseNormals, int colorMask) {
-        if (NOT_FOUND.contains(modelLocation)) { return null; }
+        if (modelLocation == null || NOT_FOUND.contains(modelLocation)) { return null; }
         ParameterizedModel model = new ParameterizedModel(modelLocation, visibleMeshes, materialTextures, reverseNormals, colorMask);
         boolean found = false;
         for (ParameterizedModel pm : ModelBuffer.MODELS) {

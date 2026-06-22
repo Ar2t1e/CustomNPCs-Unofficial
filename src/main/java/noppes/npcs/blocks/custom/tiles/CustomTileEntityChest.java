@@ -200,9 +200,7 @@ public class CustomTileEntityChest extends BlockEntity implements net.minecraft.
     @Override
     public void load(@Nonnull CompoundTag compound) {
         super.load(compound);
-        if (!compound.contains("Items", 9)) {
-            return;
-        }
+        if (!compound.contains("Items", 9)) { return; }
         this.isChest = compound.getBoolean("IsChest");
         this.guiColor = -1;
         this.guiColorArr = null;

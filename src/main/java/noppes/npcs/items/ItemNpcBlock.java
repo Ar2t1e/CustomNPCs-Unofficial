@@ -23,7 +23,8 @@ public class ItemNpcBlock extends BlockItem {
    public void initializeClient(@Nonnull Consumer<IClientItemExtensions> consumer) {
       if (CustomBlocks.registryNbt != null && CustomBlocks.registryNbt.getByte("BlockType") == (byte) 5) {
          consumer.accept(CustomTileEntityItemStackRenderer.itemPortalRenderProperties);
-      } else { consumer.accept(CustomTileEntityItemStackRenderer.itemRenderProperties); }
+      }
+      else { consumer.accept(CustomTileEntityItemStackRenderer.itemRenderProperties); }
    }
 
 }

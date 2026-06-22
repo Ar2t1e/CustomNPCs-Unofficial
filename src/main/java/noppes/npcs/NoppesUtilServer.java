@@ -591,7 +591,7 @@ public class NoppesUtilServer {
 
    public static void createAllBlockFiles(ICustomElement customblock) {
       String name = customblock.getCustomName();
-      String fileName = ("custom_" + name).toLowerCase();
+      String fileName = "custom_" + name.toLowerCase();
       File blockStatesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/blockstates");
       File blockModelsDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/models/block");
       File blockObjModelsDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/models/block/obj");
@@ -604,10 +604,14 @@ public class NoppesUtilServer {
          boolean isExample = name.contains("example");
          // Standard orientable base block:
          File orientable = new File(blockModelsDir, "orientable.json");
-         if (!orientable.exists() && Util.instance.saveFile(orientable, Util.instance.getDataFile("ort.dat"))) { LogWriter.debug("Create Orientable Block Model for \"orientable\" block"); }
+         if (!orientable.exists() && Util.instance.saveFile(orientable, Util.instance.getDataFile("ort.dat"))) {
+            LogWriter.debug("Create Orientable Block Model for \"orientable\" block");
+         }
          // Standard chest base block:
          File chestFile = new File(blockModelsDir, "chest.json");
-         if (!chestFile.exists() && Util.instance.saveFile(chestFile, Util.instance.getDataFile("jch.dat"))) { LogWriter.debug("Create Chest Block Model for \"custom chest\" block"); }
+         if (!chestFile.exists() && Util.instance.saveFile(chestFile, Util.instance.getDataFile("jch.dat"))) {
+            LogWriter.debug("Create Chest Block Model for \"custom chest\" block");
+         }
 
          File blockstate = new File(blockStatesDir, fileName + ".json"); // state
          File blockModel = new File(blockModelsDir, fileName + ".json"); // block model

@@ -135,8 +135,10 @@ public class GuiNPCFactionSetup extends GuiNPCInterface2
    public void setSelected(String selected) { scrollFactions.setSelected(selected); }
 
    @Override
-   public void scrollClicked(GuiCustomScrollNop guiCustomScroll) {
-      if (guiCustomScroll.id == 0) { Packets.sendServer(new SPacketNpcFactionSet(data.get(scrollFactions.getNormalSelected()))); }
+   public void scrollClicked(GuiCustomScrollNop scroll) {
+      if (scroll.id == 0) {
+         Packets.sendServer(new SPacketNpcFactionSet(data.get(scrollFactions.getNormalSelected())));
+      }
    }
 
    @Override

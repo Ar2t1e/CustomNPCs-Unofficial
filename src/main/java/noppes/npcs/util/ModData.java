@@ -353,7 +353,8 @@ public class ModData {
 
         CompoundTag nbtRender = new CompoundTag();
         nbtRender.putString("SpawnParticle", "CRIT");
-        nbtRender.putFloat("Transparency", 0.5f);
+        nbtRender.putInt("ChanceParticle", 10);
+        nbtRender.putFloat("Transparency", 0.75f);
         compound.put("RenderData", nbtRender);
 
         String sb = "Tags for creating a portal block:\n" +

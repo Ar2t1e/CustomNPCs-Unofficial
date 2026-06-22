@@ -75,6 +75,7 @@
     "client.IClientRecipeBookMixin",
     "client.IKeyMappingMixin",
     "client.IMouseHandlerMixin",
+    "client.IRecipeBookCategoriesMixin",
     "client.RecipeBookCategoriesMixin",
     "client.gui.components.IEditBoxMixin",
     "client.gui.components.MixinEditBox",
