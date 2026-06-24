@@ -1290,14 +1290,13 @@ public class GuiLog
                      temp++;
                      step = 2;
                      tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                     milliTick = tick - 1;
                   }
                   else {
                      temp = 0;
                      step = 3;
                      tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                     milliTick = tick - 1;
                   }
+                  milliTick = tick - 1;
                }
                break;
             } // open lists
