@@ -168,7 +168,9 @@ public class GuiNpcManageQuest
 				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 					if (bo) { Packets.sendServer(new SPacketQuestCategoryRemove(categoryData.get(selectedCategory).id)); }
 					NoppesUtil.openGUI(player, this);
-				}, selectedCategory, Component.translatable("message.delete"));
+				},
+						selectedCategory.getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // remove category
@@ -215,7 +217,9 @@ public class GuiNpcManageQuest
 				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 					if (bo) { Packets.sendServer(new SPacketQuestRemove(questData.get(selectedQuest).id)); }
 					NoppesUtil.openGUI(player, this);
-				}, selectedQuest, Component.translatable("message.delete"));
+				},
+						selectedQuest.getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // remove quest

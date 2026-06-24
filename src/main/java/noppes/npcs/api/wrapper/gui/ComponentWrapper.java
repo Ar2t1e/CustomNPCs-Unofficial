@@ -4,6 +4,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.*;
 import noppes.npcs.api.gui.IComponent;
 import noppes.npcs.api.gui.IComponentStyle;
+import noppes.npcs.util.Util;
+
+import java.util.List;
 
 public class ComponentWrapper implements IComponent {
 
@@ -11,29 +14,20 @@ public class ComponentWrapper implements IComponent {
 
     public ComponentWrapper(Component componentIn) { component = componentIn; }
 
-    public static ComponentWrapper of(String text) {
-        Component component;
-        if (text == null || text.isEmpty()) { component = Component.empty(); }
-        else {
-            try { component = new Component(ITextComponent.Serializer.jsonToComponent(text)); }
-            catch (Exception e) {
-                component = Component.translatable(text);
-                if (component.getFormattedText().equals(text)) { component = Component.literal(text); }
-            }
-        }
-        return new ComponentWrapper(component);
-    }
+    public static ComponentWrapper of(String text) { return new ComponentWrapper(Component.jsonToComponent(text)); }
 
     @Override
-    public Component getMCComponent() { return component; }
+    public ITextComponent getMCComponent() { return component.getParent(); }
 
     @Override
     public String getKey() {
-        ITextComponent contents = component.getContents();
-        if (contents instanceof TextComponentTranslation) { return ((TextComponentTranslation) contents).getKey(); }
-        else if (contents instanceof TextComponentKeybind) { return ((TextComponentKeybind) contents).getKeybind(); }
-        else if (contents instanceof TextComponentScore) { return ((TextComponentScore) contents).getName(); }
-        else if (contents instanceof TextComponentSelector) { return ((TextComponentSelector) contents).getSelector(); }
+        List<ITextComponent> list = component.getSiblings();
+        if (list.isEmpty()) { list.add(new TextComponentString("")); }
+        ITextComponent content = list.get(0);
+        if (content instanceof TextComponentTranslation) { return ((TextComponentTranslation) content).getKey(); }
+        else if (content instanceof TextComponentKeybind) { return ((TextComponentKeybind) content).getKeybind(); }
+        else if (content instanceof TextComponentScore) { return ((TextComponentScore) content).getName(); }
+        else if (content instanceof TextComponentSelector) { return ((TextComponentSelector) content).getSelector(); }
         return getString();
     }
 
@@ -42,30 +36,32 @@ public class ComponentWrapper implements IComponent {
 
     @Override
     public Object[] getTranslatableObjects() {
-        ITextComponent contents = component.getContents();
-        if (contents instanceof TextComponentTranslation) { return ((TextComponentTranslation) contents).getFormatArgs(); }
+        List<ITextComponent> list = component.getSiblings();
+        if (list.isEmpty()) { list.add(new TextComponentString("")); }
+        ITextComponent content = list.get(0);
+        if (content instanceof TextComponentTranslation) { return ((TextComponentTranslation) content).getFormatArgs(); }
         return new Object[0];
     }
 
     @Override
     public ComponentWrapper append(String addText) {
-        component.append(addText);
+        component.appendText(addText);
         return this;
     }
 
     @Override
     public ComponentWrapper append(IComponent addComponent) {
-        component.append(addComponent.getMCComponent());
+        component.appendSibling(addComponent.getMCComponent());
         return this;
     }
 
     @Override
-    public String getString() { return component.getString(); }
+    public String getString() { return Util.instance.deleteColor(component.getFormattedText()); }
 
     @Override
     public String getFormattedText() { return component.getFormattedText(); }
 
     @Override
-    public String toJson() { return Component.Serializer.componentToJson(component); }
+    public String toJson() { return ITextComponent.Serializer.componentToJson(component.getParent()); }
 
 }

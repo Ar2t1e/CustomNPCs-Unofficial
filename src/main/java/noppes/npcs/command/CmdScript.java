@@ -60,7 +60,7 @@ public class CmdScript extends CommandNoppesBase {
 		message.append(Component.literal(";\n").withStyle(TextFormatting.GOLD))
 				.append(Component.literal("Total Size: ").withStyle(TextFormatting.GOLD))
 				.append(Component.literal("" + g.size()).withStyle(TextFormatting.YELLOW));
-		sender.sendMessage(message);
+		sender.sendMessage(message.getParent());
 		if (sender instanceof EntityPlayerMP) {
 			Map<String, String> names = new HashMap<>();
 			for (EnumScriptType est : EnumScriptType.values()) { names.put(est.function, ""); }
@@ -86,7 +86,7 @@ public class CmdScript extends CommandNoppesBase {
 		message.append(Component.literal(";\n").withStyle(TextFormatting.GOLD))
 				.append(Component.literal("Total Size: ").withStyle(TextFormatting.GOLD))
 				.append(Component.literal("" + g.size()).withStyle(TextFormatting.YELLOW));
-		sender.sendMessage(message);
+		sender.sendMessage(message.getParent());
 		if (sender instanceof EntityPlayerMP) {
 			Map<String, String> names = new HashMap<>();
 			for (Map.Entry<Class<?>, String> entry : ForgeEventHandler.clientEventNames.entrySet()) {
@@ -114,7 +114,7 @@ public class CmdScript extends CommandNoppesBase {
 		message.append(Component.literal(";\n").withStyle(TextFormatting.GOLD))
 				.append(Component.literal("Total Size: ").withStyle(TextFormatting.GOLD))
 				.append(Component.literal("" + g.size()).withStyle(TextFormatting.YELLOW));
-		sender.sendMessage(message);
+		sender.sendMessage(message.getParent());
 		if (sender instanceof EntityPlayerMP) {
 			Map<String, String> names = new HashMap<>();
 			for (Map.Entry<Class<?>, String> entry : ForgeEventHandler.eventNames.entrySet()) {
@@ -130,12 +130,12 @@ public class CmdScript extends CommandNoppesBase {
 		List<Component> list = new ArrayList<>();
 	 	for (ScriptContainer container : ScriptController.Instance.getErrored()) { list.add(container.noticeString()); }
 		if (list.isEmpty()) {
-			sender.sendMessage(Component.translatable("command.script.logs.empty"));
+			sender.sendMessage(Component.translatable("command.script.logs.empty").getParent());
 		} else {
-			sender.sendMessage(Component.translatable("command.script.logs.info"));
-			for (Component message : list) { sender.sendMessage(message); }
+			sender.sendMessage(Component.translatable("command.script.logs.info").getParent());
+			for (Component message : list) { sender.sendMessage(message.getParent()); }
 		}
-		sender.sendMessage(Component.translatable("command.script.logs.end"));
+		sender.sendMessage(Component.translatable("command.script.logs.end").getParent());
 		return true;
 	}
 
@@ -143,26 +143,26 @@ public class CmdScript extends CommandNoppesBase {
 	public Boolean reload(MinecraftServer server, ICommandSender sender, String[] args) {
 		ScriptController.Instance.loadCategories();
 		// Players
-		if (ScriptController.Instance.loadPlayerScripts()) { sender.sendMessage(Component.literal("Reload player scripts successfully")); }
-		else { sender.sendMessage(Component.literal("Failed reloading player scripts")); }
+		if (ScriptController.Instance.loadPlayerScripts()) { sender.sendMessage(Component.literal("Reload player scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading player scripts").getParent()); }
 		// NPCs
-		if (ScriptController.Instance.loadNPCsScripts()) { sender.sendMessage(Component.literal("Reload NPCs scripts successfully")); }
-		else { sender.sendMessage(Component.literal("Failed reloading NPCs scripts")); }
+		if (ScriptController.Instance.loadNPCsScripts()) { sender.sendMessage(Component.literal("Reload NPCs scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading NPCs scripts").getParent()); }
 		// Forge
-		if (ScriptController.Instance.loadForgeScripts()) { sender.sendMessage(Component.literal("Reload forge scripts successfully")); }
-		else { sender.sendMessage(Component.literal("Failed reloading forge scripts")); }
+		if (ScriptController.Instance.loadForgeScripts()) { sender.sendMessage(Component.literal("Reload forge scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading forge scripts").getParent()); }
 		// Clients
-		if (ScriptController.Instance.loadClientScripts()) { sender.sendMessage(Component.literal("Reload client scripts successfully")); }
-		else { sender.sendMessage(Component.literal("Failed reloading client scripts")); }
+		if (ScriptController.Instance.loadClientScripts()) { sender.sendMessage(Component.literal("Reload client scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading client scripts").getParent()); }
 		// Potions
-		if (ScriptController.Instance.loadPotionScripts()) { sender.sendMessage(Component.literal("Reload potion scripts successfully")); }
-		else { sender.sendMessage(Component.literal("Failed reloading potion scripts")); }
+		if (ScriptController.Instance.loadPotionScripts()) { sender.sendMessage(Component.literal("Reload potion scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading potion scripts").getParent()); }
 		// Constants data
-		if (ScriptController.Instance.loadConstantData()) { sender.sendMessage(Component.literal("Reload constant data successfully")); }
-		else { sender.sendMessage(Component.literal("Failed reloading constant data")); }
+		if (ScriptController.Instance.loadConstantData()) { sender.sendMessage(Component.literal("Reload constant data successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading constant data").getParent()); }
 		// Stored data
-		if (ScriptController.Instance.loadStoredData()) { sender.sendMessage(Component.literal("Reload stored data successfully")); }
-		else { sender.sendMessage(Component.literal("Failed reloading stored data")); }
+		if (ScriptController.Instance.loadStoredData()) { sender.sendMessage(Component.literal("Reload stored data successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading stored data").getParent()); }
 		// Client data
 		for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { ScriptController.Instance.sendClientTo(player); }
 		return true;
@@ -233,47 +233,47 @@ public class CmdScript extends CommandNoppesBase {
 			case "blocks":
 				positions = ScriptController.Instance.getElements(0);
 				if (positions != null) {
-					sender.sendMessage(Component.translatable("script.command.blocks"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.blocks").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			case "doors":
 				positions = ScriptController.Instance.getElements(1);
 				if (positions != null) {
-					sender.sendMessage(Component.translatable("script.command.doors"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.doors").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			case "npcs":
 				positions = ScriptController.Instance.getElements(2);
 				if (positions != null) {
-					sender.sendMessage(Component.translatable("script.command.npcs"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.npcs").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			case "all":
-				sender.sendMessage(Component.translatable("script.command.all"));
+				sender.sendMessage(Component.translatable("script.command.all").getParent());
 				positions = ScriptController.Instance.getElements(0);
 				if (positions != null) {
-					sender.sendMessage(Component.translatable("script.command.blocks"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.blocks").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				positions = ScriptController.Instance.getElements(1);
 				if (positions != null) {
-					sender.sendMessage(Component.translatable("script.command.doors"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.doors").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				positions = ScriptController.Instance.getElements(2);
 				if (positions != null) {
-					sender.sendMessage(Component.translatable("script.command.npcs"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.npcs").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			default:
 				throw new CommandException("Unknown type \""+key+"\"");
 		}
 		if (positions == null) {
-			sender.sendMessage(Component.translatable("script.command.not.found"));
+			sender.sendMessage(Component.translatable("script.command.not.found").getParent());
 		}
 		return true;
 	}

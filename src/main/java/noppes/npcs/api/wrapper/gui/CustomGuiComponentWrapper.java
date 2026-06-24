@@ -47,6 +47,7 @@ public abstract class CustomGuiComponentWrapper implements ICustomGuiComponent {
 	private int offsetType = 0;
 	private final int[] offsets = new int[] { 0, 0 };
 
+	@SuppressWarnings("unused")
 	public CustomGuiComponentWrapper setDisablePackets() {
 		disablePackets = true;
 		return this;
@@ -162,7 +163,7 @@ public abstract class CustomGuiComponentWrapper implements ICustomGuiComponent {
 		nbt.setIntArray("size", new int[]{ width, height });
 		if (hoverText != null) {
 			NBTTagList list = new NBTTagList();
-			for (Component component : hoverText) { list.appendTag(new NBTTagString(ITextComponent.Serializer.componentToJson(component))); }
+			for (Component component : hoverText) { list.appendTag(new NBTTagString(ITextComponent.Serializer.componentToJson(component.getParent()))); }
 			if (list.tagCount() > 0) { nbt.setTag("hover", list); }
 		}
 		nbt.setInteger("type", getType());
@@ -184,7 +185,9 @@ public abstract class CustomGuiComponentWrapper implements ICustomGuiComponent {
 		}
 		if (nbt.hasKey("hover", 9)) {
 			NBTTagList list = nbt.getTagList("hover", 8);
-			for (int i = 0; i < list.tagCount(); ++i) { hoverText.add(new Component(ITextComponent.Serializer.jsonToComponent(list.getStringTagAt(i)))); }
+			for (int i = 0; i < list.tagCount(); ++i) {
+				hoverText.add(Component.jsonToComponent(list.getStringTagAt(i)));
+			}
 		}
 		return this;
 	}

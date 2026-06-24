@@ -317,7 +317,7 @@ public class DataScenes {
 						" " + npc.posX +
 						" " + (npc.posY + 0.25d) +
 						" " + npc.posZ))
-				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp"))));
+				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp").getParent())));
 		return Component.empty()
 				.append(Component.literal(" (NPC: ").withStyle(TextFormatting.DARK_GRAY))
 				.append(posClick)

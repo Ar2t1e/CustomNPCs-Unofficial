@@ -199,7 +199,7 @@ public class ClientTickHandler {
 				if (hasNewMail) {
 					ClientEventHandler.showNewMail = 0L;
 					ClientEventHandler.startMail = 0L;
-					mc.player.sendMessage(Component.translatable("mailbox.new.letters.received"));
+					mc.player.sendMessage(Component.translatable("mailbox.new.letters.received").getParent());
 				}
 			}
 			checkMails = false;

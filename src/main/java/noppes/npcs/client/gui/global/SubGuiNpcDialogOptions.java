@@ -179,8 +179,8 @@ public class SubGuiNpcDialogOptions
 					if (parent instanceof SubGuiDialogEdit && ((SubGuiDialogEdit) parent).parent != null) { NoppesUtil.openGUI(player, ((SubGuiDialogEdit) parent).parent); }
 					else { NoppesUtil.openGUI(player, this); }
 				},
-						Component.literal("ID:" + option.slot + " - " + option.title),
-						Component.translatable("message.delete"));
+						Component.literal("ID:" + option.slot + " - " + option.title).getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // remove

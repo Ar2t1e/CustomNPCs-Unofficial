@@ -44,22 +44,22 @@ public class ComponentStyleWrapper implements IComponentStyle {
     public void setColor(int color) {
         TextFormatting format;
         switch (color) {
-            case 1: format = TextFormatting.DARK_BLUE;
-            case 2: format = TextFormatting.DARK_GREEN;
-            case 3: format = TextFormatting.DARK_AQUA;
-            case 4: format = TextFormatting.DARK_RED;
-            case 5: format = TextFormatting.DARK_PURPLE;
-            case 6: format = TextFormatting.GOLD;
-            case 7: format = TextFormatting.GRAY;
-            case 8: format = TextFormatting.DARK_GRAY;
-            case 9: format = TextFormatting.BLUE;
-            case 10: format = TextFormatting.GREEN;
-            case 11: format = TextFormatting.AQUA;
-            case 12: format = TextFormatting.RED;
-            case 13: format = TextFormatting.LIGHT_PURPLE;
-            case 14: format = TextFormatting.YELLOW;
-            case 15: format = TextFormatting.WHITE;
-            default: format = TextFormatting.BLACK;
+            case 1: format = TextFormatting.DARK_BLUE; break;
+            case 2: format = TextFormatting.DARK_GREEN; break;
+            case 3: format = TextFormatting.DARK_AQUA; break;
+            case 4: format = TextFormatting.DARK_RED; break;
+            case 5: format = TextFormatting.DARK_PURPLE; break;
+            case 6: format = TextFormatting.GOLD; break;
+            case 7: format = TextFormatting.GRAY; break;
+            case 8: format = TextFormatting.DARK_GRAY; break;
+            case 9: format = TextFormatting.BLUE; break;
+            case 10: format = TextFormatting.GREEN; break;
+            case 11: format = TextFormatting.AQUA; break;
+            case 12: format = TextFormatting.RED; break;
+            case 13: format = TextFormatting.LIGHT_PURPLE; break;
+            case 14: format = TextFormatting.YELLOW; break;
+            case 15: format = TextFormatting.WHITE; break;
+            default: format = TextFormatting.BLACK; break;
         }
         style = style.setColor(format);
         component.setStyle(style);

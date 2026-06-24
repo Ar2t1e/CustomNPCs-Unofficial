@@ -50,7 +50,7 @@ public class SPacketNbtBookStackSave extends PacketServerBasic {
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
         ItemStack mcItem = new ItemStack(data);
-        if (mcItem.isEmpty()) { player.sendMessage(Component.translatable("nbt.book.not.correct.nbt")); }
+        if (mcItem.isEmpty()) { player.sendMessage(Component.translatable("nbt.book.not.correct.nbt").getParent()); }
         else {
             player.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, mcItem);
             player.inventoryContainer.detectAndSendChanges();

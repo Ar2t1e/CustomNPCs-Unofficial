@@ -121,7 +121,7 @@ public class SPacketPlayerDataSet extends PacketServerBasic {
                     default: { return; }
                 }
                 playerdata.save(true);
-                if (pl != null) { pl.sendMessage(Component.translatable("message.change.mod.data")); }
+                if (pl != null) { pl.sendMessage(Component.translatable("message.change.mod.data").getParent()); }
             }
             SPacketPlayerDataGet.sendPlayerData(type, player, name);
         }

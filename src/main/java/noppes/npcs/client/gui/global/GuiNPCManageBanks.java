@@ -230,8 +230,8 @@ public class GuiNpcManageBanks
 					NoppesUtil.openGUI(player, this);
 				},
 						Component.translatable("bank.name", ": ID:" + bank.id + " \"" + bank.name + "\"; " +
-								Component.translatable("gui.ceil", ": ID:" + (ceil + 1)).getString()),
-						Component.literal(msg));
+								Component.translatable("gui.ceil", ": ID:" + (ceil + 1)).getString()).getParent(),
+						Component.literal(msg).getParent());
 				setScreen(guiYesNo);
 				break;
 			} // remove ceil
@@ -262,8 +262,8 @@ public class GuiNpcManageBanks
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.translatable("bank.name", ": ID:" + bank.id + " \"" + bank.name + "\""),
-						Component.literal(msg));
+						Component.translatable("bank.name", ": ID:" + bank.id + " \"" + bank.name + "\"").getParent(),
+						Component.literal(msg).getParent());
 				setScreen(guiYesNo);
 				break;
 			} // remove bank
@@ -291,9 +291,11 @@ public class GuiNpcManageBanks
 			GlStateManager.scale(s, s, s);
 			minecraft.getTextureManager().bindTexture(GuiBasic.MONEY);
 			drawTexturedModalRect(0, 0, 0, 0, 256, 256);
+
 			GlStateManager.translate(0.0f, 256.0f, 0.0f);
 			minecraft.getTextureManager().bindTexture(GuiBasic.DONAT);
 			drawTexturedModalRect(0, 0, 0, 0, 256, 256);
+
 			GlStateManager.popMatrix();
 		}
 	}

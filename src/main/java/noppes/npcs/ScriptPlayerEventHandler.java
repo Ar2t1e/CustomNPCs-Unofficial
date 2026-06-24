@@ -346,7 +346,7 @@ public class ScriptPlayerEventHandler {
 			if (player.isCreative()) {
 				((ISpecBuilder) event.getItemStack().getItem()).leftClick(event.getItemStack(), player, event.getPos());
 			}
-			else { player.sendMessage(Component.translatable("availability.permission")); }
+			else { player.sendMessage(Component.translatable("availability.permission").getParent()); }
 			event.setCanceled(true);
 		}
 		else if (event.getItemStack().getItem() == CustomItems.teleporter) { event.setCanceled(true); }
@@ -401,7 +401,7 @@ public class ScriptPlayerEventHandler {
 				if (player.isCreative()) {
 					((ISpecBuilder) event.getItemStack().getItem()).rightClick(event.getItemStack(), player, event.getPos());
 				}
-				else { player.sendMessage(Component.translatable("availability.permission")); }
+				else { player.sendMessage(Component.translatable("availability.permission").getParent()); }
 				event.setCanceled(true);
 			}
 			else if (event.getItemStack().getItem() == CustomItems.teleporter) {
@@ -715,7 +715,7 @@ public class ScriptPlayerEventHandler {
 		if (!event.player.world.isRemote) {
 			EntityPlayerMP player = (EntityPlayerMP) event.player;
 			if (!ScriptController.Instance.getErrored().isEmpty()) {
-				CustomNPCsScheduler.runTack(() -> player.sendMessage(Component.translatable("command.script.logs.view")), 2500);
+				CustomNPCsScheduler.runTack(() -> player.sendMessage(Component.translatable("command.script.logs.view").getParent()), 2500);
 			}
 			PlayerData data = PlayerData.get(player);
 			EventHooks.onPlayerLogin(data.scriptData);
@@ -810,7 +810,7 @@ public class ScriptPlayerEventHandler {
 			EventHooks.onPlayerChat(handler, ev);
 			event.setCanceled(ev.isCanceled());
 			if (!event.isCanceled()) {
-				if (!message.equals(ev.message)) { event.setComponent(Component.empty().append(ForgeHooks.newChatWithLinks(ev.message))); }
+				if (!message.equals(ev.message)) { event.setComponent(Component.empty().append(ForgeHooks.newChatWithLinks(ev.message)).getParent()); }
 				Packets.sendNearby(player.world, player.getPosition(), 32,
 						new PacketChatBubble(player.getEntityId(), Component.translatable(ev.message), false));
 			}

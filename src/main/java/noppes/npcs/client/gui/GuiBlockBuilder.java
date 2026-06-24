@@ -23,10 +23,10 @@ import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.availability.SubGuiNpcAvailability;
 import noppes.npcs.client.gui.util.*;
+import noppes.npcs.mixin.client.renderer.IBlockModelRendererMixin;
+import noppes.npcs.mixin.client.renderer.IBlockRendererDispatcherMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.*;
-import noppes.npcs.reflection.client.renderer.BlockModelRendererReflection;
-import noppes.npcs.reflection.client.renderer.BlockRendererDispatcherReflection;
 import noppes.npcs.schematics.ISchematic;
 import noppes.npcs.schematics.SchematicWrapper;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
@@ -120,8 +120,8 @@ public class GuiBlockBuilder extends GuiNPCInterface
 						case MODEL:
 							IBakedModel ibakedmodel = dispatcher.getModelForState(state);
 							GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
-							BlockModelRenderer bmr = BlockRendererDispatcherReflection.getBlockModelRenderer(dispatcher);
-							BlockColors bc = BlockModelRendererReflection.getBlockColors(bmr);
+							BlockModelRenderer bmr = ((IBlockRendererDispatcherMixin) dispatcher).getBlockModelRenderer();
+							BlockColors bc = ((IBlockModelRendererMixin) bmr).getBlockColors();
 							int color = bc.colorMultiplier(state, null, null, 0);
 							if (EntityRenderer.anaglyphEnable) {
 								color = TextureUtil.anaglyphColor(color);
@@ -135,7 +135,7 @@ public class GuiBlockBuilder extends GuiNPCInterface
 							ClientEventHandler.renderModelBlockQuads(ibakedmodel.getQuads(state, null, 0L), r, g, b);
 							break;
 						case ENTITYBLOCK_ANIMATED:
-							ChestRenderer chestRenderer = BlockRendererDispatcherReflection.getChestRenderer(dispatcher);
+							ChestRenderer chestRenderer = ((IBlockRendererDispatcherMixin) dispatcher).getChestRenderer();
 							chestRenderer.renderChestBrightness(state.getBlock(), 1.0f);
 						default:
 							break;
@@ -215,7 +215,8 @@ public class GuiBlockBuilder extends GuiNPCInterface
 					}
 					else { NoppesUtil.openGUI(player, this); }
 				},
-						Component.empty(), Component.translatable("schematic.instantBuildText"));
+						Component.empty().getParent(),
+						Component.translatable("schematic.instantBuildText").getParent());
 				setScreen(guiYesNo);
 				break;
 			}

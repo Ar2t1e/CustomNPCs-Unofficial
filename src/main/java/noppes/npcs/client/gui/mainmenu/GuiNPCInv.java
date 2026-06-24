@@ -135,8 +135,8 @@ public class GuiNpcInv extends GuiContainerNPCInterface2<ContainerNPCInv>
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						scrollTemplate.getNormalSelected(),
-						Component.translatable("message.delete"));
+						scrollTemplate.getNormalSelected().getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 			} // del template
 			case 8: {
@@ -184,8 +184,8 @@ public class GuiNpcInv extends GuiContainerNPCInterface2<ContainerNPCInv>
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("gui.group").append(" ID: " + groupId),
-							Component.translatable("message.delete"));
+							Component.translatable("gui.group").append(" ID: " + groupId).getParent(),
+							Component.translatable("message.delete").getParent());
 					setScreen(guiYesNo);
 				}
 				break;

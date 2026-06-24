@@ -43,10 +43,7 @@ public class ItemSoulstoneFilled extends Item {
 		if (compound != null && compound.hasKey("Entity", 10)) {
 			Component name = Component.translatable(compound.getString("Name"));
 			if (compound.hasKey("DisplayName")) {
-				String key = compound.getString("DisplayName");
-				Component displayName = Component.Serializer.jsonToComponent(key);
-				if (displayName == null) { displayName = Component.translatable(key); }
-				name = displayName.append(" (").append(name).append(")");
+				name = Component.jsonToComponent(compound.getString("DisplayName")).append(" (").append(name).append(")");
 			}
 			list.add(TextFormatting.BLUE + name.getFormattedText());
 			if (stack.getTagCompound().hasKey("ExtraText")) {

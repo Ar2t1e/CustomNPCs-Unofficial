@@ -520,7 +520,7 @@ public class NoppesUtilServer {
 				File objFile = new File(blockObjModelsDir, fileName + ".obj");
 				File mtlFile = new File(blockObjModelsDir, fileName + ".mtl");
 				if (!isExample || !blockstate.exists() || !itemFile.exists() || !blockModel.exists() || !objFile.exists() || !mtlFile.exists()) {
-					stateDatas.put(blockstate, getDataFile("jb.dat", fileName, name));
+					stateDatas.put(blockstate, getDataFile("jbo.dat", fileName, name));
 					modelDatas.put(blockModel, getDataFile("bmo.dat", fileName, name));
 					modelDatas.put(objFile, getDataFile("bmc_o.dat", fileName, name));
 					modelDatas.put(mtlFile, getDataFile("bmc_m.dat", fileName, name));

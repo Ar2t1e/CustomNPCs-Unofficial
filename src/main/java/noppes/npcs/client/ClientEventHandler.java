@@ -41,6 +41,7 @@ import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.client.util.CrashesData;
+import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.client.util.MusicData;
 import noppes.npcs.constants.*;
 import noppes.npcs.controllers.BorderController;
@@ -53,11 +54,11 @@ import noppes.npcs.items.ItemBoundary;
 import noppes.npcs.items.ItemNbtBook;
 import noppes.npcs.items.ItemNpcMovingPath;
 import noppes.npcs.mixin.client.audio.ISoundHandlerMixin;
+import noppes.npcs.mixin.client.renderer.IBlockModelRendererMixin;
+import noppes.npcs.mixin.client.renderer.IBlockRendererDispatcherMixin;
 import noppes.npcs.mixin.pathfinding.IPathMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.*;
-import noppes.npcs.reflection.client.renderer.BlockModelRendererReflection;
-import noppes.npcs.reflection.client.renderer.BlockRendererDispatcherReflection;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
@@ -289,8 +290,8 @@ public class ClientEventHandler extends Gui {
 				case MODEL:
 					IBakedModel ibakedmodel = dispatcher.getModelForState(state);
 					GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
-					BlockModelRenderer bmr = BlockRendererDispatcherReflection.getBlockModelRenderer(dispatcher);
-					BlockColors bc = BlockModelRendererReflection.getBlockColors(bmr);
+					BlockModelRenderer bmr = ((IBlockRendererDispatcherMixin) dispatcher).getBlockModelRenderer();
+					BlockColors bc = ((IBlockModelRendererMixin) bmr).getBlockColors();
 					int color = bc.colorMultiplier(state, null, null, 0);
 					if (EntityRenderer.anaglyphEnable) {
 						color = TextureUtil.anaglyphColor(color);
@@ -304,7 +305,7 @@ public class ClientEventHandler extends Gui {
 					renderModelBlockQuads(ibakedmodel.getQuads(state, null, 0L), r, g, b);
 					break;
 				case ENTITYBLOCK_ANIMATED:
-					ChestRenderer chestRenderer = BlockRendererDispatcherReflection.getChestRenderer(dispatcher);
+					ChestRenderer chestRenderer = ((IBlockRendererDispatcherMixin) dispatcher).getChestRenderer();
 					chestRenderer.renderChestBrightness(state.getBlock(), 1.0f);
 				default:
 					break;
@@ -555,7 +556,7 @@ public class ClientEventHandler extends Gui {
 							break;
 						}
 						if (select != null) {
-							name = qData.quest.getTitle().getString();
+							name = qData.quest.getTitle().getFormattedText();
 							type = select.getType();
 							if (!select.getOrientationEntityName().isEmpty()) {
 								n = Component.translatable("entity." + select.getOrientationEntityName() + ".name")
@@ -998,6 +999,7 @@ public class ClientEventHandler extends Gui {
 			miniMapLoaded = false;
 			updateMiniMaps(true);
 			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.LOGIN, new PlayerEvent.LoginEvent(data.scriptData.getIPlayer()));
+			CustomNpcsLangPack.check();
 			LogWriter.debug("Client Player: Start game");
 		}
 		// Schematics builder blocks

@@ -316,18 +316,18 @@ public class DataDebug {
 		if (sender != null) {
 			List<String> list = CustomNpcs.debugData.logging();
 			if (!list.isEmpty()) {
-				sender.sendMessage(Component.literal("Server info:"));
-				for (String str : list) { sender.sendMessage(Component.literal(str)); }
+				sender.sendMessage(Component.literal("Server info:").getParent());
+				for (String str : list) { sender.sendMessage(Component.literal(str).getParent()); }
 			}
 			if (sender instanceof EntityPlayerMP && (CustomNpcs.Server == null || !CustomNpcs.Server.isSinglePlayer())) {
-				sender.sendMessage(Component.literal("Client info:"));
+				sender.sendMessage(Component.literal("Client info:").getParent());
 				Packets.send((EntityPlayerMP) sender, new PacketDebug(true));
 			}
 			if (sender instanceof EntityPlayerMP) {
 				Packets.send((EntityPlayerMP) sender, new PacketDebug(false));
 			}
-			CustomNPCsScheduler.runTack(() -> sender.sendMessage(Component.translatable("command.debug.show")), 1000);
-			sender.sendMessage(Component.translatable("command.debug.clear"));
+			CustomNPCsScheduler.runTack(() -> sender.sendMessage(Component.translatable("command.debug.show").getParent()), 1000);
+			sender.sendMessage(Component.translatable("command.debug.clear").getParent());
 		}
 		clear();
 	}

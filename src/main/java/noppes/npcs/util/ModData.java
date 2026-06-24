@@ -141,7 +141,6 @@ public class ModData {
         compound.setByte("BlockType", (byte) 2);
         compound.setString("Material", "WOOD");
         compound.setBoolean("IsChest", true);
-        compound.setBoolean("IsOBJModel", true);
         compound.setInteger("Size", 14);
         compound.setInteger("GUIColor", 0x46AB86);
         compound.setString("Name", "Custom Chest");
@@ -168,6 +167,7 @@ public class ModData {
         compound.setString("Material", "STONE");
         compound.setInteger("Size", 96);
         compound.setIntArray("GUIColor", new int[] { 0x00DC8C, 0xDC8000 });
+        compound.setBoolean("IsOBJModel", true);
         compound.setString("Name", "Custom Container");
             NBTTagList aabb = new NBTTagList();
             aabb.appendTag(new NBTTagDouble(0.0625d));
@@ -388,6 +388,7 @@ public class ModData {
         compound.setTag("RepairItem", (new ItemStack(Items.GOLD_INGOT)).writeToNBT(new NBTTagCompound()));
         compound.setInteger("HarvestLevel", 2);
         compound.setInteger("Enchantability", 28);
+        compound.setBoolean("IsOBJModel", true);
 
         String sb = "Tags for creating an axe item:\n" +
                 t + "- key names must match exactly (even the case of the characters);\n" +

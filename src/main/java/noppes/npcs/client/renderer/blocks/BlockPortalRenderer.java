@@ -138,9 +138,7 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends TileE
 	}
 
 	public static void reloadShaders() {
-		for (ShaderProgram shader : cash.values()) {
-			shader.delete();
-		}
+		for (ShaderProgram shader : cash.values()) { shader.delete(); }
 		cash.clear();
 		loadShaders();
 		LogWriter.info("Shaders reloaded");

@@ -4,7 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
@@ -25,12 +25,12 @@ public class JobSpawnerCloneData implements IJobSpawner.IJobSpawnerData {
     protected int count;
     protected int tab;
     protected String name;
-    protected Component title;
+    protected ITextComponent title;
 
     public JobSpawnerCloneData(@Nonnull EntityNPCInterface npc) { parent = npc; }
 
     @Override
-    public Component getTitle() { return title; }
+    public ITextComponent getTitle() { return title; }
 
     @Override
     public int getCount() { return count; }
@@ -63,15 +63,14 @@ public class JobSpawnerCloneData implements IJobSpawner.IJobSpawnerData {
     public void load(@Nonnull NBTTagCompound nbt) {
         tab = nbt.getInteger("tab");
         name = nbt.getString("name");
-        title = Component.Serializer.jsonToComponent(nbt.getString("title"));
-        if (title.getString().isEmpty()) { title = Component.literal(nbt.getString("title")).withStyle(TextFormatting.RESET); }
+        title = Component.jsonToComponent(nbt.getString("title")).getParent();
     }
 
     public @Nonnull NBTTagCompound save() {
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setInteger("tab", tab);
         nbt.setString("name", name);
-        nbt.setString("title", Component.Serializer.componentToJson(title));
+        nbt.setString("title", ITextComponent.Serializer.componentToJson(title));
         return nbt;
     }
 

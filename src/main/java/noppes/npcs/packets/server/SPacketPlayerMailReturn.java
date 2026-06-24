@@ -51,7 +51,7 @@ public class SPacketPlayerMailReturn extends PacketServerBasic {
         if (mail != null) {
             PlayerData plData = PlayerDataController.instance.getDataFromUsername(player.getServer(), mail.sender);
             if (plData == null) {
-                if (!mail.sender.isEmpty()) { player.sendMessage(Component.translatable("mailbox.error.return.player", mail.sender)); }
+                if (!mail.sender.isEmpty()) { player.sendMessage(Component.translatable("mailbox.error.return.player", mail.sender).getParent()); }
             }
             else {
                 mail.sender += Component.translatable("mailbox.returned").getFormattedText();

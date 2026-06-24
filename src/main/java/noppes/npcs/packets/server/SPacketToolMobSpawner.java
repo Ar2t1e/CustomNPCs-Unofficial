@@ -116,7 +116,7 @@ public class SPacketToolMobSpawner extends PacketServerBasic {
                   nbt.removeTag("Settings");
                   player.openContainer.detectAndSendChanges();
                }
-               player.sendMessage(Component.literal("Failed to create an entity out of your clone"));
+               player.sendMessage(Component.literal("Failed to create an entity out of your clone").getParent());
             }
             else {
                if (nbt != null) {
@@ -164,7 +164,7 @@ public class SPacketToolMobSpawner extends PacketServerBasic {
    public static void createMobSpawner(BlockPos pos, NBTTagCompound comp, EntityPlayerMP player) {
       ServerCloneController.Instance.cleanTags(comp);
       if (comp.getString("id").equalsIgnoreCase("entityhorse")) {
-         player.sendMessage(Component.translatable("message.error.create.mob.spawner"));
+         player.sendMessage(Component.translatable("message.error.create.mob.spawner").getParent());
       }
       else {
          player.world.setBlockState(pos, Blocks.MOB_SPAWNER.getDefaultState());

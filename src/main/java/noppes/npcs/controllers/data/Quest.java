@@ -15,6 +15,7 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -333,7 +334,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	public QuestObjective[] getObjectives(EntityPlayer player) {
 		if (player == null) { throw new CustomNPCsException("Player is NULL"); }
 		PlayerData data = PlayerData.get(player);
-		if (data == null || !data.questData.activeQuests.containsKey(id)) { throw new CustomNPCsException("Player doesnt have this quest active"); }
+		if (!data.questData.activeQuests.containsKey(id)) { throw new CustomNPCsException("Player doesnt have this quest active"); }
 		return questInterface.getObjectives(player);
 	}
 
@@ -376,15 +377,14 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	public int getRewardType() { return rewardType.ordinal(); }
 
 	@Override
-	public Component getTitle() {
+	public ITextComponent getTitle() {
 		Component titleCom = Component.empty();
 		if (level > 0) {
-			titleCom.append(Component.translatable("type.level").append(": ")
-							.withStyle(level <= CustomNpcs.MaxLv / 3 ? TextFormatting.DARK_GREEN :
-									(float) level <= (float) CustomNpcs.MaxLv / 1.5f ? TextFormatting.YELLOW : TextFormatting.RED))
-					.append(Component.literal(level + " ").withStyle(TextFormatting.GRAY));
+			titleCom.append(Component.translatable("type.level").withStyle(level <= CustomNpcs.MaxLv / 3 ? TextFormatting.DARK_GREEN :
+							(float) level <= (float) CustomNpcs.MaxLv / 1.5f ? TextFormatting.YELLOW : TextFormatting.RED).getParent())
+					.appendSibling(Component.literal(level + ": ").withStyle(TextFormatting.GRAY).getParent());
 		}
-		return titleCom.append(Component.translatable(title));
+		return titleCom.append(Component.translatable(title).getParent()).getParent();
 	}
 
 	@Override
@@ -452,13 +452,15 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 
 	public Component getLineKey() {
 		boolean b = isSetUp();
+		ITextComponent t = getTitle();
+		t.getStyle().setColor(TextFormatting.RESET);
 		return Component.empty()
-				.append(Component.literal("ID:" + id + "-\"").withStyle(TextFormatting.GRAY))
-				.append(getTitle().withStyle(TextFormatting.RESET))
-				.append(Component.literal("\"").withStyle(TextFormatting.GRAY))
-				.append(Component.literal(" (").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED))
-				.append(Component.translatable("quest.has." + b))
-				.append(Component.literal(")").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED));
+				.append(Component.literal("ID:" + id + "-\"").withStyle(TextFormatting.GRAY).getParent())
+				.append(t)
+				.append(Component.literal("\"").withStyle(TextFormatting.GRAY).getParent())
+				.append(Component.literal(" (").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED).getParent())
+				.append(Component.translatable("quest.has." + b).getParent())
+				.append(Component.literal(")").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED).getParent());
 	}
 
 	@Override
@@ -485,13 +487,14 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 					if (!has) { list.add(new TempDropData(ds)); }
 				}
 			}
+
 			if (!list.isEmpty() || rewardExp > 0 || rewardMoney > 0 || rewardDonat > 0 ||!rewardText.isEmpty()) {
 				allTextLogs.add("");
-				allTextLogs.add(Component.translatable("questlog.reward").getString());
+				allTextLogs.add(Component.translatable("questlog.reward").withStyle(TextFormatting.GRAY).getFormattedText());
 			}
 			if (!list.isEmpty()) {
 				allTextLogs.add(Component.translatable("questlog." + (rewardType == EnumRewardType.ONE_SELECT ? "one" :
-						rewardType == EnumRewardType.RANDOM_ONE ? "rnd" : "all") + ".reward").getString());
+						rewardType == EnumRewardType.RANDOM_ONE ? "rnd" : "all") + ".reward").getFormattedText());
 				for (TempDropData tdd : list) {
 					StringBuilder line = new StringBuilder(" -  ")
 							.append((char) 0xffff).append(" ")
@@ -511,24 +514,24 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 			if (rewardMoney > 0) {
 				allTextLogs.add(Component.translatable("questlog.rewardmoney",
 						Util.instance.getTextReducedNumber(rewardMoney, true, true, false),
-						CustomNpcs.displayCurrencies).getString());
+						CustomNpcs.displayCurrencies).getFormattedText());
 			}
 			if (rewardDonat > 0) {
 				allTextLogs.add(Component.translatable("questlog.rewarddonat",
 						Util.instance.getTextReducedNumber(rewardDonat, true, true, false),
-						CustomNpcs.displayCurrencies).getString());
+						CustomNpcs.displayCurrencies).getFormattedText());
 			}
 			if (rewardExp > 0) {
-				allTextLogs.add(Component.translatable("questlog.rewardexp", "" + rewardExp).getString());
+				allTextLogs.add(Component.translatable("questlog.rewardexp", "" + rewardExp).getFormattedText());
 			}
 		}
 		if (!rewardText.isEmpty()) {
-			allTextLogs.add(rewardText.contains("%") ? rewardText : Component.translatable(rewardText).getString());
+			allTextLogs.add(rewardText.contains("%") ? rewardText : Component.translatable(rewardText).getFormattedText());
 		}
 		if (!logText.isEmpty()) {
 			allTextLogs.add("");
-			allTextLogs.add(TextFormatting.BOLD + Component.translatable("gui.description").getString());
-			allTextLogs.add(logText.contains("%") ? logText : Component.translatable(logText).getString());
+			allTextLogs.add(TextFormatting.BOLD + Component.translatable("gui.description").getFormattedText());
+			allTextLogs.add(logText.contains("%") ? logText : Component.translatable(logText).getFormattedText());
 		}
 		return allTextLogs;
 	}
@@ -596,8 +599,9 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 				if (chance != 100.0d) {
 					NBTTagCompound compound = stack.getOrCreateSubCompound("display");
 					NBTTagList tagList = compound.getTagList("Lore", 8);
-					tagList.appendTag(new NBTTagString(Component.Serializer.componentToJson(
-							Component.translatable("inv.dropChance").append(": " + (Math.round(chance * 10.0d) / 10.0d) + "%"))));
+					tagList.appendTag(new NBTTagString(ITextComponent.Serializer.componentToJson(
+							Component.translatable("inv.dropChance")
+									.appendText(": " + (Math.round(chance * 10.0d) / 10.0d) + "%"))));
 					compound.setTag("Lore", tagList);
 				}
 			}

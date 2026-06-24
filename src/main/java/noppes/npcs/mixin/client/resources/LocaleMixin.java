@@ -1,17 +1,17 @@
 package noppes.npcs.mixin.client.resources;
 
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.resources.Locale;
 import noppes.npcs.util.Util;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = I18n.class, priority = 499)
-public class I18nMixin {
+@Mixin(value = Locale.class, priority = 498)
+public class LocaleMixin {
 
-    @Inject(method = "format", at = @At("TAIL"), cancellable = true)
-    private static void npcs$format(String translateKey, Object[] parameters, CallbackInfoReturnable<String> cir) {
+    @Inject(method = "formatMessage", at = @At("HEAD"), cancellable = true)
+    private void npcs$formatMessage(String translateKey, Object[] parameters, CallbackInfoReturnable<String> cir) {
         if (translateKey.startsWith("enchantment.level.")) {
             try {
                 int level = Integer.parseInt(translateKey.replace("enchantment.level.", ""));

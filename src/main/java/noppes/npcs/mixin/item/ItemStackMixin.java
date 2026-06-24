@@ -38,9 +38,7 @@ public class ItemStackMixin {
         boolean modified = false;
         for (int loreIndex = 0; loreIndex < loreList.tagCount(); loreIndex++) {
             String loreJson = loreList.getStringTagAt(loreIndex);
-            Component component = Component.Serializer.jsonToComponent(loreJson);
-
-            String loreText = component.getString();
+            String loreText = Component.jsonToComponent(loreJson).getFormattedText();
             String originalLine = TextFormatting.DARK_PURPLE + "" + TextFormatting.ITALIC + loreJson;
             String targetLine = TextFormatting.DARK_PURPLE + "" + TextFormatting.ITALIC + loreText;
 

@@ -64,7 +64,7 @@ public class FactionOptions {
 		if (faction != null) {
 			if (!faction.hideFaction) {
 				String message = decrease ? "faction.decreasepoints" : "faction.increasepoints";
-				player.sendMessage(Component.translatable(message, faction.name, points));
+				player.sendMessage(Component.translatable(message, faction.name, points).getParent());
 			}
 			data.increasePoints(player, factionId, decrease ? (-points) : points);
 			PlayerData.get(player).updateClient = true;

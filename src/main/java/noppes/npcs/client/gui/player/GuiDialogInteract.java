@@ -35,7 +35,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.api.constants.OptionType;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.NoppesUtil;
@@ -509,7 +508,7 @@ public class GuiDialogInteract extends GuiNPCInterface implements IGuiClose {
 		for (TextBlockClient textBlock : new ArrayList<>(lines)) {
 			int left = ClientProxy.Font.width(textBlock.getName() + ": ");
 			if (l >= lineStart) { drawString(textBlock.getName() + ": ", 0, textBlock.color, l); }
-			for (ITextComponent line : textBlock.lines) {
+			for (Component line : textBlock.lines) {
 				if (newDialogSet && l >= lineStart + lineVisibleSize) { lineStart = l - lineVisibleSize + 1; }
 				if (l < lineStart) { ++l; continue; }
 				if (dialog.showFits && startLine == l) {
@@ -645,7 +644,7 @@ public class GuiDialogInteract extends GuiNPCInterface implements IGuiClose {
 						optPos++;
 						continue;
 					}
-					for (String opt : list) {
+					for (String ignored : list) {
 						if (i == y) {
 							selected = optPos;
 							break;

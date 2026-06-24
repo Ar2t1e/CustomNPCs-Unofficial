@@ -83,6 +83,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     @Override
     public void initGui() {
         super.initGui();
+        buttonList.clear();
         setFocused(!hasSubGui());
         guiLeft = (width - xSize) / 2;
         guiTop = (height - ySize) / 2;
@@ -209,17 +210,10 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     public IComponentGui getFocused() { return wrapper.getFocused(); }
 
     @Override
-    public void onClose() { onGuiClosed(); }
+    public void onClose() { wrapper.close(); }
 
     @Override
-    public void onGuiClosed() {
-        GuiTextFieldNop.unfocus();
-        save();
-        player.closeScreen();
-        mc.displayGuiScreen(null);
-        mc.setIngameFocus();
-        mc.mouseHelper.grabMouseCursor();
-    }
+    public void onGuiClosed() { save(); }
 
     @Override
     public void add(IComponentGui element) {
@@ -352,6 +346,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         return null;
     }
 
+    @SuppressWarnings("unused")
     public GuiMenuSideButton getSideButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SIDE_BUTTON &&
@@ -361,6 +356,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         return null;
     }
 
+    @SuppressWarnings("unused")
     public GuiMenuTopButton getTopButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.TOP_BUTTON &&
@@ -397,6 +393,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         return null;
     }
 
+    @SuppressWarnings("unused")
     public GuiCustomScrollNop getScroll(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SCROLL &&
@@ -406,6 +403,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         return null;
     }
 
+    @SuppressWarnings("unused")
     public IComponentGui getExtra(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.EXTRA && element.getId() == id) { return element; }

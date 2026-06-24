@@ -252,8 +252,8 @@ public class GuiScriptInterface extends GuiNPCInterface
 								}
 								NoppesUtil.openGUI(player, this);
 							},
-									Component.empty(),
-									Component.translatable("message.delete"));
+									Component.empty().getParent(),
+									Component.translatable("message.delete").getParent());
 							setScreen(guiYesNo);
 						}
 						else {
@@ -269,7 +269,9 @@ public class GuiScriptInterface extends GuiNPCInterface
 							ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
 								if (agree && activeTab > 0) { container.script = ""; }
 								NoppesUtil.openGUI(player, this);
-							}, Component.empty(), Component.translatable("message.delete"));
+							},
+									Component.empty().getParent(),
+									Component.translatable("message.delete").getParent());
 							setScreen(guiYesNo);
 						}
 					}
@@ -295,7 +297,9 @@ public class GuiScriptInterface extends GuiNPCInterface
 						ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 							if (bo) { handler.getScripts().remove(activeTab -= 1); }
 							setScreen(this);
-						}, Component.empty(), Component.translatable("message.delete"));
+						},
+								Component.empty().getParent(),
+								Component.translatable("message.delete").getParent());
 						setScreen(guiYesNo);
 					}
 					break;
@@ -322,7 +326,9 @@ public class GuiScriptInterface extends GuiNPCInterface
 							activeTab = 0;
 						}
 						setScreen(this);
-					}, Component.translatable("gui.remove.all"), Component.translatable("message.delete"));
+					},
+							Component.translatable("gui.remove.all").getParent(),
+							Component.translatable("message.delete").getParent());
 					setScreen(guiYesNo);
 					break;
 				} // remove all codes

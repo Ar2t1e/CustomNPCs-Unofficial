@@ -461,7 +461,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 		posClick.getStyle().setColor(TextFormatting.BLUE)
 				.setUnderlined(true)
 				.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + (y + 1) + " "+z))
-				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+				.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp").getParent()));
 		message.append(Component.literal("in ").withStyle(TextFormatting.DARK_GRAY))
 				.append(posClick);
 		return message.append(Component.literal("; Side: " + (isClient() ? "Client" : "Server")).withStyle(TextFormatting.DARK_GRAY));

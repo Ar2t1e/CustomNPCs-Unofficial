@@ -51,10 +51,10 @@ public class SPacketQuestRemoveActive extends PacketServerBasic {
             PlayerData data = PlayerData.get(player);
             boolean bo = EventHooks.onQuestCanceled(data.scriptData, quest);
             if (!bo && PlayerQuestController.getRemoveActiveQuest(player, questId)) {
-                player.sendMessage(Component.translatable("quest.removequest", quest.getTitle()));
+                player.sendMessage(Component.translatable("quest.removequest", quest.getTitle()).getParent());
                 Packets.send(player, new PacketGuiUpdate());
             }
-            else { player.sendMessage(Component.translatable("quest.removequest.not", quest.getTitle())); }
+            else { player.sendMessage(Component.translatable("quest.removequest.not", quest.getTitle()).getParent()); }
         }
         CustomNpcs.debugData.end("Packets");
     }

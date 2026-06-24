@@ -93,6 +93,7 @@ public class SPacketScriptEncrypt extends PacketServerBasic {
                             .append(Component.literal(file.getAbsolutePath()).withStyle(TextFormatting.RESET))
                             .append(Component.literal("\" for ").withStyle(error ? TextFormatting.RED : TextFormatting.GRAY))
                             .append(Component.literal(handlerType).withStyle(TextFormatting.RESET))
+                            .getParent()
                     );
                 }
             }

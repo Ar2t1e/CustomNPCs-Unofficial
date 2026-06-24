@@ -368,7 +368,7 @@ public class Util implements IMethods {
 					((Object[]) temp)[0] == directory)
 			{ temp = null; }
 		} catch (Exception e) {
-			LogWriter.info("[DEBUG] "+temp);
+			LogWriter.error("[DEBUG] "+temp, e);
         }
         return list;
 	}

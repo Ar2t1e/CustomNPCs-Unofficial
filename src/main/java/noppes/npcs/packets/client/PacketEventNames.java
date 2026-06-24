@@ -80,7 +80,7 @@ public class PacketEventNames extends PacketBasic {
             Util.instance.saveFile(file, text.toString());
             player.sendMessage(Component.literal("CustomNpcs").withStyle(TextFormatting.DARK_GREEN)
                     .append(Component.literal(": Save event names to file: ").withStyle(TextFormatting.GRAY))
-                    .append(file.getAbsolutePath()));
+                    .append(file.getAbsolutePath()).getParent());
         }
         CustomNpcs.debugData.end("Packets");
     }

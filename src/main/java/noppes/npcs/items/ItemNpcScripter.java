@@ -49,7 +49,7 @@ public class ItemNpcScripter extends Item implements INPCToolItem {
 			EntityPlayerMP player = (EntityPlayerMP) playerIn;
 			if (!CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.TOOL_SCRIPTER) ||
 					(CustomNpcs.OpsOnly && !CommonUtil.isOp(player))) {
-				player.sendMessage(Component.translatable("availability.permission"));
+				player.sendMessage(Component.translatable("availability.permission").getParent());
 				return new ActionResult<>(EnumActionResult.FAIL, itemstack);
 			} else {
 				Packets.send(player, new PacketGuiOpen(EnumGuiType.ScriptPlayers, BlockPos.ORIGIN));

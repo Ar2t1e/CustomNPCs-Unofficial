@@ -87,14 +87,14 @@ public class ServerCloneController implements ICloneHandler {
 		File file = new File(dir, tab + "/" + name + ".json");
 		if (!file.exists()) {
 			if (player != null) {
-				player.sendMessage(Component.translatable("message.clone.not.found.file", tab, name));
+				player.sendMessage(Component.translatable("message.clone.not.found.file", tab, name).getParent());
 			}
 			return null;
 		}
 		try { return NBTJsonUtil.LoadFile(file); }
 		catch (Exception e) {
 			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
-			if (player != null) { player.sendMessage(Component.literal(e.getMessage())); }
+			if (player != null) { player.sendMessage(Component.literal(e.getMessage()).getParent()); }
 			return null;
 		}
 	}

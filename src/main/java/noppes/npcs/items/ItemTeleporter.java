@@ -121,7 +121,7 @@ public class ItemTeleporter extends Item implements INPCToolItem {
 
 	protected void permission(EntityPlayerMP player) {
 		LogWriter.warn(player.getName() + ": attempted to use a mechanism that was prohibited to him. Permission: " + CustomNpcsPermissions.TOOL_TELEPORTER.getNodeName());
-		player.sendMessage(Component.translatable("availability.permission"));
+		player.sendMessage(Component.translatable("availability.permission").getParent());
 	}
 
 }

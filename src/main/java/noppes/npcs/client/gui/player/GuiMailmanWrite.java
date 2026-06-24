@@ -148,8 +148,8 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.empty(),
-						Component.translatable("message.delete"));
+						Component.empty().getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // delete
@@ -1492,7 +1492,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 
     @Override
 	public void setClose(NBTTagCompound data) {
-		player.sendMessage(Component.translatable("mailbox.success", data.getString("username")));
+		player.sendMessage(Component.translatable("mailbox.success", data.getString("username")).getParent());
 		aType = 1;
 		animClose();
 	}

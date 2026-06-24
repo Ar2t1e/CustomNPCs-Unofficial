@@ -38,6 +38,7 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
@@ -102,7 +103,9 @@ import noppes.npcs.client.renderer.RenderNpcCrystal;
 import noppes.npcs.client.renderer.RenderNpcDragon;
 import noppes.npcs.client.renderer.RenderNpcSlime;
 import noppes.npcs.client.renderer.RenderProjectile;
+import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
+import noppes.npcs.mixin.minecraftforge.client.IItemModelMesherForgeMixin;
 import noppes.npcs.mixin.client.util.IRecipeBookClientMixin;
 import noppes.npcs.shared.client.gui.util.TrueTypeFont;
 import noppes.npcs.constants.EnumGuiType;
@@ -134,7 +137,6 @@ import noppes.npcs.mixin.client.resources.ILocaleMixin;
 import noppes.npcs.mixin.client.settings.IKeyBindingMixin;
 import noppes.npcs.client.particles.CustomParticleSettings;
 import noppes.npcs.potions.PotionData;
-import noppes.npcs.reflection.client.ItemModelMesherForgeReflection;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.TempFile;
@@ -198,9 +200,9 @@ public class ClientProxy extends CommonProxy {
 			else { Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(text, x, y, color); }
 		}
 
-		public void draw(Component component, float x, float y, int color) {
-			draw(component.getString(), x, y, color);
-		}
+		public void draw(Component component, float x, float y, int color) { draw(component.getFormattedText(), x, y, color); }
+
+		public void draw(ITextComponent component, float x, float y, int color) { draw(component.getFormattedText(), x, y, color); }
 
 		public String getName() {
 			if (!useCustomFont) { return "Minecraft"; }
@@ -217,9 +219,9 @@ public class ClientProxy extends CommonProxy {
 			return Minecraft.getMinecraft().fontRenderer.getStringWidth(text);
 		}
 
-		public int width(Component component) {
-			return width(component.getString());
-		}
+		public int width(Component component) { return width(component.getParent()); }
+
+		public int width(ITextComponent component) { return width(component.getFormattedText()); }
 
         public int getHeight() { return height("|"); }
 
@@ -244,7 +246,6 @@ public class ClientProxy extends CommonProxy {
 
 		// localization in game data
 		Map<String, String> properties = ((ILocaleMixin) II18nMixin.getI18nLocale()).getProperties();
-		LogWriter.debug("Localization properties found. Size: "+properties.size());
 		// custom lang files:
 		String currentLanguage = Minecraft.getMinecraft().getLanguageManager().getCurrentLanguage().getLanguageCode();
 		for (int i = 0; i < (currentLanguage.equals("en_us") ? 1 : 2) ; i++) {
@@ -676,7 +677,7 @@ public class ClientProxy extends CommonProxy {
 		// OBJ ItemStack Model Replace
 		Minecraft mc = Minecraft.getMinecraft();
 		RenderItem ri = mc.getRenderItem();
-		Map<IRegistryDelegate<Item>, Int2ObjectMap<IBakedModel>> models = ItemModelMesherForgeReflection.getModels(ri.getItemModelMesher());
+		Map<IRegistryDelegate<Item>, Int2ObjectMap<IBakedModel>> models = ((IItemModelMesherForgeMixin) ri.getItemModelMesher()).getModels();
 		if (models != null) {
 			for (IRegistryDelegate<Item> key : models.keySet()) {
 				if (!(key.get() instanceof CustomArmor) || ((CustomArmor) key.get()).objModel == null) { continue; }
@@ -687,7 +688,8 @@ public class ClientProxy extends CommonProxy {
 		}
 		mcWrapper = new WrapperMinecraft(mc);
 		checkLocalization();
-		NoppesUtil.jsonMap.clear();
+
+		CustomNpcsLangPack.load();
 	}
 
 	@Override

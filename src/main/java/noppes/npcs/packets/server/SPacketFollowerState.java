@@ -57,7 +57,7 @@ public class SPacketFollowerState extends PacketServerBasic {
          else {
             RoleEvent.FollowerFinishedEvent event = new RoleEvent.FollowerFinishedEvent(role.owner, npc.wrappedNPC);
             EventHooks.onNPCRole(npc, event);
-            role.owner.sendMessage(Component.translatable(NoppesStringUtils.formatText(role.dialogFired, role.owner, npc)));
+            role.owner.sendMessage(Component.translatable(NoppesStringUtils.formatText(role.dialogFired, role.owner, npc)).getParent());
             PlayerData data = PlayerData.get(player);
             PlayerGameData.FollowerSet fs = data.game.getFollower(role.npc);
             if (fs != null) { data.game.removeFollower(role.npc); }

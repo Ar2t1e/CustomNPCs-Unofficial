@@ -236,8 +236,8 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				},
 						Component.empty()
 								.append(Component.translatable("global.playerdata").append(": ").withStyle(TextFormatting.GRAY))
-								.append(title.withStyle(TextFormatting.RESET)),
-						Component.translatable("message.delete"));
+								.append(title.withStyle(TextFormatting.RESET)).getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 			}
 			else if (data.containsKey(scrollData.get(scroll.getNormalSelected()))) {
@@ -271,8 +271,8 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				}
 				NoppesUtil.openGUI(player, this);
 			},
-					Component.translatable("gui.wipe").append("?"),
-					Component.literal(mes));
+					Component.translatable("gui.wipe").append("?").getParent(),
+					Component.literal(mes).getParent());
 			setScreen(guiYesNo);
 		} // wipe
 		else if (button.id == 8) {
@@ -306,8 +306,8 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				}
 				NoppesUtil.openGUI(player, this);
 			},
-					Component.translatable("global.playerdata").append(": ").append(title),
-					Component.translatable("message.delete"));
+					Component.translatable("global.playerdata").append(": ").append(title).getParent(),
+					Component.translatable("message.delete").getParent());
 			setScreen(guiYesNo);
 		} // Del all data
 		else if (button.id == 11) { editData(); } // edit
@@ -320,8 +320,8 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				}
 				NoppesUtil.openGUI(player, this);
 			},
-					Component.translatable("gui.cleaning").append("?"),
-					Component.literal(mes));
+					Component.translatable("gui.cleaning").append("?").getParent(),
+					Component.literal(mes).getParent());
 			setScreen(guiYesNo);
 		} // cleaning
 	}

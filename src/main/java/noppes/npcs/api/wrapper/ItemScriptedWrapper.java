@@ -192,7 +192,7 @@ public class ItemScriptedWrapper extends ItemStackWrapper implements IItemScript
 			posClick.getStyle().setColor(TextFormatting.BLUE)
 					.setUnderlined(true)
 					.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/noppes world tp @p " + dimID + " " + x + " " + y + " "+z))
-					.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp")));
+					.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("script.hover.error.pos.tp").getParent()));
 			message.append(Component.literal("Player: \"").withStyle(TextFormatting.DARK_GRAY))
 					.append(Component.literal(iPlayer.getName()).withStyle(TextFormatting.GRAY))
 					.append(Component.literal("\"; UUID: \"").withStyle(TextFormatting.DARK_GRAY))

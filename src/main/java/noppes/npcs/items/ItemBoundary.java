@@ -61,7 +61,6 @@ public class ItemBoundary extends Item {
 
 	public void leftClick(ItemStack stack, EntityPlayerMP player) {
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return; }
 		int id = -1;
 		Vec3d vec3d = player.getPositionEyes(1.0f);
 		Vec3d vec3d2 = player.getLook(1.0f);
@@ -117,7 +116,6 @@ public class ItemBoundary extends Item {
 
 	public void rightClick(ItemStack stack, EntityPlayerMP player) {
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return; }
 		int id = -1;
 		BorderController bData = BorderController.getInstance();
 		Vec3d vec3d = player.getPositionEyes(1.0f);
@@ -171,13 +169,13 @@ public class ItemBoundary extends Item {
 				reg.y[1] = pos.getY();
 				add = true;
 			}
-			player.sendMessage(Component.translatable("message.boundary.offset.y." + add, "" + pos.getX(), "" + pos.getY(), "" + pos.getZ(), reg.toString()));
+			player.sendMessage(Component.translatable("message.boundary.offset.y." + add, "" + pos.getX(), "" + pos.getY(), "" + pos.getZ(), reg.toString()).getParent());
 			add = true;
 		} else { // add new point
 			add = reg.insertPoint(pos.getX(), pos.getY(), pos.getZ(),
 					Objects.requireNonNull(NpcAPI.Instance()).getIPos(player.posX, player.posY, player.posZ));
 			player.sendMessage(Component.translatable("message.boundary.add.vertex." + add, "" + pos.getX(),
-					"" + pos.getY(), "" + pos.getZ(), reg.toString()));
+					"" + pos.getY(), "" + pos.getZ(), reg.toString()).getParent());
 		}
 		if (add) {
 			reg.fix();

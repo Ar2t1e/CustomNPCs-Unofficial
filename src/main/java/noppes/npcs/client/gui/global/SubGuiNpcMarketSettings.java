@@ -75,8 +75,8 @@ public class SubGuiNpcMarketSettings extends GuiNPCInterface
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.translatable("gui.sections").append(": ").append(scroll.getNormalSelected()),
-						Component.translatable("message.delete"));
+						Component.translatable("gui.sections").append(": ").append(scroll.getNormalSelected()).getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // del section

@@ -3,74 +3,60 @@ package noppes.npcs.api.wrapper.data;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import noppes.npcs.api.entity.data.IAttributeModifier;
 import noppes.npcs.api.entity.data.INpcAttribute;
-import noppes.npcs.reflection.entity.ai.attributes.AttributeModifierReflection;
+import noppes.npcs.mixin.entity.ai.attributes.IAttributeModifierMixin;
 
 public class AttributeModifierWrapper implements IAttributeModifier {
 
 	private final INpcAttribute parent;
 	private final AttributeModifier modifer;
 
-	public AttributeModifierWrapper(INpcAttribute attribute, AttributeModifier modifer) {
-		this.modifer = modifer;
-		this.parent = attribute;
+	public AttributeModifierWrapper(INpcAttribute attributeIn, AttributeModifier modiferIn) {
+		modifer = modiferIn;
+		parent = attributeIn;
 	}
 
 	@Override
-	public double getAmount() {
-		return this.modifer.getAmount();
-	}
+	public double getAmount() { return modifer.getAmount(); }
 
 	@Override
-	public String getId() {
-		return this.modifer.getID().toString();
-	}
+	public String getId() { return modifer.getID().toString(); }
 
 	@Override
-	public AttributeModifier getMCModifier() {
-		return this.modifer;
-	}
+	public AttributeModifier getMCModifier() { return modifer; }
 
 	@Override
-	public String getName() {
-		return this.modifer.getName();
-	}
+	public String getName() { return modifer.getName(); }
 
 	@Override
-	public int getOperation() {
-		return this.modifer.getOperation();
-	}
+	public int getOperation() { return modifer.getOperation(); }
 
 	@Override
 	public IAttributeModifier setAmount(double amount) {
-		if (this.parent == null) {
-			AttributeModifierReflection.setAmount(modifer, amount);
+		if (parent == null) {
+			((IAttributeModifierMixin) modifer).setAmount(amount);
 			return this;
 		}
-		AttributeModifier newModifier = new AttributeModifier(this.modifer.getID(), this.modifer.getName(), amount, this.modifer.getOperation());
-		this.parent.getMCAttribute().removeModifier(this.modifer);
-		this.parent.getMCAttribute().applyModifier(newModifier);
-		return this.parent.getModifier(newModifier.getName());
+		AttributeModifier newModifier = new AttributeModifier(modifer.getID(), modifer.getName(), amount, modifer.getOperation());
+		parent.getMCAttribute().removeModifier(modifer);
+		parent.getMCAttribute().applyModifier(newModifier);
+		return parent.getModifier(newModifier.getName());
 	}
 
 	@Override
 	public IAttributeModifier setName(String name) {
-		if (this.parent == null) {
-			AttributeModifierReflection.setName(modifer, name);
+		if (parent == null) {
+			((IAttributeModifierMixin) modifer).setName(name);
 			return this;
 		}
-		AttributeModifier newModifier = new AttributeModifier(this.modifer.getID(), name, this.modifer.getAmount(), this.modifer.getOperation());
-		this.parent.getMCAttribute().removeModifier(this.modifer);
-		this.parent.getMCAttribute().applyModifier(newModifier);
-		return this.parent.getModifier(newModifier.getName());
+		AttributeModifier newModifier = new AttributeModifier(modifer.getID(), name, modifer.getAmount(), modifer.getOperation());
+		parent.getMCAttribute().removeModifier(modifer);
+		parent.getMCAttribute().applyModifier(newModifier);
+		return parent.getModifier(newModifier.getName());
 	}
 
 	@Override
-	public void setOperation(int operation) {
-		AttributeModifierReflection.setOperation(modifer, operation);
-	}
+	public void setOperation(int operation) { ((IAttributeModifierMixin) modifer).setOperation(operation); }
 
-	public String toString() {
-		return this.modifer.toString().replace("AttributeModifier", "AttributeModifierWrapper");
-	}
+	public String toString() { return modifer.toString().replace("AttributeModifier", "AttributeModifierWrapper"); }
 
 }

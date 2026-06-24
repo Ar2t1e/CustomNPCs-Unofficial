@@ -4,6 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
@@ -26,7 +27,7 @@ public class JobSpawnerNbtData implements IJobSpawner.IJobSpawnerData {
 	public JobSpawnerNbtData(@Nonnull EntityNPCInterface npc) { parent = npc; }
 
 	@Override
-	public Component getTitle() { return title; }
+	public ITextComponent getTitle() { return title.getParent(); }
 
 	@Override
 	public int getCount() { return count; }

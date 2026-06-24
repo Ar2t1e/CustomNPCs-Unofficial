@@ -7,6 +7,7 @@ import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.ClientEventHandler;
@@ -16,9 +17,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = GuiContainerCreative.class, priority = 499)
+@Mixin(value = GuiContainerCreative.class, priority = 498)
 public class GuiContainerCreativeMixin {
 
     @Final @Shadow private static ResourceLocation CREATIVE_INVENTORY_TABS;
@@ -35,7 +37,18 @@ public class GuiContainerCreativeMixin {
         }
     }
 
-    @Inject(method = "drawScreen", at = @At("TAIL"))
+    @Inject(
+            method = "drawScreen",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Ljava/util/Arrays;copyOfRange([Ljava/lang/Object;II)[Ljava/lang/Object;",
+                    ordinal = 0
+            ),
+            slice = @Slice(
+                    from = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/inventory/GuiContainerCreative;drawDefaultBackground()V"),
+                    to = @At(value = "INVOKE", target = "Ljava/util/Arrays;copyOfRange([Ljava/lang/Object;II)[Ljava/lang/Object;", ordinal = 0)
+            )
+    )
     public void npcs$drawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         GuiContainerCreative parent = (GuiContainerCreative) (Object) this;
         if (CustomNpcs.InventoryGuiEnabled) {
@@ -72,6 +85,14 @@ public class GuiContainerCreativeMixin {
             parent.mc.getTextureManager().bindTexture(new ResourceLocation("textures/items/book_normal.png"));
             parent.drawTexturedModalRect(0, 0, 0, 0, 256, 256);
             GlStateManager.popMatrix();
+            if (mouseX > x + 2 && mouseX <= x + 30) {
+                if (mouseY > y && mouseY <= y + 28) {
+                    parent.drawHoveringText(Component.translatable("quest.hover.compass.settings").getFormattedText(), mouseX, mouseY);
+                }
+                if (mouseY > y + 28 && mouseY <= y + 56) {
+                    parent.drawHoveringText(Component.translatable("key.quest.log").getFormattedText(), mouseX, mouseY);
+                }
+            }
         }
         if (selectedTabIndex == 11) {
             ClientEventHandler.renderBalance(parent, mouseX, mouseY,

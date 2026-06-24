@@ -27,9 +27,9 @@ public class PacketAchievement extends PacketBasic {
 
    public PacketAchievement() {}
 
-   public PacketAchievement(ITextComponent titleIn, ITextComponent messageIn, int typeIn, NBTTagCompound compoundIn) {
-      title = titleIn;
-      message = messageIn;
+   public PacketAchievement(Component titleIn, Component messageIn, int typeIn, NBTTagCompound compoundIn) {
+      title = titleIn.getParent();
+      message = messageIn.getParent();
       type = typeIn;
       compound = compoundIn;
    }
@@ -57,8 +57,8 @@ public class PacketAchievement extends PacketBasic {
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
       Minecraft minecraft = Minecraft.getMinecraft();
-      ITextComponent showTitle = Component.empty().append(title);
-      ITextComponent showMessage = Component.empty().append(message);
+      Component showTitle = Component.empty().append(title);
+      Component showMessage = Component.empty().append(message);
       // has quest
       if (compound.hasKey("questID", 3) && compound.getInteger("questID") >= 0) {
          IQuest quest = QuestController.instance.get(compound.getInteger("questID"));
@@ -67,7 +67,7 @@ public class PacketAchievement extends PacketBasic {
             return;
          }
          showTitle = Component.translatable("quest.name")
-                 .appendText(": " + quest.getTitle());
+                 .append(": " + quest.getTitle());
          int[] pr = compound.getIntArray("Progress");
          if (compound.getString("Type").equalsIgnoreCase("craft")) {
             ItemStack item = new ItemStack(compound.getCompoundTag("Item"));
@@ -75,8 +75,8 @@ public class PacketAchievement extends PacketBasic {
          }
          else { showMessage = Component.translatable(compound.getString("TargetName")); }
          if (pr[0] >= pr[1]) { // is complete
-            showMessage.appendText(" -");
-            showMessage.appendSibling(Component.translatable("quest.task." + compound.getString("Type") + ".0"));
+            showMessage.append(" -");
+            showMessage.append(Component.translatable("quest.task." + compound.getString("Type") + ".0"));
          }
          else { showMessage.appendText(" = " + pr[0] + "/" + pr[1]); }
       }
@@ -111,7 +111,7 @@ public class PacketAchievement extends PacketBasic {
             String titleD = Util.instance.deleteColor((String) titleF.get(achn));
             int typeD = (int) typeF.get(achn);
             if (!titleD.equals(Util.instance.deleteColor(title.getFormattedText())) || type != typeD) { continue; }
-            achn.setDisplayedText(showTitle, showMessage);
+            achn.setDisplayedText(showTitle.getParent(), showMessage.getParent());
             found = true;
          }
          catch (Exception ignored) { }

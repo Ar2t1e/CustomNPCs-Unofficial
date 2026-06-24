@@ -60,7 +60,8 @@ public class GuiNpcMobSpawnerAdd extends GuiNPCInterface implements IGuiData, IT
 				int tab = button.getValue() + 1;
 				if (!serverSide) {
 					if (ClientCloneController.Instance.getCloneData(null, name, tab) != null) {
-						setScreen(new ConfirmScreen(this::accept, Component.empty(), Component.translatable("clone.overwrite")));
+						setScreen(new ConfirmScreen(this::accept, Component.empty().getParent(),
+								Component.translatable("clone.overwrite").getParent()));
 					}
 					else { accept(true); }
 				}
@@ -77,7 +78,8 @@ public class GuiNpcMobSpawnerAdd extends GuiNPCInterface implements IGuiData, IT
 	public void setGuiData(NBTTagCompound compound) {
 		if (compound.hasKey("NameExists")) {
 			if (compound.getBoolean("NameExists")) {
-				setScreen(new ConfirmScreen(this::accept, Component.empty(), Component.translatable("clone.overwrite")));
+				setScreen(new ConfirmScreen(this::accept, Component.empty().getParent(),
+						Component.translatable("clone.overwrite").getParent()));
 			}
 			else { accept(true); }
 		}

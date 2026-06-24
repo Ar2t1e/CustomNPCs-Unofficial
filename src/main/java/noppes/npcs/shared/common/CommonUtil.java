@@ -23,6 +23,7 @@ public class CommonUtil {
         NotifyOPs(Component.translatable(message, obs).withStyle(TextFormatting.GRAY, TextFormatting.ITALIC), false);
     }
 
+    @SuppressWarnings("ConstantConditions")
     public static void NotifyOPs(Component message, boolean isScriptError) {
         Component component = Component.literal("[")
                 .append(Component.literal(CustomNpcs.MODNAME).withStyle(TextFormatting.DARK_GREEN))
@@ -34,7 +35,7 @@ public class CommonUtil {
             for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
                 if (player.isCreative() && isOp(player)) {
                     if (isScriptError) { Packets.send(player, new PacketScriptError(component)); }
-                    else if (CustomNpcs.DisplayErrorInChat) { player.sendMessage(component); }
+                    else if (CustomNpcs.DisplayErrorInChat) { player.sendMessage(component.getParent()); }
                     isSend = true;
                 }
             }
@@ -63,7 +64,7 @@ public class CommonUtil {
         if (!errorMessagesToAdmin.isEmpty() && player != null && player.isCreative() && isOp(player)) {
             for (Component component : errorMessagesToAdmin) {
                 if (player instanceof EntityPlayerMP) { Packets.send((EntityPlayerMP) player, new PacketScriptError(component)); }
-                else if (CustomNpcs.DisplayErrorInChat) { player.sendMessage(component); }
+                else if (CustomNpcs.DisplayErrorInChat) { player.sendMessage(component.getParent()); }
             }
             errorMessagesToAdmin.clear();
         }

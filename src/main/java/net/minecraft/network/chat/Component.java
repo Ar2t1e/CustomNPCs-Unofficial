@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @IgnoreForAPI
-public class Component implements ICustomTextComponent {
+public class Component {
 
     public static Component from(ITextComponent component) { return new Component(component); }
 
@@ -22,8 +22,18 @@ public class Component implements ICustomTextComponent {
 
     public static Component translatable(String localisationKey, Object... objects) { return new Component(localisationKey, objects); }
 
+    public static Component jsonToComponent(String json) {
+        if (json == null || json.isEmpty()) { return Component.empty(); }
+        try {
+            ITextComponent component = ITextComponent.Serializer.jsonToComponent(json);
+            return component == null ? Component.translatable(json) : new Component(component);
+        }
+        catch (Exception ignored) { }
+        return Component.translatable(json);
+    }
+
     public Component copy() {
-        return new Component(ITextComponent.Serializer.jsonToComponent(ITextComponent.Serializer.componentToJson(parent)));
+        return new Component(parent.createCopy());
     }
 
     private final ITextComponent parent;
@@ -37,68 +47,65 @@ public class Component implements ICustomTextComponent {
 
     public Component(ITextComponent label) { parent = label; }
 
-    @Override
     public @Nonnull ITextComponent setStyle(@Nonnull Style style) { return parent.setStyle(style); }
 
-    @Override
     public @Nonnull Style getStyle() { return parent.getStyle(); }
 
-    @Nonnull
-    @Override
-    public Component withColor(int color) {
+    public @Nonnull Component withColor(int color) {
         ((IStyleMixin) parent.getStyle()).npcs$setColor(color);
         return this;
     }
 
-    @Override
     public @Nonnull ITextComponent appendText(@Nonnull String text) { return parent.appendText(text); }
 
-    @Override
     public @Nonnull ITextComponent appendSibling(@Nonnull ITextComponent component) { return parent.appendSibling(component); }
 
-    @Override
     public @Nonnull String getUnformattedComponentText() { return parent.getUnformattedComponentText(); }
 
-    @Override
     public @Nonnull String getUnformattedText() { return parent.getUnformattedText(); }
 
-    @Override
     public @Nonnull String getFormattedText() { return parent.getFormattedText(); }
 
-    @Override
     public @Nonnull List<ITextComponent> getSiblings() { return parent.getSiblings(); }
 
-    @Override
     public @Nonnull ITextComponent createCopy() { return parent.createCopy(); }
 
-    @Override
     public @Nonnull Iterator<ITextComponent> iterator() { return parent.iterator(); }
 
-    @Override
     public @Nonnull Component append(@Nonnull String text) {
         parent.appendText(text);
         return this;
     }
 
-    @Override
     public @Nonnull Component append(@Nonnull ITextComponent component) {
         parent.appendSibling(component instanceof Component ? ((Component) component).parent : component);
         return this;
     }
 
-    @Nonnull
-    @Override
-    public String getString() { return Util.instance.deleteColor(parent.getFormattedText()); }
+    public @Nonnull Component append(@Nonnull Component component) {
+        parent.appendSibling(component.parent);
+        return this;
+    }
+
+    public @Nonnull String getString() { return Util.instance.deleteColor(parent.getFormattedText()); }
 
     public Component withStyle(TextFormatting ... textFormats) {
         Style style = parent.getStyle();
         for (TextFormatting textFormatting : textFormats) {
-            style.setColor(textFormatting);
-            if (textFormatting == TextFormatting.OBFUSCATED) { style.setObfuscated(true); }
+            if (textFormatting == TextFormatting.RESET) {
+                style.setObfuscated(false);
+                style.setBold(false);
+                style.setStrikethrough(false);
+                style.setUnderlined(false);
+                style.setItalic(false);
+                style.setColor(TextFormatting.RESET);
+            }
+            else if (textFormatting == TextFormatting.OBFUSCATED) { style.setObfuscated(true); }
             else if (textFormatting == TextFormatting.BOLD) { style.setBold(true); }
             else if (textFormatting == TextFormatting.STRIKETHROUGH) { style.setStrikethrough(true); }
             else if (textFormatting == TextFormatting.UNDERLINE) { style.setUnderlined(true); }
             else if (textFormatting == TextFormatting.ITALIC) { style.setItalic(true); }
+            else { style.setColor(textFormatting); }
         }
         parent.setStyle(style);
         return this;
@@ -111,27 +118,5 @@ public class Component implements ICustomTextComponent {
     }
 
     public ITextComponent getParent() { return parent; }
-
-    public static class Serializer {
-
-        public static String componentToJson(Component component) {
-            return component.getString().isEmpty() ? "" : componentToJson(component.parent);
-        }
-
-        public static String componentToJson(ITextComponent component) { return ITextComponent.Serializer.componentToJson(component); }
-
-        public static @Nonnull Component jsonToComponent(String content) {
-            if (content == null || content.isEmpty()) { return Component.empty(); }
-            try {
-                ITextComponent iText = ITextComponent.Serializer.jsonToComponent(content);
-                return iText != null ? new Component(iText) : Component.empty();
-            }
-            catch (Exception e) {
-                //LogWriter.warn("Not json to component \""+content+"\"");
-                return new Component(content);
-            }
-        }
-
-    }
 
 }

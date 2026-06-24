@@ -191,6 +191,7 @@ public class GuiNPCDialogNpcOptions
 						.append(Component.literal(" \"" + name + "\"").withStyle(TextFormatting.RESET))
 						.append(Component.literal(" - ").withStyle(TextFormatting.RED))
 						.append(Component.translatable("trader.busy").withStyle(TextFormatting.RED))
+						.getParent()
 				);
 				return;
 			}

@@ -63,7 +63,7 @@ public class ItemRemover extends Item implements ISpecBuilder {
 		if (pos == null) { return; }
 		PlayerData data = PlayerData.get(player);
 		BuilderData builder = ItemBuilder.getBuilder(stack, player);
-		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
+		if (!stack.hasTagCompound() || builder == null || builder.getID() == -1) {
 			NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
 				buffer.writeInt(-1);
 				buffer.writeBlockPos(new BlockPos(-1, getType(), 0));
@@ -90,17 +90,17 @@ public class ItemRemover extends Item implements ISpecBuilder {
 				emp = i;
 			}
 			if (!builder.inv.getStackInSlot(i).isEmpty() && builder.inv.getStackInSlot(i).isItemEqual(st)) {
-				player.sendMessage(Component.translatable("builder.err.add.block.0"));
+				player.sendMessage(Component.translatable("builder.err.add.block.0").getParent());
 				return;
 			}
 		}
 		if (emp == 0) {
-			player.sendMessage(Component.translatable("builder.err.add.block.1"));
+			player.sendMessage(Component.translatable("builder.err.add.block.1").getParent());
 			return;
 		}
 		builder.inv.setInventorySlotContents(emp, st);
 		builder.chances.put(emp, 100);
-		player.sendMessage(Component.translatable("builder.add.block", name));
+		player.sendMessage(Component.translatable("builder.add.block", name).getParent());
 		NBTTagCompound nbtStack = builder.getNbt();
 		stack.setTagCompound(nbtStack);
 		player.openContainer.detectAndSendChanges();
@@ -112,7 +112,7 @@ public class ItemRemover extends Item implements ISpecBuilder {
 		if (pos == null) { return; }
 		PlayerData data = PlayerData.get(player);
 		BuilderData builder = ItemBuilder.getBuilder(stack, player);
-		if (data == null || !stack.hasTagCompound() || builder == null || builder.getID() == -1) {
+		if (!stack.hasTagCompound() || builder == null || builder.getID() == -1) {
 			NoppesUtilServer.openContainerGui(player, getGUIType(), (buffer) -> {
 				buffer.writeInt(-1);
 				buffer.writeBlockPos(new BlockPos(-1, getType(), 0));

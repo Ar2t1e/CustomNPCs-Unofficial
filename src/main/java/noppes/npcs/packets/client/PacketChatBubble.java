@@ -5,6 +5,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.ClientEventHandler;
@@ -13,18 +14,20 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.common.PacketBasic;
 
+import javax.annotation.Nonnull;
+
 public class PacketChatBubble extends PacketBasic {
 
    protected static int channelId;
    private int id;
-   private Component message;
+   private ITextComponent message;
    private boolean showMessage;
 
    public PacketChatBubble() { }
 
-   public PacketChatBubble(int idIn, Component messageIn, boolean showMessageIn) {
+   public PacketChatBubble(int idIn, @Nonnull Component messageIn, boolean showMessageIn) {
       id = idIn;
-      message = messageIn;
+      message = messageIn.getParent();
       showMessage = showMessageIn;
    }
 

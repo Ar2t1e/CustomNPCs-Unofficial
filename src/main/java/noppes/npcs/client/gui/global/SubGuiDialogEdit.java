@@ -181,8 +181,8 @@ public class SubGuiDialogEdit
 					if (bo) { Packets.sendServer(new SPacketDialogMinID(dialog.id)); }
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.translatable("message.change.id", "" + dialog.id),
-						Component.translatable("message.change"));
+						Component.translatable("message.change.id", "" + dialog.id).getParent(),
+						Component.translatable("message.change").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // reset ID

@@ -6,7 +6,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
@@ -54,7 +53,7 @@ public class BlockDoorRenderer<T extends TileEntity> extends TileEntitySpecialRe
 		state = state.withProperty(BlockDoor.HINGE, upperState.getValue(BlockDoor.HINGE));
 		state = state.withProperty(BlockDoor.POWERED, upperState.getValue(BlockDoor.POWERED));
 		GlStateManager.pushMatrix();
-		RenderHelper.enableStandardItemLighting();
+		//RenderHelper.enableStandardItemLighting();
 		GlStateManager.enableAlpha();
 		GlStateManager.disableBlend();
 		GlStateManager.translate(x + 0.5, y, z + 0.5);

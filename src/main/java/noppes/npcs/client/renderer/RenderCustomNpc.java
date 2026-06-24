@@ -31,6 +31,7 @@ import noppes.npcs.constants.EnumParts;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
+import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nonnull;
 
@@ -93,8 +94,8 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void doRender(@Nonnull T npc, double d, double d1, double d2, float f, float partialTicks) {
-		this.partialTicks = partialTicks;
+	public void doRender(@Nonnull T npc, double d, double d1, double d2, float f, float partialTicksIn) {
+		partialTicks = partialTicksIn;
 		entity = npc.modelData.getEntity(npc);
 		if (entity != null) {
 			Render<?> render = renderManager.getEntityRenderObject(entity);
@@ -104,7 +105,8 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 				renderEntity = null;
 				entity = null;
 			}
-		} else {
+		}
+		else {
 			renderEntity = null;
 			List<LayerRenderer<T>> list = layerRenderers;
 			for (LayerRenderer<T> layer : list) {
@@ -143,7 +145,7 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 	@Override
 	protected void preRenderCallback(@Nonnull T npc, float f) {
 		if (renderEntity != null) {
-			renderColor(npc);
+			//renderColor(npc);
 			int size = npc.display.getSize();
 			if (entity instanceof EntityNPCInterface) {
 				((EntityNPCInterface) entity).display.setSize(5);
@@ -156,6 +158,7 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 		}
 	}
 
+	@Override
 	protected void renderLayers(@Nonnull T npc, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scaleIn) {
 		if (entity != null && renderEntity != null) {
 			NPCRendererHelper.drawLayers(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scaleIn, renderEntity);
@@ -178,64 +181,72 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 	@Override
 	protected void renderModel(@Nonnull T npc, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor) {
 		if (renderEntity != null) {
-			boolean isInvisible = npc.isInvisible();
-			if (npc.display.getVisible() == 1) {
-				isInvisible = npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player);
-			} else if (npc.display.getVisible() == 2) {
-				isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand;
-			}
-			if (isInvisible) {
-				GlStateManager.enableBlendProfile(GlStateManager.Profile.TRANSPARENT_MODEL);
-			}
-			ModelBase model = renderEntity.getMainModel();
-			if (PixelmonHelper.isPixelmon(entity)) {
-				ModelBase pixModel = (ModelBase) PixelmonHelper.getModel(entity);
-				if (pixModel != null) {
-					model = pixModel;
-					PixelmonHelper.setupModel(entity, pixModel);
-				}
-			}
-			model.swingProgress = mainModel.swingProgress;
-			model.isRiding = (entity.isRiding() && entity.getRidingEntity() != null && entity.getRidingEntity().shouldRiderSit());
-			model.setLivingAnimations(entity, limbSwing, limbSwingAmount, partialTicks);
-			model.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, entity);
-			model.isChild = entity.isChild();
-			NPCRendererHelper.renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, renderEntity, model, Objects.requireNonNull(getEntityTexture(npc)));
-
-			if (!npc.display.getOverlayTexture().isEmpty()) {
-				GlStateManager.depthFunc(515);
-				if (npc.textureGlowLocation == null) {
-					npc.textureGlowLocation = new ResourceLocation(npc.display.getOverlayTexture());
-				}
-				float f1 = 1.0f;
+			boolean isTransparent = npc.isInvisible();
+			Minecraft mc = Minecraft.getMinecraft();
+			if (npc.display.getVisible() == 1) { isTransparent = npc.display.getAvailability().isAvailable(mc.player); }
+			else if (npc.display.getVisible() == 2) { isTransparent = mc.player.getHeldItemMainhand().getItem() != CustomItems.wand; }
+			boolean wasBlendEnabled = false;
+			if (isTransparent) {
+				wasBlendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
 				GlStateManager.enableBlend();
-				GlStateManager.blendFunc(1, 1);
-				GlStateManager.disableLighting();
-                GlStateManager.depthMask(!npc.isInvisible());
-				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-				GlStateManager.pushMatrix();
-				GlStateManager.scale(1.001f, 1.001f, 1.001f);
-				NPCRendererHelper.renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, renderEntity, model, npc.textureGlowLocation);
-				GlStateManager.popMatrix();
-				GlStateManager.enableLighting();
-				GlStateManager.color(1.0f, 1.0f, 1.0f, f1);
-				GlStateManager.depthFunc(515);
-				GlStateManager.disableBlend();
+				GlStateManager.tryBlendFuncSeparate(
+						GlStateManager.SourceFactor.SRC_ALPHA,
+						GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+						GlStateManager.SourceFactor.ONE,
+						GlStateManager.DestFactor.ZERO
+				);
+				GlStateManager.color(1.0f, 1.0f, 1.0f, 0.3f);
+				GlStateManager.depthMask(false);
 			}
-			if (isInvisible) {
-				GlStateManager.disableBlendProfile(GlStateManager.Profile.TRANSPARENT_MODEL);
+
+			try {
+				ModelBase model = renderEntity.getMainModel();
+				if (PixelmonHelper.isPixelmon(entity)) {
+					ModelBase pixModel = (ModelBase) PixelmonHelper.getModel(entity);
+					if (pixModel != null) {
+						model = pixModel;
+						PixelmonHelper.setupModel(entity, pixModel);
+					}
+				}
+				model.swingProgress = mainModel.swingProgress;
+				model.isRiding = (entity.isRiding() && entity.getRidingEntity() != null && entity.getRidingEntity().shouldRiderSit());
+				model.setLivingAnimations(entity, limbSwing, limbSwingAmount, partialTicks);
+				model.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, entity);
+				model.isChild = entity.isChild();
+				NPCRendererHelper.renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, renderEntity, model, Objects.requireNonNull(getEntityTexture(npc)));
+				if (!npc.display.getOverlayTexture().isEmpty()) {
+					GlStateManager.depthFunc(515);
+					if (npc.textureGlowLocation == null) { npc.textureGlowLocation = new ResourceLocation(npc.display.getOverlayTexture()); }
+					float f1 = 1.0f;
+					GlStateManager.enableBlend();
+					GlStateManager.blendFunc(1, 1);
+					GlStateManager.disableLighting();
+					GlStateManager.depthMask(!npc.isInvisible());
+					GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+					GlStateManager.pushMatrix();
+					GlStateManager.scale(1.001f, 1.001f, 1.001f);
+					NPCRendererHelper.renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, renderEntity, model, npc.textureGlowLocation);
+					GlStateManager.popMatrix();
+					GlStateManager.enableLighting();
+					GlStateManager.color(1.0f, 1.0f, 1.0f, f1);
+					GlStateManager.depthFunc(515);
+					GlStateManager.disableBlend();
+				}
+			}
+			finally {
+				if (isTransparent) {
+					GlStateManager.depthMask(true);
+					if (!wasBlendEnabled) { GlStateManager.disableBlend(); }
+					GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+				}
 			}
 		}
-		else {
-			super.renderModel(npc, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor);
-		}
+		else { super.renderModel(npc, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor); }
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public void setLightmap(@Nonnull EntityCustomNpc npc) {
-		super.setLightmap((T) npc);
-	}
+	@SuppressWarnings("unchecked")
+	public void setLightmap(@Nonnull EntityCustomNpc npc) { super.setLightmap((T) npc); }
 
 	public List<LayerRenderer<T>> getLayers() { return new ArrayList<>(layerRenderers); }
 

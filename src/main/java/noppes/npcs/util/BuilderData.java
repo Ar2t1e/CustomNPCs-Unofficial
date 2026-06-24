@@ -579,7 +579,7 @@ public class BuilderData {
 		}
 		enMap.put(doPos + 1, listE);
 		doMap.put(doPos + 1, listB);
-		if (player != null) { player.sendMessage(Component.translatable("builder.end.redo", "" + (doPos + 2), "" + listB.size())); }
+		if (player != null) { player.sendMessage(Component.translatable("builder.end.redo", "" + (doPos + 2), "" + listB.size()).getParent()); }
 		doPos++;
 	}
 
@@ -595,7 +595,7 @@ public class BuilderData {
 			switch (schMap.size()) {
 				case 1: {
 					schMap.put(1, pos);
-					player.sendMessage(Component.translatable("builder.set.point.1", x, y, z, schematicName));
+					player.sendMessage(Component.translatable("builder.set.point.1", x, y, z, schematicName).getParent());
 					break;
 				}
 				case 2: {
@@ -603,12 +603,12 @@ public class BuilderData {
 					if (p.equals(pos)) {
 						return;
 					}
-					player.sendMessage(Component.translatable("builder.set.point.2", x, y, z, schematicName));
+					player.sendMessage(Component.translatable("builder.set.point.2", x, y, z, schematicName).getParent());
 					schMap.put(2, pos);
 					break;
 				}
 				default: {
-					player.sendMessage(Component.translatable("builder.set.point.0", x, y, z, schematicName));
+					player.sendMessage(Component.translatable("builder.set.point.0", x, y, z, schematicName).getParent());
 					schMap.put(0, pos);
 				}
 			}
@@ -631,7 +631,7 @@ public class BuilderData {
 	public void sendMessage(String text, Object... obj) {
 		if (player != null && lastMessage + 1000 <= System.currentTimeMillis()) {
 			lastMessage = System.currentTimeMillis();
-			player.sendMessage(Component.translatable(text, obj));
+			player.sendMessage(Component.translatable(text, obj).getParent());
 		}
 	}
 
@@ -845,7 +845,7 @@ public class BuilderData {
 		enMap.put(doPos, listE);
 		doMap.put(doPos, listB);
 		doPos--;
-		if (player != null) { player.sendMessage(Component.translatable("builder.end.undo", "" + (doPos + 1), "" + listB.size())); }
+		if (player != null) { player.sendMessage(Component.translatable("builder.end.undo", "" + (doPos + 1), "" + listB.size()).getParent()); }
 	}
 
 	public void work(BlockPos pos, EntityPlayerMP playerIn) {

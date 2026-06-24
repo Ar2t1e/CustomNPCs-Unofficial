@@ -189,7 +189,7 @@ public class GuiMerchantAdd extends GuiBasicContainer<ContainerMerchantAdd> {
 	@Override
 	public void updateScreen() {
 		super.updateScreen();
-		if (container.trader != null) {
+		if (container.trader != null && nextRecipeButtonIndex != null && previousRecipeButtonIndex != null) {
 			MerchantRecipeList merchantrecipelist = container.trader.getRecipes(Minecraft.getMinecraft().player);
 			if (merchantrecipelist != null) {
 				nextRecipeButtonIndex.setIsEnabled(currentRecipeIndex < merchantrecipelist.size() - 1);

@@ -115,8 +115,8 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("animation.clear.frame", "" + (frame.id + 1)),
-							Component.translatable("message.delete"));
+							Component.translatable("animation.clear.frame", "" + (frame.id + 1)).getParent(),
+							Component.translatable("message.delete").getParent());
 					setScreen(guiYesNo);
 				}
 				break;
@@ -135,8 +135,8 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("animation.clear.frame", "" + (frame.id + 1)),
-							Component.translatable("message.delete"));
+							Component.translatable("animation.clear.frame", "" + (frame.id + 1)).getParent(),
+							Component.translatable("message.delete").getParent());
 					setScreen(guiYesNo);
 				}
 				break;

@@ -186,8 +186,9 @@ public class GuiNPCBankChest extends GuiContainerNPCInterface<ContainerNPCBank> 
 									Component.translatable("bank.name", ": ")
 											.append(Component.translatable(menu.data.bank.name).withStyle(TextFormatting.BOLD))
 											.append("; ")
-											.append(Component.translatable("gui.ceil", " #" + ((char) 167) + "l" +(menu.ceil + 1))),
-									Component.translatable("message.bank.del.items"));
+											.append(Component.translatable("gui.ceil", " #" + ((char) 167) + "l" +(menu.ceil + 1)))
+											.getParent(),
+									Component.translatable("message.bank.del.items").getParent());
 							setScreen(guiYesNo);
 						}
 					})

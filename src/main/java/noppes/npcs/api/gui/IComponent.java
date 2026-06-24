@@ -1,12 +1,13 @@
 package noppes.npcs.api.gui;
 
-import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.wrapper.gui.ComponentWrapper;
 
+@SuppressWarnings("unused")
 public interface IComponent {
 
-    Component getMCComponent();
+    ITextComponent getMCComponent();
 
     String getKey();
 

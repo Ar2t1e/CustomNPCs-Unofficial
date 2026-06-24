@@ -79,7 +79,7 @@ public class PacketScriptText extends PacketBasic {
                     container.setInit(false);
                     ScriptController.Instance.clientScripts.init();
                     if (ScriptController.Instance.clientScripts.isEnabled()) {
-                        player.sendMessage(Component.translatable("scripts.client.received.server"));
+                        player.sendMessage(Component.translatable("scripts.client.received.server").getParent());
                     }
                 }
             }

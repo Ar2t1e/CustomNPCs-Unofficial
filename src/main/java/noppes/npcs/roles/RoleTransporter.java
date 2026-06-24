@@ -97,7 +97,7 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 				if (!player.isCreative()) {
 					if (loc.money > 0) {
 						if (loc.money > playerdata.game.getMoney()) {
-							player.sendMessage(Component.translatable("transporter.hover.not.money"));
+							player.sendMessage(Component.translatable("transporter.hover.not.money").getParent());
 							return;
 						}
 						playerdata.game.addMoney(-1L * loc.money);
@@ -106,7 +106,7 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 						Map<ItemStack, Boolean> barterItems = Util.instance.getInventoryItemCount(player, loc.inventory);
 						for (ItemStack stack : barterItems.keySet()) {
 							if (!barterItems.get(stack)) {
-								player.sendMessage(Component.translatable("transporter.hover.not.money"));
+								player.sendMessage(Component.translatable("transporter.hover.not.money").getParent());
 								return;
 							}
 						}
@@ -159,7 +159,8 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 		data.transports.add(transportId);
 		player.sendMessage(Component.translatable("transporter.unlock",
 				Component.translatable(loc.name).getString(),
-				Component.translatable(loc.category.title).getString()));
+				Component.translatable(loc.category.title).getString())
+				.getParent());
 	}
 
 	@Override

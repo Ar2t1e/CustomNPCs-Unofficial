@@ -102,7 +102,7 @@ public class BankData {
 		if (bank.isPublic && !player.isCreative() && !bank.access.isEmpty() && !bank.owner.equals(name) &&
 				((bank.isWhiteList && !bank.access.contains(name)) || (!bank.isWhiteList && bank.access.contains(name)))) {
 			if (player.openContainer instanceof ContainerNPCBank) { player.closeContainer(); }
-			player.sendMessage(Component.translatable("message.bank.not.access"));
+			player.sendMessage(Component.translatable("message.bank.not.access").getParent());
 			return;
 		}
 		initSettings();

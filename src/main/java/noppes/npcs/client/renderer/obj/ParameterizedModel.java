@@ -55,6 +55,7 @@ public class ParameterizedModel {
 	public OBJModel objModel = null;
 	public ResourceLocation atlas = TextureMap.LOCATION_BLOCKS_TEXTURE;
 
+	@SuppressWarnings("ConstantConditions")
 	public ParameterizedModel(ResourceLocation modelLocationIn, List<String> visibleMeshesIn, Map<String, ResourceLocation> materialTexturesIn, boolean reverseNormalsIn,  int colorMaskIn, boolean isDynamicIn) {
 		modelLocation = modelLocationIn;
 		colorMask = colorMaskIn;
@@ -120,6 +121,7 @@ public class ParameterizedModel {
 		};
 	}
 
+	@SuppressWarnings("deprecation")
 	public void load() {
 		// load model
 		try {
@@ -135,7 +137,7 @@ public class ParameterizedModel {
 	}
 
 	public void render() {
-		GL11.glPushMatrix();
+		GlStateManager.pushMatrix();
 		Minecraft.getMinecraft().getTextureManager().bindTexture(atlas);
 		if (isDynamic) { draw(); }
 		else {
@@ -146,7 +148,7 @@ public class ParameterizedModel {
 			}
 			GlStateManager.callList(listId);
 		}
-		GL11.glPopMatrix();
+		GlStateManager.popMatrix();
 	}
 
 	protected void draw() {

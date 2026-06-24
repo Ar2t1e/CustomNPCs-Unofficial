@@ -66,7 +66,7 @@ public class CmdPlayers extends CommandNoppesBase {
                     throw new CommandException("Usage " + "clear <action_name>");
             }
             sData.clear(null, type);
-            sender.sendMessage(Component.translatable("command.player.clear.skin.all." + type));
+            sender.sendMessage(Component.translatable("command.player.clear.skin.all." + type).getParent());
         }
 	}
 
@@ -98,7 +98,7 @@ public class CmdPlayers extends CommandNoppesBase {
 				switch (args[2]) {
 					case "clear": {
 						sData.clear(data.uuid, 0);
-						sender.sendMessage(Component.translatable("command.player.clear.0", data.name));
+						sender.sendMessage(Component.translatable("command.player.clear.0", data.name).getParent());
 						break;
 					}
 					case "get": {
@@ -112,7 +112,7 @@ public class CmdPlayers extends CommandNoppesBase {
 							if (location == null) { skin = "(Not set or create texture)"; }
 							else { skin = "(Composite) " + skinData.getLocation(); }
 						}
-						sender.sendMessage(Component.translatable("command.player.get.0", data.name, skin));
+						sender.sendMessage(Component.translatable("command.player.get.0", data.name, skin).getParent());
 						break;
 					}
 					case "set": {
@@ -126,7 +126,7 @@ public class CmdPlayers extends CommandNoppesBase {
 									throw new CommandException("argument.no.https");
 								}
 								sData.create(UUID.fromString(data.uuid), data.name, 0, 0, args[4]);
-								sender.sendMessage(Component.translatable("command.player.set.0", data.name, "(URL) " + args[4]));
+								sender.sendMessage(Component.translatable("command.player.set.0", data.name, "(URL) " + args[4]).getParent());
 								break;
 							}
 							case "location": {
@@ -134,7 +134,7 @@ public class CmdPlayers extends CommandNoppesBase {
 									throw new CommandException("Usage " + "/noppes player <player name> skin set location <location path>");
 								}
 								sData.create(UUID.fromString(data.uuid), data.name, 0, 1, args[4]);
-								sender.sendMessage(Component.translatable("command.player.set.0", data.name, "(Location) " + args[4]));
+								sender.sendMessage(Component.translatable("command.player.set.0", data.name, "(Location) " + args[4]).getParent());
 								break;
 							}
 							case "composite": {
@@ -168,7 +168,7 @@ public class CmdPlayers extends CommandNoppesBase {
 								}
 								location.append(".png");
 								sData.create(UUID.fromString(data.uuid), data.name, 0, 2, location.toString());
-								sender.sendMessage(Component.translatable("command.player.set.0", data.name, "(Composite) " + location));
+								sender.sendMessage(Component.translatable("command.player.set.0", data.name, "(Composite) " + location).getParent());
 								break;
 							}
 							default: throw new CommandException("Usage " + "/noppes player <player name> skin set [url|location|composite]");
@@ -183,7 +183,7 @@ public class CmdPlayers extends CommandNoppesBase {
 				switch (args[2]) {
 					case "clear": {
 						sData.clear(data.uuid, 1);
-						sender.sendMessage(Component.translatable("command.player.clear.1", data.name));
+						sender.sendMessage(Component.translatable("command.player.clear.1", data.name).getParent());
 						break;
 					}
 					case "get": {
@@ -192,7 +192,7 @@ public class CmdPlayers extends CommandNoppesBase {
 						String cape;
 						if (skinData.isUrl()) { cape = "(URL) " + skinData.getUrl(); }
 						else { cape = "(Location) " + skinData.getLocation(); }
-						sender.sendMessage(Component.translatable("command.player.get.1", data.name, cape));
+						sender.sendMessage(Component.translatable("command.player.get.1", data.name, cape).getParent());
 						break;
 					}
 					case "set": {
@@ -206,7 +206,7 @@ public class CmdPlayers extends CommandNoppesBase {
 									throw new CommandException("argument.no.https");
 								}
 								sData.create(UUID.fromString(data.uuid), data.name, 1, 0, args[4]);
-								sender.sendMessage(Component.translatable("command.player.set.1", data.name, "(URL) " + args[4]));
+								sender.sendMessage(Component.translatable("command.player.set.1", data.name, "(URL) " + args[4]).getParent());
 								break;
 							}
 							case "location": {
@@ -214,7 +214,7 @@ public class CmdPlayers extends CommandNoppesBase {
 									throw new CommandException("Usage " + "/noppes player <player name> cape set location <location path>");
 								}
 								sData.create(UUID.fromString(data.uuid), data.name, 1, 1, args[4]);
-								sender.sendMessage(Component.translatable("command.player.set.1", data.name, "(Location) " + args[4]));
+								sender.sendMessage(Component.translatable("command.player.set.1", data.name, "(Location) " + args[4]).getParent());
 								break;
 							}
 							default: throw new CommandException("Usage " + "/noppes player <player name> cape set [url|location]");
@@ -229,7 +229,7 @@ public class CmdPlayers extends CommandNoppesBase {
 				switch (args[2]) {
 					case "clear": {
 						sData.clear(data.uuid, 2);
-						sender.sendMessage(Component.translatable("command.player.clear.2", data.name));
+						sender.sendMessage(Component.translatable("command.player.clear.2", data.name).getParent());
 						break;
 					}
 					case "get": {
@@ -238,7 +238,7 @@ public class CmdPlayers extends CommandNoppesBase {
 						String elytra;
 						if (skinData.isUrl()) { elytra = "(URL) " + skinData.getUrl(); }
 						else { elytra = "(Location) " + skinData.getLocation(); }
-						sender.sendMessage(Component.translatable("command.player.get.2", data.name, elytra));
+						sender.sendMessage(Component.translatable("command.player.get.2", data.name, elytra).getParent());
 						break;
 					}
 					case "set": {
@@ -252,7 +252,7 @@ public class CmdPlayers extends CommandNoppesBase {
 									throw new CommandException("argument.no.https");
 								}
 								sData.create(UUID.fromString(data.uuid), data.name, 2, 0, args[4]);
-								sender.sendMessage(Component.translatable("command.player.set.2", data.name, "(URL) " + args[4]));
+								sender.sendMessage(Component.translatable("command.player.set.2", data.name, "(URL) " + args[4]).getParent());
 								break;
 							}
 							case "location": {
@@ -260,7 +260,7 @@ public class CmdPlayers extends CommandNoppesBase {
 									throw new CommandException("Usage " + "/noppes player <player name> elytra set location <location path>");
 								}
 								sData.create(UUID.fromString(data.uuid), data.name, 2, 1, args[4]);
-								sender.sendMessage(Component.translatable("command.player.set.2", data.name, "(Location) " + args[4]));
+								sender.sendMessage(Component.translatable("command.player.set.2", data.name, "(Location) " + args[4]).getParent());
 								break;
 							}
 							default: throw new CommandException("Usage " + "/noppes player <player name> elytra set [url|location]");

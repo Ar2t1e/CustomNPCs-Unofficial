@@ -80,7 +80,7 @@ public abstract class PacketServerBasic extends PacketBasic {
     private void sendNotAccess() {
         if (player != null) {
             player.sendMessage(Component.translatable("availability.permission")
-                    .append(TextFormatting.RED + ": " + TextFormatting.RESET + getClass().getSimpleName()));
+                    .append(TextFormatting.RED + ": " + TextFormatting.RESET + getClass().getSimpleName()).getParent());
         }
     }
 

@@ -227,8 +227,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.translatable("animation.clear.frame", "" + (frame.id + 1)),
-						Component.translatable("message.delete"));
+						Component.translatable("animation.clear.frame", "" + (frame.id + 1)).getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // remove frame
@@ -253,8 +253,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("animation.clear.frame", "" + (frame.id + 1)),
-							Component.translatable("gui.clearMessage"));
+							Component.translatable("animation.clear.frame", "" + (frame.id + 1)).getParent(),
+							Component.translatable("gui.clearMessage").getParent());
 					setScreen(guiYesNo);
 				}
 				break;
@@ -300,8 +300,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()),
-							Component.translatable("message.delete"));
+							Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()).getParent(),
+							Component.translatable("message.delete").getParent());
 					setScreen(guiYesNo);
 				}
 				break;
@@ -325,8 +325,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()),
-							Component.translatable("gui.clearMessage"));
+							Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()).getParent(),
+							Component.translatable("gui.clearMessage").getParent());
 					setScreen(guiYesNo);
 				}
 				break;

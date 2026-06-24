@@ -1,6 +1,6 @@
 package noppes.npcs.api.handler.data;
 
-import net.minecraft.network.chat.ICustomTextComponent;
+import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.api.entity.data.ICustomDrop;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.ICustomNpc;
@@ -45,7 +45,7 @@ public interface IQuest {
 
 	int getRewardType();
 
-	ICustomTextComponent getTitle();
+	ITextComponent getTitle();
 
 	boolean isCancelable();
 

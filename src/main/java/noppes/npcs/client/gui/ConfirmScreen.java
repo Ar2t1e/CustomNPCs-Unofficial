@@ -6,8 +6,8 @@ import net.minecraft.util.text.ITextComponent;
 
 public class ConfirmScreen extends GuiScreen {
 
-    protected static final ITextComponent GUI_YES = Component.translatable("gui.yes");
-    protected static final ITextComponent GUI_NO = Component.translatable("gui.no");
+    protected static final ITextComponent GUI_YES = Component.translatable("gui.yes").getParent();
+    protected static final ITextComponent GUI_NO = Component.translatable("gui.no").getParent();
     @FunctionalInterface
     public interface BooleanConsumer {
         void accept(boolean value);

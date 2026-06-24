@@ -3,7 +3,6 @@ package noppes.npcs.client.gui.script;
 import java.util.*;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
@@ -13,6 +12,8 @@ import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nonnull;
+
 public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollListener {
 
 	protected final ScriptContainer container;
@@ -20,7 +21,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 	protected GuiCustomScrollNop selected;
 
 	// New from Unofficial (BetaZavr)
-	protected static final Comparator<ITextComponent> comparator = Comparator.comparing(ITextComponent::getFormattedText);
+	protected static final Comparator<Component> comparator = Comparator.comparing(Component::getFormattedText);
 	protected final Map<String, Long> scripts;
 	protected final Map<FilePath, Component> data = new TreeMap<>();
 	protected final Component back = Component.literal("   ← (").append(Component.translatable("gui.back")).append(")");
@@ -271,7 +272,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 		public String getName() { return name; }
 
 		@Override
-		public int compareTo(FilePath other) { return (spase + "/" + name).compareTo(other.spase + "/" + other.name); }
+		public int compareTo(@Nonnull FilePath other) { return (spase + "/" + name).compareTo(other.spase + "/" + other.name); }
 
 	}
 

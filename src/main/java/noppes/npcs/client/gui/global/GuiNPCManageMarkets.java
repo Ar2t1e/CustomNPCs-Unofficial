@@ -406,8 +406,8 @@ public class GuiNpcManageMarkets extends GuiNPCInterface2
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						scrollMarkets.getNormalSelected(),
-						Component.translatable("message.delete"));
+						scrollMarkets.getNormalSelected().getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // Del market

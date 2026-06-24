@@ -113,7 +113,7 @@ public class CmdQuest extends CommandNoppesBase {
 		if (quest == null) { throw new CommandException("Unknown Quest ID \"" + args[1] + "\""); }
 		EntityPlayerMP player = CommandBase.getPlayer(server, sender, playername);
 		PlayerQuestController.addActiveQuest(quest, player, true);
-		sender.sendMessage(Component.literal("Player \"" + player.getName() + "\" started the quest ID: " + quest.id));
+		sender.sendMessage(Component.literal("Player \"" + player.getName() + "\" started the quest ID: " + quest.id).getParent());
 	}
 
 	@SubCommand(desc = "Stop a started quest", usage = "<player> <quest>", permission = 2)

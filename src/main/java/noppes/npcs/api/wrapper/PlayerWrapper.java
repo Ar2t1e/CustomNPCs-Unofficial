@@ -189,7 +189,7 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	public void setRotation(float rotation) { entity.rotationYaw = rotation; }
 
 	@Override
-	public void message(String message) { entity.sendMessage(Component.translatable(NoppesStringUtils.formatText(message, entity))); }
+	public void message(String message) { entity.sendMessage(Component.translatable(NoppesStringUtils.formatText(message, entity)).getParent()); }
 
 	@Override
 	public int getGamemode() {
@@ -347,6 +347,7 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 		return statbase != null && statbase.isIndependent;
 	}
 
+	@SuppressWarnings("unused")
 	public boolean hasAdvancement(String achievement) { return hasAchievement(achievement); }
 
 	@Override
@@ -434,7 +435,7 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	@Override
 	public void kick(String message) {
 		if (entity instanceof EntityPlayerMP) {
-			((EntityPlayerMP) entity).connection.disconnect(Component.translatable(message));
+			((EntityPlayerMP) entity).connection.disconnect(Component.translatable(message).getParent());
 		}
 	}
 

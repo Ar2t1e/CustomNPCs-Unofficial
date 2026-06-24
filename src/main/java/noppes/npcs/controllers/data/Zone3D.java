@@ -1077,7 +1077,7 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 			player.velocityChanged = true;
 		}
 		else { player.setPositionAndUpdate(getHomePos().getX() + 0.5d, getHomePos().getY(), getHomePos().getZ() + 0.5d); }
-		if (!message.isEmpty()) { player.sendMessage(Component.translatable(message)); }
+		if (!message.isEmpty()) { player.sendMessage(Component.translatable(message).getParent()); }
 	}
 
 	public NBTTagCompound save(NBTTagCompound nbtRegion) {

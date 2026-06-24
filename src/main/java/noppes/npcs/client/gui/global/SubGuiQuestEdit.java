@@ -335,7 +335,9 @@ public class SubGuiQuestEdit
 				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 					if (bo) { Packets.sendServer(new SPacketQuestMinID(quest.id)); }
 					NoppesUtil.openGUI(player, this);
-				}, Component.translatable("message.change.id", "" + quest.id), Component.translatable("message.change"));
+				},
+						Component.translatable("message.change.id", "" + quest.id).getParent(),
+						Component.translatable("message.change").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // reset ID

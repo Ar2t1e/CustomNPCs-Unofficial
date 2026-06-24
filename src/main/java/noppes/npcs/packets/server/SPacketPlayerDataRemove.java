@@ -148,7 +148,7 @@ public class SPacketPlayerDataRemove extends PacketServerBasic {
                      pData.clear();
                      if (p != null) {
                         pData.save(true);
-                        p.sendMessage(Component.translatable("message.change.mod.data"));
+                        p.sendMessage(Component.translatable("message.change.mod.data").getParent());
                      }
                   }
                }
@@ -159,7 +159,7 @@ public class SPacketPlayerDataRemove extends PacketServerBasic {
          }
          if (playerdata != null) {
             if (id >= 0) { playerdata.save(true); }
-            if (pl != null) { pl.sendMessage(Component.translatable("message.change.mod.data")); }
+            if (pl != null) { pl.sendMessage(Component.translatable("message.change.mod.data").getParent()); }
          }
          SPacketPlayerDataGet.sendPlayerData(type, player, name);
       }

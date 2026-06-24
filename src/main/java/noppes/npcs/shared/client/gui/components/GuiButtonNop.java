@@ -160,7 +160,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         List<Component> lines = new ArrayList<>();
         Util.instance.putHovers(lines, components);
         List<String> textLines = new ArrayList<>();
-        for (ITextComponent line : lines) { textLines.add(line.getFormattedText()); }
+        for (Component line : lines) { textLines.add(line.getFormattedText()); }
         net.minecraftforge.fml.client.config.GuiUtils.drawHoveringText(textLines, x, y, width, height, -1, mc.fontRenderer);
         if (!textLines.isEmpty()) {
             GlStateManager.disableRescaleNormal();

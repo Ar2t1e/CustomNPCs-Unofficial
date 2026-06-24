@@ -89,8 +89,11 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public static final ResourceLocation DONAT = new ResourceLocation(CustomNpcs.MODID, "textures/items/coin_donat.png");
     public static final ResourceLocation INFO = new ResourceLocation(CustomNpcs.MODID, "textures/gui/info.png");
     public static final ResourceLocation RESOURCE_SLOT = new ResourceLocation(CustomNpcs.MODID, "textures/gui/slot.png");
+    @SuppressWarnings("unused")
     public static final ResourceLocation MENU_BUTTON = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menubutton.png");
+    @SuppressWarnings("unused")
     public static final ResourceLocation MENU_SIDE_BUTTON = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menusidebutton.png");
+    @SuppressWarnings("unused")
     public static final ResourceLocation MENU_TOP_BUTTON = new ResourceLocation(CustomNpcs.MODID, "textures/gui/menutopbutton.png");
     public static final ResourceLocation ANIMATION_BUTTONS = new ResourceLocation(CustomNpcs.MODID, "textures/gui/animation/buttons.png");
     public static final ResourceLocation ANIMATION_BUTTONS_SLOTS = new ResourceLocation(CustomNpcs.MODID, "textures/gui/animation/button_slots.png");
@@ -175,6 +178,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     @Override
     public void initGui() {
         super.initGui();
+        buttonList.clear();
         setFocused(!hasSubGui());
         guiLeft = (width - imageWidth) / 2;
         guiTop = (height - imageHeight) / 2;
@@ -294,18 +298,10 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public void focusedPrevComponent() { wrapper.focusedPrevComponent(); }
 
     @Override
-    public void onClose() {
-        onGuiClosed();
-        setScreen(null);
-        mc.setIngameFocus();
-    }
+    public void onClose() { wrapper.close(); }
 
     @Override
-    public void onGuiClosed() {
-        GuiTextFieldNop.unfocus();
-        save();
-        wrapper.close();
-    }
+    public void onGuiClosed() { save(); }
 
     @Override
     public void add(IComponentGui element) {
@@ -477,6 +473,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         return null;
     }
 
+    @SuppressWarnings("unused")
     public GuiCustomScrollNop getScroll(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SCROLL &&
@@ -486,6 +483,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         return null;
     }
 
+    @SuppressWarnings("unused")
     public IComponentGui getExtra(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.EXTRA && element.getId() == id) { return element; }
@@ -579,7 +577,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         }
     }
 
-    public static void renderTooltipInternal(int mouseX, int mouseY, GuiScreen screen, ClientProxy.FontContainer font, List<Component> collections, float scale) {
+    public static void renderTooltipInternal(int mouseX, int mouseY, GuiScreen screen, ClientProxy.FontContainer font, List<Component> collections, float ignoredScale) {
         if (font != null && !collections.isEmpty()) {
             GlStateManager.disableRescaleNormal();
             RenderHelper.disableStandardItemLighting();
@@ -611,8 +609,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
             drawGradientRect(l1 - 3, i2 - 3, l1 + i + 3, i2 - 3 + 1, 300.0d, i1, i1);
             drawGradientRect(l1 - 3, i2 + k + 2, l1 + i + 3, i2 + k + 3, 300.0d, j1, j1);
             for (int k1 = 0; k1 < collections.size(); ++k1) {
-                Component s1 = collections.get(k1);
-                font.draw(s1, (float)l1, (float)i2, -1);
+                font.draw(collections.get(k1).getParent(), (float)l1, (float)i2, -1);
                 if (k1 == 0)  { i2 += 2; }
                 i2 += 10;
             }
@@ -795,6 +792,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         GlStateManager.popMatrix();
     }
 
+    @SuppressWarnings("unused")
     public void doubleClicked() {}
 
 }

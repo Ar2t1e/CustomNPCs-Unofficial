@@ -83,7 +83,7 @@ public class PlayerMail implements IInventory, IPlayerMail {
 		compound.setLong("TimeWillCome", timeWillCome);
 		compound.setLong("TimeWhenReceived", timeWhenReceived);
 		compound.setInteger("MailQuest", questId);
-		if (hasQuest()) { compound.setString("MailQuestTitle", getQuest().getTitle().getString()); }
+		if (hasQuest()) { compound.setString("MailQuestTitle", getQuest().getTitle().getFormattedText()); }
 		NBTTagList list = new NBTTagList();
 		for (int i = 0; i < items.size(); ++i) {
 			if (!(items.get(i)).isEmpty()) {
@@ -211,7 +211,7 @@ public class PlayerMail implements IInventory, IPlayerMail {
 	}
 
 	@Override
-	public @Nonnull ITextComponent getDisplayName() { return Component.literal(getName()); }
+	public @Nonnull ITextComponent getDisplayName() { return Component.literal(getName()).getParent(); }
 
 	@Override
 	public int getField(int id) { return 0; }

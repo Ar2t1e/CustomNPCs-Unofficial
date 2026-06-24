@@ -13,6 +13,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.NoppesUtilPlayer;
@@ -220,7 +221,7 @@ public class QuestObjective implements IQuestObjective {
 	public String getTargetName() { return name; }
 
 	@Override
-	public Component getMCText() {
+	public ITextComponent getMCText() {
 		Component text;
 		boolean bo = isCompleted();
 		if (type == EnumQuestTask.ITEM || type == EnumQuestTask.CRAFT) {
@@ -264,7 +265,7 @@ public class QuestObjective implements IQuestObjective {
 			text.append(Component.translatable("quest.task.manual."+(isCompleted() ? "0" : "1")));
 		} // Manual
 		else { text = Component.literal("null type: " + type + " #" + toString().substring(toString().indexOf("@") + 1)); }
-		return text;
+		return text.getParent();
 	}
 
 	@Override
@@ -476,7 +477,7 @@ public class QuestObjective implements IQuestObjective {
 				}
 				if (questData.quest.showProgressInChat) {
 					player.sendMessage(Component.translatable("quest.message.dialog." + progress,
-							Component.translatable(dialog).getString(), questData.quest.getTitle()));
+							Component.translatable(dialog).getString(), questData.quest.getTitle()).getParent());
 				}
 			}
 			data.updateClient = true;
@@ -522,7 +523,7 @@ public class QuestObjective implements IQuestObjective {
 					Packets.send((EntityPlayerMP) player, new PacketAchievement(Component.empty(), Component.empty(), 0, compound));
 				}
 				player.sendMessage(Component.translatable("quest.message.location." + progress,
-						Component.translatable(name).getString(), questData.quest.getTitle()));
+						Component.translatable(name).getString(), questData.quest.getTitle()).getParent());
 			}
 			data.updateClient = true;
 		}
@@ -543,13 +544,13 @@ public class QuestObjective implements IQuestObjective {
 					}
 					player.sendMessage(Component.translatable("quest.message." + key + ".0",
 							Component.translatable(name).getString(), "" + progress,
-							"" + maxProgress, questData.quest.getTitle()));
+							"" + maxProgress, questData.quest.getTitle()).getParent());
 				}
 				killed.put(name, progress);
 				setKilled(questData, killed);
 				if (progress >= maxProgress) {
 					player.sendMessage(Component.translatable("quest.message." + key + ".1",
-							Component.translatable(name).getString(), questData.quest.getTitle()));
+							Component.translatable(name).getString(), questData.quest.getTitle()).getParent());
 				}
 				data.updateClient = true;
 			}
@@ -575,11 +576,11 @@ public class QuestObjective implements IQuestObjective {
 			}
 			if (progress >= maxProgress) {
 				player.sendMessage(Component.translatable("quest.message.craft.1",
-						item.getDisplayName(), questData.quest.getTitle()));
+						item.getDisplayName(), questData.quest.getTitle()).getParent());
 			}
 			else {
 				player.sendMessage(Component.translatable("quest.message.craft.0",
-						item.getDisplayName(), "" + progress, "" + maxProgress, questData.quest.getTitle()));
+						item.getDisplayName(), "" + progress, "" + maxProgress, questData.quest.getTitle()).getParent());
 			}
 			data.updateClient = true;
 		}

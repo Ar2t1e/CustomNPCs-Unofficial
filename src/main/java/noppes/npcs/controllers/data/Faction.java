@@ -6,6 +6,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.NoppesUtilServer;
@@ -31,7 +34,7 @@ public class Faction implements IFaction {
 
 	// New from Unofficial (BetaZavr)
 	public HashSet<Integer> frendFactions = new HashSet<>();
-	public Component description = Component.empty();
+	public ITextComponent description = new TextComponentString("");
 	public ResourceLocation flag = new ResourceLocation(CustomNpcs.MODID + ":textures/cloak/mojang.png");
 
 	public Faction() { }
@@ -59,7 +62,9 @@ public class Faction implements IFaction {
 		// New from Unofficial (BetaZavr)
 		frendFactions.addAll(NBTTags.getIntegerSet(compound.getTagList("FrendFactions", 10)));
 		if (compound.hasKey("Flag", 8)) { setFlag(compound.getString("Flag")); }
-		if (compound.hasKey("Description", 8)) { description = Component.Serializer.jsonToComponent(compound.getString("Description")); }
+		if (compound.hasKey("Description", 8)) {
+			description = Component.jsonToComponent(compound.getString("Description")).getParent();
+		}
 	}
 
 	@Override
@@ -79,7 +84,7 @@ public class Faction implements IFaction {
 
 		// New from Unofficial (BetaZavr)
 		compound.setString("Flag", flag != null ? flag.toString() : "");
-		compound.setString("Description", Component.Serializer.componentToJson(description));
+		compound.setString("Description", ITextComponent.Serializer.componentToJson(description));
 		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(frendFactions));
 		return compound;
 	}
@@ -185,12 +190,12 @@ public class Faction implements IFaction {
 
 	// New from Unofficial (BetaZavr)
 	@Override
-	public String getDescription() { return description.getString(); }
+	public String getDescription() { return description.getFormattedText(); }
 
 	@Override
 	public void setDescription(String descriptionIn) {
-		if (descriptionIn == null || descriptionIn.isEmpty()) { description = Component.empty(); }
-		else { description = Component.translatable(descriptionIn); }
+		if (descriptionIn == null || descriptionIn.isEmpty()) { description = new TextComponentString(""); }
+		else { description = new TextComponentTranslation(descriptionIn); }
 	}
 
 	@Override

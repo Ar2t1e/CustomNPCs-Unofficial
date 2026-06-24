@@ -57,7 +57,8 @@ public class ItemNpcWand extends Item implements INPCToolItem {
 		return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
 	}
 
-	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer playerIn, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
+	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer playerIn, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand,
+											   @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (world.isRemote) { return EnumActionResult.SUCCESS; }
 		EntityPlayerMP player = (EntityPlayerMP) playerIn;
 		if (CustomNpcs.OpsOnly && !Objects.requireNonNull(player.getServer()).getPlayerList().canSendCommands(player.getGameProfile())) {

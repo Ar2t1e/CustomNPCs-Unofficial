@@ -42,7 +42,6 @@ public class BlockScriptedRenderer<T extends TileScripted> extends TileEntitySpe
 			GlStateManager.translate(x + 0.5, y + 0.5, z + 0.5);
 			renderItem(new ItemStack(CustomBlocks.scripted));
 			GlStateManager.popMatrix();
-			GlStateManager.popMatrix();
 			return;
 		}
 		// Custom models

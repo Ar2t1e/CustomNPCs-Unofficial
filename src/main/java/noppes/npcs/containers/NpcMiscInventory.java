@@ -101,7 +101,7 @@ public class NpcMiscInventory extends InventoryBasic {
 	}
 
 	@Override
-	public @Nonnull ITextComponent getDisplayName() { return new Component("Custom Inventory"); }
+	public @Nonnull ITextComponent getDisplayName() { return new Component("Custom Inventory").getParent(); }
 
 	@Override
 	public int getInventoryStackLimit() { return stackLimit;}

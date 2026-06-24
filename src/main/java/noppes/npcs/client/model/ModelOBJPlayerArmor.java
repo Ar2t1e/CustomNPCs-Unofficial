@@ -18,7 +18,7 @@ import noppes.npcs.client.model.part.ModelOBJPart;
 import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.items.custom.CustomArmor;
-import noppes.npcs.reflection.client.renderer.entity.RenderPlayerReflection;
+import noppes.npcs.mixin.client.renderer.entity.IRenderPlayerMixin;
 
 import javax.annotation.Nonnull;
 
@@ -121,9 +121,7 @@ public class ModelOBJPlayerArmor extends ModelBiped {
 		if (entity instanceof EntityPlayerSP) {
 			Minecraft mc = Minecraft.getMinecraft();
 			Render<?> rp = mc.getRenderManager().getEntityRenderObject(entity);
-			if (rp instanceof RenderPlayer) {
-				smallArms = RenderPlayerReflection.getSmallArms((RenderPlayer) rp);
-			}
+			if (rp instanceof RenderPlayer) { smallArms = ((IRenderPlayerMixin) rp).getSmallArms(); }
 		}
 
 		// Initially nothing is visible

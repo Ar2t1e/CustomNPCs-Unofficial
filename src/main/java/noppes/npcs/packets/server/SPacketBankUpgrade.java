@@ -73,7 +73,7 @@ public class SPacketBankUpgrade extends PacketServerBasic {
          boolean isOwner = player.isCreative() || !cont.data.bank.isPublic || cont.data.bank.owner.isEmpty() || player.getName().equals(cont.data.bank.owner);
          boolean update = false;
          if (!isOwner) {
-            player.sendMessage(Component.translatable("bank.hover.changed.false").withStyle(TextFormatting.RED));
+            player.sendMessage(Component.translatable("bank.hover.changed.false").withStyle(TextFormatting.RED).getParent());
          }
          else {
             NpcMiscInventory inv = cont.data.get(ceil);
@@ -90,15 +90,15 @@ public class SPacketBankUpgrade extends PacketServerBasic {
                         Map<ItemStack, Integer> items = new HashMap<>();
                         items.put(cs.openStack, cs.openStack.getCount());
                         open = Util.instance.canRemoveItems(player.inventory.mainInventory, items, false, false);
-                        if (!open) { player.sendMessage(Component.translatable("hover.operation.not.items")); }
+                        if (!open) { player.sendMessage(Component.translatable("hover.operation.not.items").getParent()); }
                      }
                      if (cs.openMoney > 0) {
                         if (open) { open = data.game.getMoney() >= cs.openMoney; }
-                        if (!open) { player.sendMessage(Component.translatable("hover.operation.not.money")); }
+                        if (!open) { player.sendMessage(Component.translatable("hover.operation.not.money").getParent()); }
                      }
                      if (cs.openDonat > 0) {
                         if (open) { open = data.game.getDonat() >= cs.openDonat; }
-                        if (!open) { player.sendMessage(Component.translatable("hover.operation.not.donat")); }
+                        if (!open) { player.sendMessage(Component.translatable("hover.operation.not.donat").getParent()); }
                      }
                      if (open) {
                         if (!cs.openStack.isEmpty()) { Util.instance.removeItem(player, cs.openStack, false, false); }
@@ -115,15 +115,15 @@ public class SPacketBankUpgrade extends PacketServerBasic {
                         Map<ItemStack, Integer> items = new HashMap<>();
                         items.put(cs.upgradeStack, cs.upgradeStack.getCount() * size);
                         upgrade = Util.instance.canRemoveItems(player.inventory.mainInventory, items, false, false);
-                        if (!upgrade) { player.sendMessage(Component.translatable("hover.operation.not.items")); }
+                        if (!upgrade) { player.sendMessage(Component.translatable("hover.operation.not.items").getParent()); }
                      }
                      if (cs.upgradeMoney > 0) {
                         if (upgrade) { upgrade = data.game.getMoney() >= (long) cs.upgradeMoney * (long) size; }
-                        if (!upgrade) { player.sendMessage(Component.translatable("hover.operation.not.money")); }
+                        if (!upgrade) { player.sendMessage(Component.translatable("hover.operation.not.money").getParent()); }
                      }
                      if (cs.upgradeDonat > 0) {
                         if (upgrade) { upgrade = data.game.getDonat() >= cs.upgradeDonat; }
-                        if (!upgrade) { player.sendMessage(Component.translatable("hover.operation.not.donat")); }
+                        if (!upgrade) { player.sendMessage(Component.translatable("hover.operation.not.donat").getParent()); }
                      }
                      if (upgrade) {
                         if (!cs.openStack.isEmpty()) { Util.instance.removeItem(player, cs.upgradeStack, cs.upgradeStack.getCount() * size, false, false); }

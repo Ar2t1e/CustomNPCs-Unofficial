@@ -413,7 +413,7 @@ public class PacketSyncUpdate extends PacketBasic {
          }
       }
       if (isChanged != 0) {
-         player.sendMessage(Component.translatable("minimap.set.points." + isChanged, ChatFormatting.GRAY + mm.modName));
+         player.sendMessage(Component.translatable("minimap.set.points." + isChanged, ChatFormatting.GRAY + mm.modName).getParent());
       }
    }
 

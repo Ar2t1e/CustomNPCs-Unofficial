@@ -1,6 +1,7 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.PacketBasic;
@@ -12,7 +13,7 @@ public class PacketChat extends PacketBasic {
 
    public PacketChat() { }
 
-   public PacketChat(ITextComponent messageIn) { message = messageIn; }
+   public PacketChat(Component messageIn) { message = messageIn.getParent(); }
 
    @Override
    public void decode(FriendlyByteBuf buf) { message = buf.readComponent(); }

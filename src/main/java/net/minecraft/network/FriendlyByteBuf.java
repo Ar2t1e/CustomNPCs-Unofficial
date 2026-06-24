@@ -597,19 +597,12 @@ public class FriendlyByteBuf extends ByteBuf {
     public boolean release(int decrement) { return source.release(decrement); }
 
     // in 1.20.1
-    public Component readComponent() {
-        Component component = Component.Serializer.jsonToComponent(readUtf(262144));
-        if (component == null) {
-            throw new DecoderException("Received unexpected null component");
-        }
-        return component;
+    public ITextComponent readComponent() {
+        return Component.jsonToComponent(readUtf(262144)).getParent();
     }
 
     public void writeComponent(ITextComponent component) {
-        String content;
-        if (component instanceof Component) { content = Component.Serializer.componentToJson(component); }
-        else { content = ITextComponent.Serializer.componentToJson(component); }
-        writeUtf(content, 262144);
+        writeUtf(ITextComponent.Serializer.componentToJson(component), 262144);
     }
 
     @SuppressWarnings("unused")

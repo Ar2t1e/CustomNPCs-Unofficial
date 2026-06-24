@@ -11,7 +11,6 @@ import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockVine;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.RangedAttribute;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -75,8 +74,8 @@ import noppes.npcs.dimensions.CustomWorldProvider;
 import noppes.npcs.dimensions.DimensionHandler;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemScripted;
+import noppes.npcs.mixin.entity.ai.attributes.IRangedAttributeMixin;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.reflection.entity.ai.attributes.RangedAttributeReflection;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.DataDebug;
@@ -393,7 +392,7 @@ public class CustomNpcs {
                 new ChunkController());
 		customDimensionType = DimensionType.register("CustomDimensions", "CustomNpcs", "CustomDimensions".hashCode(), CustomWorldProvider.class, false);
 		proxy.preload();
-		RangedAttributeReflection.setMaxValue((RangedAttribute) SharedMonsterAttributes.MAX_HEALTH, Double.MAX_VALUE);
+		((IRangedAttributeMixin) SharedMonsterAttributes.MAX_HEALTH).setMaximumValue(Double.MAX_VALUE);
 		DataObject.load();
 	}
 

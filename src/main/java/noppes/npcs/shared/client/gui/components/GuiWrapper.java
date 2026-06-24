@@ -213,19 +213,20 @@ public class GuiWrapper {
 
     public void close() {
         GuiTextFieldNop.unfocus();
-        gui.save();
+        Minecraft mc = Minecraft.getMinecraft();
         if (parent != null) {
+            gui.save();
             if (parent instanceof IGuiInterface) {
                 parent.setFocused(false);
-                ((IGuiInterface)parent).getWrapper().subgui = null;
-                ((IGuiInterface)parent).subGuiClosed((GuiScreen) gui);
+                ((IGuiInterface) parent).getWrapper().subgui = null;
+                ((IGuiInterface) parent).subGuiClosed((GuiScreen) gui);
                 parent.initGui();
             }
-            else { gui.onClose(); }
-        } else {
-            Minecraft mc = Minecraft.getMinecraft();
-            mc.displayGuiScreen((GuiScreen) gui);
-            mc.mouseHelper.grabMouseCursor();
+            else { mc.displayGuiScreen(parent); }
+        }
+        else {
+            mc.displayGuiScreen(null);
+            mc.setIngameFocus();
         }
     }
 

@@ -64,7 +64,7 @@ public class SPacketPlayerDataCleaning extends PacketServerBasic {
                                 EntityPlayerMP p = server.getPlayerList().getPlayerByUsername(file.getName().substring(0, file.getName().length() - 5));
                                 if (p != null) {
                                     PlayerData.get(p).save(true);
-                                    p.sendMessage(Component.translatable("message.change.mod.data"));
+                                    p.sendMessage(Component.translatable("message.change.mod.data").getParent());
                                 }
                                 break;
                             }
@@ -73,8 +73,8 @@ public class SPacketPlayerDataCleaning extends PacketServerBasic {
                     }
                 }
             }
-            if (i > 0) { player.sendMessage(Component.translatable("message.data.cleaning.true", "" + i, "" + s)); }
-            else { player.sendMessage(Component.translatable("message.data.cleaning.false", "" + s)); }
+            if (i > 0) { player.sendMessage(Component.translatable("message.data.cleaning.true", "" + i, "" + s).getParent()); }
+            else { player.sendMessage(Component.translatable("message.data.cleaning.false", "" + s).getParent()); }
         }
         SPacketPlayerDataGet.sendPlayerData(EnumPlayerData.Players, player, player.getName());
         CustomNpcs.debugData.end("Packets");

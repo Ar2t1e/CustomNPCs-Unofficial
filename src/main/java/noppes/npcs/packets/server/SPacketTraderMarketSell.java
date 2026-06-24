@@ -92,7 +92,7 @@ public class SPacketTraderMarketSell extends PacketServerBasic {
             if (notSell) {
                 marcet.detectAndSendChanges();
                 Packets.send(player, new PacketUpdateMarcetGui());
-                player.sendMessage(Component.translatable("marcet.message.not.deal"));
+                player.sendMessage(Component.translatable("marcet.message.not.deal").getParent());
                 return;
             }
             marcet.money -= dm.sellMoney;
@@ -125,7 +125,7 @@ public class SPacketTraderMarketSell extends PacketServerBasic {
                 marcet.money -= dm.sellMoney;
             }
             if (deal.getMaxCount() != 0) { deal.setAmount(deal.getAmount() + dm.count); }
-            if (CustomNpcs.SendMarcetInfo) { player.sendMessage(Component.translatable("mes.market.sell", dm.main.getDisplayName() + " x" + dm.count)); }
+            if (CustomNpcs.SendMarcetInfo) { player.sendMessage(Component.translatable("mes.market.sell", dm.main.getDisplayName() + " x" + dm.count).getParent()); }
             data.game.addMarkupXP(marcet.getId(), count);
             if (npc != null) { EventHooks.onNPCRole(npc, new RoleEvent.TraderEvent(player, npc.wrappedNPC, dm.main, dm.sellItems)); }
             marcet.detectAndSendChanges();

@@ -135,8 +135,8 @@ public class GuiNpcAnimation extends GuiNPCInterface
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							anim.getSettingName(),
-							Component.translatable("message.delete"));
+							anim.getSettingName().getParent(),
+							Component.translatable("message.delete").getParent());
 					setScreen(guiYesNo);
 				}
 				break;

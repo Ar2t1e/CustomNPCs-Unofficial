@@ -41,9 +41,9 @@ public class CmdMoney extends CommandBase {
                         String name = (args.length > 2 && !args[2].isEmpty()) ? args[2] : null;
                         PlayerData data = getData(server, sender, name, CustomNpcsPermissions.MONEY_MANAGER);
                         if (name == null || sender.getName().equalsIgnoreCase(name)) {
-                            sender.sendMessage(Component.translatable("command.money.get.money", data.game.getMoney(), CustomNpcs.displayCurrencies));
+                            sender.sendMessage(Component.translatable("command.money.get.money", data.game.getMoney(), CustomNpcs.displayCurrencies).getParent());
                         } else {
-                            sender.sendMessage(Component.translatable("command.money.get.money.player", name, data.game.getMoney(), CustomNpcs.displayCurrencies));
+                            sender.sendMessage(Component.translatable("command.money.get.money.player", name, data.game.getMoney(), CustomNpcs.displayCurrencies).getParent());
                         }
                         break;
                     }
@@ -51,9 +51,9 @@ public class CmdMoney extends CommandBase {
                         String name = (args.length > 2 && !args[2].isEmpty()) ? args[2] : null;
                         PlayerData data = getData(server, sender, name, CustomNpcsPermissions.DONAT_MANAGER);
                         if (name == null || sender.getName().equalsIgnoreCase(name)) {
-                            sender.sendMessage(Component.translatable("command.money.get.donat", data.game.getMoney(), CustomNpcs.displayCurrencies));
+                            sender.sendMessage(Component.translatable("command.money.get.donat", data.game.getMoney(), CustomNpcs.displayCurrencies).getParent());
                         } else {
-                            sender.sendMessage(Component.translatable("command.money.get.donat.player", name, data.game.getMoney(), CustomNpcs.displayCurrencies));
+                            sender.sendMessage(Component.translatable("command.money.get.donat.player", name, data.game.getMoney(), CustomNpcs.displayCurrencies).getParent());
                         }
                         break;
                     }
@@ -76,18 +76,18 @@ public class CmdMoney extends CommandBase {
                         if (args.length == 4) { player = server.getPlayerList().getPlayerByUsername(name); }
                         if (player != null) {
                             if (player.getName().equals(sender.getName())) {
-                                sender.sendMessage(Component.translatable("command.money.set.money", value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.set.money", value, CustomNpcs.displayCurrencies).getParent());
                             }
                             else {
-                                sender.sendMessage(Component.translatable("command.money.set.money.player", name, value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.set.money.player", name, value, CustomNpcs.displayCurrencies).getParent());
                                 Component message = Component.translatable("command.money.set.money", value, CustomNpcs.displayCurrencies);
                                 if (sender instanceof EntityPlayerMP) {
                                     message.append(Component.literal(" <Admin: " + sender.getName() + ">").withStyle(TextFormatting.DARK_GRAY));
                                 }
-                                player.sendMessage(message);
+                                player.sendMessage(message.getParent());
                             }
                         } else {
-                            sender.sendMessage(Component.translatable("command.money.set.money.player", name, value, CustomNpcs.displayCurrencies));
+                            sender.sendMessage(Component.translatable("command.money.set.money.player", name, value, CustomNpcs.displayCurrencies).getParent());
                         }
                         if (data.player == null) { data.save(false); }
                         break;
@@ -100,18 +100,18 @@ public class CmdMoney extends CommandBase {
                         if (args.length == 4) { player = server.getPlayerList().getPlayerByUsername(name); }
                         if (player != null) {
                             if (player.getName().equals(sender.getName())) {
-                                sender.sendMessage(Component.translatable("command.money.set.donat", value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.set.donat", value, CustomNpcs.displayCurrencies).getParent());
                             }
                             else {
-                                sender.sendMessage(Component.translatable("command.money.set.donat.player", name, value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.set.donat.player", name, value, CustomNpcs.displayCurrencies).getParent());
                                 Component message = Component.translatable("command.money.set.donat", value, CustomNpcs.displayCurrencies);
                                 if (sender instanceof EntityPlayerMP) {
                                     message.append(Component.literal(" <Admin: " + sender.getName() + ">").withStyle(TextFormatting.DARK_GRAY));
                                 }
-                                player.sendMessage(message);
+                                player.sendMessage(message.getParent());
                             }
                         }
-                        else { sender.sendMessage(Component.translatable("command.money.set.donat.player", name, value, CustomNpcs.displayCurrencies)); }
+                        else { sender.sendMessage(Component.translatable("command.money.set.donat.player", name, value, CustomNpcs.displayCurrencies).getParent()); }
                         if (data.player == null) { data.save(false); }
                         break;
                     }
@@ -134,18 +134,18 @@ public class CmdMoney extends CommandBase {
                         if (args.length == 4) { player = server.getPlayerList().getPlayerByUsername(name); }
                         if (player != null) {
                             if (player.getName().equals(sender.getName())) {
-                                sender.sendMessage(Component.translatable("command.money.add.money", value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.add.money", value, CustomNpcs.displayCurrencies).getParent());
                             }
                             else {
-                                sender.sendMessage(Component.translatable("command.money.add.money.player", name, value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.add.money.player", name, value, CustomNpcs.displayCurrencies).getParent());
                                 Component message = Component.translatable("command.money.add.money", value, CustomNpcs.displayCurrencies);
                                 if (sender instanceof EntityPlayerMP) {
                                     message.append(Component.literal(" <Admin: " + sender.getName() + ">").withStyle(TextFormatting.DARK_GRAY));
                                 }
-                                player.sendMessage(message);
+                                player.sendMessage(message.getParent());
                             }
                         } else {
-                            sender.sendMessage(Component.translatable("command.money.add.money.player", name, value, CustomNpcs.displayCurrencies));
+                            sender.sendMessage(Component.translatable("command.money.add.money.player", name, value, CustomNpcs.displayCurrencies).getParent());
                         }
                         if (data.player == null) { data.save(false); }
                         break;
@@ -158,18 +158,18 @@ public class CmdMoney extends CommandBase {
                         if (args.length == 4) { player = server.getPlayerList().getPlayerByUsername(name); }
                         if (player != null) {
                             if (player.getName().equals(sender.getName())) {
-                                sender.sendMessage(Component.translatable("command.money.add.donat", value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.add.donat", value, CustomNpcs.displayCurrencies).getParent());
                             }
                             else {
-                                sender.sendMessage(Component.translatable("command.money.add.donat.player", name, value, CustomNpcs.displayCurrencies));
+                                sender.sendMessage(Component.translatable("command.money.add.donat.player", name, value, CustomNpcs.displayCurrencies).getParent());
                                 Component message = Component.translatable("command.money.add.donat", value, CustomNpcs.displayCurrencies);
                                 if (sender instanceof EntityPlayerMP) {
                                     message.append(Component.literal(" <Admin: " + sender.getName() + ">").withStyle(TextFormatting.DARK_GRAY));
                                 }
-                                player.sendMessage(message);
+                                player.sendMessage(message.getParent());
                             }
                         }
-                        else { sender.sendMessage(Component.translatable("command.money.add.donat.player", name, value, CustomNpcs.displayCurrencies)); }
+                        else { sender.sendMessage(Component.translatable("command.money.add.donat.player", name, value, CustomNpcs.displayCurrencies).getParent()); }
                         if (data.player == null) { data.save(false); }
                         break;
                     }

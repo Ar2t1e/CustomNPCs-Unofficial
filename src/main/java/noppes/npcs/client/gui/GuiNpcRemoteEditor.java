@@ -13,6 +13,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.village.MerchantRecipeList;
 import noppes.npcs.CustomNpcs;
@@ -108,7 +109,9 @@ public class GuiNpcRemoteEditor
 				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 					if (bo) { Packets.sendServer(new SPacketRemoteNpcDelete(dataIDs.get(scroll.getNormalSelected()), all)); }
 					NoppesUtil.openGUI(player, this);
-				}, Component.empty(), Component.translatable("message.delete"));
+				},
+						Component.empty().getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // remove entity
@@ -209,7 +212,7 @@ public class GuiNpcRemoteEditor
 		for (int i = 0; i < nbtList.tagCount(); ++i) {
 			NBTTagCompound nbt = nbtList.getCompoundTagAt(i);
 			int id = nbt.getInteger("Id");
-			Component name = Component.Serializer.jsonToComponent(nbt.getString("Name"));
+			ITextComponent name = Component.jsonToComponent(nbt.getString("Name")).getParent();
 			TextFormatting type;
 			switch (nbt.getInteger("Type")) {
 				case 1: type = TextFormatting.GREEN; break;
@@ -219,17 +222,21 @@ public class GuiNpcRemoteEditor
 				default: type = TextFormatting.GRAY; break;
 			}
 			Component distance = Component.literal(df.format(nbt.getFloat("Distance"))).withStyle(TextFormatting.GOLD);
+			ITextComponent tempName = name.createCopy();
+			tempName.getStyle().setColor(TextFormatting.RESET);
 			Component key = Component.empty()
 					.append(Component.literal("ID:" + id).withStyle(type))
-					.append(name.copy().withStyle(TextFormatting.RESET))
+					.append(tempName)
 					.append(Component.literal(" (").withStyle(TextFormatting.GRAY))
 					.append(distance)
 					.append(Component.literal(")").withStyle(TextFormatting.GRAY));
 			list.add(key);
 			dataIDs.put(key, id);
 			List<Component> hoverList = new ArrayList<>();
+			tempName = name.createCopy();
+			tempName.getStyle().setColor(TextFormatting.WHITE);
 			hoverList.add(Component.literal("Name: ").withStyle(TextFormatting.GRAY)
-					.append(name.copy().withStyle(TextFormatting.WHITE)));
+					.append(tempName));
 			hoverList.add(Component.literal("Entity ID: ").withStyle(TextFormatting.GRAY)
 					.append(Component.literal("" + id).withStyle(type)));
 			hoverList.add(Component.literal("Distance to: ").withStyle(TextFormatting.GRAY)

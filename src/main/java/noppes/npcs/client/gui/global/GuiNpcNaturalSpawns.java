@@ -153,8 +153,8 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("spawning.accept.message"),
-							Component.translatable("gui.acceptMessage"));
+							Component.translatable("spawning.accept.message").getParent(),
+							Component.translatable("gui.acceptMessage").getParent());
 					setScreen(guiYesNo);
 				}
 				else {

@@ -6,6 +6,7 @@ import java.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.client.ClientProxy;
@@ -458,8 +459,8 @@ public class GuiLog extends GuiNPCInterface
 								}
 								NoppesUtil.openGUI(player, this);
 							},
-									Component.translatable("drop.quest", qd.quest.getTitle().getString()),
-									Component.translatable("quest.cancel.info"));
+									Component.translatable("drop.quest", qd.quest.getTitle().getFormattedText()).getParent(),
+									Component.translatable("quest.cancel.info").getParent());
 							setScreen(guiYesNo);
 							break;
 						}
@@ -623,7 +624,8 @@ public class GuiLog extends GuiNPCInterface
 			draw("N", 0, 0, questLogColor, (int) (105.0f * scaleW));
 			GlStateManager.popMatrix();
 		}
-		draw(Component.translatable("quest.screen.pos").getString(), (int) (guiLLeft - 3.0f * scaleW), guiLTop - 1, questLogColor, (int) (105.0f * scaleW));
+		draw(Component.translatable("quest.screen.pos").getFormattedText(),
+				(int) (guiLLeft - 3.0f * scaleW), guiLTop - 1, questLogColor, (int) (105.0f * scaleW));
 
 		// window
 		GlStateManager.pushMatrix();
@@ -659,13 +661,13 @@ public class GuiLog extends GuiNPCInterface
 		if (compassData.showQuestName) {
 			Component text = Component.translatable("quest.setts.q.name");
 			int w = (int) (49.0f * scaleW) - ClientProxy.LogFont.width(text) / 2;
-			draw(text.getString(), w, 0, questLogColor, (int) (55.0f * scaleW));
+			draw(text.getParent().getFormattedText(), w, 0, questLogColor, (int) (55.0f * scaleW));
 			i = fontHeight;
 		}
 		if (compassData.showTaskProgress) {
 			Component text = Component.translatable("quest.setts.q.tasks");
 			int w = (int) (49.0f * scaleW) - ClientProxy.LogFont.width(text) / 2;
-			draw(text.getString(), w, i, questLogColor, (int) (55.0f * scaleW));
+			draw(text.getParent().getFormattedText(), w, i, questLogColor, (int) (55.0f * scaleW));
 		}
 		GlStateManager.popMatrix();
 	}
@@ -675,7 +677,8 @@ public class GuiLog extends GuiNPCInterface
 			return;
 		}
 		if (playerFactions.isEmpty()) {
-			draw(Component.translatable("faction.nostanding").getString(), guiLLeft, guiLTop, questLogColor, (int) (-98.0f * scaleW));
+			draw(Component.translatable("faction.nostanding").getFormattedText(),
+					guiLLeft, guiLTop, questLogColor, (int) (-98.0f * scaleW));
 			return;
 		}
 		if (playerFactions.size() > 16) {
@@ -774,15 +777,16 @@ public class GuiLog extends GuiNPCInterface
 			draw(f.getName(), (int) (3.0f * scaleW), (int) (2.0f * scaleH), questLogColor, (int) (87.0f * scaleW));
 
 			if (isMouseHover(mouseX, mouseY, (int) (guiLLeft + (i > 4 ? 105.0f : 0) * scaleW), (int) (guiLTop + (i % 8) * 19.0f * scaleH), (int) (98.0f * scaleW), (int) (16.0f * scaleH))) {
-				List<Component> hover = new ArrayList<>();
+				List<ITextComponent> hover = new ArrayList<>();
 				// GM
-				if (f.hideFaction) { hover.add(Component.translatable("faction.hover.hidden")); }
+				if (f.hideFaction) { hover.add(Component.translatable("faction.hover.hidden").getParent()); }
 				// name
-				Component hName = Component.empty();
-				if (player.isCreative()) { hName.append(Component.literal("ID:" + f.id + "; ").withStyle(TextFormatting.GRAY)); }
+				Component hName = Component.literal("");
+				if (player.isCreative()) { hName.append(Component.literal("ID:" + f.id + "; ").withStyle(TextFormatting.GRAY).getParent()); }
 				hover.add(hName.append(Component.translatable("gui.name").withStyle(TextFormatting.GRAY))
 						.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
-						.append(Component.translatable(f.getName()).withStyle(TextFormatting.RESET)));
+						.append(Component.translatable(f.getName()).withStyle(TextFormatting.RESET))
+						.getParent());
 				// attitude
 				Component attitude = Component.empty()
 						.append(Component.translatable("gui.attitude").withStyle(TextFormatting.GRAY))
@@ -790,14 +794,15 @@ public class GuiLog extends GuiNPCInterface
 				if (t == 0) { attitude.append(Component.translatable("faction.unfriendly").withStyle(TextFormatting.DARK_RED)); }
 				else if (t == 2) { attitude.append(Component.translatable("faction.friendly").withStyle(TextFormatting.DARK_GREEN)); }
 				else { attitude.append(Component.translatable("faction.neutral").withStyle(TextFormatting.GOLD)); }
-				hover.add(attitude);
+				hover.add(attitude.getParent());
 				// points
 				hover.add(Component.empty()
 						.append(Component.translatable("faction.points").withStyle(TextFormatting.GRAY))
 						.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
-						.append(Component.translatable(points + (nextPoint != 0 ? "/" + nextPoint : "")).withStyle(TextFormatting.RESET)));
-				if (!f.description.getString().isEmpty()) {
-					hover.add(Component.translatable("gui.description").withStyle(TextFormatting.GRAY));
+						.append(Component.translatable(points + (nextPoint != 0 ? "/" + nextPoint : "")).withStyle(TextFormatting.RESET))
+						.getParent());
+				if (!f.description.getFormattedText().isEmpty()) {
+					hover.add(Component.translatable("gui.description").withStyle(TextFormatting.GRAY).getParent());
 					hover.add(f.description);
 				}
 				setHoverText(hover);
@@ -826,7 +831,7 @@ public class GuiLog extends GuiNPCInterface
 			fontRenderer.drawSplitString(noFaction, guiLLeft, guiLTop, (int) (98.0f * scaleW), CustomNpcs.QuestLogColor.getRGB());
 			return;
 		}
-		List<Component> hover = new ArrayList<>();
+		List<ITextComponent> hover = new ArrayList<>();
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(guiLeft, guiTopLog + 23.5f * scaleH, 0.0f);
 		mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
@@ -1158,18 +1163,19 @@ public class GuiLog extends GuiNPCInterface
 				GlStateManager.pushMatrix();
 				GlStateManager.translate(29.0f * scaleW, 3.0f * scaleH, 0.0f);
 				StringBuilder name = new StringBuilder();
-				Component qName = quest.getTitle();
-                if (ClientProxy.LogFont.width(qName.getString()) < 67.0f * scaleW) {
-					name = new StringBuilder(qName.getString());
+				ITextComponent qName = quest.getTitle();
+                if (ClientProxy.LogFont.width(qName.getFormattedText()) < 67.0f * scaleW) {
+					name = new StringBuilder(qName.getFormattedText());
 				} else {
-					for (int j = 0; j < qName.getString().length(); j++) {
-						if (ClientProxy.LogFont.width(name.toString() + qName.getString().charAt(j) + "...") >= 67.0f * scaleW) {
+					for (int j = 0; j < qName.getFormattedText().length(); j++) {
+						if (ClientProxy.LogFont.width(name.toString() + qName.getFormattedText().charAt(j) + "...") >= 67.0f * scaleW) {
 							break;
 						}
-						name.append(qName.getString().charAt(j));
+						name.append(qName.getFormattedText().charAt(j));
 					}
 					name.append("...");
 				}
+				qName.getStyle().setColor(TextFormatting.RESET);
 				ClientProxy.LogFont.draw(name.toString(), 0, 0, questLogColor);
 				IQuestObjective[] objs = quest.getObjectives(player);
 				int j = 0;
@@ -1183,21 +1189,19 @@ public class GuiLog extends GuiNPCInterface
 
 				if (hoverButton > 29 && hoverQuestId == id) {
 					if (hoverButton == 30) {
-						hover.add(Component.translatable(
-								quest.extraButtonText.isEmpty() ? "quest.hover.extra.button" : quest.extraButtonText));
+						hover.add(Component.translatable(quest.extraButtonText.isEmpty() ? "quest.hover.extra.button" : quest.extraButtonText).getParent());
 						if (quest.extraButton == 0 && player.isCreative()) {
-							hover.add(Component.translatable("quest.hover.gm.info"));
+							hover.add(Component.translatable("quest.hover.gm.info").getParent());
 						}
 					} else if (hoverButton == 31) {
-						hover.add(Component.translatable(
-								"quest.hover.compass." + (compassData.questID == quest.id)));
+						hover.add(Component.translatable("quest.hover.compass." + (compassData.questID == quest.id)).getParent());
 						if (CustomNpcs.TypeShowQuestCompass == 4 && player.isCreative()) {
-							hover.add(Component.translatable("quest.hover.gm.info"));
+							hover.add(Component.translatable("quest.hover.gm.info").getParent());
 						}
 					} else if (hoverButton == 32) {
-						hover.add(Component.translatable("drop.quest", quest.getName()));
+						hover.add(Component.translatable("drop.quest", quest.getName()).getParent());
 						if (!quest.cancelable && player.isCreative()) {
-							hover.add(Component.translatable("quest.hover.gm.info"));
+							hover.add(Component.translatable("quest.hover.gm.info").getParent());
 						}
 					}
 				}
@@ -1207,16 +1211,19 @@ public class GuiLog extends GuiNPCInterface
 					hover.add(Component.empty()
 							.append(Component.translatable("drop.category").withStyle(TextFormatting.GRAY))
 							.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
-							.append(Component.literal(selectCat).withStyle(TextFormatting.RESET)));
+							.append(Component.literal(selectCat).withStyle(TextFormatting.RESET))
+							.getParent());
 					hover.add(Component.empty()
 							.append(Component.translatable("gui.name").withStyle(TextFormatting.GRAY))
 							.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
-							.append(qName.withStyle(TextFormatting.RESET)));
+							.append(qName)
+							.getParent());
 					hover.add(Component.empty()
 							.append(Component.translatable("gui.progress", ": ").withStyle(TextFormatting.GRAY))
-							.append(Component.literal(progress).withStyle(j >= objs.length ? TextFormatting.GREEN : TextFormatting.RED)));
+							.append(Component.literal(progress).withStyle(j >= objs.length ? TextFormatting.GREEN : TextFormatting.RED))
+							.getParent());
 					if (quest.completion == EnumQuestCompletion.Npc && quest.completer != null) {
-						hover.add(Component.translatable("quest.completewith", quest.completer.getName()));
+						hover.add(Component.translatable("quest.completewith", quest.completer.getName()).getParent());
 					}
 				}
 				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1371,14 +1378,13 @@ public class GuiLog extends GuiNPCInterface
 							temp++;
 							step = 2;
 							tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-							milliTick = tick - 1;
-						} else {
+                        } else {
 							temp = 0;
 							step = 3;
 							tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-							milliTick = tick - 1;
-						}
-						GlStateManager.disableBlend();
+                        }
+                        milliTick = tick - 1;
+                        GlStateManager.disableBlend();
 					}
 					break;
 				} // open lists

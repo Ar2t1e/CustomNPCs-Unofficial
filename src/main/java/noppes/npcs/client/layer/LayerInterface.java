@@ -41,7 +41,8 @@ implements LayerRenderer<T> {
 		return R << 16 | G << 8 | B;
 	}
 
-	public void doRenderLayer(@Nonnull EntityLivingBase entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
+	public void doRenderLayer(@Nonnull EntityLivingBase entity, float limbSwing, float limbSwingAmount, float partialTicks,
+							  float ageInTicks, float netHeadYaw, float headPitch, float scale) {
 		npc = (EntityCustomNpc) entity;
 		if (npc.isInvisibleToPlayer(Minecraft.getMinecraft().player)) { return; }
 		playerdata = npc.modelData;

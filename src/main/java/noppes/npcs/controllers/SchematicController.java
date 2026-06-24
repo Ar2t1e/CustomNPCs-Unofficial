@@ -46,7 +46,7 @@ public class SchematicController {
 			long ticks = 3000L + wrapper.size * SchematicController.time + (long) Math.floor((double) wrapper.size / CustomNpcs.MaxBuilderBlocks) * 1000L;
 			player.sendMessage(Component.translatable("schematic.info.started", wrapper.schema.getName(),
 					"" + pos.getX(), "" + pos.getY(), "" + pos.getZ(), player.world.provider.getDimension(),
-					Util.instance.ticksToElapsedTime(ticks, true, true, false)));
+					Util.instance.ticksToElapsedTime(ticks, true, true, false)).getParent());
 			SchematicController.Instance.build(wrapper, player);
 		}
 	}
@@ -217,7 +217,7 @@ public class SchematicController {
 
 
 	private void sendMessage(ICommandSender sender, Component message) {
-		if (sender != null) { sender.sendMessage(message); }
+		if (sender != null) { sender.sendMessage(message.getParent()); }
 	}
 
 	public void stop(ICommandSender sender) {

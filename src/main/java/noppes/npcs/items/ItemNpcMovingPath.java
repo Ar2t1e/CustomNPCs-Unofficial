@@ -53,7 +53,7 @@ public class ItemNpcMovingPath extends Item implements INPCToolItem {
 			compound.setInteger("NPCID", npc.getEntityId());
 			compound.setUniqueId("NPCUUID", npc.getUniqueID());
 			compound.setInteger("NPCDIM", npc.world.provider.getDimension());
-			player.sendMessage(Component.translatable("message.pather.register", npc.getName(), stack.getDisplayName()));
+			player.sendMessage(Component.translatable("message.pather.register", npc.getName(), stack.getDisplayName()).getParent());
 			if (player instanceof  EntityPlayerMP) {
 				Packets.send((EntityPlayerMP) player, new PacketMenuSave(npc, EnumMenuType.MOVING_PATH));
 			}
@@ -139,7 +139,7 @@ public class ItemNpcMovingPath extends Item implements INPCToolItem {
 				npc.ais.setStartPos(new BlockPos(x, y, z));
 				player.sendMessage(Component.translatable("message.pather.home",
 						((char) 167) + "6" + x, ((char) 167) + "6" + y, ((char) 167) + "6" + z,
-						npc.getName()));
+						npc.getName()).getParent());
 			}
 			else {
 				boolean added = true;
@@ -151,13 +151,13 @@ public class ItemNpcMovingPath extends Item implements INPCToolItem {
 					list.add(new int[] { x, y, z });
 					player.sendMessage(Component.translatable("message.pather.added",
 							((char) 167) + "6" + x, ((char) 167) + "6" + y, ((char) 167) + "6" + z,
-							npc.getName()));
+							npc.getName()).getParent());
 					double d0 = x - pos[0];
 					double d1 = y - pos[1];
 					double d2 = z - pos[2];
 					double distance = Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
 					if (distance > CustomNpcs.NpcNavRange) {
-						player.sendMessage(Component.translatable("message.pather.warn.added", ((char) 167) + "6" + CustomNpcs.NpcNavRange));
+						player.sendMessage(Component.translatable("message.pather.warn.added", ((char) 167) + "6" + CustomNpcs.NpcNavRange).getParent());
 					}
 					Packets.send((EntityPlayerMP) player, new PacketMenuSave(npc, EnumMenuType.AI));
 				}

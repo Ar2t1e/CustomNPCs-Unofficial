@@ -96,8 +96,8 @@ public class GuiMailbox extends GuiNPCInterface
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						scroll.getNormalSelected(),
-						Component.translatable("message.delete"));
+						scroll.getNormalSelected().getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // delete specific
@@ -113,8 +113,8 @@ public class GuiMailbox extends GuiNPCInterface
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.translatable("mailbox.name").append(":"),
-						Component.translatable("message.delete"));
+						Component.translatable("mailbox.name").append(":").getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // delete all only read letters
@@ -130,8 +130,8 @@ public class GuiMailbox extends GuiNPCInterface
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.translatable("mailbox.name").append(":"),
-						Component.translatable("message.delete"));
+						Component.translatable("mailbox.name").append(":").getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // delete all letters

@@ -1,11 +1,11 @@
 package noppes.npcs.api.handler.data;
 
-import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
+@SuppressWarnings("unused")
 public interface IQuestObjective { // QuestObjective
 
 	int getAreaRange();
@@ -32,7 +32,7 @@ public interface IQuestObjective { // QuestObjective
 
 	String getText();
 
-	Component getMCText();
+	ITextComponent getMCText();
 
 	int getType();
 

@@ -118,7 +118,7 @@ public class GuiPermissionsEdit extends GuiNPCInterface implements ICustomScroll
                 String error = "§c" + Util.instance.translateGoogle(player, "Player name must be at least 4 characters long and must not contain spaces or characters other than _");
                 if (error.contains("4")) { error = error.replace("4", "§64§c"); }
                 if (error.contains("_")) { error = error.replace("_", "'§f_§c'"); }
-                player.sendMessage(Component.literal(error));
+                player.sendMessage(Component.literal(error).getParent());
                 return;
             }
             String node = ((TextComponentTranslation) permissions.getNormalSelected().getContents()).getKey().substring(11);

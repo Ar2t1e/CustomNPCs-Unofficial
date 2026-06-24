@@ -13,11 +13,7 @@ import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.client.renderer.texture.ITextureManagerMixin;
 import noppes.npcs.mixin.client.renderer.texture.ITextureMapMixin;
-import noppes.npcs.mixin.client.resources.IFallbackResourceManagerMixin;
-import noppes.npcs.reflection.client.resources.AbstractResourcePackReflection;
-import noppes.npcs.reflection.client.resources.DefaultResourcePackReflection;
-import noppes.npcs.reflection.client.resources.LegacyV2AdapterReflection;
-import noppes.npcs.reflection.client.resources.ResourceIndexReflection;
+import noppes.npcs.mixin.client.resources.*;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
@@ -282,23 +278,20 @@ public class ResourceSelection
                 List<IResourcePack> packs = ((IFallbackResourceManagerMixin) p.getResourcePack()).getResourcePacks();
                 if (packs == null) { return; }
                 for (IResourcePack pack : packs) {
-                    if (pack instanceof LegacyV2Adapter) {
-                        pack = LegacyV2AdapterReflection.getIResourcePack((LegacyV2Adapter) pack);
-                    }
+                    if (pack instanceof LegacyV2Adapter) { pack = ((ILegacyV2AdapterMixin) pack).getPack(); }
                     if (pack instanceof DefaultResourcePack) {
-                        ResourceIndex resourceIndex = DefaultResourcePackReflection.getResourceIndex((DefaultResourcePack) pack);
-                        Map<String, File> resourceMap = ResourceIndexReflection.getResourceMap(resourceIndex);
+                        ResourceIndex resourceIndex = ((IDefaultResourcePackMixin) pack).getResourceIndex();
+                        Map<String, File> resourceMap = ((IResourceIndexMixin) resourceIndex).getResourceMap();
                         for (String key : resourceMap.keySet()) {
                             File f = resourceMap.get(key);
                             addFile(key, f.length());
                         }
                     }
                     else if (pack instanceof AbstractResourcePack) {
-                        File directory = AbstractResourcePackReflection.getResourcePackFile((AbstractResourcePack) pack);
+                        File directory = ((IAbstractResourcePackMixin) pack).getResourcePackFile();
                         if (directory == null || !directory.isDirectory()) { continue; }
                         File dir = new File(directory, "assets");
-                        if (!dir.exists() || !dir.isDirectory()) { continue; }
-                        checkFolder(dir);
+                        if (dir.exists() && dir.isDirectory()) { checkFolder(dir); }
                     }
                 }
             }

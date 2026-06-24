@@ -100,7 +100,7 @@ public class SPacketTraderMarketBuy extends PacketServerBasic {
             if (notBuy) {
                 marcet.detectAndSendChanges();
                 Packets.send(player, new PacketUpdateMarcetGui());
-                player.sendMessage(Component.translatable("marcet.message.not.deal"));
+                player.sendMessage(Component.translatable("marcet.message.not.deal").getParent());
                 return;
             }
             marcet.money += dm.sellMoney;
@@ -159,7 +159,7 @@ public class SPacketTraderMarketBuy extends PacketServerBasic {
         }
         if (bo) {
             if (deal.getMaxCount() != 0) { deal.setAmount(deal.getAmount() - dm.count); }
-            if (CustomNpcs.SendMarcetInfo) { player.sendMessage(Component.translatable("mes.market.buy", dm.main.getDisplayName() + " x" + dm.count)); }
+            if (CustomNpcs.SendMarcetInfo) { player.sendMessage(Component.translatable("mes.market.buy", dm.main.getDisplayName() + " x" + dm.count).getParent()); }
             NoppesUtilServer.playSound(player, SoundEvents.ENTITY_ITEM_PICKUP, 0.2f, ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7f + 1.0f) * 2.0f);
             Util.instance.updatePlayerInventory(player);
             data.game.addMarkupXP(marcet.getId(), 5 * count);

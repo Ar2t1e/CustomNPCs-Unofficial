@@ -221,8 +221,8 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						Component.translatable(categoryData.get(selectedCategory).title),
-						Component.translatable("message.delete"));
+						Component.translatable(categoryData.get(selectedCategory).title).getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // del cat
@@ -280,8 +280,8 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 					}
 					NoppesUtil.openGUI(player, this);
 				},
-						dialogData.get(selectedDialog).getKey(),
-						Component.translatable("message.delete"));
+						dialogData.get(selectedDialog).getKey().getParent(),
+						Component.translatable("message.delete").getParent());
 				setScreen(guiYesNo);
 				break;
 			} // del dialog

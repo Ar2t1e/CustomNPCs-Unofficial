@@ -78,7 +78,8 @@ public class PacketSendFilePart extends PacketBasic {
                             .append(Component.literal(normalFile.getAbsolutePath()).withStyle(TextFormatting.WHITE))
                             .append(Component.literal("\" (").withStyle(TextFormatting.GRAY))
                             .append(s)
-                            .append(Component.literal("b)").withStyle(TextFormatting.GRAY)));
+                            .append(Component.literal("b)").withStyle(TextFormatting.GRAY))
+                            .getParent());
                 }
                 // Put to session
                 ScriptController.Instance.clients.put(name, file.getDataText());

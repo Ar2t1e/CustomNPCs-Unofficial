@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import net.minecraft.network.chat.Component;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.Minecraft;
@@ -15,7 +16,6 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.IChatMessages;
 
@@ -25,9 +25,8 @@ public class RenderChatMessages implements IChatMessages {
 	private String lastMessage = "";
 	private long lastMessageTime = 0L;
 	private Map<Long, TextBlockClient> messages = new TreeMap<>();
-	private final float scale = 0.5f;
 
-	@Override
+    @Override
 	public void addMessage(String message, Entity entity) {
 		if (!CustomNpcs.EnableChatBubbles) {
 			return; }
@@ -100,7 +99,8 @@ public class RenderChatMessages implements IChatMessages {
 		if (size == 0) { return; }
 		GlStateManager.pushMatrix();
 		Minecraft mc = Minecraft.getMinecraft();
-		int textYSize = (int) (size * font.FONT_HEIGHT * scale);
+        float scale = 0.5f;
+        int textYSize = (int) (size * font.FONT_HEIGHT * scale);
 		GlStateManager.translate(x + 0.0f, y + textYSize * textscale * var14, z);
 		GlStateManager.scale(textscale, textscale, textscale);
 		GL11.glNormal3f(0.0f, 1.0f, 0.0f);
@@ -124,7 +124,7 @@ public class RenderChatMessages implements IChatMessages {
 		GlStateManager.enableCull();
 		int w = 0;
 		for (TextBlockClient block2 : messages.values()) {
-			for (ITextComponent chat : block2.lines) {
+			for (Component chat : block2.lines) {
 				int g = font.getStringWidth(chat.getFormattedText()) / 3;
 				if (g > w) { w = g; }
 			}
@@ -153,7 +153,7 @@ public class RenderChatMessages implements IChatMessages {
 		GlStateManager.scale(scale, scale, scale);
 		int index = 0;
 		for (TextBlockClient block2 : messages.values()) {
-			for (ITextComponent chat : block2.lines) {
+			for (Component chat : block2.lines) {
 				String message = chat.getFormattedText();
 				font.drawString(message, -font.getStringWidth(message) / 2, index * font.FONT_HEIGHT, color);
 				++index;

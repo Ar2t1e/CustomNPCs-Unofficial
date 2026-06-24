@@ -28,7 +28,7 @@ public class ContainerCustomGui extends Container {
 
 	public ContainerCustomGui(NBTTagCompound dataIn) {
 		data = dataIn;
-		guiInventory = new InventoryBasic(Component.empty(), 0);
+		guiInventory = new InventoryBasic(Component.empty().getParent(), 0);
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class ContainerCustomGui extends Container {
 
 	public void setGui(CustomGuiWrapper gui, EntityPlayer player) {
 		activeGui = gui.getActiveGui();
-		guiInventory = new InventoryBasic(Component.empty(), activeGui.getSlots().size() + activeGui.getScrollingPanel().getSlots().size());
+		guiInventory = new InventoryBasic(Component.empty().getParent(), activeGui.getSlots().size() + activeGui.getScrollingPanel().getSlots().size());
 		customGui = gui;
 		inventorySlots.clear();
 		for (IItemSlot slot : activeGui.getSlots()) {
