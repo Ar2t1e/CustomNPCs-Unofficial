@@ -72,6 +72,7 @@ public class NoppesUtil {
    // New from Unofficial (BetaZavr)
    @SuppressWarnings("ConstantConditions")
    private static synchronized void setLocalization(String key, String value) {
+      // net.minecraftforge.common.ForgeI18n
       File langDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/lang");
       if (!langDir.exists() && !langDir.mkdirs()) { return; }
       boolean isExample = key.contains("example") && value.contains("Example");
