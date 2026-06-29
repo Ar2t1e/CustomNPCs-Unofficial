@@ -16,7 +16,6 @@ import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.util.CustomNPCsScheduler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -60,10 +59,8 @@ public abstract class PacketServerBasic extends PacketBasic {
                      return;
                   }
                }
-               CustomNPCsScheduler.runTack(()-> {
-                  if (!parent.toolAllowed(parent.player.getInventory().getSelected())) { parent.warn(prs.toString()); }
-                  else { parent.handle(); }
-               });
+               if (!parent.toolAllowed(parent.player.getInventory().getSelected())) { parent.warn(prs.toString()); }
+               else { parent.handle(); }
             }
          } catch (Exception e) { LOGGER.error(e); }
       });

@@ -468,7 +468,7 @@
 	"bard.loops": "Wiederholen",
 	"bard.offdistance": "Abstand aus",
 	"bard.ondistance": "Entfernung inkl.",
-	"barrier.copied.around": "§8Einstellungen von der Nachbarbarriere kopiert und installiert",
+	"copy.settings.adjacent.block": "§8Einstellungen von der Nachbarbarriere kopiert und installiert",
 	"beacon.affect": "Emotionen",
 	"beacon.amplifier": "Gewinnen",
 	"beacon.applicability": "Anwendbarkeit",

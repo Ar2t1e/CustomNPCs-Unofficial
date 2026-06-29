@@ -467,7 +467,7 @@
 	"bard.loops": "반복하다",
 	"bard.offdistance": "거리 떨어져",
 	"bard.ondistance": "거리 포함",
-	"barrier.copied.around": "§8이웃 장벽에서 설정을 복사하여 설치했습니다.",
+	"copy.settings.adjacent.block": "§8이웃 장벽에서 설정을 복사하여 설치했습니다.",
 	"beacon.affect": "감정",
 	"beacon.amplifier": "얻다",
 	"beacon.applicability": "적용성",

@@ -100,6 +100,7 @@ import noppes.npcs.client.renderer.MarkRenderer;
 import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.client.util.CrashesData;
+import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.client.util.MusicData;
 import noppes.npcs.constants.*;
 import noppes.npcs.controllers.*;
@@ -1413,6 +1414,7 @@ public class ClientEventHandler {
             updateMiniMaps(true);
             YDEController.getInstance().getLevelData(ScriptController.getLevelKey());
             EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.LOGIN, new PlayerEvent.LoginEvent(data.scriptData.getPlayer()));
+            CustomNpcsLangPack.check();
             LogWriter.debug("Client Player: Start game");
         }
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {

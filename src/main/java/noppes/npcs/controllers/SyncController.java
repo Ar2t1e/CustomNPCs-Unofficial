@@ -75,11 +75,9 @@ public class SyncController {
       CompoundTag compound = new CompoundTag();
       ListTag list = new ListTag();
       for (ServerLevel level : CustomNpcs.Server.getAllLevels()) {
-         DimensionData data = DimensionController.get(level);
-         CompoundTag nbt = data.save();
-         nbt.putBoolean("loaded", level.isLoaded(BlockPos.ZERO));
-         nbt.putString("name", level.dimension().location().toString());
-         list.add(nbt);
+         DimensionData dd = DimensionController.get(level);
+         dd.isLoad = level.isLoaded(BlockPos.ZERO);
+         list.add(dd.save());
       }
       compound.put("Data", list);
       Packets.send(player, new PacketSync(9, compound, true));

@@ -1,10 +1,14 @@
 package noppes.npcs.blocks;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,7 +32,6 @@ import noppes.npcs.CustomItems;
 import noppes.npcs.blocks.tiles.TileBorder;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.packets.server.SPacketGuiOpen;
-import org.jetbrains.annotations.NotNull;
 
 public class BlockBorder extends BlockInterface {
 
@@ -42,9 +45,9 @@ public class BlockBorder extends BlockInterface {
       builder.add(ROTATION);
    }
 
-   /** @deprecated */
-   @Deprecated
-   public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult ray) {
+   @Override
+   @SuppressWarnings("deprecation")
+   public @Nonnull InteractionResult use(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult ray) {
       ItemStack currentItem = player.getInventory().getSelected();
       if (!level.isClientSide && currentItem.getItem() == CustomItems.wand) {
          SPacketGuiOpen.sendOpenGui((ServerPlayer) player, EnumGuiType.Border, null, pos);
@@ -53,48 +56,97 @@ public class BlockBorder extends BlockInterface {
       return InteractionResult.PASS;
    }
 
+   @Override
    public BlockState getStateForPlacement(BlockPlaceContext context) {
-      if (context.getPlayer() != null) {
-         int l = Mth.floor((double)(context.getPlayer().getYRot() * 4.0F / 360.0F) + 0.5D) & 3;
-         return this.defaultBlockState().setValue(ROTATION, l);
-      } else {
-         return super.getStateForPlacement(context);
-      }
+      if (context.getPlayer() != null) { return defaultBlockState().setValue(ROTATION,  Direction.fromYRot(context.getPlayer().getYRot()).get2DDataValue()); }
+      else { return super.getStateForPlacement(context); }
    }
 
-   public void setPlacedBy(Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, @NotNull ItemStack item) {
-      TileBorder tile = (TileBorder)level.getBlockEntity(pos);
-      if (tile == null) { return; }
-      TileBorder adjacent = this.getTile(level, pos.west());
-      if (adjacent == null) { adjacent = this.getTile(level, pos.south()); }
-      if (adjacent == null) { adjacent = this.getTile(level, pos.north()); }
-      if (adjacent == null) { adjacent = this.getTile(level, pos.east()); }
-      if (adjacent != null) {
-         CompoundTag compound = new CompoundTag();
-         adjacent.writeExtraNBT(compound);
-         tile.readExtraNBT(compound);
-      }
-      tile.rotation = state.getValue(ROTATION);
-      if (!level.isClientSide && entity instanceof ServerPlayer player) {
-         SPacketGuiOpen.sendOpenGui(player, EnumGuiType.Border, null, pos);
+   @Override
+   public void setPlacedBy(Level level, @Nonnull BlockPos pos, @Nonnull BlockState state,
+                           @Nullable LivingEntity entity, @Nonnull ItemStack item) {
+      if (level.getBlockEntity(pos) instanceof TileBorder borderTile) {
+         TileBorder adjacent = null;
+         for (Direction facing : Direction.values()) {
+            adjacent = getAdjacentTile(level, pos.relative(facing));
+            if (adjacent != null) break;
+         }
+         if (adjacent == null) {
+            for (int i = 0; i < 3; i++) {
+               BlockPos tempPos = i == 0 ? pos : i == 1 ? pos.above() : pos.below();
+               if (i != 0) {
+                  for (int j = 0; j < 4; j++) {
+                     BlockPos p = switch (j) {
+                        case 1 -> tempPos.south();
+                        case 2 -> tempPos.west();
+                        case 3 -> tempPos.north();
+                        default -> tempPos.east();
+                     };
+                     adjacent = getAdjacentTile(level, p);
+                     if (adjacent != null) break;
+                  }
+                  if (adjacent != null) break;
+               }
+               for (int j = 0; j < 4; j++) {
+                  BlockPos p = switch (j) {
+                     case 1 -> tempPos.south().east();
+                     case 2 -> tempPos.south().west();
+                     case 3 -> tempPos.north().east();
+                     default -> tempPos.north().west();
+                  };
+                  adjacent = getAdjacentTile(level, p);
+                  if (adjacent != null) break;
+               }
+               if (adjacent != null) break;
+            }
+         }
+         if (adjacent != null) {
+            CompoundTag compound = new CompoundTag();
+            adjacent.writeExtraNBT(compound);
+            borderTile.readExtraNBT(compound);
+         }
+         borderTile.rotation = state.getValue(ROTATION);
+
+         CompoundTag nbt = new CompoundTag();
+         borderTile.saveAdditional(nbt);
+         level.setBlock(pos, state.setValue(ROTATION, borderTile.rotation), 3);
+         BlockEntity newTile = level.getBlockEntity(pos);
+         if (newTile instanceof TileBorder) {
+            newTile.load(nbt);
+            newTile.setChanged();
+         }
+
+         if (!level.isClientSide && entity instanceof ServerPlayer player) {
+            if (adjacent == null) { SPacketGuiOpen.sendOpenGui(player, EnumGuiType.Border, null, pos); }
+            else {
+               player.sendSystemMessage(Component.translatable("copy.settings.adjacent.block",
+                       ChatFormatting.GRAY + "" + adjacent.getBlockPos().getX(),
+                       ChatFormatting.GRAY + "" + adjacent.getBlockPos().getY(),
+                       ChatFormatting.GRAY + "" + adjacent.getBlockPos().getZ()));
+            } // Copy
+         }
       }
 
    }
 
-   private TileBorder getTile(Level level, BlockPos pos) {
+   private TileBorder getAdjacentTile(Level level, BlockPos pos) {
       BlockEntity tile = level.getBlockEntity(pos);
-      return tile instanceof TileBorder ? (TileBorder)tile : null;
+      Block block = level.getBlockState(pos).getBlock();
+      if (tile instanceof TileBorder borderTile && block instanceof BlockBorder) {
+         return borderTile;
+      }
+      return null;
    }
 
-   public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
+   public @Nonnull RenderShape getRenderShape(@Nonnull BlockState state) {
       return RenderShape.MODEL;
    }
 
-   public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
+   public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) {
       return new TileBorder(pos, state);
    }
 
-   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
+   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
       return createTickerHelper(type, CustomBlocks.tile_border, TileBorder::tick);
    }
 }

@@ -95,6 +95,7 @@ import noppes.npcs.client.particles.CustomParticleType;
 import noppes.npcs.client.parts.ModelData;
 import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.client.util.ClientRecipeRegister;
+import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.config.CustomNpcsGuiFactory;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.containers.ContainerCustomGui;
@@ -167,6 +168,7 @@ public class ClientProxy extends CommonProxy {
       }
    }
 
+   @Override
    public void load() {
       enqueueWork(() -> {
          Font = new FontContainer(CustomNpcs.FontType, CustomNpcs.FontSize);
@@ -236,6 +238,7 @@ public class ClientProxy extends CommonProxy {
                });
             }
          }
+         CustomNpcsLangPack.load();
       });
    }
 
@@ -267,7 +270,6 @@ public class ClientProxy extends CommonProxy {
       }, CustomItems.scripted_item);
       mcWrapper = new WrapperMinecraft(mc);
       ArmorersWorkshopHelper.register();
-      NoppesUtil.jsonMap.clear();
    }
 
    private void createFolders() {
@@ -350,6 +352,7 @@ public class ClientProxy extends CommonProxy {
          case PlayerMailbox: returnGui = new GuiMailbox(); break;
          case NpcDimensions: returnGui = new GuiNpcDimension(); break;
          case Border: returnGui = new GuiBorderBlock(preEvent.buffer.readBlockPos()); break;
+         case Portal: returnGui = new GuiPortalBlock(preEvent.buffer.readBlockPos()); break;
          case RedstoneBlock: returnGui = new GuiNpcRedstoneBlock(preEvent.buffer.readBlockPos()); break;
          case MobSpawner: returnGui = new GuiNpcMobSpawner(preEvent.buffer.readBlockPos()); break;
          case CopyBlock: returnGui = new GuiBlockCopy(preEvent.buffer.readBlockPos()); break;
@@ -413,6 +416,7 @@ public class ClientProxy extends CommonProxy {
       }
    }
 
+   @Override
    public void spawnParticle(LivingEntity player, String string, Object... ob) {
       Minecraft mc = Minecraft.getInstance();
       if (string.equals("Block")) {
@@ -435,8 +439,10 @@ public class ClientProxy extends CommonProxy {
       }
    }
 
+   @Override
    public @Nullable Player getPlayer() { return Minecraft.getInstance().player; }
 
+   @Override
    public void spawnParticle(ParticleOptions particle, double x, double y, double z, double motionX, double motionY, double motionZ, float scale) {
       Minecraft mc = Minecraft.getInstance();
       double xx = Objects.requireNonNull(mc.getCameraEntity()).getX() - x;

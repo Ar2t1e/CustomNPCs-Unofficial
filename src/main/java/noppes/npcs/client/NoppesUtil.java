@@ -3,12 +3,9 @@ package noppes.npcs.client;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.language.LanguageManager;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -20,6 +17,7 @@ import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.blocks.custom.*;
 import noppes.npcs.client.particles.CustomParticleType;
+import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.blocks.custom.CustomLiquidBlock;
 import noppes.npcs.fluids.CustomFluid;
@@ -28,7 +26,6 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketGuiOpen;
 import noppes.npcs.potions.PotionData;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.util.NBTJsonUtil;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
@@ -55,7 +52,6 @@ public class NoppesUtil {
            new float[]{ 0.420914f, 0.475206f, 0.390010f },
            new float[]{ 0.599526f, 0.877617f, 0.661491f }
    };
-   public static final Map<String, String> jsonMap = new TreeMap<>();
 
    public static void requestOpenGUI(EnumGuiType gui) { requestOpenGUI(gui, BlockPos.ZERO); }
 
@@ -70,84 +66,6 @@ public class NoppesUtil {
    public static void clickSound() { Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)); }
 
    // New from Unofficial (BetaZavr)
-   @SuppressWarnings("ConstantConditions")
-   private static synchronized void setLocalization(String key, String value) {
-      // net.minecraftforge.common.ForgeI18n
-      File langDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/lang");
-      if (!langDir.exists() && !langDir.mkdirs()) { return; }
-      boolean isExample = key.contains("example") && value.contains("Example");
-      boolean isTranslate = false;
-      String currentLanguage = "en_en";
-      LanguageManager lm = Minecraft.getInstance().getLanguageManager();
-      if (lm != null) { currentLanguage = lm.getSelected(); }
-      else {
-         File dir = CustomNpcs.getLevelSaveDirectory();
-         if (dir != null) {
-            try {
-               File options = new File(dir, "options.txt");
-               if (options.exists()) {
-                  BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(options.toPath()), StandardCharsets.UTF_8));
-                  String line;
-                  while ((line = reader.readLine()) != null) {
-                     if (line.startsWith("lang:")) {
-                        currentLanguage = line.replace("lang:", "");
-                        break;
-                     }
-                  }
-                  reader.close();
-               }
-            }
-            catch (Exception ignored) {}
-         }
-      }
-      String translateValue = value;
-      if (!currentLanguage.equals("en_us")) {
-         String language = currentLanguage;
-         if (currentLanguage.contains("_")) {
-            if (currentLanguage.equals("zh_cn")) { language = "zh_CN"; }
-            else if (currentLanguage.equals("zh_tw")) { language = "zh_TW"; }
-            else { language = currentLanguage.substring(0, currentLanguage.indexOf("_")); }
-         }
-         translateValue = Util.instance.translateGoogle("en", language, value);
-         isTranslate = !translateValue.equals(value);
-      }
-      boolean write = false;
-      for (int i = 0; i < 2; i++) {
-         if (i == 1 && currentLanguage.equals("en_us")) { break; }
-         File lang = new File(langDir, (i == 0 ? "en_us" : currentLanguage) + ".json");
-         if (jsonMap.isEmpty()) {
-            if (lang.exists()) {
-               try {
-                  String str = Files.readString(lang.toPath(), StandardCharsets.UTF_8);
-                  if (!str.isEmpty()) {
-                     CompoundTag nbt = NBTJsonUtil.Convert(str);
-                     for (String k : nbt.getAllKeys()) { jsonMap.put(k, nbt.getString(k)); }
-                  }
-               }
-               catch (Exception e) { LogWriter.error(e); }
-            }
-         }
-         if (!jsonMap.containsKey(key) || isExample) { jsonMap.put(key, (isTranslate ? translateValue : value)); }
-         try (BufferedWriter writer = Files.newBufferedWriter(lang.toPath())) {
-            CompoundTag nbt = new CompoundTag();
-            StringBuilder jsonStr = new StringBuilder("{" + ((char) 10));
-            int j = 0;
-            for (String k : jsonMap.keySet()) {
-               nbt.putString(k, jsonMap.get(k));
-               jsonStr.append((char) 9).append("\"").append(k).append("\": \"").append(jsonMap.get(k)).append("\"");
-               if (j < jsonMap.size() - 1) { jsonStr.append(","); }
-               jsonStr.append((char) 10);
-               j++;
-            }
-            writer.write(jsonStr.append("}").toString());
-            writer.close();
-            write = true;
-            NBTJsonUtil.SaveFile(lang, nbt);
-         } catch (Exception e) { LogWriter.error(e); }
-      }
-      if (write) { LogWriter.debug("Create Default Localization key \"" + key + "\""); }
-   }
-
    public static @Nonnull BufferedImage getBufferImageOffset(@Nonnull BufferedImage bufferedImage, float hueShift) {
       try {
          for (int u = 0; u < bufferedImage.getWidth(); u++) {
@@ -243,7 +161,7 @@ public class NoppesUtil {
          n += " (" + t.toUpperCase().charAt(0) + t.substring(1) + ")";
       }
       while (n.indexOf('_') != -1) { n = n.replace('_', ' '); }
-      setLocalization("item." + CustomNpcs.MODID + "." + fileName, n);
+      CustomNpcsLangPack.added("item." + CustomNpcs.MODID + "." + fileName, n);
 
       // directories
       File texturesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/item");
@@ -379,14 +297,22 @@ public class NoppesUtil {
          n = "Example Custom " + t.toUpperCase().charAt(0) + t.substring(1);
       }
       while (n.indexOf('_') != -1) { n = n.replace('_', ' '); }
-      setLocalization("block." + CustomNpcs.MODID + "." + fileName, n);
+      CustomNpcsLangPack.added("block." + CustomNpcs.MODID + "." + fileName, n);
       if (customblock instanceof CustomChest chest) {
-         setLocalization("custom.chest." + name, "Custom " + (chest.isChest ? "Chest" : "Container") + ": " + n);
+         CustomNpcsLangPack.added("custom.chest." + name, "Custom " + (chest.isChest ? "Chest" : "Container") + ": " + n);
       }
       else if (customblock instanceof CustomLiquidBlock) {
-         setLocalization("item." + CustomNpcs.MODID + "." + fileName + "_bucket", n);
-         setLocalization("item." + CustomNpcs.MODID + "." + fileName + "_bottle", n);
-         setLocalization("fluid." + fileName, n);
+         CustomNpcsLangPack.added("item." + CustomNpcs.MODID + "." + fileName + "_bucket", n);
+         CustomNpcsLangPack.added("item." + CustomNpcs.MODID + "." + fileName + "_bottle", n);
+         CustomNpcsLangPack.added("fluid." + fileName, n);
+      }
+      if (customblock instanceof CustomBlockSlab) {
+         if (isExample) {
+            String t = name.replace("example", "");
+            n = "Example Custom Double" + t.toUpperCase().charAt(0) + t.substring(1);
+         }
+         else { n += " Double"; }
+         CustomNpcsLangPack.added("item." + CustomNpcs.MODID + ".custom_double_" + name, n);
       }
 
       // textures
@@ -580,7 +506,7 @@ public class NoppesUtil {
          n = "Example Custom " + (name.toLowerCase().contains("_obj_") ? "OBJ" : "") + "Particle";
       }
       while (n.indexOf('_') != -1) { n = n.replace('_', ' '); }
-      setLocalization("particle." + name, n);
+      CustomNpcsLangPack.added("particle." + name, n);
 
       File modelDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/models/particle");
       File texturesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/particle");
@@ -620,13 +546,13 @@ public class NoppesUtil {
       }
       while (n.indexOf('_') != -1) { n = n.replace('_', ' '); }
 
-      setLocalization("effect." + CustomNpcs.MODID + ".custom_potion_" + name, n);
+      CustomNpcsLangPack.added("effect." + CustomNpcs.MODID + ".custom_potion_" + name, n);
       String itemPart = "item.minecraft.";
       String effectPart = ".effect.custom_potion_" + name;
-      setLocalization(itemPart + "potion" + effectPart, n);
-      setLocalization(itemPart + "splash_potion." + effectPart, name.equals("potionexample") ? "Example Custom Splash Potion" : n + " Splash");
-      setLocalization(itemPart + "lingering_potion" + effectPart, name.equals("potionexample") ? "Example Custom Lingering Potion" : n + " Lingering");
-      setLocalization(itemPart + "tipped_arrow" + effectPart, name.equals("potionexample") ? "Example Custom Arrow Potion" : n + " Arrow");
+      CustomNpcsLangPack.added(itemPart + "potion" + effectPart, n);
+      CustomNpcsLangPack.added(itemPart + "splash_potion." + effectPart, name.equals("potionexample") ? "Example Custom Splash Potion" : n + " Splash");
+      CustomNpcsLangPack.added(itemPart + "lingering_potion" + effectPart, name.equals("potionexample") ? "Example Custom Lingering Potion" : n + " Lingering");
+      CustomNpcsLangPack.added(itemPart + "tipped_arrow" + effectPart, name.equals("potionexample") ? "Example Custom Arrow Potion" : n + " Arrow");
 
       File texturesDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/textures/mob_effect");
       if (texturesDir.exists() || texturesDir.mkdirs()) {

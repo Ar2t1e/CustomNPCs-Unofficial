@@ -459,7 +459,7 @@
 	"bard.loops": "Repita",
 	"bard.offdistance": "Distância",
 	"bard.ondistance": "Distância incl.",
-	"barrier.copied.around": "§8Configurações copiadas e instaladas da barreira vizinha",
+	"copy.settings.adjacent.block": "§8Configurações copiadas e instaladas da barreira vizinha",
 	"beacon.affect": "Emoções",
 	"beacon.amplifier": "Ganho",
 	"beacon.applicability": "Aplicabilidade",

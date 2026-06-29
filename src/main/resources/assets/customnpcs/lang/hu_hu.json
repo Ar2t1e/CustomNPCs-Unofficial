@@ -467,7 +467,7 @@
 	"bard.loops": "Ismétlés",
 	"bard.offdistance": "Távolság",
 	"bard.ondistance": "Távolság, beleértve",
-	"barrier.copied.around": "§8Beállítások másolva és telepítve a szomszédos sorompóról",
+	"copy.settings.adjacent.block": "§8Beállítások másolva és telepítve a szomszédos sorompóról",
 	"beacon.affect": "Érzelmek",
 	"beacon.amplifier": "Nyereség",
 	"beacon.applicability": "Alkalmazhatóság",

@@ -468,7 +468,7 @@
 	"bard.loops": "Tekrarlamak",
 	"bard.offdistance": "Uzak mesafe",
 	"bard.ondistance": "Mesafe dahil.",
-	"barrier.copied.around": "§8Komşu bariyerden kopyalanan ve yüklenen ayarlar",
+	"copy.settings.adjacent.block": "§8Komşu bariyerden kopyalanan ve yüklenen ayarlar",
 	"beacon.affect": "Duygular",
 	"beacon.amplifier": "Kazanmak",
 	"beacon.applicability": "Uygulanabilirlik",

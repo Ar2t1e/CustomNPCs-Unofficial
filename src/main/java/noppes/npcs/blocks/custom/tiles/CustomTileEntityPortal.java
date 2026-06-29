@@ -19,6 +19,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.custom.CustomBlockPortal;
 import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
@@ -26,12 +27,13 @@ import java.util.Objects;
 
 public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
 
+    public Availability availability = new Availability();
     protected ResourceLocation SKY_TEXTURE;
     protected ResourceLocation PORTAL_TEXTURE;
     protected float alpha = 0.0f;
     public BlockPos posTp = new BlockPos(0, -1, 0);
     public BlockPos posHomeTp = new BlockPos(0, -1, 0);
-    public ResourceKey<Level> dimensionId = Level.OVERWORLD;
+    public ResourceKey<Level> dimensionId = Level.END;
     public ResourceKey<Level> homeDimensionId = Level.OVERWORLD;
     public int type;
 
@@ -57,6 +59,16 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
         return PORTAL_TEXTURE != null ? PORTAL_TEXTURE : TheEndPortalRenderer.END_PORTAL_LOCATION;
     }
 
+    public void setPortalTexture(String location) {
+        if (location == null || location.isEmpty()) {
+            PORTAL_TEXTURE = null;
+            getPortalTexture();
+        }
+        else {
+            PORTAL_TEXTURE = new ResourceLocation(NoppesUtilServer.validLocation(location));
+        }
+    }
+
     public @Nonnull ResourceLocation getSkyTexture() {
         if (SKY_TEXTURE == null && level != null) {
             BlockState state = level.getBlockState(worldPosition);
@@ -65,6 +77,16 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
             }
         }
         return SKY_TEXTURE != null ? SKY_TEXTURE : TheEndPortalRenderer.END_SKY_LOCATION;
+    }
+
+    public void setSkyTexture(String location) {
+        if (location == null || location.isEmpty()) {
+            SKY_TEXTURE = null;
+            getSkyTexture();
+        }
+        else {
+            SKY_TEXTURE = new ResourceLocation(NoppesUtilServer.validLocation(location));
+        }
     }
 
     public float getAlpha() {
@@ -84,11 +106,11 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
         alpha = ValueUtil.correctFloat(transparency, 0.15f, 1.0f);
     }
 
-    public BlockPos getPosTp(boolean isHome) {
+    public BlockPos getPosTp(boolean getHome) {
         BlockPos pos = null;
         ServerLevel sLevel = null;
         MinecraftServer server = level != null ? level.getServer() : CustomNpcs.Server;
-        if (isHome) {
+        if (getHome) {
             if (hasDimension(server, homeDimensionId)) {
                 pos = new BlockPos(posHomeTp);
                 if (server != null) { sLevel = server.getLevel(homeDimensionId); }
@@ -151,18 +173,24 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
         compound.putLong("TpPosition", posTp.asLong());
     }
 
-    private void readDisplay(CompoundTag compound) {
+    public void readDisplay(CompoundTag compound) {
         dimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("DimensionID")));
         homeDimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("HomeDimensionID")));
+        PORTAL_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
+        SKY_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
         type = compound.getInt("Type");
         setAlpha(compound.getFloat("Alpha"));
+        availability.load(compound.getCompound("Availability"));
     }
 
     private CompoundTag writeDisplay(CompoundTag compound) {
         compound.putString("DimensionID", dimensionId.location().toString());
         compound.putString("HomeDimensionID", homeDimensionId.location().toString());
+        compound.putString("TexturePortal", PORTAL_TEXTURE.toString());
+        compound.putString("TextureSky", SKY_TEXTURE.toString());
         compound.putInt("Type", type);
         compound.putFloat("Alpha", alpha);
+        compound.put("Availability", availability.save(new CompoundTag()));
         return compound;
     }
 

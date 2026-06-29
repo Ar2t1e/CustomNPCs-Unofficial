@@ -468,7 +468,7 @@
 	"bard.loops": "Повторення",
 	"bard.offdistance": "Відстань вимк.",
 	"bard.ondistance": "Відстань вкл.",
-	"barrier.copied.around": "§8Скопійовано та встановлено налаштування із сусіднього бар'єру",
+	"copy.settings.adjacent.block": "§8Скопійовано та встановлено налаштування із сусіднього бар'єру",
 	"beacon.affect": "Емоції",
 	"beacon.amplifier": "Посилення",
 	"beacon.applicability": "Застосовність",

@@ -468,7 +468,7 @@
 	"bard.loops": "重复",
 	"bard.offdistance": "距离",
 	"bard.ondistance": "包括距离",
-	"barrier.copied.around": "§8从邻近屏障复制并安装设置",
+	"copy.settings.adjacent.block": "§8从邻近屏障复制并安装设置",
 	"beacon.affect": "情绪",
 	"beacon.amplifier": "获得",
 	"beacon.applicability": "适用性",

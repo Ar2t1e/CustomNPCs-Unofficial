@@ -13,6 +13,8 @@ import noppes.npcs.api.gui.IDimensionGetter;
 import noppes.npcs.controllers.data.DimensionData;
 import noppes.npcs.shared.common.util.LogWriter;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -41,7 +43,7 @@ public class DimensionController {
         data.clear();
         for (int i = 0; i < compound.getList("Data", 10).size(); i++) {
             CompoundTag nbt = compound.getList("Data", 10).getCompound(i);
-            data.put(nbt.getString("name"), new DimensionData(nbt));
+            data.put(nbt.getString("id"), new DimensionData(nbt));
         }
         if (Minecraft.getInstance().screen instanceof IDimensionGetter gui) { gui.resetDimension(); }
     }
@@ -74,21 +76,23 @@ public class DimensionController {
     public static void setSpawn(Level level, BlockPos pos, float angle) {
         if (level == null || pos == null) { return; }
         String key = level.dimension().location().toString();
-        if (data.containsKey(key)) {
-            data.get(key).spawnPos = pos;
-            data.get(key).spawnAngle = angle;
-        } else {
-            data.put(key, new DimensionData(pos, angle));
-        }
+        if (!data.containsKey(key)) { data.put(key, new DimensionData(level)); }
+        data.get(key).spawnPos = pos;
+        data.get(key).spawnAngle = angle;
         save();
     }
 
-    public static DimensionData get(ServerLevel level) {
+    public static @Nonnull DimensionData get(ServerLevel level) {
         if (level == null) { return new DimensionData(); }
         String key = level.dimension().location().toString();
         if (data.containsKey(key)) { return data.get(key); }
-        data.put(key, new DimensionData(level.getSharedSpawnPos(), level.getSharedSpawnAngle()));
+        data.put(key, new DimensionData(level));
         return data.get(key);
+    }
+
+    public static @Nullable DimensionData get(String dimensionId) {
+        if (data.containsKey(dimensionId)) { return data.get(dimensionId); }
+        return null;
     }
 
 }

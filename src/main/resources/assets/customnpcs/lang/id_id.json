@@ -467,7 +467,7 @@
 	"bard.loops": "Mengulang",
 	"bard.offdistance": "Jarak",
 	"bard.ondistance": "Jarak termasuk",
-	"barrier.copied.around": "§8Menyalin dan memasang pengaturan dari penghalang tetangga",
+	"copy.settings.adjacent.block": "§8Menyalin dan memasang pengaturan dari penghalang tetangga",
 	"beacon.affect": "Emosi",
 	"beacon.amplifier": "Memperoleh",
 	"beacon.applicability": "Penerapan",

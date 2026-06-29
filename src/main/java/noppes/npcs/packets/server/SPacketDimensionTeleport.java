@@ -63,7 +63,8 @@ public class SPacketDimensionTeleport extends PacketServerBasic {
       CustomNpcs.debugData.end("Packets");
    }
 
-   public static void teleportPlayer(ServerPlayer player, ResourceKey<Level> dimension, double x, double y, double z, float yaw, float pitch) {
+   public static void teleportPlayer(ServerPlayer player, ResourceKey<Level> dimension,
+                                     double x, double y, double z, float yaw, float pitch) {
       if (player.level().dimension() != dimension) {
          MinecraftServer server = player.getServer();
          ServerLevel level = null;

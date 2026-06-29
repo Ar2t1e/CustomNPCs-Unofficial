@@ -43,15 +43,12 @@ public class SPacketTileEntitySave extends PacketServerBasic {
    }
 
    public static BlockEntity saveTileEntity(ServerPlayer player, CompoundTag compound) {
-      int x = compound.getInt("x");
-      int y = compound.getInt("y");
-      int z = compound.getInt("z");
-      BlockPos pos = new BlockPos(x, y, z);
+      BlockPos pos = new BlockPos(compound.getInt("x"), compound.getInt("y"), compound.getInt("z"));
       BlockEntity tile = player.level().getBlockEntity(pos);
       if (tile != null) {
          tile.load(compound);
+         tile.setChanged();
       }
-      player.level().blockEntityChanged(new BlockPos(x, y, z));
       return tile;
    }
 

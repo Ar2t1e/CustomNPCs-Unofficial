@@ -245,11 +245,7 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
    public boolean shouldCloseOnEsc() { return closeOnEsc; }
 
    @Override
-   public void onClose() {
-      GuiTextFieldNop.unfocus();
-      save();
-      wrapper.close();
-   }
+   public void onClose() { wrapper.close(); }
 
    @Override
    public void add(IComponentGui element) {

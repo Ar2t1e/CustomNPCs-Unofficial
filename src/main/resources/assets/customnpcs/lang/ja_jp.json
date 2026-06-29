@@ -467,7 +467,7 @@
 	"bard.loops": "繰り返す",
 	"bard.offdistance": "距離オフ",
 	"bard.ondistance": "距離含む",
-	"barrier.copied.around": "§8隣接するバリアから設定をコピーしてインストールしました",
+	"copy.settings.adjacent.block": "§8隣接するバリアから設定をコピーしてインストールしました",
 	"beacon.affect": "感情",
 	"beacon.amplifier": "得",
 	"beacon.applicability": "適用範囲",

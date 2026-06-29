@@ -52,7 +52,8 @@ public class NPCAttackSelector implements Predicate<LivingEntity> {
             if (npcEntity.isKilled()) { return false; }
             if (npc.advanced.attackOtherFactions) { return npc.faction.isAggressiveToNpc(npcEntity); }
          }
-         return npc.aiAttackTarget == null || npc.aiAttackTarget.canNewAttack();
+         //return npc.aiAttackTarget == null || npc.aiAttackTarget.canNewAttack();
+         return false;
       }
       return false;
    }

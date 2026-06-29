@@ -467,7 +467,7 @@
 	"bard.loops": "Opakovat",
 	"bard.offdistance": "Vzdálenost",
 	"bard.ondistance": "Vzdálenost vč.",
-	"barrier.copied.around": "§8Zkopírováno a nainstalováno nastavení ze sousední bariéry",
+	"copy.settings.adjacent.block": "§8Zkopírováno a nainstalováno nastavení ze sousední bariéry",
 	"beacon.affect": "Emoce",
 	"beacon.amplifier": "Získat",
 	"beacon.applicability": "Použitelnost",

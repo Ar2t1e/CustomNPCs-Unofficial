@@ -12,7 +12,7 @@ in vec4 texProj0;
 
 const vec3[] COLORS = vec3[](
   vec3(color_0_0, color_0_1, color_0_2),
-  vec3(color_1_0, color_1_1, 0.color_1_2),
+  vec3(color_1_0, color_1_1, color_1_2),
   vec3(color_2_0, color_2_1, color_2_2),
   vec3(color_3_0, color_3_1, color_3_2),
   vec3(color_4_0, color_4_1, color_4_2),

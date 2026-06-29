@@ -159,10 +159,7 @@ public class GuiBasicContainer<T extends AbstractContainerMenu> extends Abstract
 
    @Override
    public void onClose() {
-      GuiTextFieldNop.unfocus();
-      save();
-      player.closeContainer();
-      setScreen(null);
+      wrapper.close();
       if (minecraft == null) { minecraft = Minecraft.getInstance(); }
       minecraft.mouseHandler.grabMouse();
    }

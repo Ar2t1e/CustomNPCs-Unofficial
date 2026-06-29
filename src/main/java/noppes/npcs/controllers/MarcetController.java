@@ -162,7 +162,8 @@ public class MarcetController implements IMarcetHandler {
             try {
                 File file2 = new File(saveDir, "marcet.dat_old");
                 if (file2.exists()) { load(file2); }
-            } catch (Exception er) { LogWriter.error(er); }
+            }
+            catch (Exception er) { LogWriter.error(er); }
         }
         if (markets.isEmpty() || !markets.containsKey(0)) { loadDefaultMarcets(); }
         CustomNpcs.debugData.end(null);

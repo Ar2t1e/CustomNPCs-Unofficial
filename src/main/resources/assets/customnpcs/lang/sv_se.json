@@ -467,7 +467,7 @@
 	"bard.loops": "Upprepa",
 	"bard.offdistance": "Avstånd från",
 	"bard.ondistance": "Avstånd inkl.",
-	"barrier.copied.around": "§8Kopierade och installerade inställningar från den angränsande barriären",
+	"copy.settings.adjacent.block": "§8Kopierade och installerade inställningar från den angränsande barriären",
 	"beacon.affect": "Känslor",
 	"beacon.amplifier": "Få",
 	"beacon.applicability": "Tillämplighet",
