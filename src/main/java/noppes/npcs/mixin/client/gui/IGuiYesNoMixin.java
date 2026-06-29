@@ -9,10 +9,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = GuiYesNo.class, priority = 502)
 public interface IGuiYesNoMixin {
 
-    @Accessor
-    GuiYesNoCallback getParentScreen();
+    @Accessor GuiYesNoCallback getParentScreen();
 
-    @Accessor
-    int getParentButtonClickedId();
+    @Accessor int getParentButtonClickedId();
 
 }

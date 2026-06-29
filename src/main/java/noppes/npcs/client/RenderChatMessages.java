@@ -55,14 +55,15 @@ public class RenderChatMessages implements IChatMessages {
 		float f2 = (color >> 16 & 0xFF) / 255.0f;
 		float f3 = (color >> 8 & 0xFF) / 255.0f;
 		float f4 = (color & 0xFF) / 255.0f;
-		BufferBuilder tessellator = Tessellator.getInstance().getBuffer();
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder buffer = tessellator.getBuffer();
 		GlStateManager.color(f2, f3, f4, f);
-		tessellator.begin(7, DefaultVertexFormats.POSITION);
-		tessellator.pos(left, bottom, zLevel).endVertex();
-		tessellator.pos(right, bottom, zLevel).endVertex();
-		tessellator.pos(right, top, zLevel).endVertex();
-		tessellator.pos(left, top, zLevel).endVertex();
-		Tessellator.getInstance().draw();
+		buffer.begin(7, DefaultVertexFormats.POSITION);
+		buffer.pos(left, bottom, zLevel).endVertex();
+		buffer.pos(right, bottom, zLevel).endVertex();
+		buffer.pos(right, top, zLevel).endVertex();
+		buffer.pos(left, top, zLevel).endVertex();
+		tessellator.draw();
 	}
 
 	private Map<Long, TextBlockClient> getMessages() {

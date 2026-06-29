@@ -70,10 +70,10 @@ public class Dialog implements ICompatibilty, IDialog {
 		hideNPC = compound.getBoolean("DialogHideNPC");
 		showWheel = compound.getBoolean("DialogShowWheel");
 		disableEsc = compound.getBoolean("DialogDisableEsc");
-		NBTTagList tagList = compound.getTagList("Options", 10);
+		NBTTagList list = compound.getTagList("Options", 10);
 		options.clear();
-		for (int i = 0; i < tagList.tagCount(); ++i) {
-			NBTTagCompound option = tagList.getCompoundTagAt(i);
+		for (int i = 0; i < list.tagCount(); ++i) {
+			NBTTagCompound option = list.getCompoundTagAt(i);
 			int opSlot = option.getInteger("OptionSlot");
 			DialogOption dia = new DialogOption();
 			dia.load(option.getCompoundTag("Option"));
@@ -94,7 +94,7 @@ public class Dialog implements ICompatibilty, IDialog {
 		texture = compound.getString("DialogTexture");
 
 		startedNpcs.clear();
-		NBTTagList list = compound.getTagList("StartedNpcData", 10);
+		list = compound.getTagList("StartedNpcData", 10);
 		for (int i = 0; i < list.tagCount(); i++) { startedNpcs.add(new StartedNpcData(list.getCompoundTagAt(i))); }
 	}
 

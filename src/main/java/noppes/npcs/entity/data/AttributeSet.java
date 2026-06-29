@@ -59,8 +59,8 @@ public class AttributeSet implements IAttributeSet {
 							.append(Component.literal("]").withStyle(TextFormatting.GRAY)));
 		}
 		Component name = Component.translatable("attribute.name." + attr.getName());
-		if (name.getString().equals("attribute.name." + attr.getName()) ||
-				name.getString().equals("attribute.name.")) { name = Component.literal(attr.getName()); }
+		if (name.getFormattedText().equals("attribute.name." + attr.getName()) ||
+				name.getFormattedText().equals("attribute.name.")) { name = Component.literal(attr.getName()); }
 		return keyName.append(name.withStyle(TextFormatting.RESET));
 		//.append(Component.literal(" #" + toString().substring(toString().indexOf("@") + 1)).withStyle(TextFormatting.DARK_GRAY));
 	}

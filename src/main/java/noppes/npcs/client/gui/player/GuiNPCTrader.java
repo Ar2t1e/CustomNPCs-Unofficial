@@ -292,7 +292,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 				drawTexturedModalRect(xSize - 2 - s, ySize - 142, 198 - s, 118, s, 24);
 			}
 			String lv = "enchantment.level." + (md.level + 1);
-			if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getString(); }
+			if (!Component.translatable(lv).getFormattedText().equals(lv)) { lv = Component.translatable(lv).getFormattedText(); }
 			else { lv = "" + (md.level + 1); }
 			drawString(fontRenderer, lv, xSize - 6 - fontRenderer.getStringWidth(lv), ySize - 131, CustomNpcs.MainColor.getRGB());
 			if (isMouseHover(mouseX, mouseY, xSize - 100, ySize - 142, 100, 24)) {
@@ -393,7 +393,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 			for (Component hover : hovers) {
 				y = 77 + hoverY + i * (fontRenderer.FONT_HEIGHT + 1);
 				if (y >= 77 - fontRenderer.FONT_HEIGHT && y < 71 + hoverHeightMax) {
-					drawString(fontRenderer, hover.getString(), x, y, CustomNpcs.MainColor.getRGB());
+					drawString(fontRenderer, hover.getFormattedText(), x, y, CustomNpcs.MainColor.getRGB());
 				}
 				if (y >= 71 + hoverHeightMax) { break; }
 				i++;
@@ -615,7 +615,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 				String lastColor;
 				int w = 116;
 				for (Component cpt : temp) {
-					String line = cpt.getString();
+					String line = cpt.getFormattedText();
 					if (minecraft.fontRenderer.getStringWidth(line) < w) { hovers.add(cpt); }
 					else {
 						lastColor = "";
@@ -734,7 +734,9 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 		add(new TradeButtonBiDirectional(this, 6, y, scrollWidth - 5));
 		addCheckBox(11, 3, 3, "type.id", "N", isIdSort)
 				.setSize(26, 12)
-				.setHoverTexts(Component.translatable("hover.sort", Component.translatable("market.deals").getString(), Component.translatable(isIdSort ? "type.id" : "gui.name")));
+				.setHoverTexts(Component.translatable("hover.sort",
+						Component.translatable("market.deals").getFormattedText(),
+						Component.translatable(isIdSort ? "type.id" : "gui.name")));
 		add(new MarcetTextField(this, 28, ySize - 19, scrollWidth - 31)
 				.setHoverTexts("market.hover.is.search"));
 		getTextField(0).setIsFocused(focus);

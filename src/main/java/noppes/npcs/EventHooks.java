@@ -366,7 +366,6 @@ public class EventHooks {
 		}
 	}
 
-
 	public static void onPlayerKeyEvent(EntityPlayerMP player, int button, boolean isCtrlPressed, boolean isShiftPressed, boolean isAltPressed, boolean isMetaPressed, boolean pressed, String openGui) {
 		PlayerScriptData handler = PlayerData.get(player).scriptData;
 		Event event = new PlayerEvent.KeyPressedEvent(handler.getIPlayer(), button, isCtrlPressed, isAltPressed, isShiftPressed, isMetaPressed, openGui);

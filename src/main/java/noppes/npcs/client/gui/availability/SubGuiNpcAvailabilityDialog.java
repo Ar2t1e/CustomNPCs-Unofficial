@@ -40,7 +40,7 @@ public class SubGuiNpcAvailabilityDialog
 	@Override
 	public void initGui() {
 		super.initGui();
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		// title
 		addLabel(0, guiLeft + 6, guiTop + 4, "availability.available.9")
 				.setSize(imageWidth - 12, 12)
@@ -128,7 +128,7 @@ public class SubGuiNpcAvailabilityDialog
 				initGui();
 				break;
 			}
-			case 1: setSubGui(new SubGuiDialogSelection(select.getString().isEmpty() ? 0 : dataIDs.get(select))); break;
+			case 1: setSubGui(new SubGuiDialogSelection(select.getFormattedText().isEmpty() ? 0 : dataIDs.get(select))); break;
 			case 2: {
 				availability.dialogues.remove(dataIDs.get(select));
 				select = Component.empty();
@@ -148,7 +148,7 @@ public class SubGuiNpcAvailabilityDialog
 	public void subGuiClosed(GuiScreen subgui) {
 		SubGuiDialogSelection selector = (SubGuiDialogSelection) subgui;
 		if (selector.selectedDialog == null) { return; }
-		if (!select.getString().isEmpty()) {
+		if (!select.getFormattedText().isEmpty()) {
 			availability.dialogues.remove(dataIDs.get(select));
 		}
 		select = Component.literal("ID:" + selector.selectedDialog.id + " - ");
@@ -200,7 +200,7 @@ public class SubGuiNpcAvailabilityDialog
 		int p = 0;
 		getButton(1).setDisplayText("availability.selectdialog");
 		Dialog dialog = null;
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		if (isSelect) {
 			dialog = DialogController.instance.dialogs.get(dataIDs.get(select));
 			p = dataEnum.get(select).ordinal();

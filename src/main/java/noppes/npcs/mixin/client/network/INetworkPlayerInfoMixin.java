@@ -11,7 +11,6 @@ import java.util.Map;
 @Mixin(value = NetworkPlayerInfo.class, priority = 502)
 public interface INetworkPlayerInfoMixin {
 
-    @Accessor
-    Map<MinecraftProfileTexture.Type, ResourceLocation> getPlayerTextures();
+    @Accessor Map<MinecraftProfileTexture.Type, ResourceLocation> getPlayerTextures();
 
 }

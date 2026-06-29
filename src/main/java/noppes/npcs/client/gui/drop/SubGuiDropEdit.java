@@ -176,8 +176,8 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
 				.setIsVisible(!drop.item.isEmpty())
 				.setHoverTexts("drop.hover.chance");
 		// amount
-		String tied = Component.translatable("drop.tied.random").getString();
-		if (drop.tiedToLevel) { tied = Component.translatable("drop.tied.level").getString(); }
+		String tied = Component.translatable("drop.tied.random").getFormattedText();
+		if (drop.tiedToLevel) { tied = Component.translatable("drop.tied.level").getFormattedText(); }
 		boolean needReAmount = false;
 		amount = drop.amount;
 		if (drop.getMinAmount() > drop.item.getMaxStackSize()) {

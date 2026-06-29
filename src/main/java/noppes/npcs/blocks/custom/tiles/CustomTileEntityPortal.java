@@ -16,6 +16,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.blocks.custom.CustomBlockPortal;
+import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
@@ -23,10 +24,11 @@ import javax.annotation.Nullable;
 
 public class CustomTileEntityPortal extends TileEntityEndPortal {
 
+	public Availability availability;
 	protected ResourceLocation SKY_TEXTURE;
 	protected ResourceLocation PORTAL_TEXTURE;
 	protected float alpha = 0.0f;
-	public int dimensionId = 100;
+	public int dimensionId = -1;
 	public int homeDimensionId = 0;
 	public int type = 0;
 
@@ -45,6 +47,16 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 		return PORTAL_TEXTURE;
 	}
 
+	public void setPortalTexture(String location) {
+		if (location == null || location.isEmpty()) {
+			PORTAL_TEXTURE = null;
+			getPortalTexture();
+		}
+		else {
+			PORTAL_TEXTURE = new ResourceLocation(NoppesUtilServer.validLocation(location));
+		}
+	}
+
 	public ResourceLocation getSkyTexture() {
 		if (SKY_TEXTURE == null && world != null) {
 			IBlockState state = world.getBlockState(pos);
@@ -55,6 +67,16 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 		}
 		if (SKY_TEXTURE == null) { SKY_TEXTURE = new ResourceLocation("textures/environment/end_sky.png"); }
 		return SKY_TEXTURE;
+	}
+
+	public void setSkyTexture(String location) {
+		if (location == null || location.isEmpty()) {
+			SKY_TEXTURE = null;
+			getSkyTexture();
+		}
+		else {
+			SKY_TEXTURE = new ResourceLocation(NoppesUtilServer.validLocation(location));
+		}
 	}
 
 	public float getAlpha() {
@@ -151,15 +173,21 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 	private void readDisplay(NBTTagCompound compound) {
 		dimensionId = compound.getInteger("DimensionID");
 		homeDimensionId = compound.getInteger("HomeDimensionID");
+		PORTAL_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
+		SKY_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
 		type = compound.getInteger("Type");
 		setAlpha(compound.getFloat("Alpha"));
+		availability.load(compound.getCompoundTag("Availability"));
 	}
 
 	private NBTTagCompound writeDisplay(NBTTagCompound compound) {
 		compound.setInteger("DimensionID", dimensionId);
 		compound.setInteger("HomeDimensionID", homeDimensionId);
+		compound.setString("TexturePortal", PORTAL_TEXTURE.toString());
+		compound.setString("TextureSky", SKY_TEXTURE.toString());
 		compound.setInteger("Type", type);
 		compound.setFloat("Alpha", alpha);
+		compound.setTag("Availability", availability.save(new NBTTagCompound()));
 		return compound;
 	}
 

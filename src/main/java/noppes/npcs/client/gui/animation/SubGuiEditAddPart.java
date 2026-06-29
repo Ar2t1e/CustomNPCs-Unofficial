@@ -112,8 +112,8 @@ public class SubGuiEditAddPart extends GuiNPCInterface implements ITextfieldList
             case 0: {
                 if (!dataPartIDs.containsKey(button.getMessage())) { return; }
                 addPart.parentPart = dataPartIDs.get(button.getMessage());
-                String hover = Component.translatable("info.item.cloner.empty.0").getString();
-                if (parent.frame.parts.containsKey(addPart.parentPart)) { hover = Component.translatable(parent.frame.parts.get(addPart.parentPart).name).getString(); }
+                String hover = Component.translatable("info.item.cloner.empty.0").getFormattedText();
+                if (parent.frame.parts.containsKey(addPart.parentPart)) { hover = Component.translatable(parent.frame.parts.get(addPart.parentPart).name).getFormattedText(); }
                 if (getTextField(1) != null) {
                     getTextField(1).setValue("" + addPart.parentPart);
                     getTextField(1).setHoverTexts(Component.translatable("animation.add.part.hover.part.ids", hover));
@@ -419,7 +419,7 @@ public class SubGuiEditAddPart extends GuiNPCInterface implements ITextfieldList
         // name
         addLabel(lId++, x + 1, y - 10, "gui.name");
         addTextField(0, x, y, 120, 12, part.name)
-                .setHoverTexts(Component.translatable("animation.add.part.hover.name", Component.translatable(part.name).getString()));
+                .setHoverTexts(Component.translatable("animation.add.part.hover.name", Component.translatable(part.name).getFormattedText()));
         // parent part ID
         dataPartIDs.clear();
         dataPartIDs.put(Component.literal("-1"), -1);
@@ -468,10 +468,10 @@ public class SubGuiEditAddPart extends GuiNPCInterface implements ITextfieldList
         if (parent.frame.parts.containsKey(addPart.parentPart)) { hover = parent.frame.parts.get(addPart.parentPart).name; }
         addButton(0, x, y, true, p, dataPartIDs.keySet())
                 .setSize(83, 12)
-                .setHoverTexts(Component.translatable("animation.add.part.hover.part.ids", Component.translatable(hover).getString()));
+                .setHoverTexts(Component.translatable("animation.add.part.hover.part.ids", Component.translatable(hover).getFormattedText()));
         addTextField(1, x + 83 + 2, y, 35, 12, "" + addPart.parentPart)
                 .setMinMaxDefault(-1, Integer.MAX_VALUE, addPart.parentPart)
-                .setHoverTexts(Component.translatable("animation.add.part.hover.part.ids", Component.translatable(hover).getString()));
+                .setHoverTexts(Component.translatable("animation.add.part.hover.part.ids", Component.translatable(hover).getFormattedText()));
         // model type
         addLabel(lId++, x + 1, (y += 24) - 10, Component.translatable("gui.model").append(":"));
         addButton(3, x, y, false, typeModel, "gui.normal", "gui.obj")
@@ -682,12 +682,12 @@ public class SubGuiEditAddPart extends GuiNPCInterface implements ITextfieldList
                     return;
                 }
                 addPart.parentPart = dataPartIDs.get(value);
-                String hover = Component.translatable("info.item.cloner.empty.0").getString();
-                if (parent.frame.parts.containsKey(addPart.parentPart)) { hover = Component.translatable(parent.frame.parts.get(addPart.parentPart).name).getString(); }
+                String hover = Component.translatable("info.item.cloner.empty.0").getFormattedText();
+                if (parent.frame.parts.containsKey(addPart.parentPart)) { hover = Component.translatable(parent.frame.parts.get(addPart.parentPart).name).getFormattedText(); }
                 if (getButton(0) != null) {
                     Component[] variants = getButton(0).getVariants();
                     for (int i = 0; i < variants.length; i++) {
-                        if (variants[i].getString().equals("" + addPart.parentPart)) {
+                        if (variants[i].getFormattedText().equals("" + addPart.parentPart)) {
                             getButton(0).setDisplay(i);
                             break;
                         }

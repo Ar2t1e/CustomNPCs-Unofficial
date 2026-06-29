@@ -578,14 +578,25 @@ public class NoppesUtilServer {
 						break;
 					} // Stairs
 					case 4: {
+						File doubleState = new File(blockStatesDir, "custom_double_" + name + ".json");
+						File doubleModel = new File(blockModelsDir, "custom_double_" + name + ".json");
+						File doubleTopModel = new File(blockModelsDir, "custom_double_" + name + "_top.json");
 						File slabFile = new File(blockModelsDir, "bottom_" + fileName + ".json");
 						File topFile = new File(blockModelsDir, "upper_" + fileName + ".json");
-						if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !slabFile.exists() || !topFile.exists()) {
+						if (!isExample || !blockstate.exists() || !doubleState.exists() ||
+								!blockModel.exists() || !doubleModel.exists() || !doubleTopModel.exists() ||
+								!slabFile.exists() || !topFile.exists() ||
+								!itemFile.exists()) {
 							stateDatas.put(blockstate, getDataFile("jss.dat", fileName, name));
+							stateDatas.put(doubleState, getDataFile("jsd.dat", fileName, name));
+
+							modelDatas.put(doubleModel, getDataFile("bmsd.dat", fileName, name));
+							modelDatas.put(doubleTopModel, getDataFile("bmsdt.dat", fileName, name));
+
 							String data = getDataFile("bmss.dat", fileName, name);
-							modelDatas.put(blockModel, getDataFile("bmfc.dat", fileName, name)); // double
-							modelDatas.put(slabFile, data.replace("{type}", ""));
-							modelDatas.put(topFile, data.replace("{type}", "_top"));
+							modelDatas.put(blockModel, getDataFile("bmfc.dat", fileName, name));
+							modelDatas.put(slabFile, data.replace("{type}", "half"));
+							modelDatas.put(topFile, data.replace("{type}", "upper"));
 							modelDatas.put(itemFile, getDataFile("bmi.dat", fileName + "_slab", name));
 						}
 						break;
@@ -703,7 +714,6 @@ public class NoppesUtilServer {
 		return tpPos;
     }
 
-
 	public static String validLocation(String location) {
 		if (location.contains(":")) {
 			String domain = validNamespace(location.substring(0, location.indexOf(":")));
@@ -771,7 +781,6 @@ public class NoppesUtilServer {
 			Packets.send(player, new PacketNpcRole(npc.getEntityId(), comp));
 		}
 	}
-
 
 	public static void sendNpcDialogs(EntityPlayerMP player) {
 		EntityNPCInterface npc = getEditingNpc(player);

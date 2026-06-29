@@ -60,7 +60,9 @@ public class SPacketDimensionTeleport extends PacketServerBasic {
    }
 
    @SuppressWarnings("ConstantConditions")
-   public static void teleportPlayer(EntityPlayerMP player, int dimension, double x, double y, double z, float yaw, float pitch) {
+   public static void teleportPlayer(EntityPlayerMP player, int dimension,
+                                     double x, double y, double z,
+                                     float yaw, float pitch) {
       if (player.dimension != dimension) {
          MinecraftServer server = player.getServer();
          if (server != null) {

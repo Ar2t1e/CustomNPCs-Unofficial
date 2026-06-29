@@ -135,8 +135,9 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 						});
 					}
 				}
-				npc.say(player, new Line(Component.translatable("transporter.go.way").getString()));
-				SPacketDimensionTeleport.teleportPlayer(player, loc.dimension, loc.pos.getX(), loc.pos.getY(), loc.pos.getZ(), loc.yaw, loc.pitch);
+				npc.say(player, new Line(Component.translatable("transporter.go.way").getFormattedText()));
+				SPacketDimensionTeleport.teleportPlayer(player, loc.dimension, loc.pos.getX(), loc.pos.getY(), loc.pos.getZ(),
+						loc.yaw, loc.pitch);
 			}
 		}
 	}
@@ -148,8 +149,8 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 			if (!EventHooks.onNPCRole(npc, event)) {
 				data.transports.add(transportId);
 				Packets.send((EntityPlayerMP) player, new PacketChatBubble(npc.getEntityId(), Component.translatable("transporter.unlock",
-						Component.translatable(loc.name).getString(),
-						Component.translatable(loc.category.title).getString()), true));
+						Component.translatable(loc.name).getFormattedText(),
+						Component.translatable(loc.category.title).getFormattedText()), true));
 			}
 		}
 
@@ -158,8 +159,8 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 		if (EventHooks.onNPCRole(npc, event)) { return; }
 		data.transports.add(transportId);
 		player.sendMessage(Component.translatable("transporter.unlock",
-				Component.translatable(loc.name).getString(),
-				Component.translatable(loc.category.title).getString())
+				Component.translatable(loc.name).getFormattedText(),
+				Component.translatable(loc.category.title).getFormattedText())
 				.getParent());
 	}
 

@@ -67,7 +67,7 @@ public class GuiNpcFollowerSetup
 		addCheckBox(9, x, y += 16, "follower.allowSoulstone", null, role.refuseSoulStone)
 				.setSize(286, 14)
 				.setHoverTexts(Component.translatable("follower.hover.soulstone",
-						Component.translatable("item.customnpcs.npcsoulstoneempty").getString()));
+						Component.translatable("item.customnpcs.npcsoulstoneempty").getFormattedText()));
 		// money
 		addLabel(lId++, x += 73, y += 19, Component.translatable("follower.hire").append(":"))
 				.setSize(72, 10);

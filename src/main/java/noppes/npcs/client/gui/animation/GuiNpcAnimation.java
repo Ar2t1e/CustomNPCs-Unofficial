@@ -103,7 +103,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
 			case 0: {
 				if (scrollType == null || !scrollType.hasSelected()) { return; }
 				AnimationConfig newAnim = aData.createNewAnim();
-				newAnim.name = Util.instance.deleteColor(selType.getString().replaceAll(" ", "_")+ "_" + newAnim.id);
+				newAnim.name = Util.instance.deleteColor(selType.getFormattedText().replaceAll(" ", "_")+ "_" + newAnim.id);
 				newAnim.type = dataType.get(selType);
 				animation.addAnimation(newAnim.type, newAnim.id);
 				selAnim = newAnim.getSettingName();
@@ -232,7 +232,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
 					.setHoverTexts(typeHovers);
 		}
 		add(scrollType.setPos(x, y));
-		if (selType.getString().isEmpty()) {
+		if (selType.getFormattedText().isEmpty()) {
 			for (Component key : dataType.keySet()) {
 				if (dataType.get(key) == AnimationKind.STANDING) {
 					selType = key;
@@ -251,8 +251,8 @@ public class GuiNpcAnimation extends GuiNPCInterface
 		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
 		int i = 0;
 		AnimationKind type = dataType.get(selType);
-		if (!selAnim.getString().isEmpty() && !selBaseAnim.getString().isEmpty() &&
-				!Util.instance.deleteColor(selAnim.getString()).equals(Util.instance.deleteColor(selBaseAnim.getString()))) {
+		if (!selAnim.getFormattedText().isEmpty() && !selBaseAnim.getFormattedText().isEmpty() &&
+				!selAnim.getString().equals(selBaseAnim.getString())) {
 			selAnim = Component.empty();
 		}
 		for (AnimationConfig ac : aData.getAnimations()) {
@@ -260,10 +260,10 @@ public class GuiNpcAnimation extends GuiNPCInterface
 					.append(ac.getSettingName().withStyle(type == ac.type ? TextFormatting.GREEN : TextFormatting.GRAY));
 			if (animation.hasAnimation(type, ac.id)) { dataAnimations.add(key); }
 			dataAllAnimations.put(key, ac);
-			if (!selAnim.getString().isEmpty() && Util.instance.deleteColor(selAnim.getString()).equals(Util.instance.deleteColor(key.getString()))) {
+			if (!selAnim.getFormattedText().isEmpty() && selAnim.getString().equals(key.getString())) {
 				selAnim = key;
 			}
-			if (!selBaseAnim.getString().isEmpty() && Util.instance.deleteColor(selBaseAnim.getString()).equals(Util.instance.deleteColor(key.getString()))) {
+			if (!selBaseAnim.getFormattedText().isEmpty() && selBaseAnim.getString().equals(key.getString())) {
 				selBaseAnim = key;
 			}
 			allAnimations.add(key);
@@ -283,27 +283,27 @@ public class GuiNpcAnimation extends GuiNPCInterface
 		add(scrollAnimations.setPos(x, y)
 				.setUnsortedList(dataAnimations));
 
-		if (selAnim.getString().isEmpty() && selBaseAnim.getString().isEmpty() && !scrollAnimations.getList().isEmpty()) {
+		if (selAnim.getFormattedText().isEmpty() && selBaseAnim.getFormattedText().isEmpty() && !scrollAnimations.getList().isEmpty()) {
 			for (Component key : scrollAnimations.getNormalList()) {
 				selAnim = key;
 				selBaseAnim = key;
 				break;
 			}
 		}
-		if (!selAnim.getString().isEmpty()) {
+		if (!selAnim.getFormattedText().isEmpty()) {
 			scrollAnimations.setSelected(selAnim);
 			if (!scrollAnimations.hasSelected()) { selAnim = Component.empty(); }
 			else { selAnim = scrollAnimations.getNormalSelected(); }
 		}
 		else { scrollAnimations.clearSelection(); }
-		if (selBaseAnim.getString().isEmpty()) { selBaseAnim = selAnim; }
+		if (selBaseAnim.getFormattedText().isEmpty()) { selBaseAnim = selAnim; }
 
 		x += 123;
 		if (scrollAllAnimations == null) { scrollAllAnimations = addScroll(2).setSize(160, 110); }
 		add(scrollAllAnimations.setPos(x, y + 88)
 				.setUnsortedList(allAnimations)
 				.setHoverTexts(hts));
-		if (!selBaseAnim.getString().isEmpty()) { scrollAllAnimations.setSelected(selBaseAnim); }
+		if (!selBaseAnim.getFormattedText().isEmpty()) { scrollAllAnimations.setSelected(selBaseAnim); }
 		AnimationConfig anim = getAnim();
 		addLabel(1, x + 1, y - 10, Component.translatable("movement.animation").append(":"))
 				.setSize(120, 10);
@@ -342,16 +342,16 @@ public class GuiNpcAnimation extends GuiNPCInterface
 			isChanged = true;
 		} // animation Type
 		else if (scroll.id == 1) {
-			if (selAnim.getString().equals(scroll.getSelected())) { return; }
+			if (selAnim.getFormattedText().equals(scroll.getSelected())) { return; }
 			selAnim = scroll.getNormalSelected();
 			scrollAllAnimations.setSelected(selAnim);
 			selBaseAnim = scrollAllAnimations.getNormalSelected();
 			isChanged = true;
 		} // animation in type
 		else if (scroll.id == 2) {
-			if (selBaseAnim.getString().equals(scroll.getSelected())) { return; }
+			if (selBaseAnim.getFormattedText().equals(scroll.getSelected())) { return; }
 			selBaseAnim = scroll.getNormalSelected();
-			if (selBaseAnim.getString().equals(scrollAnimations.getSelected())) {
+			if (selBaseAnim.getFormattedText().equals(scrollAnimations.getSelected())) {
 				scrollAnimations.setSelected(selBaseAnim);
 				selAnim = scrollAnimations.getNormalSelected();
 			}
@@ -411,9 +411,9 @@ public class GuiNpcAnimation extends GuiNPCInterface
 	}
 
 	protected AnimationConfig getAnim() {
-		if (!dataAnimations.contains(selAnim) && !selAnim.getString().isEmpty()) { selAnim = Component.empty(); }
-		if (!selAnim.getString().isEmpty() && dataAllAnimations.containsKey(selAnim)) { return dataAllAnimations.get(selAnim); }
-		if (selBaseAnim.getString().isEmpty() || !dataAllAnimations.containsKey(selBaseAnim)) { return null; }
+		if (!dataAnimations.contains(selAnim) && !selAnim.getFormattedText().isEmpty()) { selAnim = Component.empty(); }
+		if (!selAnim.getFormattedText().isEmpty() && dataAllAnimations.containsKey(selAnim)) { return dataAllAnimations.get(selAnim); }
+		if (selBaseAnim.getFormattedText().isEmpty() || !dataAllAnimations.containsKey(selBaseAnim)) { return null; }
 		return dataAllAnimations.get(selBaseAnim);
 	}
 

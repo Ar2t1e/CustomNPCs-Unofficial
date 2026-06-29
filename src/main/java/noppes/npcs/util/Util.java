@@ -340,7 +340,7 @@ public class Util implements IMethods {
 		if (directory != null && directory.exists() && directory.isDirectory()) {
 			File[] files = directory.listFiles();
 			if (files != null) {
-				if (temp instanceof Object[] && ((Object[]) temp).length > 3 && ((Object[]) temp)[0] == directory) {
+				if (CustomNpcs.VerboseDebug && temp instanceof Object[] && ((Object[]) temp).length > 3 && ((Object[]) temp)[0] == directory) {
 					int i = 0;
 					for (File f : files) {
 						if (f.isDirectory()) { i++; }
@@ -350,7 +350,7 @@ public class Util implements IMethods {
 				for (File f : files) {
 					if (f.isDirectory()) {
 						list.addAll(getFiles(f, index));
-						if (temp instanceof Object[] && ((Object[]) temp).length > 3 && ((Object[]) temp)[0] == directory) {
+						if (CustomNpcs.VerboseDebug && temp instanceof Object[] && ((Object[]) temp).length > 3 && ((Object[]) temp)[0] == directory) {
 							((Object[]) temp)[2] = ((int) ((Object[]) temp)[2]) + 1;
 							//LogWriter.debug(ticksToElapsedTime(System.currentTimeMillis() - (long) ((Object[]) temp)[1], true, false, false) + " ... process found files["+((Object[]) temp)[2]+"/"+((Object[]) temp)[3]+"] in \"" + ((Object[]) temp)[0] + "\"; now: \""+f+"\"");
 						}
@@ -363,7 +363,7 @@ public class Util implements IMethods {
 			}
 		}
 		try {
-			if (temp instanceof Object[] &&
+			if (CustomNpcs.VerboseDebug && temp instanceof Object[] &&
 					((Object[]) temp).length > 0 &&
 					((Object[]) temp)[0] == directory)
 			{ temp = null; }

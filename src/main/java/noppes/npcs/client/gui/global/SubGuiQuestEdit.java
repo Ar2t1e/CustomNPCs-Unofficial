@@ -142,7 +142,8 @@ public class SubGuiQuestEdit
 		add(getTasksLabel(x2, y +10));
 		// task offset
 		int pos = -1;
-		if (!selectTask.getString().isEmpty()) {
+		boolean hasTask = !selectTask.getFormattedText().isEmpty();
+		if (hasTask) {
 			if (!tasksData.containsKey(selectTask)) {
 				scrollTasks.setSelect(-1);
 				selectTask = Component.empty(); }
@@ -153,11 +154,11 @@ public class SubGuiQuestEdit
 		}
 		addButton(17, x2 + 135, y, "type.down")
 				.setSize(36, 20)
-				.setIsEnabled(!selectTask.getString().isEmpty() && pos > -1 && pos < tasksData.size() - 1)
+				.setIsEnabled(hasTask && pos > -1 && pos < tasksData.size() - 1)
 				.setHoverTexts("quest.hover.edit.quest.down");
 		addButton(16, x2 + 173, y, "type.up")
 				.setSize(36, 20)
-				.setIsEnabled(!selectTask.getString().isEmpty() && pos != 0)
+				.setIsEnabled(hasTask && pos != 0)
 				.setHoverTexts("quest.hover.edit.quest.up");
 		// faction
 		addLabel(lId++, x0, (y += 22) + 5, "faction.options")
@@ -223,7 +224,7 @@ public class SubGuiQuestEdit
 				.setHoverTexts("quest.hover.edit.quest.del");
 		addButton(21, x2 + 53, y, "selectServer.edit")
 				.setSize(50, 20)
-				.setIsEnabled(!selectTask.getString().isEmpty())
+				.setIsEnabled(hasTask)
 				.setHoverTexts("quest.hover.edit.quest.edit");
 	}
 
@@ -268,7 +269,7 @@ public class SubGuiQuestEdit
 				break;
 			} // remove task
 			case 21: {
-				if (selectTask.getString().isEmpty() || !tasksData.containsKey(selectTask)) { return; }
+				if (selectTask.getFormattedText().isEmpty() || !tasksData.containsKey(selectTask)) { return; }
 				QuestObjective questObjective = tasksData.get(selectTask);
 				switch (tasksData.get(selectTask).getEnumType()) {
 					case DIALOG: setSubGui(new SubGuiNpcQuestTypeDialog(npc, questObjective, this)); break;
@@ -456,7 +457,7 @@ public class SubGuiQuestEdit
 	@Override
 	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
 		if (scroll.id == 6) {
-			if (selectTask.getString().isEmpty() || !tasksData.containsKey(selectTask)) { return; }
+			if (selectTask.getFormattedText().isEmpty() || !tasksData.containsKey(selectTask)) { return; }
 			QuestObjective questObjective = tasksData.get(selectTask);
 			switch (tasksData.get(selectTask).getEnumType()) {
 				case DIALOG: setSubGui(new SubGuiNpcQuestTypeDialog(npc, questObjective, this)); break;

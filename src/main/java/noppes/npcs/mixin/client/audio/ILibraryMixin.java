@@ -10,7 +10,6 @@ import java.util.HashMap;
 @Mixin(value = Library.class, remap = false, priority = 502)
 public interface ILibraryMixin {
 
-    @Accessor
-    HashMap<String, Source> getSourceMap();
+    @Accessor HashMap<String, Source> getSourceMap();
 
 }

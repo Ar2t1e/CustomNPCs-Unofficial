@@ -981,11 +981,11 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
-	public boolean hasOwner() {
-		return !ais.aiDisabled && advanced.scenes.getOwner() != null ||
-				(role.getEnumType() == RoleType.FOLLOWER && ((RoleFollower) role).hasOwner()) ||
-				role.getEnumType() == RoleType.COMPANION && ((RoleCompanion) role).hasOwner() ||
-				job.getEnumType() == JobType.FOLLOWER && ((JobFollower) job).hasOwner();
+	public boolean emptyOwner() {
+		return (ais.aiDisabled || advanced.scenes.getOwner() == null) &&
+				(role.getEnumType() != RoleType.FOLLOWER || !((RoleFollower) role).hasOwner()) &&
+				(role.getEnumType() != RoleType.COMPANION || !((RoleCompanion) role).hasOwner()) &&
+				(job.getEnumType() != JobType.FOLLOWER || !((JobFollower) job).hasOwner());
 	}
 
 	public boolean isAttacking() {
@@ -1711,7 +1711,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		lookAt = null;
 		if (lookAi != null) { lookAi.fastRotation = false; }
 		updateLook = false;
-		if (ais.returnToStart && !hasOwner() && isServerWorld() && !isRiding()) {
+		if (ais.returnToStart && emptyOwner() && isServerWorld() && !isRiding()) {
 			boolean isTransfer = false;
 			if (world != null && world.provider.getDimension() != homeDimensionId && getServer() != null) {
 				isTransfer = Util.instance.teleportEntity(getServer(), this, homeDimensionId,
@@ -2228,6 +2228,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 
 	public float getEyeHeight() { return eyeHeight; }
 
+	@SuppressWarnings("unused")
 	public void addRidingEntity(Entity entity) {
 		if (!hitboxRiding.containsKey(entity) && display.getHitboxState() == 2 && !isPassenger(entity)) {
 			if (Math.abs(entity.getEntityBoundingBox().minY - getEntityBoundingBox().maxY) < 0.1) {
@@ -2246,6 +2247,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	public boolean canSee(Entity entity) { return getEntitySenses().canSee(entity); }
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public boolean canEntityBeSeen(@Nonnull Entity target) {
 		if (ais.directLOS == EnumSeeTarget.DEAF) { return false; }
 		try {

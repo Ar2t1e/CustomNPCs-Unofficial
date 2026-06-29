@@ -558,7 +558,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         int x = hasSubGui() ? 0 : mouseX;
         int y = hasSubGui() ? 0 : mouseY;
         if (drawDefaultBackground) { drawDefaultBackground(); }
-        if (title != null && !title.getString().isEmpty()) {
+        if (title != null && !title.getFormattedText().isEmpty()) {
             GuiButtonNop.renderString(title, guiLeft + 4, guiTop + 5, guiLeft + imageWidth - 8, guiTop + 15,
                     CustomNpcs.LableColor.getRGB(), false, true, null);
         }

@@ -47,7 +47,7 @@ public class WrapperRecipe {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("Id", id.toString());
         compound.setString("Name", id.getResourcePath());
-        compound.setString("Group", group.getString());
+        compound.setString("Group", group.getFormattedText());
         compound.setTag("Item", product.writeToNBT(new NBTTagCompound()));
         int size = isGlobal ? 3 : 4;
         int maxX = 0;
@@ -113,7 +113,7 @@ public class WrapperRecipe {
 
     public boolean isValid() {
         if (id.getResourcePath().isEmpty() || !id.getResourceDomain().equals(CustomNpcs.MODID) ||
-                group.getString().isEmpty() || ingredients.isEmpty() || product.isEmpty()) {
+                group.getFormattedText().isEmpty() || ingredients.isEmpty() || product.isEmpty()) {
             return false;
         }
         for (ItemStack[] array : new ArrayList<>(ingredients.values())) {

@@ -4,7 +4,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
-import net.minecraft.client.resources.LanguageManager;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
@@ -19,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 @SideOnly(Side.CLIENT)
@@ -27,13 +27,12 @@ public class CustomNpcsLangPack {
     private static String currentLanguage = "en_us";
     private static ILocaleMixin locale;
     private static ILanguageMapMixin languageMap;
-    private static final Map<String, String> enProperties = Maps.newHashMap();
-    private static final Map<String, String> properties = Maps.newHashMap();
+    private static final Map<String, String> enProperties = Maps.newTreeMap();
+    private static final Map<String, String> properties = Maps.newTreeMap();
     private static boolean init = false;
 
     public static void load() {
         if (!init) { registerReloadListener(); }
-        try { reload(); } catch (Exception e) { LogWriter.error(e); }
     }
 
     private static void registerReloadListener() {
@@ -52,34 +51,29 @@ public class CustomNpcsLangPack {
         locale = (ILocaleMixin) II18nMixin.getI18nLocale();
         languageMap = (ILanguageMapMixin) II18nOldMixin.getLocalizedName();
         clear();
-        LanguageManager lm = Minecraft.getMinecraft().getLanguageManager();
-        if (lm != null) { currentLanguage = lm.getCurrentLanguage().getLanguageCode(); }
-        else {
-            File dir = CustomNpcs.getWorldSaveDirectory();
-            if (dir != null) {
-                try {
-                    File options = new File(dir, "options.txt");
-                    if (options.exists()) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(options.toPath()), StandardCharsets.UTF_8));
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            if (line.startsWith("lang:")) {
-                                currentLanguage = line.replace("lang:", "");
-                                break;
-                            }
-                        }
-                        reader.close();
+        Path options = CustomNpcs.Dir.getParentFile().getParentFile().getParentFile().toPath().resolve("options.txt");
+        if (Files.exists(options)) {
+            try (BufferedReader reader = Files.newBufferedReader(options, StandardCharsets.UTF_8)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("lang:")) {
+                        currentLanguage = line.substring("lang:".length());
+                        break;
                     }
                 }
-                catch (Exception ignored) {}
-            }
+            } catch (Exception ignored) {}
         }
-        File langDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/lang");
-        if (langDir.exists() || langDir.mkdirs()) {
-            File lang = new File(langDir, "en_us.json");
-            if (lang.exists()) { loadLocaleData(true, Files.newInputStream(lang.toPath())); }
-            lang = new File(langDir, currentLanguage + ".json");
-            if (lang.exists()) { loadLocaleData(false, Files.newInputStream(lang.toPath())); }
+
+        Path langDir = CustomNpcs.Dir.toPath().resolve("assets/" + CustomNpcs.MODID + "/lang");
+        if (Files.exists(langDir) || Files.createDirectories(langDir) != null) {
+            Path enLang = langDir.resolve("en_us.json");
+            if (Files.exists(enLang)) {
+                loadLocaleData(true, Files.newInputStream(enLang));
+            }
+            Path curLang = langDir.resolve(currentLanguage + ".json");
+            if (Files.exists(curLang)) {
+                loadLocaleData(false, Files.newInputStream(curLang));
+            }
         }
         save();
     }
@@ -110,10 +104,11 @@ public class CustomNpcsLangPack {
     }
 
     private static void saveLocaleData(boolean isEn, File lang) {
+        Map<String, String> targetMap = isEn ? enProperties : properties;
         try (BufferedWriter writer = Files.newBufferedWriter(lang.toPath())) {
             StringBuilder jsonStr = new StringBuilder();
             String str = "";
-            for (Map.Entry<String, String> entry : (isEn ? enProperties : properties).entrySet()) {
+            for (Map.Entry<String, String> entry : targetMap.entrySet()) {
                 String pre = entry.getKey().contains(".") ? entry.getKey().substring(0, entry.getKey().indexOf(".")) : entry.getKey();
                 if (!str.isEmpty() && !str.equals(pre)) { jsonStr.append((char) 10); }
                 str = pre;
@@ -135,6 +130,8 @@ public class CustomNpcsLangPack {
      * @param value - for the key, in "en_us" language
      */
     public static void added(String key, String value) {
+        if (key == null || key.isEmpty() || value == null) { return; }
+        LogWriter.info("[DEBUG] key "+key+" = "+value);
         String translateValue = value;
         if (!currentLanguage.equals("en_us")) {
             String language = currentLanguage;
@@ -146,13 +143,11 @@ public class CustomNpcsLangPack {
             String temp = Util.instance.translateGoogle("en", language, value);
             if (!temp.equals(value)) { translateValue = temp; }
         }
-        boolean needSave = !enProperties.containsKey(key);
+        boolean needSave = !enProperties.containsKey(key) || !properties.containsKey(key);
         if (!needSave && (!enProperties.get(key).equals(value) || !properties.get(key).equals(translateValue))) { needSave = true; }
         enProperties.put(key, value);
         properties.put(key, translateValue);
-        if (needSave) {
-            save();
-        }
+        if (needSave) { save(); }
     }
 
     public static void check() {

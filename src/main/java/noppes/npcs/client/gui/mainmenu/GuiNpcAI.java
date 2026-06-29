@@ -146,7 +146,7 @@ public class GuiNpcAI extends GuiNPCInterface2 implements ITextfieldListener, IG
 		addLabel(lId++, x0, (y += hStep) + 7, "ai.tacticalvariant")
 				.setSize(w, 10);
 		mess = Component.translatable("ai.hover.attack.type",
-						Component.translatable("ai.tactic." + ai.tacticalVariant.name().toLowerCase()).getString())
+						Component.translatable("ai.tactic." + ai.tacticalVariant.name().toLowerCase()).getFormattedText())
 				.append(Component.translatable("ai.hover.attack.type." + ai.tacticalVariant.name().toLowerCase()));
 		if (ai.aiDisabled) { mess.append(Component.translatable("hover.ai.disabled")); }
 		addButton(17, x1, y, false, ai.tacticalVariant.ordinal(), tactics)

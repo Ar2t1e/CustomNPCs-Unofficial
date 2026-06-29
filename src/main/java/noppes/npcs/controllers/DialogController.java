@@ -154,22 +154,22 @@ public class DialogController implements IDialogHandler {
 		Dialog dia2 = new Dialog(cat);
 		dia2.id = lastUsedDialogID++;
 		dia2.title = "Ask about village";
-		dia2.text = Util.instance.deleteColor(Component.translatable("dialog.base.2.text").getString());
+		dia2.text = Component.translatable("dialog.base.2.text").getString();
 
 		Dialog dia3 = new Dialog(cat);
 		dia3.id = lastUsedDialogID++;
 		dia3.title = "Who are you";
-		dia3.text = Util.instance.deleteColor(Component.translatable("dialog.base.3.text").getString());
+		dia3.text = Component.translatable("dialog.base.3.text").getString();
 
 		Dialog dia4 = new Dialog(cat);
 		dia4.id = lastUsedDialogID++;
 		dia4.title = "Quest description";
-		dia4.text = Util.instance.deleteColor(Component.translatable("dialog.base.4.text").getString());
+		dia4.text = Component.translatable("dialog.base.4.text").getString();
 
 		Dialog dia5 = new Dialog(cat);
 		dia5.id = lastUsedDialogID++;
 		dia5.title = "Issue a quest";
-		dia5.text = Util.instance.deleteColor(Component.translatable("dialog.base.5.text").getString());
+		dia5.text = Component.translatable("dialog.base.5.text").getString();
 		dia5.quest = 0;
 		for (Quest quest : new ArrayList<>(QuestController.instance.quests.values())) {
 			if (quest.title.equals("quest.base.0")) {
@@ -205,11 +205,11 @@ public class DialogController implements IDialogHandler {
 		option3.optionType = OptionType.QUIT_OPTION;
 
 		DialogOption option4 = new DialogOption();
-		option4.title = Util.instance.deleteColor(Component.translatable("dialog.base.4.option.0").getString());
+		option4.title = Component.translatable("dialog.base.4.option.0").getString();
 		option4.addDialog(dia1.id);
 
 		DialogOption option5 = new DialogOption();
-		option5.title = Util.instance.deleteColor(Component.translatable("dialog.base.5.option.0").getString());
+		option5.title = Component.translatable("dialog.base.5.option.0").getString();
 		option5.addDialog(dia5.id);
 
 		dia1.options.put(0, option);

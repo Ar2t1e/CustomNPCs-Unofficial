@@ -8,8 +8,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = ItemFood.class, priority = 502)
 public interface IItemFoodMixin {
 
-    @Mutable
-    @Accessor
-    void setItemUseDuration(int newItemUseDuration);
+    @Mutable @Accessor void setItemUseDuration(int newItemUseDuration);
 
 }

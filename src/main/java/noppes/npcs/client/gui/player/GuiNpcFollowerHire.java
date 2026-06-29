@@ -76,7 +76,7 @@ public class GuiNpcFollowerHire extends GuiContainerNPCInterface<ContainerNPCFol
 				Component daysS = Component.empty()
 						.append(" = " + days + " ")
 						.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-				fontRenderer.drawString(daysS.getString(), x + 27, y + 4,
+				fontRenderer.drawString(daysS.getFormattedText(), x + 27, y + 4,
 						CustomNpcResourceListener.DefaultTextColor);
 				if (isMouseHover(mouseX, mouseY, x - guiLeft + 11, y - guiTop, 16, 16)) {
 					renderToolTip(itemstack, mouseX, mouseY);
@@ -90,7 +90,7 @@ public class GuiNpcFollowerHire extends GuiContainerNPCInterface<ContainerNPCFol
 					.append(Util.instance.getTextReducedNumber(role.rentalMoney, true, true, false))
 					.append(" " + CustomNpcs.displayCurrencies + " = " + days + " ")
 					.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-			fontRenderer.drawString(daysS.getString(), guiLeft + 90, guiTop + 68, CustomNpcResourceListener.DefaultTextColor);
+			fontRenderer.drawString(daysS.getFormattedText(), guiLeft + 90, guiTop + 68, CustomNpcResourceListener.DefaultTextColor);
 		}
 	}
 

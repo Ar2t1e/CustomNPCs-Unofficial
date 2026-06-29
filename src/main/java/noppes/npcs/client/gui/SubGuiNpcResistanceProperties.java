@@ -17,7 +17,6 @@ import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IScrollData;
 import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
-import noppes.npcs.util.Util;
 
 public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 		implements ICustomScrollListener, ISliderListener, IScrollData, ITextfieldListener {
@@ -68,7 +67,7 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 					.append(Component.literal("\"").withStyle(TextFormatting.GRAY))));
 		}
 		names.addAll(notList);
-		if (select.getString().isEmpty() && !names.isEmpty()) { select = names.get(0); }
+		if (select.getFormattedText().isEmpty() && !names.isEmpty()) { select = names.get(0); }
 		List<Component> suffixes = new ArrayList<>();
 		for (Component key : names) { suffixes.add(mapSfx.get(key)); }
 
@@ -81,10 +80,10 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 				.setHoverTexts(hts));
 
 		int y = guiTop + imageHeight - 34;
-		if (!select.getString().isEmpty()) {
+		if (!select.getFormattedText().isEmpty()) {
 			float v = (2.0f - resistances.get(data.get(select)));
 			int t = (int) (v * -100.0f + 100.0f);
-			Component mes = Component.translatable("stats.hover.resist", select.getString());
+			Component mes = Component.translatable("stats.hover.resist", select.getFormattedText());
 			if (t == 0) { mes.append(Component.translatable("stats.hover.resist.0")); }
 			else if (t < 0) { mes.append(Component.translatable("stats.hover.resist.1", t)); }
 			else { mes.append(Component.translatable("stats.hover.resist.2", t)); }
@@ -115,13 +114,13 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 		if (slider.sliderValue != n) { message.append(Component.literal(slider.sliderValue < n ? "" : "+").withStyle(color)); }
 		message.append(Component.literal(String.valueOf(t).replace(".", ",") + "%").withStyle(color));
 		slider.setMessage(message);
-		Component mes = Component.translatable("stats.hover.resist", Util.instance.deleteColor(select.getString()));
+		Component mes = Component.translatable("stats.hover.resist", select.getFormattedText());
 		if (t == 0) { mes.append(Component.translatable("stats.hover.resist.0")); }
 		else if (t < 0) { mes.append(Component.translatable("stats.hover.resist.1", "" + t)); }
 		else { mes.append(Component.translatable("stats.hover.resist.2", "" + t)); }
-		slider.setHoverTexts(mes.getString());
+		slider.setHoverTexts(mes.getFormattedText());
 		if (getTextField(0) != null) {
-			getTextField(0).setHoverTexts(mes.getString()).setValue("" + t);
+			getTextField(0).setHoverTexts(mes.getFormattedText()).setValue("" + t);
 		}
 	}
 
@@ -157,12 +156,12 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 			if (name.isEmpty()) { trName = Component.literal("ANY"); }
 			else {
 				trName = Component.translatable("resistance." + name.toLowerCase());
-				if (trName.getString().equals("resistance." + name.toLowerCase())) { trName = Component.literal(name); }
+				if (trName.getFormattedText().equals("resistance." + name.toLowerCase())) { trName = Component.literal(name); }
 			}
 			if (!resistances.data.containsKey(name)) {
 				trName = trName.withStyle(TextFormatting.GRAY);
-				notHasMap.put(trName.getString(), trName);
-			} else { hasMap.put(trName.getString(), trName); }
+				notHasMap.put(trName.getFormattedText(), trName);
+			} else { hasMap.put(trName.getFormattedText(), trName); }
 			preDataMap.put(trName, name);
 		}
 		for (Map.Entry<String, Component> entry : hasMap.entrySet()) {

@@ -39,7 +39,7 @@ public class Component {
     private final ITextComponent parent;
 
     public Component(String message, boolean isSimple) {
-        if (isSimple) { parent = new TextComponentString(message); }
+        if (isSimple || (message.contains("%") && !message.contains("%%"))) { parent = new TextComponentString(message); }
         else { parent = new TextComponentTranslation(message); }
     }
 
@@ -87,7 +87,16 @@ public class Component {
         return this;
     }
 
-    public @Nonnull String getString() { return Util.instance.deleteColor(parent.getFormattedText()); }
+    public @Nonnull String getString() {
+        try {
+            return Util.instance.deleteColor(parent.getFormattedText());
+        } catch (Exception e) {
+            if (parent instanceof TextComponentTranslation) {
+                return Util.instance.deleteColor(((TextComponentTranslation) parent).getKey());
+            }
+        }
+        return parent.getUnformattedText();
+    }
 
     public Component withStyle(TextFormatting ... textFormats) {
         Style style = parent.getStyle();

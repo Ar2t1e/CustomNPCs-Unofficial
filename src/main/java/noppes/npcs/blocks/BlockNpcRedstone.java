@@ -33,61 +33,79 @@ public class BlockNpcRedstone extends BlockInterface {
 
 	public BlockNpcRedstone() {
 		super(Material.ROCK);
-		this.setName("npcredstoneblock");
-		this.setHardness(50.0f);
-		this.setResistance(2000.0f);
-		this.setCreativeTab(CustomTabs.TOOLS);
+		setName("npcredstoneblock");
+		setHardness(50.0f);
+		setResistance(2000.0f);
+		setCreativeTab(CustomTabs.TOOLS);
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public boolean canProvidePower(@Nonnull IBlockState state) {
 		return true;
 	}
 
+	@Override
 	protected @Nonnull BlockStateContainer createBlockState() {
 		return new BlockStateContainer(this, BlockNpcRedstone.ACTIVE);
 	}
 
+	@Override
 	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
 		return new TileRedstoneBlock();
 	}
 
+	@Override
 	@SideOnly(Side.CLIENT)
 	public @Nonnull BlockRenderLayer getBlockLayer() {
 		return BlockRenderLayer.CUTOUT;
 	}
 
+	@Override
 	public int getMetaFromState(@Nonnull IBlockState state) {
 		return state.getValue(BlockNpcRedstone.ACTIVE) ? 1 : 0;
 	}
 
+	@Override
 	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
 		return EnumBlockRenderType.MODEL;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState getStateFromMeta(int meta) {
-		return this.getDefaultState().withProperty(BlockNpcRedstone.ACTIVE, false);
+		return getDefaultState().withProperty(BlockNpcRedstone.ACTIVE, false);
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public int getStrongPower(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing side) {
-		return this.isActivated(state);
+		return isActivated(state);
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public int getWeakPower(@Nonnull IBlockState state, @Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos, @Nonnull EnumFacing side) {
-		return this.isActivated(state);
+		return isActivated(state);
 	}
 
 	public int isActivated(IBlockState state) {
 		return state.getValue(BlockNpcRedstone.ACTIVE) ? 15 : 0;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isFullCube(@Nonnull IBlockState state) {
 		return false;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isOpaqueCube(@Nonnull IBlockState state) {
 		return false;
 	}
 
+	@Override
 	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (par1World.isRemote) { return false; }
 		ItemStack currentItem = player.inventory.getCurrentItem();
@@ -98,6 +116,7 @@ public class BlockNpcRedstone extends BlockInterface {
 		return false;
 	}
 
+	@Override
 	public void onBlockAdded(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
 		par1World.notifyNeighborsOfStateChange(pos, this, false);
 		par1World.notifyNeighborsOfStateChange(pos.down(), this, false);
@@ -108,14 +127,16 @@ public class BlockNpcRedstone extends BlockInterface {
 		par1World.notifyNeighborsOfStateChange(pos.north(), this, false);
 	}
 
+	@Override
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entityliving, @Nonnull ItemStack item) {
 		if (entityliving instanceof EntityPlayerMP && !world.isRemote) {
 			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entityliving, EnumGuiType.RedstoneBlock, null, pos);
 		}
 	}
 
+	@Override
 	public void onBlockDestroyedByPlayer(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-		this.onBlockAdded(par1World, pos, state);
+		onBlockAdded(par1World, pos, state);
 	}
 
 }

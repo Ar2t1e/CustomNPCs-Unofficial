@@ -369,7 +369,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (!enabled || !visible) { return false; }
         boolean wasFocused = isFocused();
-        setIsFocused(isHovered);
+        if (canLoseFocus) { setIsFocused(isHovered); }
         boolean clicked = onClick(mouseX, mouseY, mouseButton);
         if (!wasFocused && isFocused()) {
             unfocus();
@@ -379,9 +379,8 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
         return clicked;
     }
 
-    private boolean onClick(double mouseX, double mouseY, int mouseButton) {
-        if (enabled && visible && mouseButton == 0) {
-            if (canLoseFocus) { setIsFocused(isHovered); }
+    private boolean onClick(double mouseX, double ignoredMouseY, int mouseButton) {
+        if (enabled && visible && mouseButton == 0 && isHovered) {
             int i = (int) mouseX - x;
             if (enableBackgroundDrawing) { i -= 4; }
             String s = font.trimStringToWidth(text.substring(lineScrollOffset), getWidth());
@@ -643,6 +642,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public boolean isAllowUppercase() { return allowUppercase; }
 
     public GuiTextFieldNop setAllowUppercase(boolean isAllowUppercase) { allowUppercase = isAllowUppercase; return this; }
@@ -666,6 +666,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
         return this;
     }
 
+    @SuppressWarnings("unused")
     public boolean isLatinAlphabetOnly() { return latinAlphabetOnly; }
 
     public GuiTextFieldNop setLatinAlphabetOnly(boolean isLatinAlphabetOnly) { latinAlphabetOnly = isLatinAlphabetOnly; return this; }

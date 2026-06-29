@@ -125,7 +125,7 @@ public class SubGuiEditText extends GuiBasic implements ITextfieldListener {
 
 	public SubGuiEditText setHoverTexts(Component ... newHovers) {
 		for (int i : hovers.keySet()) {
-			setHoverText(i < newHovers.length ? newHovers[i].getString() : "");
+			setHoverText(i < newHovers.length ? newHovers[i].getFormattedText() : "");
 			hovers.put(i, new ArrayList<>(hoverText));
 			hoverText.clear();
 		}

@@ -212,9 +212,9 @@ public class CommonProxy implements IGuiHandler {
 		return "en_en";
 	}
 
-    public void loadAnimationModel(AnimationConfig animation) { }
+	public void loadAnimationModel(AnimationConfig animation) { }
 
-    public void updatePlayerPos() { }
+	public void updatePlayerPos() { }
 
 	public void createAllFiles(ICustomElement customElement) {
 		if (customElement instanceof Block) { NoppesUtilServer.createBlockFiles(customElement); }
@@ -236,7 +236,7 @@ public class CommonProxy implements IGuiHandler {
 		IForgeRegistry<IRecipe> manager = CustomNpcs.proxy.getRecipeManager();
 		List<IRecipe> recipes = new ArrayList<>(manager.getValuesCollection());
 		// new
-        recipes.removeIf(r -> r instanceof RecipeCarpentry);
+		recipes.removeIf(r -> r instanceof RecipeCarpentry);
 		// collect
 		RecipeController rData = RecipeController.getInstance();
 		for (int i = 0; i < 2; i++) {

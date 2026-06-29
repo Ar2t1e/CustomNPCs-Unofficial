@@ -10,7 +10,6 @@ import java.util.List;
 @Mixin(value = NBTTagList.class, priority = 502)
 public interface INBTTagListMixin {
 
-    @Accessor
-    List<NBTBase> getTagList();
+    @Accessor List<NBTBase> getTagList();
 
 }

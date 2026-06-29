@@ -17,19 +17,23 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTabs;
 import noppes.npcs.EventHooks;
@@ -40,9 +44,11 @@ import noppes.npcs.api.event.NpcEvent.CustomNpcTeleport;
 import noppes.npcs.api.event.PlayerEvent.CustomTeleport;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
+import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemNpcBlock;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
@@ -64,7 +70,7 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 		String name = "custom_" + nbtBlock.getString("RegistryName");
 		setRegistryName(CustomNpcs.MODID, name.toLowerCase());
 		setUnlocalizedName(name.toLowerCase());
-		setDefaultState(blockState.getBaseState().withProperty(CustomBlockPortal.TYPE, 0));
+		setDefaultState(blockState.getBaseState().withProperty(TYPE, 0));
 
 		enableStats = true;
 		blockParticleGravity = 1.0F;
@@ -83,14 +89,10 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 	}
 
 	@Override
-	protected @Nonnull BlockStateContainer createBlockState() {
-		return new BlockStateContainer(this, TYPE);
-	}
+	protected @Nonnull BlockStateContainer createBlockState() { return new BlockStateContainer(this, TYPE); }
 
 	@Override
-	public TileEntity createNewTileEntity(@Nonnull World worldIn, int meta) {
-		return new CustomTileEntityPortal();
-	}
+	public TileEntity createNewTileEntity(@Nonnull World world, int meta) { return new CustomTileEntityPortal(); }
 
 	@Override
 	public @Nonnull AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
@@ -125,7 +127,30 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 
 	@Override
 	@SuppressWarnings("ConstantConditions")
-	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nullable EntityLivingBase placer, @Nonnull ItemStack stack) {
+	public @Nonnull IBlockState getStateForPlacement(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumFacing facing,
+													 float hitX, float hitY, float hitZ, int meta,
+													 @Nullable EntityLivingBase placer, @Nonnull EnumHand hand) {
+		if (placer != null) {
+			CustomTileEntityPortal adjacent = null;
+			for (EnumFacing f : EnumFacing.values()) {
+				adjacent = getAdjacentTile(world, pos.offset(f));
+				if (adjacent != null) break;
+			}
+			int type;
+			if (adjacent != null) { type = adjacent.type; }
+			else {
+				type = placer.rotationPitch < -45 || placer.rotationPitch > 45 ? 0 : 1;
+				if (type == 1 && (placer.getHorizontalFacing() == EnumFacing.EAST || placer.getHorizontalFacing() == EnumFacing.WEST)) { type = 2; }
+			}
+			return getDefaultState().withProperty(TYPE, type);
+		}
+		else { return super.getStateForPlacement(world, pos, facing, hitX, hitY, hitZ, meta, placer, hand); }
+	}
+
+	@Override
+	@SuppressWarnings("ConstantConditions")
+	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state,
+								@Nullable EntityLivingBase placer, @Nonnull ItemStack stack) {
 		TileEntity tile = world.getTileEntity(pos);
 		if (tile instanceof CustomTileEntityPortal) {
 			CustomTileEntityPortal portalTile = (CustomTileEntityPortal) tile;
@@ -141,29 +166,41 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 				if (adjacent != null) break;
 			}
 			if (adjacent != null) {
-				portalTile.type = adjacent.type;
 				if (adjacent.posTp.getY() > -1) { portalTile.posTp = new BlockPos(adjacent.posTp); }
 				if (adjacent.posHomeTp.getY() > -1) { portalTile.posHomeTp = new BlockPos(adjacent.posHomeTp); }
 				portalTile.dimensionId = adjacent.dimensionId;
 				portalTile.homeDimensionId = adjacent.homeDimensionId;
 				portalTile.setAlpha(adjacent.getAlpha());
+				portalTile.availability.load(adjacent.availability.save(new NBTTagCompound()));
+			} else {
+				portalTile.homeDimensionId = world.provider.getDimension();
+				portalTile.dimensionId = world.provider.getDimension() == 0 ? -1 : 0;
 			}
-			else {
-				portalTile.type = placer == null || placer.rotationPitch < -45 || placer.rotationPitch > 45 ? 0 : 1;
-				if (portalTile.type == 1 && (placer.getHorizontalFacing() == EnumFacing.EAST || placer.getHorizontalFacing() == EnumFacing.WEST)) { portalTile.type = 2; }
-			}
+			portalTile.type = state.getValue(TYPE);
 
-			NBTTagCompound nbt = new NBTTagCompound();
-			portalTile.writeToNBT(nbt);
-			IBlockState newState = state.withProperty(CustomBlockPortal.TYPE, portalTile.type);
-			world.setBlockState(pos, newState, 3);
-			TileEntity newTile = world.getTileEntity(pos);
-			if (newTile instanceof CustomTileEntityPortal) {
-				newTile.readFromNBT(nbt);
-				newTile.markDirty();
+			if (placer instanceof EntityPlayerMP && !world.isRemote) {
+				if (adjacent == null) { SPacketGuiOpen.sendOpenGui((EntityPlayerMP) placer, EnumGuiType.Portal, null, pos); }
+				else {
+					placer.sendMessage(Component.translatable("copy.settings.adjacent.block",
+							TextFormatting.GRAY + "" + adjacent.getPos().getX(),
+							TextFormatting.GRAY + "" + adjacent.getPos().getY(),
+							TextFormatting.GRAY + "" + adjacent.getPos().getZ()).getParent());
+				} // Copy
 			}
 		}
 		super.onBlockPlacedBy(world, pos, state, placer, stack);
+	}
+
+	@Override
+	public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
+		if (!world.isRemote) {
+			ItemStack currentItem = player.inventory.getCurrentItem();
+			if (currentItem.getItem() == CustomItems.wand || currentItem.getItem() == CustomItems.scripter) {
+				SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.Portal, null, pos);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -179,22 +216,26 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 					return;
 				}
 			}
-			int id = nbtData.hasKey("DimensionID", 3) ? nbtData.getInteger("DimensionID") : 0;
-			int homeId = nbtData.hasKey("HomeDimensionID", 3) ? nbtData.getInteger("HomeDimensionID") : 0;
+			int id = 0;
+			int homeId = worldIn.provider.getDimension();
 			TileEntity blockTile = worldIn.getTileEntity(pos);
 			if (blockTile instanceof CustomTileEntityPortal) {
 				CustomTileEntityPortal tile = (CustomTileEntityPortal) blockTile;
-				if (DimensionManager.isDimensionRegistered(tile.dimensionId)) { id = tile.dimensionId; }
-				if (DimensionManager.isDimensionRegistered(tile.homeDimensionId)) { homeId = tile.homeDimensionId; }
+				if (entityIn instanceof EntityPlayerMP && !tile.availability.isAvailable((EntityPlayerMP) entityIn)) { return; }
+				id = tile.dimensionId;
+				homeId = tile.homeDimensionId;
+			} else {
+				if (nbtData.hasKey("DimensionID", 3)) { id = nbtData.getInteger("DimensionID"); }
+				if (nbtData.hasKey("HomeDimensionID", 3)) { homeId = nbtData.getInteger("HomeDimensionID"); }
 			}
-			if (DimensionManager.isDimensionRegistered(id)) { id = 0; }
-			if (DimensionManager.isDimensionRegistered(homeId)) { homeId = 0; }
+			if (!DimensionManager.isDimensionRegistered(id)) { id = 0; }
+			if (!DimensionManager.isDimensionRegistered(homeId)) { homeId = worldIn.provider.getDimension(); }
 
-			boolean isHome = worldIn.provider.getDimension() == id;
+			boolean getHome = worldIn.provider.getDimension() == id  && id != homeId;
 			BlockPos p = null;
-			if (blockTile instanceof CustomTileEntityPortal) { p = ((CustomTileEntityPortal) blockTile).getPosTp(isHome); }
+			if (blockTile instanceof CustomTileEntityPortal) { p = ((CustomTileEntityPortal) blockTile).getPosTp(getHome); }
 			if (p == null) {
-				WorldServer world = Objects.requireNonNull(worldIn.getMinecraftServer()).getWorld(isHome ? homeId : id);
+				WorldServer world = Objects.requireNonNull(worldIn.getMinecraftServer()).getWorld(getHome ? homeId : id);
 				p = world.getSpawnCoordinate();
 				if (p == null) { p = world.getSpawnPoint(); }
 				if (!world.isAirBlock(p)) { p = world.getTopSolidOrLiquidBlock(p); }
@@ -204,7 +245,7 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 				}
 			}
 			if (entityIn instanceof EntityPlayerMP) {
-				CustomTeleport event = EventHooks.onPlayerTeleport((EntityPlayerMP) entityIn, p, pos, isHome ? homeId : id);
+				CustomTeleport event = EventHooks.onPlayerTeleport((EntityPlayerMP) entityIn, p, pos, getHome ? homeId : id);
 				if (!event.isCanceled()) {
 					int dimension = event.dimension;
 					if (DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
@@ -214,16 +255,22 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 				}
 			}
 			else {
-				int dimension = isHome ? homeId : id;
+				int dimension = getHome ? homeId : id;
+				double[] motions = new double[] { entityIn.motionX, entityIn.motionY, entityIn.motionZ };
 				if (entityIn instanceof EntityNPCInterface) {
-					CustomNpcTeleport event = EventHooks.onNpcTeleport((EntityNPCInterface) entityIn, p, pos, isHome ? homeId : id);
+					CustomNpcTeleport event = EventHooks.onNpcTeleport((EntityNPCInterface) entityIn, p, pos, getHome ? homeId : id);
 					if (event.isCanceled() || entityIn.isDead) { return; }
 					dimension = event.dimension;
 					if (DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
 				}
-				WorldServer world = Objects.requireNonNull(worldIn.getMinecraftServer()).getWorld(isHome ? homeId : id);
+				WorldServer world = Objects.requireNonNull(worldIn.getMinecraftServer()).getWorld(getHome ? homeId : id);
 				if (world != null && entityIn.world.provider.getDimension() != dimension) { entityIn = entityIn.changeDimension(dimension); }
-				if (entityIn != null) { entityIn.setPosition(p.getX() + 0.5d, p.getY(), p.getZ() + 0.5d); }
+				if (entityIn != null) {
+					entityIn.setPosition(p.getX() + 0.5d, p.getY(), p.getZ() + 0.5d);
+					entityIn.motionX = motions[0];
+					entityIn.motionY = motions[1];
+					entityIn.motionZ = motions[2];
+				}
 			}
 		}
 	}

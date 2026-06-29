@@ -48,9 +48,9 @@ public class GuiBorderBlock extends GuiNPCInterface
 		addLabel(1, xl, (y += 24) + 5, "gui.message").setColor(color);
 		Component hover = Component.translatable("border.hover.message");
 		Component mes = Component.translatable(tile.message);
-		if (!tile.message.equals(mes.getString())) {
+		if (!tile.message.equals(mes.getFormattedText())) {
 			hover.append("<br>");
-			hover.append(Component.translatable("gui.translation", mes.getString()));
+			hover.append(Component.translatable("gui.translation", mes.getFormattedText()));
 		}
 		addTextField(1, x, y, 200, 20, tile.message)
 				.setHoverTexts(hover);

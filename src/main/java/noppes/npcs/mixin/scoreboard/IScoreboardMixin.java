@@ -10,7 +10,6 @@ import java.util.Map;
 @Mixin(value = Scoreboard.class, priority = 502)
 public interface IScoreboardMixin {
 
-    @Accessor
-    Map<String, ScorePlayerTeam> getTeams();
+    @Accessor Map<String, ScorePlayerTeam> getTeams();
 
 }

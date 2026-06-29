@@ -9,18 +9,14 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.List;
 
 // Used by custom GUI
-@Mixin(value = GuiLabel.class, priority = 499)
+@Mixin(value = GuiLabel.class, priority = 498)
 public class GuiLabelMixin implements IGuiLabelMixin {
 
-    @Final
-    @Shadow
-    private List<String> labels;
+    @Final @Shadow private List<String> labels;
 
-    @Shadow
-    private boolean centered;
+    @Shadow private boolean centered;
 
-    @Shadow
-    private int border;
+    @Shadow private int border;
 
     @Override
     public int npcs$getBorder() { return border; }

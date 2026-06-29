@@ -15,13 +15,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Random;
-
-@Mixin(value = EntityLivingBase.class, priority = 499)
+@Mixin(value = EntityLivingBase.class, priority = 498)
 public class EntityLivingBaseMixin implements IEntityLivingBaseIMixin {
 
-    @Unique
-    private DamageSource npcs$currentDamageSource;
+    @Unique private DamageSource npcs$currentDamageSource;
 
     // remember the source of damage
     @Inject(method = "attackEntityFrom", at = @At("HEAD"))

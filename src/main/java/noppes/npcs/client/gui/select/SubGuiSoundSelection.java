@@ -52,7 +52,7 @@ public class SubGuiSoundSelection extends ResourceSelection {
 		int h = guiTop + imageHeight - 25;
 		List<Object> options = new ArrayList<>();
 		options.add("spawner.random");
-		if (!select.getString().isEmpty() && selectDir != null) {
+		if (!select.getFormattedText().isEmpty() && selectDir != null) {
 			String key = selectDir.getResourceDomain() + ":" + select.getString();
 			if (eventsData.containsKey(key)) {
 				for (ISoundEventAccessor<Sound> event : ((ISoundEventAccessorMixin) eventsData.get(key)).getAccessorList()) {
@@ -181,7 +181,7 @@ public class SubGuiSoundSelection extends ResourceSelection {
 			drawRect(left, top, right, bottom, alpha << 24);
 			if (error != null) {
 				if (delay == 0L) { delay = System.currentTimeMillis() + 4000L; }
-				drawCenteredString(font, error.getString(), (right-left)/2, top + 1, CustomNpcs.MainColor.getRGB());
+				drawCenteredString(font, error.getFormattedText(), (right-left)/2, top + 1, CustomNpcs.MainColor.getRGB());
 				if (delay < System.currentTimeMillis()) { isPlay = false; }
 				return;
 			}
@@ -212,7 +212,7 @@ public class SubGuiSoundSelection extends ResourceSelection {
 
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
-		if (!scroll.getSelected().isEmpty() && scroll.getSelected().equals(select.getString())) { return; }
+		if (!scroll.getSelected().isEmpty() && scroll.getSelected().equals(select.getFormattedText())) { return; }
 		option = 0;
 		super.scrollClicked(scroll);
 		if (getButton(3) != null) {

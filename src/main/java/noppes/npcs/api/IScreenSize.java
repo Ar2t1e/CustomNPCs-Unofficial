@@ -2,7 +2,7 @@ package noppes.npcs.api;
 
 import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
+@SuppressWarnings("unused")
 public interface IScreenSize {
 
     double getWidth();

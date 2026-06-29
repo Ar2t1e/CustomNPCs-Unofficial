@@ -13,7 +13,6 @@ import java.util.List;
 @Mixin(value = FallbackResourceManager.class, priority = 502)
 public interface IFallbackResourceManagerMixin {
 
-    @Accessor("resourcePacks")
-    List<IResourcePack> getResourcePacks();
+    @Accessor("resourcePacks") List<IResourcePack> getResourcePacks();
 
 }

@@ -11,11 +11,8 @@ import java.util.Set;
 @Mixin(value = ItemTool.class, priority = 502)
 public interface IItemToolMixin {
 
-    @Mutable
-    @Accessor(remap = false)
-    void setToolClass(String toolClass);
+    @Mutable @Accessor(remap = false) void setToolClass(String toolClass);
 
-    @Accessor
-    Set<Block> getEffectiveBlocks();
+    @Accessor Set<Block> getEffectiveBlocks();
 
 }

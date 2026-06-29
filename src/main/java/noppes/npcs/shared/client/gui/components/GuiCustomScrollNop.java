@@ -270,8 +270,8 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
             // main
             int right = r - 1;
             // add bz
-            if (suffixes != null && i < suffixes.size() && suffixes.get(i) != null && !suffixes.get(i).getString().isEmpty()) {
-                int w = 1 + (customFont != null ? customFont.width(suffixes.get(i).getString()) : font.getStringWidth(suffixes.get(i).getString()));
+            if (suffixes != null && i < suffixes.size() && suffixes.get(i) != null && !suffixes.get(i).getFormattedText().isEmpty()) {
+                int w = 1 + (customFont != null ? customFont.width(suffixes.get(i).getFormattedText()) : font.getStringWidth(suffixes.get(i).getFormattedText()));
                 right -= w;
                 GuiButtonNop.renderString(suffixes.get(i), right, top, right + w, top + 10,
                         (i == hover ? CustomNpcs.HoverColor.getRGB() : CustomNpcs.MainColor.getRGB()), true, false, customFont);
@@ -325,7 +325,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
                 if (mouseInOption(mouseX, mouseY, displayIndex)) {
                     boolean isIgnore = false;
                     for (Component ignore : ignoreSelected) {
-                        if (Util.instance.equalsDeleteColor(ignore.getString(), line, false)) {
+                        if (ignore.getString().equals(line)) {
                             isIgnore = true;
                             break;
                         }
@@ -491,9 +491,9 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     private boolean isSameList(List<Component> checklist) {
         if (list.size() != checklist.size()) { return false; }
         List<String> main = new ArrayList<>();
-        for (Component component : list) { main.add(component.getString()); }
+        for (Component component : list) { main.add(component.getFormattedText()); }
         List<String> check = new ArrayList<>();
-        for (Component component : checklist) { check.add(component.getString()); }
+        for (Component component : checklist) { check.add(component.getFormattedText()); }
         for (int i = 0; i < check.size(); i++) {
             String line = main.get(i);
             if (!check.contains(line) || !check.get(i).equalsIgnoreCase(line)) { return false; }
@@ -505,7 +505,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     public void replace(Component old, Component newLine) {
         int i = 0;
         for (Component line : new ArrayList<>(list)) {
-            if (Util.instance.equalsDeleteColor(line.getString(), old.getString(), false)) {
+            if (line.getString().equals(old.getString())) {
                 list.remove(line);
                 list.add(i, newLine);
                 if (isSorted) { list.sort(new ComponentOrderComparator()); }
@@ -535,7 +535,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
 
     public GuiCustomScrollNop setSelected(Component line) {
         if (list.contains(line)) { selected = list.indexOf(line); }
-        else { setSelected(line == null ? "" : line.getString()); }
+        else { setSelected(line == null ? "" : line.getFormattedText()); }
         return this;
     }
 

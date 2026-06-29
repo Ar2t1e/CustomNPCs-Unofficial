@@ -78,11 +78,9 @@ public class SyncController {
 		NBTTagCompound compound = new NBTTagCompound();
 		NBTTagList list = new NBTTagList();
 		for (WorldServer world : CustomNpcs.Server.worlds) {
-			DimensionData data = DimensionController.get(world);
-			NBTTagCompound nbt = data.save();
-			nbt.setBoolean("loaded", world.isBlockLoaded(BlockPos.ORIGIN));
-			nbt.setInteger("name", world.provider.getDimension());
-			list.appendTag(nbt);
+			DimensionData dd = DimensionController.get(world);
+			dd.isLoad = world.isBlockLoaded(BlockPos.ORIGIN);
+			list.appendTag(dd.save());
 		}
 		compound.setTag("Data", list);
 		Packets.send(player, new PacketSync(9, compound, true));

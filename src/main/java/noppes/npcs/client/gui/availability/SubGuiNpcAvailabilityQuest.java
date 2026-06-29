@@ -42,7 +42,7 @@ public class SubGuiNpcAvailabilityQuest
 	@Override
 	public void initGui() {
 		super.initGui();
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		// title
 		addLabel(0, guiLeft + 6, guiTop + 4, "availability.available.1")
 				.setSize(imageWidth - 12, 12)
@@ -112,7 +112,7 @@ public class SubGuiNpcAvailabilityQuest
 		int p = 0;
 		getButton(1).setDisplayText("availability.selectquest");
 		Quest quest = null;
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		if (isSelect) {
 			quest = QuestController.instance.quests.get(dataIDs.get(select));
 			p = dataEnum.get(select).ordinal();
@@ -147,7 +147,7 @@ public class SubGuiNpcAvailabilityQuest
 				break;
 			}
 			case 1 : {
-				setSubGui(new SubGuiQuestSelection(select.getString().isEmpty() ? 0 : dataIDs.get(select)));
+				setSubGui(new SubGuiQuestSelection(select.getFormattedText().isEmpty() ? 0 : dataIDs.get(select)));
 				break;
 			}
 			case 2 : {

@@ -118,7 +118,7 @@ public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListene
 		addButton(1, x1, y, "selectServer.edit")
 				.setSize(110, 20)
 				.setHoverTexts("display.hover.set.model");
-		int tw = font.getStringWidth(Component.translatable("display.size").getString());
+		int tw = font.getStringWidth(Component.translatable("display.size").getFormattedText());
 		int x3 = x2 - 2 - tw;
 		addLabel(lID++, x3, y + 5, "display.size")
 				.setSize(tw + 1, 10);
@@ -166,7 +166,7 @@ public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListene
 		addYesNo(5, x1, y, display.getHasLivingAnimation())
 				.setSize(40, 20)
 				.setHoverTexts("display.hover.animation");
-		tw = font.getStringWidth(Component.translatable("display.tint").getString());
+		tw = font.getStringWidth(Component.translatable("display.tint").getFormattedText());
 		x3 = x2 - 2 - tw;
 		addLabel(lID++, x3, y + 5, "display.tint")
 				.setSize(tw + 1, 10);
@@ -193,7 +193,7 @@ public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListene
 				.setSize(60, 20)
 				.setIsEnabled(CustomNpcs.EnableInvisibleNpcs && display.getVisible() == 1)
 				.setHoverTexts("display.hover.visible." + (CustomNpcs.EnableInvisibleNpcs ? 1 : 0));
-		tw = font.getStringWidth(Component.translatable("display.hitbox").getString());
+		tw = font.getStringWidth(Component.translatable("display.hitbox").getFormattedText());
 		x3 = x2 - 2 - tw;
 		addLabel(lID++, x3, y + 5, "display.hitbox")
 				.setSize(tw + 1, 10);
@@ -236,7 +236,7 @@ public class GuiNpcDisplay extends GuiNPCInterface2 implements ITextfieldListene
 				"display.hide", "display.show", "display.showAttacking")
 				.setHoverTexts("display.hover.boss.bar")
 				.setSize(110, 20);
-		tw = font.getStringWidth(Component.translatable("gui.color").getString());
+		tw = font.getStringWidth(Component.translatable("gui.color").getFormattedText());
 		x3 = x2 - 2 - tw;
 		addLabel(lID, x3, y + 5, "gui.color")
 				.setSize(tw + 1, 10);

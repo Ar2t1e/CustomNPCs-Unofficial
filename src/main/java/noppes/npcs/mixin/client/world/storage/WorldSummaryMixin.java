@@ -12,13 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = WorldSummary.class, priority = 498)
 public class WorldSummaryMixin implements IWorldSummaryMixin {
 
-    @Unique
-    public String npcs$agreementName = "";
+    @Unique public String npcs$agreementName = "";
 
     @Override
-    public String npcs$getAgreementName() {
-        return npcs$agreementName;
-    }
+    public String npcs$getAgreementName() { return npcs$agreementName; }
 
     @Inject(method = "<init>", at = @At("RETURN"))
     public void init(WorldInfo info, String fileNameIn, String displayNameIn, long sizeOnDiskIn, boolean requiresConversionIn, CallbackInfo ci) {

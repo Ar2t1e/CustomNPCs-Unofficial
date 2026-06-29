@@ -8,11 +8,10 @@ import org.spongepowered.asm.mixin.*;
 
 import java.util.*;
 
-@Mixin(value = RenderLivingBase.class, priority = 499)
+@Mixin(value = RenderLivingBase.class, priority = 498)
 public class RenderLivingBaseMixin<T extends EntityLivingBase> implements IRenderLivingBaseMixin {
 
-    @Shadow
-    protected List<LayerRenderer<T>> layerRenderers;
+    @Shadow protected List<LayerRenderer<T>> layerRenderers;
 
     @Override
     public LayerRenderer<T> npcs$getLayer(Class<?> layerClass) {

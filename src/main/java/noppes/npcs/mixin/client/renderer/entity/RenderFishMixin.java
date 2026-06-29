@@ -28,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
 
-@Mixin(value = RenderFish.class)
+@Mixin(value = RenderFish.class, priority = 498)
 public abstract class RenderFishMixin extends Render<EntityFishHook> {
 
     @Final @Shadow private static ResourceLocation FISH_PARTICLES;

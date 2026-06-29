@@ -397,20 +397,20 @@ public class GuiBoundarySetting extends GuiNPCInterface
 		}
 		if (regions == null) { regions = addScroll(0).setSize(110, 130); }
 		regions.setUnsortedList(new ArrayList<>(dataRegions.values()));
-		if (!selectReg.getString().isEmpty()) { regions.setSelected(selectReg); }
+		if (!selectReg.getFormattedText().isEmpty()) { regions.setSelected(selectReg); }
 		add(regions.setPos(guiLeft + 5, guiTop + 14));
 		// regions
 		addLabel(lId++, guiLeft + 6, guiTop + 4, "gui.regions")
 				.setSize(108, 12)
-				.setHoverTexts(Component.translatable("region.hover.regions.list", Component.translatable("item.customnpcs.npcboundary").getString()));
+				.setHoverTexts(Component.translatable("region.hover.regions.list", Component.translatable("item.customnpcs.npcboundary").getFormattedText()));
 		if (points == null) { points = addScroll(1).setSize(imageWidth - side - 124, side / 2); }
 		points.setUnsortedList(new ArrayList<>(dataPoints.values()));
-		if (!selectP.getString().isEmpty()) { points.setSelected(selectP); }
+		if (!selectP.getFormattedText().isEmpty()) { points.setSelected(selectP); }
 		add(points.setPos(r1, guiTop + 14));
 		// points
 		addLabel(lId++, r1, guiTop + 4, "gui.points")
 				.setSize(imageWidth - side - 126, 12)
-				.setHoverTexts(Component.translatable("region.hover.points.list", Component.translatable("item.customnpcs.npcboundary").getString()));
+				.setHoverTexts(Component.translatable("region.hover.points.list", Component.translatable("item.customnpcs.npcboundary").getFormattedText()));
 		// ID 0 - color
 		String color = "gui.color";
 		if (region != null) {
@@ -433,7 +433,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
 				.setIsEnabled(region != null)
 				.setHoverTexts("hover.delete");
 		// ID 3 - OffSet -X
-		String trRegion = Component.translatable("gui.region").getString();
+		String trRegion = Component.translatable("gui.region").getFormattedText();
 		addButton(3, r0 + 13, guiTop + 3, "←")
 				.setSize(13, 13)
 				.setIsEnabled(region != null)
@@ -480,7 +480,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
 				.setHoverTexts(Component.translatable("region.hover.point.remove", trRegion));
 
 		// ID 12 - OffSet Point -X
-		String trPoint = Component.translatable("gui.point").getString();
+		String trPoint = Component.translatable("gui.point").getFormattedText();
 		addButton(12, r1, h0 + 25, "←")
 				.setSize(12, 12)
 				.setIsEnabled(region != null && point != null)
@@ -541,7 +541,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
 		Component q = Component.translatable("quest.next");
 		if (region != null && region.questID > 0) {
 			Quest quest = QuestController.instance.quests.get(region.questID);
-			q = Component.translatable("gui.quest", ": " + (quest != null ? Component.translatable(quest.getName()).getString() : ""));
+			q = Component.translatable("gui.quest", ": " + (quest != null ? Component.translatable(quest.getName()).getFormattedText() : ""));
 		}
 		addButton(27, r1, guiTop + side - 1, q)
 				.setSize(79, 14)
@@ -632,7 +632,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
 				if (!dataRegions.containsValue(scroll.getNormalSelected())) { return; }
 				for (int id : dataRegions.keySet()) {
 					if (region != null && region.getId() == id) { continue; }
-					if (dataRegions.get(id).getString().equals(scroll.getSelected()) && BorderController.getInstance().regions.containsKey(id)) {
+					if (dataRegions.get(id).getFormattedText().equals(scroll.getSelected()) && BorderController.getInstance().regions.containsKey(id)) {
 						region = BorderController.getInstance().getRegion(id);
 						regID = id;
 						point = null;
@@ -647,7 +647,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
 			case 1: { // Point List
 				if (region == null || !dataPoints.containsValue(scroll.getNormalSelected())) { return; }
 				for (int id : dataPoints.keySet()) {
-					if (dataPoints.get(id).getString().equals(scroll.getSelected()) && region.points.containsKey(id)) {
+					if (dataPoints.get(id).getFormattedText().equals(scroll.getSelected()) && region.points.containsKey(id)) {
 						point = region.points.get(id);
 						initGui();
 						break;

@@ -76,7 +76,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 		EmotionConfig emtn = getEmtn();
 		switch (button.id) {
 			case 0: {
-				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(Component.translatable("gui.new").getString())));
+				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(Component.translatable("gui.new").getFormattedText())));
 				break;
 			} // create new
 			case 1: {
@@ -323,7 +323,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 		scroll.setUnsortedList(new ArrayList<>(dataEmtns.keySet()));
 		scroll.setSelected(selEmtn);
 		if (!dataEmtns.containsKey(selEmtn)) { selEmtn = Component.empty(); }
-		if (selEmtn.getString().isEmpty() && !dataEmtns.isEmpty()) {
+		if (selEmtn.getFormattedText().isEmpty() && !dataEmtns.isEmpty()) {
 			for (Component key : dataEmtns.keySet()) {
 				selEmtn = key;
 				scroll.setSelected(selEmtn);
@@ -619,7 +619,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
 		if (scroll.id == 0) {
-			if (selEmtn.getString().equals(scroll.getSelected())) { return; }
+			if (selEmtn.getFormattedText().equals(scroll.getSelected())) { return; }
 			save();
 			selEmtn = scroll.getNormalSelected();
 		}

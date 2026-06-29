@@ -29,34 +29,42 @@ public class BlockWaypoint extends BlockInterface {
 
 	public BlockWaypoint() {
 		super(Material.IRON);
-		this.setName("npcwaypoint");
-		this.setSoundType(SoundType.METAL);
-		this.setHardness(5.0f);
-		this.setResistance(10.0f);
-		this.setCreativeTab(CustomTabs.TOOLS);
+		setName("npcwaypoint");
+		setSoundType(SoundType.METAL);
+		setHardness(5.0f);
+		setResistance(10.0f);
+		setCreativeTab(CustomTabs.TOOLS);
 	}
 
+	@Override
 	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
 		return new TileWaypoint();
 	}
 
+	@Override
 	@SideOnly(Side.CLIENT)
 	public @Nonnull BlockRenderLayer getBlockLayer() {
 		return BlockRenderLayer.CUTOUT;
 	}
 
+	@Override
 	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
 		return EnumBlockRenderType.MODEL;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isFullCube(@Nonnull IBlockState state) {
 		return false;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isOpaqueCube(@Nonnull IBlockState state) {
 		return false;
 	}
 
+	@Override
 	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (par1World.isRemote) {
 			return false;
@@ -69,6 +77,7 @@ public class BlockWaypoint extends BlockInterface {
 		return false;
 	}
 
+	@Override
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
 		if (entity instanceof EntityPlayerMP && !world.isRemote) {
 			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entity, EnumGuiType.Waypoint, null, pos);

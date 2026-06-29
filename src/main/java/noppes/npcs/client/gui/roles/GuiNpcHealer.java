@@ -44,7 +44,7 @@ public class GuiNpcHealer
 		backGui = EnumGuiType.MainMenuAdvanced;
 		job = (JobHealer)npc.job;
 		for (Potion p : Potion.REGISTRY) {
-			potions.put(Component.translatable("effect." + p.getName().toLowerCase()).getString(), Potion.getIdFromPotion(p));
+			potions.put(Component.translatable("effect." + p.getName().toLowerCase()).getFormattedText(), Potion.getIdFromPotion(p));
 		}
 	}
 
@@ -87,7 +87,7 @@ public class GuiNpcHealer
 			else { // to setts
 				HealerSettings hs = job.effects.get(id);
 				String lv = "enchantment.level." + (hs.amplifier + 1);
-				if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getString(); }
+				if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getFormattedText(); }
 				else { lv = "" + (hs.amplifier + 1); }
 				displays_1.put(name.append(Component.literal(" " + lv).withStyle(TextFormatting.RESET)), pointName);
 				Component f = Component.translatable(hs.type == (byte) 0 ? "faction.friendly" : hs.type == (byte) 1 ? "faction.unfriendly" : "spawner.all")
@@ -160,7 +160,7 @@ public class GuiNpcHealer
 		addLabel(4, x2, y + 5, "beacon.amplifier")
 				.setSize(100, 12);
 		String lv = "enchantment.level." + (amplifier + 1);
-		if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getString(); }
+		if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getFormattedText(); }
 		else { lv = "" + (amplifier + 1); }
 		addTextField(3, x3, y, 40, 20, amplifier + 1)
 				.setMinMaxDefault(1, 4, 1)

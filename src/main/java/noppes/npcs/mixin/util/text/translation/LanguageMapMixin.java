@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
 
-@Mixin(value = LanguageMap.class, priority = 499)
+@Mixin(value = LanguageMap.class, priority = 498)
 public class LanguageMapMixin implements ILanguageMapMixin {
 
     @Final

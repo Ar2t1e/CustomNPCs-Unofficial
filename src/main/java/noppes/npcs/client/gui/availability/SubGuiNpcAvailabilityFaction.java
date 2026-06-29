@@ -43,7 +43,7 @@ public class SubGuiNpcAvailabilityFaction
 	@Override
 	public void initGui() {
 		super.initGui();
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		// title
 		addLabel(1, guiLeft + 6, guiTop + 4, "availability.available.2")
 				.setSize(imageWidth - 12, 12)
@@ -264,7 +264,7 @@ public class SubGuiNpcAvailabilityFaction
 		getButton(1).setDisplayText("availability.selectquest");
 		int p = 0, s = 0;
 		Faction faction = null;
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		if (isSelect) {
 			faction = FactionController.instance.factions.get(dataIDs.get(select));
 			p = dataSets.get(select).factionAvailable.ordinal();

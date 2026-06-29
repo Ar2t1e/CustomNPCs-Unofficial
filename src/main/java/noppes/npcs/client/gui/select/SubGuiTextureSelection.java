@@ -50,6 +50,7 @@ public class SubGuiTextureSelection extends ResourceSelection {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public SubGuiTextureSelection(GuiScreen parentIn, int idIn, EntityNPCInterface npc, @Nonnull String textureIn, String suffixIn, int typeIn, TextureSelection textureSelectionIn) {
 		this(parentIn, idIn, npc, textureIn, suffixIn, typeIn);
 		textureSelection = textureSelectionIn;
@@ -72,7 +73,7 @@ public class SubGuiTextureSelection extends ResourceSelection {
 		}
 		String res = baseResource;
 		if (button.id == 2 && resource != null) { res = resource.toString(); }
-		if (npc != null && type >= 0 && type <= 2) {
+		if (npc != null && type >= 0 && type <= 2 && resource != null) {
 			switch (type) {
 				case 1: {
 					npc.display.setCapeTexture(res);

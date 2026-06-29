@@ -10,6 +10,8 @@ import net.minecraft.util.math.BlockPos;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.api.item.INPCToolItem;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiOpen;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.item.ISpecBuilder;
@@ -78,10 +80,8 @@ public class SPacketGuiOpen extends PacketServerBasic {
             int y = pos.getY();
             int z = pos.getZ();
             try {
-               if (gui.hasContainer && CustomNpcs.proxy.getServerGuiElement(gui.ordinal(), player, player.world, x, y, z) != null) {
-                  player.openGui(CustomNpcs.instance, gui.ordinal(), player.world, x, y, z);
-                  player.openContainer.detectAndSendChanges();
-               } else {
+               if (!gui.hasContainer) {Packets.send(player, new PacketGuiOpen(gui, pos)); }
+               else if (CustomNpcs.proxy.getServerGuiElement(gui.ordinal(), player, player.world, x, y, z) != null) {
                   NoppesUtilServer.openContainerGui(player, gui, (buffer) -> {
                      buffer.writeInt(npc != null ? npc.getEntityId() : -1);
                      buffer.writeBlockPos(pos);

@@ -14,13 +14,11 @@ public class CreativeTabNpcs extends CreativeTabs {
 
 	public CreativeTabNpcs(String label) {
 		super(label);
-		this.item = Items.BOWL;
-		this.meta = 0;
+		item = Items.BOWL;
+		meta = 0;
 	}
 
 	@Override
-	public @Nonnull ItemStack getTabIconItem() {
-		return new ItemStack(this.item, 1, this.meta);
-	}
+	public @Nonnull ItemStack getTabIconItem() { return new ItemStack(this.item, 1, this.meta); }
 
 }

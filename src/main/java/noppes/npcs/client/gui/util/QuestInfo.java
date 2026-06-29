@@ -70,17 +70,17 @@ public class QuestInfo {
         entitys.clear();
         List<String> preLines = new ArrayList<>();
         // quest name
-        preLines.add(Component.translatable("gui.quest", ": ").getString() + TextFormatting.BOLD +
-                Component.translatable(qData.quest.title).getString());
+        preLines.add(Component.translatable("gui.quest", ": ").getFormattedText() + TextFormatting.BOLD +
+                Component.translatable(qData.quest.title).getFormattedText());
         // completion npc name
         if (qData.quest.completion == EnumQuestCompletion.Npc && qData.quest.completer != null) {
-            preLines.add(Component.translatable("quest.completewith", qData.quest.completer.getName()).getString());
+            preLines.add(Component.translatable("quest.completewith", qData.quest.completer.getName()).getFormattedText());
         }
         // all objectives
         IQuestObjective[] allObj = qData.quest.getObjectives(player);
         if (allObj.length > 0) {
             preLines.add("");
-            preLines.add(TextFormatting.BOLD + Component.translatable("quest.objectives." + qData.quest.step).getString());
+            preLines.add(TextFormatting.BOLD + Component.translatable("quest.objectives." + qData.quest.step).getFormattedText());
             String line;
             for (int i = 0; i < allObj.length; i++) {
                 line = (i + 1) + "-";

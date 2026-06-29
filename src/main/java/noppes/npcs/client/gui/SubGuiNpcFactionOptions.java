@@ -93,7 +93,7 @@ public class SubGuiNpcFactionOptions
 			if (newName.contains("ID:" + id + " - ")) {
 				newName = newName.substring(newName.indexOf(" - ") + 3);
 			}
-			newName = Component.translatable(newName).getString();
+			newName = Component.translatable(newName).getFormattedText();
 
 			Component str = Component.empty().append(Component.literal("ID:" + id + " - " + newName).withStyle(TextFormatting.GRAY));
 			if (options.hasFaction(id)) {
@@ -102,10 +102,10 @@ public class SubGuiNpcFactionOptions
 						.append(Component.literal("ID:" + id + " - ").withStyle(TextFormatting.GRAY))
 						.append(Component.literal(newName).withStyle(fo.decreaseFactionPoints ? TextFormatting.RED : TextFormatting.DARK_GREEN));
 			}
-			newList.put(str.getString(), str);
+			newList.put(str.getFormattedText(), str);
 			hoverMap.put(str, Component.literal(newName));
 			data.put(str, id);
-			if (name != null && name.equals(Util.instance.deleteColor(newName))) { name = str.getString(); }
+			if (name != null && name.equals(Util.instance.deleteColor(newName))) { name = str.getFormattedText(); }
 		}
 		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
 		int i = 0;
@@ -142,7 +142,7 @@ public class SubGuiNpcFactionOptions
 		}
 		if (fo != null) { fo.check(); }
 		Map<String, Integer> dataMap = new HashMap<>();
-		for (Component component : data.keySet()) { dataMap.put(component.getString(), data.get(component)); }
+		for (Component component : data.keySet()) { dataMap.put(component.getFormattedText(), data.get(component)); }
 		setData(null, dataMap);
 	}
 

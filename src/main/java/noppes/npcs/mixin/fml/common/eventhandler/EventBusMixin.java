@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 import java.lang.reflect.Method;
 
-@Mixin(value = EventBus.class, priority = 502)
+@Mixin(value = EventBus.class, priority = 498)
 public class EventBusMixin implements IEventBusMixin {
 
     @Unique

@@ -11,10 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(value = RecipeBookPage.class, priority = 498)
 public class RecipeBookPageMixin {
 
-    @Final
-    @Shadow
-    @Mutable
     @SuppressWarnings("unused")
-    private GuiRecipeOverlay overlay = new CustomGuiRecipeOverlay();
+    @Final @Shadow @Mutable private GuiRecipeOverlay overlay = new CustomGuiRecipeOverlay();
 
 }

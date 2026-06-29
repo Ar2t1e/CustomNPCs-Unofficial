@@ -8,12 +8,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = Slot.class, priority = 502)
 public interface ISlotMixin {
 
-    @Mutable
-    @Accessor("xPos")
-    void setX(int newX);
+    @Mutable @Accessor("xPos") void setX(int newX);
 
-    @Mutable
-    @Accessor("yPos")
-    void setY(int newX);
+    @Mutable @Accessor("yPos") void setY(int newX);
 
 }

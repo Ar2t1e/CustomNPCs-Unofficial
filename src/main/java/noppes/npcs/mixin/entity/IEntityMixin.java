@@ -14,37 +14,26 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = Entity.class, priority = 502)
 public interface IEntityMixin {
 
-    @Accessor
-    void setWorld(World newWorld);
+    @Accessor void setWorld(World newWorld);
 
-    @Accessor
-    EntityDataManager getDataManager();
+    @Accessor EntityDataManager getDataManager();
 
-    @Accessor
-    DataParameter<Byte> getFLAGS();
+    @Accessor DataParameter<Byte> getFLAGS();
 
-    @Accessor(remap = false)
-    CapabilityDispatcher getCapabilities();
+    @Accessor(remap = false) CapabilityDispatcher getCapabilities();
 
-    @Accessor(remap = false)
-    void setCapabilities(CapabilityDispatcher newCapabilityDispatcher);
+    @Accessor(remap = false) void setCapabilities(CapabilityDispatcher newCapabilityDispatcher);
 
-    @Accessor
-    BlockPos getLastPortalPos();
+    @Accessor BlockPos getLastPortalPos();
 
-    @Accessor
-    void setLastPortalPos(BlockPos newBlockPos);
+    @Accessor void setLastPortalPos(BlockPos newBlockPos);
 
-    @Accessor
-    Vec3d getLastPortalVec();
+    @Accessor Vec3d getLastPortalVec();
 
-    @Accessor
-    void setLastPortalVec(Vec3d newVec3d);
+    @Accessor void setLastPortalVec(Vec3d newVec3d);
 
-    @Accessor
-    EnumFacing getTeleportDirection();
+    @Accessor EnumFacing getTeleportDirection();
 
-    @Accessor
-    void setTeleportDirection(EnumFacing newEnumFacing);
+    @Accessor void setTeleportDirection(EnumFacing newEnumFacing);
 
 }

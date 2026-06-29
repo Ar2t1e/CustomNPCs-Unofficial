@@ -38,9 +38,9 @@ public class GuiQuestCompletion extends GuiNPCInterface {
 	public void initGui() {
 		super.initGui();
 		Component questTitle = Component.translatable("questlog.completed").append(Component.translatable(quest.getName()));
-		int left = (imageWidth - fontRenderer.getStringWidth(questTitle.getString())) / 2;
+		int left = (imageWidth - fontRenderer.getStringWidth(questTitle.getFormattedText())) / 2;
 		addLabel(0, guiLeft + left, guiTop + 4, Component.translatable(quest.getName()));
-		textBlockClient = new TextBlockClient(Component.translatable(quest.getCompleteText()).getString(), 170, true, npc, player);
+		textBlockClient = new TextBlockClient(Component.translatable(quest.getCompleteText()).getFormattedText(), 170, true, npc, player);
 		maxLine = 180 / fontRenderer.FONT_HEIGHT;
 		if (textBlockClient.lines.size() > maxLine) {
 			addButton(0, guiLeft + 28, guiTop + imageHeight - 24, "quest.complete")

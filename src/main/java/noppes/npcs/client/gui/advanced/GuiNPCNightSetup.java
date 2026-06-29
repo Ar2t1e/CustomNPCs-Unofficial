@@ -40,7 +40,7 @@ public class GuiNPCNightSetup extends GuiNPCInterface2 implements IGuiData {
 				.setSize(w, 10);
 		addYesNo(0, x1, y, data.hasDisplay)
 				.setHoverTexts(Component.translatable("transform.hover.tab",
-						Component.translatable("menu.display").getString()));
+						Component.translatable("menu.display").getFormattedText()));
 		addLabel(10, x2, y + 5, "advanced.editingmode")
 				.setSize(w, 10);
 		addYesNo(10, x3, y, data.editingModus)
@@ -49,7 +49,7 @@ public class GuiNPCNightSetup extends GuiNPCInterface2 implements IGuiData {
 				.setSize(w, 10);
 		addYesNo(1, x1, y, data.hasStats)
 				.setHoverTexts(Component.translatable("transform.hover.tab",
-						Component.translatable("menu.stats").getString()));
+						Component.translatable("menu.stats").getFormattedText()));
 		if (data.editingModus) {
 			addButton(11, x2, y, "advanced.loadday")
 					.setHoverTexts(Component.translatable("transform.hover.loadday")
@@ -59,7 +59,7 @@ public class GuiNPCNightSetup extends GuiNPCInterface2 implements IGuiData {
 				.setSize(w, 10);
 		addYesNo(2, x1, y, data.hasAi)
 				.setHoverTexts(Component.translatable("transform.hover.tab",
-						Component.translatable("menu.ai").getString()));
+						Component.translatable("menu.ai").getFormattedText()));
 		if (data.editingModus) {
 			addButton(12, x2, y, "advanced.loadnight")
 					.setHoverTexts(Component.translatable("transform.hover.loadnight")
@@ -69,7 +69,7 @@ public class GuiNPCNightSetup extends GuiNPCInterface2 implements IGuiData {
 				.setSize(w, 10);
 		addYesNo(3, x1, y, data.hasInv)
 				.setHoverTexts(Component.translatable("transform.hover.tab",
-						Component.translatable("menu.inventory").getString()));
+						Component.translatable("menu.inventory").getFormattedText()));
 
 		// New from Unofficial (BetaZavr)
 		addLabel(7, x0, (y += 22) + 5, "movement.animation")
@@ -81,17 +81,17 @@ public class GuiNPCNightSetup extends GuiNPCInterface2 implements IGuiData {
 				.setSize(w, 10);
 		addYesNo(4, x1, y, data.hasAdvanced)
 				.setHoverTexts(Component.translatable("transform.hover.tab",
-						Component.translatable("menu.advanced").getString()));
+						Component.translatable("menu.advanced").getFormattedText()));
 		addLabel(5, x0, (y += 22) + 5, "role.name")
 				.setSize(w, 10);
 		addYesNo(5, x1, y, data.hasRole)
 				.setHoverTexts(Component.translatable("transform.hover.role",
-						Component.translatable("menu.advanced").getString()));
+						Component.translatable("menu.advanced").getFormattedText()));
 		addLabel(6, x0, (y += 22) + 5, "job.name")
 				.setSize(w, 10);
 		addYesNo(6, x1, y, data.hasJob)
 				.setHoverTexts(Component.translatable("transform.hover.job",
-						Component.translatable("menu.advanced").getString()));
+						Component.translatable("menu.advanced").getFormattedText()));
 	}
 
 	@Override

@@ -2,7 +2,6 @@ package noppes.npcs.mixin.tileentity;
 
 import com.google.common.collect.Lists;
 import net.minecraft.item.EnumDyeColor;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.BannerPattern;
@@ -21,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nullable;
 import java.util.List;
 
-@Mixin(value = TileEntityBanner.class, priority = 499)
+@Mixin(value = TileEntityBanner.class, priority = 498)
 public class TileEntityBannerMixin implements ITileEntityBanner {
 
     @Shadow private EnumDyeColor baseColor;

@@ -23,23 +23,26 @@ public abstract class BlockNpcDoorInterface extends BlockDoor implements ITileEn
 
 	public BlockNpcDoorInterface() {
 		super(Material.WOOD);
-		this.setRegistryName(CustomNpcs.MODID, "npcscripteddoor");
-		this.setUnlocalizedName("npcscripteddoor");
-		this.setHardness(5.0f);
-		this.setResistance(10.0f);
-		this.setCreativeTab(CustomTabs.TOOLS);
-		this.hasTileEntity = true;
+		setRegistryName(CustomNpcs.MODID, "npcscripteddoor");
+		setUnlocalizedName("npcscripteddoor");
+		setHardness(5.0f);
+		setResistance(10.0f);
+		setCreativeTab(CustomTabs.TOOLS);
+		hasTileEntity = true;
 	}
 
+	@Override
 	public void breakBlock(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
 		super.breakBlock(worldIn, pos, state);
 		worldIn.removeTileEntity(pos);
 	}
 
+	@Override
 	public TileEntity createNewTileEntity(@Nonnull World worldIn, int meta) {
 		return new TileDoor();
 	}
 
+	@Override
 	public @Nonnull IBlockState getActualState(@Nonnull IBlockState state, @Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos) {
 		if (state.getValue(BlockNpcDoorInterface.HALF) == BlockDoor.EnumDoorHalf.LOWER) {
 			IBlockState iblockstate1 = worldIn.getBlockState(pos.up());
@@ -60,14 +63,17 @@ public abstract class BlockNpcDoorInterface extends BlockDoor implements ITileEn
 		return state;
 	}
 
+	@Override
 	public @Nonnull ItemStack getItem(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-		return new ItemStack(CustomBlocks.scripted_door_item, 1, this.damageDropped(state));
+		return new ItemStack(CustomBlocks.scripted_door_item, 1, damageDropped(state));
 	}
 
+	@Override
 	public @Nonnull Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) {
 		return ItemStack.EMPTY.getItem();
 	}
 
+	@Override
 	public boolean hasTileEntity(@Nonnull IBlockState state) {
 		return true;
 	}

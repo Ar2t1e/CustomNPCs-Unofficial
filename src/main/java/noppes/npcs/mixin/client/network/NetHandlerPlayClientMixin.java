@@ -14,38 +14,30 @@ import noppes.npcs.api.mixin.client.network.INetHandlerPlayClientMixin;
 import noppes.npcs.entity.EntityNPCInterface;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 import java.util.UUID;
 
-@Mixin(value = NetHandlerPlayClient.class, priority = 4)
+@Mixin(value = NetHandlerPlayClient.class, priority = 498)
 public class NetHandlerPlayClientMixin implements INetHandlerPlayClientMixin {
 
-    @Shadow
-    private Minecraft gameController;
+    @Shadow private Minecraft gameController;
 
-    @Shadow
-    private boolean doneLoadingTerrain;
+    @Shadow private boolean doneLoadingTerrain;
 
-    @Final
-    @Shadow
-    private NetworkManager netManager;
+    @Final @Shadow private NetworkManager netManager;
 
-    @Final
-    @Shadow
-    private Map<UUID, NetworkPlayerInfo> playerInfoMap;
+    @Final @Shadow private Map<UUID, NetworkPlayerInfo> playerInfoMap;
 
     @Override
     public Map<UUID, NetworkPlayerInfo> npcs$getplayerInfoMap() { return playerInfoMap; }
 
-    /**
-     * @author BetaZavr
-     * @reason NPCs have hard hitboxes
-     */
-    @Overwrite
-    public void handlePlayerPosLook(SPacketPlayerPosLook packetIn) {
+    @Inject(method = "handlePlayerPosLook", at = @At("HEAD"), cancellable = true)
+    public void npcs$handlePlayerPosLook(SPacketPlayerPosLook packetIn, CallbackInfo ci) {
         NetHandlerPlayClient parent = (NetHandlerPlayClient) (Object) this;
         PacketThreadUtil.checkThreadAndEnqueue(packetIn, parent, gameController);
         EntityPlayer player = gameController.player;
@@ -88,6 +80,7 @@ public class NetHandlerPlayClientMixin implements INetHandlerPlayClientMixin {
             doneLoadingTerrain = true;
             gameController.displayGuiScreen(null);
         }
+        ci.cancel();
     }
 
 }

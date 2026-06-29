@@ -4,6 +4,7 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.api.interfaces.ParamName;
 
+@SuppressWarnings("unused")
 public interface INbt {
 
 	void remove(@ParamName("key") String key);

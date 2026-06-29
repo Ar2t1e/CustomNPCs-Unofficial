@@ -10,7 +10,6 @@ import java.util.Map;
 @Mixin(value = TextureMap.class, priority = 502)
 public interface ITextureMapMixin {
 
-    @Accessor
-    Map<String, TextureAtlasSprite> getMapRegisteredSprites();
+    @Accessor Map<String, TextureAtlasSprite> getMapRegisteredSprites();
 
 }

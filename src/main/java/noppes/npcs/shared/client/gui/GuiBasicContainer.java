@@ -460,7 +460,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         drawDefaultBackground();
-        if (title != null && !title.getString().isEmpty()) {
+        if (title != null && !title.getFormattedText().isEmpty()) {
             GuiButtonNop.renderString(title, guiLeft + 4, guiTop + 5, guiLeft + xSize - 8, guiTop + 15,
                     CustomNpcs.LableColor.getRGB(), false, true, null);
         }

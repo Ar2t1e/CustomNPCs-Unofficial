@@ -99,7 +99,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                                     int left, int top, int right, int bottom, int color, boolean showShadow,
                                     boolean centered, ClientProxy.FontContainer customFont) {
         Minecraft mc = Minecraft.getMinecraft();
-        int textWidth = customFont != null ? customFont.width(message) : mc.fontRenderer.getStringWidth(message.getString());
+        int textWidth = customFont != null ? customFont.width(message) : mc.fontRenderer.getStringWidth(message.getFormattedText());
         int height = (top + bottom - 9) / 2 + 1;
         if (customFont != null) {
             textWidth++;
@@ -138,18 +138,18 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             double d2 = Math.sin(Math.PI / 2.0d * Math.cos(Math.PI * 2.0d * d0 / d1)) / 2.0 + 0.5;
             double d3 = ValueUtil.lerp(d2, 0.0, centerX);
             if (customFont != null) { customFont.draw(message, left - (int) d3, height, color); }
-            else { mc.fontRenderer.drawString(message.getString(), left - (int) d3, height, color, showShadow); }
+            else { mc.fontRenderer.drawString(message.getFormattedText(), left - (int) d3, height, color, showShadow); }
             GL11.glDisable(GL11.GL_SCISSOR_TEST);
         } // moved
         else {
             if (centered) {
                 width = (left + right) / 2;
                 if (customFont != null) { customFont.draw(message, width - (float) textWidth / 2.0f, height, color); }
-                else { mc.fontRenderer.drawString(message.getString(), width - (float) textWidth / 2.0f, height, color, showShadow); }
+                else { mc.fontRenderer.drawString(message.getFormattedText(), width - (float) textWidth / 2.0f, height, color, showShadow); }
             }
             else {
                 if (customFont != null) { customFont.draw(message, left, height, color); }
-                else { mc.fontRenderer.drawString(message.getString(), left, height, color, showShadow); }
+                else { mc.fontRenderer.drawString(message.getFormattedText(), left, height, color, showShadow); }
             }
         } // in round
         GlStateManager.popMatrix();
@@ -270,7 +270,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     }
 
     protected boolean clicked(double mouseX, double mouseY) {
-        return visible && enabled && mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
+        return visible && enabled && (isHovered || mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height);
     }
 
     @Override
@@ -340,7 +340,6 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 int v = 46 + state * 20;
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(x, y, 0.0f);
-                GlStateManager.scale(1.0f, (float) height / 22.0f, 1.0f);
                 drawTexturedModalRect(0, 0, 0, v, left, 20);
                 drawTexturedModalRect(left, 0, 200 - right, v, right, 20);
                 GlStateManager.popMatrix();
@@ -393,7 +392,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             renderString(label, x + 2, y, x + width - 2, y + height, color, showShadow, true, customFont);
         } else {
             if (customFont != null) { customFont.draw(label, getX() + 2, getY(), color); }
-            else { mc.fontRenderer.drawString(label.getString(), getX() + 2.0f - mc.fontRenderer.getStringWidth(label.getString()) / 2.0f, getY(), color, showShadow); }
+            else { mc.fontRenderer.drawString(label.getFormattedText(), getX() + 2.0f - mc.fontRenderer.getStringWidth(label.getFormattedText()) / 2.0f, getY(), color, showShadow); }
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
@@ -493,31 +492,6 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         y += addY;
     }
 
-    public Component[] getVariants() { return display; }
-
-
-    public GuiButtonNop setVariants(Object ... variants) {
-        Set<Component> lines = new LinkedHashSet<>();
-        for (Object o : variants) {
-            if (o == null) { lines.add(Component.empty()); }
-            else if (o instanceof Component) { lines.add(((Component) o)); }
-            else if (o instanceof List<?>) {
-                for (Object line : ((List<?>) o)) {
-                    if (line == null) { lines.add(Component.empty()); }
-                    else if (line instanceof Component) { lines.add(((Component) line)); }
-                    else { lines.add(Component.translatable("" + line)); }
-                }
-            }
-            else { lines.add(Component.translatable("" + o)); }
-        }
-        display = lines.toArray(new Component[0]);
-        displayValue = variants.length == 0 ? 0 : displayValue % variants.length;
-        if (displayValue >= 0 && displayValue < display.length) {
-            setDisplayText(display[displayValue]);
-        }
-        return this;
-    }
-
     @Override
     public GuiButtonNop setHoverTexts(Object... components) {
         hoverText.clear();
@@ -559,6 +533,31 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) { return false; }
+
+    public Component[] getVariants() { return display; }
+
+
+    public GuiButtonNop setVariants(Object ... variants) {
+        Set<Component> lines = new LinkedHashSet<>();
+        for (Object o : variants) {
+            if (o == null) { lines.add(Component.empty()); }
+            else if (o instanceof Component) { lines.add(((Component) o)); }
+            else if (o instanceof List<?>) {
+                for (Object line : ((List<?>) o)) {
+                    if (line == null) { lines.add(Component.empty()); }
+                    else if (line instanceof Component) { lines.add(((Component) line)); }
+                    else { lines.add(Component.translatable("" + line)); }
+                }
+            }
+            else { lines.add(Component.translatable("" + o)); }
+        }
+        display = lines.toArray(new Component[0]);
+        displayValue = variants.length == 0 ? 0 : displayValue % variants.length;
+        if (displayValue >= 0 && displayValue < display.length) {
+            setDisplayText(display[displayValue]);
+        }
+        return this;
+    }
 
     public int getState() {
         boolean lbm = Mouse.isButtonDown(0);

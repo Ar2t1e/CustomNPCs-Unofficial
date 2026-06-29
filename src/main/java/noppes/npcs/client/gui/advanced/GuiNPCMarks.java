@@ -110,13 +110,13 @@ public class GuiNPCMarks extends GuiNPCInterface2 implements ICustomScrollListen
 		for (MarkData.Mark mark : data.marks) {
 			Component key = Component.literal(i + ": ").append(Component.translatable((String) marks[mark.getType()]).withColor(mark.color));
 			ds.add(key);
-			if (!selMark.getString().isEmpty() && selMark.getString().equals(key.getString())) { selectedMark = mark; }
+			if (!selMark.getFormattedText().isEmpty() && selMark.getFormattedText().equals(key.getFormattedText())) { selectedMark = mark; }
 			i++;
 		}
 		if (scroll == null) { scroll = addScroll(0).setSize(130, 174); }
 		scroll.setList(new ArrayList<>())
 				.setUnsortedList(ds);
-		if (selectedMark != null && !selMark.getString().isEmpty()) { scroll.setSelected(selMark); }
+		if (selectedMark != null && !selMark.getFormattedText().isEmpty()) { scroll.setSelected(selMark); }
 		add(scroll.setPos(guiLeft + 5, guiTop + 14));
 		if (selectedMark == null) { selectedMark = data.getNewMark(); }
 		// type
@@ -181,7 +181,7 @@ public class GuiNPCMarks extends GuiNPCInterface2 implements ICustomScrollListen
 
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
-		if (selMark.getString().equals(scroll.getSelected())) { return; }
+		if (selMark.getFormattedText().equals(scroll.getSelected())) { return; }
 		selMark = scroll.getNormalSelected();
 		initGui();
 	}

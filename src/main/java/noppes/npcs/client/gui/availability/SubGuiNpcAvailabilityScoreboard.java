@@ -40,7 +40,7 @@ public class SubGuiNpcAvailabilityScoreboard
 	@Override
 	public void initGui() {
 		super.initGui();
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		// title
 		addLabel(1, guiLeft + 6, guiTop + 4, "availability.available.6")
 				.setSize(imageWidth - 12, 12)

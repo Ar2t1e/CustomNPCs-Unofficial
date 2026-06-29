@@ -76,28 +76,28 @@ public class SubGuiNpcQuestReward extends GuiBasic implements ITextfieldListener
 				.setHoverTexts("quest.hover.reward.edit");
 		// type
 		Component label = Component.translatable("quest.reward.get.item");
-		addLabel(0, x1 - 2 - font.getStringWidth(label.getString()), (y += h + 2) + 2, label);
+		addLabel(0, x1 - 2 - font.getStringWidth(label.getFormattedText()), (y += h + 2) + 2, label);
 		addButton(0, x1, y, false, quest.rewardType.ordinal(),
 				"drop.type.all", "drop.type.one", "drop.type.random")
 				.setSize(62, h)
 				.setHoverTexts("quest.hover.edit.reward.type");
 		// xp
 		label = Component.translatable("quest.exp").append(":");
-		addLabel(1, x1 - 2 - font.getStringWidth(label.getString()), (y += h + 3) + 1, label);
+		addLabel(1, x1 - 2 - font.getStringWidth(label.getFormattedText()), (y += h + 3) + 1, label);
 		int max = 99999;
 		addTextField(0, x1 + 1, y, 60, h - 2, quest.rewardExp)
 				.setMinMaxDefault(0, max, quest.rewardExp)
 				.setHoverTexts(Component.translatable("quest.hover.edit.reward.xp", ((char) 167) + "6" + max));
 		// money
 		label = Component.translatable("gui.money").append(":");
-		addLabel(2, x1 - 2 - font.getStringWidth(label.getString()), (y += h + 2) + 1, label);
+		addLabel(2, x1 - 2 - font.getStringWidth(label.getFormattedText()), (y += h + 2) + 1, label);
 		max = 99999999;
 		addTextField(1, x1 + 1, y, 60, h - 2, quest.rewardMoney)
 				.setMinMaxDefault(0, max, quest.rewardMoney)
 				.setHoverTexts(Component.translatable("quest.hover.edit.reward.money", ((char) 167) + "6" + max));
 		// donat
 		label = Component.translatable("gui.donat").append(":");
-		addLabel(3, x1 - 2 - font.getStringWidth(label.getString()), (y += h + 2) + 1, label);
+		addLabel(3, x1 - 2 - font.getStringWidth(label.getFormattedText()), (y += h + 2) + 1, label);
 		addTextField(2, x1 + 1, y, 60, h - 2, quest.rewardDonat)
 				.setMinMaxDefault(0, max, quest.rewardDonat)
 				.setHoverTexts(Component.translatable("quest.hover.edit.reward.donat", ((char) 167) + "6" + max));

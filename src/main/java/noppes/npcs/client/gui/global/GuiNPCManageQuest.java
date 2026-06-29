@@ -30,7 +30,6 @@ import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
-import noppes.npcs.util.Util;
 
 public class GuiNpcManageQuest
 		extends GuiNPCInterface2
@@ -66,9 +65,10 @@ public class GuiNpcManageQuest
 		for (QuestCategory category : qData.categories.values()) {
 			Component key = category.getTitle();
 			categoryData.put(key, category);
-			if (selectedCategory.getString().isEmpty() || selectedCategory.getString().equals(key.getString())) { selectedCategory = key; }
+			if (selectedCategory.getFormattedText().isEmpty() || selectedCategory.getString().equals(key.getString())) { selectedCategory = key; }
 		}
-		if (!selectedCategory.getString().isEmpty()) {
+		boolean hasCategory = !selectedCategory.getFormattedText().isEmpty();
+		if (hasCategory) {
 			if (categoryData.containsKey(selectedCategory)) {
 				Map<Component, Quest> map = new LinkedHashMap<>();
 				for (Quest quest : new ArrayList<>(categoryData.get(selectedCategory).quests.values())) {
@@ -77,7 +77,7 @@ public class GuiNpcManageQuest
 				List<Map.Entry<Component, Quest>> list = getEntryList(map);
 				for (Map.Entry<Component, Quest> entry : list) {
 					questData.put(entry.getKey(), entry.getValue());
-					if (selectedQuest.getString().isEmpty()) {
+					if (selectedQuest.getFormattedText().isEmpty()) {
 						selectedQuest = entry.getKey();
 					}
 				}
@@ -95,8 +95,9 @@ public class GuiNpcManageQuest
 				}
 			}
 		}
-		if (!selectedCategory.getString().isEmpty() && !categoryData.containsKey(selectedCategory)) { selectedCategory = Component.empty(); }
-		if (!selectedQuest.getString().isEmpty() && !questData.containsKey(selectedQuest)) { selectedQuest = Component.empty(); }
+		if (hasCategory && !categoryData.containsKey(selectedCategory)) { selectedCategory = Component.empty(); }
+		boolean hasQuest = !selectedQuest.getFormattedText().isEmpty();
+		if (hasQuest && !questData.containsKey(selectedQuest)) { selectedQuest = Component.empty(); }
 		// scroll info
 		addLabel(0, guiLeft + 8, guiTop + 4, "gui.categories");
 		addLabel(1, guiLeft + 180, guiTop + 4, "quest.quests");
@@ -105,19 +106,19 @@ public class GuiNpcManageQuest
 		addLabel(3, guiLeft + 356, guiTop + 8, "quest.quests");
 		addButton(13, x, y += 10, "selectServer.edit")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedQuest.getString().isEmpty())
+				.setIsEnabled(hasQuest)
 				.setHoverTexts("manager.hover.quest.edit", selectedQuest);
 		addButton(12, x, y += 17, "gui.remove")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedQuest.getString().isEmpty())
+				.setIsEnabled(hasQuest)
 				.setHoverTexts("manager.hover.quest.del", selectedQuest);
 		addButton(11, x, y += 17, "gui.add")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedCategory.getString().isEmpty())
+				.setIsEnabled(hasCategory)
 				.setHoverTexts("manager.hover.quest.add", selectedCategory);
 		addButton(10, x, y += 21, "gui.copy")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedQuest.getString().isEmpty())
+				.setIsEnabled(hasQuest)
 				.setHoverTexts("manager.hover.quest.copy", selectedQuest);
 		addButton(9, x, y += 17, "gui.paste")
 				.setSize(64, 15)
@@ -125,31 +126,33 @@ public class GuiNpcManageQuest
 				.setHoverTexts("manager.hover.quest.paste." + (copyQuest != null), copyQuest != null ? copyQuest.getLineKey() : "");
 		GuiButtonNop checkBox = addCheckBox(14, x, y + 17, "gui.name", "ID", sortByName)
 				.setSize(64, 15);
-		checkBox.setHoverTexts(Component.translatable("hover.sort", Component.translatable("dialog.dialogs").getString(), checkBox.getMessage().getString()));
+		checkBox.setHoverTexts(Component.translatable("hover.sort",
+				Component.translatable("dialog.dialogs").getFormattedText(),
+				checkBox.getMessage().getFormattedText()));
 
 		// category buttons
 		y = guiTop + 140;
 		addLabel(2, x + 2, y, "gui.categories");
 		addButton(3, x, y += 10, "selectServer.edit")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedCategory.getString().isEmpty())
+				.setIsEnabled(hasCategory)
 				.setHoverTexts("manager.hover.category.edit");
 		addButton(2, x, y += 17, "gui.remove")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedCategory.getString().isEmpty())
+				.setIsEnabled(hasCategory)
 				.setHoverTexts("manager.hover.category.del");
 		addButton(1, x, y + 17, "gui.add")
 				.setSize(64, 15)
 				.setHoverTexts("manager.hover.category.add");
 
 		if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, 198); }
-		if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelected(selectedCategory); }
+		if (hasCategory) { scrollCategories.setSelected(selectedCategory); }
 		scrollCategories.setNormalList(new ArrayList<>(categoryData.keySet()))
 				.setPos( guiLeft + 4, guiTop + 15);
 		add(scrollCategories);
 
 		if (scrollQuests == null) { scrollQuests = addScroll(1).setSize(170, 198); }
-		if (!selectedQuest.getString().isEmpty()) { scrollQuests.setSelected(selectedQuest); }
+		if (hasQuest) { scrollQuests.setSelected(selectedQuest); }
 		scrollQuests.setUnsortedList(new ArrayList<>(questData.keySet()))
 				.setHoverTexts(hts)
 				.setPos(guiLeft + 176, guiTop + 15);
@@ -160,7 +163,7 @@ public class GuiNpcManageQuest
 	public void buttonEvent(GuiButtonNop button) {
 		switch (button.id) {
 			case 1: {
-				setSubGui(new SubGuiEditText(1, Component.translatable("gui.new").getString()));
+				setSubGui(new SubGuiEditText(1, Component.translatable("gui.new").getFormattedText()));
 				break;
 			} // new category
 			case 2: {
@@ -316,13 +319,13 @@ public class GuiNpcManageQuest
 	public void scrollClicked(GuiCustomScrollNop scroll) {
 		if (!scroll.hasSelected()) { return; }
 		if (scroll.id == 0) {
-			if (selectedCategory.getString().equals(scroll.getSelected())) { return; }
+			if (selectedCategory.getFormattedText().equals(scroll.getSelected())) { return; }
 			selectedCategory = scrollCategories.getNormalSelected();
 			selectedQuest = Component.empty();
 			scrollQuests.clearSelection();
 		}
 		else if (scroll.id == 1) {
-			if (selectedQuest.getString().equals(scroll.getSelected())) { return; }
+			if (selectedQuest.getFormattedText().equals(scroll.getSelected())) { return; }
 			selectedQuest = scrollQuests.getNormalSelected();
 		}
 		initGui();
@@ -347,8 +350,8 @@ public class GuiNpcManageQuest
 		List<Map.Entry<Component, Quest>> list = new ArrayList<>(map.entrySet());
 		list.sort((d_0, d_1) -> {
 			if (sortByName) {
-				String n_0 = Util.instance.deleteColor(Component.translatable(d_0.getValue().title).getString() + "_" + d_0.getValue().id).toLowerCase();
-				String n_1 = Util.instance.deleteColor(Component.translatable(d_1.getValue().title).getString() + "_" + d_1.getValue().id).toLowerCase();
+				String n_0 = (Component.translatable(d_0.getValue().title).getString() + "_" + d_0.getValue().id).toLowerCase();
+				String n_1 = (Component.translatable(d_1.getValue().title).getString() + "_" + d_1.getValue().id).toLowerCase();
 				return n_0.compareTo(n_1);
 			} else {
 				return Integer.compare(d_0.getValue().id, d_1.getValue().id);

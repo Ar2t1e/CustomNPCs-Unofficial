@@ -170,7 +170,7 @@ public class ResourceSelection
             scroll.setUnsortedList(list).setSuffixes(suffixes);
             if (scroll.getHover() != pos) { scroll.setSelect(pos); }
             domain = Component.empty().append(Component.literal(selectDir.getResourceDomain() + "/" + path));
-            while (font.getStringWidth(domain.getString()) > 250 && path.contains("/")) {
+            while (font.getStringWidth(domain.getFormattedText()) > 250 && path.contains("/")) {
                 path = path.substring(path.indexOf("/") + 1);
                 domain = Component.empty().append(Component.literal(selectDir.getResourceDomain() + "/.../" + path));
             }
@@ -189,7 +189,7 @@ public class ResourceSelection
         if (closeOnEsc && GuiBasic.isEscKey(keyCode)) { cancel(); }
         if (scroll != null && scroll.getSearchValue().isEmpty() && keyCode == Keyboard.KEY_BACK) {
             List<String> list = scroll.getList();
-            if (!list.isEmpty() && list.get(0).equals(back.getString())) {
+            if (!list.isEmpty() && list.get(0).equals(back.getFormattedText())) {
                 if (selectDir != null) {
                     if (!selectDir.getResourcePath().contains("/")) { selectDir = null; }
                     else { selectDir = new ResourceLocation(selectDir.getResourceDomain(), selectDir.getResourcePath().substring(0, selectDir.getResourcePath().lastIndexOf("/"))); }

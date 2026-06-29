@@ -123,7 +123,7 @@ public class SubGuiNpcAvailabilityItemStacks
             ItemStack stack = cont.inv.getStackInSlot(i);
             AvailabilityStackData aData = availability.stacksData.get(i);
             Component name;
-            if (stack.isEmpty()) { name = Component.literal(Component.translatable("info.item.cloner.empty.0").getString()); }
+            if (stack.isEmpty()) { name = Component.literal(Component.translatable("info.item.cloner.empty.0").getFormattedText()); }
             else {
                 name = Component.literal(stack.getDisplayName());
                 if (stack.getCount() > 1) { name.append(Component.literal(" x" + stack.getCount())); }
@@ -147,7 +147,7 @@ public class SubGuiNpcAvailabilityItemStacks
         scroll.setUnsortedList(list)
                 .setStacks(stacks)
                 .setSuffixes(suffixes);
-        if (!select.getString().isEmpty()) { scroll.setSelected(select); }
+        if (!select.getFormattedText().isEmpty()) { scroll.setSelected(select); }
         add(scroll.setPos(guiLeft + 70, guiTop + 4));
         // ignore damage
         AvailabilityStackData aData = availability.stacksData.get(cont.slot.getSlotIndex());

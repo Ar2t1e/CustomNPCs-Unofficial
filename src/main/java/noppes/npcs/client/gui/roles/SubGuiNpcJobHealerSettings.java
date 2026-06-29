@@ -46,7 +46,7 @@ public class SubGuiNpcJobHealerSettings
 		addLabel(3, x0, guiTop + y + 5, "beacon.amplifier")
 				.setSize(86, 12);
 		String lv = "enchantment.level." + (healerSettings.amplifier + 1);
-		if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getString(); }
+		if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getFormattedText(); }
 		else { lv = "" + (healerSettings.amplifier + 1); }
 		addTextField(3, x2, guiTop + y, 45, 20, healerSettings.amplifier + 1)
 				.setMinMaxDefault(1, 4, 1)
@@ -101,7 +101,7 @@ public class SubGuiNpcJobHealerSettings
 			case 3: {
 				healerSettings.amplifier = textField.getInteger() - 1;
 				String lv = "enchantment.level." + (healerSettings.amplifier + 1);
-				if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getString(); }
+				if (!Component.translatable(lv).getString().equals(lv)) { lv = Component.translatable(lv).getFormattedText(); }
 				else { lv = "" + (healerSettings.amplifier + 1); }
 				textField.setHoverTexts("beacon.hover.power", lv);
 				break;

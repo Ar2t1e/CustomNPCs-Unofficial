@@ -19,7 +19,6 @@ import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
-import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
 
@@ -47,7 +46,7 @@ public class SubGuiNPCLinesEdit extends GuiNPCInterface
 
 	@Override
 	public void buttonEvent(@Nonnull GuiButtonNop button) {
-		if (select.getString().isEmpty() && scroll.hasSelected()) { select = scroll.getNormalSelected(); }
+		if (select.getFormattedText().isEmpty() && scroll.hasSelected()) { select = scroll.getNormalSelected(); }
 		switch (button.id) {
 			case 0: setSubGui(new SubGuiEditText(0, CustomNpcs.DefaultInteractLine)); break; // add
 			case 1: {
@@ -107,10 +106,10 @@ public class SubGuiNPCLinesEdit extends GuiNPCInterface
 		if (scroll == null) { scroll = addScroll(0).setSize(imageWidth - 12, imageHeight - 85); }
 		List<Component> list = new ArrayList<>(data.keySet());
 		Line line = null;
-		if (!select.getString().isEmpty()) {
+		if (!select.getFormattedText().isEmpty()) {
 			boolean hasInList = false;
 			for (Component c : list) {
-				if (Util.instance.deleteColor(c.getString()).equals(Util.instance.deleteColor(select.getString()))) {
+				if (c.getString().equals(select.getString())) {
 					select = c;
 					line = lines.lines.get(data.get(select));
 					scroll.setSelected(select);

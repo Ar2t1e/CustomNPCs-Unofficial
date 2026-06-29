@@ -10,24 +10,18 @@ import javax.annotation.Nonnull;
 @Mixin(value = PositionedSound.class, priority = 502)
 public interface IPositionedSoundMixin {
 
-    @Accessor
-    void setSound(@Nonnull Sound newSound);
+    @Accessor void setSound(@Nonnull Sound newSound);
 
     @Accessor float getXPosF();
 
-    @Accessor
-    void setXPosF(float newXPosF);
+    @Accessor void setXPosF(float newXPosF);
 
-    @Accessor
-    float getYPosF();
+    @Accessor float getYPosF();
 
-    @Accessor
-    void setYPosF(float newYPosF);
+    @Accessor void setYPosF(float newYPosF);
 
-    @Accessor
-    float getZPosF();
+    @Accessor float getZPosF();
 
-    @Accessor
-    void setZPosF(float newZPosF);
+    @Accessor void setZPosF(float newZPosF);
 
 }

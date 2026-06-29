@@ -6,6 +6,7 @@ import noppes.npcs.api.INbt;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
+@SuppressWarnings("unused")
 public interface IOverlay {
 
 	int getId();

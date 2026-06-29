@@ -38,12 +38,12 @@ public class SubGuiDropAttribute extends GuiNPCInterface implements ITextfieldLi
 		int lId = 80;
 		// name
 		addTextField(72, guiLeft + 4, guiTop + 5, 163, 20, attribute.getAttribute())
-				.setHoverTexts("drop.hover.attribute.name", Component.translatable("attribute.name." + attribute.getAttribute()).getString());
+				.setHoverTexts("drop.hover.attribute.name", Component.translatable("attribute.name." + attribute.getAttribute()).getFormattedText());
 		// values
 		values = new double[] { attribute.getMinValue(), attribute.getMaxValue() };
 		addLabel(lId++, guiLeft + 56, guiTop + 36, "type.value");
-		String tied = Component.translatable("drop.tied.random").getString();
-		if (attribute.parent.tiedToLevel) { tied = Component.translatable("drop.tied.level").getString(); }
+		String tied = Component.translatable("drop.tied.random").getFormattedText();
+		if (attribute.parent.tiedToLevel) { tied = Component.translatable("drop.tied.level").getFormattedText(); }
 		// min
 		addTextField(73, guiLeft + 4, guiTop + 27, 50, 14, "" + values[0])
 				.setMinMaxDefault(-4096.0d, 4096.0d, attribute.getMinValue())

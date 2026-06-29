@@ -193,7 +193,6 @@ public class ServerEventsHandler {
 					else if (event.getTarget() instanceof EntityNPCInterface) {
 						if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.NPC_GUI)) {
 							event.setCanceled(true);
-							NoppesUtilServer.setEditingNpc(player, (EntityNPCInterface) event.getTarget());
 							NoppesUtilServer.sendOpenGui(player, EnumGuiType.MainMenuDisplay, (EntityNPCInterface) event.getTarget());
 						}
 					}

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = Items.class, priority = 499)
+@Mixin(value = Items.class, priority = 498)
 public class ItemsMixin {
 
     /**

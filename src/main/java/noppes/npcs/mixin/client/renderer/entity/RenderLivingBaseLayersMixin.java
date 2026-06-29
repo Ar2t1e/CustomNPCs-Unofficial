@@ -2,7 +2,6 @@ package noppes.npcs.mixin.client.renderer.entity;
 
 import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
-import net.minecraft.client.renderer.entity.layers.LayerWitherAura;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import noppes.npcs.entity.EntityCustomNpc;
@@ -16,16 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
 
-@Mixin(value = RenderLivingBase.class, priority = 499)
+@Mixin(value = RenderLivingBase.class, priority = 498)
 public abstract class RenderLivingBaseLayersMixin<T extends EntityLivingBase> {
 
-    @Shadow
-    protected List<LayerRenderer<T>> layerRenderers;
+    @Shadow protected List<LayerRenderer<T>> layerRenderers;
 
-    @Final
-    @Unique
-    protected Map<T, List<LayerRenderer<T>>> npcs$backLayers = new HashMap<>();
-
+    @Final @Unique protected Map<T, List<LayerRenderer<T>>> npcs$backLayers = new HashMap<>();
 
     @Inject(method = "renderLayers", at = @At("HEAD"))
     private void npcs$preRenderLayers(T entityIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scaleIn, CallbackInfo ci) {

@@ -248,7 +248,7 @@ public class GuiLabel extends Gui implements IComponentGui {
 
     public void setMessage(@Nonnull Component label) {
         message = label;
-        setWidth(Minecraft.getMinecraft().fontRenderer.getStringWidth(message.getString()) + 3);
+        setWidth(Minecraft.getMinecraft().fontRenderer.getStringWidth(message.getFormattedText()) + 3);
         setHeight(0);
     }
 

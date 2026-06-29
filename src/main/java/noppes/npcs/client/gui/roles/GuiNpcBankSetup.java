@@ -79,7 +79,7 @@ public class GuiNpcBankSetup extends GuiNPCInterface2 implements IScrollData, IC
 		}
 		data.putAll(map);
 		scroll.setNormalList(new ArrayList<>(data.keySet()));
-		if (!name.getString().isEmpty()) { scroll.setSelected(name); }
+		if (!name.getFormattedText().isEmpty()) { scroll.setSelected(name); }
 		initGui();
 	}
 

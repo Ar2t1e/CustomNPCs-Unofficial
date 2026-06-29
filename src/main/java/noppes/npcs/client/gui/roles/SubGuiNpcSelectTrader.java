@@ -53,7 +53,7 @@ public class SubGuiNpcSelectTrader extends GuiNPCInterface implements IGuiData, 
 		if (scrollMarkets == null) { scrollMarkets = addScroll(0).setSize(170, 157); }
 		int x = guiLeft + 12, y = guiTop + 14;
 		scrollMarkets.setNormalList(list);
-		if (data.containsValue(id) && !select.getString().isEmpty()) { scrollMarkets.setSelected(select); }
+		if (data.containsValue(id) && !select.getFormattedText().isEmpty()) { scrollMarkets.setSelected(select); }
 		add(scrollMarkets.setPos(x, y));
 		addLabel(0, x + 2, y - 10, "market.select")
 				.setSize(170, 12)
@@ -84,7 +84,7 @@ public class SubGuiNpcSelectTrader extends GuiNPCInterface implements IGuiData, 
 
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
-		if (scroll.getSelected().equals(select.getString()) || !data.containsKey(scroll.getNormalSelected())) { return; }
+		if (scroll.getSelected().equals(select.getFormattedText()) || !data.containsKey(scroll.getNormalSelected())) { return; }
 		select = scroll.getNormalSelected();
 		id = data.get(scroll.getNormalSelected());
 		initGui();

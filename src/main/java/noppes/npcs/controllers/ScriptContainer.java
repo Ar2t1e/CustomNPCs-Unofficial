@@ -369,7 +369,7 @@ public class ScriptContainer {
 					catch (Throwable t) {
 						errored = true;
 						Component notice = handler.noticeString(type, event);
-						String noticeToLog = Util.instance.deleteColor(notice.getString());
+						String noticeToLog = notice.getString();
 						pw.write(noticeToLog + "\n");
 						t.printStackTrace(pw);
 						Throwable cause = t.getCause();

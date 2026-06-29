@@ -48,7 +48,7 @@ public class GuiNpcManageLinkedNpc
 		switch (button.id) {
 			case 1: {
 				save();
-				setSubGui(new SubGuiEditText(Util.instance.deleteColor(Component.translatable("gui.new").getString())));
+				setSubGui(new SubGuiEditText(Util.instance.deleteColor(Component.translatable("gui.new").getFormattedText())));
 				break;
 			}
 			case 2: {

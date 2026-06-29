@@ -58,7 +58,9 @@ public class SubGuiDropValueNbt  extends GuiNPCInterface implements ITextfieldLi
 		if (name.contains(".")) {
 			while (name.contains(".")) { name = name.substring(name.indexOf(".") + 1); }
 		}
-		addLabel(lId++, guiLeft + 4, guiTop + 5, Component.translatable("drop.tag.type", name, Component.translatable("tag.type." + t).getString()))
+		addLabel(lId++, guiLeft + 4, guiTop + 5, Component.translatable("drop.tag.type",
+				name,
+				Component.translatable("tag.type." + t).getFormattedText()))
 				.setHoverTexts("drop.hover.tag.name");
 		// path
 		addTextField(93, guiLeft + 4, guiTop + 18, 163, 20, tag.getPath())

@@ -46,7 +46,7 @@ public class GuiCreationEntities extends GuiCreationScreenInterface<ContainerLay
                         .getEntityClassRenderObject(c) instanceof RenderLivingBase)) {
 					continue;
 				}
-                if (name.getString().toLowerCase().contains("customnpc")) { continue; }
+                if (name.getFormattedText().toLowerCase().contains("customnpc")) { continue; }
 				data.put(name, c.asSubclass(EntityLivingBase.class));
 			} catch (Exception e) { LogWriter.error(e); }
 		}

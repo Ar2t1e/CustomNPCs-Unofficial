@@ -199,7 +199,7 @@ public class SubGuiNpcQuestTypeItem
 	@Override
 	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
 		drawCenteredString(font,
-				Component.translatable("quest.title." + (task.getEnumType() == EnumQuestTask.ITEM ? "item" : "craft")).getString(),
+				Component.translatable("quest.title." + (task.getEnumType() == EnumQuestTask.ITEM ? "item" : "craft")).getFormattedText(),
 				guiLeft + xSize / 2, guiTop - 12, 0xFFFFFFFF);
 		// Back
 		if (background != null) {

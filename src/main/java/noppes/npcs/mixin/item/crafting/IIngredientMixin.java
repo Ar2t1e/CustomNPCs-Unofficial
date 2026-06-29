@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = Ingredient.class, priority = 502)
 public interface IIngredientMixin {
 
-    @Accessor
-    ItemStack[] getMatchingStacks();
+    @Accessor ItemStack[] getMatchingStacks();
 
 }

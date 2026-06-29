@@ -35,7 +35,6 @@ import noppes.npcs.packets.server.SPacketNaturalSpawnRemove;
 import noppes.npcs.packets.server.SPacketNaturalSpawnSave;
 import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.*;
-import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
 // Changed by Unofficial (BetaZavr)
@@ -159,7 +158,7 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 				}
 				else {
 					save();
-					String name = Component.translatable("gui.new").getFormattedText();
+					String name = Component.translatable("gui.new").getString();
 					while (true) {
 						boolean found = false;
 						for (Component key : data.keySet()) {
@@ -340,7 +339,7 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 				String name = textField.getValue();
 				boolean found = false;
 				for (Component key : data.keySet()) {
-					if (Util.instance.deleteColor(key.getString()).equals(name)) {
+					if (key.getString().equals(name)) {
 						found = true;
 						break;
 					}
@@ -348,7 +347,7 @@ public class GuiNpcNaturalSpawns extends GuiNPCInterface2
 				if (name.isEmpty() || found) { textField.setValue(spawn.name); }
 				else {
 					for (Component key : new ArrayList<>(data.keySet())) {
-						if (Util.instance.deleteColor(key.getString()).equals(spawn.name)) {
+						if (key.getString().equals(spawn.name)) {
 							data.remove(key);
 							spawn.name = name;
 							Component newKey = Component.translatable(spawn.name);

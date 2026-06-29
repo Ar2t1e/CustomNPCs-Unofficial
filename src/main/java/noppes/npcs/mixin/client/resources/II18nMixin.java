@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = I18n.class, priority = 502)
 public interface II18nMixin {
 
-    @Accessor
-    static Locale getI18nLocale() { throw new IllegalStateException("Mixin did not initialize properly."); }
+    @Accessor static Locale getI18nLocale() { throw new IllegalStateException("Mixin did not initialize properly."); }
 
 }

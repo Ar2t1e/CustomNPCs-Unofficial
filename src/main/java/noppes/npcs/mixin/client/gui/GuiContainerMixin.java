@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = GuiContainer.class, priority = 499)
+@Mixin(value = GuiContainer.class, priority = 498)
 public class GuiContainerMixin {
 
     @Unique

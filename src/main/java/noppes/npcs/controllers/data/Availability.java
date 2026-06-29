@@ -920,7 +920,7 @@ public class Availability implements ICompatibilty, IAvailability {
 				if (d != null) { data.append(Component.translatable(d.getName())); }
 				data.append(Component.translatable("quest.task.manual."+(dialogAvailable(id, dialogues.get(id), player) ? "0" : "1")));
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.dialogues").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.dialogues").append(data)); }
 		}
 		// quests
 		if (!quests.isEmpty()) {
@@ -939,7 +939,7 @@ public class Availability implements ICompatibilty, IAvailability {
 				if (q != null) { data.append(q.getTitle()); }
 				data.append(Component.translatable("quest.task.manual."+(questAvailable(id, quests.get(id), player) ? "0" : "1")));
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.quests").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.quests").append(data)); }
 		}
 		// factions
 		if (!factions.isEmpty()) {
@@ -961,7 +961,7 @@ public class Availability implements ICompatibilty, IAvailability {
 				if (f != null) { data.append(f.getName()); }
 				data.append(Component.translatable("quest.task.manual."+(factionAvailable(id, factions.get(id).factionStance, factions.get(id).factionAvailable, player) ? "0" : "1")));
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.factions").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.factions").append(data)); }
 		}
 		// scoreboards
 		if (!scoreboards.isEmpty()) {
@@ -974,7 +974,7 @@ public class Availability implements ICompatibilty, IAvailability {
 						.append(String.valueOf(scoreboards.get(obj).scoreboardValue))
 						.append(Component.translatable("quest.task.manual."+(scoreboardAvailable(player, obj, scoreboards.get(obj).scoreboardType, scoreboards.get(obj).scoreboardValue) ? "0" : "1")));
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.scoreboards").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.scoreboards").append(data)); }
 		}
 		// player names
 		if (!playerNames.isEmpty()) {
@@ -1012,7 +1012,7 @@ public class Availability implements ICompatibilty, IAvailability {
 				}
 				data.append("]").append(Component.translatable("quest.task.manual."+(listExcept.contains(player.getName()) ? "0" : "1")));
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.player.names").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.player.names").append(data)); }
 		}
 		// storeddata
 		if (!storeddata.isEmpty()) {
@@ -1044,7 +1044,7 @@ public class Availability implements ICompatibilty, IAvailability {
 						.append(sd.key)
 						.append(Component.translatable("quest.task.item."+(bo ? "0" : "1")));
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.storeddata").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.storeddata").append(data)); }
 		}
 		// moneys
 		if (!moneys.isEmpty()) {
@@ -1066,7 +1066,7 @@ public class Availability implements ICompatibilty, IAvailability {
 						.append(Component.translatable("gui." + eam.name().toLowerCase()))
 						.append(Component.translatable("quest.task.item."+(bo ? "1" : "0")));
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.moneys").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.moneys").append(data)); }
 		}
 		// stacks
 		if (!stacks.isEmpty()) {
@@ -1078,7 +1078,7 @@ public class Availability implements ICompatibilty, IAvailability {
 						.append(stack.getDisplayName())
 						.append(" x" + stack.getCount());
 			}
-			if (!data.getString().isEmpty()) { list.add(Component.translatable("availability.type.stacks").append(data)); }
+			if (!data.getFormattedText().isEmpty()) { list.add(Component.translatable("availability.type.stacks").append(data)); }
 		}
 		// health
 		if (healthType != 0) {

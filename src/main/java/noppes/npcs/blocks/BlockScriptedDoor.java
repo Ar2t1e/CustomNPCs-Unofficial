@@ -48,6 +48,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) {
 		return ((TileScriptedDoor) Objects.requireNonNull(world.getTileEntity(pos))).blockHardness;
 	}
@@ -58,6 +59,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) { return EnumBlockRenderType.INVISIBLE; }
 
 	@Override
@@ -68,7 +70,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 			if (iblockstate1.getBlock() != this) {
 				worldIn.setBlockToAir(pos);
 			} else if (neighborBlock != this) {
-				this.neighborChanged(iblockstate1, worldIn, blockpos1, neighborBlock, blockpos1);
+				neighborChanged(iblockstate1, worldIn, blockpos1, neighborBlock, blockpos1);
 			}
 		} else {
 			BlockPos blockpos2 = pos.up();
@@ -85,7 +87,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 						&& flag != iblockstate2.getValue(BlockScriptedDoor.POWERED)) {
 					worldIn.setBlockState(blockpos2, iblockstate2.withProperty(BlockScriptedDoor.POWERED, flag), 2);
 					if (flag != state.getValue(BlockScriptedDoor.OPEN)) {
-						this.toggleDoor(worldIn, pos, flag);
+						toggleDoor(worldIn, pos, flag);
 					}
 				}
 				int power = 0;
@@ -122,7 +124,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		if (tile != null && EventHooks.onScriptBlockInteract(tile, player, side.getIndex(), hitX, hitY, hitZ)) {
 			return false;
 		}
-		this.toggleDoor(world, blockpos1, iblockstate1.getValue(BlockDoor.OPEN).equals(false));
+		toggleDoor(world, blockpos1, iblockstate1.getValue(BlockDoor.OPEN).equals(false));
 		return true;
 	}
 
@@ -192,7 +194,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 						Packets.sendNearby(world, pos, 32,
 								new PacketPlaySound(sound, SoundCategory.NEUTRAL, pos.getX(), pos.getY(), pos.getZ(), 1.0f, 1.0f));
 					} else {
-						world.playEvent(null, open ? this.blockMaterial == Material.IRON ? 1005 : 1006 : this.blockMaterial == Material.IRON ? 1011 : 1012, pos, 0);
+						world.playEvent(null, open ? blockMaterial == Material.IRON ? 1005 : 1006 : blockMaterial == Material.IRON ? 1011 : 1012, pos, 0);
 					}
 				}
 			}

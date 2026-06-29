@@ -719,6 +719,7 @@ public class ScriptController {
 	}
 
 	public void loadDir(File dir, String name, String ext, boolean encrypt, boolean isClient) {
+		if (ext == null) { ext = ".js"; }
 		File[] files = dir.listFiles();
 		if (files != null) {
 			for (File file : files) {

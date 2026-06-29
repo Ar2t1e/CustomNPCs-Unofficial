@@ -8,12 +8,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = ItemArmor.class, priority = 502)
 public interface IItemArmorMixin {
 
-    @Mutable
-    @Accessor("damageReduceAmount")
-    void setDefense(int maxStDam);
+    @Mutable @Accessor("damageReduceAmount") void setDefense(int maxStDam);
 
-    @Mutable
-    @Accessor
-    void setToughness(float newToughness);
+    @Mutable @Accessor void setToughness(float newToughness);
 
 }

@@ -243,7 +243,7 @@ public class QuestObjective implements IQuestObjective {
 		} // Dialog
 		else if (type == EnumQuestTask.KILL || type == EnumQuestTask.AREAKILL) {
 			text = Component.translatable("entity." + name + ".name");
-			if (text.getString().contains("entity.") && text.getString().indexOf(".name") > 0) {
+			if (text.getFormattedText().contains("entity.") && text.getFormattedText().indexOf(".name") > 0) {
 				text = Component.literal(name);
 			}
 			text.append(Component.literal(" " + getProgress()).withStyle(bo ? TextFormatting.DARK_GREEN : TextFormatting.DARK_RED))
@@ -477,7 +477,7 @@ public class QuestObjective implements IQuestObjective {
 				}
 				if (questData.quest.showProgressInChat) {
 					player.sendMessage(Component.translatable("quest.message.dialog." + progress,
-							Component.translatable(dialog).getString(), questData.quest.getTitle()).getParent());
+							Component.translatable(dialog).getFormattedText(), questData.quest.getTitle()).getParent());
 				}
 			}
 			data.updateClient = true;
@@ -523,7 +523,7 @@ public class QuestObjective implements IQuestObjective {
 					Packets.send((EntityPlayerMP) player, new PacketAchievement(Component.empty(), Component.empty(), 0, compound));
 				}
 				player.sendMessage(Component.translatable("quest.message.location." + progress,
-						Component.translatable(name).getString(), questData.quest.getTitle()).getParent());
+						Component.translatable(name).getFormattedText(), questData.quest.getTitle()).getParent());
 			}
 			data.updateClient = true;
 		}
@@ -543,14 +543,14 @@ public class QuestObjective implements IQuestObjective {
 						Packets.send((EntityPlayerMP) player, new PacketAchievement(Component.empty(), Component.empty(), 0, compound));
 					}
 					player.sendMessage(Component.translatable("quest.message." + key + ".0",
-							Component.translatable(name).getString(), "" + progress,
+							Component.translatable(name).getFormattedText(), "" + progress,
 							"" + maxProgress, questData.quest.getTitle()).getParent());
 				}
 				killed.put(name, progress);
 				setKilled(questData, killed);
 				if (progress >= maxProgress) {
 					player.sendMessage(Component.translatable("quest.message." + key + ".1",
-							Component.translatable(name).getString(), questData.quest.getTitle()).getParent());
+							Component.translatable(name).getFormattedText(), questData.quest.getTitle()).getParent());
 				}
 				data.updateClient = true;
 			}

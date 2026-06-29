@@ -2,6 +2,8 @@ package noppes.npcs.shared.client.gui.components.custom;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -81,6 +83,12 @@ public class CustomGuiEntityDisplay extends GuiLabel implements IComponentCustom
 
    public static void drawEntity(Entity entity, double x, double y, float zoomed, int rotation, int vertical, double xMouse, double yMouse, float guiLeft, float guiTop, int followCursor) {
       if (entity == null) { return; }
+
+      GlStateManager.pushMatrix();
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.enableColorMaterial();
+      RenderHelper.enableStandardItemLighting();
+
       EntityNPCInterface npc = null;
       if (entity instanceof EntityNPCInterface) { npc = (EntityNPCInterface)entity; }
       EntityLiving livingEntity = null;
@@ -159,6 +167,13 @@ public class CustomGuiEntityDisplay extends GuiLabel implements IComponentCustom
          EntityCustomNpc cnpc = (EntityCustomNpc) npc;
          if (cnpc.modelData.getEntity(cnpc) != null) { EntityUtil.Copy(npc, cnpc.modelData.getEntity(cnpc)); }
       }
+
+      RenderHelper.disableStandardItemLighting();
+      GlStateManager.disableRescaleNormal();
+      GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+      GlStateManager.disableTexture2D();
+      GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+      GlStateManager.popMatrix();
    }
 
    @Override

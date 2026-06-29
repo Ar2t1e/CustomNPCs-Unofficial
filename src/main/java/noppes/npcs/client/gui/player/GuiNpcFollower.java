@@ -99,7 +99,7 @@ public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollowe
 					Component daysS = Component.empty()
 							.append(" = " + days + " ")
 							.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-					fontRenderer.drawString(daysS.getString(), x + 27, y + 4,
+					fontRenderer.drawString(daysS.getFormattedText(), x + 27, y + 4,
 							CustomNpcResourceListener.DefaultTextColor);
 					if (isMouseHover(mouseX, mouseY, x - guiLeft + 11, y - guiTop, 16, 16)) {
 						renderToolTip(itemstack, mouseX, mouseY);
@@ -136,7 +136,7 @@ public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollowe
 					.append(Util.instance.getTextReducedNumber(role.rentalMoney, true, true, false))
 					.append(" " + CustomNpcs.displayCurrencies + " = " + days + " ")
 					.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-			fontRenderer.drawString(daysS.getString(), guiLeft + 80, guiTop + 56, CustomNpcResourceListener.DefaultTextColor);
+			fontRenderer.drawString(daysS.getFormattedText(), guiLeft + 80, guiTop + 56, CustomNpcResourceListener.DefaultTextColor);
 		}
 		if (displayNPC != null) { drawNpc(displayNPC, 33, 131, 1.0f, 0, 0, 1); }
 		else { drawNpc(33, 131); }
@@ -146,13 +146,13 @@ public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollowe
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
 		long time = (System.currentTimeMillis() - role.hiredTime) / 50L;
 		fontRenderer.drawString(Component.translatable("follower.health")
-				.append(": " + npc.getHealth() + "/" + npc.getMaxHealth()).getString(), 62, 70, CustomNpcResourceListener.DefaultTextColor);
+				.append(": " + npc.getHealth() + "/" + npc.getMaxHealth()).getFormattedText(), 62, 70, CustomNpcResourceListener.DefaultTextColor);
 		if (!role.infiniteDays) {
 			fontRenderer.drawString(Component.translatable("follower.daysleft")
-					.append(" " + Util.instance.ticksToElapsedTime((role.getDays() * 28800L) - time, false, true, false)).getString(), 62, 82, CustomNpcResourceListener.DefaultTextColor);
+					.append(" " + Util.instance.ticksToElapsedTime((role.getDays() * 28800L) - time, false, true, false)).getFormattedText(), 62, 82, CustomNpcResourceListener.DefaultTextColor);
 		}
 		fontRenderer.drawString(Component.translatable("follower.lastday")
-				.append(": " + Util.instance.ticksToElapsedTime(time, false, true, false)).getString(), 62, 94, CustomNpcResourceListener.DefaultTextColor);
+				.append(": " + Util.instance.ticksToElapsedTime(time, false, true, false)).getFormattedText(), 62, 94, CustomNpcResourceListener.DefaultTextColor);
 	}
 
 	@Override

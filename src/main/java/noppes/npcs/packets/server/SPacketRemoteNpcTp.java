@@ -44,7 +44,8 @@ public class SPacketRemoteNpcTp extends PacketServerBasic {
       Entity entity = player.world.getEntityByID(entityId);
       if (entity != null) {
          if (entity instanceof EntityNPCInterface) { npc = (EntityNPCInterface) entity; }
-         SPacketDimensionTeleport.teleportPlayer(player, player.world.provider.getDimension(), entity.posX, entity.posY, entity.posZ, player.rotationYaw, player.rotationPitch);
+         SPacketDimensionTeleport.teleportPlayer(player, player.world.provider.getDimension(),
+                 entity.posX, entity.posY, entity.posZ, player.rotationYaw, player.rotationPitch);
       }
       CustomNpcs.debugData.end("Packets");
    }

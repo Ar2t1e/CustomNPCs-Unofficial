@@ -123,7 +123,7 @@ public class QuestInterface {
 					Dialog d = DialogController.instance.dialogs.get(to.getTargetID());
 					if (d != null) {
 						name = Component.empty();
-						name.append(Component.literal(Util.instance.deleteColor(Component.translatable(d.category.getName()).getString()) + "/").withStyle(TextFormatting.DARK_GRAY))
+						name.append(Component.literal(Util.instance.deleteColor(Component.translatable(d.category.getName()).getFormattedText()) + "/").withStyle(TextFormatting.DARK_GRAY))
 								.append(Component.translatable(d.getName()).withStyle(TextFormatting.RESET));
 					}
 					keys.put(key.append(Component.literal("["))
@@ -137,7 +137,7 @@ public class QuestInterface {
 				case AREAKILL: {
 					name = Component.translatable("entity." + to.getTargetName() + ".name");
 					if (to.getTargetName().isEmpty()) { name = Component.translatable("quest.has.false"); }
-					else if (name.getString().startsWith("entity.") && name.getString().endsWith(".name")) { name = Component.literal(to.getTargetName()); }
+					else if (name.getFormattedText().startsWith("entity.") && name.getFormattedText().endsWith(".name")) { name = Component.literal(to.getTargetName()); }
 					key.append(Component.literal("["));
 					if (to.getEnumType() == EnumQuestTask.KILL) { key.append(Component.literal("K").withStyle(TextFormatting.RED)); }
 					else { key.append(Component.literal("AK").withStyle(TextFormatting.DARK_RED)); }

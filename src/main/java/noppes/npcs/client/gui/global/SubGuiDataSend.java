@@ -45,6 +45,7 @@ public class SubGuiDataSend extends GuiNPCInterface implements ITextfieldListene
 	}
 
 	@Override
+	@SuppressWarnings("all")
 	public void initGui() {
 		super.initGui();
 
@@ -76,7 +77,8 @@ public class SubGuiDataSend extends GuiNPCInterface implements ITextfieldListene
 		max = (year == cal.get(Calendar.YEAR) ? cal.get(Calendar.MONTH) + 1 : 12);
 		addTextField(1, guiLeft + 61, guiTop + 16, 54, 20, "" + (month + 1))
 				.setMinMaxDefault(year == min ? 11 : 1, max, (month + 1))
-				.setHoverTexts(Component.translatable("hover.data.month", "" + max, Component.translatable("month." + month).getString()));
+				.setHoverTexts(Component.translatable("hover.data.month", "" + max,
+						Component.translatable("month." + month).getFormattedText()));
 		max = cal.get(Calendar.YEAR);
 		addTextField(2, guiLeft + 118, guiTop + 16, 54, 20, "" + year)
 				.setMinMaxDefault(min, max, year)

@@ -7,13 +7,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(value = ParticleFlame.class, priority = 499)
+@Mixin(value = ParticleFlame.class, priority = 498)
 public class ParticleFlameMixin implements IParticleFlameMixin {
 
-    @Mutable
-    @Final
-    @Shadow
-    private float flameScale;
+    @Mutable @Final @Shadow private float flameScale;
 
     @Override
     public void npcs$setFlameScale(float newFlameScale) {

@@ -41,8 +41,8 @@ public class SubGuiNpcFactionSelect extends GuiNPCInterface implements ICustomSc
 			case 14: {
 				GuiNpcManageFactions.sortByName = ((GuiCheckBoxNop) button).selected();
 				button.setHoverTexts(Component.translatable("hover.sort",
-						Component.translatable("global.factions").getString(),
-						button.getMessage().getString()));
+						Component.translatable("global.factions").getFormattedText(),
+						button.getMessage().getFormattedText()));
 				break;
 			}
 			case 66: onClose(); break;
@@ -61,7 +61,7 @@ public class SubGuiNpcFactionSelect extends GuiNPCInterface implements ICustomSc
 		data.clear();
 		for (Map.Entry<Component, Integer> entry : newList) {
 			int id = entry.getValue();
-			String name = Util.instance.deleteColor(entry.getKey().getString());
+			String name = entry.getKey().getString();
 			if (name.contains("ID:" + id + " ")) { name = name.substring(name.indexOf(" ") + 3); }
 			Component key = Component.empty()
 					.append(Component.literal("ID:" + id + " ").withStyle(TextFormatting.GRAY))
@@ -85,8 +85,8 @@ public class SubGuiNpcFactionSelect extends GuiNPCInterface implements ICustomSc
 		GuiButtonNop checkBox = addCheckBox(14, x, y + 3, "gui.name", "ID", GuiNpcManageFactions.sortByName)
 				.setSize(60, 12);
 		checkBox.setHoverTexts(Component.translatable("hover.sort",
-				Component.translatable("global.factions").getString(),
-				checkBox.getMessage().getString()));
+				Component.translatable("global.factions").getFormattedText(),
+				checkBox.getMessage().getFormattedText()));
 	}
 
 	@Override

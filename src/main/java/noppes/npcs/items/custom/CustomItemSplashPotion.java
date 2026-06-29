@@ -1,10 +1,8 @@
 package noppes.npcs.items.custom;
 
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.PotionTypes;
 import net.minecraft.item.ItemSplashPotion;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.PotionType;
 import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
@@ -24,6 +22,7 @@ public class CustomItemSplashPotion extends ItemSplashPotion {
 		this.setUnlocalizedName("splash_potion");
 	}
 
+	@Override
 	public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> items) {
 		if (getCreativeTab() != null) {
 			if (tab == CreativeTabs.BREWING) {

@@ -53,11 +53,11 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 		for (DialogCategory category : dData.categories.values()) {
 			Component key = Component.translatable(category.title);
 			categoryData.put(key, category);
-			if (selectedCategory.getString().isEmpty()) { selectedCategory = key; }
+			if (selectedCategory.getFormattedText().isEmpty()) { selectedCategory = key; }
 		}
 		// dialogs
 		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
-		if (!selectedCategory.getString().isEmpty()) {
+		if (!selectedCategory.getFormattedText().isEmpty()) {
 			if (categoryData.containsKey(selectedCategory)) {
 				Map<Component, Dialog> map = new LinkedHashMap<>();
 				for (Dialog dialog : categoryData.get(selectedCategory).dialogs.values()) {
@@ -73,7 +73,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 				}
 				for (Map.Entry<Component, Dialog> entry : getEntryList(map)) {
 					dialogData.put(entry.getKey(), entry.getValue());
-					if (selectedDialog.getString().isEmpty()) { selectedDialog = entry.getKey(); }
+					if (selectedDialog.getFormattedText().isEmpty()) { selectedDialog = entry.getKey(); }
 				}
 				// Hover Text:
 				if (!dialogData.isEmpty()) {
@@ -104,7 +104,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 										if (od.dialogId != dialog.id) { continue; }
 										activationDialogs.add(Component.empty()
 												.append(Component.literal("ID:" + d.id).withStyle(TextFormatting.GRAY))
-												.append(Component.literal(" " + Component.translatable("gui.answer").getString()  + ": ").withStyle(TextFormatting.DARK_GRAY))
+												.append(Component.literal(" " + Component.translatable("gui.answer").getFormattedText()  + ": ").withStyle(TextFormatting.DARK_GRAY))
 												.append(Component.literal(option.slot + "." + i).withStyle(TextFormatting.GRAY))
 												.append(Component.literal(" " + d.category.getName() + "/").withStyle(TextFormatting.DARK_GRAY))
 												.append(Component.literal(d.getName()).withStyle(TextFormatting.RESET)));
@@ -117,7 +117,7 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 											continue;
 										}
 										nextDialogs.add(Component.empty()
-												.append(Component.literal(Component.translatable("gui.answer").getString() + ": ").withStyle(TextFormatting.DARK_GRAY))
+												.append(Component.literal(Component.translatable("gui.answer").getFormattedText() + ": ").withStyle(TextFormatting.DARK_GRAY))
 												.append(Component.literal(k + " ID:" + d.id).withStyle(TextFormatting.GRAY))
 												.append(Component.literal(" " + d.category.getName() + "/").withStyle(TextFormatting.DARK_GRAY))
 												.append(Component.literal(d.getName()).withStyle(TextFormatting.RESET)));
@@ -145,6 +145,8 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 				selectedDialog = Component.empty();
 			}
 		}
+		boolean hasCategory = !selectedCategory.getFormattedText().isEmpty();
+		boolean hasDialog = !selectedDialog.getFormattedText().isEmpty();
 		// scroll info
 		addLabel(0, guiLeft + 8, guiTop + 4, "gui.categories");
 		addLabel(1, guiLeft + 180, guiTop + 4, "dialog.dialogs");
@@ -153,19 +155,19 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 		addLabel(3, x + 2, y, "dialog.dialogs");
 		addButton(13, x, y += 10, "selectServer.edit")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedDialog.getString().isEmpty())
+				.setIsEnabled(hasDialog)
 				.setHoverTexts("manager.hover.dialog.edit", selectedDialog);
 		addButton(12, x, y += 17, "gui.remove")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedDialog.getString().isEmpty())
+				.setIsEnabled(hasDialog)
 				.setHoverTexts("manager.hover.dialog.del", selectedDialog);
 		addButton(11, x, y += 17, "gui.add")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedCategory.getString().isEmpty())
+				.setIsEnabled(hasCategory)
 				.setHoverTexts("manager.hover.dialog.add", selectedCategory);
 		addButton(10, x, y += 21, "gui.copy")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedCategory.getString().isEmpty())
+				.setIsEnabled(hasCategory)
 				.setHoverTexts("manager.hover.dialog.copy", selectedDialog);
 		addButton(9, x, y += 17, "gui.paste")
 				.setSize(64, 15)
@@ -174,20 +176,20 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 		GuiButtonNop checkBox = addCheckBox(14, x, y + 17, "gui.name", "ID", sortByName)
 				.setSize(64, 15);
 		checkBox.setHoverTexts(Component.translatable("hover.sort",
-				Component.translatable("dialog.dialogs").getString(),
-				checkBox.getMessage().getString()));
+				Component.translatable("dialog.dialogs").getFormattedText(),
+				checkBox.getMessage().getFormattedText()));
 		// category buttons
 		y = guiTop + 130;
 		addLabel(2, x + 2, y, "gui.categories");
 		// edit
 		addButton(3, x, y += 10, "selectServer.edit")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedCategory.getString().isEmpty())
+				.setIsEnabled(hasCategory)
 				.setHoverTexts("manager.hover.category.edit");
 		// del
 		addButton(2, x, y += 17, "gui.remove")
 				.setSize(64, 15)
-				.setIsEnabled(!selectedCategory.getString().isEmpty())
+				.setIsEnabled(hasCategory)
 				.setHoverTexts("manager.hover.category.del");
 		// add
 		addButton(1, x, y + 17, "gui.add")
@@ -195,11 +197,11 @@ public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScro
 				.setHoverTexts("manager.hover.category.add");
 		if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, imageHeight - 3); }
 		scrollCategories.setNormalList(new ArrayList<>(categoryData.keySet()));
-		if (!selectedCategory.getString().isEmpty()) { scrollCategories.setSelected(selectedCategory); }
+		if (hasCategory) { scrollCategories.setSelected(selectedCategory); }
 		add(scrollCategories.setPos(guiLeft + 4, guiTop + 15));
 		if (scrollDialogs == null) { scrollDialogs = addScroll(1).setSize(170, imageHeight - 3); }
 		scrollDialogs.setUnsortedList(new ArrayList<>(dialogData.keySet()));
-		if (!selectedDialog.getString().isEmpty()) { scrollDialogs.setSelected(selectedDialog); }
+		if (hasDialog) { scrollDialogs.setSelected(selectedDialog); }
 		scrollDialogs.setHoverTexts(hts);
 		add(scrollDialogs.setPos(guiLeft + 176, guiTop + 15));
 	}

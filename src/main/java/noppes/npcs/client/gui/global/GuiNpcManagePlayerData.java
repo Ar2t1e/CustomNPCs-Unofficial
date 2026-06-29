@@ -56,7 +56,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 	public GuiNpcManagePlayerData(EntityNPCInterface npc) {
 		super(npc);
 		backGui = EnumGuiType.MainMenuGlobal;
-		Packets.sendServer(new SPacketPlayerDataGet(selection, selectedPlayer.getString()));
+		Packets.sendServer(new SPacketPlayerDataGet(selection, selectedPlayer.getFormattedText()));
 	}
 
 	@Override
@@ -127,7 +127,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 	}
 
 	public void initButtons() {
-		boolean hasPlayer = selectedPlayer != null && !selectedPlayer.getString().isEmpty();
+		boolean hasPlayer = selectedPlayer != null && !selectedPlayer.getFormattedText().isEmpty();
 		getButton(0).setIsVisible(true)
 				.setIsEnabled(hasPlayer && scroll.hasSelected()); // remove
 		getButton(1).setIsEnabled(selection != EnumPlayerData.Players && hasPlayer);
@@ -205,7 +205,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 			if (selection == EnumPlayerData.Players) { totalPlayers = scroll.getList() == null ? 1 : scroll.getList().size(); }
 			getLabel(0).setMessage(Component.translatable("data.sel.player")
 					.append(" (" + totalPlayers + "): ")
-					.append(Component.literal(selectedPlayer.getString()).withStyle(isOnline ? TextFormatting.DARK_GREEN : TextFormatting.DARK_RED).withStyle(TextFormatting.BOLD)));
+					.append(Component.literal(selectedPlayer.getFormattedText()).withStyle(isOnline ? TextFormatting.DARK_GREEN : TextFormatting.DARK_RED).withStyle(TextFormatting.BOLD)));
 		}
 	}
 
@@ -225,7 +225,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 			if (selection == EnumPlayerData.Players || !scroll.hasSelected()) {
 				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 					if (bo && data.containsKey(selected)) {
-						Packets.sendServer(new SPacketPlayerDataRemove(selection, selectedPlayer.getString(), data.get(selected)));
+						Packets.sendServer(new SPacketPlayerDataRemove(selection, selectedPlayer.getFormattedText(), data.get(selected)));
 						data.clear();
 						selected = Component.empty();
 						selectedPlayer = Component.empty();
@@ -241,11 +241,11 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				setScreen(guiYesNo);
 			}
 			else if (data.containsKey(scrollData.get(scroll.getNormalSelected()))) {
-				Packets.sendServer(new SPacketPlayerDataRemove(selection, selectedPlayer.getString(), data.get(scrollData.get(scroll.getNormalSelected()))));
+				Packets.sendServer(new SPacketPlayerDataRemove(selection, selectedPlayer.getFormattedText(), data.get(scrollData.get(scroll.getNormalSelected()))));
 			}
 		} // del
 		else if (button.id >= 1 && button.id <= 6 || button.id == 9) {
-			if (selectedPlayer.getString().isEmpty() && button.id != 1) { return; }
+			if (selectedPlayer.getFormattedText().isEmpty() && button.id != 1) { return; }
 			if (selection == EnumPlayerData.Game) { save(); }
 			if (button.id == 9) { selection = EnumPlayerData.Game; }
 			else { selection = EnumPlayerData.values()[button.id - 1]; }
@@ -253,10 +253,10 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 			data.clear();
 			selected = Component.empty();
 			initButtons();
-			Packets.sendServer(new SPacketPlayerDataGet(selection, selectedPlayer.getString()));
+			Packets.sendServer(new SPacketPlayerDataGet(selection, selectedPlayer.getFormattedText()));
 		}
 		else if (button.id == 7) {
-			String mes = Component.translatable("data.hover.wipe").getString().replace("<br>", "" + (char) 10);
+			String mes = Component.translatable("data.hover.wipe").getFormattedText().replace("<br>", "" + (char) 10);
 			ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 				if (bo) {
 					selection = EnumPlayerData.Wipe;
@@ -312,7 +312,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 		} // Del all data
 		else if (button.id == 11) { editData(); } // edit
 		else if (button.id == 12) {
-			String mes = Component.translatable("data.hover.cleaning").getString().replace("<br>", "" + (char) 10);
+			String mes = Component.translatable("data.hover.cleaning").getFormattedText().replace("<br>", "" + (char) 10);
 			ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
 				if (bo) {
 					SubGuiDataSend subgui = new SubGuiDataSend();
@@ -330,7 +330,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 	public void save() {
 		ContainerNPCBank.editPlayerBankData = null;
 		if (selection == EnumPlayerData.Game) {
-			boolean hasPlayer = selectedPlayer != null && !selectedPlayer.getString().isEmpty();
+			boolean hasPlayer = selectedPlayer != null && !selectedPlayer.getFormattedText().isEmpty();
 			if (hasPlayer && gameData != null) {
 				Packets.sendServer(new SPacketPlayerDataSet(EnumPlayerData.Game, selectedPlayer.getString(), 0, gameData));
 			}
@@ -396,7 +396,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
-		if (!selected.getString().equals(scroll.getSelected())) {
+		if (!selected.getFormattedText().equals(scroll.getSelected())) {
 			selected = scroll.getNormalSelected();
 			if (selection == EnumPlayerData.Players) {
 				selectedPlayer = selected;
@@ -476,7 +476,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				int factionId = data.get(scrollData.get(scroll.getNormalSelected()));
 				SubGuiEditText subgui = new SubGuiEditText(1, "");
 				Faction f = FactionController.instance.factions.get(factionId);
-				String v = Util.instance.deleteColor(scroll.getHoversTexts().get(scroll.getSelectedIndex()).get(1).getString());
+				String v = scroll.getHoversTexts().get(scroll.getSelectedIndex()).get(1).getString();
 				int value = -1;
 				try { value = Integer.parseInt(v.substring(v.lastIndexOf(" ") + 1)); } catch (Exception e) { LogWriter.error(e); }
 				if (f != null) { subgui.numbersOnly = new int[] { 0, f.friendlyPoints * 2, value }; }
@@ -543,7 +543,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				Map<String, Map<Integer, String>> mapF = new TreeMap<>();
 				Map<String, Component> mapH = new LinkedHashMap<>();
 				for (Component str : data.keySet()) {
-					String line = str.getString();
+					String line = str.getFormattedText();
 					String cat = line.substring(0, line.indexOf(": "));
 					String name = line.substring(line.indexOf(": ") + 2);
 					Map<String, Map<Integer, String>> map;
@@ -622,7 +622,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 			case Dialog: {
 				Map<Integer, Component> map = new TreeMap<>();
 				for (Component str : data.keySet()) {
-					String line = str.getString();
+					String line = str.getFormattedText();
 					String cat = line.substring(0, line.indexOf(": "));
 					String name = line.substring(line.indexOf(": ") + 2);
 					map.put(data.get(str), Component.empty()
@@ -647,7 +647,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 			case Transport: {
 				Map<Integer, Component> map = new TreeMap<>();
 				for (Component str : data.keySet()) {
-					String line = str.getString();
+					String line = str.getFormattedText();
 					String cat = line.substring(0, line.indexOf(": "));
 					String name = line.substring(line.indexOf(": ") + 2);
 					map.put(data.get(str), Component.empty()
@@ -714,7 +714,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 				Map<Component, Component> map = new HashMap<>();
 				scrollData.clear();
 				for (Component str : data.keySet()) {
-					String line = str.getString();
+					String line = str.getFormattedText();
 					if (search.isEmpty() || line.toLowerCase().contains(search)) {
 						String[] l = line.split(";");
 						int value = -1;
@@ -749,9 +749,9 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 		if (!hovers.isEmpty()) {
 			int i = 0;
 			for (Component str : hovers) {
-				if (str.getString().contains("<br>")) {
+				if (str.getFormattedText().contains("<br>")) {
 					List<Component> lines = new ArrayList<>();
-					String[] ls = str.getString().split("<br>");
+					String[] ls = str.getFormattedText().split("<br>");
 					for (String l : ls) { lines.add(Component.literal(l)); }
 					hts.put(i, lines);
 				}

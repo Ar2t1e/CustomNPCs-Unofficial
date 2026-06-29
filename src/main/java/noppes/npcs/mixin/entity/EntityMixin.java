@@ -11,14 +11,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = Entity.class, priority = 499)
+@Mixin(value = Entity.class, priority = 498)
 public class EntityMixin implements IEntityIMixin {
 
-    @Shadow
-    public int timeUntilPortal;
+    @Shadow public int timeUntilPortal;
 
-    @Unique
-    protected final Data npcs$storeddata = new Data();
+    @Unique protected final Data npcs$storeddata = new Data();
 
     @Override
     public void npcs$copyDataFromOld(Entity entity) {

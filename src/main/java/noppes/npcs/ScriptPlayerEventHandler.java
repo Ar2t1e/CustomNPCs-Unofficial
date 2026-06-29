@@ -788,7 +788,8 @@ public class ScriptPlayerEventHandler {
 			double x = coords.getX();
 			double y = coords.getY();
 			double z = coords.getZ();
-			SPacketDimensionTeleport.teleportPlayer(player, world.provider.getDimension(), x, y, z, player.rotationYaw, player.rotationPitch);
+			SPacketDimensionTeleport.teleportPlayer(player, world.provider.getDimension(), x, y, z,
+					player.rotationYaw, player.rotationPitch);
 		} else {
 			data.game.logPos = null;
 			data.game.logPosDimID = 0;

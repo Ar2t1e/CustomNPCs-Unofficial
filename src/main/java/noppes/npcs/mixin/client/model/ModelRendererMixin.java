@@ -7,14 +7,11 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(value = ModelRenderer.class, priority = 499)
+@Mixin(value = ModelRenderer.class, priority = 498)
 public class ModelRendererMixin implements IModelRendererMixin {
 
-    @Final
-    @Shadow
-    private ModelBase baseModel;
+    @Final @Shadow private ModelBase baseModel;
 
-    @Override
-    public ModelBase npcs$getBaseModel() { return baseModel; }
+    @Override public ModelBase npcs$getBaseModel() { return baseModel; }
 
 }

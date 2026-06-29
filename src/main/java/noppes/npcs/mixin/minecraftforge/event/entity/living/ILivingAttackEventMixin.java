@@ -8,8 +8,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = LivingAttackEvent.class, priority = 502, remap = false)
 public interface ILivingAttackEventMixin {
 
-    @Mutable
-    @Accessor
-    void setAmount(float newAmount);
+    @Mutable @Accessor void setAmount(float newAmount);
 
 }

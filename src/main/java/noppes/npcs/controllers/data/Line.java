@@ -22,7 +22,7 @@ public class Line implements ILine {
 
 	public Line() { }
 
-	public Line(String textIn) { text = Component.translatable(textIn).getString(); }
+	public Line(String textIn) { text = Component.translatable(textIn).getFormattedText(); }
 
 	public Line copy() {
 		Line line = new Line(text);

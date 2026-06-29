@@ -162,6 +162,7 @@ public class Packets {
         register(PacketCustomChestName.class);
         register(PacketNpcRarityTitleSet.class);
         register(PacketBorderData.class);
+        register(PacketBorderClear.class);
 
         // Client -> Server
         register(SPacketBankGet.class);
@@ -326,7 +327,6 @@ public class Packets {
         register(SPacketPermissionMenuGet.class);
         register(SPacketPermissionGlobalGet.class);
         register(SPacketPlayerFactionsGet.class);
-        register(SPacketBorderClear.class);
         register(SPacketRegionRemove.class);
         register(SPacketRegionSave.class);
         register(SPacketRegionSetOnItem.class);

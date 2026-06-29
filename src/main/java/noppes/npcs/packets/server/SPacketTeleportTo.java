@@ -68,7 +68,8 @@ public class SPacketTeleportTo extends PacketServerBasic {
                     if (coords.getY() == 0) { coords = world.getTopSolidOrLiquidBlock(coords); }
                 }
             }
-            SPacketDimensionTeleport.teleportPlayer(player, dimensionId, coords.getX(), coords.getY(), coords.getZ(), player.rotationYaw, player.rotationPitch);
+            SPacketDimensionTeleport.teleportPlayer(player, dimensionId, coords.getX(), coords.getY(), coords.getZ(),
+                    player.rotationYaw, player.rotationPitch);
         }
         CustomNpcs.debugData.end("Packets");
     }

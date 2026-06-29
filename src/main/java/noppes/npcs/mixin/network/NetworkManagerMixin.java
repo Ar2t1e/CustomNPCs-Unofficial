@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.List;
 
-@Mixin(value = NetworkManager.class, priority = 499)
+@Mixin(value = NetworkManager.class, priority = 498)
 public class NetworkManagerMixin {
 
     // Packets not allowed to be processed:
@@ -37,6 +37,7 @@ public class NetworkManagerMixin {
      * @author BetaZavr
      * @reason Processing packets with scripts
      */
+    @SuppressWarnings("unchecked")
     @Inject(method = "channelRead0*", at = @At("HEAD"), cancellable = true)
     private void npcs$channelRead0(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
         if (channel.isOpen() && !npcs$notAllowed.contains(packet.getClass().getSimpleName())) {

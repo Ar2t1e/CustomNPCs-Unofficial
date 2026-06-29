@@ -11,7 +11,6 @@ import java.util.Map;
 @Mixin(value = SoundRegistry.class, priority = 502)
 public interface ISoundRegistryMixin {
 
-    @Accessor
-    Map<ResourceLocation, SoundEventAccessor> getSoundRegistry();
+    @Accessor Map<ResourceLocation, SoundEventAccessor> getSoundRegistry();
 
 }

@@ -105,8 +105,8 @@ public class GuiNpcAdvanced extends GuiNPCInterface2 implements IGuiData {
 				.setSize(60, 20)
 				.setIsEnabled(false) // eye
 				.setHoverTexts(Component.translatable("animation.hover.eye",
-						Component.translatable("gui.help.general").getString(),
-						Component.translatable("selectServer.edit").getString()), "gui.wip");
+						Component.translatable("gui.help.general").getFormattedText(),
+						Component.translatable("selectServer.edit").getFormattedText()), "gui.wip");
 		addButton(7, x, y += 24, "advanced.lines")
 				.setSize(195, 20)
 				.setHoverTexts("advanced.menu.hover.says");

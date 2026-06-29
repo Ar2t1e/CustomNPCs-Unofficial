@@ -42,16 +42,16 @@ public class ItemRemover extends Item implements ISpecBuilder {
 	@Override
 	public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> list, @Nonnull ITooltipFlag flagIn) {
         BuilderData builder = ItemBuilder.getBuilder(stack, null);
-		list.add(Component.translatable("info.item.builder.main.0").getString()); // item for ...
-		list.add(Component.translatable("info.item.builder.main.1").getString()); // E
+		list.add(Component.translatable("info.item.builder.main.0").getFormattedText()); // item for ...
+		list.add(Component.translatable("info.item.builder.main.1").getFormattedText()); // E
 		if (builder != null) {
-			list.add(Component.translatable("info.item.remover").getString());
+			list.add(Component.translatable("info.item.remover").getFormattedText());
 			for (int i = 3; i <= 5; i++) {
-				list.add(Component.translatable("info.item.builder.main." + i).getString());
+				list.add(Component.translatable("info.item.builder.main." + i).getFormattedText());
 			}
 			list.add(Component.translatable("info.item.builder.range.0", "" + builder.region[0], "" + builder.region[1], "" + builder.region[2]).getFormattedText());
 		} else {
-			list.add(Component.translatable("info.item.builder.main.2").getString());
+			list.add(Component.translatable("info.item.builder.main.2").getFormattedText());
 			if (stack.hasTagCompound() && stack.getTagCompound() != null && stack.getTagCompound().hasKey("ID", 3) && stack.getTagCompound().hasKey("BuilderType", 3)) {
 				Packets.sendServerDelayed(new SPacketGetBuildData(stack.getTagCompound().getInteger("ID"), stack.getTagCompound().getInteger("BuilderType")), stack, 2000);
 			}

@@ -73,15 +73,15 @@ public class GuiNpcConversation extends GuiNPCInterface2
 				key.append(Component.translatable("type.empty").withStyle(TextFormatting.RED));
 			}
 			else {
-				if (font.getStringWidth(key.getString() + textLine) <= sW - 5) { key.append(Component.literal("...").withStyle(TextFormatting.GRAY)); }
+				if (font.getStringWidth(key.getFormattedText() + textLine) <= sW - 5) { key.append(Component.literal("...").withStyle(TextFormatting.GRAY)); }
 				else {
 					StringBuilder text = new StringBuilder();
-					for (int i = 0; i < textLine.length() && font.getStringWidth(key.getString() + text) < sW - 20; i++) { text.append(textLine.charAt(i)); }
+					for (int i = 0; i < textLine.length() && font.getStringWidth(key.getFormattedText() + text) < sW - 20; i++) { text.append(textLine.charAt(i)); }
 					key.append(Component.literal(text + "...").withStyle(TextFormatting.RESET));
 				}
 			}
 			data.put(key, entry.getKey());
-			if (select.getString().isEmpty()) { select = key; }
+			if (select.getFormattedText().isEmpty()) { select = key; }
 		}
 		if (scroll == null) { scroll = addScroll(0).setSize(sW, 197); }
 		add(scroll.setPos(x0, y)
@@ -150,8 +150,8 @@ public class GuiNpcConversation extends GuiNPCInterface2
 			addButton(4, x2 + 34, y, false, job.mode ? 0 : 1, "gui.always", "gui.playernearby")
 					.setSize(96, 20)
 					.setHoverTexts(Component.translatable("job.conversation.hover.type",
-							Component.translatable("gui.always").getString(),
-							Component.translatable("gui.playernearby").getString()));
+							Component.translatable("gui.always").getFormattedText(),
+							Component.translatable("gui.playernearby").getFormattedText()));
 		}
 	}
 

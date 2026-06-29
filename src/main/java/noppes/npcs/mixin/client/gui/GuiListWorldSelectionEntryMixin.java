@@ -23,20 +23,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mixin(value = GuiListWorldSelectionEntry.class, priority = 499)
+@Mixin(value = GuiListWorldSelectionEntry.class, priority = 498)
 public class GuiListWorldSelectionEntryMixin {
 
-    @Final
-    @Shadow
-    private Minecraft client;
+    @Final @Shadow private Minecraft client;
 
-    @Final
-    @Shadow
-    private GuiWorldSelection worldSelScreen;
+    @Final @Shadow private GuiWorldSelection worldSelScreen;
 
-    @Final
-    @Shadow
-    private WorldSummary worldSummary;
+    @Final @Shadow private WorldSummary worldSummary;
 
     /*
      * Before starting a single-player game, you must check

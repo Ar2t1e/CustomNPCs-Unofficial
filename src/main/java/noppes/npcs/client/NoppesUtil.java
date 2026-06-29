@@ -335,8 +335,16 @@ public class NoppesUtil {
 			CustomNpcsLangPack.added("custom.chest." + name, "Custom " + (((CustomChest) customblock).isChest ? "Chest" : "Container") + ": " + n);
 		}
 		if (customblock instanceof CustomLiquid) {
-			CustomNpcsLangPack.added("item." + CustomNpcs.MODID + "." + fileName + "_bucket.name", n);
+			CustomNpcsLangPack.added("item." + fileName + "_bucket.name", n);
 			CustomNpcsLangPack.added("fluid." + fileName, n);
+		}
+		if (customblock instanceof CustomBlockSlab) {
+			if (isExample) {
+				String t = name.replace("example", "");
+				n = "Example Custom Double " + t.toUpperCase().charAt(0) + t.substring(1);
+			}
+			else { n += " Double"; }
+			CustomNpcsLangPack.added("tile.custom_double_" + name + ".name", n);
 		}
 
 		// textures

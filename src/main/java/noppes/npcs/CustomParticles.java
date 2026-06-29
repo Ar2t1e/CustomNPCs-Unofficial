@@ -5,20 +5,19 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraftforge.common.util.EnumHelper;
 import noppes.npcs.client.particles.CustomParticleSettings;
+import noppes.npcs.mixin.util.IEnumParticleTypesMixin;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ModData;
 import noppes.npcs.util.NBTJsonUtil;
 import noppes.npcs.util.Util;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class CustomParticles {
 
     public static Map<Integer, CustomParticleSettings> customparticles = new TreeMap<>();
 
-    @SuppressWarnings("unchecked")
     public static void registerParticle() {
         File prtcsFile = new File(CustomNpcs.Dir, "custom_particles.js");
         NBTTagCompound nbtParticles = getParticleNbt(prtcsFile);
@@ -32,37 +31,8 @@ public class CustomParticles {
         maxId += 1;
         Class<?>[] additionalTypes = { String.class, int.class, boolean.class, int.class }; // particleName, particleID,
         // create new
-        Map<Integer, EnumParticleTypes> particles = new HashMap<>();
-        Map<String, EnumParticleTypes> byName = new HashMap<>();
-
-        Field field = null;
-        try { field = EnumParticleTypes.class.getDeclaredField("field_179365_U"); }
-        catch (Exception ignored) {
-            try { field = EnumParticleTypes.class.getDeclaredField("PARTICLES"); }
-            catch (Exception e) { LogWriter.error(e); }
-        }
-        if (field != null) {
-            try {
-                field.setAccessible(true);
-                particles = (Map<Integer, EnumParticleTypes>) field.get(EnumParticleTypes.class);
-            }
-            catch (Exception e) { LogWriter.error(e); }
-
-        }
-        field = null;
-        try { field = EnumParticleTypes.class.getDeclaredField("field_186837_Z"); }
-        catch (Exception ignored) {
-            try { field = EnumParticleTypes.class.getDeclaredField("BY_NAME"); }
-            catch (Exception e) { LogWriter.error(e); }
-        }
-        if (field != null) {
-            try {
-                field.setAccessible(true);
-                byName = (Map<String, EnumParticleTypes>) field.get(EnumParticleTypes.class);
-            }
-            catch (Exception e) { LogWriter.error(e); }
-
-        }
+        Map<Integer, EnumParticleTypes> particles = IEnumParticleTypesMixin.getParticles();
+        Map<String, EnumParticleTypes> byName = IEnumParticleTypesMixin.getByNames();
 
         for (int i = 0; i < nbtParticles.getTagList("Particles", 10).tagCount(); i++) {
             NBTTagCompound nbtParticle = nbtParticles.getTagList("Particles", 10).getCompoundTagAt(i);

@@ -57,8 +57,6 @@ public class GuiCustomWindowNop extends GuiBasic
     // Yellow Dialog Edit
     protected ClientProxy.FontContainer customFont = null;
     public boolean isLock = false;
-    public boolean isYDEShow = false;
-    //public YDEScrollNop yde_scroll;
 
     public GuiCustomWindowNop(IGuiInterface gui, int idIn, int x, int y, int width, int height, Component titleIn) {
         super();
@@ -128,14 +126,14 @@ public class GuiCustomWindowNop extends GuiBasic
                 drawVerticalLine(1, 1, bottom - 2, color);
                 drawVerticalLine(right - 2, 1, bottom - 2, color);
                 drawHorizontalLine(1, right - 2, bottom - 2, color);
-                if (title != null && !title.getString().isEmpty()) {
+                if (title != null && !title.getFormattedText().isEmpty()) {
                     GlStateManager.translate(3.0f, 3.0f, 0.0f);
                     drawTopRect(right - 1);
                 }
                 GlStateManager.popMatrix();
                 GlStateManager.popMatrix();
 
-                if (title != null && !title.getString().isEmpty()) {
+                if (title != null && !title.getFormattedText().isEmpty()) {
                     GuiButtonNop.renderString(title, guiLeft + 3, guiTop + 1,
                             guiLeft + imageWidth - 10, guiTop + 11,
                             YDEController.textColor, false, false, customFont);
@@ -177,7 +175,7 @@ public class GuiCustomWindowNop extends GuiBasic
                 GlStateManager.translate(3.0f, 3.0f, 0.0f);
                 drawTopRect(right - 3);
                 GlStateManager.popMatrix();
-                if (title != null && !title.getString().isEmpty()) {
+                if (title != null && !title.getFormattedText().isEmpty()) {
                     GuiButtonNop.renderString(title, guiLeft + 4, guiTop + 2,
                             guiLeft + imageWidth - 20, guiTop + 11,
                             CustomNpcs.MainColor.getRGB() | 255 << 24, false, false, null);
@@ -475,6 +473,7 @@ public class GuiCustomWindowNop extends GuiBasic
 
     public int getColorLine() { return colorLine; }
 
+    @SuppressWarnings("unused")
     public boolean isHeadHovered() { return isHeadHovered; }
 
     public GuiCustomWindowNop addClose(OnClose onCloseIn) {

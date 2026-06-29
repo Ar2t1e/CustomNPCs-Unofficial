@@ -70,7 +70,7 @@ public class SubGuiNpcAvailabilityRegions
         super.initGui();
         int x = guiLeft + 5;
         int y = guiTop + 197;
-        boolean isSelect = !select.getString().isEmpty();
+        boolean isSelect = !select.getFormattedText().isEmpty();
         // title
         addLabel(1, x - 1, guiTop + 4, "availability.available.7")
                 .setSize(imageWidth - 8, 12)
@@ -133,7 +133,7 @@ public class SubGuiNpcAvailabilityRegions
                     suffixes.add(Component.literal("N").withStyle(TextFormatting.RED));
                 }
                 data.put(key, id);
-                if (select.getString().isEmpty() || selID == id) {
+                if (select.getFormattedText().isEmpty() || selID == id) {
                     select = key;
                     isSelect = true;
                 }

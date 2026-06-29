@@ -97,14 +97,14 @@ public class ItemNpcMovingPath extends Item implements INPCToolItem {
 	@SideOnly(Side.CLIENT)
 	@Override
 	public void addInformation(@Nonnull ItemStack stack, @Nullable World worldIn, @Nonnull List<String> list, @Nonnull ITooltipFlag flagIn) {
-        list.add(Component.translatable("info.item.moving.path").getString());
+        list.add(Component.translatable("info.item.moving.path").getFormattedText());
 		for (int i = 0; i <= 6; i++) {
 			if (i == 1 || i == 2) {
 				list.add(Component.translatable("info.item.moving.path." + i,
-						Component.translatable("ai.movingpath").getString()).getString());
+						Component.translatable("ai.movingpath").getFormattedText()).getFormattedText());
 				continue;
 			}
-			list.add(Component.translatable("info.item.moving.path." + i).getString());
+			list.add(Component.translatable("info.item.moving.path." + i).getFormattedText());
 		}
 	}
 

@@ -63,8 +63,8 @@ public class SubGuiDropEnchant extends GuiNPCInterface implements ITextfieldList
 		// levels
 		levels = new int[] { enchant.getMinLevel(), enchant.getMaxLevel() };
 		addLabel(lId++, guiLeft + 56, guiTop + 48, "type.level");
-		String tied = Component.translatable("drop.tied.random").getString();
-		if (enchant.parent.tiedToLevel) { tied = Component.translatable("drop.tied.level").getString(); }
+		String tied = Component.translatable("drop.tied.random").getFormattedText();
+		if (enchant.parent.tiedToLevel) { tied = Component.translatable("drop.tied.level").getFormattedText(); }
 		// min
 		addTextField(52, guiLeft + 4, guiTop + 39, 50, 14, "" + levels[0])
 				.setMinMaxDefault(0, 100000, enchant.getMinLevel())

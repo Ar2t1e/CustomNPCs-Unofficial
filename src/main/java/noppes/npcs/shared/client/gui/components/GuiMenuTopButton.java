@@ -57,7 +57,7 @@ public class GuiMenuTopButton extends GuiButtonNop {
     // New from Unofficial (BetaZavr)
     @Override
     public int getFGColor() {
-        if (packedFGColor != -1) { return packedFGColor; }
+        if (packedFGColor != 0) { return packedFGColor; }
         else if (isHovered) { return CustomNpcs.HoverColor.getRGB(); }
         return CustomNpcs.ButtonColor.getRGB();
     }

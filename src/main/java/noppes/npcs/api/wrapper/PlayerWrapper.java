@@ -362,7 +362,8 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 	@Override
 	public void setPosition(double x, double y, double z) {
 		if (entity instanceof EntityPlayerMP) {
-			SPacketDimensionTeleport.teleportPlayer((EntityPlayerMP) entity, entity.dimension, x, y, z, entity.rotationYaw, entity.rotationPitch);
+			SPacketDimensionTeleport.teleportPlayer((EntityPlayerMP) entity, entity.dimension, x, y, z,
+					entity.rotationYaw, entity.rotationPitch);
 		}
 	}
 

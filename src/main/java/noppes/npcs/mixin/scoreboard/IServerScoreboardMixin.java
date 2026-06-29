@@ -11,7 +11,6 @@ import java.util.Set;
 @Mixin(value = ServerScoreboard.class, priority = 502)
 public interface IServerScoreboardMixin {
 
-    @Accessor
-    Set<ScoreObjective> getAddedObjectives();
+    @Accessor Set<ScoreObjective> getAddedObjectives();
 
 }

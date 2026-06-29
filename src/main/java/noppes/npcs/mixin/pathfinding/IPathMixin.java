@@ -8,19 +8,14 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = Path.class, priority = 502)
 public interface IPathMixin {
 
-    @Accessor
-    PathPoint[] getPoints();
+    @Accessor PathPoint[] getPoints();
 
-    @Accessor
-    PathPoint[] getOpenSet();
+    @Accessor PathPoint[] getOpenSet();
 
-    @Accessor
-    void setOpenSet(PathPoint[] openSet);
+    @Accessor void setOpenSet(PathPoint[] openSet);
 
-    @Accessor
-    PathPoint[] getClosedSet();
+    @Accessor PathPoint[] getClosedSet();
 
-    @Accessor
-    void setClosedSet(PathPoint[] closedSet);
+    @Accessor void setClosedSet(PathPoint[] closedSet);
 
 }

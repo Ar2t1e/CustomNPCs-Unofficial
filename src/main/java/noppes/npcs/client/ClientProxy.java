@@ -2,7 +2,6 @@ package noppes.npcs.client;
 
 import java.awt.*;
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 
@@ -132,8 +131,6 @@ import noppes.npcs.items.custom.CustomArmor;
 import noppes.npcs.items.ItemScripted;
 import noppes.npcs.api.mixin.client.particle.IParticleFlameMixin;
 import noppes.npcs.api.mixin.client.particle.IParticleSmokeNormalMixin;
-import noppes.npcs.mixin.client.resources.II18nMixin;
-import noppes.npcs.mixin.client.resources.ILocaleMixin;
 import noppes.npcs.mixin.client.settings.IKeyBindingMixin;
 import noppes.npcs.client.particles.CustomParticleSettings;
 import noppes.npcs.potions.PotionData;
@@ -236,34 +233,6 @@ public class ClientProxy extends CommonProxy {
 
 	public static final Map<String, TempFile> loadFiles = new TreeMap<>();
 	public static IMinecraft mcWrapper = null;
-
-	// Apply changes to your localizations without disabling processes
-	public static void checkLocalization() {
-		// directory custom langs:
-		File langDir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID + "/lang");
-		if (!langDir.exists() || !langDir.isDirectory()) { return; }
-		LogWriter.info("Check Mod Localization");
-
-		// localization in game data
-		Map<String, String> properties = ((ILocaleMixin) II18nMixin.getI18nLocale()).getProperties();
-		// custom lang files:
-		String currentLanguage = Minecraft.getMinecraft().getLanguageManager().getCurrentLanguage().getLanguageCode();
-		for (int i = 0; i < (currentLanguage.equals("en_us") ? 1 : 2) ; i++) {
-			File lang = new File(langDir, (i == 0 ? "en_us" : currentLanguage) + ".lang");
-			if (lang.exists() && lang.isFile()) { // loading localizations from mod file
-				try {
-					BufferedReader reader = Files.newBufferedReader(lang.toPath());
-					String line;
-					while ((line = reader.readLine()) != null) {
-						if (line.startsWith("#") || !line.contains("=")) { continue; }
-						String[] vk = line.split("=");
-						properties.put(vk[0], vk[1]);
-					}
-					reader.close();
-				} catch (Exception e) { LogWriter.error("Error load custom localization", e); }
-			}
-		}
-	}
 
 	private void createFolders() {
 		File dir = new File(CustomNpcs.Dir, "assets/" + CustomNpcs.MODID);
@@ -503,6 +472,10 @@ public class ClientProxy extends CommonProxy {
 				returnGui = new GuiBorderBlock(buffer.readBlockPos());
 				break;
 			}
+			case Portal: {
+				returnGui = new GuiPortalBlock(buffer.readBlockPos());
+				break;
+			}
 			case RedstoneBlock: {
 				returnGui = new GuiNpcRedstoneBlock(buffer.readBlockPos());
 				break;
@@ -585,9 +558,7 @@ public class ClientProxy extends CommonProxy {
 	}
 
 	@Override
-	public EntityPlayer getPlayer() {
-		return Minecraft.getMinecraft().player;
-	}
+	public EntityPlayer getPlayer() { return Minecraft.getMinecraft().player; }
 
 	@Override
 	public PlayerData getPlayerData(EntityPlayer player) {
@@ -639,7 +610,6 @@ public class ClientProxy extends CommonProxy {
 			}
 			return -1;
 		}, CustomItems.scripter_item);
-		checkLocalization();
 		ClientRegisterEvents.load();
 	}
 
@@ -687,9 +657,6 @@ public class ClientProxy extends CommonProxy {
 			}
 		}
 		mcWrapper = new WrapperMinecraft(mc);
-		checkLocalization();
-
-		CustomNpcsLangPack.load();
 	}
 
 	@Override
@@ -725,6 +692,7 @@ public class ClientProxy extends CommonProxy {
 		}
 		PixelmonHelper.loadClient();
 		OBJLoader.INSTANCE.addDomain(CustomNpcs.MODID);
+		CustomNpcsLangPack.load();
 	}
 
 	@Override
@@ -776,11 +744,8 @@ public class ClientProxy extends CommonProxy {
 		if (fx == null) {
 			return;
 		}
-		if (particle == EnumParticleTypes.FLAME) {
-			((IParticleFlameMixin) fx).npcs$setFlameScale(scale);
-		} else if (particle == EnumParticleTypes.SMOKE_NORMAL) {
-			((IParticleSmokeNormalMixin) fx).npcs$setSmokeParticleScale(scale);
-		}
+		if (particle == EnumParticleTypes.FLAME) { ((IParticleFlameMixin) fx).npcs$setFlameScale(scale); }
+		else if (particle == EnumParticleTypes.SMOKE_NORMAL) { ((IParticleSmokeNormalMixin) fx).npcs$setSmokeParticleScale(scale); }
 	}
 
 	// New from Unofficial (BetaZavr)

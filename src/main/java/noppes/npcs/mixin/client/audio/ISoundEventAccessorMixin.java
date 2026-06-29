@@ -11,7 +11,6 @@ import java.util.List;
 @Mixin(value = SoundEventAccessor.class, priority = 502)
 public interface ISoundEventAccessorMixin {
 
-    @Accessor
-    List<ISoundEventAccessor<Sound>> getAccessorList();
+    @Accessor List<ISoundEventAccessor<Sound>> getAccessorList();
 
 }

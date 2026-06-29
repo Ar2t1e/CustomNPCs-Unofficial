@@ -36,9 +36,9 @@ public class SubGuiNpcAvailabilityNames
 	public void buttonEvent(GuiButtonNop guiButton) {
 		switch (guiButton.id) {
 			case 0: {
-				if (select.getString().isEmpty()) { return; }
+				if (select.getFormattedText().isEmpty()) { return; }
 				EnumAvailabilityPlayerName eapn = EnumAvailabilityPlayerName.values()[guiButton.getValue()];
-				availability.playerNames.put(select.getString(), eapn);
+				availability.playerNames.put(select.getFormattedText(), eapn);
 				initGui();
 				break;
 			}
@@ -47,8 +47,8 @@ public class SubGuiNpcAvailabilityNames
 				break;
 			}
 			case 2: {
-				if (select.getString().isEmpty()) { return; }
-				availability.playerNames.remove(select.getString());
+				if (select.getFormattedText().isEmpty()) { return; }
+				availability.playerNames.remove(select.getFormattedText());
 				select = Component.empty();
 				initGui();
 				break;
@@ -65,7 +65,7 @@ public class SubGuiNpcAvailabilityNames
 	@Override
 	public void initGui() {
 		super.initGui();
-		boolean isSelect = !select.getString().isEmpty();
+		boolean isSelect = !select.getFormattedText().isEmpty();
 		// title
 		addLabel(1, guiLeft + 6, guiTop + 4, "availability.available.4")
 				.setSize(imageWidth - 12, 12)
@@ -120,9 +120,9 @@ public class SubGuiNpcAvailabilityNames
 
 	@Override
 	public void save() {
-		if (select.getString().isEmpty()) { return; }
+		if (select.getFormattedText().isEmpty()) { return; }
 		EnumAvailabilityPlayerName eapn = EnumAvailabilityPlayerName.values()[getButton(0).getValue()];
-		availability.playerNames.put(select.getString(), eapn);
+		availability.playerNames.put(select.getFormattedText(), eapn);
 		select = Component.empty();
 	}
 
@@ -134,7 +134,7 @@ public class SubGuiNpcAvailabilityNames
 
 	@Override
 	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
-		SubGuiEditText subGui = new SubGuiEditText(0, select.getString())
+		SubGuiEditText subGui = new SubGuiEditText(0, select.getFormattedText())
 				.setHoverTexts(Component.translatable("availability.hover.player.name"));
 		setSubGui(subGui);
 	}
@@ -143,12 +143,12 @@ public class SubGuiNpcAvailabilityNames
 	public void subGuiClosed(GuiScreen subgui) {
 		if (subgui instanceof SubGuiEditText && !((SubGuiEditText) subgui).cancelled) {
 			EnumAvailabilityPlayerName eapn = EnumAvailabilityPlayerName.Only;
-			if (!select.getString().isEmpty()) {
+			if (!select.getFormattedText().isEmpty()) {
 				eapn = data.get(select);
-				availability.playerNames.remove(select.getString());
+				availability.playerNames.remove(select.getFormattedText());
 			}
 			select = Component.literal(((SubGuiEditText) subgui).text[0]);
-			availability.playerNames.put(select.getString(), eapn);
+			availability.playerNames.put(select.getFormattedText(), eapn);
 			initGui();
 		}
 	}

@@ -68,8 +68,8 @@ public class GuiNpcManageBanks
 		scroll.setSelected(selected);
 		selected = scroll.getNormalSelected();
 		for (int slotId = 0; slotId < 2; slotId++) {
-			((ISlotMixin) container.getSlot(slotId)).setX(selected.getString().isEmpty() ? -5000 : 180);
-			((ISlotMixin) container.getSlot(slotId)).setY(selected.getString().isEmpty() ? -5000 : slotId == 0 ? 107 : 166);
+			((ISlotMixin) container.getSlot(slotId)).setX(selected.getFormattedText().isEmpty() ? -5000 : 180);
+			((ISlotMixin) container.getSlot(slotId)).setY(selected.getFormattedText().isEmpty() ? -5000 : slotId == 0 ? 107 : 166);
 		}
 		List<Component> list = scroll.getNormalList();
 		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
@@ -81,6 +81,7 @@ public class GuiNpcManageBanks
 			}
 		}
 		scroll.setHoverTexts(hts);
+		boolean hasSelectBank = !selected.getFormattedText().isEmpty();
 		Component change = Component.translatable("bank.hover.change");
 		// add bank
 		y += scroll.height + 24;
@@ -90,7 +91,7 @@ public class GuiNpcManageBanks
 		// del bank
 		addButton(7, x + scroll.width - 50, y, "gui.remove")
 				.setSize(50, 20)
-				.setIsEnabled(!selected.getString().isEmpty() && data.size() > 1)
+				.setIsEnabled(hasSelectBank && data.size() > 1)
 				.setHoverTexts(Component.translatable("bank.hover.del")
 						.append(change));
 		// name
@@ -100,9 +101,9 @@ public class GuiNpcManageBanks
 		int lId = 0;
 		addLabel(lId++, x0, y + 4, Component.translatable("gui.name").append(":"))
 				.setSize(68, 10)
-				.setIsVisible(!selected.getString().isEmpty());
+				.setIsVisible(hasSelectBank);
 		addTextField(0, x, y, 202, 18, bank.name)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setMaxStringLength(20)
 				.setHoverTexts(Component.translatable("bank.hover.name")
 						.append("<br>\"").append(Component.translatable(bank.name)).append("\""));
@@ -110,22 +111,22 @@ public class GuiNpcManageBanks
 		y += 22;
 		addLabel(lId++, x0, y + 4, Component.translatable("gui.ceil", ":"))
 				.setSize(68, 10)
-				.setIsVisible(!selected.getString().isEmpty());
+				.setIsVisible(hasSelectBank);
 		List<String> csIds = new ArrayList<>();
 		for (int i = 0; i < bank.ceilSettings.size(); i++) { csIds.add("" + (i + 1)); }
 		addButton(0, x, y, true, ceil, csIds.toArray(new Object[0]))
 				.setSize(66, 20)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setHoverTexts(Component.translatable("bank.hover.ceil", "" + bank.ceilSettings.size()));
 		// add ceil
 		addButton(1, x + 68, y, "gui.add")
 				.setSize(66, 20)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setHoverTexts(Component.translatable("bank.hover.ceil.add").append(change));
 		// del ceil
 		addButton(2, x + 137, y, "gui.remove")
 				.setSize(66, 20)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setIsEnabled(ceil > 0)
 				.setHoverTexts(Component.translatable("bank.hover.ceil.add").append(change));
 		// slots
@@ -136,23 +137,23 @@ public class GuiNpcManageBanks
 		// min
 		addLabel(lId++, x0, y + 4, Component.translatable("gui.start").append(":"))
 				.setSize(68, 10)
-				.setIsVisible(!selected.getString().isEmpty());
+				.setIsVisible(hasSelectBank);
 		addTextField(1, x + 1, y + 1, 64, 18, "" + sc)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setMinMaxDefault(1, mc, sc)
 				.setHoverTexts(Component.translatable("bank.hover.slots.min").append(change));
 		// max
 		addLabel(lId++, x + 68, y + 4, Component.translatable("gui.max").append(":"))
 				.setSize(48, 10)
-				.setIsVisible(!selected.getString().isEmpty());
+				.setIsVisible(hasSelectBank);
 		addTextField(2, x + 138, y + 1, 64, 18, "" + mc)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setMinMaxDefault(1, 198, mc)
 				.setHoverTexts(Component.translatable("bank.hover.slots.max").append(change));
 		// is public
 		addCheckBox(3, x0, (y += 22), "bank.public.true", "bank.public.false", bank.isPublic)
 				.setSize(180, 16)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setHoverTexts("bank.hover.public");
 		// setting names
 		Component hoverOwner = Component.translatable("bank.hover.settings");
@@ -167,12 +168,12 @@ public class GuiNpcManageBanks
 				.setTexture(GuiBasic.WIDGETS) // lock
 				.setUV(bank.owner.isEmpty() ? 20 : 0, 146, 20, 20)
 				.setSize(20, 20)
-				.setIsVisible(!selected.getString().isEmpty() && bank.isPublic)
+				.setIsVisible(hasSelectBank && bank.isPublic)
 				.setHoverTexts(hoverOwner);
 		// is free
 		addCheckBox(4, x0, y + 22, "bank.free.true", "bank.free.false", cs.isFree)
 				.setSize(180, 16)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setHoverTexts("bank.hover.free");
 
 		// open money
@@ -180,25 +181,25 @@ public class GuiNpcManageBanks
 		y = guiTop + 95;
 		addLabel(lId++, x - 22, y, Component.translatable("bank.tab.cost").append(":"))
 				.setSize(68, 10)
-				.setIsVisible(!selected.getString().isEmpty());
+				.setIsVisible(hasSelectBank);
 		addTextField(3, x, y += 31, 51, 12, "" + cs.openMoney)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, cs.openMoney)
 				.setHoverTexts("bank.hover.open.money");
 		addTextField(5, x, y += 14, 51, 12, "" + cs.openDonat)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, cs.openDonat)
 				.setHoverTexts("bank.hover.open.donat");
 		// upgrade money
 		addLabel(lId, x - 22, y += 14, Component.translatable("bank.upg.cost").append(":"))
 				.setSize(68, 10)
-				.setIsVisible(!selected.getString().isEmpty());
+				.setIsVisible(hasSelectBank);
 		addTextField(4, x, y += 31, 51, 12, "" + cs.upgradeMoney)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, cs.upgradeMoney)
 				.setHoverTexts("bank.hover.upgrade.money");
 		addTextField(6, x, y + 14, 51, 12, "" + cs.upgradeDonat)
-				.setIsVisible(!selected.getString().isEmpty())
+				.setIsVisible(hasSelectBank)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, cs.upgradeDonat)
 				.setHoverTexts("bank.hover.upgrade.donat");
 	}
@@ -230,7 +231,7 @@ public class GuiNpcManageBanks
 					NoppesUtil.openGUI(player, this);
 				},
 						Component.translatable("bank.name", ": ID:" + bank.id + " \"" + bank.name + "\"; " +
-								Component.translatable("gui.ceil", ": ID:" + (ceil + 1)).getString()).getParent(),
+								Component.translatable("gui.ceil", ": ID:" + (ceil + 1)).getFormattedText()).getParent(),
 						Component.literal(msg).getParent());
 				setScreen(guiYesNo);
 				break;
@@ -304,12 +305,12 @@ public class GuiNpcManageBanks
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		if (isWait) {
-			Component text = Component.translatable("gui.wait", ": " + Component.translatable("gui.wait.data").getString());
-			font.drawString(text.getString(), guiLeft + (float) (width - font.getStringWidth(text.getString())) / 2.0f, guiTop + 60,
+			Component text = Component.translatable("gui.wait", ": " + Component.translatable("gui.wait.data").getFormattedText());
+			font.drawString(text.getFormattedText(), guiLeft + (float) (width - font.getStringWidth(text.getFormattedText())) / 2.0f, guiTop + 60,
 					CustomNpcResourceListener.DefaultTextColor, false);
 			return;
 		}
-		if (hasSubGui() || !CustomNpcs.ShowDescriptions || selected.getString().isEmpty()) { return; }
+		if (hasSubGui() || !CustomNpcs.ShowDescriptions || selected.getFormattedText().isEmpty()) { return; }
 		for (int slotId = 0; slotId < 2; ++slotId) {
 			Slot slot = container.getSlot(slotId);
 			if (!slot.getHasStack() && isMouseHover(mouseX, mouseY, guiLeft + slot.xPos, guiTop + slot.yPos, 18, 18)) {
@@ -356,7 +357,7 @@ public class GuiNpcManageBanks
 
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
-		if (scroll.id == 0 && !selected.getString().equals(scroll.getSelected()) && data.containsKey(scroll.getNormalSelected())) {
+		if (scroll.id == 0 && !selected.getFormattedText().equals(scroll.getSelected()) && data.containsKey(scroll.getNormalSelected())) {
 			save();
 			ceil = 0;
 			selected = scroll.getNormalSelected();
@@ -476,7 +477,7 @@ public class GuiNpcManageBanks
 	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 	private String getMessage(String locKey) {
-		String str = Component.translatable(locKey).getString();
+		String str = Component.translatable(locKey).getFormattedText();
 		while (str.contains("<br>")) { str = str.replace("<br>", "" + ((char) 10)); }
 		return str;
 	}

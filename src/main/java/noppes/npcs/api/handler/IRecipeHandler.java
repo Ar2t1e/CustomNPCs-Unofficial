@@ -6,6 +6,7 @@ import noppes.npcs.api.handler.data.INpcRecipe;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 public interface IRecipeHandler {
 
 	List<INpcRecipe> getAnvilRecipes(String group);

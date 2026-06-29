@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = GuiInventory.class, priority = 498)
 public class GuiInventoryMixin {
 
-
     @Inject(method = "drawScreen", at = @At("TAIL"))
     public void npcs$drawScreenPost(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         GuiInventory parent = (GuiInventory) (Object) this;

@@ -47,10 +47,7 @@ public class SPacketTileEntitySave extends PacketServerBasic {
    }
 
    public static TileEntity saveTileEntity(EntityPlayerMP player, NBTTagCompound compound) {
-      int x = compound.getInteger("x");
-      int y = compound.getInteger("y");
-      int z = compound.getInteger("z");
-      BlockPos pos = new BlockPos(x, y, z);
+      BlockPos pos = new BlockPos(compound.getInteger("x"), compound.getInteger("y"), compound.getInteger("z"));
       TileEntity tile = player.world.getTileEntity(pos);
       if (tile != null) {
          tile.readFromNBT(compound);

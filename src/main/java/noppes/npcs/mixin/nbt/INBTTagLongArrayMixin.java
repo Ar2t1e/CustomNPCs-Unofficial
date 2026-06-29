@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = NBTTagLongArray.class, priority = 502)
 public interface INBTTagLongArrayMixin {
 
-    @Accessor
-    long[] getData();
+    @Accessor long[] getData();
 
 }

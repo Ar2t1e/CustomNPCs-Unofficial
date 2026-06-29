@@ -226,6 +226,7 @@ public class GuiNpcRemoteEditor
 			tempName.getStyle().setColor(TextFormatting.RESET);
 			Component key = Component.empty()
 					.append(Component.literal("ID:" + id).withStyle(type))
+					.append(" ")
 					.append(tempName)
 					.append(Component.literal(" (").withStyle(TextFormatting.GRAY))
 					.append(distance)

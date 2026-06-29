@@ -48,7 +48,7 @@ public class EntityAIReturn extends EntityAIBase {
 
 	@Override
 	public boolean shouldExecute() {
-		if (!npc.hasOwner() &&
+		if (npc.emptyOwner() &&
 				!npc.isRiding() &&
 				npc.ais.shouldReturnHome() &&
 				!npc.isKilled() &&

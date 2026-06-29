@@ -32,33 +32,40 @@ public class BlockBuilder extends BlockInterface {
 
 	public BlockBuilder() {
 		super(Material.ROCK);
-		this.setName("npcbuilderblock");
-		this.setHardness(5.0f);
-		this.setResistance(10.0f);
-		this.setCreativeTab(CustomTabs.TOOLS);
-		this.setSoundType(SoundType.STONE);
+		setName("npcbuilderblock");
+		setHardness(5.0f);
+		setResistance(10.0f);
+		setCreativeTab(CustomTabs.TOOLS);
+		setSoundType(SoundType.STONE);
 	}
 
+	@Override
 	protected @Nonnull BlockStateContainer createBlockState() {
 		return new BlockStateContainer(this, BlockBuilder.ROTATION);
 	}
 
+	@Override
 	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
 		return new TileBuilder();
 	}
 
+	@Override
 	public int getMetaFromState(@Nonnull IBlockState state) {
 		return state.getValue(BlockBuilder.ROTATION);
 	}
 
+	@Override
 	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
 		return EnumBlockRenderType.MODEL;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull IBlockState getStateFromMeta(int meta) {
-		return this.getDefaultState().withProperty(BlockBuilder.ROTATION, meta);
+		return getDefaultState().withProperty(BlockBuilder.ROTATION, meta);
 	}
 
+	@Override
 	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (par1World.isRemote) {
 			return true;
@@ -71,6 +78,7 @@ public class BlockBuilder extends BlockInterface {
 		return true;
 	}
 
+	@Override
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
 		int var6 = MathHelper.floor(entity.rotationYaw / 90.0f + 0.5) & 0x3;
 		world.setBlockState(pos, state.withProperty(BlockBuilder.ROTATION, var6), 2);

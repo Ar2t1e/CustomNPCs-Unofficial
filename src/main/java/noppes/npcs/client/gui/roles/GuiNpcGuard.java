@@ -91,13 +91,13 @@ public class GuiNpcGuard extends GuiNPCInterface2 implements ICustomScrollListen
 		y += 34;
 		if (scrollAllEntities == null) { scrollAllEntities = addScroll(0).setSize(175, 174); }
 		scrollAllEntities.setNormalList(allNames);
-		if (!select.getString().isEmpty()) { scrollAllEntities.setSelected(select); }
+		if (!select.getFormattedText().isEmpty()) { scrollAllEntities.setSelected(select); }
 		add(scrollAllEntities.setPos(x, y));
 		addLabel(11, x + 1, y - 10, "guard.availableTargets");
 		if (scrollSelected == null) { scrollSelected = addScroll(1).setSize(175, 174); }
 		x = guiLeft + 183;
 		scrollSelected.setNormalList(selected);
-		if (!select.getString().isEmpty()) { scrollSelected.setSelected(select); }
+		if (!select.getFormattedText().isEmpty()) { scrollSelected.setSelected(select); }
 		add(scrollSelected.setPos(x + 58, y));
 		addLabel(12, x + 59, y - 10, "guard.currentTargets");
 		addButton(11, x, y += 22, ">")

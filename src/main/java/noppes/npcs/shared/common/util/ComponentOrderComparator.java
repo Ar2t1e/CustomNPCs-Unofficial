@@ -30,8 +30,8 @@ public class ComponentOrderComparator implements Comparator<Object> {
 	public int compare(Object o1, Object o2) {
 		String a = o1.toString().toLowerCase();
 		String b = o2.toString().toLowerCase();
-		if (o1 instanceof Component) { a = ((Component) o1).getString().toLowerCase(); }
-		if (o2 instanceof Component) { b = ((Component) o2).getString().toLowerCase(); }
+		if (o1 instanceof Component) { a = ((Component) o1).getFormattedText().toLowerCase(); }
+		if (o2 instanceof Component) { b = ((Component) o2).getFormattedText().toLowerCase(); }
 		int ia = 0;
 		int ib = 0;
 		while(true) {

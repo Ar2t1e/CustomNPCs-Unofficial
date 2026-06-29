@@ -6,17 +6,14 @@ import noppes.npcs.api.mixin.client.config.IGuiEditArrayMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(value = GuiEditArray.class, remap = false, priority = 499)
+@Mixin(value = GuiEditArray.class, remap = false, priority = 498)
 public class GuiEditArrayMixin implements IGuiEditArrayMixin {
 
-    @Shadow
-    protected GuiScreen parentScreen;
+    @Shadow protected GuiScreen parentScreen;
 
-    @Shadow
-    protected int slotIndex;
+    @Shadow protected int slotIndex;
 
-    @Shadow
-    protected boolean enabled;
+    @Shadow protected boolean enabled;
 
     @Override
     public GuiScreen npcs$getParentScreen() { return parentScreen; }

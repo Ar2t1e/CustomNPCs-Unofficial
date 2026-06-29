@@ -31,7 +31,7 @@ public class PacketCustomChestName extends PacketBasic {
         CustomNpcs.debugData.start("Packets");
         GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         if (screen instanceof GuiCustomChest) {
-            ((GuiCustomChest) screen).title = Component.translatable(name).getString();
+            ((GuiCustomChest) screen).title = Component.translatable(name).getFormattedText();
         }
         CustomNpcs.debugData.end("Packets");
     }

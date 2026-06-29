@@ -9,6 +9,7 @@ import noppes.npcs.api.wrapper.WrapperRecipe;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public interface INpcRecipe {
 
 	String getName();
@@ -39,7 +40,6 @@ public interface INpcRecipe {
 
 	boolean isShaped();
 
-	@SuppressWarnings("unused")
 	void setIsShaped(@ParamName("isShaped") boolean isShaped);
 
 	// New from Unofficial (BetaZavr)
@@ -47,13 +47,10 @@ public interface INpcRecipe {
 
 	boolean isKnown();
 
-	@SuppressWarnings("unused")
 	void setIsKnown(@ParamName("isKnown") boolean isKnown);
 
-	@SuppressWarnings("unused")
 	boolean showInRecipeBook();
 
-	@SuppressWarnings("unused")
 	void setShowInRecipeBook(@ParamName("showInRecipeBook") boolean showInRecipeBook);
 
 	IAvailability getAvailability();
@@ -75,4 +72,5 @@ public interface INpcRecipe {
 	void setItems(@ParamName("items") IItemStack[][] items);
 
 	void setItems(@ParamName("mapItems") Map<Integer, List<IItemStack>> mapItems);
+
 }

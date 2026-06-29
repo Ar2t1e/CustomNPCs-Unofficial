@@ -40,7 +40,7 @@ public class CommonUtil {
                 }
             }
             WorldServer world = CustomNpcs.Server.getWorld(0);
-            if (world != null && world.getGameRules().getBoolean("logAdminCommands")) { LogWriter.info(component.getString()); }
+            if (world != null && world.getGameRules().getBoolean("logAdminCommands")) { LogWriter.info(component.getFormattedText()); }
         }
         if (!isSend) {
             boolean found = false;

@@ -46,36 +46,38 @@ public class CustomDoor extends BlockDoor implements ITileEntityProvider, ICusto
 
 	public CustomDoor(Material material, NBTTagCompound nbtBlock) {
 		super(material);
-		this.nbtData = nbtBlock;
+		nbtData = nbtBlock;
 		String name = "custom_" + nbtBlock.getString("RegistryName");
-		this.setRegistryName(CustomNpcs.MODID, name.toLowerCase());
-		this.setUnlocalizedName(name.toLowerCase());
-		this.hasTileEntity = false;
-		this.setSoundType(CustomBlock.getNbtSoundType(nbtBlock.getString("SoundType")));
-		this.setHardness(0.0f);
-		this.setResistance(10.0f);
+		setRegistryName(CustomNpcs.MODID, name.toLowerCase());
+		setUnlocalizedName(name.toLowerCase());
+		hasTileEntity = false;
+		setSoundType(CustomBlock.getNbtSoundType(nbtBlock.getString("SoundType")));
+		setHardness(0.0f);
+		setResistance(10.0f);
 
 		if (nbtBlock.hasKey("Hardness", 5)) {
-			this.setHardness(nbtBlock.getFloat("Hardness"));
+			setHardness(nbtBlock.getFloat("Hardness"));
 		}
 		if (nbtBlock.hasKey("Resistance", 5)) {
-			this.setResistance(nbtBlock.getFloat("Resistance"));
+			setResistance(nbtBlock.getFloat("Resistance"));
 		}
 		if (nbtBlock.hasKey("LightLevel", 5)) {
-			this.setLightLevel(nbtBlock.getFloat("LightLevel"));
+			setLightLevel(nbtBlock.getFloat("LightLevel"));
 		}
 		if (nbtBlock.hasKey("BlockRenderType", 8)) {
-			this.renderType = CustomBlock.getNbtRenderType(nbtBlock.getString("BlockRenderType"));
+			renderType = CustomBlock.getNbtRenderType(nbtBlock.getString("BlockRenderType"));
 		}
 
-		this.setCreativeTab(CustomTabs.BLOCKS);
+		setCreativeTab(CustomTabs.BLOCKS);
 	}
 
+	@Override
 	public void breakBlock(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
 		super.breakBlock(worldIn, pos, state);
 		worldIn.removeTileEntity(pos);
 	}
 
+	@Override
 	public TileEntity createNewTileEntity(@Nonnull World worldIn, int meta) {
 		return null;
 	}
@@ -84,31 +86,28 @@ public class CustomDoor extends BlockDoor implements ITileEntityProvider, ICusto
 	@SideOnly(Side.CLIENT)
 	public @Nonnull BlockRenderLayer getBlockLayer() {
 		String name = "";
-		if (this.nbtData != null && this.nbtData.hasKey("BlockLayer", 8)) {
-			name = this.nbtData.getString("BlockLayer");
+		if (nbtData != null && nbtData.hasKey("BlockLayer", 8)) {
+			name = nbtData.getString("BlockLayer");
 		}
 		while (name.contains(" ")) {
 			name = name.replace(" ", "_");
 		}
 		switch (name.toLowerCase()) {
-		case "cutout":
-			return BlockRenderLayer.CUTOUT;
-		case "cutout_mipped":
-			return BlockRenderLayer.CUTOUT_MIPPED;
-		case "translucent":
-			return BlockRenderLayer.TRANSLUCENT;
-		default:
-			return BlockRenderLayer.SOLID;
+			case "solid": return BlockRenderLayer.SOLID;
+			case "cutout_mipped": return BlockRenderLayer.CUTOUT_MIPPED;
+			case "translucent": return BlockRenderLayer.TRANSLUCENT;
+			default: return BlockRenderLayer.CUTOUT;
 		}
 	}
 
+	@Override
 	public @Nonnull ItemStack getItem(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
 		Item item = new ItemNpcBlock(this);
 		for (Item it : Item.REGISTRY) {
 			if (!Objects.requireNonNull(it.getRegistryName()).getResourceDomain().equals(CustomNpcs.MODID)) {
 				continue;
 			}
-			if (it.getRegistryName().equals(this.getRegistryName())) {
+			if (it.getRegistryName().equals(getRegistryName())) {
 				item = it;
 				break;
 			}
@@ -116,13 +115,14 @@ public class CustomDoor extends BlockDoor implements ITileEntityProvider, ICusto
 		return new ItemStack(item, 1, 0);
 	}
 
+	@Override
 	public @Nonnull Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) {
 		Item item = new ItemNpcBlock(this);
 		for (Item it : Item.REGISTRY) {
 			if (!Objects.requireNonNull(it.getRegistryName()).getResourceDomain().equals(CustomNpcs.MODID)) {
 				continue;
 			}
-			if (it.getRegistryName().equals(this.getRegistryName())) {
+			if (it.getRegistryName().equals(getRegistryName())) {
 				item = it;
 				break;
 			}
@@ -131,8 +131,9 @@ public class CustomDoor extends BlockDoor implements ITileEntityProvider, ICusto
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
-		return this.renderType;
+		return renderType;
 	}
 
 	@Override
@@ -143,25 +144,27 @@ public class CustomDoor extends BlockDoor implements ITileEntityProvider, ICusto
 		}
 	}
 
+	@Override
 	public boolean hasTileEntity(@Nonnull IBlockState state) {
 		return true;
 	}
 
 	@Override
 	public boolean isFullCube(@Nonnull IBlockState state) {
-		return this.nbtData != null && this.nbtData.hasKey("IsFullCube") && this.nbtData.getBoolean("IsFullCube");
+		return nbtData != null && nbtData.hasKey("IsFullCube") && nbtData.getBoolean("IsFullCube");
 	}
 
 	@Override
 	public boolean isLadder(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EntityLivingBase entity) {
-		return this.nbtData.getBoolean("IsLadder");
+		return nbtData.getBoolean("IsLadder");
 	}
 
 	@Override
 	public boolean isOpaqueCube(@Nonnull IBlockState state) {
-		return this.nbtData != null && this.nbtData.hasKey("IsOpaqueCube") && this.nbtData.getBoolean("IsOpaqueCube");
+		return nbtData != null && nbtData.hasKey("IsOpaqueCube") && nbtData.getBoolean("IsOpaqueCube");
 	}
 
+	@Override
 	public boolean onBlockActivated(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer playerIn, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
 		if (nbtData != null && nbtData.hasKey("InteractOpen") && !nbtData.getBoolean("InteractOpen")) { return false; }
 
@@ -181,14 +184,14 @@ public class CustomDoor extends BlockDoor implements ITileEntityProvider, ICusto
 	}
 
 	@Override
-	public String getCustomName() { return this.nbtData.getString("RegistryName"); }
+	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(this.nbtData); }
+	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
 
 	@Override
 	public int getElementType() {
-		if (this.nbtData != null && this.nbtData.hasKey("BlockType", 1)) { return this.nbtData.getByte("BlockType"); }
+		if (nbtData != null && nbtData.hasKey("BlockType", 1)) { return nbtData.getByte("BlockType"); }
 		return 6;
 	}
 

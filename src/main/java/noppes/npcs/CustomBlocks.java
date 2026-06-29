@@ -331,7 +331,9 @@ public class CustomBlocks {
                 location.endsWith(":custom_facingblockexample") || location.endsWith(":custom_stairsexample") ||
                 location.endsWith(":custom_slabexample") || location.endsWith(":custom_portalexample") || location.endsWith(":custom_chestexample")
                 || location.endsWith(":custom_containerexample") || location.endsWith(":custom_doorexample");
-        if (isExample || defFiles) { CustomNpcs.proxy.createAllFiles((ICustomElement) block); }
+        if ((isExample || defFiles) && !(block instanceof CustomBlockSlab.CustomBlockSlabDouble)) {
+            CustomNpcs.proxy.createAllFiles((ICustomElement) block);
+        }
         LogWriter.info("Load Custom Block \"" + location + "\"");
         customblocks.put((ICustomElement) block, createItem(block));
         names.add(location);

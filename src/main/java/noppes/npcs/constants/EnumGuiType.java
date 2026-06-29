@@ -44,6 +44,7 @@ public enum EnumGuiType
 	MobSpawnerMounter,
 	NpcDimensions,
 	Border,
+	Portal,
 	Script,
 	ScriptBlock,
 	ScriptDoor,

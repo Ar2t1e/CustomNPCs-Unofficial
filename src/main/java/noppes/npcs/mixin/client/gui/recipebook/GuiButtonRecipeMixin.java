@@ -59,7 +59,7 @@ public class GuiButtonRecipeMixin {
                             npcs$availabilityList = new ArrayList<>();
                             for (Component tooltip : ((RecipeCarpentry) recipe).availability
                                     .getAvailability(mc.player, Component.translatable("recipe.hover.availability.type"))) {
-                                npcs$availabilityList.add(tooltip.getString());
+                                npcs$availabilityList.add(tooltip.getFormattedText());
                             }
                         }
                         if (((RecipeCarpentry) recipe).availability.isAvailable(mc.player)) {
@@ -120,15 +120,15 @@ public class GuiButtonRecipeMixin {
                 List<String> hovers = guiScreen.getItemToolTip(recipe.getRecipeOutput());
                 hovers.add("");
                 hovers.add(Component.translatable("gui.type").append(": ")
-                        .append(Component.translatable("item.craft.type."+(recipe instanceof IShapedRecipe || npcRecipe.isShaped()))).getString());
+                        .append(Component.translatable("item.craft.type."+(recipe instanceof IShapedRecipe || npcRecipe.isShaped()))).getFormattedText());
                 if (npcs$availabilityType != 0) {
-                    hovers.add(Component.translatable("gui.recipebook.availability."+ npcs$availabilityType).getString());
+                    hovers.add(Component.translatable("gui.recipebook.availability."+ npcs$availabilityType).getFormattedText());
                 }
                 if (npcs$availabilityList != null) {
-                    hovers.add(Component.translatable("gui.recipebook.availability.3").getString());
+                    hovers.add(Component.translatable("gui.recipebook.availability.3").getFormattedText());
                 }
                 if (list.getRecipes(book.isFilteringCraftable()).size() > 1) {
-                    hovers.add(Component.translatable("gui.recipebook.moreRecipes").getString());
+                    hovers.add(Component.translatable("gui.recipebook.moreRecipes").getFormattedText());
                 }
                 cir.setReturnValue(hovers);
             }

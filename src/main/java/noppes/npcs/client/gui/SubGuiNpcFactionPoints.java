@@ -25,19 +25,19 @@ public class SubGuiNpcFactionPoints extends GuiBasic implements ITextfieldListen
 		super.initGui();
 		// default Points
 		addLabel(2, guiLeft + 4, guiTop + 33, "faction.default");
-		addTextField(2, guiLeft + 8 + font.getStringWidth(getLabel(2).getMessage().getString()), guiTop + 28, 70, 20, faction.defaultPoints)
+		addTextField(2, guiLeft + 8 + font.getStringWidth(getLabel(2).getMessage().getFormattedText()), guiTop + 28, 70, 20, faction.defaultPoints)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, faction.defaultPoints)
 				.setHoverTexts("faction.hover.point.def")
 				.setMaxStringLength(6);
 		// unfriendly -> neutral
 		Component title = Component.translatable("faction.unfriendly").append("<->").append(Component.translatable("faction.neutral"));
 		addLabel(3, guiLeft + 4, guiTop + 80, title);
-		GuiTextFieldNop textField3 = addTextField(3, guiLeft + 8 + font.getStringWidth(title.getString()), guiTop + 75, 70, 20, faction.neutralPoints)
+		GuiTextFieldNop textField3 = addTextField(3, guiLeft + 8 + font.getStringWidth(title.getFormattedText()), guiTop + 75, 70, 20, faction.neutralPoints)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, faction.neutralPoints)
 				.setHoverTexts("faction.hover.point.unfr");
 		title = Component.translatable("faction.neutral").append("<->").append(Component.translatable("faction.friendly"));
 		addLabel(4, guiLeft + 4, guiTop + 105, title);
-		GuiTextFieldNop textField4 = addTextField(4, guiLeft + 8 + font.getStringWidth(title.getString()), guiTop + 100, 70, 20, faction.friendlyPoints)
+		GuiTextFieldNop textField4 = addTextField(4, guiLeft + 8 + font.getStringWidth(title.getFormattedText()), guiTop + 100, 70, 20, faction.friendlyPoints)
 				.setMinMaxDefault(0, Integer.MAX_VALUE, faction.friendlyPoints);
 		if (textField3.getX() > textField4.getX()) { textField4.setX(textField3.getX()); }
 		else { textField3.setX(textField4.getX()); }

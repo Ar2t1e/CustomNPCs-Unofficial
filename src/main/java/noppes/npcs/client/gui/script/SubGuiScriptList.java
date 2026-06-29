@@ -77,7 +77,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 					if (folder.isEmpty()) {
 						if (path.isEmpty()) {
 							fs.put(key, scripts.get(file));
-							hs.put(key.getString(), new ArrayList<>(Collections.singletonList(Component.literal(file))));
+							hs.put(key.getFormattedText(), new ArrayList<>(Collections.singletonList(Component.literal(file))));
 						}
 					}
 					else {
@@ -90,15 +90,15 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 						Component fld = Component.literal(folder);
 						if (path.isEmpty() && !folder.isEmpty()) {
 							ds.put(fld, 0L);
-							hs.put(fld.getString(), new ArrayList<>(Collections.singletonList(Component.literal(folder))));
+							hs.put(fld.getFormattedText(), new ArrayList<>(Collections.singletonList(Component.literal(folder))));
 						}
 						else if (folder.isEmpty()) {
 							fs.put(key, scripts.get(file));
-							hs.put(key.getString(), new ArrayList<>(Collections.singletonList(Component.literal(file))));
+							hs.put(key.getFormattedText(), new ArrayList<>(Collections.singletonList(Component.literal(file))));
 						}
 						else {
 							ds.put(fld, 0L);
-							hs.put(fld.getString(), new ArrayList<>(Collections.singletonList(Component.literal(path + "/" + folder))));
+							hs.put(fld.getFormattedText(), new ArrayList<>(Collections.singletonList(Component.literal(path + "/" + folder))));
 						}
 					}
 				}
@@ -107,7 +107,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 							.append(Component.literal(t + ":").withStyle(TextFormatting.GRAY))
 							.append(key.withStyle(TextFormatting.RESET));
 					ft.put(line, scripts.get(file));
-					hs.put(line.getString(), new ArrayList<>(Collections.singletonList(Component.literal(file))));
+					hs.put(line.getFormattedText(), new ArrayList<>(Collections.singletonList(Component.literal(file))));
 					t++;
 				}
 			}
@@ -117,7 +117,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 		for (Component key : ds.keySet()) {
 			suffixesBase.add(Component.empty());
 			listBase.add(key);
-			if (hs.containsKey(key.getString())) { htsB.put(i, hs.get(key.getString())); }
+			if (hs.containsKey(key.getFormattedText())) { htsB.put(i, hs.get(key.getFormattedText())); }
 			key.getStyle().setColor(TextFormatting.GOLD);
 			i++;
 		}
@@ -127,10 +127,10 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 			if (Math.abs(l) > 999) { size = Util.instance.getTextReducedNumber(Math.abs(l), false, false, true); }
 			suffixesBase.add(Component.literal(size).withStyle(TextFormatting.AQUA));
 			listBase.add(key);
-			if (hs.containsKey(key.getString())) {
-				List<Component> hoverList = hs.get(key.getString());
+			if (hs.containsKey(key.getFormattedText())) {
+				List<Component> hoverList = hs.get(key.getFormattedText());
 				if (l < 0) {
-					hs.get(key.getString()).add(Component.translatable("gui.encrypted").withStyle(TextFormatting.DARK_RED));
+					hs.get(key.getFormattedText()).add(Component.translatable("gui.encrypted").withStyle(TextFormatting.DARK_RED));
 				}
 				htsB.put(i, hoverList);
 			}
@@ -145,10 +145,10 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 			if (Math.abs(l) > 999) { size = Util.instance.getTextReducedNumber(Math.abs(l), false, false, true); }
 			suffixes.add(Component.literal(size).withStyle(TextFormatting.AQUA));
 			list.add(key);
-			if (hs.containsKey(key.getString())) {
-				List<Component> hoverList = hs.get(key.getString());
+			if (hs.containsKey(key.getFormattedText())) {
+				List<Component> hoverList = hs.get(key.getFormattedText());
 				if (l < 0) {
-					hs.get(key.getString()).add(Component.translatable("gui.encrypted").withStyle(TextFormatting.DARK_RED));
+					hs.get(key.getFormattedText()).add(Component.translatable("gui.encrypted").withStyle(TextFormatting.DARK_RED));
 				}
 				htsS.put(i, hoverList);
 			}
@@ -184,7 +184,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 			case 1: {
 				if (!base.hasSelected()) { return; }
 				String file;
-				try { file = base.getHoversTexts().get(base.getSelectedIndex()).get(0).getString(); } catch (Exception e) { return; }
+				try { file = base.getHoversTexts().get(base.getSelectedIndex()).get(0).getFormattedText(); } catch (Exception e) { return; }
 				container.scripts.add(file);
 				base.setSelect(-1);
 				initGui();
@@ -193,7 +193,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 			case 2: {
 				if (!selected.hasSelected()) { return; }
 				String file;
-				try { file = selected.getHoversTexts().get(selected.getSelectedIndex()).get(0).getString(); } catch (Exception e) { return; }
+				try { file = selected.getHoversTexts().get(selected.getSelectedIndex()).get(0).getFormattedText(); } catch (Exception e) { return; }
 				container.scripts.remove(file);
 				selected.setSelect(-1);
 				initGui();
@@ -223,7 +223,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
     @Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
 		if (scroll.id == 0) {
-			if (scroll.getSelected().equals(back.getString())) {
+			if (scroll.getSelected().equals(back.getFormattedText())) {
 				if (path.lastIndexOf("/") == -1) { path = ""; }
 				else { path = path.substring(0, path.lastIndexOf("/")); }
 				base.setSelect(-1);
@@ -239,7 +239,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 	@Override
 	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
 		String file = "";
-		try { file = scroll.getHoversTexts().get(scroll.getSelectedIndex()).get(0).getString(); }
+		try { file = scroll.getHoversTexts().get(scroll.getSelectedIndex()).get(0).getFormattedText(); }
 		catch (Exception e) { LogWriter.error(e); }
 		if (file.isEmpty()) { return; }
 		if (scroll.id == 0) {

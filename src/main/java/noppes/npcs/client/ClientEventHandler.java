@@ -912,26 +912,26 @@ public class ClientEventHandler extends Gui {
 						GlStateManager.popMatrix();
 					}
 					GlStateManager.translate(
-							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayName.getString())) / 2.0d,
+							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayName.getFormattedText())) / 2.0d,
 							playerData.overlay.getWindowSize().getHeight() - 35.0d - 3.0d * lH,
 							0.0d);
-					drawString(mc.fontRenderer, rayName.getString(), 0, 0, 0xFFFFFF);
+					drawString(mc.fontRenderer, rayName.getFormattedText(), 0, 0, 0xFFFFFF);
 					GlStateManager.popMatrix();
 
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(
-							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayTitle.getString())) / 2.0d,
+							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayTitle.getFormattedText())) / 2.0d,
 							playerData.overlay.getWindowSize().getHeight() - 35 - 2.0d * lH,
 							0.0d);
-					drawString(mc.fontRenderer, rayTitle.getString(), 0, 0, 0xFFFFFF);
+					drawString(mc.fontRenderer, rayTitle.getFormattedText(), 0, 0, 0xFFFFFF);
 					GlStateManager.popMatrix();
 
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(
-							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayPos.getString())) / 2.0d,
+							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayPos.getFormattedText())) / 2.0d,
 							playerData.overlay.getWindowSize().getHeight() - 35 - lH,
 							0.0d);
-					drawString(mc.fontRenderer, rayPos.getString(), 0, 0, 0xFFFFFF);
+					drawString(mc.fontRenderer, rayPos.getFormattedText(), 0, 0, 0xFFFFFF);
 					GlStateManager.popMatrix();
 				}
 				else if (!mc.player.getHeldItemOffhand().isEmpty()) {
@@ -950,18 +950,18 @@ public class ClientEventHandler extends Gui {
 
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(
-							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayName.getString())) / 2.0d,
+							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayName.getFormattedText())) / 2.0d,
 							playerData.overlay.getWindowSize().getHeight() - 35.0d - 3.0d * lH,
 							0.0d);
-					drawString(mc.fontRenderer, rayName.getString(), 0, 0, 0xFFFFFF);
+					drawString(mc.fontRenderer, rayName.getFormattedText(), 0, 0, 0xFFFFFF);
 					GlStateManager.popMatrix();
 
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(
-							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayTitle.getString())) / 2.0d,
+							(playerData.overlay.getWindowSize().getWidth() - (double) mc.fontRenderer.getStringWidth(rayTitle.getFormattedText())) / 2.0d,
 							playerData.overlay.getWindowSize().getHeight() - 35 - 2.0d * lH,
 							0.0d);
-					drawString(mc.fontRenderer, rayTitle.getString(), 0, 0, 0xFFFFFF);
+					drawString(mc.fontRenderer, rayTitle.getFormattedText(), 0, 0, 0xFFFFFF);
 					GlStateManager.popMatrix();
 				}
 			}

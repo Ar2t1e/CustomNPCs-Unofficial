@@ -2,7 +2,6 @@ package noppes.npcs.util;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.util.NonNullList;
 import noppes.npcs.NoppesUtilPlayer;
 
 import java.util.*;

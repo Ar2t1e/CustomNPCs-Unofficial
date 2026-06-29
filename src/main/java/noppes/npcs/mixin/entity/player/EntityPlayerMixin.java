@@ -17,12 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = EntityPlayer.class, priority = 498)
 public class EntityPlayerMixin implements IEntityPlayerMixin {
 
-    @Mutable
-    @Shadow
-    protected BlockPos spawnPos;
+    @Mutable @Shadow protected BlockPos spawnPos;
 
-    @Unique
-    public DataAnimation npcs$animation;
+    @Unique public DataAnimation npcs$animation;
 
     @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("HEAD"))
     public void npcs$attackTargetEntityWithCurrentItem(Entity targetEntity, CallbackInfo ci) {

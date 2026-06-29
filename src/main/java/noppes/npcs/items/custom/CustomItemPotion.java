@@ -1,17 +1,14 @@
 package noppes.npcs.items.custom;
 
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.PotionTypes;
 import net.minecraft.item.ItemPotion;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.PotionType;
 import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomPotions;
 import noppes.npcs.CustomTabs;
 import noppes.npcs.potions.PotionData;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
@@ -25,6 +22,7 @@ public class CustomItemPotion extends ItemPotion {
 		this.setUnlocalizedName("potion");
 	}
 
+	@Override
 	public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> items) {
 		if (getCreativeTab() != null) {
 			if (tab == CreativeTabs.BREWING) {

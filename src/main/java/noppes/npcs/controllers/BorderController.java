@@ -17,7 +17,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketBorderData;
 import noppes.npcs.packets.client.PacketGuiUpdate;
-import noppes.npcs.packets.client.SPacketBorderClear;
+import noppes.npcs.packets.client.PacketBorderClear;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.handler.IBorderHandler;
@@ -189,7 +189,7 @@ public class BorderController implements IBorderHandler {
 	}
 
 	public void sendTo(EntityPlayerMP player) {
-		Packets.send(player, new SPacketBorderClear());
+		Packets.send(player, new PacketBorderClear());
 		for (int id : regions.keySet()) {
 			if (id < 0 || regions.get(id).getId() < 0) {
 				continue;
