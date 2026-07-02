@@ -74,9 +74,7 @@ public class GuiContainerCreativeMixin {
 
             GlStateManager.pushMatrix();
             RenderHelper.enableGUIStandardItemLighting();
-            String pos = String.valueOf(31L - (System.currentTimeMillis() / 100L) % 32L);
-            if (pos.length() < 2) { pos = "0" + pos; }
-            parent.mc.getTextureManager().bindTexture(new ResourceLocation("textures/items/compass_" + pos + ".png"));
+            parent.mc.getTextureManager().bindTexture(ClientEventHandler.COMPASS_ICONS[(int) (31L - (System.currentTimeMillis() / 100L) % 32L)]);
             GlStateManager.translate(x + 10, y + 6, 0.0f);
             float s = 16.0f / 256.0f;
             GlStateManager.scale(s, s, s);

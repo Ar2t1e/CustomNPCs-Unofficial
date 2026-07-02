@@ -74,7 +74,8 @@ public class GuiLog extends GuiNPCInterface
 
 	static {
 		GuiLog.ql.clear();
-		for (int i = 0; i < 6; i++) { GuiLog.ql.put(i, new ResourceLocation(CustomNpcs.MODID, "textures/quest log/q_log_" + i + ".png")); }
+		for (int i = 0; i < 6; i++) { GuiLog.ql.put(i,
+				new ResourceLocation(CustomNpcs.MODID, "textures/quest/log/q_log_" + i + ".png")); }
 	}
 
 	public static QuestInfo activeQuest;
@@ -827,8 +828,7 @@ public class GuiLog extends GuiNPCInterface
 
 	protected void drawQuestLog(int mouseX, int mouseY) {
 		if (categories.isEmpty()) {
-			String noFaction = Component.translatable("quest.noquests").getFormattedText();
-			fontRenderer.drawSplitString(noFaction, guiLLeft, guiLTop, (int) (98.0f * scaleW), CustomNpcs.QuestLogColor.getRGB());
+			draw(Component.translatable("quest.noquests").getFormattedText(), guiLLeft, guiLTop, questLogColor, (int) (-98.0f * scaleW));
 			return;
 		}
 		List<ITextComponent> hover = new ArrayList<>();
@@ -943,7 +943,9 @@ public class GuiLog extends GuiNPCInterface
 			ItemStack[] stacks = activeQuest.stacks.toArray(new ItemStack[0]);
 			int j = 0, k = 0;
 			for (int l = 0; l < 2; l++) {
-				List<String> list = activeQuest.getText(first, player).get(page + l);
+				Map<Integer, List<String>> mapText = activeQuest.getText(first, player);
+				if (page * 2 > mapText.size()) { page = (int) Math.floor(mapText.size() / 2.0f); }
+				List<String> list = mapText.get(page * 2 + l);
 				if (list == null) {
 					continue;
 				} // empty right page
@@ -1061,7 +1063,7 @@ public class GuiLog extends GuiNPCInterface
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(guiLLeft, guiLTop - 1.5f * scaleH, 0.0f);
 			for (int id : quests.get(selectCat).keySet()) {
-				if (p < page * 10) {
+				if (p < page * 16) {
 					p++;
 					continue;
 				}
@@ -1243,7 +1245,7 @@ public class GuiLog extends GuiNPCInterface
 		compassData = data.compass;
 		// Back
 		GlStateManager.pushMatrix();
-		drawGradientRect(0, 0, mc.displayWidth, mc.displayHeight, 0xAA000000, 0xAA000000);
+		drawGradientRect(0, 0, mc.displayWidth, mc.displayHeight, 0xAAFF0000, 0xAA000000);
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 		GlStateManager.popMatrix();
 		// Animations
@@ -1832,7 +1834,6 @@ public class GuiLog extends GuiNPCInterface
 		guiLRight = guiCenter + (int) (2.0f * scaleW);
 		guiLTop = guiTopLog + (int) (8.0f * scaleH);
 
-		// Quests
 		if (type == 0) {
 			quests.clear();
 			categories.clear();
@@ -1872,54 +1873,92 @@ public class GuiLog extends GuiNPCInterface
 			while (catSelect >= categories.size()) {
 				catSelect--;
 			}
-		}
-		// Factions
+		} // Quests
 		else if (type == 2) {
-			int x0 = guiLLeft + 8;
-			int x1 = guiLRight + (int) (3.0f * scaleW);
-			int y = (int) (guiLTop + 82.0f * scaleH);
+			int x0 = guiLLeft + 7;
+			int x1 = guiLRight + (int) (scaleW);
+			int y = (int) (guiLTop + 86.0f * scaleH);
+			int lId = 0;
 			// Screen Pos
+			addLabel(lId++, x0 - (int) (10.0f * scaleW), y - (int) (2.0f * scaleH), "U:")
+					.setCustomFont(ClientProxy.LogFont)
+					.setColor(questLogColor);
 			addTextField(0, x0, y, (int) (40.0f * scaleW),
 					(int) (11.0f * scaleH), "" + compassData.screenPos[0])
 					.setMinMaxDefault(0.0f, 1.0f, compassData.screenPos[0])
 					.setHoverTexts("quest.hover.compass.edit.ups");
+			addLabel(lId++, x0 + (int) (45.0f * scaleW), y - (int) (2.0f * scaleH), "V:")
+					.setCustomFont(ClientProxy.LogFont)
+					.setColor(questLogColor);
 			addTextField(1, x0 + (int) (54.0f * scaleW), y,
 					(int) (40.0f * scaleW), (int) (11.0f * scaleH), "" + compassData.screenPos[1])
 					.setMinMaxDefault(0.0d, 1.0d, compassData.screenPos[1])
 					.setHoverTexts("quest.hover.compass.edit.vpos");
 			// Scale
 			x0 -= 1;
-			float v = compassData.scale - 0.5f;
-			addSlider(0, x0, y += (int) (18.0f * scaleH), v)
+			addLabel(lId++, x0 - (int) (10.0f * scaleW), (y += (int) (18.0f * scaleH)) - (int) (3.0f * scaleH), "S:")
+					.setCustomFont(ClientProxy.LogFont)
+					.setColor(questLogColor);
+			addSlider(0, x0, y, compassData.scale - 0.5f)
 					.setSize((int) (94.0f * scaleW), (int) (fontHeight * scaleH))
 					.setString(("" + compassData.scale).replace(".", ","))
 					.setShowShadow(false)
 					.setHoverTexts("quest.hover.compass.edit.scale");
-			getSlider(0).setString(("" + compassData.scale).replace(".", ","));
-
-			// Incline
-			v = compassData.incline * -0.022222f + 0.5f;
-			addSlider(1, x0, y += (int) (17.0f * scaleH), v)
-					.setSize((int) (94.0f * scaleW), (int) (fontHeight * scaleH))
-					.setString(("" + (45.0f + compassData.incline * -1.0f)).replace(".", ","))
-					.setHoverTexts("quest.hover.compass.edit.incline");
-			addCheckBox(0, x1, y - (int) scaleH, "quest.screen.show.quest", null, compassData.showQuestName)
-					.setSize((int) (100.0f * scaleW), (int) (fontHeight * scaleH))
+			if (!compassData.isFlat) {
+				// Incline
+				addLabel(lId++, x0 - (int) (10.0f * scaleW), (y += (int) (17.0f * scaleH)) - (int) (3.0f * scaleH), "T:")
+						.setCustomFont(ClientProxy.LogFont)
+						.setColor(questLogColor);
+				addSlider(1, x0, y, compassData.incline * -0.022222f + 0.5f)
+						.setSize((int) (94.0f * scaleW), (int) (fontHeight * scaleH))
+						.setString(("" + (45.0f + compassData.incline * -1.0f)).replace(".", ","))
+						.setHoverTexts("quest.hover.compass.edit.incline");
+				// Rotation
+				addLabel(lId, x0 - (int) (10.0f * scaleW), (y += (int) (17.0f * scaleH)) - (int) (3.0f * scaleH), "R:")
+						.setCustomFont(ClientProxy.LogFont)
+						.setColor(questLogColor);
+				addSlider(2, x0, y, compassData.rot * 0.016667f + 0.5f)
+						.setSize((int) (94.0f * scaleW), (int) (fontHeight * scaleH))
+						.setString(("" + compassData.rot).replace(".", ","))
+						.setHoverTexts("quest.hover.compass.edit.rotation");
+			}
+			y = (int) (guiLTop + 64.0f * scaleH);
+			addCheckBox(0, x1, y, "quest.screen.show.quest", null, compassData.showQuestName)
+					.setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
 					.setColor(questLogColor)
-					.setShowShadow(false)
-					.setHoverTexts("quest.hover.compass.edit.show name");
-
-			// Rotation
-			v = compassData.rot * 0.016667f + 0.5f;
-			addSlider(2, x0, y += (int) (17.0f * scaleH), v)
-					.setSize((int) (94.0f * scaleW), (int) (fontHeight * scaleH));
-			getSlider(2).setString(("" + compassData.rot).replace(".", ","));
-			addCheckBox(1, x1, y - (int) scaleH, "quest.screen.show.task", null, compassData.showTaskProgress)
-					.setSize((int) (100.0f * scaleW), (int) (fontHeight * scaleH))
+					.setCustomFont(ClientProxy.LogFont);
+			addCheckBox(1, x1, y += (int) (14.0f * scaleH), "quest.screen.show.task", null, compassData.showTaskProgress)
+					.setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
 					.setColor(questLogColor)
-					.setShowShadow(false)
-					.setHoverTexts("quest.hover.compass.edit.rotation");
-		}
+					.setCustomFont(ClientProxy.LogFont);
+			addCheckBox(3, x1, y += (int) (17.0f * scaleH), "quest.screen.show.dial", null, compassData.showDial)
+					.setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
+					.setColor(questLogColor)
+					.setCustomFont(ClientProxy.LogFont);
+			addCheckBox(4, x1, y += (int) (14.0f * scaleH), "quest.screen.compass.type.0", "quest.screen.compass.type.4", compassData.showOfPlayer)
+					.setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
+					.setColor(questLogColor)
+					.setCustomFont(ClientProxy.LogFont);
+
+			addCheckBox(5, x1, y += (int) (17.0f * scaleH), "quest.screen.is.flat", "quest.screen.is.3d", compassData.isFlat)
+					.setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
+					.setColor(questLogColor)
+					.setCustomFont(ClientProxy.LogFont);
+			addCheckBox(6, x1, y += (int) (14.0f * scaleH), "quest.screen.log.is.fast", "quest.screen.log.is.slow", compassData.questLogIsFast)
+					.setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
+					.setColor(questLogColor)
+					.setCustomFont(ClientProxy.LogFont);
+			addButton(2, x1, y + (int) (14.0f * scaleH), "")
+					.setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
+					.setTexture(ANIMATION_BUTTONS)
+					.setUV(0, 96, 200, 20)
+					.setIsVisible(player.isCreative())
+					.setColor(questLogColor)
+					.setCustomFont(ClientProxy.LogFont)
+					.setHoverTexts("quest.screen.hover.compass.global", "quest.screen.hover.compass.type." + CustomNpcs.TypeShowQuestCompass)
+					.setVariants("quest.screen.compass.type.0", "quest.screen.compass.type.1", "quest.screen.compass.type.2", "quest.screen.compass.type.3", "quest.screen.compass.type.4")
+					.setDisplay(CustomNpcs.TypeShowQuestCompass);
+		} // Compass
 	}
 
 	@Override

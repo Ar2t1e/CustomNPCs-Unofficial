@@ -32,11 +32,14 @@ public class PlayerCompassData implements ICompassData, IPlayerData {
     public int dimension = 0;
     public int questID;
     private int range = 5;
-    private int type = 0;
+    private int taskType = 0;
     public final float[] screenPos = new float[] { 0.15f, 0.765f };
     public float scale = 1.0f;
     public float  incline = 0.0f;
     public float  rot = 0.0f;
+
+    public int color = (int) (Math.random() * 16777215.0);
+
 
     @Override
     public NBTTagCompound save(NBTTagCompound compound) {
@@ -47,7 +50,7 @@ public class PlayerCompassData implements ICompassData, IPlayerData {
         compassNbt.setInteger("DimensionID", dimension);
         compassNbt.setIntArray("BlockPos", new int[] { pos.getX(), pos.getY(), pos.getZ() });
         compassNbt.setInteger("Range", range);
-        compassNbt.setInteger("Type", type);
+        compassNbt.setInteger("Type", taskType);
         compassNbt.setBoolean("ShowOfPlayer", showOfPlayer);
         compassNbt.setBoolean("IsCustomPoint", isCustomPoint);
         compassNbt.setBoolean("QuestLogIsFast", questLogIsFast);
@@ -120,7 +123,7 @@ public class PlayerCompassData implements ICompassData, IPlayerData {
     public String getTitle() { return title; }
 
     @Override
-    public int getType() { return type; }
+    public int getTaskType() { return taskType; }
 
     @Override
     public boolean isCustomPoint() { return isCustomPoint; }
@@ -189,7 +192,7 @@ public class PlayerCompassData implements ICompassData, IPlayerData {
     @Override
     public void setType(int typeIn) {
         if (typeIn < 0) { typeIn *= -1; }
-        type = typeIn % EnumQuestTask.values().length;
+        taskType = typeIn % EnumQuestTask.values().length;
     }
 
 }

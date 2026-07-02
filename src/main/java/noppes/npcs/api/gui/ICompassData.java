@@ -18,7 +18,7 @@ public interface ICompassData {
 
 	String getTitle();
 
-	int getType();
+	int getTaskType();
 
 	boolean isCustomPoint();
 

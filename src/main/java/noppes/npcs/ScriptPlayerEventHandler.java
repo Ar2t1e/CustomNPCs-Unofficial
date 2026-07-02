@@ -493,10 +493,8 @@ public class ScriptPlayerEventHandler {
 				Entity target = Util.instance.getLookEntity(player, d0, false);
 				if (target != null) {
 					((ItemNbtBook) event.getItemStack().getItem()).entityEvent(player, target);
-					event.setCanceled(true); }
-				else if (!player.getHeldItemOffhand().isEmpty()) {
-					((ItemNbtBook) event.getItemStack().getItem()).itemEvent(player);
-					event.setCanceled(true); }
+					event.setCanceled(true);
+				}
 				else {
 					Vec3d vec3d = player.getPositionEyes(1.0f);
 					Vec3d vec3d2 = player.getLook(1.0f);
@@ -504,6 +502,10 @@ public class ScriptPlayerEventHandler {
 					RayTraceResult result = player.world.rayTraceBlocks(vec3d, vec3d3, false, false, false);
 					if (result != null && result.typeOfHit == RayTraceResult.Type.BLOCK) {
 						((ItemNbtBook) event.getItemStack().getItem()).blockEvent(player, result.getBlockPos());
+						event.setCanceled(true);
+					}
+					else if (!player.getHeldItemOffhand().isEmpty()) {
+						((ItemNbtBook) event.getItemStack().getItem()).itemEvent(player);
 						event.setCanceled(true);
 					}
 				}

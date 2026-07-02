@@ -14,6 +14,7 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.recipebook.RecipeList;
 import net.minecraft.client.particle.Particle;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -195,6 +196,7 @@ public class ClientProxy extends CommonProxy {
 		public void draw(String text, float x, float y, int color) {
 			if (useCustomFont && textFont.hasFont()) { textFont.draw(text, x, y, color); }
 			else { Minecraft.getMinecraft().fontRenderer.drawStringWithShadow(text, x, y, color); }
+			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 
 		public void draw(Component component, float x, float y, int color) { draw(component.getFormattedText(), x, y, color); }
