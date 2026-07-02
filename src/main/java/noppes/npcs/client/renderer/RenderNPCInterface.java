@@ -126,19 +126,23 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 
 	@Override
 	protected void setupRotations(T npc, @Nonnull PoseStack matrixScale, float f, float f1, float f2) {
-		if (npc.isAlive() && npc.isSleeping()) {
-			matrixScale.mulPose(Axis.YP.rotationDegrees((float)npc.ais.orientation));
-			matrixScale.mulPose(Axis.ZP.rotationDegrees(getFlipDegrees(npc)));
-			matrixScale.mulPose(Axis.YP.rotationDegrees(270.0F));
+		if (npc.isAlive()) {
+			if (npc.isSleeping()) {
+				matrixScale.mulPose(Axis.YP.rotationDegrees((float)npc.ais.orientation));
+				matrixScale.mulPose(Axis.ZP.rotationDegrees(getFlipDegrees(npc)));
+				matrixScale.mulPose(Axis.YP.rotationDegrees(270.0F));
+				return;
+			}
+			else if (npc.currentAnimation == 7) {
+				matrixScale.mulPose(Axis.YP.rotationDegrees(270.0F - f1));
+				float scale = (float) npc.display.getSize() / 5.0F;
+				matrixScale.translate(-scale + ((EntityCustomNpc)npc).modelData.getLegsY() * scale, 0.14F, 0.0F);
+				matrixScale.mulPose(Axis.ZP.rotationDegrees(270.0F));
+				matrixScale.mulPose(Axis.YP.rotationDegrees(270.0F));
+				return;
+			}
 		}
-		else if (npc.isAlive() && npc.currentAnimation == 7) {
-			matrixScale.mulPose(Axis.YP.rotationDegrees(270.0F - f1));
-			float scale = (float) npc.display.getSize() / 5.0F;
-			matrixScale.translate(-scale + ((EntityCustomNpc)npc).modelData.getLegsY() * scale, 0.14F, 0.0F);
-			matrixScale.mulPose(Axis.ZP.rotationDegrees(270.0F));
-			matrixScale.mulPose(Axis.YP.rotationDegrees(270.0F));
-		}
-		else { super.setupRotations(npc, matrixScale, f, f1, f2); }
+		super.setupRotations(npc, matrixScale, f, f1, f2);
 	}
 
 	@Override
@@ -168,7 +172,10 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 			zOffset = zOffset / 5.0F * (float)npc.display.getSize();
 			matrixStack.translate(xOffset, yOffset, zOffset);
 			//if ((npc.display.getBossbar() == 1 || npc.display.getBossbar() == 2 && npc.isAttacking()) && !npc.isKilled() && npc.deathTime <= 20 && npc.canNpcSee(Minecraft.getInstance().player)) { }
-			if (npc.ais.getStandingType() == 3 && !npc.isWalking() && !npc.isInteracting()) { npc.yBodyRotO = npc.yBodyRot = (float) npc.ais.orientation; }
+			if (npc.ais.getStandingType() == 3 && !npc.isWalking() && !npc.isInteracting()) {
+				npc.yBodyRotO = npc.yBodyRot = (float) npc.ais.orientation;
+			}
+
 			shadowRadius = npc.getBbWidth() * 0.8F * npc.display.getShadowSize();
 			int stackSize = ((IPoseStackMixin) matrixStack).getPoseStack().size();
 			try {

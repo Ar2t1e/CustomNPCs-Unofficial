@@ -374,10 +374,6 @@ public class ScriptPlayerEventHandler {
                ((ItemNbtBook) event.getItemStack().getItem()).entityEvent(player, target);
                event.setCanceled(true);
             }
-            else if (!player.getOffhandItem().isEmpty()) {
-               ((ItemNbtBook) event.getItemStack().getItem()).itemEvent(player);
-               event.setCanceled(true);
-            }
             else {
                Vec3 vec3d = player.getEyePosition(1.0F);
                Vec3 vec3d1 = player.getViewVector(1.0F);
@@ -388,6 +384,10 @@ public class ScriptPlayerEventHandler {
                      ((ItemNbtBook) event.getItemStack().getItem()).blockEvent(player, result.getBlockPos());
                      event.setCanceled(true);
                   }
+               }
+               else if (!player.getOffhandItem().isEmpty()) {
+                  ((ItemNbtBook) event.getItemStack().getItem()).itemEvent(player);
+                  event.setCanceled(true);
                }
             }
          } // Empty Click:

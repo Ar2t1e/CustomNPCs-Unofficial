@@ -62,7 +62,7 @@ public class SubGuiNpcFactionSelect extends GuiNPCInterface implements ICustomSc
         for (Map.Entry<Component, Integer> entry : newList) {
             int id = entry.getValue();
             String name = Util.instance.deleteColor(entry.getKey().getString());
-            if (name.contains("ID:" + id + " ")) { name = name.substring(name.indexOf(" ") + 3); }
+            if (name.contains("ID:" + id + " ")) { name = name.substring(name.indexOf(" ") + 1); }
             Component key = Component.empty()
                     .append(Component.literal("ID:" + id + " ").withStyle(ChatFormatting.GRAY))
                     .append(Component.literal(name).withStyle(ChatFormatting.RESET));

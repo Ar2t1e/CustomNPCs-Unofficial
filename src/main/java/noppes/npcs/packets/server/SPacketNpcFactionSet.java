@@ -7,7 +7,6 @@ import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.PacketServerBasic;
-import noppes.npcs.shared.common.util.LogWriter;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +38,6 @@ public class SPacketNpcFactionSet extends PacketServerBasic {
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
       npc.setFaction(id);
-      LogWriter.info("[DEBUG] "+id+" / "+npc.getFaction().id);
       CustomNpcs.debugData.end("Packets");
    }
 

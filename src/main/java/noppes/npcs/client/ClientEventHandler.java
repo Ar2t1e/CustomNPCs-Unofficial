@@ -3,6 +3,7 @@ package noppes.npcs.client;
 import com.google.gson.Gson;
 import com.mojang.blaze3d.audio.Channel;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
@@ -65,6 +66,7 @@ import net.minecraftforge.client.event.RenderLivingEvent.Post;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.event.sound.PlaySoundSourceEvent;
 import net.minecraftforge.client.event.sound.PlayStreamingSourceEvent;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -160,7 +162,7 @@ public class ClientEventHandler {
     public static ParameterizedModel COMPASS_ARROW_21;
     public static ParameterizedModel COMPASS_ARROW_22;
     public static ParameterizedModel COMPASS_ARROW_3;
-    private int qt = 0;
+    private static int qt = 0;
     // Items:
     public static final List<Vec3> movingPath = new ArrayList<>();
     // Schematics:
@@ -371,6 +373,54 @@ public class ClientEventHandler {
                 1.0f, 0.0f, 0.0f, 1.0f);
     }
 
+    private static void renderEntityForBook(Entity entityIn, GuiGraphics graphics) {
+        if (!(entityIn instanceof LivingEntity entity)) { return; }
+        EntityNPCInterface npc = null;
+        int visible = 0;
+        int showName = 0;
+        int orientation = 0;
+        if (entity instanceof EntityNPCInterface cnpc) {
+            npc = cnpc;
+            visible = npc.display.getVisible();
+            showName = npc.display.getShowName();
+            orientation = npc.ais.orientation;
+            npc.display.setVisible(2);
+            npc.display.setShowName(0);
+            npc.ais.orientation = 0;
+        }
+        PoseStack matrixStack = graphics.pose();
+        matrixStack.pushPose();
+        float scW = entity.getBbWidth() > 1.0f ? 1.0f / entity.getBbWidth() : 1.0f;
+        float scH = entity.getBbHeight() > 2.4f ? 2.4f / entity.getBbHeight() : 1.0f;
+        float scale = Math.min(scW, scH);
+        matrixStack.scale(-30.0f * scale * 0.75f, -30.0f * scale * 0.75f, -30.0f * scale * 0.75f);
+        float f2 = entity.getYRot();
+        float f3 = entity.getXRot();
+        float f4 = entity.yHeadRot;
+        float f5 = entity.yBodyRot;
+        float f6 = entity.yBodyRotO;
+        matrixStack.mulPose(Axis.XP.rotationDegrees(-20.0f));
+        matrixStack.mulPose(Axis.YP.rotationDegrees(210.0f));
+        entity.setYRot(0.0f);
+        entity.setXRot(0.0f);
+        entity.yHeadRot = 0.0f;
+        entity.yBodyRot = 0.0f;
+        entity.yBodyRotO = 0.0f;
+        EntityRenderDispatcher renderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+        renderDispatcher.render(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT);
+        entity.setYRot(f2);
+        entity.setXRot(f3);
+        entity.yHeadRot = f4;
+        entity.yBodyRot = f5;
+        entity.yBodyRotO = f6;
+        if (npc != null) {
+            npc.display.setVisible(visible);
+            npc.display.setShowName(showName);
+            npc.ais.orientation = orientation;
+        }
+        matrixStack.popPose();
+    }
+
     // DebugRenderer.renderFilledBox(PoseStack, MultiBufferSource, aabb, red, green, blue, alpha);
     public void renderFilledBox(VertexConsumer consumer, Matrix4f matrix4f, AABB aabb,
                                  boolean addFromInside, float red, float green, float blue, float alpha) {
@@ -503,7 +553,6 @@ public class ClientEventHandler {
         CustomNpcs.debugData.end("Players");
     }
 
-    @OnlyIn(Dist.CLIENT)
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void cnpcScreenPostInit(ScreenEvent.Init.Post event) {
         CustomNpcs.debugData.start("Players");
@@ -559,10 +608,10 @@ public class ClientEventHandler {
 
                             matrixStack.pushPose();
                             matrixStack.translate(b.getX() + 9.0f, b.getY() + 5.0f, 0.0f);
-                            int i = (int) (31L - (System.currentTimeMillis() / 100L) % 32L);
                             float s = 16.0f / 256.0f;
                             matrixStack.scale(s, s, s);
-                            graphics.blit(COMPASS_ICONS[i], 0, 0, 0, 0, 256, 256);
+                            graphics.blit(COMPASS_ICONS[(int) (31L - (System.currentTimeMillis() / 100L) % 32L)],
+                                    0, 0, 0, 0, 256, 256);
                             matrixStack.popPose();
                         })
                         .setSize(29, 26)
@@ -602,7 +651,6 @@ public class ClientEventHandler {
     }
 
     // New from Unofficial (BetaZavr)
-    @OnlyIn(Dist.CLIENT)
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void cnpcBackgroundRendered(ScreenEvent.Render.Post event) {
         if (event.getScreen() instanceof InventoryScreen gui) {
@@ -620,7 +668,7 @@ public class ClientEventHandler {
     @SubscribeEvent
     public void cnpcScreenOpening(ScreenEvent.Opening event) {
         CustomNpcs.debugData.start("Players");
-        Minecraft mc = Minecraft.getInstance();
+        mc = Minecraft.getInstance();
         String oldScreenName = mc.screen == null ? "GuiIngame" : mc.screen.getClass().getSimpleName();
         if (oldScreenName.equals(event.getScreen().getClass().getSimpleName())) { LogWriter.info("Re-open GUI - " + event.getScreen().getClass()); }
         else {
@@ -658,732 +706,6 @@ public class ClientEventHandler {
             if (mc.screen == null) { Packets.sendServer(new SPacketPlayerScreen("GuiIngame", event.getScreen().getClass().getSimpleName())); }
             CustomNpcs.debugData.end("Players");
         }, 100);
-    }
-
-    /** HUD Bar Interface */
-    @SubscribeEvent
-    public void cnpcRenderOverlay(RenderGuiOverlayEvent event) {
-        CustomNpcs.debugData.start(null);
-        mc = Minecraft.getInstance();
-        PlayerData playerData = CustomNpcs.proxy.getPlayerData(mc.player);
-        long winID = mc.getWindow().getWindow();
-        GuiGraphics graphics = event.getGuiGraphics();
-        PoseStack matrixStack = graphics.pose();
-        boolean isMoved = InputConstants.isKeyDown(winID, mc.options.keyUp.getKey().getValue()) ||
-                InputConstants.isKeyDown(winID, mc.options.keyDown.getKey().getValue()) ||
-                InputConstants.isKeyDown(winID, mc.options.keyRight.getKey().getValue()) ||
-                InputConstants.isKeyDown(winID, mc.options.keyLeft.getKey().getValue());
-        if (CustomNpcs.proxy.getPlayerData(mc.player).overlay.isMoved != isMoved) {
-            playerData.overlay.isMoved = isMoved;
-            Packets.sendServer(new SPacketPlayerIsMoved(isMoved));
-        }
-        if ((hasNewMail || startMail > 0L) && CustomNpcs.MailWindow != -1) { // Mail
-            CustomNpcs.MailWindow = 1;
-            int[] offsets = new int[2];
-            float sr = -45.0f, su = 12.0f, sv = -32.0f; // sr = 45.0f, su = 12.0f, sv = 32.0f;
-            offsets[1] = (int) playerData.overlay.getWindowSize().getHeight() - 32;
-            matrixStack.pushPose();
-            matrixStack.translate(offsets[0] + 16, offsets[1] + 16, 0);
-            if (startMail == 0L) { startMail = System.currentTimeMillis(); }
-            long time = System.currentTimeMillis() - startMail;
-            // animation
-            if (showNewMail == 0L || (time - showNewMail > -500L && time - showNewMail < 0L)) { // start
-                if (showNewMail == 0L) {
-                    showNewMail = time + 500L;
-                }
-                time -= showNewMail;
-                matrixStack.mulPose(Axis.ZP.rotationDegrees(sr * (float) time / 500.0f));
-                matrixStack.translate(su * (float) time / 500.0f, sv * (float) time / 500.0f, 0);
-                if (time >= 0L) {
-                    startMail = 0L;
-                }
-            }
-            if (!hasNewMail) {
-                if (time > 0L) {
-                    startMail = System.currentTimeMillis() + 500L;
-                    time = System.currentTimeMillis() - startMail;
-                }
-                time += 500L;
-                time *= -1L;
-                matrixStack.mulPose(Axis.ZP.rotationDegrees(sr * (float) time / 500.0f));
-                matrixStack.translate(su * (float) time / 500.0f, sv * (float) time / 500.0f, 0);
-                if (time < -480L) {
-                    startMail = 0L;
-                }
-            } // end
-            else if (time % 31500 < 1750) {
-                time = time % 1750;
-                if (time < 500) {
-                    matrixStack.mulPose(Axis.ZP.rotationDegrees(30.0f * (float) time / 500.0f));
-                    matrixStack.translate(-1.0f * (float) time / 500.0f, -5.0f * (float) time / 500.0f, 0);
-                } else if (time < 1250) {
-                    matrixStack.mulPose(Axis.ZP.rotationDegrees(30.0f - 420.0f * (float) (time -= 500L) / 750.0f));
-                    matrixStack.translate(-1.0f + (float) time / 750.0f, -5.0f + 5.0f * (float) time / 750.0f,
-                            0);
-                } else {
-                    matrixStack.mulPose(Axis.ZP.rotationDegrees(-30.0f + 30.0f * (float) (time - 1250L) / 500.0f));
-                }
-            } // living
-            time = System.currentTimeMillis() % 3000;
-            if (time < 1500) { RenderSystem.setShaderColor(0.85f, 0.85f, 0.85f, 0.5f + 0.45f * (float) time / 1500.f); }
-            else { RenderSystem.setShaderColor(0.85f, 0.85f, 0.85f, 0.5f + 0.45f * (3000.0f - (float) time) / 1500.f); }
-            matrixStack.scale(0.5f, 0.5f, 0.5f);
-            RenderSystem.enableBlend();
-            graphics.blit(GuiMailmanWrite.icons, -16, -16, 0, 0, 32, 32);
-            matrixStack.popPose();
-        }
-        if (mc.level != null && mc.player != null && (mc.screen == null || mc.screen instanceof ChatScreen || mc.screen instanceof GuiLog)) {
-            // Quest Compass
-            PlayerCompassData compassData = playerData.compass;
-            if (CustomNpcs.TypeShowQuestCompass != 4 && compassData.getShowOfPlayer()) {
-                boolean isShow = true;
-                if (!mc.player.isCreative() && (CustomNpcs.TypeShowQuestCompass == 2 || CustomNpcs.TypeShowQuestCompass == 3)) {
-                    isShow = false;
-                    for (int slotId = 0; slotId < mc.player.getInventory().getContainerSize(); slotId++) {
-                        if (mc.player.getInventory().getItem(slotId).getItem() == Items.COMPASS) {
-                            isShow = true;
-                            break;
-                        }
-                    }
-                }
-                if (isShow) {
-                    boolean needPoint = CustomNpcs.TypeShowQuestCompass == 1 || CustomNpcs.TypeShowQuestCompass == 3;
-                    String name = "";
-                    String title = "";
-                    double[] point = null;
-                    int taskType = -1;
-                    int range = 5;
-                    int taskColor = 0x808080;
-                    String n = "";
-                    if (compassData.isCustomPoint()) {
-                        point = new double[] { compassData.pos.getX() - 0.5d, compassData.pos.getY() + 0.5d, compassData.pos.getZ() + 0.5d };
-                        name = Util.instance.getOldFormattedText(Component.translatable(compassData.name));
-                        title = Util.instance.getOldFormattedText(Component.translatable(compassData.title));
-                        taskColor = compassData.color;
-                        taskType = compassData.getTaskType();
-                        if (!mc.level.dimension().location().toString().equals(compassData.getDimensionID())) { taskType = 7; }
-                        range = compassData.getRange();
-                        if (compassData.getNPCName().isEmpty()) {
-                            n = Component.translatable("entity." + compassData.getNPCName() + ".name").getString();
-                            n = n.substring(0, n.length() - 2);
-                            if (n.equals("entity." + compassData.getNPCName() + ".name")) { n = compassData.getNPCName(); }
-                        }
-                    }
-                    else {
-                        if (!playerData.questData.activeQuests.containsKey(playerData.compass.questID) || playerData.compass.questID <= 0) {
-                            for (int id : playerData.questData.activeQuests.keySet()) {
-                                if (playerData.questData.activeQuests.get(id).quest.hasCompassSettings() && id != playerData.compass.questID && id > 0) {
-                                    playerData.compass.questID = id;
-                                    break;
-                                }
-                            }
-                        }
-                        QuestData qData = playerData.questData.activeQuests.get(playerData.compass.questID);
-                        if (qData != null) {
-                            double minD = Double.MAX_VALUE;
-                            QuestObjective select = null;
-                            for (QuestObjective io : qData.quest.questInterface.getObjectives(mc.player)) {
-                                if (io.isCompleted()) { continue; }
-                                if (qData.quest.step != 1) {
-                                    if (io.rangeCompass == 0 && select == null) {
-                                        select = io;
-                                    } else if (io.rangeCompass != 0) {
-                                        double d = Util.instance.distanceTo(io.pos.getX() + 0.5d, io.pos.getY(), io.pos.getZ() + 0.5d, mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(), mc.player.getZ());
-                                        if (d <= minD) {
-                                            minD = d;
-                                            select = io;
-                                        }
-                                    }
-                                    continue;
-                                }
-                                select = io;
-                                break;
-                            }
-                            if (select != null) {
-                                name = Util.instance.getOldFormattedText(qData.quest.getTitle());
-                                taskType = select.getType();
-                                taskColor = select.colorCompass;
-                                if (!select.getOrientationEntityName().isEmpty()) {
-                                    n = Component.translatable("entity." + select.getOrientationEntityName() + ".name").getString();
-                                    n = n.substring(0, n.length() - 2);
-                                    if (n.equals("entity." + select.getOrientationEntityName() + ".name")) {
-                                        n = select.getOrientationEntityName();
-                                    }
-                                }
-                                if (!mc.level.dimension().location().equals(select.dimension)) { taskType = 7; }
-                                if (taskType != EnumQuestTask.KILL.ordinal() && taskType != EnumQuestTask.AREAKILL.ordinal()) { range = 1; }
-                                if (select.rangeCompass > 0) {
-                                    range = select.rangeCompass;
-                                    EnumQuestTask t = EnumQuestTask.values()[select.getType()];
-                                    point = new double[] { select.pos.getX() - 0.5d, select.pos.getY() + 0.5d,
-                                            select.pos.getZ() + 0.5d };
-                                    if (t == EnumQuestTask.ITEM) {
-                                        title = Component.translatable("gui.get").getString() + ": "
-                                                + select.getItem().getDisplayName() + ": " + select.getProgress() + "/"
-                                                + select.getMaxProgress();
-                                    } else if (t == EnumQuestTask.CRAFT) {
-                                        title = Component.translatable("gui.get").getString() + ": "
-                                                + select.getItem().getDisplayName() + ": " + select.getProgress() + "/"
-                                                + select.getMaxProgress();
-                                    } else if (t == EnumQuestTask.DIALOG) {
-                                        title = Component.translatable("gui.read").getString() + ": ";
-                                        Dialog dialog = DialogController.instance.dialogs.get(select.getTargetID());
-                                        if (dialog != null) {
-                                            title += Component.translatable(dialog.title).getString();
-                                        } else {
-                                            title = "Dialog";
-                                        }
-                                    } else if (t == EnumQuestTask.LOCATION) {
-                                        title = Component.translatable("gui.found").getString() + ": "
-                                                + select.getTargetName();
-                                    } else if (EnumQuestTask.values()[select.getType()] == EnumQuestTask.MANUAL) {
-                                        title = select.getTargetName();
-                                    }
-                                    if (t == EnumQuestTask.KILL || t == EnumQuestTask.AREAKILL) {
-                                        n = Component.translatable("entity." + select.getTargetName() + ".name").getString();
-                                        n = n.substring(0, n.length() - 2);
-                                        if (n.equals("entity." + select.getTargetName() + ".name")) {
-                                            n = select.getTargetName();
-                                        }
-                                        title = Component.translatable("gui.kill").getString() + ": " + n + ": " + select.getProgress() + "/" + select.getMaxProgress();
-                                    }
-                                }
-                            }
-                            else if (qData.isCompleted && qData.quest.completion == EnumQuestCompletion.Npc
-                                    && qData.quest.getCompleterNpc() != null) {
-                                point = new double[] { qData.quest.completerPos[0] - 0.5d, qData.quest.completerPos[1] + 0.5d,
-                                        qData.quest.completerPos[2] + 0.5d };
-                                taskType = EnumQuestTask.DIALOG.ordinal();
-                                taskColor = 0x72CA00;
-                                if (!mc.level.dimension().equals(qData.quest.completerPosDimension)) { taskType = 7; }
-                                else {
-                                    AABB bb = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).move(point[0], point[1], point[2]).inflate(64.0d, 128.0d, 64.0d);
-                                    List<EntityNPCInterface> ents = mc.level.getEntitiesOfClass(EntityNPCInterface.class, bb);
-                                    final EntityNPCInterface npc = getClosestNPC(point, ents, qData);
-                                    if (npc != null) {
-                                        point[0] = npc.getX();
-                                        point[1] = npc.getY();
-                                        point[2] = npc.getZ();
-                                        range = 1;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (!n.isEmpty() && point != null) {
-                        LivingEntity e = null;
-                        AABB bb = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).move(point[0], point[1], point[2]).inflate(range, 1.5d, range);
-                        List<LivingEntity> ents = mc.level.getEntitiesOfClass(LivingEntity.class, bb);
-                        Player pl = mc.level.getNearestPlayer(mc.player, 32.0d);
-                        if (pl != null && pl.getEffect(MobEffects.INVISIBILITY) == null) {
-                            e = pl;
-                            range = 1;
-                        }
-                        if (e == null) {
-                            double d = range * range * range;
-                            LivingEntity et = null;
-                            Vec3 v = new Vec3(point[0], point[1], point[2]);
-                            for (LivingEntity el : ents) {
-                                if (!el.getName().getString().equals(n)) { continue; }
-                                double r = v.distanceToSqr(el.getX(), el.getY(),el.getZ());
-                                if (et != null) {
-                                    if (r >= d) { continue; }
-                                }
-                                d = r;
-                                et = el;
-                            }
-                            if (et == null) {
-                                bb = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).move(point[0], point[1], point[2]).inflate(range, range, range);
-                                ents.clear();
-                                ents = mc.level.getEntitiesOfClass(LivingEntity.class, bb);
-                                d = range * range * range;
-                                for (LivingEntity el : ents) {
-                                    if (!el.getName().getString().equals(n)) { continue; }
-                                    double r = v.distanceToSqr(el.getX(), el.getY(),el.getZ());
-                                    if (et != null) {
-                                        if (r >= d) { continue; }
-                                    }
-                                    d = r;
-                                    et = el;
-                                }
-                            }
-                            e = et;
-                            range = 1;
-                        }
-                        if (e != null) {
-                            point[0] = e.getX();
-                            point[1] = e.getY();
-                            point[2] = e.getZ();
-                        }
-                    }
-                    if (!needPoint || point != null) {
-                        float scale = (compassData.isFlat ? 1.0f : -15.0f) * compassData.scale;
-                        float incline = -45.0f + compassData.incline;
-                        int[] uvPos = new int[] {(int) (mc.getWindow().getGuiScaledWidth() * compassData.screenPos[0]),
-                                (int) (mc.getWindow().getGuiScaledHeight() * compassData.screenPos[1])};
-                        matrixStack.pushPose();
-                            if (qt < 40) { qt++; }
-                            matrixStack.translate(uvPos[0], uvPos[1], 0.0d);
-                            // Named
-                            RenderSystem.enableBlend();
-                            RenderSystem.defaultBlendFunc();
-                            RenderSystem.disableDepthTest();
-                            if (compassData.showQuestName || compassData.showTaskProgress) {
-                                matrixStack.pushPose();
-                                float yOffset = compassData.isFlat ? 14.0f : 30.0f;
-                                float h = 0.0f;
-                                float w = 0.0f;
-                                float w0 = 0.0f;
-                                float w1 = 0.0f;
-                                float l = 0.0f;
-                                if (compassData.showQuestName && !name.isEmpty()) {
-                                    h += 10.0f;
-                                    w = ClientProxy.LogFont.width(name);
-                                    w0 = w;
-                                    if (uvPos[0] - w0 / 2.0f < 1.5f) { w0 = uvPos[0] * 2.0f - 3.0f; } // left
-                                    if (uvPos[0] + w0 / 2.0f > mc.getWindow().getGuiScaledWidth() - 1.5f) {
-                                        w0 = (w0 - (mc.getWindow().getGuiScaledWidth() - uvPos[0]) + 3.0f) * 2.0f;
-                                    } // right
-                                    l = w0 / -2.0f;
-                                }
-                                if (compassData.showTaskProgress && !title.isEmpty()) {
-                                    h += 10.0f;
-                                    w1 = ClientProxy.LogFont.width(title);
-                                    if (w < w1) { w = w1; }
-                                    if (uvPos[0] - w1 / 2.0f < 1.5f) { w1 = uvPos[0] * 2.0f - 3.0f; } // left
-                                    if (uvPos[0] + w1 / 2.0f > mc.getWindow().getGuiScaledWidth() - 1.5f) {
-                                        w1 = (w1 - (mc.getWindow().getGuiScaledWidth() - uvPos[0]) + 3.0f) * 2.0f;
-                                    } // right
-                                    if (l > w1 / -2.0f) { l = w1 / -2.0f; }
-                                }
-                                // down
-                                if (uvPos[1] + yOffset + h > mc.getWindow().getGuiScaledHeight()) { yOffset = -h; }
-                                matrixStack.translate(0.0d, yOffset, 0.0d);
-                                // background
-                                if (h > 0) {
-                                    l -= 2.0f;
-                                    w += 5.0f;
-                                    int color = 0x03202020;
-                                    graphics.fill((int) l, 0, (int) (l + w) - 1, 1, color);
-                                    graphics.fill((int) l, 1, (int) (l) + 1, (int) h - 1, color);
-                                    graphics.fill((int) (l + w) - 2, 1, (int) (l + w) - 1, (int) h - 1, color);
-                                    graphics.fill((int) l, (int) h - 1, (int) (l + w) - 1, (int) h, color);
-                                    color = 0x03303030;
-                                    graphics.fill((int) l + 1, 1, (int) (l + w) - 2, (int) h - 1, color);
-                                    // name
-                                    if (compassData.showQuestName) {
-                                        ClientProxy.LogFont.draw(graphics, name, w0 / -2.0f, 0, 0x0FFFFFFF);
-                                    }
-                                    if (compassData.showTaskProgress) {
-                                        ClientProxy.LogFont.draw(graphics, title, w1 / -2.0f, compassData.showQuestName ? 10 : 0, 0x0FFFFFFF);
-                                    }
-                                }
-                                matrixStack.popPose();
-                            }
-                            RenderSystem.enableDepthTest();
-                            // Model
-                                matrixStack.pushPose();
-                                matrixStack.translate(0.0f, compassData.isFlat ? 6.5f : -16.0f * compassData.scale + 29.0f, 0.0f);
-                                matrixStack.scale(scale, scale, scale);
-                                float yaw = mc.player.getYRot() % 360;
-                                if (yaw < 0.0f) { yaw += 360.0f; }
-                                if (compassData.isFlat) {
-                                    float l = 0.0f;
-                                    if (uvPos[0] - 101 < 1.5f) { l = 101.5f - uvPos[0]; } // left
-                                    if (uvPos[0] + 101.0f > mc.getWindow().getGuiScaledWidth() - 1.5f) {
-                                        l = mc.getWindow().getGuiScaledWidth() - uvPos[0] - 101.5f;
-                                    } // right
-                                    matrixStack.translate(l, 0.0f, 0.0f);
-                                    // background
-                                    RenderSystem.enableBlend();
-                                    RenderSystem.defaultBlendFunc();
-                                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.0625f);
-                                    matrixStack.pushPose();
-                                    matrixStack.translate(-101.5f, -7.0f, 0.0f);
-                                    matrixStack.scale(0.5f, 0.5f, 0.5f);
-                                    graphics.blit(GuiBasic.INFO, 0, 0, 0, 74, 204, 28);
-                                    matrixStack.translate(204.0f, 0.0f, 0.0f);
-                                    graphics.blit(GuiBasic.INFO, 0, 0, 0, 102, 204, 28);
-                                    matrixStack.popPose();
-                                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-                                    graphics.enableScissor(uvPos[0] - (int) (99.0f * compassData.scale + l),
-                                            uvPos[1] + (int) (-6.0f * compassData.scale + 7.0f),
-                                            uvPos[0] + (int) (100.0f * compassData.scale + l),
-                                            uvPos[1] + (int) (5.0f * compassData.scale + 6.5f));
-                                    // Dial
-                                    if (compassData.isShowDial()) {
-                                        matrixStack.pushPose();
-                                        matrixStack.translate(yaw * - 2.222222f, -6.0f, 0.0f);
-                                        //divisions
-                                        RenderSystem.enableBlend();
-                                        RenderSystem.defaultBlendFunc();
-                                        matrixStack.pushPose();
-                                        matrixStack.translate(-0.5f, 1.0f, 0.0f);
-                                        matrixStack.scale(0.5f, 0.5f, 0.5f);
-                                        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.0625f);
-                                        for (int i = 0; i < 12; i++) {
-                                            graphics.blit(GuiBasic.INFO, i * 200, 0, 29, 0, 4, 20);
-                                        }
-                                        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-                                        matrixStack.popPose();
-                                        // sides
-                                        UtilYDE.FONT_HEADLINE.draw(graphics, "E", -203, 0, 0x08C8F0DC);
-                                        UtilYDE.FONT_HEADLINE.draw(graphics, "N", -3, 0, 0x08BEF0F0);
-                                        UtilYDE.FONT_HEADLINE.draw(graphics, "W", 196, 0, 0x08F0F0BE);
-                                        UtilYDE.FONT_HEADLINE.draw(graphics, "S", 397, 0, 0x08F0DCBE);
-                                        UtilYDE.FONT_HEADLINE.draw(graphics, "E", 597, 0, 0x08C8F0BE);
-                                        UtilYDE.FONT_HEADLINE.draw(graphics, "N", 797, 0, 0x08BEF0F0);
-                                        matrixStack.popPose();
-                                    }
-                                    // Arrow
-                                    matrixStack.pushPose();
-                                    if (point != null) {
-                                        IRayTraceRotate angles = Util.instance.getAngles3D(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(), mc.player.getZ(), point[0], point[1], point[2]);
-                                        if (range == 1 || angles.getDistance() > range) {
-                                            matrixStack.pushPose();
-                                            RenderSystem.enableBlend();
-                                            RenderSystem.defaultBlendFunc();
-                                            RenderSystem.setShaderColor(FastColor.ARGB32.red(taskColor) / 255.0f,
-                                                    FastColor.ARGB32.green(taskColor) / 255.0f,
-                                                    FastColor.ARGB32.blue(taskColor) / 255.0f,
-                                                    ValueUtil.correctFloat(-0.000433f * (float) (angles.getDistance() - range) + 0.04165f, 0.02f, 0.04165f));
-                                            float rot = (yaw - (float) angles.getYaw()) % 360;
-                                            if (rot > 180) { rot -= 360.0f; }
-                                            if (rot < -180) { rot += 360.0f; }
-                                            if (rot > 44.0f) {
-                                                matrixStack.translate(-99.0f, -3.5f, 0.0f);
-                                                matrixStack.scale(0.5f, 0.5f, 0.5f);
-                                                graphics.blit(GuiBasic.INFO, 0, 0, 15, 34, 10, 14);
-                                            }
-                                            else if (rot < -42.9f) {
-                                                matrixStack.translate(95.0f, -3.5f, 0.0f);
-                                                matrixStack.scale(0.5f, 0.5f, 0.5f);
-                                                graphics.blit(GuiBasic.INFO, 0, 0, 15, 20, 10, 14);
-                                            }
-                                            else {
-                                                matrixStack.translate(rot * - 2.222222f, -2.0f, 0.0f);
-                                                matrixStack.scale(0.5f, 0.5f, 0.5f);
-                                                if (mc.player.getY() < point[1] - range) {
-                                                    graphics.blit(GuiBasic.INFO, -2, -6, 15, 0, 14, 10);
-                                                } // up
-                                                else if (mc.player.getY() > point[1] + range) {
-                                                    graphics.blit(GuiBasic.INFO, -2, 4, 15, 10, 14, 10);
-                                                } // dow
-                                                else {
-                                                    graphics.blit(GuiBasic.INFO, 0, 0, 15, 48, 10, 10);
-                                                }
-                                            }
-                                            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-                                            matrixStack.popPose();
-                                        } // direction
-                                        else {
-                                            long speed = 1500L;
-                                            float a = 48.0f / (speed - (speed / 148.0f * 100.0f));
-                                            float t = (System.currentTimeMillis() % (speed * 2L)) - speed;
-                                            matrixStack.pushPose();
-                                            RenderSystem.enableBlend();
-                                            RenderSystem.defaultBlendFunc();
-                                            RenderSystem.setShaderColor(FastColor.ARGB32.red(taskColor) / 255.0f,
-                                                    FastColor.ARGB32.green(taskColor) / 255.0f,
-                                                    FastColor.ARGB32.blue(taskColor) / 255.0f,
-                                                    0.025f);
-                                            int w;
-                                            if (t < 0) {
-                                                w = ValueUtil.correctInt((int) (a * (t + speed)), 0, 48);
-                                                // left
-                                                matrixStack.pushPose();
-                                                matrixStack.translate(-a * t - 147.5f, 1.5f, 0.0f);
-                                                matrixStack.scale(1.0f, 0.5f, 1.0f);
-                                                graphics.blit(GuiBasic.INFO, 0, 0, 81, 8, w, 8);
-                                                matrixStack.popPose();
-                                                // right
-                                                matrixStack.pushPose();
-                                                matrixStack.translate(a * t + 147.5f, 1.5f, 0.0f);
-                                                matrixStack.scale(1.0f, 0.5f, 1.0f);
-                                                graphics.blit(GuiBasic.INFO, -w, 0, 81 - w, 8, w, 8);
-                                                matrixStack.popPose();
-                                            } // down
-                                            else {
-                                                w = ValueUtil.correctInt((int) (-a * t + 148.0f), 0, 48);
-                                                // left
-                                                matrixStack.pushPose();
-                                                matrixStack.translate(a * t - 147.5f, -5.5f, 0.0f);
-                                                matrixStack.scale(1.0f, 0.5f, 1.0f);
-                                                graphics.blit(GuiBasic.INFO, 0, 0, 33, 0, w, 8);
-                                                matrixStack.popPose();
-                                                // right
-                                                matrixStack.pushPose();
-                                                matrixStack.translate(-a * t + 99.5f, -5.5f, 0.0f);
-                                                matrixStack.scale(1.0f, 0.5f, 1.0f);
-                                                graphics.blit(GuiBasic.INFO, 48 - w, 0, 129 - w, 0, w, 8);
-                                                matrixStack.popPose();
-                                            } // up
-                                            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-                                            matrixStack.popPose();
-                                        } // found
-                                    }
-                                    matrixStack.popPose();
-                                    graphics.disableScissor();
-                                }
-                                else {
-                                    matrixStack.mulPose(Axis.XP.rotationDegrees(incline));
-                                    if (compassData.rot != 0.0f) { matrixStack.mulPose(Axis.YP.rotationDegrees(compassData.rot)); }
-                                    // Body
-                                    matrixStack.pushPose();
-                                    if (COMPASS_BODY == null) { COMPASS_BODY = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                            Collections.singletonList("body"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                    ModelBuffer.render(COMPASS_BODY, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                    matrixStack.popPose();
-                                    // Dial
-                                    if (compassData.isShowDial()) {
-                                        matrixStack.pushPose();
-                                        matrixStack.mulPose(Axis.YP.rotationDegrees(-1.0f * mc.player.getYRot()));
-                                        if (COMPASS_DIAL == null) { COMPASS_DIAL = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                Collections.singletonList("dial"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                        ModelBuffer.render(COMPASS_DIAL, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                        matrixStack.popPose();
-                                    }
-                                    if (point != null) {
-                                        IRayTraceRotate angles = Util.instance.getAngles3D(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(), mc.player.getZ(), point[0], point[1], point[2]);
-                                        if (range == 1 || angles.getDistance() > range) {
-                                            // Arrow_0
-                                            matrixStack.pushPose();
-                                            matrixStack.mulPose(Axis.YP.rotationDegrees(180.0f + yaw - (float) angles.getYaw()));
-                                            if (COMPASS_ARROW_0 == null) { COMPASS_ARROW_0 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                    Collections.singletonList("arrow_0"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                            ModelBuffer.render(COMPASS_ARROW_0, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                            matrixStack.popPose();
-                                            // Arrow_1 upper
-                                            double yP;
-                                            yP = -0.25d * (mc.player.getY() - point[1]) / (double) range;
-                                            matrixStack.pushPose();
-                                            if (yP >= -0.25d && yP <= 0.25d) {
-                                                matrixStack.translate(0.0d, yP, 0.0d);
-                                            }
-                                            else {
-                                                if (yP > 0.25d) {
-                                                    matrixStack.translate(0.0d, 0.275d, 0.0d);
-                                                } else if (yP < -0.25d) {
-                                                    matrixStack.translate(0.0d, -0.275d, 0.0d);
-                                                }
-                                                double t = System.currentTimeMillis() % 1000.0d;
-                                                double f0 = t < 500.0d ? -0.025d + 0.05d * (t % 500.0d) / 500.0d
-                                                        : 0.025d - 0.05d * (t % 500.0d) / 500.0d;
-                                                matrixStack.translate(0.0d, f0, 0.0d);
-                                            }
-                                            if (COMPASS_ARROW_1 == null) { COMPASS_ARROW_1 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                    Collections.singletonList("arrow_1"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                            ModelBuffer.render(COMPASS_ARROW_1, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                            matrixStack.popPose();
-                                            // Arrow_2
-                                            matrixStack.pushPose();
-                                            if (yP > 0.25d) {
-                                                if (COMPASS_ARROW_21 == null) { COMPASS_ARROW_21 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                        Collections.singletonList("arrow_21"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                                ModelBuffer.render(COMPASS_ARROW_21, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                            }
-                                            else if (yP < -0.25d) {
-                                                if (COMPASS_ARROW_22 == null) { COMPASS_ARROW_22 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                        Collections.singletonList("arrow_22"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                                ModelBuffer.render(COMPASS_ARROW_22, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                            }
-                                            else {
-                                                if (COMPASS_ARROW_20 == null) { COMPASS_ARROW_20 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                        Collections.singletonList("arrow_20"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                                ModelBuffer.render(COMPASS_ARROW_20, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                            }
-                                            matrixStack.popPose();
-                                        } // direction
-                                        else {
-                                            // Arrow_3
-                                            matrixStack.pushPose();
-                                            float t = System.currentTimeMillis() % 4000L;
-                                            float f0 = t < 2000.0f ? -0.00033f * t + 1.0f : 0.00033f * t - 0.30033f;
-                                            matrixStack.scale(f0, f0, f0);
-                                            if (COMPASS_ARROW_3 == null) { COMPASS_ARROW_3 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                    Collections.singletonList("arrow_3"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
-                                            ModelBuffer.render(COMPASS_ARROW_3, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                            matrixStack.popPose();
-                                        } // found
-                                    }
-                                    if (taskType >= 0 && taskType <= EnumQuestTask.values().length) {
-                                        matrixStack.pushPose();
-                                        if (!COMPASS_FASE.containsKey(taskType)) {
-                                            Map<String, ResourceLocation> m = new HashMap<>();
-                                            m.put("#material", new ResourceLocation(CustomNpcs.MODID, "util/compass"));
-                                            m.put("#task", new ResourceLocation(CustomNpcs.MODID, "util/task_" + taskType));
-                                            COMPASS_FASE.put(taskType, ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-                                                    Collections.singletonList("fase"), m,  false, 0));
-                                        }
-                                        ModelBuffer.render(COMPASS_FASE.get(taskType), matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                                        matrixStack.popPose();
-                                    }
-                                }
-                                matrixStack.popPose();
-                        matrixStack.popPose();
-                    }
-                }
-            }
-            // Information from the NBT Book
-            if (mc.player != null && (mc.player.getMainHandItem().getItem() instanceof ItemNbtBook || mc.player.getOffhandItem().getItem() instanceof ItemNbtBook)) {
-                double distance = playerData.game.renderDistance;
-                Vec3 vec3d = mc.player.getEyePosition(1.0f);
-                Vec3 vec3d1 = mc.player.getLookAngle();
-                Vec3 vec3d2 = vec3d.add(vec3d1.x * distance, vec3d1.y * distance, vec3d1.z * distance);
-                BlockHitResult result = mc.level.clip(new ClipContext(vec3d, vec3d2, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
-                MutableComponent rayName;
-                MutableComponent rayTitle = Component.empty();
-                double lH = mc.font.lineHeight + 1.0d;
-                ItemStack st;
-                if (result.getType() != HitResult.Type.MISS) {
-                    BlockPos blockPos = result.getBlockPos();
-                    Entity entity = Util.instance.getLookEntity(mc.player, distance, false);
-                    st = null;
-                    BlockState state = null;
-                    double dist;
-                    MutableComponent rayPos = Component.empty();
-                    if (entity != null) {
-                        dist = Math.round(mc.player.distanceTo(entity) * 10.0d) / 10.0d;
-                        ResourceLocation res = EntityType.getKey(entity.getType());
-                        rayName = Component.empty()
-                                .append(Component.literal(" [" + res + "] ").withStyle(ChatFormatting.GRAY))
-                                .append(Component.literal(entity.getName().getString()).withStyle(ChatFormatting.RESET));
-                        rayTitle = Component.literal(entity.getClass().getSimpleName()).withStyle(ChatFormatting.YELLOW);
-                        rayPos = Component.empty()
-                                .append(Component.literal("[X:").withStyle(ChatFormatting.AQUA))
-                                .append(Component.literal("" + (Math.round(entity.getX() * 10.0d) / 10.0d)).withStyle(ChatFormatting.GOLD))
-                                .append(Component.literal(", Y:").withStyle(ChatFormatting.AQUA))
-                                .append(Component.literal("" + (Math.round(entity.getY() * 10.0d) / 10.0d)).withStyle(ChatFormatting.GOLD))
-                                .append(Component.literal(", Z:").withStyle(ChatFormatting.AQUA))
-                                .append(Component.literal("" + (Math.round(entity.getZ() * 10.0d) / 10.0d)).withStyle(ChatFormatting.GOLD))
-                                .append(Component.literal("]").withStyle(ChatFormatting.AQUA))
-                                .append(Component.literal(" " + dist).withStyle(ChatFormatting.DARK_AQUA));
-                    }
-                    else {
-                        float f = (float) (mc.player.getX() - blockPos.getX() + 0.5d);
-                        float f1 = (float) (mc.player.getY() - blockPos.getY() + 0.5d);
-                        float f2 = (float) (mc.player.getZ() - blockPos.getZ() + 0.5d);
-                        dist = Math.round(Math.sqrt(f * f + f1 * f1 + f2 * f2) * 10.0d) / 10.0d;
-                        if (dist > playerData.game.renderDistance && !mc.player.getOffhandItem().isEmpty()
-                                && !(mc.player.getOffhandItem().getItem() instanceof ItemNbtBook)) {
-                            st = mc.player.getOffhandItem();
-                            rayName = Component.literal(st.getHoverName().getString());
-                        } else {
-                            state = mc.level.getBlockState(blockPos);
-                            if (dist > playerData.game.renderDistance) {
-                                result = mc.level.clip(new ClipContext(vec3d, vec3d2, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
-                                if (result.getType() != HitResult.Type.MISS) {
-                                    BlockState tempState = mc.level.getBlockState(result.getBlockPos());
-                                    if (!(tempState.getBlock() instanceof AirBlock)) {
-                                        state = tempState;
-                                    }
-                                }
-                            }
-                            rayName = Component.empty()
-                                    .append(Component.literal(" [" + ForgeRegistries.BLOCKS.getKey(state.getBlock()) + "] ").withStyle(ChatFormatting.GRAY))
-                                    .append(state.getBlock().getName().withStyle(ChatFormatting.RESET));
-                            String stateText = state.toString();
-                            if (stateText.contains("[")) {
-                                stateText = stateText.substring(stateText.indexOf("["));
-                            } else {
-                                stateText = "[]";
-                            }
-                            rayTitle = Component.empty()
-                                    .append(Component.literal(state.getBlock().getClass().getSimpleName()).withStyle(ChatFormatting.RESET))
-                                    .append(Component.literal("; state: ").withStyle(ChatFormatting.GRAY))
-                                    .append(Component.literal(stateText).withStyle(ChatFormatting.YELLOW));
-                            if (state.getBlock() instanceof BaseEntityBlock) {
-                                rayTitle.append(Component.literal("; ").withStyle(ChatFormatting.GRAY))
-                                        .append(Component.literal("hasTile").withStyle(ChatFormatting.DARK_AQUA));
-                            }
-                            rayPos = Component.empty()
-                                    .append(Component.literal(" [X:").withStyle(ChatFormatting.GREEN))
-                                    .append(Component.literal("" + blockPos.getX()).withStyle(ChatFormatting.GOLD))
-                                    .append(Component.literal(", Y:").withStyle(ChatFormatting.GREEN))
-                                    .append(Component.literal("" + blockPos.getY()).withStyle(ChatFormatting.GOLD))
-                                    .append(Component.literal(", Z:").withStyle(ChatFormatting.GREEN))
-                                    .append(Component.literal("" + blockPos.getZ()).withStyle(ChatFormatting.GOLD))
-                                    .append(Component.literal("]").withStyle(ChatFormatting.GREEN))
-                                    .append(Component.literal(" " + dist).withStyle(ChatFormatting.DARK_AQUA));
-                        }
-                    }
-                    matrixStack.pushPose();
-                    if (entity != null) {
-                        matrixStack.pushPose();
-                        matrixStack.translate(8.0d + playerData.overlay.getWindowSize().getWidth() / 2.0d,
-                                playerData.overlay.getWindowSize().getHeight() - 45.0d - 3.5d * lH,
-                                -200.0d);
-                        renderEntityForBook(entity, graphics);
-                        matrixStack.popPose();
-                    } else if (state != null) {
-                        st = new ItemStack(state.getBlock().asItem(), 1);
-                    }
-                    if (st != null) {
-                        matrixStack.pushPose();
-                        matrixStack.translate(playerData.overlay.getWindowSize().getWidth() / 2.0d,
-                                playerData.overlay.getWindowSize().getHeight() - 45.0d - 4.5d * lH,
-                                0.0d);
-                        graphics.renderItem(st, 0, 0);
-                        graphics.renderItemDecorations(mc.font, st, 0, 0);
-                        matrixStack.popPose();
-                    }
-                    matrixStack.translate(
-                            (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayName)) / 2.0d,
-                            playerData.overlay.getWindowSize().getHeight() - 45.0d - 3.0d * lH,
-                            0.0d);
-                    graphics.drawString(mc.font, rayName, 0, 0, 0xFFFFFF);
-                    matrixStack.popPose();
-
-                    matrixStack.pushPose();
-                    matrixStack.translate(
-                            (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayTitle)) / 2.0d,
-                            playerData.overlay.getWindowSize().getHeight() - 45.0d - 2.0d * lH,
-                            0.0d);
-                    graphics.drawString(mc.font, rayTitle, 0, 0, 0xFFFFFF);
-                    matrixStack.popPose();
-
-                    matrixStack.pushPose();
-                    matrixStack.translate(
-                            (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayPos)) / 2.0d,
-                            playerData.overlay.getWindowSize().getHeight() - 45.0d - lH,
-                            0.0d);
-                    graphics.drawString(mc.font, rayPos, 0, 0, 0xFFFFFF);
-                    matrixStack.popPose();
-
-                }
-                else if (!mc.player.getOffhandItem().isEmpty()) {
-                    st = mc.player.getOffhandItem();
-                    rayName = Component.empty()
-                            .append(Component.literal(" [" + ForgeRegistries.ITEMS.getKey(st.getItem()) + "] ").withStyle(ChatFormatting.GRAY))
-                            .append(st.getItem().getName(st));
-
-                    rayTitle = Component.empty()
-                            .append(Component.literal(st.getItem().getClass().getSimpleName()).withStyle(ChatFormatting.RESET));
-                    if (st.hasTag()) {
-                        rayTitle.append(Component.literal("; ").withStyle(ChatFormatting.GRAY))
-                                .append(Component.literal("hasTags").withStyle(ChatFormatting.DARK_AQUA));
-                    }
-
-                    matrixStack.pushPose();
-                    matrixStack.translate(
-                            (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayName)) / 2.0d,
-                            playerData.overlay.getWindowSize().getHeight() - 45.0d - 3.0d * lH,
-                            0.0d);
-                    graphics.drawString(mc.font, rayName, 0, 0, 0xFFFFFF);
-                    matrixStack.popPose();
-
-                    matrixStack.pushPose();
-                    matrixStack.translate(
-                            (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayTitle)) / 2.0d,
-                            playerData.overlay.getWindowSize().getHeight() - 45.0d - 2.0d * lH,
-                            0.0d);
-                    graphics.drawString(mc.font, rayTitle, 0, 0, 0xFFFFFF);
-                    matrixStack.popPose();
-                }
-            }
-        }
-        CustomNpcs.debugData.end(null);
     }
 
     /** HUD Bar Interface Canceled */
@@ -1558,6 +880,16 @@ public class ClientEventHandler {
             }
         }
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            long winID = mc.getWindow().getWindow();
+            PlayerData playerData = CustomNpcs.proxy.getPlayerData(mc.player);
+            boolean isMoved = InputConstants.isKeyDown(winID, mc.options.keyUp.getKey().getValue()) ||
+                    InputConstants.isKeyDown(winID, mc.options.keyDown.getKey().getValue()) ||
+                    InputConstants.isKeyDown(winID, mc.options.keyRight.getKey().getValue()) ||
+                    InputConstants.isKeyDown(winID, mc.options.keyLeft.getKey().getValue());
+            if (playerData.overlay.isMoved != isMoved) {
+                CustomNpcs.proxy.getPlayerData(mc.player).overlay.isMoved = isMoved;
+                Packets.sendServer(new SPacketPlayerIsMoved(isMoved));
+            }
             Camera camera = mc.gameRenderer.getMainCamera();
             float amplitude = crashes.get(crashes.endTime - mc.level.getGameTime());
             if (amplitude != 0.0f) {
@@ -1636,54 +968,6 @@ public class ClientEventHandler {
         }
         catch (Exception e) { LogWriter.error(e); }
         return new BlockPos(x, y, z);
-    }
-
-    private void renderEntityForBook(Entity entityIn, GuiGraphics graphics) {
-        if (!(entityIn instanceof LivingEntity entity)) { return; }
-        EntityNPCInterface npc = null;
-        int visible = 0;
-        int showName = 0;
-        int orientation = 0;
-        if (entity instanceof EntityNPCInterface cnpc) {
-            npc = cnpc;
-            visible = npc.display.getVisible();
-            showName = npc.display.getShowName();
-            orientation = npc.ais.orientation;
-            npc.display.setVisible(2);
-            npc.display.setShowName(0);
-            npc.ais.orientation = 0;
-        }
-        PoseStack matrixStack = graphics.pose();
-        matrixStack.pushPose();
-        float scW = entity.getBbWidth() > 1.0f ? 1.0f / entity.getBbWidth() : 1.0f;
-        float scH = entity.getBbHeight() > 2.4f ? 2.4f / entity.getBbHeight() : 1.0f;
-        float scale = Math.min(scW, scH);
-        matrixStack.scale(-30.0f * scale * 0.75f, -30.0f * scale * 0.75f, -30.0f * scale * 0.75f);
-        float f2 = entity.getYRot();
-        float f3 = entity.getXRot();
-        float f4 = entity.yHeadRot;
-        float f5 = entity.yBodyRot;
-        float f6 = entity.yBodyRotO;
-        matrixStack.mulPose(Axis.XP.rotationDegrees(-20.0f));
-        matrixStack.mulPose(Axis.YP.rotationDegrees(210.0f));
-        entity.setYRot(0.0f);
-        entity.setXRot(0.0f);
-        entity.yHeadRot = 0.0f;
-        entity.yBodyRot = 0.0f;
-        entity.yBodyRotO = 0.0f;
-        EntityRenderDispatcher renderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-        renderDispatcher.render(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT);
-        entity.setYRot(f2);
-        entity.setXRot(f3);
-        entity.yHeadRot = f4;
-        entity.yBodyRot = f5;
-        entity.yBodyRotO = f6;
-        if (npc != null) {
-            npc.display.setVisible(visible);
-            npc.display.setShowName(showName);
-            npc.ais.orientation = orientation;
-        }
-        matrixStack.popPose();
     }
 
     private void renderNpcMovingPath(PoseStack matrixStack, MultiBufferSource.BufferSource bufferSource, Camera camera, EntityCustomNpc npc) {
@@ -2895,6 +2179,732 @@ public class ClientEventHandler {
                     RenderSystem.disableDepthTest();
                     GuiTooltipUtils.renderTooltip(graphics, font, hoverText, Optional.empty(), mouseX, mouseY);
                 }
+            }
+        }
+    }
+
+    /** HUD: Mail Overlay */
+    public static void renderMailOverlay(ForgeGui ignoredGui, GuiGraphics graphics, float ignoredPartialTick, int ignoredScreenWidth, int ignoredScreenHeight) {
+        if ((hasNewMail || startMail > 0L) && CustomNpcs.MailWindow != -1) {
+            PoseStack matrixStack = graphics.pose();
+            CustomNpcs.MailWindow = 1;
+            int[] offsets = new int[2];
+            float sr = -45.0f, su = 12.0f, sv = -32.0f; // sr = 45.0f, su = 12.0f, sv = 32.0f;
+            offsets[1] = (int) CustomNpcs.proxy.getPlayerData(mc.player).overlay.getWindowSize().getHeight() - 32;
+            matrixStack.pushPose();
+            matrixStack.translate(offsets[0] + 16, offsets[1] + 16, 0);
+            if (startMail == 0L) { startMail = System.currentTimeMillis(); }
+            long time = System.currentTimeMillis() - startMail;
+            // animation
+            if (showNewMail == 0L || (time - showNewMail > -500L && time - showNewMail < 0L)) { // start
+                if (showNewMail == 0L) {
+                    showNewMail = time + 500L;
+                }
+                time -= showNewMail;
+                matrixStack.mulPose(Axis.ZP.rotationDegrees(sr * (float) time / 500.0f));
+                matrixStack.translate(su * (float) time / 500.0f, sv * (float) time / 500.0f, 0);
+                if (time >= 0L) {
+                    startMail = 0L;
+                }
+            }
+            if (!hasNewMail) {
+                if (time > 0L) {
+                    startMail = System.currentTimeMillis() + 500L;
+                    time = System.currentTimeMillis() - startMail;
+                }
+                time += 500L;
+                time *= -1L;
+                matrixStack.mulPose(Axis.ZP.rotationDegrees(sr * (float) time / 500.0f));
+                matrixStack.translate(su * (float) time / 500.0f, sv * (float) time / 500.0f, 0);
+                if (time < -480L) {
+                    startMail = 0L;
+                }
+            } // end
+            else if (time % 31500 < 1750) {
+                time = time % 1750;
+                if (time < 500) {
+                    matrixStack.mulPose(Axis.ZP.rotationDegrees(30.0f * (float) time / 500.0f));
+                    matrixStack.translate(-1.0f * (float) time / 500.0f, -5.0f * (float) time / 500.0f, 0);
+                } else if (time < 1250) {
+                    matrixStack.mulPose(Axis.ZP.rotationDegrees(30.0f - 420.0f * (float) (time -= 500L) / 750.0f));
+                    matrixStack.translate(-1.0f + (float) time / 750.0f, -5.0f + 5.0f * (float) time / 750.0f,
+                            0);
+                } else {
+                    matrixStack.mulPose(Axis.ZP.rotationDegrees(-30.0f + 30.0f * (float) (time - 1250L) / 500.0f));
+                }
+            } // living
+            time = System.currentTimeMillis() % 3000;
+            if (time < 1500) { RenderSystem.setShaderColor(0.85f, 0.85f, 0.85f, 0.5f + 0.45f * (float) time / 1500.f); }
+            else { RenderSystem.setShaderColor(0.85f, 0.85f, 0.85f, 0.5f + 0.45f * (3000.0f - (float) time) / 1500.f); }
+            matrixStack.scale(0.5f, 0.5f, 0.5f);
+            RenderSystem.enableBlend();
+            graphics.blit(GuiMailmanWrite.icons, -16, -16, 0, 0, 32, 32);
+            matrixStack.popPose();
+        }
+    }
+
+    /** HUD: Quest Compass Overlay */
+    public static void renderCompassOverlay(ForgeGui ignoredGui, GuiGraphics graphics, float ignoredPartialTick, int ignoredScreenWidth, int ignoredScreenHeight) {
+        mc = Minecraft.getInstance();
+        if (mc.level != null && mc.player != null && (mc.screen == null || mc.screen instanceof ChatScreen || mc.screen instanceof GuiLog)) {
+            PlayerData playerData = CustomNpcs.proxy.getPlayerData(mc.player);
+            PlayerCompassData compassData = playerData.compass;
+            if (CustomNpcs.TypeShowQuestCompass != 4 && compassData.getShowOfPlayer()) {
+                PoseStack matrixStack = graphics.pose();
+                boolean isShow = true;
+                if (!mc.player.isCreative() && (CustomNpcs.TypeShowQuestCompass == 2 || CustomNpcs.TypeShowQuestCompass == 3)) {
+                    isShow = false;
+                    for (int slotId = 0; slotId < mc.player.getInventory().getContainerSize(); slotId++) {
+                        if (mc.player.getInventory().getItem(slotId).getItem() == Items.COMPASS) {
+                            isShow = true;
+                            break;
+                        }
+                    }
+                }
+                if (isShow) {
+                    boolean needPoint = CustomNpcs.TypeShowQuestCompass == 1 || CustomNpcs.TypeShowQuestCompass == 3;
+                    String name = "";
+                    String title = "";
+                    double[] point = null;
+                    int taskType = -1;
+                    int range = 5;
+                    int taskColor = 0x808080;
+                    String n = "";
+                    if (compassData.isCustomPoint()) {
+                        point = new double[] { compassData.pos.getX() - 0.5d, compassData.pos.getY() + 0.5d, compassData.pos.getZ() + 0.5d };
+                        name = Util.instance.getOldFormattedText(Component.translatable(compassData.name));
+                        title = Util.instance.getOldFormattedText(Component.translatable(compassData.title));
+                        taskColor = compassData.color;
+                        taskType = compassData.getTaskType();
+                        if (!mc.level.dimension().location().toString().equals(compassData.getDimensionID())) { taskType = 7; }
+                        range = compassData.getRange();
+                        if (compassData.getNPCName().isEmpty()) {
+                            n = Component.translatable("entity." + compassData.getNPCName() + ".name").getString();
+                            n = n.substring(0, n.length() - 2);
+                            if (n.equals("entity." + compassData.getNPCName() + ".name")) { n = compassData.getNPCName(); }
+                        }
+                    }
+                    else {
+                        if (!playerData.questData.activeQuests.containsKey(compassData.questID) || compassData.questID <= 0) {
+                            for (int id : playerData.questData.activeQuests.keySet()) {
+                                if (playerData.questData.activeQuests.get(id).quest.hasCompassSettings() && id != compassData.questID && id > 0) {
+                                    compassData.questID = id;
+                                    break;
+                                }
+                            }
+                        }
+                        QuestData qData = playerData.questData.activeQuests.get(compassData.questID);
+                        if (qData != null) {
+                            double minD = Double.MAX_VALUE;
+                            QuestObjective select = null;
+                            for (QuestObjective io : qData.quest.questInterface.getObjectives(mc.player)) {
+                                if (io.isCompleted()) { continue; }
+                                if (qData.quest.step != 1) {
+                                    if (io.rangeCompass == 0 && select == null) {
+                                        select = io;
+                                    } else if (io.rangeCompass != 0) {
+                                        double d = Util.instance.distanceTo(io.pos.getX() + 0.5d, io.pos.getY(), io.pos.getZ() + 0.5d, mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(), mc.player.getZ());
+                                        if (d <= minD) {
+                                            minD = d;
+                                            select = io;
+                                        }
+                                    }
+                                    continue;
+                                }
+                                select = io;
+                                break;
+                            }
+                            if (select != null) {
+                                name = Util.instance.getOldFormattedText(qData.quest.getTitle());
+                                taskType = select.getType();
+                                taskColor = select.colorCompass;
+                                if (!select.getOrientationEntityName().isEmpty()) {
+                                    n = Component.translatable("entity." + select.getOrientationEntityName() + ".name").getString();
+                                    n = n.substring(0, n.length() - 2);
+                                    if (n.equals("entity." + select.getOrientationEntityName() + ".name")) {
+                                        n = select.getOrientationEntityName();
+                                    }
+                                }
+                                if (!mc.level.dimension().location().equals(select.dimension)) { taskType = 7; }
+                                if (taskType != EnumQuestTask.KILL.ordinal() && taskType != EnumQuestTask.AREAKILL.ordinal()) { range = 1; }
+                                if (select.rangeCompass > 0) {
+                                    range = select.rangeCompass;
+                                    EnumQuestTask t = EnumQuestTask.values()[select.getType()];
+                                    point = new double[] { select.pos.getX() - 0.5d, select.pos.getY() + 0.5d,
+                                            select.pos.getZ() + 0.5d };
+                                    if (t == EnumQuestTask.ITEM) {
+                                        title = Component.translatable("gui.get").getString() + ": "
+                                                + select.getItem().getDisplayName() + ": " + select.getProgress() + "/"
+                                                + select.getMaxProgress();
+                                    } else if (t == EnumQuestTask.CRAFT) {
+                                        title = Component.translatable("gui.get").getString() + ": "
+                                                + select.getItem().getDisplayName() + ": " + select.getProgress() + "/"
+                                                + select.getMaxProgress();
+                                    } else if (t == EnumQuestTask.DIALOG) {
+                                        title = Component.translatable("gui.read").getString() + ": ";
+                                        Dialog dialog = DialogController.instance.dialogs.get(select.getTargetID());
+                                        if (dialog != null) {
+                                            title += Component.translatable(dialog.title).getString();
+                                        } else {
+                                            title = "Dialog";
+                                        }
+                                    } else if (t == EnumQuestTask.LOCATION) {
+                                        title = Component.translatable("gui.found").getString() + ": "
+                                                + select.getTargetName();
+                                    } else if (EnumQuestTask.values()[select.getType()] == EnumQuestTask.MANUAL) {
+                                        title = select.getTargetName();
+                                    }
+                                    if (t == EnumQuestTask.KILL || t == EnumQuestTask.AREAKILL) {
+                                        n = Component.translatable("entity." + select.getTargetName() + ".name").getString();
+                                        n = n.substring(0, n.length() - 2);
+                                        if (n.equals("entity." + select.getTargetName() + ".name")) {
+                                            n = select.getTargetName();
+                                        }
+                                        title = Component.translatable("gui.kill").getString() + ": " + n + ": " + select.getProgress() + "/" + select.getMaxProgress();
+                                    }
+                                }
+                            }
+                            else if (qData.isCompleted && qData.quest.completion == EnumQuestCompletion.Npc
+                                    && qData.quest.getCompleterNpc() != null) {
+                                point = new double[] { qData.quest.completerPos[0] - 0.5d, qData.quest.completerPos[1] + 0.5d,
+                                        qData.quest.completerPos[2] + 0.5d };
+                                taskType = EnumQuestTask.DIALOG.ordinal();
+                                taskColor = 0x72CA00;
+                                if (!mc.level.dimension().equals(qData.quest.completerPosDimension)) { taskType = 7; }
+                                else {
+                                    AABB bb = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).move(point[0], point[1], point[2]).inflate(64.0d, 128.0d, 64.0d);
+                                    List<EntityNPCInterface> ents = mc.level.getEntitiesOfClass(EntityNPCInterface.class, bb);
+                                    final EntityNPCInterface npc = getClosestNPC(point, ents, qData);
+                                    if (npc != null) {
+                                        point[0] = npc.getX();
+                                        point[1] = npc.getY();
+                                        point[2] = npc.getZ();
+                                        range = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!n.isEmpty() && point != null) {
+                        LivingEntity e = null;
+                        AABB bb = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).move(point[0], point[1], point[2]).inflate(range, 1.5d, range);
+                        List<LivingEntity> ents = mc.level.getEntitiesOfClass(LivingEntity.class, bb);
+                        Player pl = mc.level.getNearestPlayer(mc.player, 32.0d);
+                        if (pl != null && pl.getEffect(MobEffects.INVISIBILITY) == null) {
+                            e = pl;
+                            range = 1;
+                        }
+                        if (e == null) {
+                            double d = range * range * range;
+                            LivingEntity et = null;
+                            Vec3 v = new Vec3(point[0], point[1], point[2]);
+                            for (LivingEntity el : ents) {
+                                if (!el.getName().getString().equals(n)) { continue; }
+                                double r = v.distanceToSqr(el.getX(), el.getY(),el.getZ());
+                                if (et != null) {
+                                    if (r >= d) { continue; }
+                                }
+                                d = r;
+                                et = el;
+                            }
+                            if (et == null) {
+                                bb = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).move(point[0], point[1], point[2]).inflate(range, range, range);
+                                ents.clear();
+                                ents = mc.level.getEntitiesOfClass(LivingEntity.class, bb);
+                                d = range * range * range;
+                                for (LivingEntity el : ents) {
+                                    if (!el.getName().getString().equals(n)) { continue; }
+                                    double r = v.distanceToSqr(el.getX(), el.getY(),el.getZ());
+                                    if (et != null) {
+                                        if (r >= d) { continue; }
+                                    }
+                                    d = r;
+                                    et = el;
+                                }
+                            }
+                            e = et;
+                            range = 1;
+                        }
+                        if (e != null) {
+                            point[0] = e.getX();
+                            point[1] = e.getY();
+                            point[2] = e.getZ();
+                        }
+                    }
+
+                    if (!needPoint || point != null) {
+                        float scale = (compassData.isFlat ? 1.0f : -15.0f) * compassData.scale;
+                        int[] uvPos = new int[] {(int) (mc.getWindow().getGuiScaledWidth() * compassData.screenPos[0]),
+                                (int) (mc.getWindow().getGuiScaledHeight() * compassData.screenPos[1])};
+
+                        matrixStack.pushPose();
+                        if (qt < 40) { qt++; }
+                        matrixStack.translate(uvPos[0], uvPos[1], 0.0d);
+                        // Named
+                        RenderSystem.enableBlend();
+                        RenderSystem.defaultBlendFunc();
+                        RenderSystem.disableDepthTest();
+                        if (compassData.showQuestName || compassData.showTaskProgress) {
+                            matrixStack.pushPose();
+                            float yOffset = compassData.isFlat ? 14.0f : 30.0f;
+                            float h = 0.0f;
+                            float w = 0.0f;
+                            float w0 = 0.0f;
+                            float w1 = 0.0f;
+                            float l = 0.0f;
+                            if (compassData.showQuestName && !name.isEmpty()) {
+                                h += 10.0f;
+                                w = ClientProxy.LogFont.width(name);
+                                w0 = w;
+                                if (uvPos[0] - w0 / 2.0f < 1.5f) { w0 = uvPos[0] * 2.0f - 3.0f; } // left
+                                if (uvPos[0] + w0 / 2.0f > mc.getWindow().getGuiScaledWidth() - 1.5f) {
+                                    w0 = (w0 - (mc.getWindow().getGuiScaledWidth() - uvPos[0]) + 3.0f) * 2.0f;
+                                } // right
+                                l = w0 / -2.0f;
+                            }
+                            if (compassData.showTaskProgress && !title.isEmpty()) {
+                                h += 10.0f;
+                                w1 = ClientProxy.LogFont.width(title);
+                                if (w < w1) { w = w1; }
+                                if (uvPos[0] - w1 / 2.0f < 1.5f) { w1 = uvPos[0] * 2.0f - 3.0f; } // left
+                                if (uvPos[0] + w1 / 2.0f > mc.getWindow().getGuiScaledWidth() - 1.5f) {
+                                    w1 = (w1 - (mc.getWindow().getGuiScaledWidth() - uvPos[0]) + 3.0f) * 2.0f;
+                                } // right
+                                if (l > w1 / -2.0f) { l = w1 / -2.0f; }
+                            }
+                            // down
+                            if (uvPos[1] + yOffset + h > mc.getWindow().getGuiScaledHeight()) { yOffset = -h; }
+                            matrixStack.translate(0.0d, yOffset, 0.0d);
+                            // background
+                            if (h > 0) {
+                                l -= 2.0f;
+                                w += 5.0f;
+                                int color = 0x03202020;
+                                graphics.fill((int) l, 0, (int) (l + w) - 1, 1, color);
+                                graphics.fill((int) l, 1, (int) (l) + 1, (int) h - 1, color);
+                                graphics.fill((int) (l + w) - 2, 1, (int) (l + w) - 1, (int) h - 1, color);
+                                graphics.fill((int) l, (int) h - 1, (int) (l + w) - 1, (int) h, color);
+                                color = 0x03303030;
+                                graphics.fill((int) l + 1, 1, (int) (l + w) - 2, (int) h - 1, color);
+                                // name
+                                if (compassData.showQuestName) {
+                                    ClientProxy.LogFont.draw(graphics, name, w0 / -2.0f, 0, 0x0FFFFFFF);
+                                }
+                                if (compassData.showTaskProgress) {
+                                    ClientProxy.LogFont.draw(graphics, title, w1 / -2.0f, compassData.showQuestName ? 10 : 0, 0x0FFFFFFF);
+                                }
+                            }
+                            matrixStack.popPose();
+                        }
+                        RenderSystem.enableDepthTest();
+                        // Model
+                        matrixStack.pushPose();
+                        matrixStack.translate(0.0f, compassData.isFlat ? 6.5f : -16.0f * compassData.scale + 29.0f, 0.0f);
+                        matrixStack.scale(scale, scale, scale);
+                        float yaw = mc.player.getYRot() % 360;
+                        if (yaw < 0.0f) { yaw += 360.0f; }
+                        if (compassData.isFlat) {
+                            float l = 0.0f;
+                            if (uvPos[0] - 101 < 1.5f) { l = 101.5f - uvPos[0]; } // left
+                            if (uvPos[0] + 101.0f > mc.getWindow().getGuiScaledWidth() - 1.5f) {
+                                l = mc.getWindow().getGuiScaledWidth() - uvPos[0] - 101.5f;
+                            } // right
+                            matrixStack.translate(l, 0.0f, 0.0f);
+                            // background
+                            RenderSystem.enableBlend();
+                            RenderSystem.defaultBlendFunc();
+                            matrixStack.pushPose();
+                            matrixStack.translate(-101.5f, -7.0f, 0.0f);
+                            matrixStack.scale(0.5f, 0.5f, 0.5f);
+                            graphics.blit(GuiBasic.INFO, 0, 0, 0, 74, 204, 28);
+                            matrixStack.translate(204.0f, 0.0f, 0.0f);
+                            graphics.blit(GuiBasic.INFO, 0, 0, 0, 102, 204, 28);
+                            matrixStack.popPose();
+
+                            graphics.enableScissor(uvPos[0] - (int) (99.0f * compassData.scale + l),
+                                    uvPos[1] + (int) (-6.0f * compassData.scale + 7.0f),
+                                    uvPos[0] + (int) (100.0f * compassData.scale + l),
+                                    uvPos[1] + (int) (5.0f * compassData.scale + 6.5f));
+
+                            // Dial
+                            if (compassData.isShowDial()) {
+                                matrixStack.pushPose();
+                                matrixStack.translate(yaw * - 2.222222f, -6.0f, 0.0f);
+                                //divisions
+                                RenderSystem.enableBlend();
+                                RenderSystem.defaultBlendFunc();
+                                matrixStack.pushPose();
+                                matrixStack.translate(-0.5f, 1.0f, 0.0f);
+                                matrixStack.scale(0.5f, 0.5f, 0.5f);
+                                for (int i = 0; i < 12; i++) {
+                                    graphics.blit(GuiBasic.INFO, i * 200, 0, 29, 0, 4, 20);
+                                }
+                                matrixStack.popPose();
+                                // sides
+                                UtilYDE.FONT_HEADLINE.draw(graphics, "W", -203, 0, 0xC0C8F0DC);
+                                UtilYDE.FONT_HEADLINE.draw(graphics, "S", -2.5F, 0, 0xC0BEF0F0);
+                                UtilYDE.FONT_HEADLINE.draw(graphics, "E", 197.5F, 0, 0xC0F0F0BE);
+                                UtilYDE.FONT_HEADLINE.draw(graphics, "N", 397, 0, 0xC0F0DCBE);
+                                UtilYDE.FONT_HEADLINE.draw(graphics, "W", 596, 0, 0xC0C8F0BE);
+                                UtilYDE.FONT_HEADLINE.draw(graphics, "S", 797.5F, 0, 0xC0BEF0F0);
+                                matrixStack.popPose();
+                            }
+                            // Arrow
+                            matrixStack.pushPose();
+                            if (point != null) {
+                                IRayTraceRotate angles = Util.instance.getAngles3D(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(), mc.player.getZ(), point[0], point[1], point[2]);
+                                if (range == 1 || angles.getDistance() > range) {
+                                    matrixStack.pushPose();
+                                    RenderSystem.enableBlend();
+                                    RenderSystem.defaultBlendFunc();
+                                    RenderSystem.setShaderColor(FastColor.ARGB32.red(taskColor) / 255.0f,
+                                            FastColor.ARGB32.green(taskColor) / 255.0f,
+                                            FastColor.ARGB32.blue(taskColor) / 255.0f,
+                                            ValueUtil.correctFloat(-0.0175f * (float) (angles.getDistance() - range) + 1.175f, 0.3f, 1.0f));
+                                    float rot = (yaw - (float) angles.getYaw()) % 360;
+                                    if (rot > 180) { rot -= 360.0f; }
+                                    if (rot < -180) { rot += 360.0f; }
+                                    if (rot > 44.0f) {
+                                        matrixStack.translate(-99.0f, -3.5f, 0.0f);
+                                        matrixStack.scale(0.5f, 0.5f, 0.5f);
+                                        graphics.blit(GuiBasic.INFO, 0, 0, 15, 34, 10, 14);
+                                    }
+                                    else if (rot < -42.9f) {
+                                        matrixStack.translate(95.0f, -3.5f, 0.0f);
+                                        matrixStack.scale(0.5f, 0.5f, 0.5f);
+                                        graphics.blit(GuiBasic.INFO, 0, 0, 15, 20, 10, 14);
+                                    }
+                                    else {
+                                        matrixStack.translate(rot * - 2.222222f, -2.0f, 0.0f);
+                                        matrixStack.scale(0.5f, 0.5f, 0.5f);
+                                        if (mc.player.getY() < point[1] - range) {
+                                            graphics.blit(GuiBasic.INFO, -2, -6, 15, 0, 14, 10);
+                                        } // up
+                                        else if (mc.player.getY() > point[1] + range) {
+                                            graphics.blit(GuiBasic.INFO, -2, 4, 15, 10, 14, 10);
+                                        } // dow
+                                        else {
+                                            graphics.blit(GuiBasic.INFO, 0, 0, 15, 48, 10, 10);
+                                        }
+                                    }
+                                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                                    matrixStack.popPose();
+                                } // direction
+                                else {
+                                    long speed = 1500L;
+                                    float a = 48.0f / (speed - (speed / 148.0f * 100.0f));
+                                    float t = (System.currentTimeMillis() % (speed * 2L)) - speed;
+                                    matrixStack.pushPose();
+                                    RenderSystem.enableBlend();
+                                    RenderSystem.defaultBlendFunc();
+                                    RenderSystem.setShaderColor(FastColor.ARGB32.red(taskColor) / 255.0f,
+                                            FastColor.ARGB32.green(taskColor) / 255.0f,
+                                            FastColor.ARGB32.blue(taskColor) / 255.0f,
+                                            0.5f);
+                                    int w;
+                                    if (t < 0) {
+                                        w = ValueUtil.correctInt((int) (a * (t + speed)), 0, 48);
+                                        // left
+                                        matrixStack.pushPose();
+                                        matrixStack.translate(-a * t - 147.5f, 1.5f, 0.0f);
+                                        matrixStack.scale(1.0f, 0.5f, 1.0f);
+                                        graphics.blit(GuiBasic.INFO, 0, 0, 81, 8, w, 8);
+                                        matrixStack.popPose();
+                                        // right
+                                        matrixStack.pushPose();
+                                        matrixStack.translate(a * t + 147.5f, 1.5f, 0.0f);
+                                        matrixStack.scale(1.0f, 0.5f, 1.0f);
+                                        graphics.blit(GuiBasic.INFO, -w, 0, 81 - w, 8, w, 8);
+                                        matrixStack.popPose();
+                                    } // down
+                                    else {
+                                        w = ValueUtil.correctInt((int) (-a * t + 148.0f), 0, 48);
+                                        // left
+                                        matrixStack.pushPose();
+                                        matrixStack.translate(a * t - 147.5f, -5.5f, 0.0f);
+                                        matrixStack.scale(1.0f, 0.5f, 1.0f);
+                                        graphics.blit(GuiBasic.INFO, 0, 0, 33, 0, w, 8);
+                                        matrixStack.popPose();
+                                        // right
+                                        matrixStack.pushPose();
+                                        matrixStack.translate(-a * t + 99.5f, -5.5f, 0.0f);
+                                        matrixStack.scale(1.0f, 0.5f, 1.0f);
+                                        graphics.blit(GuiBasic.INFO, 48 - w, 0, 129 - w, 0, w, 8);
+                                        matrixStack.popPose();
+                                    } // up
+                                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                                    matrixStack.popPose();
+                                } // found
+                            }
+                            matrixStack.popPose();
+                            graphics.disableScissor();
+                        }
+                        else {
+                            Lighting.setupForFlatItems();
+                            matrixStack.mulPose(Axis.XP.rotationDegrees(-45.0f + compassData.incline));
+                            if (compassData.rot != 0.0f) { matrixStack.mulPose(Axis.YP.rotationDegrees(compassData.rot)); }
+                            // Body
+                            matrixStack.pushPose();
+                            if (COMPASS_BODY == null) { COMPASS_BODY = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                    Collections.singletonList("body"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                            ModelBuffer.render(COMPASS_BODY, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                            matrixStack.popPose();
+                            // Dial
+                            if (compassData.isShowDial()) {
+                                matrixStack.pushPose();
+                                matrixStack.mulPose(Axis.YP.rotationDegrees(mc.player.getYRot()));
+                                if (COMPASS_DIAL == null) { COMPASS_DIAL = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                        Collections.singletonList("dial"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                                ModelBuffer.render(COMPASS_DIAL, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                matrixStack.popPose();
+                            }
+                            if (point != null) {
+                                IRayTraceRotate angles = Util.instance.getAngles3D(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(), mc.player.getZ(), point[0], point[1], point[2]);
+                                if (range == 1 || angles.getDistance() > range) {
+                                    // Arrow_0
+                                    matrixStack.pushPose();
+                                    matrixStack.mulPose(Axis.YP.rotationDegrees(yaw - (float) angles.getYaw()));
+                                    if (COMPASS_ARROW_0 == null) { COMPASS_ARROW_0 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                            Collections.singletonList("arrow_0"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                                    ModelBuffer.render(COMPASS_ARROW_0, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                    matrixStack.popPose();
+                                    // Arrow_1 upper
+                                    double yP;
+                                    yP = -0.25d * (mc.player.getY() - point[1]) / (double) range;
+                                    matrixStack.pushPose();
+                                    if (yP >= -0.25d && yP <= 0.25d) {
+                                        matrixStack.translate(0.0d, yP, 0.0d);
+                                    }
+                                    else {
+                                        if (yP > 0.25d) {
+                                            matrixStack.translate(0.0d, 0.275d, 0.0d);
+                                        } else if (yP < -0.25d) {
+                                            matrixStack.translate(0.0d, -0.275d, 0.0d);
+                                        }
+                                        double t = System.currentTimeMillis() % 1000.0d;
+                                        double f0 = t < 500.0d ? -0.025d + 0.05d * (t % 500.0d) / 500.0d
+                                                : 0.025d - 0.05d * (t % 500.0d) / 500.0d;
+                                        matrixStack.translate(0.0d, f0, 0.0d);
+                                    }
+                                    if (COMPASS_ARROW_1 == null) { COMPASS_ARROW_1 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                            Collections.singletonList("arrow_1"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                                    ModelBuffer.render(COMPASS_ARROW_1, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                    matrixStack.popPose();
+                                    // Arrow_2
+                                    matrixStack.pushPose();
+                                    if (yP > 0.25d) {
+                                        if (COMPASS_ARROW_21 == null) { COMPASS_ARROW_21 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                                Collections.singletonList("arrow_21"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                                        ModelBuffer.render(COMPASS_ARROW_21, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                    }
+                                    else if (yP < -0.25d) {
+                                        if (COMPASS_ARROW_22 == null) { COMPASS_ARROW_22 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                                Collections.singletonList("arrow_22"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                                        ModelBuffer.render(COMPASS_ARROW_22, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                    }
+                                    else {
+                                        if (COMPASS_ARROW_20 == null) { COMPASS_ARROW_20 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                                Collections.singletonList("arrow_20"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                                        ModelBuffer.render(COMPASS_ARROW_20, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                    }
+                                    matrixStack.popPose();
+                                } // direction
+                                else {
+                                    // Arrow_3
+                                    matrixStack.pushPose();
+                                    float t = System.currentTimeMillis() % 4000L;
+                                    float f0 = t < 2000.0f ? -0.00033f * t + 1.0f : 0.00033f * t - 0.30033f;
+                                    matrixStack.scale(f0, f0, f0);
+                                    if (COMPASS_ARROW_3 == null) { COMPASS_ARROW_3 = ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                            Collections.singletonList("arrow_3"), GuiBasic.TEXTURES_COMPASS,  false, 0); }
+                                    ModelBuffer.render(COMPASS_ARROW_3, matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                    matrixStack.popPose();
+                                } // found
+                            }
+                            if (taskType >= 0 && taskType <= EnumQuestTask.values().length) {
+                                matrixStack.pushPose();
+                                if (!COMPASS_FASE.containsKey(taskType)) {
+                                    Map<String, ResourceLocation> m = new HashMap<>();
+                                    m.put("#material", new ResourceLocation(CustomNpcs.MODID, "util/compass"));
+                                    m.put("#task", new ResourceLocation(CustomNpcs.MODID, "util/task_" + taskType));
+                                    COMPASS_FASE.put(taskType, ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
+                                            Collections.singletonList("fase"), m,  false, 0));
+                                }
+                                ModelBuffer.render(COMPASS_FASE.get(taskType), matrixStack, graphics.bufferSource(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+                                matrixStack.popPose();
+                            }
+                        }
+                        matrixStack.popPose();
+                        matrixStack.popPose();
+                    }
+                }
+            }
+        }
+    }
+
+    /** HUD: NBT Book Info Overlay */
+    public static void renderNbtBookOverlay(ForgeGui ignoredGui, GuiGraphics graphics, float ignoredPartialTick, int ignoredScreenWidth, int ignoredScreenHeight) {
+        mc = Minecraft.getInstance();
+        if (mc.level != null && mc.player != null &&
+                (mc.screen == null || mc.screen instanceof ChatScreen || mc.screen instanceof GuiLog) &&
+                (mc.player.getMainHandItem().getItem() instanceof ItemNbtBook || mc.player.getOffhandItem().getItem() instanceof ItemNbtBook)) {
+            PlayerData playerData = CustomNpcs.proxy.getPlayerData(mc.player);
+            PoseStack matrixStack = graphics.pose();
+            double distance = playerData.game.renderDistance;
+            Vec3 vec3d = mc.player.getEyePosition(1.0f);
+            Vec3 vec3d1 = mc.player.getLookAngle();
+            Vec3 vec3d2 = vec3d.add(vec3d1.x * distance, vec3d1.y * distance, vec3d1.z * distance);
+            BlockHitResult result = mc.level.clip(new ClipContext(vec3d, vec3d2, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
+            MutableComponent rayName;
+            MutableComponent rayTitle = Component.empty();
+            double lH = mc.font.lineHeight + 1.0d;
+            ItemStack st;
+            if (result.getType() != HitResult.Type.MISS) {
+                BlockPos blockPos = result.getBlockPos();
+                Entity entity = Util.instance.getLookEntity(mc.player, distance, false);
+                st = null;
+                BlockState state = null;
+                double dist;
+                MutableComponent rayPos = Component.empty();
+                if (entity != null) {
+                    dist = Math.round(mc.player.distanceTo(entity) * 10.0d) / 10.0d;
+                    ResourceLocation res = EntityType.getKey(entity.getType());
+                    rayName = Component.empty()
+                            .append(Component.literal(" [" + res + "] ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal(entity.getName().getString()).withStyle(ChatFormatting.RESET));
+                    rayTitle = Component.literal(entity.getClass().getSimpleName()).withStyle(ChatFormatting.YELLOW);
+                    rayPos = Component.empty()
+                            .append(Component.literal("[X:").withStyle(ChatFormatting.AQUA))
+                            .append(Component.literal("" + (Math.round(entity.getX() * 10.0d) / 10.0d)).withStyle(ChatFormatting.GOLD))
+                            .append(Component.literal(", Y:").withStyle(ChatFormatting.AQUA))
+                            .append(Component.literal("" + (Math.round(entity.getY() * 10.0d) / 10.0d)).withStyle(ChatFormatting.GOLD))
+                            .append(Component.literal(", Z:").withStyle(ChatFormatting.AQUA))
+                            .append(Component.literal("" + (Math.round(entity.getZ() * 10.0d) / 10.0d)).withStyle(ChatFormatting.GOLD))
+                            .append(Component.literal("]").withStyle(ChatFormatting.AQUA))
+                            .append(Component.literal(" " + dist).withStyle(ChatFormatting.DARK_AQUA));
+                }
+                else {
+                    float f = (float) (mc.player.getX() - blockPos.getX() + 0.5d);
+                    float f1 = (float) (mc.player.getY() - blockPos.getY() + 0.5d);
+                    float f2 = (float) (mc.player.getZ() - blockPos.getZ() + 0.5d);
+                    dist = Math.round(Math.sqrt(f * f + f1 * f1 + f2 * f2) * 10.0d) / 10.0d;
+                    if (dist > playerData.game.renderDistance && !mc.player.getOffhandItem().isEmpty()
+                            && !(mc.player.getOffhandItem().getItem() instanceof ItemNbtBook)) {
+                        st = mc.player.getOffhandItem();
+                        rayName = Component.literal(st.getHoverName().getString());
+                    } else {
+                        state = mc.level.getBlockState(blockPos);
+                        if (dist > playerData.game.renderDistance) {
+                            result = mc.level.clip(new ClipContext(vec3d, vec3d2, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
+                            if (result.getType() != HitResult.Type.MISS) {
+                                BlockState tempState = mc.level.getBlockState(result.getBlockPos());
+                                if (!(tempState.getBlock() instanceof AirBlock)) {
+                                    state = tempState;
+                                }
+                            }
+                        }
+                        rayName = Component.empty()
+                                .append(Component.literal(" [" + ForgeRegistries.BLOCKS.getKey(state.getBlock()) + "] ").withStyle(ChatFormatting.GRAY))
+                                .append(state.getBlock().getName().withStyle(ChatFormatting.RESET));
+                        String stateText = state.toString();
+                        if (stateText.contains("[")) {
+                            stateText = stateText.substring(stateText.indexOf("["));
+                        } else {
+                            stateText = "[]";
+                        }
+                        rayTitle = Component.empty()
+                                .append(Component.literal(state.getBlock().getClass().getSimpleName()).withStyle(ChatFormatting.RESET))
+                                .append(Component.literal("; state: ").withStyle(ChatFormatting.GRAY))
+                                .append(Component.literal(stateText).withStyle(ChatFormatting.YELLOW));
+                        if (state.getBlock() instanceof BaseEntityBlock) {
+                            rayTitle.append(Component.literal("; ").withStyle(ChatFormatting.GRAY))
+                                    .append(Component.literal("hasTile").withStyle(ChatFormatting.DARK_AQUA));
+                        }
+                        rayPos = Component.empty()
+                                .append(Component.literal(" [X:").withStyle(ChatFormatting.GREEN))
+                                .append(Component.literal("" + blockPos.getX()).withStyle(ChatFormatting.GOLD))
+                                .append(Component.literal(", Y:").withStyle(ChatFormatting.GREEN))
+                                .append(Component.literal("" + blockPos.getY()).withStyle(ChatFormatting.GOLD))
+                                .append(Component.literal(", Z:").withStyle(ChatFormatting.GREEN))
+                                .append(Component.literal("" + blockPos.getZ()).withStyle(ChatFormatting.GOLD))
+                                .append(Component.literal("]").withStyle(ChatFormatting.GREEN))
+                                .append(Component.literal(" " + dist).withStyle(ChatFormatting.DARK_AQUA));
+                    }
+                }
+                matrixStack.pushPose();
+                if (entity != null) {
+                    matrixStack.pushPose();
+                    matrixStack.translate(8.0d + playerData.overlay.getWindowSize().getWidth() / 2.0d,
+                            playerData.overlay.getWindowSize().getHeight() - 45.0d - 3.5d * lH,
+                            -200.0d);
+                    renderEntityForBook(entity, graphics);
+                    matrixStack.popPose();
+                }
+                else if (state != null) {
+                    st = new ItemStack(state.getBlock().asItem(), 1);
+                }
+                if (st != null) {
+                    matrixStack.pushPose();
+                    matrixStack.translate(playerData.overlay.getWindowSize().getWidth() / 2.0d,
+                            playerData.overlay.getWindowSize().getHeight() - 45.0d - 4.5d * lH,
+                            0.0d);
+                    graphics.renderItem(st, 0, 0);
+                    graphics.renderItemDecorations(mc.font, st, 0, 0);
+                    matrixStack.popPose();
+                }
+                matrixStack.translate(
+                        (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayName)) / 2.0d,
+                        playerData.overlay.getWindowSize().getHeight() - 45.0d - 3.0d * lH,
+                        0.0d);
+                graphics.drawString(mc.font, rayName, 0, 0, 0xFFFFFF);
+                matrixStack.popPose();
+
+                matrixStack.pushPose();
+                matrixStack.translate(
+                        (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayTitle)) / 2.0d,
+                        playerData.overlay.getWindowSize().getHeight() - 45.0d - 2.0d * lH,
+                        0.0d);
+                graphics.drawString(mc.font, rayTitle, 0, 0, 0xFFFFFF);
+                matrixStack.popPose();
+
+                matrixStack.pushPose();
+                matrixStack.translate(
+                        (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayPos)) / 2.0d,
+                        playerData.overlay.getWindowSize().getHeight() - 45.0d - lH,
+                        0.0d);
+                graphics.drawString(mc.font, rayPos, 0, 0, 0xFFFFFF);
+                matrixStack.popPose();
+
+            }
+            else if (!mc.player.getOffhandItem().isEmpty()) {
+                st = mc.player.getOffhandItem();
+                rayName = Component.empty()
+                        .append(Component.literal(" [" + ForgeRegistries.ITEMS.getKey(st.getItem()) + "] ").withStyle(ChatFormatting.GRAY))
+                        .append(st.getItem().getName(st));
+
+                rayTitle = Component.empty()
+                        .append(Component.literal(st.getItem().getClass().getSimpleName()).withStyle(ChatFormatting.RESET));
+                if (st.hasTag()) {
+                    rayTitle.append(Component.literal("; ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal("hasTags").withStyle(ChatFormatting.DARK_AQUA));
+                }
+
+                matrixStack.pushPose();
+                matrixStack.translate(
+                        (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayName)) / 2.0d,
+                        playerData.overlay.getWindowSize().getHeight() - 45.0d - 3.0d * lH,
+                        0.0d);
+                graphics.drawString(mc.font, rayName, 0, 0, 0xFFFFFF);
+                matrixStack.popPose();
+
+                matrixStack.pushPose();
+                matrixStack.translate(
+                        (playerData.overlay.getWindowSize().getWidth() - (double) mc.font.width(rayTitle)) / 2.0d,
+                        playerData.overlay.getWindowSize().getHeight() - 45.0d - 2.0d * lH,
+                        0.0d);
+                graphics.drawString(mc.font, rayTitle, 0, 0, 0xFFFFFF);
+                matrixStack.popPose();
             }
         }
     }

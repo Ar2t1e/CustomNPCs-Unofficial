@@ -41,6 +41,7 @@ import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.joml.Vector2ic;
 
+@SuppressWarnings("unused")
 @OnlyIn(Dist.CLIENT)
 public abstract class GuiBasic extends Screen implements IGuiInterface {
 
@@ -514,14 +515,14 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
 
    public static void renderTooltipInternal(GuiGraphics graphics, int mouseX, int mouseY, ClientProxy.FontContainer font, List<Component> collections, float scale) {
       if (font != null && !collections.isEmpty()) {
-         int toolWidht = 0;
+         int toolWidth = 0;
          int toolHeight = (collections.size() == 1 ? -2 : 0);
          for (Component c : new ArrayList<>(collections)) {
             int k = font.width(c);
-            if (k > toolWidht) { toolWidht = k; }
+            if (k > toolWidth) { toolWidth = k; }
          }
          Vector2ic vector2ic = DefaultTooltipPositioner.INSTANCE.positionTooltip(graphics.guiWidth(), graphics.guiHeight(), mouseX, mouseY,
-                 (int) (toolWidht * scale), (int) (toolHeight * scale));
+                 (int) (toolWidth * scale), (int) (toolHeight * scale));
          int x = vector2ic.x();
          int y = vector2ic.y();
          PoseStack matrixStack = graphics.pose();
@@ -533,7 +534,7 @@ public abstract class GuiBasic extends Screen implements IGuiInterface {
          matrixStack.pushPose();
          matrixStack.translate(- 1, - 1, 0.0F);
          matrixStack.scale(0.5f, 0.5f, 0.5f);
-         int r = (toolWidht + 1) * 2;
+         int r = (toolWidth + 1) * 2;
          int b = (toolHeight + 4) * 2;
          int color = YDEController.backColor & 0xFFFFFF | 0xE0000000;
          graphics.fill(-1, -1, r + 3, b + 1, color);

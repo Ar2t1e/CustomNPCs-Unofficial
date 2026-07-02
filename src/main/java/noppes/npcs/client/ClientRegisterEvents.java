@@ -14,9 +14,11 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RegisterRecipeBookCategoriesEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -46,6 +48,26 @@ import java.util.Map;
 public class ClientRegisterEvents {
 
     private static final Map<ResourceLocation, ShaderData> SHADERS = new HashMap<>();
+
+    /** HUD Bar Interface */
+    @SubscribeEvent
+    public static void registerOverlays(RegisterGuiOverlaysEvent event) {
+        event.registerBelow(
+                VanillaGuiOverlay.CHAT_PANEL.id(),
+                "cnpc_mail",
+                ClientEventHandler::renderMailOverlay
+        );
+        event.registerBelow(
+                VanillaGuiOverlay.CHAT_PANEL.id(),
+                "cnpc_compass",
+                ClientEventHandler::renderCompassOverlay
+        );
+        event.registerBelow(
+                VanillaGuiOverlay.CHAT_PANEL.id(),
+                "cnpc_nbtbook",
+                ClientEventHandler::renderNbtBookOverlay
+        );
+    }
 
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) {

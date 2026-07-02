@@ -255,12 +255,12 @@ public abstract class EntityNPCInterface
       hurtDuration = ais.getMaxHurtResistantTime();
    }
 
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public boolean canBreatheUnderwater() { return ais.movementType == 2; }
 
-   @Deprecated
    @Override
+   @SuppressWarnings("deprecation")
    public boolean isPushedByFluid() { return ais.movementType != 2; }
 
    @Nullable
@@ -443,6 +443,13 @@ public abstract class EntityNPCInterface
    }
 
    @Override
+   protected float tickHeadTurn(float targetYaw, float movementSpeed) {
+      if (!isAlive()) { return 0.0F; }
+      return super.tickHeadTurn(targetYaw, movementSpeed);
+   }
+
+   @Override
+   @SuppressWarnings("deprecation")
    public void aiStep() { // old: onLivingUpdate()
       if (CustomNpcs.FreezeNPCs) { return; }
       if (isNoAi()) { super.aiStep(); }
@@ -1150,6 +1157,7 @@ public abstract class EntityNPCInterface
       }
    }
 
+   @SuppressWarnings("UnstableApiUsage")
    public void saySurrounding(Line line) {
       if (line != null) {
          if (line.getShowText() && !line.getText().isEmpty()) {
@@ -1255,6 +1263,9 @@ public abstract class EntityNPCInterface
       }
       EntityDimensions size = new EntityDimensions(w, h, false);
       size = size.scale((float) display.getSize() * 0.2F);
+      if (getHealth() <= 0.0f) {
+         size = new EntityDimensions(size.height / 2.0f, size.width / 3.0f, false);
+      }
       if ((double) (size.width / 2.0F) > level().getMaxEntityRadius()) { level().increaseMaxEntityRadius(size.width / 2.0F); }
       return size;
    }
@@ -1276,6 +1287,7 @@ public abstract class EntityNPCInterface
 
    public void reset(int delay) { CustomNPCsScheduler.runTack(this::reset, delay); }
 
+   @SuppressWarnings("ConstantConditions")
    public void reset() {
       boolean needsSync = hasDied;
       hasDied = false;
@@ -1294,7 +1306,7 @@ public abstract class EntityNPCInterface
       setTarget(null);
       setLastHurtByMob(null);
       deathTime = 0;
-      if (ais.returnToStart && !hasOwner() && !isClientSide() && !isPassenger()) {
+      if (ais.returnToStart && emptyOwner() && !isClientSide() && !isPassenger()) {
          boolean isTransfer = false;
          double x = getStartXPos();
          double y = getStartYPos();
@@ -1751,6 +1763,7 @@ public abstract class EntityNPCInterface
    }
 
    @Override
+   @SuppressWarnings("ConstantConditions")
    public @Nonnull CommandSourceStack createCommandSourceStack() {
       if (level().isClientSide) { return super.createCommandSourceStack(); }
       EntityUtil.Copy(this, CommandPlayer);
@@ -1833,11 +1846,11 @@ public abstract class EntityNPCInterface
       return job.getType() == 5 && job instanceof JobFollower ? ((JobFollower)job).following : null;
    }
 
-   public boolean hasOwner() {
-      return !ais.aiDisabled && advanced.scenes.getOwner() != null ||
-              (role.getEnumType() == RoleType.FOLLOWER && ((RoleFollower) role).hasOwner()) ||
-              (role.getEnumType() == RoleType.COMPANION && ((RoleCompanion) role).hasOwner()) ||
-              (job.getEnumType() == JobType.FOLLOWER && ((JobFollower) job).hasOwner());
+   public boolean emptyOwner() {
+      return (ais.aiDisabled || advanced.scenes.getOwner() == null) &&
+              (role.getEnumType() != RoleType.FOLLOWER || !((RoleFollower) role).hasOwner()) &&
+              (role.getEnumType() != RoleType.COMPANION || !((RoleCompanion) role).hasOwner()) &&
+              (job.getEnumType() != JobType.FOLLOWER || !((JobFollower) job).hasOwner());
    }
 
    public int followRange() {
@@ -2164,5 +2177,6 @@ public abstract class EntityNPCInterface
    public boolean canAttack(@Nonnull LivingEntity entity) {
       return !ais.aiDisabled && !(entity instanceof Bat) && super.canAttack(entity);
    }
+
 
 }

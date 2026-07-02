@@ -27,7 +27,7 @@ public class EntityAIReturn extends Goal {
 
    @Override
    public boolean canUse() {
-      if (!npc.hasOwner() &&
+      if (npc.emptyOwner() &&
               !npc.isPassenger() &&
               npc.ais.shouldReturnHome() &&
               !npc.isKilled() &&

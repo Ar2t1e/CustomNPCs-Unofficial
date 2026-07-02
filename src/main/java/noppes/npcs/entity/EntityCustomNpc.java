@@ -35,6 +35,7 @@ public class EntityCustomNpc extends EntityNPCFlying {
       }
    }
 
+   @Override
    public void readAdditionalSaveData(@Nonnull CompoundTag compound) {
       if (compound.contains("NpcModelData")) {
          modelData.load(compound.getCompound("NpcModelData"));
@@ -42,11 +43,13 @@ public class EntityCustomNpc extends EntityNPCFlying {
       super.readAdditionalSaveData(compound);
    }
 
+   @Override
    public void addAdditionalSaveData(@Nonnull CompoundTag compound) {
       super.addAdditionalSaveData(compound);
       compound.put("NpcModelData", modelData.save());
    }
 
+   @Override
    public boolean saveAsPassenger(@Nonnull CompoundTag compound) {
       boolean bo = super.saveAsPassenger(compound);
       if (bo) {
@@ -76,12 +79,14 @@ public class EntityCustomNpc extends EntityNPCFlying {
       }
    }
 
+   @Override
    public boolean startRiding(@Nonnull Entity entityIn, boolean force) {
       boolean b = super.startRiding(entityIn, force);
       refreshDimensions();
       return b;
    }
 
+   @Override
    public void refreshDimensions() {
       Entity entity = modelData.getEntity(this);
       if (entity != null) {
@@ -90,6 +95,7 @@ public class EntityCustomNpc extends EntityNPCFlying {
       super.refreshDimensions();
    }
 
+   @Override
    public @Nonnull EntityDimensions getDimensions(@Nonnull Pose pos) {
       if (modelData == null) {
          return new EntityDimensions(0.6F, 1.8F, false);
@@ -126,12 +132,14 @@ public class EntityCustomNpc extends EntityNPCFlying {
       }
    }
 
+   @Override
    public double getPassengersRidingOffset() {
       Entity entity = modelData.getEntity(this);
       return entity != null ? entity.getPassengersRidingOffset() / 5.0D * (double)display.getSize() : super.getPassengersRidingOffset();
    }
 
    // New Unofficial (Goodbird)
+   @Override
    protected void pushEntities() {
       if (display.getHitboxState() == 0) {
          if (level().isClientSide() && CustomNpcs.EnableInvisibleNpcs && CustomNpcs.InvisibilityAlgorithm == 2) {
