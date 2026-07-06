@@ -9,6 +9,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyInteger;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.CommandException;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -18,6 +19,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -33,10 +35,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.CustomItems;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomTabs;
-import noppes.npcs.EventHooks;
+import noppes.npcs.*;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
@@ -49,6 +48,7 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemNpcBlock;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
 import noppes.npcs.packets.server.SPacketGuiOpen;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
@@ -256,20 +256,19 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 			}
 			else {
 				int dimension = getHome ? homeId : id;
-				double[] motions = new double[] { entityIn.motionX, entityIn.motionY, entityIn.motionZ };
 				if (entityIn instanceof EntityNPCInterface) {
 					CustomNpcTeleport event = EventHooks.onNpcTeleport((EntityNPCInterface) entityIn, p, pos, getHome ? homeId : id);
 					if (event.isCanceled() || entityIn.isDead) { return; }
 					dimension = event.dimension;
 					if (DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
 				}
-				WorldServer world = Objects.requireNonNull(worldIn.getMinecraftServer()).getWorld(getHome ? homeId : id);
-				if (world != null && entityIn.world.provider.getDimension() != dimension) { entityIn = entityIn.changeDimension(dimension); }
-				if (entityIn != null) {
-					entityIn.setPosition(p.getX() + 0.5d, p.getY(), p.getZ() + 0.5d);
-					entityIn.motionX = motions[0];
-					entityIn.motionY = motions[1];
-					entityIn.motionZ = motions[2];
+				MinecraftServer server = worldIn.getMinecraftServer();
+				if (server != null) {
+					WorldServer world = server.getWorld(getHome ? homeId : id);
+					if (world != null && entityIn.world.provider.getDimension() != dimension) {
+						try { Util.instance.teleportEntity(server, entityIn, dimension, p); }
+						catch (CommandException e) { LogWriter.error("[DEBUG] ", e); }
+					}
 				}
 			}
 		}

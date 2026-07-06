@@ -24,6 +24,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -774,7 +775,7 @@ public class Util implements IMethods {
 		if (entity.world.isRemote || entity.isDead) {
 			return null;
 		}
-		net.minecraftforge.common.ForgeHooks.onTravelToDimension(entity, dimensionId);
+		ForgeHooks.onTravelToDimension(entity, dimensionId);
 		entity.world.profiler.startSection("changeDimension");
 		int dimensionStart = entity.dimension;
 		WorldServer worldserverStart = server.getWorld(dimensionStart);

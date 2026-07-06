@@ -26,16 +26,20 @@ import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.*;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.event.sound.PlaySoundSourceEvent;
 import net.minecraftforge.client.event.sound.PlayStreamingSourceEvent;
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
+import noppes.npcs.blocks.custom.CustomBlockLiquid;
 import noppes.npcs.client.gui.player.GuiMailmanWrite;
 import noppes.npcs.client.gui.player.GuiOpenCase;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
@@ -52,6 +56,7 @@ import noppes.npcs.controllers.data.*;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.fluids.CustomFluid;
 import noppes.npcs.items.ItemBoundary;
 import noppes.npcs.items.ItemNbtBook;
 import noppes.npcs.items.ItemNpcMovingPath;
@@ -432,10 +437,10 @@ public class ClientEventHandler extends Gui {
 				}
 			}
 		}
-		if (event.getEntity() instanceof EntityPlayer && ClientEventHandler.chatMessages.containsKey((EntityPlayer) event.getEntity())) {
+		if (event.getEntity() instanceof EntityPlayer && chatMessages.containsKey((EntityPlayer) event.getEntity())) {
 			EntityPlayer player = (EntityPlayer) event.getEntity();
 			float height = event.getEntity().height + 0.9f;
-			ClientEventHandler.chatMessages.get(player).renderMessages(event.getX(), event.getY() + height, event.getZ(),
+			chatMessages.get(player).renderMessages(event.getX(), event.getY() + height, event.getZ(),
 					0.666667f * height, isInRange(Minecraft.getMinecraft().player, event.getX(), event.getY() + 1.2d, event.getZ()), true);
 		}
 		CustomNpcs.debugData.end(null);
@@ -2664,4 +2669,20 @@ public class ClientEventHandler extends Gui {
 		}
 	}
 
+	@SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
+	public static void onFogDensity(EntityViewRenderEvent.FogDensity event) {
+		LogWriter.info("[DEBUG] ");
+		Entity entity = event.getEntity();
+		World world = entity.world;
+		BlockPos pos = new BlockPos(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ);
+		IBlockState state = world.getBlockState(pos);
+
+		if (state.getBlock() instanceof CustomBlockLiquid) {
+			Fluid fluid = ((CustomBlockLiquid) state.getBlock()).getFluid();
+			if (fluid instanceof CustomFluid) {
+				event.setDensity(fluid.getDensity() / 1000.0f);
+				event.setCanceled(true);
+			}
+		}
+	}
 }

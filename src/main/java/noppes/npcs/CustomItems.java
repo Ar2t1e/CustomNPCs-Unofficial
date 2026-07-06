@@ -71,7 +71,6 @@ public class CustomItems {
         items.add(teleporter = new ItemTeleporter());
         items.add(soulstoneEmpty = new ItemSoulstoneEmpty());
         items.add(soulstoneFull = new ItemSoulstoneFilled());
-        items.add(CustomTabs.ITEMS.item = scripter_item = new ItemScripted());
         items.add(nbt_book = new ItemNbtBook());
         items.add(npcboundary = new ItemBoundary());
         items.add(npcbuilder = new ItemBuilder());
@@ -79,6 +78,7 @@ public class CustomItems {
         items.add(npcplacer = new ItemPlacer());
         items.add(npcreplacer = new ItemReplacer());
         items.add(npcsaver = new ItemSaver());
+        items.add(CustomTabs.ITEMS.item = scripter_item = new ItemScripted());
         List<String> names = new ArrayList<>();
         for (Item it : items) { names.add(Objects.requireNonNull(it.getRegistryName()).toString()); }
         // Custom Items

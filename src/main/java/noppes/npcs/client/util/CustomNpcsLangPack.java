@@ -131,7 +131,6 @@ public class CustomNpcsLangPack {
      */
     public static void added(String key, String value) {
         if (key == null || key.isEmpty() || value == null) { return; }
-        LogWriter.info("[DEBUG] key "+key+" = "+value);
         String translateValue = value;
         if (!currentLanguage.equals("en_us")) {
             String language = currentLanguage;

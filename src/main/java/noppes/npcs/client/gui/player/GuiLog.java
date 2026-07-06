@@ -1245,7 +1245,7 @@ public class GuiLog extends GuiNPCInterface
 		compassData = data.compass;
 		// Back
 		GlStateManager.pushMatrix();
-		drawGradientRect(0, 0, mc.displayWidth, mc.displayHeight, 0xAAFF0000, 0xAA000000);
+		drawGradientRect(0, 0, mc.displayWidth, mc.displayHeight, 0xAA000000, 0xAA000000);
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 		GlStateManager.popMatrix();
 		// Animations

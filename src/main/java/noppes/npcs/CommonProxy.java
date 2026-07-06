@@ -1,5 +1,6 @@
 package noppes.npcs;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import net.minecraft.block.Block;
@@ -16,6 +17,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.stats.RecipeBook;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -23,6 +25,7 @@ import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistryModifiable;
 import net.minecraftforge.registries.RegistryManager;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.handler.data.INpcRecipe;
@@ -38,12 +41,14 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataInventory;
 import noppes.npcs.mixin.entity.player.IEntityPlayerMPMixin;
 import noppes.npcs.mixin.stats.IRecipeBookMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nullable;
 
 public class CommonProxy implements IGuiHandler {
 
 	public static final Map<EntityPlayer, Availability> availabilityStacks = new HashMap<>();
+	private static Field availabilityMapField;
 
 	@Override
 	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) { return null; }
@@ -234,20 +239,62 @@ public class CommonProxy implements IGuiHandler {
 
 	public void syncRecipeManager() {
 		IForgeRegistry<IRecipe> manager = CustomNpcs.proxy.getRecipeManager();
-		List<IRecipe> recipes = new ArrayList<>(manager.getValuesCollection());
-		// new
-		recipes.removeIf(r -> r instanceof RecipeCarpentry);
-		// collect
+		if (!(manager instanceof ForgeRegistry)) { return; }
+
+		ForgeRegistry<IRecipe> forgeRegistry = (ForgeRegistry<IRecipe>) manager;
+		IForgeRegistryModifiable<IRecipe> modifiable = (IForgeRegistryModifiable<IRecipe>) manager;
 		RecipeController rData = RecipeController.getInstance();
-		for (int i = 0; i < 2; i++) {
-			for (INpcRecipe iRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
-				recipes.add((RecipeCarpentry) iRecipe);
+
+		forgeRegistry.unfreeze();
+
+		try {
+			// 1. Collecting RecipeCarpentry items to remove
+			List<IRecipe> toRemove = new ArrayList<>();
+			for (IRecipe recipe : manager.getValuesCollection()) {
+				if (recipe instanceof RecipeCarpentry) {
+					RecipeCarpentry carpentry = (RecipeCarpentry) recipe;
+					String name = carpentry.getMCId().getResourcePath();
+					if (!rData.containsName(name) || !carpentry.isValid()) { toRemove.add(carpentry); }
+				}
+			}
+
+			// 2. Delete and release the ID (to prevent ID leaks due to a bug in Forge)
+			for (IRecipe recipe : toRemove) {
+				ResourceLocation key = recipe.getRegistryName();
+				int id = forgeRegistry.getID(key);
+				modifiable.remove(key);
+				if (id >= 0) { clearAvailabilityMapId(id); }
+			}
+
+			// 3. We register only current RecipeCarpentry
+			for (int i = 0; i < 2; i++) {
+				for (INpcRecipe iRecipe : (i == 0 ? rData.getAllGlobalRecipes() : rData.getAllAnvilRecipes())) {
+					RecipeCarpentry carpentry = (RecipeCarpentry) iRecipe;
+					if (carpentry.isValid()) { manager.register(carpentry); }
+				}
 			}
 		}
-		for (IRecipe r : recipes) { manager.register(r); }
+		finally { forgeRegistry.freeze(); }
+
+		// 4. Synchronizing the recipe book for all players
 		if (CustomNpcs.Server != null) {
 			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) { syncRecipe(player.getRecipeBook()); }
 		}
+	}
+
+	private static void clearAvailabilityMapId(int id) {
+		try {
+			if (availabilityMapField == null) {
+				availabilityMapField = ForgeRegistry.class.getDeclaredField("availabilityMap");
+				availabilityMapField.setAccessible(true);
+			}
+			IForgeRegistry<IRecipe> manager = CustomNpcs.proxy.getRecipeManager();
+			BitSet map = (BitSet) availabilityMapField.get(manager);
+			if (map != null) {
+				map.clear(id);
+			}
+		}
+		catch (Exception e) { LogWriter.error(e); }
 	}
 
 	protected void syncRecipe(RecipeBook book) {

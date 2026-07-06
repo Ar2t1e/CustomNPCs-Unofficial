@@ -2,6 +2,7 @@ package noppes.npcs;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.statemap.StateMap;
 import net.minecraft.item.Item;
@@ -11,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fluids.BlockFluidBase;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.UniversalBucket;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -30,6 +32,7 @@ import noppes.npcs.client.renderer.item.ItemCarpentryBenchRenderer;
 import noppes.npcs.client.renderer.item.ItemMailboxRenderer;
 import noppes.npcs.fluids.CustomFluid;
 import noppes.npcs.items.*;
+import noppes.npcs.items.custom.CustomFluidBottle;
 import noppes.npcs.items.custom.CustomItem;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ModData;
@@ -38,6 +41,7 @@ import noppes.npcs.util.Util;
 
 import java.io.File;
 import java.util.*;
+import java.util.List;
 
 public class CustomBlocks {
 
@@ -134,10 +138,13 @@ public class CustomBlocks {
                     }
                     FluidRegistry.registerFluid(fluid);
                     FluidRegistry.addBucketForFluid(fluid);
-                    registryBlock(location, new CustomLiquid(fluid, CustomItem.getMaterial(nbtBlock.getString("Material")), nbtBlock),
-                            names, blocks, nbtBlock.getBoolean("CreateDefaultFiles"));
+                    registryBlock(location, new CustomBlockLiquid(fluid, Material.WATER, nbtBlock), names, blocks, nbtBlock.getBoolean("CreateDefaultFiles"));
                     LogWriter.debug("Load Custom Fluid: \"" + location + "\"");
                     customfluid.put(location, fluid);
+                    if (nbtBlock.getBoolean("AddCauldron")) {
+                        Block cauldron = new CustomCauldron(fluid, nbtBlock);
+                        registryBlock(CustomNpcs.MODID + ":custom_cauldron_" + valid, cauldron, names, blocks, false);
+                    }
                     break;
                 } // Liquid
                 case (byte) 2: {
@@ -208,9 +215,7 @@ public class CustomBlocks {
         items.add(border_item = createItem(border));
         items.add(builder_item = createItem(builder));
         items.add(copy_item = createItem(copy));
-        items.add(scripted_item = createItem(scripted));
-
-        items.add(CustomTabs.BLOCKS.item = scripted_item);
+        items.add(CustomTabs.BLOCKS.item = scripted_item = createItem(scripted));
         // Blocks
         for (Map.Entry<ICustomElement, Item> entry : customblocks.entrySet()) {
             if (entry.getValue() != null) {
@@ -218,6 +223,13 @@ public class CustomBlocks {
             }
         }
         // Fluids
+        for (Map.Entry<String, ICustomElement> entry : customfluid.entrySet()) {
+            if (entry.getValue() != null) {
+                CustomFluid fluid = (CustomFluid) entry.getValue();
+                Item bottle = new CustomFluidBottle(fluid, fluid.nbtData);
+                items.add(bottle);
+            }
+        }
         for (Item it : event.getRegistry()) {
             if (it instanceof UniversalBucket) { it.setCreativeTab(CustomTabs.BLOCKS); }
         }
@@ -250,6 +262,8 @@ public class CustomBlocks {
                     ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(CustomBlockPortal.TYPE).build());
                 } else if (block instanceof CustomDoor) {
                     ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockDoor.POWERED).build());
+                } else if (block instanceof CustomBlockLiquid) {
+                    ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockFluidBase.LEVEL).build());
                 }
                 ModelLoader.setCustomModelResourceLocation(customblocks.get(element), 0, new ModelResourceLocation(Objects.requireNonNull(block.getRegistryName()), "inventory"));
             }
@@ -278,6 +292,9 @@ public class CustomBlocks {
                 item.setTileEntityItemStackRenderer(((ItemNpcBlock) item).getBlock() instanceof CustomBlockPortal ?
                         CustomTileEntityItemStackRenderer.itemPortalRenderer :
                         CustomTileEntityItemStackRenderer.itemRenderer);
+            }
+            if (item instanceof CustomFluidBottle) {
+                ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(Objects.requireNonNull(item.getRegistryName()), "inventory"));
             }
         }
         items.clear();

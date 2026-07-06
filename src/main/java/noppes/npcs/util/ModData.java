@@ -108,17 +108,38 @@ public class ModData {
     }
 
     private static NBTTagCompound getExampleLiquid() {
+
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "liquidexample");
         compound.setByte("BlockType", (byte) 1);
-        compound.setFloat("Resistance", 2.0f);
-        compound.setInteger("Density", 1100);
-        compound.setBoolean("IsGaseous", false);
-        compound.setInteger("Luminosity", 5);
-        compound.setInteger("Viscosity", 900);
-        compound.setInteger("Temperature", 300);
-        compound.setInteger("Color", 0xFFFFFFFF);
-        compound.setString("Material", "WATER");
+        compound.setBoolean("HasInGameRules", false);
+        compound.setBoolean("AddCauldron", true);
+        compound.setInteger("SlopeFindDistance", 4);
+        compound.setInteger("DropOff", 1);
+        compound.setInteger("TickDelay", 5);
+        compound.setFloat("Resistance", 100.0f);
+        compound.setString("SoundAmbientFlowing", "block.water.ambient");
+        compound.setString("SoundBucketFill", "item.bucket.fill");
+        compound.setString("ParticleUnderFluid", "underwater");
+        compound.setString("ParticleDripParticle", "dripping_water");
+
+        NBTTagCompound nbtProperties = new NBTTagCompound();
+        nbtProperties.setBoolean("liquid", true);
+        nbtProperties.setFloat("explosionResistance", 2.0f);
+        nbtProperties.setInteger("mapColor", 0x822BD9);
+        compound.setTag("Properties", nbtProperties);
+
+        NBTTagCompound nbtFluidType = new NBTTagCompound();
+        nbtFluidType.setInteger("tickRate", 5);
+        nbtFluidType.setInteger("slopeFindDistance", 4);
+        nbtFluidType.setInteger("levelDecreasePerBlock", 4);
+        nbtFluidType.setInteger("fogColor", 0xFF822BD9);
+        nbtFluidType.setInteger("tintColor", 0xFF822BD9);
+        nbtFluidType.setInteger("lightLevel", 5);
+        nbtFluidType.setInteger("density", 1100);
+        nbtFluidType.setInteger("viscosity", 900);
+        nbtFluidType.setInteger("temperature", 300);
+        compound.setTag("FluidType", nbtFluidType);
 
         String sb = "Tags for creating a liquid block:\n" +
                 t + "- key names must match exactly (even the case of the characters);\n" +
@@ -130,7 +151,7 @@ public class ModData {
                 t + "7 key 'Luminosity'; type: 'Integer'; format: '0'<>'2147483647'; default: 5; des - 'Can be excluded' Light level emitted by the fluid block;\n" +
                 t + "8 key 'Viscosity'; type: 'Integer'; format: '0'<>'2147483647'; default: 900; des - 'Can be excluded' Fluid viscosity; higher = slower flow;\n" +
                 t + "9 key 'Temperature'; type: 'Integer'; format: '-2147483648'<>'0'<>'2147483647'; default: 300; des - 'Can be excluded' Fluid temperature in Kelvin; affects interactions;\n" +
-                t + "10 key 'Color'; type: 'Integer'; format: '0'<>'4294967295'; default: 0xFFFFFFFF; des - 'Can be excluded' ARGB color of the fluid (hex); example: 0xFFFFFFFF = white, 0xFF0000FF = blue;";
+                t + "10 key 'tintColor'; type: 'Integer'; format: '0'<>'4294967295'; default: 0xFFFFFFFF; des - 'Can be excluded' ARGB color of the fluid (hex); example: 0xFFFFFFFF = white, 0xFF0000FF = blue;";
         compound.setString("-Description", sb);
         return compound;
     }

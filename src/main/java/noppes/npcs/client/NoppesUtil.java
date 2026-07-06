@@ -334,7 +334,7 @@ public class NoppesUtil {
 		if (customblock instanceof CustomChest) {
 			CustomNpcsLangPack.added("custom.chest." + name, "Custom " + (((CustomChest) customblock).isChest ? "Chest" : "Container") + ": " + n);
 		}
-		if (customblock instanceof CustomLiquid) {
+		if (customblock instanceof CustomBlockLiquid) {
 			CustomNpcsLangPack.added("item." + fileName + "_bucket.name", n);
 			CustomNpcsLangPack.added("fluid." + fileName, n);
 		}
@@ -377,11 +377,11 @@ public class NoppesUtil {
 						File textureFile = new File(textBlocksDir, name + "_overlay.png");
 						File flowFile = new File(textBlocksDir, name + "_flow.png");
 						File stillFile = new File(textBlocksDir, name + "_still.png");
-						File bucketFile = new File(textItemDir, name + "_bucket.png");
+
 						File bottleFile = new File(textItemDir, name + "_bottle.png");
 
 						if (!stillMCmetaFile.exists() || !flowMCmetaFile.exists() ||
-								!textureFile.exists() || !flowFile.exists() || !stillFile.exists() || !bucketFile.exists()) {
+								!textureFile.exists() || !flowFile.exists() || !stillFile.exists()) {
 							// mc_metas
 							noppes.npcs.util.Util.instance.saveFile(stillMCmetaFile, NoppesUtilServer.getDataFile("wms.dat", fileName, name));
 							noppes.npcs.util.Util.instance.saveFile(flowMCmetaFile, NoppesUtilServer.getDataFile("wmf.dat", fileName, name));
@@ -389,12 +389,9 @@ public class NoppesUtil {
 							ICustomElement element = CustomBlocks.customfluid.get(CustomNpcs.MODID + ":custom_fluid_" + name);
 							int tint = customblock.getCustomNbt().getCompound("FluidType").getInteger("tintColor");
 							if (element instanceof CustomFluid && ((CustomFluid) element).getBlock() != null) { tint = ((CustomFluid) element).getColor(); }
-							textures.put(textureFile, getBufferImageOffset(getBufferedImage("wo.png", 8, 8), offsetColor));
-							textures.put(flowFile, getBufferImageOffset(getBufferedImage("wf.png", 32, 512), offsetColor));
-							textures.put(stillFile, getBufferImageOffset(getBufferedImage("ws.png", 16, 320), offsetColor));
-							// bucket
-							textures.put(bucketFile, combineBuffer(getBufferedImage("wb.png", 16, 16),
-									getBufferImageTint(getBufferedImage("wc.png", 16, 16), tint)));
+							textures.put(textureFile, getBufferedImage("wo.png", 8, 8));
+							textures.put(flowFile, getBufferedImage("wf.png", 32, 512));
+							textures.put(stillFile, getBufferedImage("ws.png", 16, 320));
 							// bottle
 							textures.put(bottleFile, combineBuffer(getBufferImageTint(getBufferedImage("wl.png", 16, 16), tint),
 									getBufferedImage("wt.png", 16, 16)));

@@ -25,11 +25,11 @@ public class ItemScripted extends Item {
 	}
 
 	public ItemScripted() {
-		this.setRegistryName(CustomNpcs.MODID, "scripted_item");
-		this.setUnlocalizedName("scripted_item");
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomTabs.TOOLS);
-		this.setHasSubtypes(true);
+		setRegistryName(CustomNpcs.MODID, "scripted_item");
+		setUnlocalizedName("scripted_item");
+		maxStackSize = 1;
+		setCreativeTab(CustomTabs.TOOLS);
+		setHasSubtypes(true);
 	}
 
 	public double getDurabilityForDisplay(@Nonnull ItemStack stack) {
@@ -57,7 +57,7 @@ public class ItemScripted extends Item {
 		if (color >= 0) {
 			return color;
 		}
-		return MathHelper.hsvToRGB((float) (Math.max(0.0f, (1.0 - this.getDurabilityForDisplay(stack))) / 3.0f), 1.0f,  1.0f);
+		return MathHelper.hsvToRGB((float) (Math.max(0.0f, (1.0 - getDurabilityForDisplay(stack))) / 3.0f), 1.0f,  1.0f);
 	}
 
 	public boolean hitEntity(@Nonnull ItemStack stack, @Nonnull EntityLivingBase target, @Nonnull EntityLivingBase attacker) {
@@ -65,9 +65,9 @@ public class ItemScripted extends Item {
 	}
 
 	public boolean showDurabilityBar(@Nonnull ItemStack stack) {
-		IItemStack istack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
-		if (istack instanceof ItemScriptedWrapper) {
-			return ((ItemScriptedWrapper) istack).durabilityShow;
+		IItemStack iStack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack);
+		if (iStack instanceof ItemScriptedWrapper) {
+			return ((ItemScriptedWrapper) iStack).durabilityShow;
 		}
 		return super.showDurabilityBar(stack);
 	}

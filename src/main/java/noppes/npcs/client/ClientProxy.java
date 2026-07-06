@@ -576,12 +576,13 @@ public class ClientProxy extends CommonProxy {
 		return playerData;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked", "rawtypes"})
 	@Deprecated
 	@Override
 	public void load() {
 		Minecraft mc = Minecraft.getMinecraft();
 		MinecraftForge.EVENT_BUS.register(new ClientEventHandler());
+		MinecraftForge.EVENT_BUS.register(new ClientRegisterEvents());
 		if (CustomNpcs.InventoryGuiEnabled) {
 			MinecraftForge.EVENT_BUS.register(new TabRegistry());
 			if (TabRegistry.getTabList().isEmpty()) {
@@ -590,7 +591,6 @@ public class ClientProxy extends CommonProxy {
 				TabRegistry.registerTab(new InventoryTabQuests());
 			}
 		}
-		// registerEntityRenderingHandler(Class<T> entityClass, IRenderFactory<? super T> renderFactory)
 		RenderingRegistry.registerEntityRenderingHandler(EntityNpcPony.class, (Render) new RenderNPCPony());
 		RenderingRegistry.registerEntityRenderingHandler(EntityNpcCrystal.class, new RenderNpcCrystal(new ModelNpcCrystal()));
 		RenderingRegistry.registerEntityRenderingHandler(EntityNpcDragon.class, new RenderNpcDragon(new ModelNpcDragon(), 0.5f));

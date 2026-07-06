@@ -3,6 +3,8 @@
   "package": "noppes.npcs.mixin",
   "refmap": "customnpcs.refmap.json",
   "mixins": [
+    "block.material.IMapColorMixin",
+    "block.material.IMaterialMixin",
     "block.properties.IPropertyIntegerMixin",
     "client.audio.ILibraryMixin",
     "client.audio.ISoundSystemMixin",
@@ -91,6 +93,7 @@
     "client.particle.ParticleSmokeNormalMixin",
     "client.renderer.IBlockModelRendererMixin",
     "client.renderer.IBlockRendererDispatcherMixin",
+    "client.renderer.ItemRendererMixin",
     "client.renderer.entity.IRenderPlayerMixin",
     "client.renderer.entity.RenderFishMixin",
     "client.renderer.entity.RenderLivingBaseLayersMixin",

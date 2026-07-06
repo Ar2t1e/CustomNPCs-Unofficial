@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 
 public class CustomTileEntityPortal extends TileEntityEndPortal {
 
-	public Availability availability;
+	public @Nonnull Availability availability = new Availability();
 	protected ResourceLocation SKY_TEXTURE;
 	protected ResourceLocation PORTAL_TEXTURE;
 	protected float alpha = 0.0f;
@@ -173,8 +173,8 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 	private void readDisplay(NBTTagCompound compound) {
 		dimensionId = compound.getInteger("DimensionID");
 		homeDimensionId = compound.getInteger("HomeDimensionID");
-		PORTAL_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
-		SKY_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
+		if (compound.hasKey("TexturePortal")) { PORTAL_TEXTURE = new ResourceLocation(compound.getString("TexturePortal")); }
+		if (compound.hasKey("TextureSky")) { SKY_TEXTURE = new ResourceLocation(compound.getString("TextureSky")); }
 		type = compound.getInteger("Type");
 		setAlpha(compound.getFloat("Alpha"));
 		availability.load(compound.getCompoundTag("Availability"));
@@ -183,8 +183,8 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 	private NBTTagCompound writeDisplay(NBTTagCompound compound) {
 		compound.setInteger("DimensionID", dimensionId);
 		compound.setInteger("HomeDimensionID", homeDimensionId);
-		compound.setString("TexturePortal", PORTAL_TEXTURE.toString());
-		compound.setString("TextureSky", SKY_TEXTURE.toString());
+		if (PORTAL_TEXTURE != null) { compound.setString("TexturePortal", PORTAL_TEXTURE.toString()); }
+		if (SKY_TEXTURE != null) { compound.setString("TextureSky", SKY_TEXTURE.toString()); }
 		compound.setInteger("Type", type);
 		compound.setFloat("Alpha", alpha);
 		compound.setTag("Availability", availability.save(new NBTTagCompound()));
