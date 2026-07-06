@@ -190,7 +190,7 @@ public class ModData {
         nbtProperties.putBoolean("noLootTable", true);
         nbtProperties.putFloat("explosionResistance", 2.0f);
         nbtProperties.putString("mapColor", "WATER");
-        nbtProperties.putInt("mapColor", 0x4040FF);
+        nbtProperties.putInt("mapColor", 0x822BD9);
         nbtProperties.putString("sound", "EMPTY");
         nbtProperties.putString("pushReaction", "DESTROY");
         compound.put("Properties", nbtProperties);

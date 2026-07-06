@@ -24,7 +24,7 @@ import net.minecraftforge.common.SoundActions;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
-import noppes.npcs.blocks.custom.CustomLiquidBlock;
+import noppes.npcs.blocks.custom.CustomBlockLiquid;
 import noppes.npcs.items.custom.CustomBottleItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ public abstract class CustomFluid extends FlowingFluid implements ICustomElement
     protected CustomFluid source;
     protected @Nullable BucketItem bucket;
     protected @Nullable CustomBottleItem bottle;
-    protected @Nullable CustomLiquidBlock block;
+    protected @Nullable CustomBlockLiquid block;
 
     protected final int tickRate;
     protected final int slopeFindDistance;
@@ -77,7 +77,7 @@ public abstract class CustomFluid extends FlowingFluid implements ICustomElement
 
     public @Nonnull Item getBottle() { return bottle != null ? bottle : Items.AIR; }
 
-    public void setLinks(@Nonnull CustomFluid sourceIn, @Nonnull CustomFluid fluidIn, @Nonnull CustomLiquidBlock blockIn,
+    public void setLinks(@Nonnull CustomFluid sourceIn, @Nonnull CustomFluid fluidIn, @Nonnull CustomBlockLiquid blockIn,
                          @Nonnull BucketItem bucketIn, @Nonnull CustomBottleItem bottleIn) {
         if (source == null) { source = sourceIn; }
         if (flowing == null) { flowing = fluidIn; }
@@ -88,11 +88,11 @@ public abstract class CustomFluid extends FlowingFluid implements ICustomElement
 
     @Override
     protected @Nonnull BlockState createLegacyBlock(@Nonnull FluidState state) {
-        if (block != null) { return block.defaultBlockState().setValue(CustomLiquidBlock.LEVEL, getLegacyLevel(state)); }
+        if (block != null) { return block.defaultBlockState().setValue(CustomBlockLiquid.LEVEL, getLegacyLevel(state)); }
         return Blocks.AIR.defaultBlockState();
     }
 
-    public @Nullable CustomLiquidBlock getBlock() { return block; }
+    public @Nullable CustomBlockLiquid getBlock() { return block; }
 
     @Override
     protected boolean canConvertToSource(@Nonnull Level level) { return false; }

@@ -691,7 +691,7 @@ public class GuiLog
       matrixStack.translate(guiLLeft, guiLTop, 0.0f);
       for (Faction f : playerFactions) {
          if (f.hideFaction && !player.isCreative()) { continue; }
-         if (p < page * 10) { p++; continue; }
+         if (p < page * 16) { p++; continue; }
          if (i == 8) {
             matrixStack.translate(105.0f * scaleW, -7.0f * 19.0f * scaleH, 0.0f);
          } else if (i % 8 != 0) {
@@ -1172,7 +1172,7 @@ public class GuiLog
       // Back
       matrixStack.pushPose();
       matrixStack.translate(0.0f, 0.0f, -1.0f);
-      graphics.fill(0, 0, minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight(), 0xAAFF0000, 0xAA000000);
+      graphics.fill(0, 0, minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight(), 0xAA000000, 0xAA000000);
       matrixStack.popPose();
 
       // Animations

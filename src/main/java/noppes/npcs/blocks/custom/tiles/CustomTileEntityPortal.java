@@ -27,7 +27,7 @@ import java.util.Objects;
 
 public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
 
-    public Availability availability = new Availability();
+    public @Nonnull Availability availability = new Availability();
     protected ResourceLocation SKY_TEXTURE;
     protected ResourceLocation PORTAL_TEXTURE;
     protected float alpha = 0.0f;
@@ -176,8 +176,8 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
     public void readDisplay(CompoundTag compound) {
         dimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("DimensionID")));
         homeDimensionId = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("HomeDimensionID")));
-        PORTAL_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
-        SKY_TEXTURE = new ResourceLocation(compound.getString("TexturePortal"));
+        if (compound.contains("TexturePortal")) { PORTAL_TEXTURE = new ResourceLocation(compound.getString("TexturePortal")); }
+        if (compound.contains("TextureSky")) { SKY_TEXTURE = new ResourceLocation(compound.getString("TextureSky")); }
         type = compound.getInt("Type");
         setAlpha(compound.getFloat("Alpha"));
         availability.load(compound.getCompound("Availability"));
@@ -186,8 +186,8 @@ public class CustomTileEntityPortal extends TheEndPortalBlockEntity {
     private CompoundTag writeDisplay(CompoundTag compound) {
         compound.putString("DimensionID", dimensionId.location().toString());
         compound.putString("HomeDimensionID", homeDimensionId.location().toString());
-        compound.putString("TexturePortal", PORTAL_TEXTURE.toString());
-        compound.putString("TextureSky", SKY_TEXTURE.toString());
+        if (PORTAL_TEXTURE != null) { compound.putString("TexturePortal", PORTAL_TEXTURE.toString()); }
+        if (SKY_TEXTURE != null) { compound.putString("TextureSky", SKY_TEXTURE.toString()); }
         compound.putInt("Type", type);
         compound.putFloat("Alpha", alpha);
         compound.put("Availability", availability.save(new CompoundTag()));

@@ -19,7 +19,7 @@ import noppes.npcs.blocks.custom.*;
 import noppes.npcs.client.particles.CustomParticleType;
 import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.blocks.custom.CustomLiquidBlock;
+import noppes.npcs.blocks.custom.CustomBlockLiquid;
 import noppes.npcs.fluids.CustomFluid;
 import noppes.npcs.items.custom.*;
 import noppes.npcs.packets.Packets;
@@ -301,7 +301,7 @@ public class NoppesUtil {
       if (customblock instanceof CustomChest chest) {
          CustomNpcsLangPack.added("custom.chest." + name, "Custom " + (chest.isChest ? "Chest" : "Container") + ": " + n);
       }
-      else if (customblock instanceof CustomLiquidBlock) {
+      else if (customblock instanceof CustomBlockLiquid) {
          CustomNpcsLangPack.added("item." + CustomNpcs.MODID + "." + fileName + "_bucket", n);
          CustomNpcsLangPack.added("item." + CustomNpcs.MODID + "." + fileName + "_bottle", n);
          CustomNpcsLangPack.added("fluid." + fileName, n);

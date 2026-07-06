@@ -4,7 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.level.GameRules;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.blocks.custom.CustomLiquidBlock;
+import noppes.npcs.blocks.custom.CustomBlockLiquid;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ModData;
 import noppes.npcs.util.NBTJsonUtil;
@@ -57,7 +57,7 @@ public class GameRulesMixin {
                 if (nbtBlock.getByte("BlockType") == (byte) 1 &&
                         nbtBlock.contains("HasInGameRules", 1) && nbtBlock.getBoolean("HasInGameRules")) {
                     String name = "custom_fluid_" + nbtBlock.getString("RegistryName") + "SourceConversion";
-                    CustomLiquidBlock.gameRules.put(nbtBlock.getString("RegistryName"),
+                    CustomBlockLiquid.gameRules.put(nbtBlock.getString("RegistryName"),
                             GameRules.register(name, GameRules.Category.UPDATES, GameRules.BooleanValue.create(true)));
                     LogWriter.info("Add Fluid GameRules \"" + name + "\"");
                 }

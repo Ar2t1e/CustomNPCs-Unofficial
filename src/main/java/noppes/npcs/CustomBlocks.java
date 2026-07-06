@@ -228,7 +228,7 @@ public class CustomBlocks {
                           fluidType, slopeFindDistance, levelDecreasePerBlock, explosionResistance, tickRate);
                   BucketItem bucket = new BucketItem(() -> source, (new Item.Properties()).craftRemainder(Items.BUCKET).stacksTo(1));
                   CustomBottleItem bottle = new CustomBottleItem(source, (new Item.Properties()).craftRemainder(Items.GLASS_BOTTLE).stacksTo(LayeredCauldronBlock.MAX_FILL_LEVEL));
-                  CustomLiquidBlock block = new CustomLiquidBlock(location, () -> source, getProperty(nbtBlock), nbtBlock);
+                  CustomBlockLiquid block = new CustomBlockLiquid(location, () -> source, getProperty(nbtBlock), nbtBlock);
                   flowing.setLinks(source, flowing, block, bucket, bottle);
                   source.setLinks(source, flowing, block, bucket, bottle);
                   event.getForgeRegistry().register(flowing.getLocation(), flowing);
@@ -514,7 +514,7 @@ public class CustomBlocks {
               || location.endsWith(":custom_containerexample") || location.endsWith(":custom_doorexample");
       if (isExample || defFiles) { CustomNpcs.proxy.createAllFiles((ICustomElement) block); }
       LogWriter.info("Load Custom Block \"" + location + "\"");
-      if (!(block instanceof CustomLiquidBlock)) {
+      if (!(block instanceof CustomBlockLiquid)) {
          if (block instanceof CustomDoor door) { customblocks.put(element, new DoubleHighBlockItem(door, new Properties())); }
          else { customblocks.put(element, new ItemNpcBlock(block, new Properties())); }
       }

@@ -5,7 +5,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.*;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
@@ -17,13 +16,13 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 // WaterFluid or LavaFluid
-public class CustomLiquidBlock extends LiquidBlock implements ICustomElement {
+public class CustomBlockLiquid extends LiquidBlock implements ICustomElement {
 
     public static final HashMap<String, GameRules.Key<GameRules.BooleanValue>> gameRules = new HashMap<>();
     protected final @Nonnull CompoundTag nbtData;
     public final @Nonnull ResourceLocation name;
 
-    public CustomLiquidBlock(@Nonnull ResourceLocation nameIn, @Nonnull Supplier<? extends CustomFluid> supplier, @Nonnull BlockBehaviour.Properties property, @Nonnull CompoundTag nbtBlock) {
+    public CustomBlockLiquid(@Nonnull ResourceLocation nameIn, @Nonnull Supplier<? extends CustomFluid> supplier, @Nonnull BlockBehaviour.Properties property, @Nonnull CompoundTag nbtBlock) {
         super(supplier, property);
         nbtData = nbtBlock;
         name = nameIn;
