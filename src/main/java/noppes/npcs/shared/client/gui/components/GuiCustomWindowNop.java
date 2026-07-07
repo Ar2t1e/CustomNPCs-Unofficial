@@ -57,6 +57,8 @@ public class GuiCustomWindowNop extends GuiBasic
     // Yellow Dialog Edit
     protected ClientProxy.FontContainer customFont = null;
     public boolean isLock = false;
+    public boolean isYDEShow = false;
+    public YDEScrollNop yde_scroll;
 
     public GuiCustomWindowNop(IGuiInterface gui, int idIn, int x, int y, int width, int height, Component titleIn) {
         super();

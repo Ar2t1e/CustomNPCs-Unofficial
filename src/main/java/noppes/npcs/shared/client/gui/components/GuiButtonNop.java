@@ -334,14 +334,23 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 mc.getTextureManager().bindTexture(WIDGETS_LOCATION);
                 GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
                 GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
                 int left = width / 2;
                 int right = width - left;
                 int v = 46 + state * 20;
+                int h0 = height / 2;
+                int h1 = height - h0;
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(x, y, 0.0f);
-                drawTexturedModalRect(0, 0, 0, v, left, 20);
-                drawTexturedModalRect(left, 0, 200 - right, v, right, 20);
+                drawTexturedModalRect(0, 0, 0, v, left, h0); // left up
+                drawTexturedModalRect(0, h0, 0, v + 20 - h1, left, h1); // left down
+                drawTexturedModalRect(left, 0, 200 - right, v, right, h0); // right up
+                drawTexturedModalRect(left, h0, 200 - right, v + 20 - h1, right, h1); // right down
+                if (enabled && isFocused()) {
+                    drawHorizontalLine(0, width - 1, 0, 0xFFFFFFFF);
+                    drawHorizontalLine(0, width - 1, height - 1, 0xFFFFFFFF);
+                    drawVerticalLine(0, 0, height - 1, 0xFFFFFFFF);
+                    drawVerticalLine(width - 1, 0, height - 1, 0xFFFFFFFF);
+                }
                 GlStateManager.popMatrix();
             }
             else {
@@ -374,7 +383,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 GlStateManager.popMatrix();
             }
         }
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.color(2.0F, 2.0F, 2.0F, 1.0F);
 
         GlStateManager.pushMatrix();
         @Nonnull Component label = getMessage();
@@ -394,7 +403,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             if (customFont != null) { customFont.draw(label, getX() + 2, getY(), color); }
             else { mc.fontRenderer.drawString(label.getFormattedText(), getX() + 2.0f - mc.fontRenderer.getStringWidth(label.getFormattedText()) / 2.0f, getY(), color, showShadow); }
         }
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.color(2.0F, 2.0F, 2.0F, 1.0F);
 
         GlStateManager.popMatrix();
         if (renderStacks != null && renderStacks.length != 0 && (listener == null || !listener.hasSubGui())) {
@@ -420,6 +429,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             }
         }
         GlStateManager.disableBlend();
+        GlStateManager.color(2.0F, 2.0F, 2.0F, 1.0F);
     }
 
     @Override
@@ -560,11 +570,11 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     }
 
     public int getState() {
-        boolean lbm = Mouse.isButtonDown(0);
+        boolean lbm = Mouse.isButtonDown(0) && isHovered;
         if (texture == null) {
             int i = 1;
             if (!enabled) { i = 0; }
-            else if (lbm && isHoveredOrFocused() && (listener == null || !listener.hasSubGui())) { i = 2; }
+            else if (lbm && (listener == null || !listener.hasSubGui())) { i = 2; }
             return i;
         }
         if (isAnim) {

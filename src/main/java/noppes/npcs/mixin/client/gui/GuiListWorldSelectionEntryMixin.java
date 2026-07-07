@@ -39,17 +39,20 @@ public class GuiListWorldSelectionEntryMixin {
     @Inject(method = "loadWorld", at = @At("HEAD"), cancellable = true)
     private void npcs$loadWorld(CallbackInfo ci) {
         try {
-            String agreementName = ((IWorldSummaryMixin) worldSummary).npcs$getAgreementName();
-            if (ScriptController.Instance.notAgreement(agreementName)) {
+            ScriptController.setLevelKey(((IWorldSummaryMixin) worldSummary).npcs$getAgreementName());
+            if (ScriptController.Instance.notAgreement(ScriptController.getLevelKey())) {
                 ci.cancel();
                 client.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 if (client.getSaveLoader().canLoadWorld(this.worldSummary.getFileName())) {
                     client.displayGuiScreen(new GuiYesNo((result, id) -> {
                         if (result) {
-                            ScriptController.Instance.setAgreement(agreementName, true);
+                            ScriptController.Instance.setAgreement(ScriptController.getLevelKey(), true);
                             FMLClientHandler.instance().tryLoadExistingWorld(worldSelScreen, worldSummary);
                         }
-                        else { client.displayGuiScreen(worldSelScreen); }
+                        else {
+                            client.displayGuiScreen(worldSelScreen);
+                            ScriptController.setLevelKey("");
+                        }
                     },
                             I18n.format("system.check.scripts.agree"),
                             I18n.format("system.check.scripts.title"),

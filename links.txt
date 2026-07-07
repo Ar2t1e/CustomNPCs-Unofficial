@@ -1,3 +1,4 @@
+// Файл содержит ссылки на сырые файлы классов мода из ветки публичного репозитория GitHub. Одна строка = одна ссылка
 https://raw.githubusercontent.com/BetaZavr/CustomNPCs-Unofficial/1.12.2_new/src/main/java/micdoodle8/mods/galacticraft/api/client/tabs/AbstractTab.java
 https://raw.githubusercontent.com/BetaZavr/CustomNPCs-Unofficial/1.12.2_new/src/main/java/micdoodle8/mods/galacticraft/api/client/tabs/InventoryTabFactions.java
 https://raw.githubusercontent.com/BetaZavr/CustomNPCs-Unofficial/1.12.2_new/src/main/java/micdoodle8/mods/galacticraft/api/client/tabs/InventoryTabQuests.java

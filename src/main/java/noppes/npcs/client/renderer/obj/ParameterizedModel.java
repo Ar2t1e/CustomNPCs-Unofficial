@@ -138,6 +138,7 @@ public class ParameterizedModel {
 
 	public void render() {
 		GlStateManager.pushMatrix();
+		GlStateManager.enableBlend();
 		Minecraft.getMinecraft().getTextureManager().bindTexture(atlas);
 		if (isDynamic) { draw(); }
 		else {
@@ -148,6 +149,7 @@ public class ParameterizedModel {
 			}
 			GlStateManager.callList(listId);
 		}
+		GlStateManager.disableBlend();
 		GlStateManager.popMatrix();
 	}
 

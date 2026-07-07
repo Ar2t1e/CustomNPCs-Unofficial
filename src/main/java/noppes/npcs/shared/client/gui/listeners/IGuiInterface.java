@@ -74,6 +74,7 @@ public interface IGuiInterface {
 
 	GuiCustomScrollNop addScroll(int id, boolean isMultipleSelection);
 
+	@SuppressWarnings("unused")
 	void extraEvent(Object extra);
 
 	int getX();
@@ -91,6 +92,7 @@ public interface IGuiInterface {
 
 	boolean mouseReleased(double x, double y, int mouseButton);
 
+	@SuppressWarnings("unused")
 	IComponentGui getLastFocused();
 
 	void focusedNextComponent();
@@ -101,4 +103,5 @@ public interface IGuiInterface {
 
 	boolean keyPressed(char typedChar, int keyCode);
 
+	boolean doubleClicked(IComponentGui component);
 }

@@ -245,6 +245,7 @@ public class Dialog implements ICompatibilty, IDialog {
 	// New from BetaZavr
 	public static class StartedNpcData {
 
+		public final @Nonnull String name;
 		public final @Nonnull UUID uuid;
 		public final int dim;
 		public int slot;
@@ -252,11 +253,13 @@ public class Dialog implements ICompatibilty, IDialog {
 		public StartedNpcData(int slotIn, @Nonnull EntityNPCInterface npc) {
 			slot = slotIn;
 			uuid = npc.getUniqueID();
+			name = npc.getName();
 			dim = npc.world.provider.getDimension();
 		}
 
 		public StartedNpcData(@Nonnull NBTTagCompound compound) {
 			slot = compound.getInteger("Slot");
+			name = compound.getString("NpcName");
 			uuid = Objects.requireNonNull(compound.getUniqueId("UUID"));
 			dim = compound.getInteger("Dimension");
 		}
@@ -264,6 +267,7 @@ public class Dialog implements ICompatibilty, IDialog {
 		public NBTTagCompound save() {
 			NBTTagCompound compound = new NBTTagCompound();
 			compound.setInteger("Slot", slot);
+			compound.setString("NpcName", name);
 			compound.setUniqueId("UUID", uuid);
 			compound.setInteger("Dimension", dim);
 			return compound;

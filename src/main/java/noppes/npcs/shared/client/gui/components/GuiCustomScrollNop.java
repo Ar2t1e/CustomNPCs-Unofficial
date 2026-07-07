@@ -74,10 +74,14 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     protected List<ResourceData> prefixes;
     protected List<ItemStack> stacks = null;
     protected boolean isScrolling = false;
+    protected boolean isSimpleSelect = false;
+    protected float scaleX = 1.0f;
+    protected float scaleY = 1.0f;
     public int lineHeight = Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT + 4;
     public int colorBackS = 0xC0101010;
     public int colorBackE = 0xE0101010;
     public int border = 0xFF000000;
+    public int type = 0;
 
     public GuiCustomScrollNop(Object parent, int idIn) {
         id = idIn;
@@ -167,7 +171,29 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
             drawVerticalLine(w, 0, h, border);
             GlStateManager.popMatrix();
         }
-        if ((colorBackS >> 24 & 255) > 0 || (colorBackE >> 24 & 255) > 0) { drawGradientRect(x, y, width + x, height + y, colorBackS, colorBackE); }
+        if ((colorBackS >> 24 & 255) > 0 || (colorBackE >> 24 & 255) > 0) {
+            int sx = x;
+            int sy = y;
+            int ex = width + x;
+            int ey = height + y;
+            if (enabled && isFocused()) {
+                int sv = y;
+                int ev = y + height - 1;
+                if (hasSearch && textField.isVisible()) {
+                    drawHorizontalLine(x, x + width - 1, sv, 0xFFFFFFFF);
+                    sv -= 22;
+                }
+                drawHorizontalLine(x, x + width - 1, sv, 0xFFFFFFFF);
+                drawHorizontalLine(x, x + width - 1, ev, 0xFFFFFFFF);
+                drawVerticalLine(x, sv, ev, 0xFFFFFFFF);
+                drawVerticalLine(x + width - 1, sv, ev, 0xFFFFFFFF);
+                sx = x + 1;
+                sy = y + 1;
+                ex = width + x - 1;
+                ey = height + y - 1;
+            }
+            drawGradientRect(sx, sy, ex, ey, colorBackS, colorBackE);
+        }
 
         // draw scrolling
         if (scrollHeight < height - 2) {
@@ -209,7 +235,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     }
 
     @Override
-    public void tick() { }
+    public void tick() { textField.tick(); }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) { return false; }
@@ -276,17 +302,21 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
                 GuiButtonNop.renderString(suffixes.get(i), right, top, right + w, top + 10,
                         (i == hover ? CustomNpcs.HoverColor.getRGB() : CustomNpcs.MainColor.getRGB()), true, false, customFont);
             }
-            if (multipleSelection && selectedList.contains(i) || !multipleSelection && selected == i) {
+            if (multipleSelection && selectedList.contains(i) ||
+                    isSimpleSelect && hover == i ||
+                    !multipleSelection && selected == i) {
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(left - 2.0f, top - 3.0f, 0.0f);
                 if (customFont != null) {
                     int c = border != 0xFF000000 ? border : -1;
                     GlStateManager.scale(0.5f, 0.5f, 0.5f);
-                    drawVerticalLine(0, 1, lineHeight * 2 + 1, c);
-                    drawVerticalLine((r - 2) * 2, 1, lineHeight * 2 + 1, c);
-                    drawHorizontalLine(1, (r - 2) * 2, 2, c);
-                    drawHorizontalLine(1, (r - 2) * 2, lineHeight * 2, c);
-                    drawRect(2, 4, (r - 2) * 2 - 1, lineHeight * 2 - 1, (c & 0xFFFFFF) | 0x60000000);
+                    r = (int) ((float) (r - left) * scaleX) + 1;
+                    int h = (int) (lineHeight * 2.0f * scaleY) + 2;
+                    drawRect(0, 3, r, h, (c & 0xFFFFFF) | 0x60000000);
+                    drawVerticalLine(0, 3, h, c);
+                    drawVerticalLine(r, 3, h, c);
+                    drawHorizontalLine(0, r, 3, c);
+                    drawHorizontalLine(0, r, h, c);
                 }
                 else {
                     drawVerticalLine(0, 0, lineHeight + 1, -1);
@@ -424,9 +454,13 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
             selected = hover;
             hover = -1;
         }
-        if (clicked && listener instanceof ICustomScrollListener) { ((ICustomScrollListener) listener).scrollClicked(this); }
+        if (clicked && listener instanceof ICustomScrollListener) {
+            if (isSimpleSelect) { ((ICustomScrollListener) listener).scrollDoubleClicked(this); }
+            else { ((ICustomScrollListener) listener).scrollClicked(this); }
+        }
         long time = System.currentTimeMillis();
-        if (listener instanceof ICustomScrollListener && selected >= 0 && selected == lastClickedItem && time - lastClickedTime < 500L) {
+        if (!isSimpleSelect && listener instanceof ICustomScrollListener &&
+                selected >= 0 && selected == lastClickedItem && time - lastClickedTime < 500L) {
             ((ICustomScrollListener) listener).scrollDoubleClicked(this);
         }
         lastClickedTime = time;
@@ -753,6 +787,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     @Override
     public GuiCustomScrollNop setIsVisible(boolean isVisible) {
         visible = isVisible;
+        if (!isVisible) { type = 0; }
         return this;
     }
 
@@ -793,6 +828,17 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
     public GuiCustomScrollNop setIgnoreSelected(ArrayList<Component> list) {
         ignoreSelected.clear();
         if (list != null) { ignoreSelected.addAll(list); }
+        return this;
+    }
+
+    public GuiCustomScrollNop setIsSimpleSelect(boolean isSimpleSelectIn) {
+        isSimpleSelect = isSimpleSelectIn;
+        return this;
+    }
+
+    public GuiCustomScrollNop setHoverScale(float x, float y) {
+        scaleX = ValueUtil.correctFloat(x, 0.0f, 5.0f);
+        scaleY = ValueUtil.correctFloat(y, 0.0f, 5.0f);
         return this;
     }
 

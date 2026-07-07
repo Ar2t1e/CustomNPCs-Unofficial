@@ -35,6 +35,7 @@ import org.lwjgl.opengl.GL11;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
@@ -85,6 +86,10 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public GuiWrapper wrapper = new GuiWrapper(this);
 
     // Mod Resources
+    public static final DecimalFormat df = new DecimalFormat("#.#");
+    public static final DecimalFormat df2 = new DecimalFormat("#.##");
+    public static final DecimalFormat df3 = new DecimalFormat("#.###");
+    public static final DecimalFormat df4 = new DecimalFormat("#.####");
     public static final ResourceLocation MONEY = new ResourceLocation(CustomNpcs.MODID, "textures/items/coin_gold.png");
     public static final ResourceLocation DONAT = new ResourceLocation(CustomNpcs.MODID, "textures/items/coin_donat.png");
     public static final ResourceLocation INFO = new ResourceLocation(CustomNpcs.MODID, "textures/gui/info.png");
@@ -98,6 +103,8 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public static final ResourceLocation ANIMATION_BUTTONS = new ResourceLocation(CustomNpcs.MODID, "textures/gui/animation/buttons.png");
     public static final ResourceLocation ANIMATION_BUTTONS_SLOTS = new ResourceLocation(CustomNpcs.MODID, "textures/gui/animation/button_slots.png");
     public static final ResourceLocation WIDGETS = new ResourceLocation("textures/gui/widgets.png");
+    public static final ResourceLocation YDE_BUTTONS = getResource("animation/yde_buttons.png");
+    public static final ResourceLocation YDE_VERT_BUTTONS = getResource("animation/yde_vertical_buttons.png");
 
     // 3D compass
     public static final Map<String, ResourceLocation> TEXTURES_COMPASS = new HashMap<>();
@@ -204,8 +211,8 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
             wrapper.subgui.handleMouseInput();
             return;
         }
-        double mouseX = (double) (Mouse.getEventX() * width) / mc.displayWidth;
-        double mouseY = height - (double) (Mouse.getEventY() * imageHeight) / mc.displayHeight - 1;
+        double mouseX = (double) Mouse.getX() / (double) scaledResolution.getScaleFactor();
+        double mouseY = (double) (mc.displayHeight - Mouse.getY()) / (double) scaledResolution.getScaleFactor() - 1;
         int mouseButton = Mouse.getEventButton();
         if (Mouse.getEventButtonState()) {
             if (mc.gameSettings.touchscreen && touchValue++ > 0) { return; }
@@ -497,10 +504,10 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     @Override
     public void preDrawScreen(int mouseX, int mouseY) {
         if (wrapper.subgui == null) {
-            if (eventButton != -1 && lastMouseEvent > 0L) {
-                double d0 = (mouseX - wrapper.mouseX) * (double) scaledResolution.getScaleFactor();
-                double d1 = (mouseY - wrapper.mouseY) * (double) scaledResolution.getScaleFactor();
-                mouseDragged(mouseX, mouseY, eventButton, d0, d1);
+            if (eventButton != -1 && lastMouseEvent > 0L && (Mouse.getEventDX() != 0 || Mouse.getEventDY() != 0)) {
+                double dx = (double) Mouse.getEventDX() / (double) scaledResolution.getScaleFactor();
+                double dy = (double) Mouse.getEventDY() / (double) scaledResolution.getScaleFactor();
+                mouseDragged(mouseX, mouseY, eventButton, dx, dy);
             }
             int dWheel = Mouse.getDWheel();
             if (dWheel != 0) { mouseScrolled(mouseX, mouseY, dWheel); }
@@ -553,6 +560,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        preDrawScreen(mouseX, mouseY);
         wrapper.mouseX = mouseX;
         wrapper.mouseY = mouseY;
         int x = hasSubGui() ? 0 : mouseX;
@@ -792,7 +800,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         GlStateManager.popMatrix();
     }
 
-    @SuppressWarnings("unused")
-    public void doubleClicked() {}
+    @Override
+    public boolean doubleClicked(IComponentGui component) { return false; }
 
 }

@@ -9,7 +9,6 @@ import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
-import java.io.DataInputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -51,7 +50,7 @@ public class YDEController {
         NBTTagCompound compound = new NBTTagCompound();
         File file = new File(CustomNpcs.Dir, "yde_data.dat");
         if (file.exists()) {
-            try { compound = CompressedStreamTools.readCompressed(new DataInputStream(Files.newInputStream(file.toPath()))); }
+            try { compound = CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())); }
             catch (Exception e) { LogWriter.error(e); }
         }
         else { save(); }
@@ -83,6 +82,7 @@ public class YDEController {
     }
 
     public @Nonnull YDEData getLevelData(String levelKey) {
+        //levels.clear();
         if (!levels.containsKey(levelKey)) { levels.put(levelKey, new YDEData()); }
         return levels.get(levelKey).check();
     }

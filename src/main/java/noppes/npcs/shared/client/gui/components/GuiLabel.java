@@ -34,6 +34,7 @@ public class GuiLabel extends Gui implements IComponentGui {
     protected ClientProxy.FontContainer customFont = null;
     protected int backColor = 0;
     protected int borderColor = 0;
+    protected long lastClicked = 0L;
     public IGuiInterface listener;
     public boolean showShadow = false;
     public int offsetHoverX = 0;
@@ -198,7 +199,16 @@ public class GuiLabel extends Gui implements IComponentGui {
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) { return false; }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) { return false; }
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        if (isHovered && visible) {
+            if (lastClicked + 500L > System.currentTimeMillis()) {
+                lastClicked = 0L;
+                return listener.doubleClicked(this);
+            }
+            else { lastClicked = System.currentTimeMillis(); }
+        }
+        return false;
+    }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) { return false; }

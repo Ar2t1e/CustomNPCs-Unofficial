@@ -47,8 +47,17 @@ public class GuiButtonBiDirectional extends GuiButtonNop {
       GlStateManager.popMatrix();
 
       int color = 0xFF000000;
-      drawHorizontalLine(getX() + 11, getX() + width - 12, getY(), color);
-      drawHorizontalLine(getX() + 11, getX() + width - 12, getY() + getHeight() - 1, color);
+
+      if (enabled && isFocused()) {
+         drawHorizontalLine(x + 10, x + width - 11, y, 0xFFFFFFFF);
+         drawHorizontalLine(x + 10, x + width - 11, y + height - 1, 0xFFFFFFFF);
+         drawVerticalLine(x + 10, y, y + height - 1, 0xFFFFFFFF);
+         drawVerticalLine(x + width - 11, y, y + height - 1, 0xFFFFFFFF);
+      }
+      else {
+         drawHorizontalLine(getX() + 11, getX() + width - 12, getY(), color);
+         drawHorizontalLine(getX() + 11, getX() + width - 12, getY() + getHeight() - 1, color);
+      }
       @Nonnull Component label = getMessage();
       if (isHovered) {
          label = Component.literal(TextFormatting.UNDERLINE + label.getFormattedText());

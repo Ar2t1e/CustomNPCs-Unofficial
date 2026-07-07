@@ -195,8 +195,12 @@ public class ClientEventHandler extends Gui {
 		if (rotation % 2 == 0) { renderSelectionBox(new BlockPos(schem.schema.getWidth(), schem.schema.getHeight(), schem.schema.getLength())); }
 		else { renderSelectionBox(new BlockPos(schem.schema.getLength(), schem.schema.getHeight(), schem.schema.getWidth())); }
 		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-		GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE,
+				GlStateManager.DestFactor.ZERO);
+		GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA,
+				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 		GlStateManager.depthMask(false);
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F);
 		try {
@@ -2232,10 +2236,10 @@ public class ClientEventHandler extends Gui {
 					drawRect((int) l + 1, 1, (int) (l + w) - 2, (int) h - 1, color);
 					// name
 					if (compassData.showQuestName) {
-						ClientProxy.LogFont.draw(name, w0 / -2.0f, 0, 0x0FFFFFFF);
+						ClientProxy.LogFont.draw(name, w0 / -2.0f, 0, 0xC0FFFFFF);
 					}
 					if (compassData.showTaskProgress) {
-						ClientProxy.LogFont.draw(title, w1 / -2.0f, compassData.showQuestName ? 10 : 0, 0x0FFFFFFF);
+						ClientProxy.LogFont.draw(title, w1 / -2.0f, compassData.showQuestName ? 10 : 0, 0xC0FFFFFF);
 					}
 				}
 				GlStateManager.popMatrix();
@@ -2397,7 +2401,7 @@ public class ClientEventHandler extends Gui {
 				GL11.glDisable(GL11.GL_SCISSOR_TEST);
 			}
 			else {
-				GlStateManager.rotate(-45.0f + compassData.incline, 1.0f, 0.0f, 0.0f);
+				GlStateManager.rotate(-45.0f - compassData.incline, 1.0f, 0.0f, 0.0f);
 				if (compassData.rot != 0.0f) { GlStateManager.rotate(compassData.rot, 0.0f, 1.0f, 0.0f); }
 				// Body
 				GlStateManager.pushMatrix();

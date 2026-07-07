@@ -49,6 +49,7 @@ public class GuiTextArea
     public int y;
     public int width;
     public int height;
+    public int packedFGColor = 0xFFE0E0E0;
     public String text = null;
     public boolean isHovered;
     public boolean active = false;
@@ -88,8 +89,8 @@ public class GuiTextArea
         isHovered = false;
         if (!visible) { return; }
         isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
-        drawRect(x - 1, y - 1, x + width + 1, y + height + 1, -6250336);
-        drawRect(x, y, x + width, y + height, -16777216);
+        drawRect(x - 1, y - 1, x + width + 1, y + height + 1, enabled && isFocused() ? 0xFFFFFFFF : 0xFFA0A0A0);
+        drawRect(x, y, x + width, y + height, isFocused() ? 0xFF181818 : 0xFF000000);
         container.visibleLines = height / container.lineHeight;
         int startBracket;
         if (clicked) {
@@ -169,7 +170,7 @@ public class GuiTextArea
                     drawRect(x + 1 + yPos, e, x + 1 + posX, e + container.lineHeight + 1, -1728052993);
                 }
                 yPos = y + (i - scrolledLine) * container.lineHeight + 1;
-                font.draw(data.getFormattedString(container.makeup), (float)(x + 1), (float) yPos, -2039584);
+                font.draw(data.getFormattedString(container.makeup), (float)(x + 1), (float) yPos, packedFGColor);
                 if (active && isEnabled() && cursorCounter / 6 % 2 == 0 && cursorPosition >= data.start && cursorPosition < data.end) {
                     posX = x + font.width(line.substring(0, cursorPosition - data.start));
                     drawRect(posX + 1, yPos, posX + 2, yPos + 1 + container.lineHeight, -3092272);
@@ -610,5 +611,10 @@ public class GuiTextArea
     public int getWidth() { return width; }
 
     public void setWidth(int widthIn) { width = widthIn; }
+
+    public GuiTextArea setColor(int color) {
+        packedFGColor = color;
+        return this;
+    }
 
 }

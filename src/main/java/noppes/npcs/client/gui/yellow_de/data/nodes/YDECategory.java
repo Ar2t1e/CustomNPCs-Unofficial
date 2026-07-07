@@ -1,8 +1,8 @@
 package noppes.npcs.client.gui.yellow_de.data.nodes;
 
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.client.gui.yellow_de.data.EnumYDEType;
 import noppes.npcs.client.gui.yellow_de.data.YDEData;
 import noppes.npcs.client.gui.yellow_de.data.YDENode;
@@ -47,7 +47,7 @@ public class YDECategory extends YDENode {
         categoryId = cat.id;
         if (id < 0) {
             parent.nodes.remove(-1);
-            id =  parent.getEmptyNodeId();
+            id = parent.getEmptyNodeId();
             parent.nodes.put(id, this);
         }
         return Component.empty()

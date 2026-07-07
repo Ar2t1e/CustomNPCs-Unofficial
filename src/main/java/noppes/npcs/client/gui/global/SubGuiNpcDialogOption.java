@@ -31,7 +31,7 @@ public class SubGuiNpcDialogOption
 	public static int LastColor = new Color(0xE0E0E0).getRGB();
 
 	// New from Unofficial (BetaZavr)
-	private static final Object[] options = new Object[] { "gui.close", "dialog.dialog", "gui.disabled", "menu.role", "block.minecraft.command_block" };
+	public static final Object[] options = new Object[] { "gui.close", "dialog.dialog", "gui.disabled", "menu.role", "block.minecraft.command_block" };
 	public final GuiScreen parent;
 	private final Map<Component, DialogOption.OptionDialogID> data = new HashMap<>(); // {scrollTitle, dialogID}
 	private GuiCustomScrollNop scroll;

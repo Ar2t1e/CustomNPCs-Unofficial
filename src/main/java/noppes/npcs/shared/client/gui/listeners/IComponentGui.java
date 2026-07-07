@@ -53,4 +53,12 @@ public interface IComponentGui {
     void tick();
 
     boolean isHovered();
+
+    int getHeight();
+
+    int getWidth();
+
+    int getX();
+
+    int getY();
 }

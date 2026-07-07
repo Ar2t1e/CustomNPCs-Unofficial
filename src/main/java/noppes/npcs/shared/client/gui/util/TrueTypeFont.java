@@ -22,6 +22,7 @@ import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.LRUHashMap;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 import javax.annotation.Nullable;
 
@@ -71,22 +72,19 @@ public class TrueTypeFont {
 
 	public int draw(String text, float x, float y, int color) {
 		GlyphCache cache = getOrCreateCache(text);
-		int a = color >> 24 & 255;
-		int r = color >> 16 & 255;
-		int g = color >> 8 & 255;
-		int b = color & 255;
+		float a = (color >> 24 & 255) / 255.0f;
+		float r = (color >> 16 & 255) / 255.0f;
+		float g = (color >> 8 & 255) / 255.0f;
+		float b = (color & 255) / 255.0f;
 		if (a == 0) { a = 255; }
 
-		GlStateManager.color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+		GlStateManager.color(r, g, b, a);
 		GlStateManager.enableBlend();
 
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(x, y, 0.0f);
 		GlStateManager.scale(scale, scale, 1.0f);
 
-		int rr = r;
-		int gg = g;
-		int  bb = b;
 		boolean bold = false;
 		boolean italic = false;
 		boolean underline = false;
@@ -100,16 +98,14 @@ public class TrueTypeFont {
 		for (Glyph gl : glyphs) {
 			switch (gl.type) {
 				case RESET: {
-					rr = r;
-					gg = g;
-					bb = b;
 					bold = italic = underline = strikethrough = obfuscated = false;
+					GlStateManager.color(r, g, b, a);
 					break;
 				}
 				case COLOR: {
-					rr = gl.color >> 16 & 255;
-					gg = gl.color >> 8 & 255;
-					bb = gl.color & 255;
+					GlStateManager.color((gl.color >> 16 & 255) / 255.0f,
+							(gl.color >> 8 & 255) / 255.0f,
+							(gl.color & 255) / 255.0f, a);
 					break;
 				}
 				case BOLD: bold = true; break;
@@ -142,7 +138,7 @@ public class TrueTypeFont {
 						fillGradient(gl.texture, currentX + (italic ? -italicOffset : 0), 0.0F,
 								(float) renderGlyph.x * textureScale(),
 								(float) renderGlyph.y * textureScale(),
-								glWidth, glHeight, rr, gg, bb);
+								glWidth, glHeight);
 					}
 
 					GlStateManager.popMatrix();
@@ -163,18 +159,18 @@ public class TrueTypeFont {
 						fillGradient(gl.texture, currentX + 0.5F + (italic ? -italicOffset : 0), 0.0F,
 								(float) renderGlyph.x * textureScale(),
 								(float) renderGlyph.y * textureScale(),
-								glWidth, glHeight, rr, gg, bb);
+								glWidth, glHeight);
 						GlStateManager.popMatrix();
 						currentX += 0.5F;
 					}
 					float f0 = 0.5f;
 					if (strikethrough) {
 						float lineY = glHeight * 0.5f;
-						fillColor(currentX, lineY, glWidth, f0, rr, gg, bb);
+						fillColor(currentX, lineY, glWidth, f0);
 					}
 					if (underline) {
 						float lineY = glHeight - 1.0f;
-						fillColor(currentX, lineY, glWidth, f0, rr, gg, bb);
+						fillColor(currentX, lineY, glWidth, f0);
 					}
 					currentX += glWidth;
 					break;
@@ -188,51 +184,54 @@ public class TrueTypeFont {
 		return (int) (x + currentX * scale);
 	}
 
-	public void fillGradient(int texture, float x, float y, float textureX, float textureY, float width, float height, int r, int g, int b) {
+	public void fillGradient(int texture, float x, float y, float textureX, float textureY, float width, float height) {
 		float f = 0.00390625F;
 		float zLevel = 0.0f;
 
+		GlStateManager.enableBlend();
+		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE,
+				GlStateManager.DestFactor.ZERO);
 		GlStateManager.bindTexture(texture);
 
 		BufferBuilder builder = Tessellator.getInstance().getBuffer();
-		builder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
+		builder.begin(7, DefaultVertexFormats.POSITION_TEX);
 		builder.noColor();
 		builder.pos(x, (y + height), zLevel)
 				.tex((textureX * f), ((textureY + height) * f))
-				.color(r, g, b, 255)
 				.endVertex();
 		builder.pos((x + width), (y + height), zLevel)
 				.tex(((textureX + width) * f), ((textureY + height) * f))
-				.color(r, g, b, 255)
 				.endVertex();
 		builder.pos((x + width), y, zLevel)
 				.tex(((textureX + width) * f), (textureY * f))
-				.color(r, g, b, 255)
 				.endVertex();
 		builder.pos(x, y, zLevel)
 				.tex((textureX * f), (textureY * f))
-				.color(r, g, b, 255)
 				.endVertex();
 		Tessellator.getInstance().draw();
+		GlStateManager.disableBlend();
 	}
 
-	private void fillColor(float x, float y, float w, float h, int r, int g, int b) {
+	private void fillColor(float x, float y, float w, float h) {
 		float zLevel = 0.0f;
-		BufferBuilder builder = Tessellator.getInstance().getBuffer();
-		builder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-		builder.pos(x, y + h, zLevel)
-				.color(r, g, b, 255)
-				.endVertex();
-		builder.pos(x + w, y + h, zLevel)
-				.color(r, g, b, 255)
-				.endVertex();
-		builder.pos(x + w, y, zLevel)
-				.color(r, g, b, 255)
-				.endVertex();
-		builder.pos(x, y, zLevel)
-				.color(r, g, b, 255)
-				.endVertex();
-		Tessellator.getInstance().draw();
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferbuilder = tessellator.getBuffer();
+		GlStateManager.enableBlend();
+		GlStateManager.disableTexture2D();
+		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+				GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE,
+				GlStateManager.DestFactor.ZERO);
+		bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
+		bufferbuilder.pos(x, y + h, zLevel).endVertex();
+		bufferbuilder.pos(x + w, y + h, zLevel).endVertex();
+		bufferbuilder.pos(x + w, y, zLevel).endVertex();
+		bufferbuilder.pos(x, y, zLevel).endVertex();
+		tessellator.draw();
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
 	}
 
 	private Glyph getObfuscatedGlyph(char originalChar, Glyph original) {
@@ -361,15 +360,11 @@ public class TrueTypeFont {
 			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(pixels.length * 4);
 			byteBuffer.asIntBuffer().put(pixels).flip();
 			TextureUtil.uploadTextureImage(cache.textureId, cache.bufferedImage);
-			GL11.glPixelStorei(GL11.GL_UNPACK_ROW_LENGTH, 0);
-			GL11.glPixelStorei(GL11.GL_UNPACK_SKIP_ROWS, 0);
-			GL11.glPixelStorei(GL11.GL_UNPACK_SKIP_PIXELS, 0);
-			GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
-			GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, TEXTURE_SIZE, TEXTURE_SIZE, 0, 32993, 33639, byteBuffer);
-			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);  // LINEAR — better anti-aliasing
-			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);  // and for minification also LINEAR
-			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, 33071);  // GL_CLAMP_TO_EDGE
-			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, 33071);  // GL_CLAMP_TO_EDGE
+			GlStateManager.bindTexture(cache.textureId);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
 			glyphCache.put(c, g);
 		}
 		return g;
@@ -427,6 +422,40 @@ public class TrueTypeFont {
 	public String getFontName() { return font.getFontName(); }
 
 	public boolean hasFont() { return font != null; }
+
+	public String trimStringToWidth(String str, int maxWidth) {
+		if (str == null || str.isEmpty()) { return ""; }
+		float scaledMaxWidth = maxWidth / (scale * textureScale());
+		int currentWidth = 0;
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < str.length(); i++) {
+			char c = str.charAt(i);
+			if (c == specialChar && i + 1 < str.length()) {
+				char next = str.charAt(i + 1);
+				if ("0123456789abcdefklmnor".indexOf(Character.toLowerCase(next)) >= 0) {
+					result.append(c).append(next);
+					i++;
+					continue;
+				}
+			}
+			Glyph glyph = getOrCreateGlyph(c);
+			int charWidth = glyph.width;
+			if (currentWidth + charWidth > scaledMaxWidth) { break; }
+			currentWidth += charWidth;
+			result.append(c);
+		}
+		return result.toString();
+	}
+
+	public String trimStringToWidth(String str, int maxWidth, boolean withEllipsis) {
+		String result = trimStringToWidth(str, maxWidth);
+		if (withEllipsis && result.length() < str.length()) {
+			int ellipsisWidth = width("...");
+			String withoutEllipsis = trimStringToWidth(str, maxWidth - ellipsisWidth);
+			return withoutEllipsis + "...";
+		}
+		return result;
+	}
 
 	static class Glyph {
 		TrueTypeFont.GlyphType type;

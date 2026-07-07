@@ -68,7 +68,7 @@ public class ScriptController {
 	public final Map<String, String> clients = new TreeMap<>();
 	public final Map<String, File> encrypts = new TreeMap<>();
 
-	// key create in CommonProxy.getAgreementKey() and in ClientEventHandler.cnpcOpenGUIEvent()
+	private static String currentAgreement;
 	private final List<String> agreements = new ArrayList<>();
 	private final List<ScriptContainer> errors = new ArrayList<>();
 	private final Map<Integer,List<Object>> elements = new TreeMap<>();
@@ -185,6 +185,11 @@ public class ScriptController {
 		if (isClient) { loadAgreements(); }
 		CustomNpcs.debugData.end(null);
 	}
+
+
+	public static String getLevelKey() { return currentAgreement; }
+
+	public static void setLevelKey(String levelKey) { currentAgreement = levelKey != null ? levelKey : ""; }
 
 	public File clientScriptsFile() {
 		boolean isClient = Thread.currentThread().getName().toLowerCase().contains("client");

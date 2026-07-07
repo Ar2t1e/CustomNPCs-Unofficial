@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
@@ -104,8 +105,8 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
             wrapper.subgui.handleMouseInput();
             return;
         }
-        double mouseX = (double) (Mouse.getEventX() * width) / mc.displayWidth;
-        double mouseY = height - (double) (Mouse.getEventY() * ySize) / mc.displayHeight - 1;
+        double mouseX = (double) Mouse.getX() / (double) scaledResolution.getScaleFactor();
+        double mouseY = (double) (mc.displayHeight - Mouse.getY()) / (double) scaledResolution.getScaleFactor() - 1;
         int mouseButton = Mouse.getEventButton();
         if (Mouse.getEventButtonState()) {
             if (mc.gameSettings.touchscreen && touchValue++ > 0) { return; }
@@ -469,10 +470,10 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     @Override
     public void preDrawScreen(int mouseX, int mouseY) {
         if (wrapper.subgui == null) {
-            if (eventButton != -1 && lastMouseEvent > 0L) {
-                double d0 = (mouseX - wrapper.mouseX) * (double) scaledResolution.getScaleFactor();
-                double d1 = (mouseY - wrapper.mouseY) * (double) scaledResolution.getScaleFactor();
-                mouseDragged(mouseX, mouseY, eventButton, d0, d1);
+            if (eventButton != -1 && lastMouseEvent > 0L && (Mouse.getEventDX() != 0 || Mouse.getEventDY() != 0)) {
+                double dx = (double) Mouse.getEventDX() / (double) scaledResolution.getScaleFactor();
+                double dy = (double) Mouse.getEventDY() / (double) scaledResolution.getScaleFactor();
+                mouseDragged(mouseX, mouseY, eventButton, dx, dy);
             }
             int dWheel = Mouse.getDWheel();
             if (dWheel != 0) { mouseScrolled(mouseX, mouseY, dWheel); }
@@ -481,6 +482,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        preDrawScreen(mouseX, mouseY);
         wrapper.mouseX = mouseX;
         wrapper.mouseY = mouseY;
         Container container = inventorySlots;
@@ -493,7 +495,9 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         }
         super.drawScreen(x, y, partialTicks);
         zLevel = 0.0f;
+        RenderHelper.enableGUIStandardItemLighting();
         for (IComponentGui component : new ArrayList<>(wrapper.components)) { component.render(x, y, partialTicks); }
+        RenderHelper.disableStandardItemLighting();
         if (wrapper.subgui != null) {
             inventorySlots = container;
             GlStateManager.pushMatrix();
@@ -672,5 +676,8 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     public void drawNpc(Entity entity, int x, int y, float zoomed, int rotation, int vertical, int followCursor) {
         wrapper.drawNpc(entity, x, y, zoomed, rotation, vertical, followCursor, guiLeft, guiTop);
     }
+
+    @Override
+    public boolean doubleClicked(IComponentGui component) { return false; }
 
 }

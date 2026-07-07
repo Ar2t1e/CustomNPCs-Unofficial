@@ -11,6 +11,7 @@ import noppes.npcs.shared.client.gui.GuiBasicContainer;
 import noppes.npcs.shared.client.gui.components.custom.CustomGuiEntityDisplay;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class GuiWrapper {
 
@@ -161,8 +162,11 @@ public class GuiWrapper {
     }
 
     private void setFocus(IComponentGui focused) {
-        if (focused != null && !focused.isFocused()) { return; }
-        for (IComponentGui component : new ArrayList<>(components)) { component.setIsFocused(component == focused); }
+        if (focused != null && !focused.isHovered()) { return; }
+        for (IComponentGui component : new ArrayList<>(components)) {
+            component.setIsFocused(component == focused);
+            if (component instanceof GuiCustomScrollNop) { ((GuiCustomScrollNop) component).textField.setIsFocused(component == focused); }
+        }
         if (focused instanceof GuiSliderNop && lastFocusedComponent != focused) { ((GuiSliderNop) focused).onRelease(0.0D, 0.0D); }
         lastFocusedComponent = focused;
     }
@@ -234,15 +238,24 @@ public class GuiWrapper {
         if (element == null) { return; }
         List<IComponentGui> newComponents = new ArrayList<>(components);
         for (IComponentGui comp : newComponents) {
-            if (comp.getClass() == element.getClass() && comp.getId() == element.getId()) {
+            if (comp != null && comp.getClass() == element.getClass() && comp.getId() == element.getId()) {
                 newComponents.remove(comp);
                 break;
             }
         }
         newComponents.add(element);
-        newComponents.sort(Comparator.comparing(IComponentGui::getElementType)
-                .thenComparingInt(IComponentGui::getId));
+        //newComponents.sort(Comparator.comparing(IComponentGui::getElementType).thenComparingInt(IComponentGui::getId));
         components = newComponents;
+        boolean found = false;
+        IComponentGui first = null;
+        for (IComponentGui component : newComponents) {
+            if (!component.getElementType().isSelectable() || !component.isVisible() || !component.isEnabled()) {
+                continue;
+            }
+            if (first == null) { first = component; }
+            if (component.isFocused()) { found = true; break; }
+        }
+        if (!found && first != null) { first.setIsFocused(true); }
     }
 
     public <C extends IComponentGui> List<C> getComponents(Class<C> clazz) {
@@ -273,7 +286,9 @@ public class GuiWrapper {
         boolean change = false;
         IComponentGui first = null;
         for (IComponentGui component : new ArrayList<>(components)) {
-            if (!component.getElementType().isSelectable()) { continue; }
+            if (!component.getElementType().isSelectable() || !component.isVisible() || !component.isEnabled()) {
+                continue;
+            }
             if (first == null) { first = component; }
             if (!found && component.isFocused()) {
                 component.setIsFocused(false);
@@ -281,6 +296,7 @@ public class GuiWrapper {
             }
             else if (found && !component.isFocused()) {
                 component.setIsFocused(true);
+                LogWriter.info("[DEBUG] "+component.getId()+" - "+component);
                 change = true;
                 break;
             }

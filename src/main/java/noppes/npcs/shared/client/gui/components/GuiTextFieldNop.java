@@ -319,8 +319,9 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
             }
             default: {
                 if (enabled && charAllowed(typedChar, keyCode)) {
+                    String preText = getValue();
                     writeText(Character.toString(typedChar));
-                    return true;
+                    return !preText.equals(getValue());
                 }
             } // any symbol
         }
@@ -368,26 +369,24 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (!enabled || !visible) { return false; }
-        boolean wasFocused = isFocused();
-        if (canLoseFocus) { setIsFocused(isHovered); }
-        boolean clicked = onClick(mouseX, mouseY, mouseButton);
-        if (!wasFocused && isFocused()) {
-            unfocus();
-            activeTextfield = this;
-        }
-        if (wasFocused && !isFocused()) { unFocused(); }
+        boolean clicked = mouseButton == 0 && clicked(mouseX, mouseY);
+        if (clicked) { onClick(mouseX, mouseY); }
+        setIsFocused(isHovered && clicked);
         return clicked;
     }
 
-    private boolean onClick(double mouseX, double ignoredMouseY, int mouseButton) {
-        if (enabled && visible && mouseButton == 0 && isHovered) {
-            int i = (int) mouseX - x;
-            if (enableBackgroundDrawing) { i -= 4; }
-            String s = font.trimStringToWidth(text.substring(lineScrollOffset), getWidth());
-            setCursorPosition(font.trimStringToWidth(s, i).length() + lineScrollOffset);
-            return true;
-        }
-        return false;
+    protected boolean clicked(double mouseX, double mouseY) {
+        return enabled && visible && mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + getHeight();
+    }
+
+    private void onClick(double mouseX, double ignoredMouseY) {
+        int i = (int) Math.floor(mouseX) - getX();
+        if (enableBackgroundDrawing) { i -= (customFont != null ? 2 : 4); }
+        String value = getValue();
+        String s = customFont != null ? customFont.getFont().trimStringToWidth(value.substring(lineScrollOffset), getWidth()) :
+                font.trimStringToWidth(text.substring(lineScrollOffset), getWidth());
+        setCursorPosition((customFont != null ? customFont.getFont().trimStringToWidth(s, i) :
+                font.trimStringToWidth(s, i)).length() + lineScrollOffset);
     }
 
     public void unFocused() {
@@ -406,7 +405,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
         }
         if (listener instanceof ITextfieldListener) { ((ITextfieldListener) listener).unFocused(this); }
         if (this == activeTextfield) { activeTextfield = null; }
-        setIsFocused(false);
+        focused = false;
     }
 
     @Override
@@ -445,8 +444,8 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     public void renderWidget(int mouseX, int mouseY, float partialTicks) {
         if (visible) {
             if (getEnableBackgroundDrawing()) {
-                drawRect(x - 1, y - 1, x + width + 1, y + height + 1, -6250336);
-                drawRect(x, y, x + width, y + height, -16777216);
+                drawRect(x - 1, y - 1, x + width + 1, y + height + 1, enabled && isFocused() ? 0xFFFFFFFF : 0xFFA0A0A0);
+                drawRect(x, y, x + width, y + height, enabled && isFocused() ? 0xFF181818 : 0xFF000000);
             }
             int color = getTextColor();
             int j = cursorPosition - lineScrollOffset;
@@ -652,7 +651,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
      * @param type - 0: none; 1: full resource; 2: resource path; 3: resource domain
      */
     public GuiTextFieldNop setResourceLocationType(int type) {
-        resourceLocationType = ValueUtil.correctInt(type, 0, 2);
+        resourceLocationType = ValueUtil.correctInt(type, 0, 3);
         return this;
     }
 
@@ -730,6 +729,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
                 cursorCounter = 0;
                 activeTextfield = this;
             }
+            else if (activeTextfield == this) { unFocused(); }
         }
         return this;
     }

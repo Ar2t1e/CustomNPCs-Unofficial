@@ -57,7 +57,7 @@ public class YDEDialog extends YDENode {
             parent.nodes.put(id, this);
         }
         dialogId = dialog != null ? dialog.id : -1;
-        return Component.translatable("dialog.dialog").append(Component.literal("ID: " + dialogId));
+        return Component.translatable("dialog.dialog").append("ID: " + dialogId);
     }
 
 }

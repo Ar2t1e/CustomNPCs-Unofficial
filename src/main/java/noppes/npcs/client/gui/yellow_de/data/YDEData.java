@@ -77,8 +77,7 @@ public class YDEData {
             YDECategory yde_category = null;
             for (YDENode node : new ArrayList<>(nodes.values())) {
                 if (node instanceof YDECategory) {
-                    YDECategory catNode = (YDECategory) node;
-                    if (catNode.category.equals(category.title)) { yde_category = catNode; }
+                    if (node.category.equals(category.title)) { yde_category = ((YDECategory) node); }
                 }
             }
             if (yde_category == null) {
@@ -91,11 +90,10 @@ public class YDEData {
         Set<Integer> sets = new HashSet<>();
         for (YDENode node : new ArrayList<>(nodes.values())) {
             if (node instanceof YDEDialog) {
-                YDEDialog yde_dialog = (YDEDialog) node;
-                if (yde_dialog.dialogId > -1 &&
-                        DialogController.instance.get(yde_dialog.dialogId) == null || sets.contains(yde_dialog.dialogId)) {
+                if (((YDEDialog) node).dialogId > -1 &&
+                        DialogController.instance.get(((YDEDialog) node).dialogId) == null || sets.contains(((YDEDialog) node).dialogId)) {
                     nodes.remove(node.id);
-                } else { sets.add(yde_dialog.dialogId); }
+                } else { sets.add(((YDEDialog) node).dialogId); }
             }
         }
         for (DialogCategory category : new ArrayList<>(DialogController.instance.categories.values())) {
@@ -235,20 +233,15 @@ public class YDEData {
 
     public YDEArea getArea(String category, int areaId) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
-            if (node instanceof YDEArea) {
-                YDEArea area = (YDEArea) node;
-                if (area.category.equals(category) && area.id == areaId) { return area; }
-            }
+            if (node instanceof YDEArea && node.category.equals(category) && node.id == areaId) { return (YDEArea) node; }
         }
         return null;
     }
 
     public YDEOption getOption(DialogOption optionIn) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
-            if (node.type == EnumYDEType.OPTION && node instanceof YDEOption) {
-                YDEOption option = (YDEOption) node;
-                if (option.option.equals(optionIn)) { return option; }
-            }
+            if (node.type == EnumYDEType.OPTION && node instanceof YDEOption &&
+                    ((YDEOption) node).option.equals(optionIn)) { return (YDEOption) node; }
         }
         return null;
     }
@@ -265,32 +258,25 @@ public class YDEData {
 
     public YDENpc getNpc(String category, Dialog.StartedNpcData npcData) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
-            if (node instanceof YDENpc) {
-                YDENpc npc = (YDENpc) node;
-                if (npc.category.equals(category) && npc.npcData.equals(npcData)) { return npc; }
-            }
+            if (node.type == EnumYDEType.NPC && node instanceof YDENpc &&
+                    node.category.equals(category) && ((YDENpc) node).npcData.equals(npcData)) { return (YDENpc) node; }
         }
         return null;
     }
 
     public YDEQuest getQuest(String category, int questId) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
-            if (node instanceof YDEQuest) {
-                YDEQuest quest = (YDEQuest) node;
-                if (quest.category.equals(category) && quest.questId == questId) { return quest; }
-            }
+            if (node.type == EnumYDEType.QUEST && node instanceof YDEQuest &&
+                    node.category.equals(category) && ((YDEQuest) node).questId == questId) { return (YDEQuest) node; }
         }
         return null;
     }
 
     public YDEDialog getDialog(@Nonnull Dialog dialog) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
-            if (node instanceof YDEDialog) {
-                YDEDialog yde_dialog = (YDEDialog) node;
-                if (dialog.equals(yde_dialog.dialog) ||
-                        (yde_dialog.dialog != null && yde_dialog.dialog.id == dialog.id) ||
-                        yde_dialog.dialogId == dialog.id) { return yde_dialog; }
-            }
+            if (node.type == EnumYDEType.DIALOG && node instanceof YDEDialog &&
+                    (dialog.equals(((YDEDialog) node).dialog) || (((YDEDialog) node).dialog != null &&
+                            ((YDEDialog) node).dialog.id == dialog.id) || ((YDEDialog) node).dialogId == dialog.id)) { return (YDEDialog) node; }
         }
         return null;
     }
@@ -298,10 +284,8 @@ public class YDEData {
     public YDEDialog getDialog(int dialogId) {
         Dialog dialog = DialogController.instance.get(dialogId);
         for (YDENode node : new ArrayList<>(nodes.values())) {
-            if (node instanceof YDEDialog) {
-                YDEDialog yde_dialog = (YDEDialog) node;
-                if (dialog != null && dialog.equals(yde_dialog.dialog) || yde_dialog.dialogId == dialogId) { return yde_dialog; }
-            }
+            if (node.type == EnumYDEType.DIALOG && node instanceof YDEDialog &&
+                    (dialog != null && dialog.equals(((YDEDialog) node).dialog) || ((YDEDialog) node).dialogId == dialogId)) { return (YDEDialog) node; }
         }
         return null;
     }
@@ -320,9 +304,8 @@ public class YDEData {
         YDECategory empty = null;
         for (YDENode node : new ArrayList<>(nodes.values())) {
             if (node instanceof YDECategory) {
-                YDECategory cat = (YDECategory) node;
-                if (cat.category.equals(categoryTitle)) { return cat; }
-                if (cat.category.isEmpty()) { empty = cat; }
+                if (node.category.equals(categoryTitle)) { return ((YDECategory) node); }
+                if (node.category.isEmpty()) { empty = (YDECategory) node; }
             }
         }
         if (empty == null) { nodes.put(-1, empty = new YDECategory(this, -1, "")); }

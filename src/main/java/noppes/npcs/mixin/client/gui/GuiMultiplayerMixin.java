@@ -22,17 +22,20 @@ public class GuiMultiplayerMixin {
      */
     @Inject(method = "connectToServer", at = @At("HEAD"), cancellable = true)
     private void npcs$connectToServer(ServerData server, CallbackInfo ci) {
-        String agreementName = server.serverName + ";" + server.gameVersion + ";" + server.serverIP + ";" + server.isOnLAN();
-        if (ScriptController.Instance.notAgreement(agreementName)) {
+        ScriptController.setLevelKey(server.serverName + ";" + server.gameVersion + ";" + server.serverIP + ";" + server.isOnLAN());
+        if (ScriptController.Instance.notAgreement(ScriptController.getLevelKey())) {
             ci.cancel();
             Minecraft client = Minecraft.getMinecraft();
             GuiScreen parent = client.currentScreen;
             client.displayGuiScreen(new GuiYesNo((result, id) -> {
                 if (result) {
-                    ScriptController.Instance.setAgreement(agreementName, true);
+                    ScriptController.Instance.setAgreement(ScriptController.getLevelKey(), true);
                     FMLClientHandler.instance().connectToServer(parent, server);
                 }
-                else { client.displayGuiScreen(parent); }
+                else {
+                    client.displayGuiScreen(parent);
+                    ScriptController.setLevelKey("");
+                }
             },
                     I18n.format("system.check.scripts.agree"),
                     I18n.format("system.check.scripts.title"),

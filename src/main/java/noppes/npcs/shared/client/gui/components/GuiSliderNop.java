@@ -91,8 +91,7 @@ public class GuiSliderNop extends Gui implements IComponentGui {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrolled) {
         if (visible && enabled && isHovered && scrolled != 0.0d) {
-            float step = (float) width / 100.0f;
-            setSliderValue(sliderValue + (scrolled > 0.0d ? step : -step));
+            setSliderValue(sliderValue + (scrolled > 0.0d ? 0.05f : -0.05f));
             return true;
         }
         return false;
@@ -120,6 +119,8 @@ public class GuiSliderNop extends Gui implements IComponentGui {
     }
 
     public void renderWidget(int mouseX, int mouseY, float partialTicks) {
+        isHovered = visible && mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
+        if (!visible) { return; }
         GlStateManager.pushMatrix();
         GlStateManager.enableDepth();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -133,6 +134,12 @@ public class GuiSliderNop extends Gui implements IComponentGui {
         drawDefaultBackground();
         GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + getWidth(), getY() + getHeight(),
                 packedFGColor | 255 << 24, showShadow, true, customFont);
+        if (enabled && isFocused()) {
+            drawHorizontalLine(x, x + width - 1, y, 0xFFFFFFFF);
+            drawHorizontalLine(x, x + width - 1, y + height - 1, 0xFFFFFFFF);
+            drawVerticalLine(x, y, y + height - 1, 0xFFFFFFFF);
+            drawVerticalLine(x + width - 1, y, y + height - 1, 0xFFFFFFFF);
+        }
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.popMatrix();
         GlStateManager.disableDepth();
@@ -144,8 +151,8 @@ public class GuiSliderNop extends Gui implements IComponentGui {
         return this;
     }
 
-    public void onClick(double x, double y) {
-        setSliderValue((float)(x - (double)(getX() + 4)) / (float)(width - 8));
+    public void onClick(double mouseX, double mouseY) {
+        setSliderValue((float)(mouseX - (double)(getX() + 4)) / (float)(width - 8));
     }
 
     @Override

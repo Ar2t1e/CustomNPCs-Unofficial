@@ -231,13 +231,13 @@ public class GuiNpcInv extends GuiContainerNPCInterface2<ContainerNPCInv>
 		// min xp
 		addLabel(0,  guiLeft + 108, guiTop + 18, "inv.minExp")
 				.setSize(66, 12);
-		addTextField(0, guiLeft + 108, guiTop + 29, 60, 20, inventory.getExpMin())
+		addTextField(0, guiLeft + 108, guiTop + 29, 60, 18, inventory.getExpMin())
 				.setMinMaxDefault(0, Short.MAX_VALUE, 0)
 				.setHoverTexts("inv.hover.drops.minxp");
 		// max xp
 		addLabel(1, guiLeft + 108, guiTop + 52, "inv.maxExp")
 				.setSize(66, 12);
-		addTextField(1, guiLeft + 108, guiTop + 63, 60, 20, inventory.getExpMax())
+		addTextField(1, guiLeft + 108, guiTop + 63, 60, 18, inventory.getExpMax())
 				.setMinMaxDefault(0, Short.MAX_VALUE, 0)
 				.setHoverTexts("inv.hover.drops.maxxp");
 		// xp loot mode
