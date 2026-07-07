@@ -432,7 +432,7 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
     * @param type - 0: none; 1: full resource; 2: resource path; 3: resource domain
     */
    public GuiTextFieldNop setResourceLocationType(int type) {
-      resourceLocationType = ValueUtil.correctInt(type, 0, 2);
+      resourceLocationType = ValueUtil.correctInt(type, 0, 3);
       return this;
    }
 

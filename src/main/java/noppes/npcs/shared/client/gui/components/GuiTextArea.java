@@ -83,6 +83,7 @@ public class GuiTextArea
       setText(text);
       undoing = false;
       font.setSpecial(colorChar);
+      setFGColor(0xFFE0E0E0);
    }
 
    public static GuiTextArea getActive() { return activeArea; }
@@ -185,7 +186,7 @@ public class GuiTextArea
                graphics.fill(getX() + 1 + yPos, e, getX() + 1 + posX, e + container.lineHeight + 1, 0x990000FF);
             }
             yPos = getY() + (i - scrolledLine) * container.lineHeight + 1;
-            font.draw(graphics.pose(), data.getFormattedString(container.makeup), (float)(getX() + 1), (float) yPos, 0xFFE0E0E0);
+            font.draw(graphics.pose(), data.getFormattedString(container.makeup), (float)(getX() + 1), (float) yPos, getFGColor());
             if (activeArea == this && isEnabled() && cursorCounter / 8 % 2 == 0 && cursorPosition >= data.start && cursorPosition < data.end) {
                posX = getX() + font.width(line.substring(0, cursorPosition - data.start));
                graphics.fill(posX + 1, yPos, posX + 2, yPos + 1 + container.lineHeight, 0xFFD0D0D0);
@@ -629,9 +630,9 @@ public class GuiTextArea
       return false;
    }
 
-
    public GuiTextArea setColor(int color) {
       setFGColor(color);
       return this;
    }
+
 }

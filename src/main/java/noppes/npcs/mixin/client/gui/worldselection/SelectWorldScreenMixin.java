@@ -33,15 +33,14 @@ public class SelectWorldScreenMixin {
     )
     private void npcsLoadWorld(CallbackInfo ci) {
         try {
-            ScriptController sData = ScriptController.Instance;
             ScriptController.setLevelKey(summary.getLevelName()+"_"+summary.getLevelId()+"_"+summary.getWorldVersionName().getString()+"_"+summary.getSettings().gameType());
-            if (sData.notAgreement(ScriptController.getLevelKey())) {
+            if (ScriptController.Instance.notAgreement(ScriptController.getLevelKey())) {
                 ci.cancel();
                 minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 Screen backScreen = minecraft.screen;
                 minecraft.setScreen(new ConfirmScreen((agree) -> {
                     if (agree && minecraft.getLevelSource().levelExists(summary.getLevelId())) {
-                        sData.setAgreement(ScriptController.getLevelKey(), true);
+                        ScriptController.Instance.setAgreement(ScriptController.getLevelKey(), true);
                         minecraft.forceSetScreen(new GenericDirtMessageScreen(Component.translatable("selectWorld.data_read")));
                         minecraft.createWorldOpenFlows().loadLevel(screen, summary.getLevelId());
                     }

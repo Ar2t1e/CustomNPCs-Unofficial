@@ -1293,9 +1293,7 @@ public class GuiYellowDialogEditor extends GuiBasic
         }
     }
 
-    private void addNewQuest() {
-
-    }
+    private void addNewQuest() { }
 
     private void showExtraMenu() {
         if (category != null) {
@@ -1730,8 +1728,7 @@ public class GuiYellowDialogEditor extends GuiBasic
         rightTab.yde_scroll.tabId = tabId;
     }
 
-    private void setRightTabAvailability(int lId) {
-    }
+    private void setRightTabAvailability(int lId) {}
 
     public void removeSelect(int id) { selects.remove(id); }
 

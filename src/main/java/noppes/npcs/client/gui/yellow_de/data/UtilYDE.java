@@ -31,7 +31,6 @@ public class UtilYDE {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableDepthTest();
-        RenderSystem.enableDepthTest();
         int r = FastColor.ARGB32.red(color);
         int g = FastColor.ARGB32.green(color);
         int b = FastColor.ARGB32.blue(color);
