@@ -26,7 +26,7 @@ version = getCustomVersion()
 // Snapshot version
 def getCustomVersion() {
     Date date = new Date()
-    String month = LocalDateTime.now().month.toString().substring(0, 3)
+    String month = LocalDateTime.now().getMonth().toString().substring(0, 3)
     return "v." + mod_version + "-" + date.format("dd") + month.charAt(0) + month.substring(1).toLowerCase() + date.format("yyyy") + '-Snapshot'
 }
 

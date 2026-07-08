@@ -14,6 +14,7 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
@@ -455,7 +456,7 @@ public class ScriptContainer {
          }
          else { executor.execute(() -> generateAsyncContext(async, sync, arguments)); }
       }
-      else { runSync(sync, arguments); }
+      else { handlerSync(sync, arguments); }
    }
 
    private void generateAsyncContext(String async, String sync, Object arguments) {
@@ -478,16 +479,20 @@ public class ScriptContainer {
          engine = contexts.get(threadId);
          engine.eval("var asyncFunction = (" + async + ");");
          Object result = ((Invocable) engine).invokeFunction("asyncFunction", arguments);
-         if (!sync.isEmpty()) { runSync(sync, result); }
+         if (!sync.isEmpty()) { handlerSync(sync, result); }
       }
       catch (Throwable e) { LogWriter.error(handler.noticeString(async, null) + " script generate async context: ", e); }
    }
 
+   private void handlerSync(String sync, Object arguments) {
+      if (Minecraft.getInstance().isSameThread()) { Minecraft.getInstance().execute(() -> runSync(sync, arguments)); }
+      else if (CustomNpcs.Server != null && CustomNpcs.Server.isRunning()) { CustomNpcs.Server.execute(() -> runSync(sync, arguments)); }
+      else { CustomNPCsScheduler.runTack(() -> runSync(sync, arguments)); }
+   }
+
    private void runSync(String sync, Object arguments) {
-      CustomNPCsScheduler.runTack(() -> {
-         try { ((Invocable) engine).invokeFunction(sync, arguments); }
-         catch (Throwable e) { LogWriter.error(handler.noticeString(sync, null) + " script sync errored: ", e); }
-      });
+      try { ((Invocable) engine).invokeFunction(sync, arguments); }
+      catch (Throwable e) { LogWriter.error(handler.noticeString(sync, null) + " script sync errored: ", e); }
    }
 
    public boolean hasHandler() {

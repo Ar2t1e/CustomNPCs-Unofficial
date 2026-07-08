@@ -477,14 +477,13 @@ public class NoppesUtilServer {
               (armorDir.exists() || armorDir.mkdirs()) &&
               (armorObjDir.exists() || armorObjDir.mkdirs()) &&
               (modelsObjDir.exists() || modelsObjDir.mkdirs())) {
-         boolean isExample = name.contains("example");
-         // Models
+          // Models
          File itemModel = new File(modelsDir, fileName + ".json");
          Map<File, String> modelDatas = new HashMap<>();
          if (customitem.getCustomNbt().getBoolean("IsOBJModel")) {
             File objFile = new File(modelsObjDir, name + ".obj");
             File mtlFile = new File(modelsObjDir, name + ".mtl");
-            if (!isExample || !itemModel.exists() || !objFile.exists() || !mtlFile.exists()) {
+            if (!itemModel.exists() || !objFile.exists() || !mtlFile.exists()) {
                modelDatas.put(itemModel, getDataFile("imas.dat", fileName, name));
                modelDatas.put(objFile, getDataFile("ima_o.dat", fileName, name));
                modelDatas.put(mtlFile, getDataFile("ima_m.dat", fileName, name));
@@ -493,11 +492,11 @@ public class NoppesUtilServer {
          else {
             switch (customitem.getElementType()) {
                case (byte) 1: {
-                  if (!isExample || !itemModel.exists()) { modelDatas.put(itemModel, getDataFile("imw.dat", fileName, name)); }
+                  if (!itemModel.exists()) { modelDatas.put(itemModel, getDataFile("imw.dat", fileName, name)); }
                   break;
                } // Weapon
                case (byte) 2: {
-                  if (!isExample || !itemModel.exists()) { modelDatas.put(itemModel, getDataFile("imt.dat", fileName, name)); }
+                  if (!itemModel.exists()) { modelDatas.put(itemModel, getDataFile("imt.dat", fileName, name)); }
                   break;
                } // Tool
                case (byte) 3: {
@@ -505,7 +504,7 @@ public class NoppesUtilServer {
                   if (((CustomArmor) customitem).objModel != null) {
                      File objFile = new File(armorObjDir, name + ".obj");
                      File mtlFile = new File(armorObjDir, name + ".mtl");
-                     if (!isExample || !itemModel.exists() || !objFile.exists() || !mtlFile.exists()) {
+                     if (!itemModel.exists() || !objFile.exists() || !mtlFile.exists()) {
                         modelDatas.put(itemModel, getDataFile("imro.dat", fileName, name + "_" + slot));
                         modelDatas.put(objFile, getDataFile("am_o.dat", fileName, name));
                         modelDatas.put(mtlFile, getDataFile("am_m.dat", fileName, name));
@@ -521,7 +520,7 @@ public class NoppesUtilServer {
                      File lapisTrimFile = new File(modelsDir, fileName + "_" + slot + "_lapis_trim.json");
                      File emeraldTrimFile = new File(modelsDir, fileName + "_" + slot + "_emerald_trim.json");
                      File copperTrimFile = new File(modelsDir, fileName + "_" + slot + "_copper_trim.json");
-                     if (!isExample || !itemModel.exists() ||
+                     if (!itemModel.exists() ||
                              !ironDarkerTrimFile.exists() || !quartzTrimFile.exists() ||
                              !netheriteTrimFile.exists() || !redstoneTrimFile.exists() ||
                              !amethystTrimFile.exists() || !goldTrimFile.exists() ||
@@ -543,7 +542,7 @@ public class NoppesUtilServer {
                } // Armor
                case (byte) 4: {
                   File blockingFile = new File(modelsDir, fileName + "_blocking.json");
-                  if (!isExample || !itemModel.exists() || !blockingFile.exists()) {
+                  if (!itemModel.exists() || !blockingFile.exists()) {
                      modelDatas.put(itemModel, getDataFile("imsb.dat", fileName, name));
                      modelDatas.put(blockingFile, getDataFile("ims.dat", fileName, name));
                   }
@@ -553,7 +552,7 @@ public class NoppesUtilServer {
                   File pulling_0_File = new File(modelsDir, fileName + "_pulling_0.json");
                   File pulling_1_File = new File(modelsDir, fileName + "_pulling_1.json");
                   File pulling_2_File = new File(modelsDir, fileName + "_pulling_2.json");
-                  if (!isExample || !itemModel.exists() || !pulling_0_File.exists() ||
+                  if (!itemModel.exists() || !pulling_0_File.exists() ||
                           !pulling_1_File.exists() || !pulling_2_File.exists()) {
                      modelDatas.put(itemModel, getDataFile("imb.dat", fileName, name));
                      String jsonModel = getDataFile("imbp.dat", fileName, name);
@@ -568,14 +567,14 @@ public class NoppesUtilServer {
                } // Potion
                case (byte) 8: {
                   File castFile = new File(modelsDir, fileName + "_cast.json");
-                  if (!isExample || !itemModel.exists() || !castFile.exists()) {
+                  if (!itemModel.exists() || !castFile.exists()) {
                      modelDatas.put(itemModel, getDataFile("imf.dat", fileName, name));
                      modelDatas.put(castFile, getDataFile("imfc.dat", fileName, name));
                   }
                   break;
                } // Fishing Rod
                default: {
-                  if (!isExample || !itemModel.exists()) { modelDatas.put(itemModel, getDataFile("im.dat", fileName, name)); }
+                  if (!itemModel.exists()) { modelDatas.put(itemModel, getDataFile("im.dat", fileName, name)); }
                   break;
                } // 0: Simple
             }
@@ -601,8 +600,7 @@ public class NoppesUtilServer {
               (blockModelsDir.exists() || blockModelsDir.mkdirs()) &&
               (itemModelsDir.exists() || itemModelsDir.mkdirs()) &&
               (blockObjModelsDir.exists() || blockObjModelsDir.mkdirs())) {
-         boolean isExample = name.contains("example");
-         // Standard orientable base block:
+          // Standard orientable base block:
          File orientable = new File(blockModelsDir, "orientable.json");
          if (!orientable.exists() && Util.instance.saveFile(orientable, Util.instance.getDataFile("ort.dat"))) {
             LogWriter.debug("Create Orientable Block Model for \"orientable\" block");
@@ -621,7 +619,7 @@ public class NoppesUtilServer {
          if (customblock.getCustomNbt().getBoolean("IsOBJModel")) {
             File objFile = new File(blockObjModelsDir, fileName + ".obj");
             File mtlFile = new File(blockObjModelsDir, fileName + ".mtl");
-            if (!isExample || !blockstate.exists() || !itemFile.exists() || !blockModel.exists() || !objFile.exists() || !mtlFile.exists()) {
+            if (!blockstate.exists() || !itemFile.exists() || !blockModel.exists() || !objFile.exists() || !mtlFile.exists()) {
                stateDatas.put(blockstate, getDataFile("jb.dat", fileName, name));
                modelDatas.put(blockModel, getDataFile("bmo.dat", fileName, name));
                modelDatas.put(objFile, getDataFile("bmc_o.dat", fileName, name));
@@ -635,7 +633,7 @@ public class NoppesUtilServer {
                   blockstate = new File(blockStatesDir, fileName + ".json");
                   File bucketFile = new File(itemModelsDir, fileName + "_bucket.json");
                   File bottleFile = new File(itemModelsDir, fileName + "_bottle.json");
-                  if (!isExample || !blockstate.exists() || !blockModel.exists() ||
+                  if (!blockstate.exists() || !blockModel.exists() ||
                           !bucketFile.exists() || !bottleFile.exists()) {
                      stateDatas.put(blockstate, getDataFile("jlq.dat", fileName, name));
                      modelDatas.put(blockModel, getDataFile("bml.dat", fileName, name));
@@ -648,7 +646,7 @@ public class NoppesUtilServer {
                      File fullFile = new File(blockModelsDir, fileName + "_cauldron_full.json");
                      File level1File = new File(blockModelsDir, fileName + "_cauldron_level1.json");
                      File level2File = new File(blockModelsDir, fileName + "_cauldron_level2.json");
-                     if (!isExample || !cauldronStateFile.exists() || !fullFile.exists() || !level1File.exists() || !level2File.exists()) {
+                     if (!cauldronStateFile.exists() || !fullFile.exists() || !level1File.exists() || !level2File.exists()) {
                         stateDatas.put(cauldronStateFile, getDataFile("jlqc.dat", fileName, name));
                         modelDatas.put(fullFile, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_full"));
                         modelDatas.put(level1File, getDataFile("bmlc.dat", fileName, name).replace("{type}", "_level1"));
@@ -658,7 +656,7 @@ public class NoppesUtilServer {
                   break;
                } // Liquid
                case 2: {
-                  if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
+                  if (!blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
                      boolean isChest = ((CustomChest) customblock).isChest;
                      stateDatas.put(blockstate, getDataFile("jb" + (isChest ? "h" : "") + ".dat", fileName, name));
                      modelDatas.put(blockModel, getDataFile("bm" + (isChest ? "h" : "") + ".dat", fileName, name));
@@ -669,7 +667,7 @@ public class NoppesUtilServer {
                case 3: {
                   File innerFile = new File(blockModelsDir, fileName + "_inner.json");
                   File outerFile = new File(blockModelsDir, fileName + "_outer.json");
-                  if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !innerFile.exists() || !outerFile.exists()) {
+                  if (!blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !innerFile.exists() || !outerFile.exists()) {
                      stateDatas.put(blockstate, getDataFile("jbs.dat", fileName, name));
                      String data = getDataFile("bms.dat", fileName, name);
                      modelDatas.put(blockModel, data.replace("{type}", ""));
@@ -682,7 +680,7 @@ public class NoppesUtilServer {
                case 4: {
                   File slabFile = new File(blockModelsDir, fileName + "_slab.json");
                   File topFile = new File(blockModelsDir, fileName + "_slab_top.json");
-                  if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !slabFile.exists() || !topFile.exists()) {
+                  if (!blockstate.exists() || !blockModel.exists() || !itemFile.exists() || !slabFile.exists() || !topFile.exists()) {
                      stateDatas.put(blockstate, getDataFile("jss.dat", fileName, name));
                      String data = getDataFile("bmss.dat", fileName, name);
                      modelDatas.put(blockModel, getDataFile("bmfc.dat", fileName, name)); // double
@@ -693,7 +691,7 @@ public class NoppesUtilServer {
                   break;
                } // Slab
                case 5: {
-                  if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
+                  if (!blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
                      stateDatas.put(blockstate, getDataFile("jbp.dat", fileName, name));
                      modelDatas.put(blockModel, getDataFile("bmp.dat", name, name));
                      modelDatas.put(itemFile, getDataFile("imp.dat", fileName, name));
@@ -709,7 +707,7 @@ public class NoppesUtilServer {
                   File topLeftOpenFile = new File(blockModelsDir, fileName + "_top_left_open.json");
                   File topRightFile = new File(blockModelsDir, fileName + "_top_right.json");
                   File topRightOpenFile = new File(blockModelsDir, fileName + "_top_right_open.json");
-                  if (!isExample || !blockstate.exists() || !itemFile.exists() ||
+                  if (!blockstate.exists() || !itemFile.exists() ||
                           !bottomLeftFile.exists() || !bottomLeftOpenFile.exists() ||
                           !bottomRightFile.exists() || !bottomRightOpenFile.exists() ||
                           !topLeftFile.exists() || !topLeftOpenFile.exists() ||
@@ -729,7 +727,7 @@ public class NoppesUtilServer {
                   break;
                } // Door
                default: {
-                  if (!isExample || !blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
+                  if (!blockstate.exists() || !blockModel.exists() || !itemFile.exists()) {
                      if (customblock instanceof CustomBlock block && block.hasProperty()) {
                         CompoundTag data = customblock.getCustomNbt().getMCNBT().getCompound("Property");
                         String state = getDataFile("jpr.dat", fileName, name);
