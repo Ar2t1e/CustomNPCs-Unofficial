@@ -335,8 +335,8 @@ public class NoppesUtil {
 			CustomNpcsLangPack.added("custom.chest." + name, "Custom " + (((CustomChest) customblock).isChest ? "Chest" : "Container") + ": " + n);
 		}
 		if (customblock instanceof CustomBlockLiquid) {
-			CustomNpcsLangPack.added("item." + fileName + "_bucket.name", n);
-			CustomNpcsLangPack.added("fluid." + fileName, n);
+			CustomNpcsLangPack.added("fluid.custom_fluid_" + name, n);
+			CustomNpcsLangPack.added("item." + CustomNpcs.MODID + ":custom_bottle_" + name + ".name", n + " Bottle");
 		}
 		if (customblock instanceof CustomBlockSlab) {
 			if (isExample) {
@@ -395,6 +395,13 @@ public class NoppesUtil {
 							// bottle
 							textures.put(bottleFile, combineBuffer(getBufferImageTint(getBufferedImage("wl.png", 16, 16), tint),
 									getBufferedImage("wt.png", 16, 16)));
+							if (customblock.getCustomNbt().getBoolean("AddCauldron")) {
+								textureFile = new File(textItemDir, "cauldron_" + name + ".png");
+								if (!textureFile.exists()) {
+									textures.put(textureFile, combineBuffer(getBufferImageTint(getBufferedImage("cf.png", 16, 16), tint),
+											getBufferedImage("ci.png", 16, 16)));
+								}
+							}
 						}
 						break;
 					} // Liquid
@@ -583,7 +590,7 @@ public class NoppesUtil {
 		if (texturesDir.exists() || texturesDir.mkdirs()) {
 			float offsetColor = rnd.nextFloat();
 			File texture = new File(texturesDir, name + ".png");
-			if (!isExample || !texture.exists()) {
+			if (!texture.exists()) {
 				try {
 					if (ImageIO.write(getBufferImageOffset(getBufferedImage("pi.png", 18, 18), offsetColor), "png", texture)) {
 						LogWriter.debug("Create default texture for \"" + name + "\" potion");

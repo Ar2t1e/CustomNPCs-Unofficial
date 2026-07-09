@@ -132,6 +132,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public GuiBasic() {
         mc = Minecraft.getMinecraft();
         minecraft = mc;
+        scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         font = (fontRenderer = mc.fontRenderer);
         player = mc.player;
         itemRender = mc.getRenderItem();

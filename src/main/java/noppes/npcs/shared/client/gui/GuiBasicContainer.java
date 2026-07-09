@@ -75,6 +75,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         menu = cont;
         mc = Minecraft.getMinecraft();
         minecraft = mc;
+        scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
         font = (fontRenderer = mc.fontRenderer);
         itemRender = mc.getRenderItem();
         player = mc.player;

@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -37,6 +38,7 @@ public class TrueTypeFont {
 	private final Map<Character, TrueTypeFont.Glyph> glyphCache = new HashMap<>();
 	private final List<TrueTypeFont.TextureCache> textures = new ArrayList<>();
 	private final Graphics2D globalG = (Graphics2D) (new BufferedImage(1, 1, 2)).getGraphics();
+	private final ConcurrentLinkedQueue<TextureCache> pendingUploads = new ConcurrentLinkedQueue<>();
 	public float scale = 1.0F;
 	private char specialChar = (char) 167;
 
@@ -71,6 +73,8 @@ public class TrueTypeFont {
 	public void setSpecial(char c) { specialChar = c; }
 
 	public int draw(String text, float x, float y, int color) {
+		processPendingUploads();
+
 		GlyphCache cache = getOrCreateCache(text);
 		float a = (color >> 24 & 255) / 255.0f;
 		float r = (color >> 16 & 255) / 255.0f;
@@ -329,6 +333,11 @@ public class TrueTypeFont {
 		return null;
 	}
 
+	public void processPendingUploads() {
+		TextureCache cache;
+		while ((cache = pendingUploads.poll()) != null) { uploadTexture(cache); }
+	}
+
 	private Glyph getOrCreateGlyph(char c) {
 		Glyph g = glyphCache.get(c);
 		if (g == null) {
@@ -355,6 +364,16 @@ public class TrueTypeFont {
 			cache.g.drawString("" + c, g.x, g.y + metrics.getAscent());
 			g.texture = cache.textureId;
 			// load texture
+			if (Minecraft.getMinecraft().isCallingFromMinecraftThread()) { uploadTexture(cache); }
+			else if (!cache.uploaded) { pendingUploads.offer(cache); }
+			glyphCache.put(c, g);
+		}
+		return g;
+	}
+
+	private void uploadTexture(TextureCache cache) {
+		pendingUploads.remove(cache);
+		if (!cache.uploaded) {
 			int[] pixels = new int[TEXTURE_SIZE * TEXTURE_SIZE];
 			cache.bufferedImage.getRGB(0, 0, TEXTURE_SIZE, TEXTURE_SIZE, pixels, 0, TEXTURE_SIZE);
 			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(pixels.length * 4);
@@ -365,9 +384,8 @@ public class TrueTypeFont {
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-			glyphCache.put(c, g);
+			cache.uploaded = true;
 		}
-		return g;
 	}
 
 	private TextureCache getCurrentTexture() {
@@ -415,6 +433,7 @@ public class TrueTypeFont {
 	private float textureScale() { return 0.5f; }
 
 	public void dispose() {
+		pendingUploads.clear();
 		for (TextureCache cache : textures) { GlStateManager.deleteTexture(cache.textureId); }
 		textCache.clear();
 	}
@@ -485,6 +504,8 @@ public class TrueTypeFont {
 	}
 
 	static class TextureCache {
+
+		boolean uploaded = false;
 		int x;
 		int y;
 		int textureId = GL11.glGenTextures();

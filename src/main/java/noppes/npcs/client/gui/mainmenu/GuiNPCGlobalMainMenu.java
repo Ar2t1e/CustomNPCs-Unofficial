@@ -25,7 +25,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 	public boolean[] permissions = new boolean[12];
 
 	public GuiNpcGlobalMainMenu(EntityNPCInterface npc) {
-		super(npc, 5);
+		super(npc, 6);
 		Arrays.fill(permissions, true);
 		Packets.sendServer(new SPacketPermissionGlobalGet());
 	}

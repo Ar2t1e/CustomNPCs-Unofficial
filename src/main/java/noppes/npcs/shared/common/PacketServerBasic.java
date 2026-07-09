@@ -3,6 +3,7 @@ package noppes.npcs.shared.common;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.Side;
@@ -11,7 +12,6 @@ import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.CustomNPCsScheduler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,13 +52,16 @@ public abstract class PacketServerBasic extends PacketBasic {
                             return;
                         }
                     }
-                    CustomNPCsScheduler.runTack(()-> {
-                        if (!toolAllowed(player.getHeldItem(EnumHand.MAIN_HAND))) { warn(prs.toString()); }
-                        else { handle(); }
-                    });
+                    MinecraftServer server = player.getServer();
+                    if (server != null) { server.addScheduledTask(() -> runHandle(prs.toString())); } else { runHandle(prs.toString()); }
                 }
             } catch (Exception e) { LOGGER.error(e); }
         }
+    }
+
+    private void runHandle(String prs) {
+        if (!toolAllowed(player.getHeldItem(EnumHand.MAIN_HAND))) { warn(prs); }
+        else { handle(); }
     }
 
     protected void permission(String permissions) {

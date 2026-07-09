@@ -12,7 +12,6 @@ import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 import org.lwjgl.input.Keyboard;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
 import noppes.npcs.CustomNpcs;
@@ -48,6 +47,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 		Keyboard.enableRepeatEvents(true);
 		if (npc != null) {
 			GuiMenuTopButton display = new GuiMenuTopButton(parent, 1, "menu.display", guiLeft + 4, guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) {
 					save();
 					activeMenu = 1;
@@ -72,6 +72,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 							.append(Component.literal("" + npc.display.getSize()).withStyle(TextFormatting.RESET))
 							.append(Component.literal(";").withStyle(TextFormatting.GRAY)));
 			GuiMenuTopButton stats = new GuiMenuTopButton(parent, 2, "menu.stats", display.getX() + display.getWidth(), guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) {
 					save();
 					activeMenu = 2;
@@ -116,6 +117,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 							.append(Component.translatable("" + npc.stats.ranged.getStrength()).withStyle(TextFormatting.RESET))
 							.append(Component.literal(";").withStyle(TextFormatting.GRAY)));
 			GuiMenuTopButton ai = new GuiMenuTopButton(parent, 3, "menu.ai", stats.getX() + stats.getWidth(), guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) {
 					save();
 					activeMenu = 3;
@@ -150,6 +152,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 							.append(Component.literal("" + npc.ais.getWalkingSpeed()).withStyle(TextFormatting.RESET))
 							.append(Component.literal(";").withStyle(TextFormatting.GRAY)));
 			GuiMenuTopButton inv = new GuiMenuTopButton(parent, 4, "menu.inventory", ai.getX() + ai.getWidth(), guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) {
 					save();
 					activeMenu = 4;
@@ -169,6 +172,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 							.append(Component.literal("" + npc.inventory.drops.size()).withStyle(TextFormatting.RESET))
 							.append(Component.literal(";").withStyle(TextFormatting.GRAY)));
 			GuiMenuTopButton advanced = new GuiMenuTopButton(parent, 5, "menu.advanced", inv.getX() + inv.getWidth(), guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) {
 					save();
 					activeMenu = 5;
@@ -191,6 +195,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 							.append(Component.translatable(npc.getFaction().name).withStyle(TextFormatting.RESET))
 							.append(Component.literal(";").withStyle(TextFormatting.GRAY)));
 			GuiMenuTopButton global = new GuiMenuTopButton(parent, 6, "menu.global", advanced.getX() + advanced.getWidth(), guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) {
 					save();
 					activeMenu = 6;
@@ -198,11 +203,15 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 				}
 			};
 			GuiMenuTopButton close = new GuiMenuTopButton(parent, 0, "X", guiLeft + width - 22, guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) { GuiNpcMenu.this.close(); }
 			};
 			GuiMenuTopButton delete = new GuiMenuTopButton(parent, 66, Component.translatable("selectServer.delete"), guiLeft + width - 72, guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) {
-					GuiYesNo guiyesno = new GuiYesNo(GuiNpcMenu.this, "", Component.translatable("message.delete", npc.getDisplayName().getFormattedText()).getFormattedText(), 0);
+					GuiYesNo guiyesno = new GuiYesNo(GuiNpcMenu.this, "",
+							Component.translatable("message.delete",
+									npc.getDisplayName().getFormattedText()).getFormattedText(), 0);
 					mc.displayGuiScreen(guiyesno);
 				}
 			};
@@ -212,6 +221,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 		}
 		else {
 			GuiMenuTopButton close = new GuiMenuTopButton(parent, 0, "X", guiLeft + width - 22, guiTop - 17) {
+				@Override
 				public void onClick(double x, double y) { GuiNpcMenu.this.close(); }
 			};
 			topButtons = new GuiMenuTopButton[] { close };
@@ -226,7 +236,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 	private void close() {
 		if (parent instanceof GuiContainerNPCInterface2<?>) { ((GuiContainerNPCInterface2<?>) parent).backGui = null; }
 		else if (parent instanceof GuiNPCInterface2) { ((GuiNPCInterface2) parent).backGui = null; }
-		((GuiScreen) parent).onGuiClosed();
+		if (parent != null) { parent.onClose(); }
 		if (npc != null) {
 			npc.reset();
 			Packets.sendServer(new SPacketMenuClose());

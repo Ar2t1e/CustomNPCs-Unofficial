@@ -21,7 +21,7 @@ public abstract class PacketBasic implements IMessage {
     public void handleClient() {
         player = Minecraft.getMinecraft().player;
         npc = NoppesUtilServer.getEditingNpc(player);
-        handle();
+        Minecraft.getMinecraft().addScheduledTask(this::handle);
     }
 
     @Override

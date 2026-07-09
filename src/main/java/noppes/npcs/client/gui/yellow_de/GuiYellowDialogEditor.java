@@ -142,7 +142,6 @@ public class GuiYellowDialogEditor extends GuiBasic
 
     @Override
     public void initGui() {
-        if (mc == null) { mc = Minecraft.getMinecraft(); }
         if (hasSubGui()) { wrapper.subgui.initGui(); }
         // super initGui:
         guiScale = (float) scaledResolution.getScaleFactor();
@@ -183,11 +182,11 @@ public class GuiYellowDialogEditor extends GuiBasic
             categoryData.put(key, c);
             if (c.title.equals(category.category)) { selectedCategory = key; }
         }
-        scroll.setCustomFont(UtilYDE.FONT)
-                .setPos(leftTab.getX() + 2, leftTab.getY() + 14)
-                .setSize(leftTab.imageWidth - 4, leftTab.imageHeight / 2 - 34)
-                .setNormalList(categories)
-                .setSelected(selectedCategory);
+        scroll.setCustomFont(UtilYDE.FONT);
+        scroll.setPos(leftTab.getX() + 2, leftTab.getY() + 14);
+        scroll.setSize(leftTab.imageWidth - 4, leftTab.imageHeight / 2 - 34);
+        scroll.setNormalList(categories);
+        scroll.setSelected(selectedCategory);
         scroll.border = YDEController.windowLineColor;
         leftTab.addButton(0, 4, leftTab.imageHeight / 2 - 18, "gui.add")
                 .setCustomFont(UtilYDE.FONT)
@@ -431,6 +430,7 @@ public class GuiYellowDialogEditor extends GuiBasic
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        if (links == null || helper == null) { return; }
         float scale = 2.0f / guiScale;
         xMouse = mouseX / scale;
         yMouse = mouseY / scale;

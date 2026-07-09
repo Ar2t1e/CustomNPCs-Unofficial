@@ -45,7 +45,7 @@ public class ForgeEvent extends CustomNPCsEvent {
 		IBlock iBlock = null;
 		IEntity<?> iEntity = null;
 		IPlayer<?> iPlayer = null;
-		if (eventIn != null && API != null) {
+		if (API != null) {
 			if (eventIn instanceof net.minecraftforge.event.entity.EntityEvent) {
 				net.minecraftforge.event.entity.EntityEvent event = (net.minecraftforge.event.entity.EntityEvent) eventIn;
 				iEntity = event.getEntity() != null ? API.getIEntity(event.getEntity()) : null;
@@ -54,7 +54,7 @@ public class ForgeEvent extends CustomNPCsEvent {
 				net.minecraftforge.event.world.WorldEvent event = (net.minecraftforge.event.world.WorldEvent) eventIn;
 				iWorld = event.getWorld() != null ? API.getIWorld(event.getWorld()) : null;
 			}
-			if (!CustomNpcs.SimplifiedForgeEvents) {
+			if (!CustomNpcs.SimplifiedForgeEvents && eventIn != null) {
 				List<Field> fields = new ArrayList<>(Arrays.asList(eventIn.getClass().getDeclaredFields()));
 				for (Field field : eventIn.getClass().getFields()) {
 					if (!fields.contains(field)) { fields.add(field); }
