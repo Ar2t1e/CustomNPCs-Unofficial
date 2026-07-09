@@ -10,6 +10,7 @@ import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSpeak;
+import noppes.npcs.shared.common.util.LRUHashMap;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
@@ -17,15 +18,12 @@ import javax.net.ssl.SSLHandshakeException;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TranslateUtil {
 
    private static boolean hasInternet = true;
-   private static final Map<String, String> translateDate = new HashMap<>();
+   private static final Map<String, String> translateDate = new LRUHashMap<>(5000);
 
    private static final String TranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=%s&tl=%s&dt=t&q=%s";
    public static final String AudioUrl = "http://translate.google.com/translate_tts?q=%s&tl=%s";

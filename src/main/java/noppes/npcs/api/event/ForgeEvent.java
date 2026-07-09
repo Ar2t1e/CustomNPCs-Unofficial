@@ -52,7 +52,7 @@ public class ForgeEvent extends CustomNPCsEvent {
          if (eventIn instanceof net.minecraftforge.event.level.LevelEvent ev && ev.getLevel() instanceof Level level) {
             iWorld = API.getIWorld(level);
          }
-         if (!CustomNpcs.SimplifiedForgeEvents) {
+         if (!CustomNpcs.SimplifiedForgeEvents && eventIn != null) {
             List<Field> fields = new ArrayList<>(Arrays.asList(eventIn.getClass().getDeclaredFields()));
             for (Field field : eventIn.getClass().getFields()) {
                if (!fields.contains(field)) { fields.add(field); }

@@ -1,7 +1,7 @@
 package noppes.npcs.shared.common.util;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class LRUHashMap<K, V> extends LinkedHashMap<K, V> {
 
@@ -9,18 +9,12 @@ public class LRUHashMap<K, V> extends LinkedHashMap<K, V> {
 
    public LRUHashMap(int size) {
       super(size, 0.75F, true);
-      this.maxSize = size;
+      maxSize = size;
    }
 
    @Override
-   public V put(K key, V value) {
-      if (size() > maxSize) {
-         for (K k : new HashSet<>(keySet())) {
-            remove(k);
-            if (size() < maxSize) { break; }
-         }
-      }
-      return super.put(key, value);
+   protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+      return size() > maxSize;
    }
 
 }
