@@ -406,8 +406,6 @@ public class YDEWindowNop extends GuiCustomWindowNop {
     public void unFocused(GuiTextFieldNop textField) { listener.unFocused(this, textField); }
 
     @Override
-    public void textUpdate(IComponentGui textEditor, String text) {
-        listener.textUpdate(this, textEditor, text);
-    }
+    public void textUpdate(IComponentGui textEditor, String text) { listener.textUpdate(this, textEditor, text); }
 
 }

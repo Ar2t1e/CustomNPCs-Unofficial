@@ -162,7 +162,7 @@ public class GuiWrapper {
             return true;
          }
       }
-      return true;
+      return false;
    }
 
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {

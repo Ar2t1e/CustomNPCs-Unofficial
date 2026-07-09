@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nonnull;
 
@@ -63,7 +64,7 @@ public class GuiCheckBoxNop extends GuiButtonNop {
         if (packedFGColor != -1) { return packedFGColor; }
         else if (!active) { return CustomNpcs.NotEnableColor.getRGB(); }
         else if (isHovered) { return CustomNpcs.HoverColor.getRGB(); }
-        return CustomNpcs.LableColor.getRGB();
+        return textColor;
     }
 
     @Override
@@ -79,6 +80,7 @@ public class GuiCheckBoxNop extends GuiButtonNop {
     public boolean selected() { return selected; }
 
     public void setColor(int newTextColor, boolean isShowShadow) {
+        LogWriter.info("[DEBUG] "+id+"; "+textColor);
         textColor = newTextColor;
         showShadow = isShowShadow;
     }

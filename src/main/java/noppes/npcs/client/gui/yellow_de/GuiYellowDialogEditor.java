@@ -25,6 +25,7 @@ import noppes.npcs.api.handler.data.IDialogCategory;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.SubGuiEditText;
+import noppes.npcs.client.gui.availability.*;
 import noppes.npcs.client.gui.global.SubGuiNpcDialogOption;
 import noppes.npcs.client.gui.player.GuiDialogInteract;
 import noppes.npcs.client.gui.select.SubGuiColorSelector;
@@ -34,6 +35,7 @@ import noppes.npcs.client.gui.yellow_de.data.nodes.*;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.controllers.data.DialogCategory;
 import noppes.npcs.controllers.data.DialogOption;
@@ -44,6 +46,7 @@ import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.CustomNPCsScheduler;
@@ -58,7 +61,7 @@ import java.util.*;
 import java.util.List;
 
 public class GuiYellowDialogEditor extends GuiBasic
-        implements ICustomScrollListener, ITextfieldListener {
+        implements ICustomScrollListener, ITextfieldListener, ISliderListener {
 
     public static YDEData YDE_DATA = YDEController.getInstance().getLevelData(ScriptController.getLevelKey());
     // window
@@ -88,9 +91,9 @@ public class GuiYellowDialogEditor extends GuiBasic
     protected boolean lmbIsSelect;
     protected final int[] lmbSelect = new int[2];
     // tabs
+    public final @Nonnull GuiCustomWindowNop leftTab;
+    public final @Nonnull GuiCustomWindowNop rightTab;
     protected int tabW = 160;
-    protected final @Nonnull GuiCustomWindowNop leftTab;
-    protected final @Nonnull GuiCustomWindowNop rightTab;
     protected boolean hoverLeft = false;
     protected boolean hoverRight = false;
     protected GuiCustomScrollNop helper;
@@ -738,6 +741,12 @@ public class GuiYellowDialogEditor extends GuiBasic
     }
 
     @Override
+    public void mousePressed(GuiSliderNop slider) { }
+
+    @Override
+    public void mouseReleased(GuiSliderNop slider) { }
+
+    @Override
     public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
         if (!hasSubGui()) {
             boolean bo = false;
@@ -781,6 +790,11 @@ public class GuiYellowDialogEditor extends GuiBasic
             for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
                 if (component instanceof GuiEventListener element && element.keyPressed(keyCode, scanCode, modifiers)) { return true; }
             }
+            for (IComponentGui component : wrapper.components) {
+                if (component instanceof YDEWindowNop window && window.keyPressed(keyCode, scanCode, modifiers)) {
+                    return true;
+                }
+            }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
@@ -789,6 +803,9 @@ public class GuiYellowDialogEditor extends GuiBasic
     public boolean charTyped(char c, int keyId) {
         for (IComponentGui component : new ArrayList<>(notScaledComponents)) {
             if (component instanceof GuiEventListener element && element.charTyped(c, keyId)) { return true; }
+        }
+        for (IComponentGui component : wrapper.components) {
+            if (component instanceof YDEWindowNop window && window.charTyped(c, keyId)) { return true; }
         }
         return super.charTyped(c, keyId);
     }
@@ -817,6 +834,29 @@ public class GuiYellowDialogEditor extends GuiBasic
         } // select dialog category
         else if (category != null) {
             if (scroll.id == 3) {
+                if (rightTab.yde_scroll.select instanceof YDEWindowNop window) {
+                    if (window.node instanceof YDEOption yde_option) {
+                        Component selected = scroll.getNormalSelected();
+                        for (int i = 0; i < yde_option.option.dialogs.size(); i++) {
+                            DialogOption.OptionDialogID od = yde_option.option.dialogs.get(i);
+                            Dialog d = DialogController.instance.get(od.dialogId);
+                            Component key;
+                            if (d == null) {
+                                key = Component.empty()
+                                        .append(Component.literal("ID: " + od.dialogId).withStyle(ChatFormatting.GRAY))
+                                        .append(Component.literal(" Dialog Not Found!").withStyle(ChatFormatting.RED));
+                            } else { key = d.getKey(); }
+                            if (key.getString().equals(selected.getString())) {
+                                rightTab.yde_scroll.availability = od.availability;
+                                rightTab.yde_scroll.scrollSelect = selected;
+                                if (rightTab.yde_scroll.getTopButton(1) != null) {
+                                    rightTab.yde_scroll.getTopButton(1).setIsEnabled(true);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
 
             } // right dialog option
         }
@@ -950,9 +990,18 @@ public class GuiYellowDialogEditor extends GuiBasic
         }
     }
 
+    @Override
+    public void mouseDragged(GuiSliderNop slider) {
+        if (slider.id == 115 && rightTab.yde_scroll.availability != null) {
+            rightTab.yde_scroll.availability.health = (int) (slider.sliderValue * 100.0f);
+            slider.setString(rightTab.yde_scroll.availability.health + "%");
+        }
+    }
+
     public boolean mouseButtonEvent(IComponentGui component, @Nullable GuiButtonNop button, int mouseButton) {
 //LogWriter.info("TEST: buttonID: "+(button == null ? "null" : button.id)+"; mouseButton: "+mouseButton+"; component "+component);
         if (mouseButton == 0 && button != null) {
+            Availability av = rightTab.yde_scroll.availability;
             switch (button.id) {
                 case 0: {
                     if (component == null) {
@@ -1051,6 +1100,98 @@ public class GuiYellowDialogEditor extends GuiBasic
                     }
                     break;
                 }
+                case 100: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityDialog(av));
+                        return true;
+                    }
+                    break;
+                } // Availability Dialog
+                case 101: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityQuest(av));
+                        return true;
+                    }
+                    break;
+                } // Availability Quest
+                case 102: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityFaction(av));
+                        return true;
+                    }
+                    break;
+                } // Availability Faction
+                case 103: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        SubGuiNpcAvailabilityItemStacks.parent = this;
+                        SubGuiNpcAvailabilityItemStacks.setting = this;
+                        Packets.sendServer(new SPacketContainerOpen(EnumGuiType.AvailabilityStack, (b) -> b.writeNbt(av.save(new CompoundTag()))));
+                        return true;
+                    }
+                    break;
+                } // Availability Stack
+                case 104: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityMoneys(av));
+                        return true;
+                    }
+                    break;
+                } // Availability Money
+                case 105: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityScoreboard(av));
+                        return true;
+                    }
+                    break;
+                } // Availability Scoreboard
+                case 106: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityNames(av));
+                        return true;
+                    }
+                    break;
+                } // Availability Names
+                case 107: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityStoredData(av));
+                        return true;
+                    }
+                    break;
+                } // Availability StoredData
+                case 108: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        setSubGui(new SubGuiNpcAvailabilityRegions(av));
+                        return true;
+                    }
+                    break;
+                } // Availability Regions
+                case 109: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        av.setDaytime(ValueUtil.correctInt(button.getValue() - 1, 0, 2));
+                        GuiTextFieldNop tf0 = rightTab.yde_scroll.getTextField(110);
+                        GuiTextFieldNop tf1 = rightTab.yde_scroll.getTextField(111);
+                        if (tf0 != null) { tf0.setValue("" + av.daytime[0]); }
+                        if (tf1 != null) { tf1.setValue("" + av.daytime[1]); }
+                        return true;
+                    }
+                    break;
+                } // Availability Daytime
+                case 113: {
+                    if (component instanceof YDEScrollNop && av != null && button instanceof GuiCheckBoxNop checkBox) {
+                        av.setGMOnly(checkBox.selected());
+                        return true;
+                    }
+                    break;
+                } // Availability GM Only
+                case 114: {
+                    if (component instanceof YDEScrollNop && av != null) {
+                        av.healthType = button.getValue();
+                        GuiSliderNop slider = rightTab.yde_scroll.getSlider(115);
+                        if (slider != null) { slider.setIsVisible(av.healthType != 0); }
+                        return true;
+                    }
+                    break;
+                } // Availability health
                 case 2500: {
                     if (component == null) {
                         if (button.equals(leftTab.exit)) { leftTab.isYDEShow = !leftTab.isYDEShow; }
@@ -1443,6 +1584,7 @@ public class GuiYellowDialogEditor extends GuiBasic
     private void setSelectNode(int tabId) {
         IComponentGui select = getSelect();
         rightTab.yde_scroll.init();
+        DialogController dData = DialogController.instance;
         if (category != null && select instanceof YDEWindowNop window) {
             //LogWriter.info("TEST: t: "+tabId+"; w: "+window.id);
             int h0 = UtilYDE.FONT.getHeight() + 4;
@@ -1481,12 +1623,11 @@ public class GuiYellowDialogEditor extends GuiBasic
                 if (tabId == 0) {} // main
                 if (tabId == 1) {
 
-                    setRightTabAvailability(lId);
+                    fillAvailabilityTab(lId);
                 } // availability
                 else { } // mail
             }
             if (window.node instanceof YDEOption yde_option) {
-                if (tabId != 1) { rightTab.yde_scroll.availability = null; }
                 rightTab.yde_scroll.addTopButton(0, 0, 0, "gui.answer")
                         .setCustomFont(UtilYDE.FONT)
                         .setTexture(YDE_BUTTONS)
@@ -1510,15 +1651,16 @@ public class GuiYellowDialogEditor extends GuiBasic
                 int lH = UtilYDE.FONT.getHeight() + 2;
                 int w = rightTab.yde_scroll.width - 12;
                 int y = 0;
+                int x = 1;
                 if (tabId == 0) {
                     // title
-                    rightTab.yde_scroll.addLabel(lId++, 1, y, Component.translatable("dialog.dialog")
+                    rightTab.yde_scroll.addLabel(lId++, x, y, Component.translatable("dialog.dialog")
                                     .append(" ID:" + yde_option.dialogId + "; ").append(yde_option.getTitle()).append(":"))
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
                     // name
-                    rightTab.yde_scroll.addLabel(lId++, 1, y += lH, Component.translatable("gui.text").append(":"))
+                    rightTab.yde_scroll.addLabel(lId++, x, y += lH, Component.translatable("gui.text").append(":"))
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
@@ -1527,18 +1669,18 @@ public class GuiYellowDialogEditor extends GuiBasic
                     if (!Util.instance.equalsDeleteColor(yde_option.option.title, c.getString(), false)) {
                         hover.append("<br>").append(c);
                     }
-                    rightTab.yde_scroll.addTextField(0, 1, y += lH, w, lH, yde_option.option.title)
+                    rightTab.yde_scroll.addTextField(0, x, y += lH, w, lH, yde_option.option.title)
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setHoverTexts(hover);
                     // color
                     StringBuilder color = new StringBuilder(Integer.toHexString(yde_option.option.optionColor));
                     while (color.length() < 6) { color.insert(0, 0); }
-                    rightTab.yde_scroll.addLabel(lId++, 1, y += lH + 2, Component.translatable("gui.color").append(":"))
+                    rightTab.yde_scroll.addLabel(lId++, x, y += lH + 2, Component.translatable("gui.color").append(":"))
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
-                    rightTab.yde_scroll.addButton(4, 0, y += lH, color)
+                    rightTab.yde_scroll.addButton(4, x, y += lH, color)
                             .setSize(w / 3 * 2, lH)
                             .setTexture(YDE_BUTTONS)
                             .setDefBack(false)
@@ -1548,11 +1690,11 @@ public class GuiYellowDialogEditor extends GuiBasic
                             .setColor(yde_option.option.optionColor)
                             .setHoverTexts("color.hover");
                     // type
-                    rightTab.yde_scroll.addLabel(lId++, 1, y += lH + 2, Component.translatable("gui.type").append(":"))
+                    rightTab.yde_scroll.addLabel(lId++, x, y += lH + 2, Component.translatable("gui.type").append(":"))
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
-                    rightTab.yde_scroll.addButton(5, 0, y += lH, false, yde_option.option.optionType.get(), SubGuiNpcDialogOption.options)
+                    rightTab.yde_scroll.addButton(5, x, y += lH, false, yde_option.option.optionType.get(), SubGuiNpcDialogOption.options)
                             .setSize(w / 3 * 2, lH)
                             .setTexture(YDE_BUTTONS)
                             .setDefBack(false)
@@ -1566,7 +1708,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                     for (ResourceLocation res : GuiDialogInteract.icons.values()) {
                         list.add(res.getPath().substring(res.getPath().lastIndexOf("/") + 1, res.getPath().lastIndexOf(".")));
                     }
-                    rightTab.yde_scroll.addLabel(lId++, 1, y += lH + 2, Component.translatable("dialog.icon").append(":"))
+                    rightTab.yde_scroll.addLabel(lId++, x, y += lH + 2, Component.translatable("dialog.icon").append(":"))
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
@@ -1579,16 +1721,14 @@ public class GuiYellowDialogEditor extends GuiBasic
                     // options
                     if (yde_option.option.optionType == OptionType.DIALOG_OPTION) {
                         rightTab.yde_scroll.add(new GuiLineNop(this, lId++,
-                                rightTab.yde_scroll.guiLeft + 1, rightTab.yde_scroll.guiTop + (y += lH * 2 + 2),
+                                rightTab.yde_scroll.guiLeft + x, rightTab.yde_scroll.guiTop + (y += lH * 2 + 2),
                                 w, 0.5f, false,
                                 YDEController.componentLineColor & 0xFFFFFF | 0xC0000000)
                                 .setScale(0.5f));
-                        rightTab.yde_scroll.addLabel(lId, 1, y += 2, Component.translatable("gui.options").append(":"))
+                        rightTab.yde_scroll.addLabel(lId, x, y += 2, Component.translatable("gui.options").append(":"))
                                 .setCustomFont(UtilYDE.FONT)
                                 .setColor(YDEController.textColor)
                                 .setSize(w - 2, lH);
-
-                        DialogController dData = DialogController.instance;
                         List<Component> keys = new ArrayList<>();
                         int pos = -1;
                         int i = 0;
@@ -1617,7 +1757,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                                 .setCustomFont(UtilYDE.FONT);
                         if (!rightTab.yde_scroll.scrollSelect.getString().isEmpty()) { scroll.setSelected(rightTab.yde_scroll.scrollSelect); }
                         // up
-                        int x = scroll.width + 2;
+                        x = scroll.width + 2;
                         int wB = scroll.height / 2;
                         rightTab.yde_scroll.addButton(9, x, y, "↑")
                                 .setSize(lH, wB)
@@ -1643,9 +1783,9 @@ public class GuiYellowDialogEditor extends GuiBasic
                         Component removeC = Component.translatable("gui.remove");
                         Component editC = Component.translatable("gui.edit");
                         int tB = UtilYDE.FONT.width(addC) + UtilYDE.FONT.width(removeC) + UtilYDE.FONT.width(editC);
-                        x = 0;
-                        wB = (int) ((float) UtilYDE.FONT.width(addC) / (float) tB * 129.0f);
-                        rightTab.yde_scroll.addButton(6, 0, y += scroll.height + 1, "gui.add")
+                        x = 1;
+                        wB = (int) ((float) UtilYDE.FONT.width(addC) / (float) tB * 125.0f);
+                        rightTab.yde_scroll.addButton(6, x, y += scroll.height + 1, "gui.add")
                                 .setSize(wB, lH)
                                 .setTexture(YDE_BUTTONS)
                                 .setDefBack(false)
@@ -1676,12 +1816,13 @@ public class GuiYellowDialogEditor extends GuiBasic
                                 .setCustomFont(UtilYDE.FONT)
                                 .setIsEnabled(scroll.hasSelected())
                                 .setHoverTexts("dialog.option.hover.edit");
+                        x = 1;
                         rightTab.yde_scroll.add(new GuiLineNop(this, lId,
-                                rightTab.yde_scroll.guiLeft + 1, rightTab.yde_scroll.guiTop + (y += lH + 2),
+                                rightTab.yde_scroll.guiLeft + x, rightTab.yde_scroll.guiTop + (y += lH + 2),
                                 w, 0.5f, false,
                                 YDEController.componentLineColor & 0xFFFFFF | 0xC0000000)
                                 .setScale(0.5f));
-                        rightTab.yde_scroll.addButton(11, 0, y + 2, "availability.available")
+                        rightTab.yde_scroll.addButton(11, x, y + 2, "availability.available")
                                 .setSize(w / 3 * 2, lH)
                                 .setTexture(YDE_BUTTONS)
                                 .setDefBack(false)
@@ -1717,8 +1858,27 @@ public class GuiYellowDialogEditor extends GuiBasic
                             .setCustomFont(UtilYDE.FONT)
                             .setColor(YDEController.textColor)
                             .setSize(w - 2, lH);
-
-                    setRightTabAvailability(lId);
+                    if (!yde_option.option.dialogs.isEmpty()) {
+                        DialogOption.OptionDialogID optionDialogID = null;
+                        if (!rightTab.yde_scroll.scrollSelect.getString().isEmpty()) {
+                            for (DialogOption.OptionDialogID od : yde_option.option.dialogs) {
+                                Component key;
+                                Dialog d = dData.get(od.dialogId);
+                                if (d == null) {
+                                    key = Component.empty()
+                                            .append(Component.literal("ID: " + od.dialogId).withStyle(ChatFormatting.GRAY))
+                                            .append(Component.literal(" Dialog Not Found!").withStyle(ChatFormatting.RED));
+                                }
+                                else { key = d.getKey(); }
+                                if (key.getString().equals(rightTab.yde_scroll.scrollSelect.getString())) {
+                                    optionDialogID = od;
+                                    break;
+                                }
+                            }
+                        }
+                        if (optionDialogID != null) { rightTab.yde_scroll.availability = optionDialogID.availability; }
+                    }
+                    fillAvailabilityTab(lId);
                 } // availability
             }
         }
@@ -1728,7 +1888,215 @@ public class GuiYellowDialogEditor extends GuiBasic
         rightTab.yde_scroll.tabId = tabId;
     }
 
-    private void setRightTabAvailability(int lId) {}
+    private void fillAvailabilityTab(int lId) {
+        if (rightTab.yde_scroll.availability == null) { return; }
+
+        Availability av = rightTab.yde_scroll.availability;
+        int lH = UtilYDE.FONT.getHeight();
+        int h = lH + 2;
+        int w = rightTab.yde_scroll.width - 12;
+        int y = 0;
+        int x = 1;
+
+        // Title
+        rightTab.yde_scroll.addLabel(lId++, x, y, Component.translatable("availability.available"))
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setSize(w - 2, h)
+                .setCentered(true);
+        y += h + 4;
+
+        // Dialog
+        rightTab.yde_scroll.addButton(100, x, y, "availability.selectdialog")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.selectdialog");
+        y += h + 2;
+
+        // Quest
+        rightTab.yde_scroll.addButton(101, x, y, "availability.selectquest")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.selectquest");
+        y += h + 2;
+
+        // Faction
+        rightTab.yde_scroll.addButton(102, x, y, "availability.selectfaction")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.selectfaction");
+        y += h + 2;
+
+        // Stack
+        rightTab.yde_scroll.addButton(103, x, y, "availability.stack")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.stack");
+        y += h + 2;
+
+        // Money
+        rightTab.yde_scroll.addButton(104, x, y, "availability.currency")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.currency");
+        y += h + 2;
+
+        // Scoreboard
+        rightTab.yde_scroll.addButton(105, x, y, "availability.selectscoreboard")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.selectscoreboard");
+        y += h + 2;
+
+        // Names
+        rightTab.yde_scroll.addButton(106, x, y, "availability.selectnames")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.selectnames");
+        y += h + 2;
+
+        // StoredData
+        rightTab.yde_scroll.addButton(107, x, y, "availability.storeddata")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.storeddata");
+        y += h + 2;
+
+        // Region
+        rightTab.yde_scroll.addButton(108, x, y, "availability.region")
+                .setSize(w, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.region");
+        y += h + 6;
+
+        // Daytime
+        int wB = 57;
+        int x1 = x + wB + 2;
+        int x2 = x1 + 42;
+        rightTab.yde_scroll.addLabel(lId++, x, y, Component.translatable("availability.daytime"))
+                .setSize(wB, h)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor);
+        y += h;
+
+        int dayType = av.daytime[0] == av.daytime[1] ? 1 :
+                av.daytime[0] == 18 && av.daytime[1] == 6 ? 2 :
+                        av.daytime[0] == 6 && av.daytime[1] == 18 ? 3 : 1;
+
+        rightTab.yde_scroll.addButton(109, x, y, false, dayType,
+                        "availability.own", "availability.always", "availability.night", "availability.day")
+                .setSize(wB, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.daytime.0");
+
+        rightTab.yde_scroll.addTextField(110, x1, y, 40, h, av.daytime[0])
+                .setMinMaxDefault(0, 23, av.daytime[0])
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.daytime.1");
+
+        rightTab.yde_scroll.addTextField(111, x2, y, 40, h, av.daytime[1])
+                .setMinMaxDefault(0, 23, av.daytime[1])
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.daytime.2");
+        y += h + 2;
+
+        // Min Player Level
+        rightTab.yde_scroll.addLabel(lId++, x, y, Component.translatable("availability.minlevel"))
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setSize(wB, h);
+        y += h;
+
+        rightTab.yde_scroll.addTextField(112, x, y, wB, h, av.minPlayerLevel)
+                .setMinMaxDefault(0, Integer.MAX_VALUE, 0)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.level");
+        y += h + 2;
+
+        // Health
+        rightTab.yde_scroll.addLabel(lId, x, y, Component.translatable("availability.health"))
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setSize(wB, h);
+        y += h;
+
+        rightTab.yde_scroll.addButton(114, x, y, false, av.healthType,
+                        "availability.always", "availability.bigger", "availability.smaller")
+                .setSize(wB, h)
+                .setTexture(YDE_BUTTONS)
+                .setDefBack(false)
+                .setIsAnim(true)
+                .setUV(0, 0, 200, 20)
+                .setCustomFont(UtilYDE.FONT)
+                .setColor(YDEController.textColor)
+                .setHoverTexts("availability.hover.health.type");
+
+        rightTab.yde_scroll.addSlider(115, x1, y, av.health / 100.0f)
+                .setSize(82, h)
+                .setIsVisible(av.healthType != 0)
+                .setCustomFont(UtilYDE.FONT)
+                .setHoverTexts("availability.hover.health");
+        y += h + 2;
+
+        // GM Only checkbox
+        GuiCheckBoxNop checkBox = rightTab.yde_scroll.addCheckBox(113, x, y, "availability.type.only.gm", "availability.type.only.gm.false", av.getGMOnly());
+        checkBox.setSize(w, h)
+                .setCustomFont(UtilYDE.FONT);
+        checkBox.setColor(CustomNpcs.MainColor.getRGB(), false);
+    }
 
     public void removeSelect(int id) { selects.remove(id); }
 
@@ -1761,6 +2129,17 @@ public class GuiYellowDialogEditor extends GuiBasic
                     }
                 }
             }
+            if (component instanceof YDEScrollNop) {
+                if (rightTab.yde_scroll.availability != null) {
+                    Availability av = rightTab.yde_scroll.availability;
+                    switch (textField.id) {
+                        case 110: av.daytime[0] = textField.getInteger(); break;
+                        case 111: av.daytime[1] = textField.getInteger(); break;
+                        case 112: av.minPlayerLevel = textField.getInteger(); break;
+                    }
+                    av.hasOptions();
+                }
+            } // Availability text fields
         }
     }
 

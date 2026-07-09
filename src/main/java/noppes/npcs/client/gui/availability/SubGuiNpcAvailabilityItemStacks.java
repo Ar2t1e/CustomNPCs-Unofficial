@@ -12,6 +12,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.yellow_de.GuiYellowDialogEditor;
 import noppes.npcs.constants.EnumAvailabilityStackData;
 import noppes.npcs.containers.ContainerNpcAvailabilityItem;
 import noppes.npcs.controllers.data.Availability;
@@ -22,6 +23,7 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public class SubGuiNpcAvailabilityItemStacks
         implements ICustomScrollListener {
 
     public static Screen parent;
-    public static SubGuiNpcAvailability setting;
+    public static IGuiInterface setting;
 
     protected final Availability availability;
     protected final ContainerNpcAvailabilityItem cont;
@@ -185,7 +187,9 @@ public class SubGuiNpcAvailabilityItemStacks
         if (setting != null) {
             CompoundTag compound = new CompoundTag();
             availability.save(compound); // temp availability
-            setting.availability.load(compound); // edit availability
+            // edit availability
+            if (setting instanceof SubGuiNpcAvailability gui) { gui.availability.load(compound); }
+            else if (setting instanceof GuiYellowDialogEditor gui) { gui.rightTab.yde_scroll.availability.load(compound); }
         }
     }
 

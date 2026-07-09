@@ -630,6 +630,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       return this;
    }
 
+   @SuppressWarnings("unused")
    public void setSelectedList(Collection<String> newSelectedList) {
       int i = 0;
       selectedList.clear();
@@ -777,6 +778,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
 
    public List<Component> getNormalList() { return list; }
 
+   @SuppressWarnings("unused")
    public boolean hasSearch() { return hasSearch; }
 
    @Override
@@ -833,6 +835,7 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
 
    public String getSearchValue() { return textField.getValue(); }
 
+   @SuppressWarnings("unused")
    public void setSearchValue(String text) { textField.setValue(text); }
 
    public GuiCustomScrollNop setIgnoreSelected(ArrayList<Component> list) {
@@ -851,7 +854,5 @@ public class GuiCustomScrollNop extends Screen implements IComponentGui {
       scaleY = ValueUtil.correctFloat(y, 0.0f, 5.0f);
       return this;
    }
-
-
 
 }
