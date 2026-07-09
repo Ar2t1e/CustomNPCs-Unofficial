@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Zde můžete napsat naprosto jakékoli jméno pro svou postavu",
   "guihint.npcoverlay": "Změňte texturu určité části těla (například můžete změnit oči)",
   "guihint.npcrange": "Určete, z jaké vzdálenosti v blocích může vaše postava střílet (záleží také na poloměru agrese).",
-  "guihint.npcrangedprops.peaceful": "Máte zapnutou obtížnost \"mírumilovná\". Projektily vaší postavy hráčům neublíží .",
+  "guihint.npcrangedprops.peaceful": "Máte zapnutou „mírovou“ obtížnost. Projektily vaší postavy již nebudou poškozovat hráče",
   "guihint.npcrespawn": "Znovuzrodí se vaše postava po smrti?",
   "guihint.npcrespawntime": "Zadejte čas, po kterém má být postava pokaždé oživena (čas je zadán v sekundách)",
   "guihint.npcshootindirect": "Jaký styl střelby preferujete pro svou postavu? (například můžete simulovat katapult)",

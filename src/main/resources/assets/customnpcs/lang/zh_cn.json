@@ -1535,7 +1535,7 @@
   "guihint.npcname": "在这里你可以为你的角色写任何名字",
   "guihint.npcoverlay": "改变特定身体部位的纹理（例如,你可以改变眼睛）",
   "guihint.npcrange": "指定你的角色可以从多远的距离射击（这也取决于仇恨半径）",
-  "guihint.npcrangedprops.peaceful": "\n您已启用\"和平”难度。您角色的投射物不会对玩家造成伤害",
+  "guihint.npcrangedprops.peaceful": "你开启了“和平”难度。你的角色的射弹将不再伤害玩家",
   "guihint.npcrespawn": "你的角色死后会重生吗？",
   "guihint.npcrespawntime": "指定每次角色复活的时间（时间以秒为单位）",
   "guihint.npcshootindirect": "你更喜欢你的角色采用哪种射击风格？（例如,你可以模拟弹射）",

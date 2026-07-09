@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Hier können Sie absolut jeden beliebigen Namen für Ihren Charakter schreiben",
   "guihint.npcoverlay": "Ändern Sie die Textur eines bestimmten Körperteils (Sie können beispielsweise die Augen ändern).",
   "guihint.npcrange": "Geben Sie an, aus welcher Entfernung in Blöcken Ihr Charakter schießen kann (dies hängt auch vom Aggro-Radius ab)",
-  "guihint.npcrangedprops.peaceful": "\n Du hast den Schwierigkeitsgrad \"friedlich\" aktiviert. Die Projektile deines Charakters werden den Spielern keinen Schaden zufügen",
+  "guihint.npcrangedprops.peaceful": "Du hast den Schwierigkeitsgrad „friedlich“ aktiviert. Die Projektile Ihres Charakters fügen Spielern keinen Schaden mehr zu",
   "guihint.npcrespawn": "Wird Ihr Charakter nach dem Tod wiedergeboren?",
   "guihint.npcrespawntime": "Geben Sie die Zeit an, nach der der Charakter jedes Mal wiederbelebt werden soll (die Zeit wird in Sekunden angegeben).",
   "guihint.npcshootindirect": "Welchen Schießstil bevorzugen Sie für Ihren Charakter? (Sie können beispielsweise ein Katapult simulieren)",

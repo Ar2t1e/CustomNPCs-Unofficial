@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Di sini Anda dapat menulis nama apa pun untuk karakter Anda",
   "guihint.npcoverlay": "Mengubah tekstur bagian tubuh tertentu (misalnya, Anda dapat mengubah mata)",
   "guihint.npcrange": "Tentukan dari jarak berapa blok karakter Anda dapat menembak (ini juga tergantung pada radius aggro)",
-  "guihint.npcrangedprops.peaceful": "\n Anda mengaktifkan tingkat kesulitan \"damai\". Proyektil karakter Anda tidak akan melukai pemain.",
+  "guihint.npcrangedprops.peaceful": "Anda mengaktifkan tingkat kesulitan \"damai\". Proyektil karakter Anda tidak lagi merusak pemain",
   "guihint.npcrespawn": "Apakah karakter Anda akan terlahir kembali setelah kematian?",
   "guihint.npcrespawntime": "Tentukan waktu setelah karakter harus dihidupkan kembali setiap kali (waktu ditentukan dalam detik)",
   "guihint.npcshootindirect": "Gaya menembak seperti apa yang Anda sukai untuk karakter Anda? (misalnya, Anda dapat mensimulasikan ketapel)",

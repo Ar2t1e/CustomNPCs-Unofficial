@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Ide bármilyen nevet írhatsz a karakterednek",
   "guihint.npcoverlay": "Változtasd meg egy adott testrész textúráját (például megváltoztathatod a szemeket)",
   "guihint.npcrange": "Add meg, hogy a karaktered milyen távolságból lőhet blokkokban (ez az aggro sugártól is függ).",
-  "guihint.npcrangedprops.peaceful": "\n Be van kapcsolva a \"békés” nehézségi fokozat. A karaktered lövedékei nem fognak sebzést okozni a játékosoknak.",
+  "guihint.npcrangedprops.peaceful": "Be van kapcsolva a \"békés\" nehézség. A karaktered lövedékei többé nem károsítják a játékosokat",
   "guihint.npcrespawn": "Újjászületik a karaktered a halálod után?",
   "guihint.npcrespawntime": "Add meg azt az időt, amely elteltével a karaktert minden alkalommal újra kell éleszteni (az időt másodpercben add meg).",
   "guihint.npcshootindirect": "Milyen lövöldözési stílust részesítesz előnyben a karaktereddel? (például szimulálhatsz egy katapultot)",

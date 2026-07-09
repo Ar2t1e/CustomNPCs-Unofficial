@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Ici, vous pouvez écrire absolument n'importe quel nom pour votre personnage",
   "guihint.npcoverlay": "Changer la texture d'une partie spécifique du corps (par exemple, vous pouvez changer les yeux)",
   "guihint.npcrange": "Spécifiez à quelle distance en blocs votre personnage peut tirer (cela dépend également du rayon d'aggro)",
-  "guihint.npcrangedprops.peaceful": "\n Vous avez activé la difficulté «Paisible». Les projectiles de votre personnage n'endommageront pas les joueurs.",
+  "guihint.npcrangedprops.peaceful": "Vous avez activé la difficulté « paisible ». Les projectiles de votre personnage n'endommageront plus les joueurs",
   "guihint.npcrespawn": "Votre personnage renaîtra-t-il après la mort ?",
   "guihint.npcrespawntime": "Spécifiez le temps après lequel le personnage doit être réanimé à chaque fois (le temps est spécifié en secondes)",
   "guihint.npcshootindirect": "Quel style de tir préférez-vous pour votre personnage? (Par exemple, vous pouvez simuler une catapulte)",

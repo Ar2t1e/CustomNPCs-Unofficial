@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Här kan du skriva absolut vilket namn som helst för din karaktär",
   "guihint.npcoverlay": "Ändra strukturen på en specifik kroppsdel (till exempel kan du ändra ögonen)",
   "guihint.npcrange": "Ange från vilket avstånd i block din karaktär kan skjuta (detta beror också på aggro-radien)",
-  "guihint.npcrangedprops.peaceful": "\n Du har aktiverat svårighetsgraden \"fredlig\". Din karaktärs projektiler kommer inte att skada spelare.",
+  "guihint.npcrangedprops.peaceful": "Du har \"fredlig\" svårighet aktiverad. Din karaktärs projektiler kommer inte längre att skada spelare",
   "guihint.npcrespawn": "Kommer din karaktär att återfödas efter döden?",
   "guihint.npcrespawntime": "Ange tiden efter vilken karaktären ska återupplivas varje gång (tiden anges i sekunder)",
   "guihint.npcshootindirect": "Vilken skjutstil föredrar du för din karaktär? (till exempel kan du simulera en katapult)",

@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Burada karakteriniz için istediğiniz ismi yazabilirsiniz",
   "guihint.npcoverlay": "Belirli bir vücut bölümünün dokusunu değiştirin (örneğin, gözlerinizi değiştirebilirsiniz)",
   "guihint.npcrange": "Karakterinizin bloklar halinde hangi mesafeden ateş edebileceğini belirtin (bu aynı zamanda saldırı yarıçapına da bağlıdır)",
-  "guihint.npcrangedprops.peaceful": "\n \"Barışçıl\" zorluk seviyesini etkinleştirdiniz. Karakterinizin mermileri oyunculara hasar vermeyecek.",
+  "guihint.npcrangedprops.peaceful": "\"Barışçıl\" zorluk düzeyiniz açık. Karakterinizin mermileri artık oyunculara zarar vermeyecek",
   "guihint.npcrespawn": "Karakteriniz öldükten sonra yeniden doğacak mı?",
   "guihint.npcrespawntime": "Karakterin her seferinde ne kadar süre sonra canlandırılacağını belirtin (süre saniye olarak belirtilir)",
   "guihint.npcshootindirect": "Karakteriniz için hangi atış stilini tercih edersiniz? (Örneğin, mancınık simülasyonu yapabilirsiniz)",

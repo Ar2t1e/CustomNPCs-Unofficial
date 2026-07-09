@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Hier kunt u absoluut elke naam voor uw personage schrijven",
   "guihint.npcoverlay": "Verander de textuur van een specifiek lichaamsdeel (je kunt bijvoorbeeld de ogen veranderen)",
   "guihint.npcrange": "Geef aan vanaf welke afstand in blokken je personage kan schieten (dit hangt ook af van de aggroradius)",
-  "guihint.npcrangedprops.peaceful": "\n Je hebt de moeilijkheidsgraad \"vreedzaam\" ingeschakeld. De projectielen van je personage zullen geen schade toebrengen aan spelers.",
+  "guihint.npcrangedprops.peaceful": "Je hebt de moeilijkheid 'vreedzaam' ingeschakeld. De projectielen van je personage zullen spelers niet langer beschadigen",
   "guihint.npcrespawn": "Wordt jouw personage na zijn dood herboren?",
   "guihint.npcrespawntime": "Geef de tijd op waarna het personage elke keer weer tot leven moet worden gewekt (de tijd wordt opgegeven in seconden)",
   "guihint.npcshootindirect": "Welke schietstijl prefereer je voor je personage? (Je kunt bijvoorbeeld een katapult simuleren)",

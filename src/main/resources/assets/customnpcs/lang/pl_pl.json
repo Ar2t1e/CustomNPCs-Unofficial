@@ -1535,7 +1535,7 @@
   "guihint.npcname": "Tutaj możesz napisać absolutnie dowolne imię dla swojej postaci",
   "guihint.npcoverlay": "Zmień teksturę określonej części ciała (na przykład możesz zmienić oczy)",
   "guihint.npcrange": "Określ, z jakiej odległości w blokach Twoja postać może strzelać (zależy to również od promienia agresji)",
-  "guihint.npcrangedprops.peaceful": "\n Masz włączony poziom trudności \"pokojowy”. Pociski twojej postaci nie będą ranić graczy.",
+  "guihint.npcrangedprops.peaceful": "Masz włączony „pokojowy” poziom trudności. Pociski twojej postaci nie będą już zadawać obrażeń graczom",
   "guihint.npcrespawn": "Czy Twoja postać odrodzi się po śmierci?",
   "guihint.npcrespawntime": "Określ czas, po którym postać powinna zostać ożywiona za każdym razem (czas jest podawany w sekundach)",
   "guihint.npcshootindirect": "Jaki styl strzelania preferujesz dla swojej postaci? (na przykład możesz symulować katapultę)",
