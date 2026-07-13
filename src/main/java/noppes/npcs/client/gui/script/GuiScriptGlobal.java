@@ -16,7 +16,6 @@ public class GuiScriptGlobal extends GuiNPCInterface {
 		setBackground("smallbg.png");
 		imageWidth = 176;
 		imageHeight = 222;
-		drawDefaultBackground = false;
 	}
 
 	@Override

@@ -34,7 +34,7 @@ public class YDEData {
                 case NPC: node = new YDENpc(this, -1, "", null); break;
                 case OPTION: node = new YDEOption(this, -1, "", -1, new DialogOption()); break;
                 case QUEST: node = new YDEQuest(this, -1, "", -1); break;
-                case AREA: node = new YDEArea(this, "", ""); break;
+                case AREA: node = new YDEArea(this, -1, "", ""); break;
                 default: node = new YDEDialog(this, -1, "", -1); break;
             }
             try {
@@ -231,6 +231,7 @@ public class YDEData {
         }
     }
 
+    @SuppressWarnings("unused")
     public YDEArea getArea(String category, int areaId) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
             if (node instanceof YDEArea && node.category.equals(category) && node.id == areaId) { return (YDEArea) node; }

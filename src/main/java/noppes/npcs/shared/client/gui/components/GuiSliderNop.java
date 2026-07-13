@@ -126,10 +126,16 @@ public class GuiSliderNop extends Gui implements IComponentGui {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.enableBlend();
         Minecraft.getMinecraft().getTextureManager().bindTexture(GuiButtonNop.WIDGETS_LOCATION);
-        // left background
-        drawTexturedModalRect(getX(), getY(), 0, 46, getWidth() / 2, getHeight());
-        // right background
-        drawTexturedModalRect(getX() + getWidth() / 2, getY(), 200 - getWidth() / 2, 46, getWidth() / 2, getHeight());
+        int h0 = height / 2;
+        int h1 = height - h0;
+        int x = getX();
+        int y = getY();
+        int wp = width / 2;
+        // background
+        drawTexturedModalRect(x, y, 0, 46, wp, h0); // left up
+        drawTexturedModalRect(x, y + h0, 0, 66 - h1, wp, h1); // left down
+        drawTexturedModalRect(x + wp, y, 200 - wp, 46, wp, h0); // right up
+        drawTexturedModalRect(x + wp, y + h0, 200 - wp, 66 - h1, wp, h1); // right down
         // scroll
         drawDefaultBackground();
         GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + getWidth(), getY() + getHeight(),
@@ -173,7 +179,7 @@ public class GuiSliderNop extends Gui implements IComponentGui {
     public void onRelease(double x, double y) {
         if (sliderValue != startValue) {
             Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-            if (listener instanceof ISliderListener) { ((ISliderListener) listener).mouseDragged(this); }
+            if (listener instanceof ISliderListener) { ((ISliderListener) listener).mouseReleased(this); }
             startValue = sliderValue;
         }
     }

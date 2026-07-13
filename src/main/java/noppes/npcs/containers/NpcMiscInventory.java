@@ -142,7 +142,7 @@ public class NpcMiscInventory extends InventoryBasic {
 	public NBTTagCompound save() {
 		NBTTagCompound compound = new NBTTagCompound();
 		compound.setTag("NpcMiscInv", NBTTags.nbtItemStackList(this));
-		compound.setInteger("NpcMiscInvSize",getSizeInventory());
+		compound.setInteger("NpcMiscInvSize", getSizeInventory());
 		return compound;
 	}
 

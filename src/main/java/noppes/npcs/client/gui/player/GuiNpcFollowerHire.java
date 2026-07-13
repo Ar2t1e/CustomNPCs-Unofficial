@@ -14,6 +14,7 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketFollowerHire;
 import noppes.npcs.roles.RoleFollower;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.util.Util;
 
@@ -61,24 +62,28 @@ public class GuiNpcFollowerHire extends GuiContainerNPCInterface<ContainerNPCFol
 		int index = 0;
 		for (int slot = 0; slot < role.rentalItems.getSizeInventory(); ++slot) {
 			ItemStack itemstack = role.rentalItems.getStackInSlot(slot);
+			mc.getTextureManager().bindTexture(GuiBasic.RESOURCE_SLOT);
 			if (!NoppesUtilServer.isItemStackNull(itemstack)) {
 				int days = 1;
 				if (role.rates.containsKey(slot)) { days = role.rates.get(slot); }
 				int yOffset = index * 18;
-				int x = guiLeft + 78;
+				int x = guiLeft + 89;
 				int y = guiTop + yOffset + 10;
 				GlStateManager.enableRescaleNormal();
 				RenderHelper.enableGUIStandardItemLighting();
-				itemRender.renderItemAndEffectIntoGUI(itemstack, x + 11, y);
-				itemRender.renderItemOverlays(fontRenderer, itemstack, x + 11, y);
+				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+				drawTexturedModalRect(x - 1, y - 1, 0, 0, 18, 18);
+				itemRender.renderItemAndEffectIntoGUI(itemstack, x, y);
+				itemRender.renderItemOverlays(fontRenderer, itemstack, x, y);
 				RenderHelper.disableStandardItemLighting();
 				GlStateManager.disableRescaleNormal();
 				Component daysS = Component.empty()
 						.append(" = " + days + " ")
 						.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-				fontRenderer.drawString(daysS.getFormattedText(), x + 27, y + 4,
-						CustomNpcResourceListener.DefaultTextColor);
-				if (isMouseHover(mouseX, mouseY, x - guiLeft + 11, y - guiTop, 16, 16)) {
+				fontRenderer.drawString(daysS.getFormattedText(), x + 16, y + 4,
+						CustomNpcResourceListener.DefaultTextColor,
+						false);
+				if (isMouseHover(mouseX, mouseY, x, y, 16, 16)) {
 					renderToolTip(itemstack, mouseX, mouseY);
 				}
 				++index;
@@ -90,7 +95,9 @@ public class GuiNpcFollowerHire extends GuiContainerNPCInterface<ContainerNPCFol
 					.append(Util.instance.getTextReducedNumber(role.rentalMoney, true, true, false))
 					.append(" " + CustomNpcs.displayCurrencies + " = " + days + " ")
 					.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-			fontRenderer.drawString(daysS.getFormattedText(), guiLeft + 90, guiTop + 68, CustomNpcResourceListener.DefaultTextColor);
+			fontRenderer.drawString(daysS.getFormattedText(), guiLeft + 90, guiTop + 69,
+					CustomNpcResourceListener.DefaultTextColor,
+					false);
 		}
 	}
 

@@ -275,6 +275,8 @@ public class CustomNpcs {
 	public static boolean ReplaceCustomBackground = true;
 	@ConfigProp(info = "Commission for transferring coins between players through a team", def = "5", min = "0", max = "500")
 	public static int CoinCommission = 5;
+	@ConfigProp(info = "The animation of the GUI mod will be fast", def = "false", type = "client")
+	public static boolean IsFastAnimationGUI = false;
 
 	@SidedProxy(clientSide = "noppes.npcs.client.ClientProxy", serverSide = "noppes.npcs.CommonProxy")
 	public static CommonProxy proxy;

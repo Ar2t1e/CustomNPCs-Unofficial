@@ -243,8 +243,7 @@ public class GuiLog extends GuiNPCInterface
 
 		type = t;
 		temp = 0;
-		tick = (int) (15 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-		milliTick = tick;
+		setNextTick(15, false);
 		step = 0;
 
 		imageWidth = 0;
@@ -318,14 +317,12 @@ public class GuiLog extends GuiNPCInterface
 			int catList = catRow * 8 + id - 7;
 			if (catSelect == catList && page != 0) {
 				step = 11;
-				tick = (int) (10 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick;
+				setNextTick(10, false);
 				page = 0;
 			}
 			if (catSelect != catList || activeQuest != null) {
 				step = catSelect > catList || activeQuest != null ? 11 : 10;
-				tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick - 1;
+				setNextTick(11, true);
 				catSelect = catList;
 				page = 0;
 				activeQuest = null;
@@ -335,8 +332,7 @@ public class GuiLog extends GuiNPCInterface
 		switch (id) {
 			case 0: {
 				mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-				tick = (int) (15 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick;
+				setNextTick(15, false);
 				step = type + 7;
 				type = -1;
 				return true;
@@ -344,8 +340,7 @@ public class GuiLog extends GuiNPCInterface
 			case 1: {
 				if (type == 1) { return false; }
 				mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-				tick = (int) (15 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick;
+				setNextTick(15, false);
 				toPrePage = false;
 				step = type + 7;
 				page = 0;
@@ -357,8 +352,7 @@ public class GuiLog extends GuiNPCInterface
 			case 2: {
 				if (type == 1) { return false; }
 				mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-				tick = (int) (15 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick;
+				setNextTick(15, false);
 				toPrePage = type == 1;
 				step = type + 7;
 				catRow = 0;
@@ -372,8 +366,7 @@ public class GuiLog extends GuiNPCInterface
 			case 3: {
 				if (type != 2 && CustomNpcs.TypeShowQuestCompass != 4) {
 					mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-					tick = (int) (15 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-					milliTick = tick;
+					setNextTick(15, false);
 					toPrePage = true;
 					step = type + 7;
 					page = 0;
@@ -386,15 +379,13 @@ public class GuiLog extends GuiNPCInterface
 				mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0f));
 				page++;
 				step = 10;
-				tick = (int) (10 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick;
+				setNextTick(10, false);
 				return true;
 			} // page right
 			case 5: {
 				page--;
 				step = 11;
-				tick = (int) (10 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick;
+				setNextTick(10, false);
 				return true;
 			} // page left
 			case 6: {
@@ -411,8 +402,7 @@ public class GuiLog extends GuiNPCInterface
 				if (catName.isEmpty() || !quests.containsKey(catName) || !quests.get(catName).containsKey(hoverQuestId)) { return false; }
 				activeQuest = new QuestInfo(quests.get(catName).get(hoverQuestId), mc.world);
 				step = 10;
-				tick = (int) (10 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-				milliTick = tick;
+				setNextTick(10, false);
 				return true;
 			} // quest select
 			case 16: {
@@ -1269,8 +1259,7 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.popMatrix();
 					if (tick == 0) {
 						step = 1;
-						tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(21, true);
 						MusicController.Instance.playSound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":book.down",
 								(float) player.posX, (float) player.posY, (float) player.posZ, 1.0f,
 								0.75f + 0.25f * rnd.nextFloat());
@@ -1319,8 +1308,7 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.popMatrix();
 					if (tick == 0) {
 						step = 2;
-						tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(11, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1375,17 +1363,17 @@ public class GuiLog extends GuiNPCInterface
 								(float) player.posX, (float) player.posY, (float) player.posZ, 1.0f,
 								0.8f + 0.4f * rnd.nextFloat());
 					}
+					int time = 11;
 					if (tick == 0) {
 						if (temp < 3) {
 							temp++;
 							step = 2;
-							tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
                         } else {
 							temp = 0;
 							step = 3;
-							tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
+							time = 21;
                         }
-                        milliTick = tick - 1;
+						setNextTick(time, true);
                         GlStateManager.disableBlend();
 					}
 					break;
@@ -1417,8 +1405,7 @@ public class GuiLog extends GuiNPCInterface
 
 					if (tick == 0) {
 						step = type + 4;
-						tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(21, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1463,8 +1450,7 @@ public class GuiLog extends GuiNPCInterface
 					}
 					if (tick == 0) {
 						step = toPrePage ? 10 : 11;
-						tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(11, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1473,8 +1459,7 @@ public class GuiLog extends GuiNPCInterface
 					drawBox(mouseX, mouseY);
 					if (tick == 0) {
 						step = toPrePage ? 10 : 11;
-						tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(11, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1483,8 +1468,7 @@ public class GuiLog extends GuiNPCInterface
 					drawBox(mouseX, mouseY);
 					if (tick == 0) {
 						step = toPrePage ? 10 : 11;
-						tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(11, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1532,8 +1516,7 @@ public class GuiLog extends GuiNPCInterface
 						} else {
 							step = type + 4;
 						}
-						tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(21, true);
 					}
 					break;
 				} // quest tab close
@@ -1547,8 +1530,7 @@ public class GuiLog extends GuiNPCInterface
 						} else {
 							step = type + 4;
 						}
-						tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(21, true);
 					}
 					break;
 				} // faction close
@@ -1562,8 +1544,7 @@ public class GuiLog extends GuiNPCInterface
 						} else {
 							step = type + 4;
 						}
-						tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(21, true);
 					}
 					break;
 				} // compass close
@@ -1608,8 +1589,7 @@ public class GuiLog extends GuiNPCInterface
 					}
 					if (tick == 0) {
 						step = -1;
-						tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(11, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1655,8 +1635,7 @@ public class GuiLog extends GuiNPCInterface
 					}
 					if (tick == 0) {
 						step = -1;
-						tick = (int) (11 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(11, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1687,8 +1666,7 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.popMatrix();
 					if (tick == 0) {
 						step = 13;
-						tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(21, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1739,8 +1717,7 @@ public class GuiLog extends GuiNPCInterface
 								(float) player.posX, (float) player.posY, (float) player.posZ, 1.0f,
 								0.75f + 0.25f * rnd.nextFloat());
 						step = 14;
-						tick = (int) (21 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(21, true);
 						GlStateManager.disableBlend();
 					}
 					break;
@@ -1754,8 +1731,7 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.popMatrix();
 					if (tick == 0) {
 						step = 14;
-						tick = (int) (101 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-						milliTick = tick - 1;
+						setNextTick(101, true);
 						save();
 						if (type == -1) {
 							mc.displayGuiScreen(new GuiInventory(player));
@@ -1965,8 +1941,7 @@ public class GuiLog extends GuiNPCInterface
 	public boolean keyPressed(char typedChar, int keyCode) {
 		if (step >= 0) { return false; }
 		if (keyCode == Keyboard.KEY_ESCAPE || isInventoryKey(keyCode)) {
-			tick = (int) (15 / (data.game.questLogIsFast ? 3.0f : 1.0f));
-			milliTick = tick;
+			setNextTick(15, false);
 			step = type + 7;
 			type = keyCode == Keyboard.KEY_ESCAPE ? -2 : -1;
 			return true;
@@ -2139,6 +2114,11 @@ public class GuiLog extends GuiNPCInterface
 			}
 		}
 		return lines;
+	}
+
+	private void setNextTick(int time, boolean isNext) {
+		tick = (int) (time / (CustomNpcs.IsFastAnimationGUI ? 3.0f : 1.0f));
+		milliTick = tick - (isNext ? 1 : 0);
 	}
 
 }

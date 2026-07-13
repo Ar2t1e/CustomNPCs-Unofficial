@@ -42,8 +42,14 @@ public class ItemSoulstoneFilled extends Item {
 		NBTTagCompound compound = stack.getTagCompound();
 		if (compound != null && compound.hasKey("Entity", 10)) {
 			Component name = Component.translatable(compound.getString("Name"));
-			if (compound.hasKey("DisplayName")) {
-				name = Component.jsonToComponent(compound.getString("DisplayName")).append(" (").append(name).append(")");
+			if (compound.hasKey("DisplayName", 8)) {
+				Component displayName = Component.empty()
+						.append(Component.translatable(compound.getString("DisplayName")).withStyle(TextFormatting.BLUE));
+				if (flag == ITooltipFlag.TooltipFlags.ADVANCED) {
+					name = displayName.append(Component.literal(" (").withStyle(TextFormatting.DARK_GRAY))
+							.append(name.withStyle(TextFormatting.DARK_GRAY))
+							.append(Component.literal(")").withStyle(TextFormatting.DARK_GRAY));
+				}
 			}
 			list.add(TextFormatting.BLUE + name.getFormattedText());
 			if (stack.getTagCompound().hasKey("ExtraText")) {

@@ -12,6 +12,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import noppes.npcs.*;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.JobType;
@@ -32,6 +33,8 @@ import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nonnull;
+
 public class RoleFollower extends RoleInterface implements IRoleFollower {
 
 	public boolean disableGui = false;
@@ -47,11 +50,18 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 	public NpcMiscInventory inventory = new NpcMiscInventory(0);
 	public EntityPlayer owner = null;
 	public HashMap<Integer, Integer> rates = new HashMap<>();
-	public String dialogFarewell = Component.translatable("follower.farewellText").append(" {player}").getFormattedText();
-	public String dialogFired = Component.translatable("follower.firedText").append(" {player}").getFormattedText();
-	public String dialogHire = Component.translatable("follower.hireText")
-			.append(" {days} ")
-			.append(Component.translatable("follower.days")).getFormattedText();
+	public String dialogFarewell = getTexts("follower.farewellText", " {player}");
+	public String dialogFired = getTexts("follower.firedText", " {player}");
+	public String dialogHire = getTexts("follower.hireText", " {days} ", Component.translatable("follower.days"));
+
+	private String getTexts(@Nonnull String main, Object ... added) {
+		Component component = Component.translatable(main);
+		for (Object part : added) {
+			if (part instanceof String) { component.append((String) part); }
+			else if (part instanceof Component) { component.append((Component) part); }
+		}
+		return Util.instance.deleteColor(component.getFormattedText());
+	}
 
 	public RoleFollower(EntityNPCInterface npc) {
 		super(npc);
@@ -110,7 +120,7 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 	public void addDays(int days) {
 		if (hiredTime == 0L) {
 			daysHired = days;
-			hiredTime = System.currentTimeMillis();
+			hiredTime = getCurrentTime();
 		}
 		else { daysHired += days; }
 	}
@@ -134,7 +144,7 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
         fs.dimId = npc.world.provider.getDimension();
         fs.npc = npc;
         owner = getOwner();
-		if (!infiniteDays && (System.currentTimeMillis() - hiredTime) > getDays() * 1440000L) {
+		if (!infiniteDays && (getCurrentTime() - hiredTime) > (long) getDays() * 24000L) {
 			RoleEvent.FollowerFinishedEvent event = new RoleEvent.FollowerFinishedEvent(owner, npc.wrappedNPC);
 			EventHooks.onNPCRole(npc, event);
 			if (owner != null && owner.openContainer instanceof ContainerNPCFollowerHire) { owner.closeScreen(); }
@@ -177,17 +187,13 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 	}
 
 	@Override
-	public boolean defendOwner() {
-		return !isFollowing() || npc.job.getEnumType() != JobType.GUARD;
-	}
+	public boolean defendOwner() { return isFollowing() && npc != null && npc.job.getEnumType() == JobType.GUARD; }
 
     @Override
 	public int getDays() {
 		if (infiniteDays) { return 100; }
-		if (daysHired <= 0) { return 0; }
-		int daysPassed = (int) Math.floor((double) (System.currentTimeMillis() - hiredTime) / 480000.0d);
-		return daysHired - daysPassed;
-	}
+        return Math.max(daysHired, 0);
+    }
 
 	@Override
 	public IPlayer<?> getFollowing() {
@@ -204,32 +210,18 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 	@Override
 	public boolean getInfinite() { return infiniteDays; }
 
+	@SuppressWarnings("ConstantConditions")
 	public EntityPlayer getOwner() {
-		if (ownerUUID == null || ownerUUID.isEmpty()) { return null; }
-		try {
-			UUID uuid = UUID.fromString(ownerUUID);
-            MinecraftServer server = null;
-            if (npc.world != null) { server = npc.world.getMinecraftServer(); }
-            if (server == null && CustomNpcs.Server != null) { server = CustomNpcs.Server; }
-            if (server != null) { return server.getPlayerList().getPlayerByUUID(uuid); }
-        } catch (Exception e) { LogWriter.error(e); }
-        assert npc.world != null;
-        return npc.world.getPlayerEntityByName(ownerUUID);
-	}
-
-	private PlayerData getOwnerData() {
-		if (ownerUUID == null || ownerUUID.isEmpty() || CustomNpcs.Server == null || npc.world == null || npc.world.getMinecraftServer() == null) {
-			return null;
+		if (npc != null && npc.world != null && !npc.world.isRemote && (ownerUUID != null && !ownerUUID.isEmpty())) {
+			try {
+				UUID uuid = UUID.fromString(ownerUUID);
+				MinecraftServer server = npc.world.getMinecraftServer();
+				if (server == null && CustomNpcs.Server != null) { server = CustomNpcs.Server; }
+				if (server != null) { return server.getPlayerList().getPlayerByUUID(uuid); }
+			} catch (Exception e) { LogWriter.error(e); }
+			return npc.world.getPlayerEntityByName(ownerUUID);
 		}
-		return PlayerDataController.instance.getDataFromUsername(
-				CustomNpcs.Server == null ? npc.world.getMinecraftServer() : CustomNpcs.Server, ownerUUID);
-	}
-
-	public int getRange() {
-		if (npc.stats.aggroRange > CustomNpcs.NpcNavRange) {
-			return CustomNpcs.NpcNavRange;
-		}
-		return npc.stats.aggroRange;
+		return null;
 	}
 
 	@Override
@@ -257,7 +249,8 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 
 	@Override
 	public boolean isFollowing() {
-		return ownerUUID != null && !ownerUUID.isEmpty() && isFollowing && getDays() > 0;
+		return ownerUUID != null && !ownerUUID.isEmpty() && isFollowing &&
+				(getCurrentTime() - hiredTime) < (long) getDays() * 24000L;
 	}
 
 	@Override
@@ -271,9 +264,9 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 			}
 			else if (owner.world.provider.getDimension() == npc.world.provider.getDimension()) {
 				for (int i = 0; i < inventory.getSizeInventory(); i++) {
-					ItemStack stack = inventory.getStackInSlot(i);
-					if (!NoppesUtilServer.isItemStackNull(stack)) {
-						EntityItem entityitem = new EntityItem(owner.world, owner.posX, owner.posY, owner.posZ, stack);
+					ItemStack entityItem = inventory.getStackInSlot(i);
+					if (!NoppesUtilServer.isItemStackNull(entityItem)) {
+						EntityItem entityitem = new EntityItem(owner.world, owner.posX, owner.posY, owner.posZ, entityItem);
 						entityitem.setPickupDelay(0);
 						owner.world.spawnEntity(entityitem);
 					}
@@ -293,9 +286,7 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 	}
 
 	@Override
-	public void reset() {
-		killed();
-	}
+	public void reset() { killed(); }
 
 	@Override
 	public void setFollowing(IPlayer<?> player) {
@@ -317,5 +308,36 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 
 	@Override
 	public void setRefuseSoulstone(boolean refuse) { refuseSoulStone = refuse; }
+
+	// New from Unofficial (BetaZavr)
+	public long getCurrentTime() {
+		World level = null;
+		if (npc != null) { level = npc.world; }
+		else if (CustomNpcs.Server != null) { level = CustomNpcs.Server.getWorld(0); }
+		return level != null ? level.getTotalWorldTime() : 0;
+	}
+
+	private PlayerData getOwnerData() {
+		if (ownerUUID == null || ownerUUID.isEmpty() || CustomNpcs.Server == null || npc.world == null || npc.world.getMinecraftServer() == null) {
+			return null;
+		}
+		return PlayerDataController.instance.getDataFromUsername(
+				CustomNpcs.Server == null ? npc.world.getMinecraftServer() : CustomNpcs.Server, ownerUUID);
+	}
+
+	public int getRange() {
+		if (npc.stats.aggroRange > CustomNpcs.NpcNavRange) {
+			return CustomNpcs.NpcNavRange;
+		}
+		return npc.stats.aggroRange;
+	}
+
+	@SuppressWarnings("unused")
+	public int getDaysLeft() {
+		if (infiniteDays) { return 100; }
+		if (daysHired <= 0) { return 0; }
+		int daysPassed = (int) Math.floor((double) (getCurrentTime() - hiredTime) / 24000.0d);
+		return Math.max(daysHired - daysPassed, 0);
+	}
 
 }

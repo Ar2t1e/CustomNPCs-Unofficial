@@ -75,12 +75,8 @@ public class ItemSoulstoneEmpty extends Item {
 				CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.SOULSTONE_ALL)) { return true; }
 		if (entity instanceof EntityNPCInterface) {
 			EntityNPCInterface npc = (EntityNPCInterface) entity;
-			if (npc.role instanceof RoleCompanion) {
-				if (((RoleCompanion) npc.role).getOwner() == player) { return true; }
-			}
-			if (npc.role instanceof RoleFollower) {
-				if (((RoleFollower) npc.role).getOwner() == player) { return !((RoleFollower) npc.role).refuseSoulStone; }
-			}
+			if (npc.role instanceof RoleCompanion && ((RoleCompanion) npc.role).getOwner() == player) { return true; }
+			if (npc.role instanceof RoleFollower && ((RoleFollower) npc.role).getOwner() == player) { return !((RoleFollower) npc.role).refuseSoulStone; }
 			return CustomNpcs.SoulStoneNPCs;
 		}
 		return entity instanceof EntityAnimal && CustomNpcs.SoulStoneAnimals;

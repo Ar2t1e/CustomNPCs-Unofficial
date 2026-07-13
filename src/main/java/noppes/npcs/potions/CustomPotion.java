@@ -132,10 +132,7 @@ public class CustomPotion extends Potion implements ICustomElement {
 
 	@Override
 	public void removeAttributesModifiersFromEntity(@Nonnull EntityLivingBase entityLivingBaseIn, @Nonnull AbstractAttributeMap attributeMapIn, int amplifier) {
-		for (Entry<IAttribute, AttributeModifier> entry : attributeModifierMap.entrySet()) {
-			IAttributeInstance iattributeinstance = attributeMapIn.getAttributeInstance(entry.getKey());
-            iattributeinstance.removeModifier(entry.getValue());
-        }
+		super.removeAttributesModifiersFromEntity(entityLivingBaseIn, attributeMapIn, amplifier);
 		EventHooks.onCustomPotionEvent(new CustomPotionEvent.EndEffect(this, entityLivingBaseIn, amplifier), EnumScriptType.POTION_END);
 	}
 
