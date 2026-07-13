@@ -12,34 +12,29 @@ public class EntityAIOwnerHurtByTarget extends TargetGoal {
    LivingEntity theOwnerAttacker;
    private int timer;
 
-   public EntityAIOwnerHurtByTarget(EntityNPCInterface npc) {
-      super(npc, false);
-      this.npc = npc;
-      this.setFlags(EnumSet.of(Flag.TARGET));
+   public EntityAIOwnerHurtByTarget(EntityNPCInterface npcIn) {
+      super(npcIn, false);
+      npc = npcIn;
+      setFlags(EnumSet.of(Flag.TARGET));
    }
 
+   @Override
    public boolean canUse() {
-      if (this.npc.isFollower() && this.npc.role.defendOwner()) {
-         LivingEntity entity = this.npc.getOwner();
-         if (entity == null) {
-            return false;
-         } else {
-            this.theOwnerAttacker = entity.getLastHurtByMob();
-            int i = entity.getLastHurtByMobTimestamp();
-            return i != this.timer && this.canAttack(this.theOwnerAttacker, TargetingConditions.DEFAULT);
+      if (npc.isFollower() && npc.role.defendOwner()) {
+         LivingEntity entity = npc.getOwner();
+         if (entity != null) {
+            theOwnerAttacker = entity.getLastHurtByMob();
+            return entity.getLastHurtByMobTimestamp() != timer && canAttack(theOwnerAttacker, TargetingConditions.DEFAULT);
          }
-      } else {
-         return false;
       }
+      return false;
    }
 
+   @Override
    public void start() {
-      this.npc.setTarget(this.theOwnerAttacker);
-      LivingEntity entity = this.npc.getOwner();
-      if (entity != null) {
-         this.timer = entity.getLastHurtByMobTimestamp();
-      }
-
+      npc.setTarget(theOwnerAttacker);
+      LivingEntity entity = npc.getOwner();
+      if (entity != null) { timer = entity.getLastHurtByMobTimestamp(); }
       super.start();
    }
 

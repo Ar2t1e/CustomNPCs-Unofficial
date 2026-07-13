@@ -55,7 +55,6 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
    protected static final ResourceLocation mTable = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/table.png");
    protected static final ResourceLocation mSendBox = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/send_box.png");
    protected static final ResourceLocation widgets = new ResourceLocation("textures/gui/widgets.png");
-   public static final ResourceLocation icons = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/icons.png");
    public static PlayerMail mail = new PlayerMail();
    public static Screen parent;
 
@@ -78,7 +77,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
    // Animations
    protected int step;
    protected int tick;
-   protected int mTick;
+   protected int milliTick;
    protected int aType;
    protected long errTick;
    protected final Random rnd = new Random();
@@ -105,8 +104,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
          bookTotalPages = 1;
       }
       ClientTickHandler.checkMails = true;
-      tick = 30;
-      mTick = 30;
+      setNextTick(30, false);
       step = 0;
    }
 
@@ -190,45 +188,45 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
       if (menu.canEdit && !menu.canSend) { // dialog/quest add to
          addButton(0, x + 52, y, "gui.done")
                  .setSize(50, 14)
-                 .setTexture(icons)
-                 .setUV(0, 176, 0, 0);
+                 .setTexture(GuiMailbox.buttons)
+                 .setUV(0, 120, 0, 0);
       }
       else if (menu.canEdit) { // write
          addButton(0, x + 52, y, "mailbox.send")
                  .setSize(50, 14)
-                 .setTexture(icons)
-                 .setUV(0, 176, 0, 0);
+                 .setTexture(GuiMailbox.buttons)
+                 .setUV(0, 120, 0, 0);
       }
       if (!menu.canEdit && !menu.canSend) { // read -> delete
          if (mail.ransom > 0) {
             addButton(6, x + 220, y - 42, "gui.pay")
                     .setSize(50, 14)
-                    .setTexture(icons)
-                    .setUV(0, 176, 0, 0);
+                    .setTexture(GuiMailbox.buttons)
+                    .setUV(0, 120, 0, 0);
          }
          else if (mail.money > 0) {
             addButton(6, x + 220, y - 42, "gui.take")
                     .setSize(50, 14)
-                    .setTexture(icons)
-                    .setUV(0, 176, 0, 0)
+                    .setTexture(GuiMailbox.buttons)
+                    .setUV(0, 120, 0, 0)
                     .setHoverTexts("display.hover.X");
          }
          addButton(4, x, y, "gui.remove")
                  .setSize(50, 14)
-                 .setTexture(icons)
-                 .setUV(0, 176, 0, 0);
+                 .setTexture(GuiMailbox.buttons)
+                 .setUV(0, 120, 0, 0);
          if (!mail.isReturned()) {
             addButton(7, x + 52, y, "mailbox.back")
                     .setSize(50, 14)
-                    .setTexture(icons)
-                    .setUV(0, 176, 0, 0);
+                    .setTexture(GuiMailbox.buttons)
+                    .setUV(0, 120, 0, 0);
          }
       }
       if (!menu.canEdit || menu.canSend) { // write -> cancel
          addButton(3, x + 104, y, !menu.canEdit ? "gui.back" : "gui.cancel")
                  .setSize(50, 14)
-                 .setTexture(icons)
-                 .setUV(0, 176, 0, 0)
+                 .setTexture(GuiMailbox.buttons)
+                 .setUV(0, 120, 0, 0)
                  .setHoverTexts("display.hover.X");
       }
       add(buttonNextPage = new GuiButtonNextPage(this, 1, x + 135, y - 16, true, null));
@@ -422,6 +420,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
    }
 
    // OLD: addString
+   @SuppressWarnings("unused")
    private void append(String str) {
       if (minecraft == null) { minecraft = Minecraft.getInstance(); }
       String text = getText();
@@ -701,9 +700,10 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 
          if (minecraft == null) { minecraft = Minecraft.getInstance(); }
          int ls = minecraft.font.width(s);
-         graphics.drawString(font, s, guiLeft + 163 - ls, guiTop + 18, 0, false);
+         graphics.drawString(font, s, guiLeft + 128 - ls, guiTop + 132, 0, false);
          if (!drawEnd.isEmpty()) { graphics.drawString(font, drawEnd, guiLeft + 159, guiTop + 127, 0, false); }
-         graphics.drawWordWrap(minecraft.font, Component.translatable(totalText), guiLeft + 36, guiTop + 18 + 16, 116, 0);
+         graphics.drawWordWrap(minecraft.font, Component.translatable(totalText),
+                 guiLeft + 15, guiTop + 30, 144, 0);
          if (!menu.canEdit && !menu.canSend && mail.ransom > 0) {
             int borderC = new Color(0x40000000).getRGB();
             graphics.fillGradient(guiLeft + 11, guiTop + 36, guiLeft + 164, guiTop + 144, borderC, borderC);
@@ -744,7 +744,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                      getLabel(8).setBackColor(new Color(0x80FF0000).getRGB());
                      getButton(6).layerColor = new Color(0xFFF00000).getRGB();
                   }
-                  graphics.blit(icons, -2, -2, 0, 32, 20, 20);
+                  graphics.blit(GuiMailbox.icons, -2, -2, 0, 32, 20, 20);
                   matrixStack.popPose();
                }
             }
@@ -796,7 +796,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
       }
       // Info
       if (!menu.canEdit && mail.ransom > 0) {
-         graphics.blit(icons, guiLeft + 33, guiTop + 43, 0, 126, 120, 130);
+         graphics.blit(GuiMailbox.icons, guiLeft + 33, guiTop + 43, 0, 126, 120, 130);
          graphics.drawString(font, Component.translatable("mailbox.hover.ransom.sell"), guiLeft + 36, guiTop + 100,
                  CustomNpcs.MainColor.getRGB() | 0xFF000000);
       }
@@ -861,7 +861,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
       if (tick >= 0) {
          if (tick == 0) { partialTicks = 0.0f; }
          float part = (float) tick + partialTicks;
-         float cos = ValueUtil.correctFloat((float) Math.cos(90.0d * part / (double) mTick * Math.PI / 180.0d), 0.0f, 1.0f);
+         float cos = ValueUtil.correctFloat((float) Math.cos(90.0d * part / (double) milliTick * Math.PI / 180.0d), 0.0f, 1.0f);
          switch (step) {
             case 0: {
                float u = guiLeft + (1.0f - cos) * 174.0f;
@@ -874,8 +874,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 1;
-                  tick = 21;
-                  mTick = 20;
+                  setNextTick(21, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.down",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.75f + 0.25f * rnd.nextFloat());
@@ -894,8 +893,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 2;
-                  tick = 21;
-                  mTick = 20;
+                  setNextTick(21, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.sheet",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.8f + 0.4f * rnd.nextFloat());
@@ -933,8 +931,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 3;
-                  tick = 16;
-                  mTick = 15;
+                  setNextTick(16, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.sheet",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.8f + 0.4f * rnd.nextFloat());
@@ -969,8 +966,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 4;
-                  tick = 36;
-                  mTick = 35;
+                  setNextTick(36, true);
                }
                break;
             } // envelope_1 offset
@@ -1009,7 +1005,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                   int x1 = x * 18 - 202;
                   int y1 = y * 18 + (y == 3 ? 2 : 0) - 29;
                   if (t < 0) {
-                     graphics.blit(mSendBox, x1, y1, 0, 0, 18, 18);
+                     graphics.blit(GuiBasic.RESOURCE_SLOT, x1, y1, 0, 0, 18, 18);
                   } else {
                      cos = (float) Math.cos(90.0d * ((double) t + partialTicks) / 35.0d * Math.PI / 180.0d);
                      if (cos < 0.0f) {
@@ -1052,7 +1048,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                }
                if (tick == 0) {
                   step = 5;
-                  mTick = 0;
+                  milliTick = 0;
                }
                break;
             } // slots
@@ -1060,8 +1056,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                drawPlace(graphics, guiLeft, guiTop, mouseX, mouseY);
                if (tick == 0) {
                   step = 7;
-                  tick = 36;
-                  mTick = 36;
+                  setNextTick(36, false);
                }
             } // simple close/back
             case 7: {
@@ -1115,8 +1110,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                }
                if (tick == 0) {
                   step = aType == 0 ? 8 : aType == 1 ? 10 : 13;
-                  tick = 31;
-                  mTick = 30;
+                  setNextTick(31, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.sheet",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.8f + 0.4f * rnd.nextFloat());
@@ -1157,8 +1151,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 9;
-                  tick = 31;
-                  mTick = 30;
+                  setNextTick(31, true);
                }
                break;
             } // 1 _ simple close/back
@@ -1182,7 +1175,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 0;
-                  mTick = 0;
+                  milliTick = 0;
                   onClose();
                }
                break;
@@ -1218,8 +1211,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 11;
-                  tick = 16;
-                  mTick = 15;
+                  setNextTick(16, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.sheet",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.8f + 0.4f * rnd.nextFloat());
@@ -1255,8 +1247,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                }
                if (tick == 0) {
                   step = 12;
-                  tick = 31;
-                  mTick = 30;
+                  setNextTick(31, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.sheet",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.8f + 0.4f * rnd.nextFloat());
@@ -1282,7 +1273,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                }
                if (tick == 0) {
                   step = 0;
-                  mTick = 0;
+                  milliTick = 0;
                   onClose();
                }
                break;
@@ -1310,8 +1301,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 14;
-                  tick = 16;
-                  mTick = 15;
+                  setNextTick(16, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":mail.delete",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.8f + 0.4f * rnd.nextFloat());
@@ -1340,8 +1330,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 15;
-                  tick = 31;
-                  mTick = 30;
+                  setNextTick(31, true);
                }
                break;
             } // 2 _ delete
@@ -1362,8 +1351,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 16;
-                  tick = 31;
-                  mTick = 30;
+                  setNextTick(31, true);
                }
                break;
             } // 3 _ delete
@@ -1375,7 +1363,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
                matrixStack.popPose();
                if (tick == 0) {
                   step = 0;
-                  mTick = 0;
+                  milliTick = 0;
                   onClose();
                }
                break;
@@ -1475,6 +1463,11 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
       }
    }
 
+   private void setNextTick(int time, boolean isNext) {
+      tick = (int) (time / (CustomNpcs.IsFastAnimationGUI ? 3.0f : 1.0f));
+      milliTick = tick - (isNext ? 1 : 0);
+   }
+
    @Override
    public void unFocused(GuiTextFieldNop textField) {
       switch (textField.id) {
@@ -1528,8 +1521,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
    private void animClose() {
       if (step != 5) { return; }
       step = 6;
-      tick = 5;
-      mTick = 5;
+      setNextTick(5, false);
    }
 
    @Override

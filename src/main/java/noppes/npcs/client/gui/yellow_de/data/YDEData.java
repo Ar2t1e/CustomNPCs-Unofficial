@@ -19,12 +19,7 @@ public class YDEData {
     public final Map<Integer, YDENode> nodes = new TreeMap<>();
     public final List<YDELink> links = new ArrayList<>();
 
-    public YDEData() {
-        check();
-        resetYpos();
-    }
-
-    public YDEData(CompoundTag compound) {
+    public void load(CompoundTag compound) {
         ListTag listNodes = compound.getList("Nodes", 10);
         for (int i = 0; i < listNodes.size(); i++) {
             CompoundTag nbt = listNodes.getCompound(i);
@@ -33,7 +28,7 @@ public class YDEData {
                 case NPC -> new YDENpc(this, -1, "", null);
                 case OPTION -> new YDEOption(this, -1, "", -1, new DialogOption());
                 case QUEST -> new YDEQuest(this, -1, "", -1);
-                case AREA -> new YDEArea(this, "", "");
+                case AREA -> new YDEArea(this, -1, "", "");
                 default -> new YDEDialog(this, -1, "", -1);
             };
             try {
@@ -71,165 +66,191 @@ public class YDEData {
     }
 
     public YDEData check() {
-        // process categories
-        for (DialogCategory category : new ArrayList<>(DialogController.instance.categories.values())) {
-            YDECategory yde_category = null;
-            for (YDENode node : new ArrayList<>(nodes.values())) {
-                if (node instanceof YDECategory catNode) {
-                    if (catNode.category.equals(category.title)) { yde_category = catNode; }
+        boolean isChanged = false;
+        // remove missing nodes
+        Iterator<Map.Entry<Integer, YDENode>> it = nodes.entrySet().iterator();
+        while (it.hasNext()) {
+            YDENode node = it.next().getValue();
+            if (node instanceof YDEDialog d) {
+                if (!DialogController.instance.hasDialog(d.dialogId)) {
+                    it.remove();
+                    isChanged = true;
                 }
             }
-            if (yde_category == null) {
-                yde_category = new YDECategory(this, getEmptyNodeId(), category.title);
-                if (category.id > -1) { yde_category.categoryId = category.id; }
+            else if (node instanceof YDEOption o) {
+                boolean exists = false;
+                for (Dialog dialog : DialogController.instance.dialogs.values()) {
+                    if (dialog.options.containsValue(o.option)) { exists = true; break; }
+                }
+                if (!exists) {
+                    it.remove();
+                    isChanged = true;
+                }
             }
-            nodes.put(yde_category.id, yde_category);
-        }
-        // process dialogues
-        Set<Integer> sets = new HashSet<>();
-        for (YDENode node : new ArrayList<>(nodes.values())) {
-            if (node instanceof YDEDialog yde_dialog) {
-                if (yde_dialog.dialogId > -1 &&
-                        DialogController.instance.get(yde_dialog.dialogId) == null || sets.contains(yde_dialog.dialogId)) {
-                    nodes.remove(node.id);
-                } else { sets.add(yde_dialog.dialogId); }
+            else if (node instanceof YDENpc n) {
+                boolean parentExists = false;
+                for (YDENode parent : nodes.values()) {
+                    if (parent instanceof YDEDialog d && d.dialog != null
+                            && d.dialog.startedNpcs.contains(n.npcData)) {
+                        parentExists = true; break;
+                    }
+                }
+                if (!parentExists) {
+                    it.remove();
+                    isChanged = true;
+                }
             }
-        }
-        for (DialogCategory category : new ArrayList<>(DialogController.instance.categories.values())) {
-            for (Dialog dialog : new ArrayList<>(category.dialogs.values())) {
-                YDEDialog yde_dialog = getDialog(dialog);
-                if (yde_dialog == null) {
-                    yde_dialog = new YDEDialog(this, getEmptyNodeId(), category.title, dialog.id);
-                    nodes.put(yde_dialog.id, yde_dialog);
-                    processDialog(yde_dialog, 0, getLastY(yde_dialog));
+            else if (node instanceof YDEQuest q) {
+                boolean parentExists = false;
+                for (YDENode parent : nodes.values()) {
+                    if (parent instanceof YDEDialog d && d.dialog != null
+                            && d.dialog.quest == q.questId) {
+                        parentExists = true; break;
+                    }
+                }
+                if (!parentExists) {
+                    it.remove();
+                    isChanged = true;
                 }
             }
         }
+        // remove missing links
+        if (!isChanged) {
+            Iterator<YDELink> il = links.iterator();
+            while (il.hasNext()) {
+                YDELink link = il.next();
+                if (!nodes.containsKey(link.back) || !nodes.containsKey(link.next)) {
+                    il.remove();
+                    isChanged = true;
+                }
+            }
+        }
+        // check and add new nodes
+        if (!isChanged) {
+            for (Dialog dialog : DialogController.instance.dialogs.values()) {
+                if (!hasCategory(dialog.category.title)) {
+                    isChanged = true;
+                    break;
+                } // has category node
+                if (getDialog(dialog) == null) {
+                    isChanged = true;
+                    break;
+                } // has dialog node
+                if (getQuest(dialog.category.title, dialog.quest) == null) {
+                    isChanged = true;
+                    break;
+                } // has quest node
+                for (Dialog.StartedNpcData snd : dialog.startedNpcs) {
+                    if (getNpc(dialog.category.title, snd) == null) {
+                        isChanged = true;
+                        break;
+                    }
+                } // has npc node
+                if (isChanged) { break; }
+                for (Map.Entry<Integer, DialogOption> entry : dialog.options.entrySet()) {
+                    entry.getValue().slot = entry.getKey();
+                    if (getOption(entry.getValue()) == null) {
+                        isChanged = true;
+                        break;
+                    }
+                }  // has option node
+                if (isChanged) { break; }
+            }
+        }
+        if (isChanged) { reBuilding(); }
         return this;
     }
 
-    private void processDialog(YDEDialog yde_dialog, int x, int y) {
-        yde_dialog.x = x;
-        yde_dialog.y = y;
-        if (yde_dialog.dialog == null) { yde_dialog.dialog = DialogController.instance.get(yde_dialog.dialogId); }
-        if (yde_dialog.dialog != null) {
-            if (yde_dialog.dialog.quest > -1) {
-                YDEQuest yde_quest = getQuest(yde_dialog.category, yde_dialog.dialog.quest);
-                if (yde_quest == null) {
-                    yde_quest = new YDEQuest(this, getEmptyNodeId(), yde_dialog.category, yde_dialog.dialog.quest);
-                    yde_quest.x = x + 45;
-                    yde_quest.y = yde_dialog.y + 140;
-                    nodes.put(yde_quest.id, yde_quest);
-                }
-                links.add(new YDELink(yde_dialog.id, yde_quest.id, EnumYDEType.QUEST));
-            }
-            if (!yde_dialog.dialog.startedNpcs.isEmpty()) {
-                for (Dialog.StartedNpcData npcData : new ArrayList<>(yde_dialog.dialog.startedNpcs)) {
-                    YDENpc yde_npc = getNpc(yde_dialog.category, npcData);
-                    if (yde_npc == null) {
-                        yde_npc = new YDENpc(this, getEmptyNodeId(), yde_dialog.category, npcData);
-                        yde_npc.x = x - 100;
-                        yde_npc.y = getLastY(yde_npc);
-                        nodes.put(yde_npc.id, yde_npc);
+    private void reBuilding() {
+        nodes.clear();
+        links.clear();
+        for (DialogCategory category : DialogController.instance.categories.values()) { createCategory(category); }
+    }
+
+    private void createCategory(DialogCategory category) {
+        YDECategory yde_category = new YDECategory(this, getEmptyNodeId(), category.title);
+        nodes.put(yde_category.id, yde_category);
+        // create all branches
+        int branchYPos = 0;
+        for (Dialog dialog : category.dialogs.values()) {
+            YDEDialog node = getDialog(dialog);
+            if (node == null) {
+                YDEDialog yde_dialog = new YDEDialog(this, getEmptyNodeId(), dialog.category.title, dialog.id);
+                yde_dialog.dialog = dialog;
+                nodes.put(yde_dialog.id, yde_dialog);
+
+                DialogBranch branch = new DialogBranch();
+                buildBranchRecursive(branch, 0, yde_dialog);
+                branch.calculateMetrics(branchYPos);
+
+                YDEArea area = new YDEArea(this, getEmptyNodeId(), dialog.category.title, dialog.title);
+                area.x = branch.x;
+                area.y = branch.y + branchYPos;
+                area.width = branch.width;
+                area.height = branch.height;
+                nodes.put(area.id, area);
+
+                branchYPos += branch.height + 20;
+            } // new branch
+        }
+    }
+
+    private void buildBranchRecursive(DialogBranch branch, int column, YDENode node) {
+        branch.addNode(node, column);
+        if (node instanceof YDEDialog dialogNode) {
+            LogWriter.info("[DEBUG] column "+column+"; dialog: "+(dialogNode.dialog != null ? dialogNode.dialog.title : dialogNode.dialogId));
+            if (dialogNode.dialog != null) {
+                // quest (this column)
+                if (dialogNode.dialog.quest > -1) {
+                    YDEQuest quest = getQuest(dialogNode.category, dialogNode.dialog.quest);
+                    if (quest == null) {
+                        quest = new YDEQuest(this, getEmptyNodeId(), dialogNode.category, dialogNode.dialog.quest);
+                        nodes.put(quest.id, quest);
+                        branch.addNode(quest, column);
                     }
-                    links.add(new YDELink(yde_dialog.id, yde_npc.id, EnumYDEType.NPC));
+                    links.add(new YDELink(dialogNode.id, quest.id, EnumYDEType.QUEST));
+                }
+                // npcs (column - 1)
+                for (Dialog.StartedNpcData npcData : dialogNode.dialog.startedNpcs) {
+                    YDENpc npc = getNpc(dialogNode.category, npcData);
+                    if (npc == null) {
+                        npc = new YDENpc(this, getEmptyNodeId(), dialogNode.category, npcData);
+                        nodes.put(npc.id, npc);
+                        branch.addNode(npc, column - 1);
+                    }
+                    links.add(new YDELink(dialogNode.id, npc.id, EnumYDEType.NPC));
+                }
+                // options (column + 1)
+                for (DialogOption option : dialogNode.dialog.options.values()) {
+                    YDEOption optNode = getOption(option);
+                    if (optNode == null) {
+                        optNode = new YDEOption(this, getEmptyNodeId(), dialogNode.category, dialogNode.dialogId, option);
+                        nodes.put(optNode.id, optNode);
+                        buildBranchRecursive(branch, column + 1, optNode);
+                    }
+                    links.add(new YDELink(dialogNode.id, optNode.id, EnumYDEType.OPTION));
                 }
             }
-            if (!yde_dialog.dialog.options.isEmpty()) {
-                x += 200;
-                for (Map.Entry<Integer, DialogOption> entry : new ArrayList<>(yde_dialog.dialog.options.entrySet())) {
-                    entry.getValue().slot = entry.getKey();
-                    YDEOption yde_option = getOption(entry.getValue());
-                    if (yde_option == null) {
-                        yde_option = new YDEOption(this, getEmptyNodeId(), yde_dialog.category, yde_dialog.dialogId, entry.getValue());
-                        yde_option.x = x;
-                        yde_option.y = getLastY(yde_option);
-                        nodes.put(yde_option.id, yde_option);
-                        if (entry.getValue().hasDialogs()) {
-                            for (DialogOption.OptionDialogID optionDialog : new ArrayList<>(entry.getValue().dialogs)) {
-                                YDEDialog yde_next_dialog = getDialog(optionDialog.dialogId);
-                                if (yde_next_dialog == null) {
-                                    yde_next_dialog = new YDEDialog(this, getEmptyNodeId(), yde_dialog.category, optionDialog.dialogId);
-                                    Dialog nextDialog = DialogController.instance.get(optionDialog.dialogId);
-                                    if (nextDialog == null) {
-                                        DialogCategory category = DialogController.instance.getCategory(yde_dialog.category);
-                                        nextDialog = new Dialog(category);
-                                        nextDialog.id = optionDialog.dialogId;
-                                        DialogController.instance.saveDialog(category, nextDialog);
-                                    }
-                                    links.add(new YDELink(yde_option.id, yde_next_dialog.id, EnumYDEType.OPTION));
-                                    nodes.put(yde_next_dialog.id, yde_next_dialog);
-                                    processDialog(yde_next_dialog, x + 200, yde_option.y);
-                                } // Dialogue not found in mod data
-                            }
+        } // dialog
+        else if (node instanceof YDEOption optionNode) {
+            LogWriter.info("[DEBUG] column "+column+"; option: "+optionNode.option.title+"; dialogId: "+optionNode.dialogId);
+            if (optionNode.option.hasDialogs()) {
+                for (DialogOption.OptionDialogID od : optionNode.option.dialogs) {
+                    YDEDialog nextDialog = getDialog(od.dialogId);
+                    if (nextDialog == null) {
+                        nextDialog = new YDEDialog(this, getEmptyNodeId(), optionNode.category, od.dialogId);
+                        if (nextDialog.dialog == null || optionNode.category.equals(nextDialog.dialog.category.title)) {
+                            nodes.put(nextDialog.id, nextDialog);
+                            buildBranchRecursive(branch, column + 1, nextDialog);
                         }
                     }
-                    links.add(new YDELink(yde_dialog.id, yde_option.id, EnumYDEType.DIALOG));
+                    links.add(new YDELink(optionNode.id, nextDialog.id, EnumYDEType.OPTION));
                 }
             }
-        }
+        } // option
     }
 
-    private int getLastY(YDENode node) {
-        int yMax = 0;
-        for (YDENode n : new ArrayList<>(nodes.values())) {
-            if (n instanceof YDECategory || n instanceof YDEArea || n.equals(node)) { continue; }
-            if (n.x + n.width >= node.x && n.x < node.x + node.width) {
-                int y = n.y + n.height + 20;
-                if (yMax < y) { yMax = y; }
-            }
-        }
-        return yMax;
-    }
-
-    private void resetYpos() {
-        List<Map<Integer, YDENode>> tempList = new ArrayList<>();
-        int x = 0;
-        // rows
-        while (true) {
-            Map<Integer, YDENode> map = new TreeMap<>();
-            for (YDENode node : new ArrayList<>(nodes.values())) {
-                if (node instanceof YDECategory || node instanceof YDEArea) { continue; }
-                boolean added = true;
-                for (Map<Integer, YDENode> tempNodes : tempList) {
-                    for (YDENode n : tempNodes.values()) {
-                        if (n.equals(node)) {
-                            added = false;
-                            break;
-                        }
-                    }
-                }
-                if (added && node.x + node.width >= x && node.x < x + 200) { map.put(node.y, node); }
-            }
-            if (map.isEmpty()) { break; }
-            else {
-                tempList.add(map);
-                x += 200;
-            }
-        }
-        // y sets
-        int yCenter = 0;
-        for (Map<Integer, YDENode> tempNodes : tempList) {
-            List<YDENode> hasLinks = new ArrayList<>();
-            int y = 0;
-            for (YDENode node : tempNodes.values()) {
-                y += node.height + 20;
-                if ((node instanceof YDEDialog || node instanceof YDEOption) && !getFromLinks(node.id).isEmpty()) { hasLinks.add(node); }
-            }
-            y -= 20;
-            y /= -2;
-            for (YDENode node : tempNodes.values()) {
-                node.y = yCenter + y;
-                y += node.height + 20;
-            }
-            if (!hasLinks.isEmpty()) {
-                yCenter = 0;
-                for (YDENode node : hasLinks) { yCenter += node.y + node.height / 2; }
-                if (hasLinks.size() > 1) { yCenter /= 2; }
-            }
-        }
-    }
-
+    @SuppressWarnings("unused")
     public YDEArea getArea(String category, int areaId) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
             if (node instanceof YDEArea area && area.category.equals(category) && area.id == areaId) { return area; }
@@ -240,7 +261,19 @@ public class YDEData {
     public YDEOption getOption(DialogOption optionIn) {
         for (YDENode node : new ArrayList<>(nodes.values())) {
             if (node.type == EnumYDEType.OPTION && node instanceof YDEOption option &&
-                    option.option.equals(optionIn)) { return option; }
+                    option.option.dialogs.size() == optionIn.dialogs.size() &&
+                    option.option.equals(optionIn)) {
+                boolean equalDialogsData = true;
+                for (int i = 0; i < optionIn.dialogs.size(); i++) {
+                    DialogOption.OptionDialogID od0 = optionIn.dialogs.get(i);
+                    DialogOption.OptionDialogID od1 = option.option.dialogs.get(i);
+                    if (od0.dialogId != od1.dialogId) {
+                        equalDialogsData = false;
+                        break;
+                    }
+                }
+                if (equalDialogsData) { return option; }
+            }
         }
         return null;
     }
@@ -298,6 +331,15 @@ public class YDEData {
         return yde_dialog;
     }
 
+    public boolean hasCategory(String categoryTitle) {
+        for (YDENode node : new ArrayList<>(nodes.values())) {
+            if (node instanceof YDECategory cat) {
+                if (cat.category.equals(categoryTitle)) { return true; }
+            }
+        }
+        return false;
+    }
+
     public @Nonnull YDECategory getCategory(String categoryTitle) {
         YDECategory empty = null;
         for (YDENode node : new ArrayList<>(nodes.values())) {
@@ -345,5 +387,55 @@ public class YDEData {
     }
 
     public void removeLink(YDELink selectLink) { links.remove(selectLink); }
+
+    private static class DialogBranch {
+
+        private final Map<Integer, List<YDENode>> columns = new TreeMap<>();
+        private final Set<Integer> nodeIds = new HashSet<>();
+
+        private int x = 0;
+        private int y = 0;
+        private int height = 0;
+        private int width = 0;
+
+        void addNode(YDENode node, int colX) {
+            if (nodeIds.contains(node.id)) return;
+            nodeIds.add(node.id);
+            columns.computeIfAbsent(colX, k -> new ArrayList<>()).add(node);
+        }
+
+        void calculateMetrics(int branchYPos) {
+            height = 0;
+            Map<Integer, Integer> columnHeights = new HashMap<>();
+            // max height
+            for (Map.Entry<Integer, List<YDENode>> entry : columns.entrySet()) {
+                int colHeight = 0;
+                for (YDENode node : entry.getValue()) {
+                    if (colHeight > 0) { colHeight += 20; }
+                    colHeight += node.height;
+                }
+                columnHeights.put(entry.getKey(), colHeight);
+                if (colHeight > height) { height = colHeight; }
+            }
+            // calculate posses
+            int center = height / 2;
+            y = 0;
+            x = 0;
+            int maxX = -1;
+            for (Map.Entry<Integer, List<YDENode>> entry : columns.entrySet()) {
+                int colY = branchYPos + center - columnHeights.get(entry.getKey()) / 2;
+                for (YDENode node : entry.getValue()) {
+                    node.x = entry.getKey() * 200;
+                    node.y = colY;
+                    colY += node.height + 20;
+                    if (node instanceof YDENpc) { node.x += 90; }
+                    else if (node instanceof YDEQuest) { node.x += 45; }
+                    if (x > node.x) { x = node.x; }
+                    if (maxX < node.x + node.width) { maxX = node.x + node.width; }
+                }
+            }
+            width = maxX - x;
+        }
+    }
 
 }

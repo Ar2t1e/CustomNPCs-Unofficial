@@ -33,6 +33,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
    protected static final ResourceLocation mDoor = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/box_door.png");
    protected static final ResourceLocation mList = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/box_list.png");
    public static final ResourceLocation icons = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/icons.png");
+   public static final ResourceLocation buttons = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/buttons.png");
 
    protected final Map<Component, PlayerMail> scrollData = new HashMap<>();
    protected GuiCustomScrollNop scroll;
@@ -42,7 +43,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
    protected int closeType;
    protected int step;
    protected int tick;
-   protected int millyTick;
+   protected int milliTick;
    protected final Random rnd = new Random();
 
    public GuiMailbox() {
@@ -52,8 +53,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
 
       ClientTickHandler.checkMails = true;
       // Animations
-      tick = 30;
-      millyTick = 30;
+      setNextTick(30);
       step = 0;
       closeType = 0;
       Packets.sendServer(new SPacketPlayerMailGet());
@@ -67,15 +67,13 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
             if (selected == null) { return; }
             GuiMailmanWrite.mail = selected;
             step = 4;
-            tick = 15;
-            millyTick = 15;
+            setNextTick(15);
             closeType = 2;
             break;
          } // select
          case 1: {
             step = 4;
-            tick = 15;
-            millyTick = 15;
+            setNextTick(15);
             closeType = 1;
             break;
          } // close 1
@@ -132,8 +130,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
          } // delete all letters
          case 5: {
             step = 4;
-            tick = 15;
-            millyTick = 15;
+            setNextTick(15);
             closeType = 0;
             break;
          } // close 0
@@ -211,12 +208,12 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
       if (tick >= 0) {
          if (tick == 0) { partialTicks = 0.0f; }
          float part = (float) tick + partialTicks;
-         float cos = (float) Math.cos(90.0d * part / (double) millyTick * Math.PI / 180.0d);
+         float cos = (float) Math.cos(90.0d * part / (double) milliTick * Math.PI / 180.0d);
          if (cos < 0.0f) { cos = 0.0f; }
          else if (cos > 1.0f) { cos = 1.0f; }
          switch (step) {
             case 0: {
-               if (tick == millyTick) {
+               if (tick == milliTick) {
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":mail.movement",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.75f + 0.25f * rnd.nextFloat());
@@ -228,8 +225,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
                matrixStack.popPose();
                if (tick == 0) {
                   step = 1;
-                  tick = 20;
-                  millyTick = 20;
+                  setNextTick(20);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":mail.open.door",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.75f + 0.25f * rnd.nextFloat());
@@ -244,8 +240,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
                matrixStack.popPose();
                if (tick == 0) {
                   step = 2;
-                  tick = 15;
-                  millyTick = 15;
+                  setNextTick(15);
                }
                break;
             } // opening the door
@@ -266,12 +261,12 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
                matrixStack.popPose();
                if (tick == 0) {
                   step = 3;
-                  millyTick = 0;
+                  milliTick = 0;
                }
                break;
             } // turning the door
             case 4: {
-               if (tick == millyTick) {
+               if (tick == milliTick) {
                   MusicController.Instance.playSound(SoundSource.PLAYERS,
                           CustomNpcs.MODID + ":mail.close.door",
                           player.getX(), player.getY(), player.getZ(), 1.0f, 0.75f + 0.25f * rnd.nextFloat());
@@ -292,8 +287,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
                matrixStack.popPose();
                if (tick == 0) {
                   step = 5;
-                  tick = 20;
-                  millyTick = 20;
+                  setNextTick(20);
                }
                break;
             } // back turning the door
@@ -305,8 +299,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
                matrixStack.popPose();
                if (tick == 0) {
                   step = 6;
-                  tick = 30;
-                  millyTick = 30;
+                  setNextTick(30);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":mail.movement",
                           player.getX(), player.getY(), player.getZ(), 1.0f,
                           0.75f + 0.25f * rnd.nextFloat());
@@ -321,8 +314,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
                matrixStack.popPose();
                if (tick == 0) {
                   step = 0;
-                  tick = 30;
-                  millyTick = 30;
+                  setNextTick(30);
                   if (closeType == 1) {
                      Packets.sendServer(new SPacketPlayerMailOpen(true, true, 0L, ""));
                   }
@@ -456,37 +448,31 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
       int y = guiTop + 202;
       addButton(0, x, y, "mailbox.read")
               .setSize(58, 14)
-              .setTexture(icons)
-              .setUV(0, 96, 0, 0)
+              .setTexture(buttons)
               .setIsEnabled(selected != null)
               .setHoverTexts("mailbox.hover.read");
       addButton(1, x + 59, y, "mailbox.write")
               .setSize(58, 14)
-              .setTexture(icons)
-              .setUV(0, 96, 0, 0)
+              .setTexture(buttons)
               .setHoverTexts("mailbox.hover.write");
       addButton(2, x + 118, y, "gui.remove")
               .setSize(58, 14)
-              .setTexture(icons)
-              .setUV(0, 96, 0, 0)
+              .setTexture(buttons)
               .setIsEnabled(selected != null)
               .setHoverTexts("mailbox.hover.del");
       addButton(3, x, y += 16, "gui.remove.all")
               .setSize(58, 14)
-              .setTexture(icons)
-              .setUV(0, 96, 0, 0)
+              .setTexture(buttons)
               .setIsEnabled(!list.isEmpty())
               .setHoverTexts("mailbox.hover.delall");
       addButton(4, x + 59, y, "gui.clear")
               .setSize(58, 14)
-              .setTexture(icons)
-              .setUV(0, 96, 0, 0)
+              .setTexture(buttons)
               .setIsEnabled(!list.isEmpty())
               .setHoverTexts("mailbox.hover.clear");
       addButton(5, x + 118, y, "display.hover.X")
               .setSize(58, 14)
-              .setTexture(icons)
-              .setUV(0, 96, 0, 0)
+              .setTexture(buttons)
               .setHoverTexts("hover.exit");
    }
 
@@ -494,8 +480,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
       if (!hasSubGui() && step == 3 && (isEscKey(keyCode) || isInventoryKey(keyCode))) {
          step = 4;
-         tick = 15;
-         millyTick = 15;
+         setNextTick(15);
          closeType = 0;
          return true;
       }
@@ -515,8 +500,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
       GuiMailmanWrite.parent = this;
       GuiMailmanWrite.mail = selected;
       step = 4;
-      tick = 15;
-      millyTick = 15;
+      setNextTick(15);
       closeType = 2;
    }
 
@@ -525,6 +509,11 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
       CustomNpcs.proxy.getPlayerData(player).mailData.load(compound);
       selected = null;
       init();
+   }
+
+   private void setNextTick(int time) {
+      tick = (int) (time / (CustomNpcs.IsFastAnimationGUI ? 3.0f : 1.0f));
+      milliTick = tick;
    }
 
 }

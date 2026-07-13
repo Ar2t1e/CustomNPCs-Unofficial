@@ -40,6 +40,7 @@ public class NpcMiscInventory extends SimpleContainer {
    public CompoundTag save() {
       CompoundTag compound = new CompoundTag();
       compound.put("NpcMiscInv", NBTTags.nbtItemStackList(((ISimpleContainerMixin) this).getItems()));
+      compound.putInt("NpcMiscInvSize", getContainerSize());
       return compound;
    }
 

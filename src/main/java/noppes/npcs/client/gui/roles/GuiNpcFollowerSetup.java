@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.gui.util.GuiContainerNPCInterface2;
@@ -108,7 +109,18 @@ public class GuiNpcFollowerSetup
    }
 
    @Override
-   public void save() { Packets.sendServer(new SPacketNpcRoleSave(role.save(new CompoundTag()))); }
+   public void save() {
+      for (int i = 0; i < 3; i++) {
+         ItemStack itemstack = i < role.rentalItems.getContainerSize() ? role.rentalItems.getItem(i) : ItemStack.EMPTY;
+         if (!NoppesUtilServer.isItemStackNull(itemstack) && !role.rates.containsKey(i) && getTextField(i) != null) {
+            role.rates.put(i, getTextField(i).getInteger());
+         }
+      }
+      if (role.rentalMoney > 0 && !role.rates.containsKey(3) && getTextField(7) != null) {
+         role.rates.put(3, getTextField(7).getInteger());
+      }
+      Packets.sendServer(new SPacketNpcRoleSave(role.save(new CompoundTag())));
+   }
 
    @Override
    public void unFocused(GuiTextFieldNop textField) {

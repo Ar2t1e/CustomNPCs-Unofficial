@@ -10,8 +10,9 @@ public class YDEArea extends YDENode {
 
     protected String name;
 
-    public YDEArea(YDEData parent, String categoryIn, String nameIn) {
+    public YDEArea(YDEData parent, int idIn, String categoryIn, String nameIn) {
         super(parent);
+        id = idIn;
         type = EnumYDEType.AREA;
         category = categoryIn;
         name = nameIn;

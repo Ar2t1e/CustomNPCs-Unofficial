@@ -7,12 +7,17 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NBTTags;
+import noppes.npcs.api.constants.JobType;
 import noppes.npcs.containers.ContainerNPCFollowerHire;
 import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.api.NpcAPI;
@@ -30,6 +35,7 @@ import noppes.npcs.packets.server.SPacketGuiOpen;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class RoleFollower extends RoleInterface implements IRoleFollower {
@@ -47,11 +53,18 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
    public NpcMiscInventory inventory = new NpcMiscInventory(0);
    public Player owner = null;
    public HashMap<Integer, Integer> rates = new HashMap<>();
-   public String dialogFarewell = Util.instance.getOldFormattedText(Component.translatable("follower.farewellText").append(" {player}"));
-   public String dialogFired = Util.instance.getOldFormattedText(Component.translatable("follower.firedText").append(" {player}"));
-   public String dialogHire = Util.instance.getOldFormattedText(Component.translatable("follower.hireText")
-           .append(" {days} ")
-           .append(Component.translatable("follower.days")));
+   public String dialogFarewell = getTexts("follower.farewellText", " {player}");
+   public String dialogFired = getTexts("follower.firedText", " {player}");
+   public String dialogHire = getTexts("follower.hireText", " {days} ", Component.translatable("follower.days"));
+
+   private String getTexts(@Nonnull String main, Object ... added) {
+      MutableComponent component = Component.translatable(main);
+      for (Object part : added) {
+         if (part instanceof String str) { component.append(str); }
+         else if (part instanceof Component comp) { component.append(comp); }
+      }
+      return Util.instance.deleteColor(Util.instance.getOldFormattedText(component));
+   }
 
    public RoleFollower(EntityNPCInterface npc) {
       super(npc);
@@ -66,7 +79,7 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       daysHired = compound.getInt("MercenaryDaysHired");
       hiredTime = compound.getLong("MercenaryHiredTime");
       rates = NBTTags.getIntegerIntegerMap(compound.getList("MercenaryDayRates", 10));
-      if (compound.contains("getCompound", 10)) {
+      if (compound.contains("MercenaryInventory", 10)) {
          int size = compound.getCompound("MercenaryInventory").getInt("NpcMiscInvSize");
          inventory = new NpcMiscInventory(size);
          inventory.load(compound.getCompound("MercenaryInventory"));
@@ -106,6 +119,7 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       return compound;
    }
 
+   @Override
    public boolean aiShouldExecute() {
       // New from Unofficial (BetaZavr)
       if (npc.getHealth() <= 0.0f) { return false; }
@@ -124,7 +138,7 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       fs.dimId = npc.level().dimension().location();
       fs.npc = npc;
       owner = getOwner();
-      if (!infiniteDays && (System.currentTimeMillis() - hiredTime) > getDays() * 1440000L) {
+      if (!infiniteDays && (getCurrentTime() - hiredTime) > (long) getDays() * (long) Level.TICKS_PER_DAY) {
          RoleEvent.FollowerFinishedEvent event = new RoleEvent.FollowerFinishedEvent(owner, npc.wrappedNPC);
          EventHooks.onNPCRole(npc, event);
          if (owner != null && owner.containerMenu instanceof ContainerNPCFollowerHire) { owner.closeContainer(); }
@@ -166,9 +180,9 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       return false;
    }
 
+   @SuppressWarnings("ConstantConditions")
    public Player getOwner() {
-      if (npc == null || npc.level().isClientSide) { return null; }
-      if (ownerUUID != null && !ownerUUID.isEmpty()) {
+      if (npc != null && npc.level() != null && !npc.level().isClientSide && (ownerUUID != null && !ownerUUID.isEmpty())) {
          try {
             UUID uuid = UUID.fromString(ownerUUID);
              return npc.level().getPlayerByUUID(uuid);
@@ -182,16 +196,40 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       return null;
    }
 
-   public boolean hasOwner() {
-      if (!infiniteDays && daysHired <= 0) { return false; }
-      return ownerUUID != null && !ownerUUID.isEmpty();
-   }
+   public boolean hasOwner() { return (infiniteDays || daysHired > 0) && ownerUUID != null && !ownerUUID.isEmpty(); }
 
+   @Override
    public void killed() {
+      if (!inventory.isEmpty()) {
+         if (owner == null) {
+            for (int i = 0; i < inventory.getContainerSize(); i++) {
+               ItemStack stack = inventory.getItem(i);
+               if (!stack.isEmpty()) {
+                  npc.spawnAtLocation(stack, 0.0f);
+               }
+            }
+         }
+         else if (owner.level().dimension() == npc.level().dimension()) {
+            for (int i = 0; i < inventory.getContainerSize(); i++) {
+               ItemStack stack = inventory.getItem(i);
+               if (!stack.isEmpty()) {
+                  ItemEntity entityItem = new ItemEntity(owner.level(), owner.getX(), owner.getY(), owner.getZ(), stack);
+                  entityItem.setPickUpDelay(0);
+                  owner.level().addFreshEntity(entityItem);
+               }
+            }
+         }
+         inventory.clearContent();
+      }
       ownerUUID = null;
       daysHired = 0;
       hiredTime = 0L;
       isFollowing = true;
+      PlayerData plData = getOwnerData();
+      if (plData != null) {
+         plData.game.removeFollower(npc);
+         plData.save(true);
+      }
    }
 
    @Override
@@ -210,9 +248,14 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       }
    }
 
-   public boolean defendOwner() { return isFollowing() && npc != null && npc.job.getType() == 3; }
+   @Override
+   public boolean defendOwner() { return isFollowing() && npc != null && npc.job.getEnumType() == JobType.GUARD; }
 
-   public boolean isFollowing() { return owner != null && isFollowing && getDays() > 0; }
+   @Override
+   public boolean isFollowing() {
+      return ownerUUID != null && !ownerUUID.isEmpty() && isFollowing &&
+              (getCurrentTime() - hiredTime) < (long) getDays() * (long) Level.TICKS_PER_DAY;
+   }
 
    public void setOwner(@Nullable Player player) {
       if (player == null) {
@@ -224,40 +267,58 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
       ownerUUID = id.toString();
    }
 
+   @Override
    public int getDays() {
       if (infiniteDays) { return 100; }
-      else if (daysHired <= 0) { return 0; }
-      int days = (int)(((npc == null ? 0 : npc.level().getGameTime()) - hiredTime) / 24000L);
-      return daysHired - days;
+      return Math.max(daysHired, 0);
    }
 
+   @Override
    public void addDays(int days) {
-      daysHired = days + getDays();
-      hiredTime = npc == null ? 0 : npc.level().getGameTime();
+      if (hiredTime == 0L) {
+         daysHired = days;
+         hiredTime = getCurrentTime();
+      }
+      else { daysHired += days; }
    }
 
+   @Override
    public boolean getInfinite() { return infiniteDays; }
 
+   @Override
    public void setInfinite(boolean infinite) { infiniteDays = infinite; }
 
+   @Override
    public boolean getGuiDisabled() { return disableGui; }
 
+   @Override
    public void setGuiDisabled(boolean disabled) { disableGui = disabled; }
 
+   @Override
    public boolean getRefuseSoulstone() { return refuseSoulStone; }
 
+   @Override
    public void setRefuseSoulstone(boolean refuse) { refuseSoulStone = refuse; }
 
+   @Override
    public IPlayer<?> getFollowing() {
       Player owner = getOwner();
       return owner != null ? (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(owner) : null;
    }
 
+   @Override
    public void setFollowing(IPlayer<?> player) {
       setOwner(player == null ? null : player.getMCEntity());
    }
 
    // New from Unofficial (BetaZavr)
+   public long getCurrentTime() {
+      Level level = null;
+      if (npc != null) { level = npc.level(); }
+      else if (CustomNpcs.Server != null) { level = CustomNpcs.Server.getLevel(Level.OVERWORLD); }
+      return level != null ? level.getGameTime() : 0;
+   }
+
    public int getRange() {
       if (npc.stats.aggroRange > CustomNpcs.NpcNavRange) { return CustomNpcs.NpcNavRange; }
       return npc.stats.aggroRange;
@@ -266,6 +327,14 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
    private PlayerData getOwnerData() {
       if (ownerUUID == null || ownerUUID.isEmpty() || CustomNpcs.Server == null || npc.level().getServer() == null) { return null; }
       return PlayerDataController.instance.getDataFromUsername(CustomNpcs.Server == null ? npc.level().getServer() : CustomNpcs.Server, ownerUUID);
+   }
+
+   @SuppressWarnings("unused")
+   public int getDaysLeft() {
+      if (infiniteDays) { return 100; }
+      if (daysHired <= 0) { return 0; }
+      int daysPassed = (int) Math.floor((double) (getCurrentTime() - hiredTime) / (double) Level.TICKS_PER_DAY);
+      return Math.max(daysHired - daysPassed, 0);
    }
 
 }

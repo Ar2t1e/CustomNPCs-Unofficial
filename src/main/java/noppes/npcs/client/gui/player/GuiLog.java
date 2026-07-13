@@ -241,8 +241,7 @@ public class GuiLog
 
       type = t;
       temp = 0;
-      tick = (int) (15 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-      milliTick = tick;
+      setNextTick(15, false);
       step = 0;
 
       imageWidth = 0;
@@ -305,7 +304,7 @@ public class GuiLog
             init();
             break;
          }
-         case 6: compassData.questLogIsFast = ((GuiCheckBoxNop) button).selected(); break;
+         case 6: CustomNpcs.IsFastAnimationGUI = ((GuiCheckBoxNop) button).selected(); break;
       }
    }
 
@@ -315,14 +314,12 @@ public class GuiLog
          int catList = catRow * 8 + id - 7;
          if (catSelect == catList && page != 0) {
             step = 11;
-            tick = (int) (10 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-            milliTick = tick;
+            setNextTick(10, false);
             page = 0;
          }
          if (catSelect != catList || activeQuest != null) {
             step = catSelect > catList || activeQuest != null ? 11 : 10;
-            tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-            milliTick = tick - 1;
+            setNextTick(11, true);
             catSelect = catList;
             page = 0;
             activeQuest = null;
@@ -332,8 +329,7 @@ public class GuiLog
       switch (id) {
          case 0: {
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-            tick = (int) (15 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-            milliTick = tick;
+            setNextTick(15, false);
             step = type + 7;
             type = -1;
             return true;
@@ -341,8 +337,7 @@ public class GuiLog
          case 1: {
             if (type != 1) {
                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-               tick = (int) (15 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-               milliTick = tick;
+               setNextTick(15, false);
                toPrePage = false;
                step = type + 7;
 
@@ -356,8 +351,7 @@ public class GuiLog
          case 2: {
             if (type != 0) {
                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-               tick = (int) (15 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-               milliTick = tick;
+               setNextTick(15, false);
                toPrePage = type == 1;
                step = type + 7;
 
@@ -373,8 +367,7 @@ public class GuiLog
          case 3: {
             if (type != 2 && CustomNpcs.TypeShowQuestCompass != 4) {
                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-               tick = (int) (15 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-               milliTick = tick;
+               setNextTick(15, false);
                toPrePage = true;
                step = type + 7;
 
@@ -388,15 +381,13 @@ public class GuiLog
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
             page++;
             step = 10;
-            tick = (int) (10 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-            milliTick = tick;
+            setNextTick(10, false);
             return true;
          } // page right
          case 5: {
             page--;
             step = 11;
-            tick = (int) (10 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-            milliTick = tick;
+            setNextTick(10, false);
             return true;
          } // page left
          case 6: {
@@ -413,8 +404,7 @@ public class GuiLog
                if (catName.isEmpty() || !quests.containsKey(catName) || !quests.get(catName).containsKey(hoverQuestId)) { return true; }
                activeQuest = new QuestInfo(quests.get(catName).get(hoverQuestId), minecraft.level);
                step = 10;
-               tick = (int) (10 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-               milliTick = tick;
+               setNextTick(10, false);
             }
             return true;
          } // quest select
@@ -1194,8 +1184,7 @@ public class GuiLog
                matrixStack.popPose();
                if (tick == 0) {
                   step = 1;
-                  tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(21, true);
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.down", player.getX(), player.getY(), player.getZ(), 1.0f, 0.75f + 0.25f * rnd.nextFloat());
                }
                break;
@@ -1238,8 +1227,7 @@ public class GuiLog
                matrixStack.popPose();
                if (tick == 0) {
                   step = 2;
-                  tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(11, true);
                }
                break;
             } // open
@@ -1285,17 +1273,18 @@ public class GuiLog
                if (tick == milliTick) {
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.sheet", player.getX(), player.getY(), player.getZ(), 1.0f, 0.8f + 0.4f * rnd.nextFloat());
                }
+               int time = 11;
                if (tick == 0) {
                   if (temp < 3) {
                      temp++;
                      step = 2;
-                     tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
                   }
                   else {
                      temp = 0;
                      step = 3;
-                     tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
+                     time = 21;
                   }
+                  setNextTick(time, true);
                   milliTick = tick - 1;
                }
                break;
@@ -1324,8 +1313,7 @@ public class GuiLog
 
                if (tick == 0) {
                   step = type + 4;
-                  tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(21, true);
                }
                break;
             } // tab open
@@ -1362,8 +1350,7 @@ public class GuiLog
                }
                if (tick == 0) {
                   step = toPrePage ? 10 : 11;
-                  tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(11, true);
                }
                break;
             } // quest tab open
@@ -1371,8 +1358,7 @@ public class GuiLog
                drawBox(graphics, mouseX, mouseY);
                if (tick == 0) {
                   step = toPrePage ? 10 : 11;
-                  tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(11, true);
                }
                break;
             } // faction open
@@ -1380,8 +1366,7 @@ public class GuiLog
                drawBox(graphics, mouseX, mouseY);
                if (tick == 0) {
                   step = toPrePage ? 10 : 11;
-                  tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(11, true);
                }
                break;
             } // compass open
@@ -1422,8 +1407,7 @@ public class GuiLog
                if (tick == 0) {
                   if (type < 0) { step = 12; }
                   else { step = type + 4; }
-                  tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(21, true);
                }
                break;
             } // quest tab close
@@ -1436,8 +1420,7 @@ public class GuiLog
                   } else {
                      step = type + 4;
                   }
-                  tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(21, true);
                }
                break;
             } // faction close
@@ -1449,8 +1432,7 @@ public class GuiLog
                   } else {
                      step = type + 4;
                   }
-                  tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(21, true);
                }
                break;
             } // compass close
@@ -1484,8 +1466,7 @@ public class GuiLog
                }
                if (tick == 0) {
                   step = -1;
-                  tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(11, true);
                }
                break;
             } // next page
@@ -1525,8 +1506,7 @@ public class GuiLog
                }
                if (tick == 0) {
                   step = -1;
-                  tick = (int) (11 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(11, true);
                }
                break;
             } // pre page
@@ -1554,8 +1534,7 @@ public class GuiLog
                matrixStack.popPose();
                if (tick == 0) {
                   step = 13;
-                  tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(21, true);
                }
                break;
             } // close tabs
@@ -1603,8 +1582,7 @@ public class GuiLog
                if (tick == 0) {
                   MusicController.Instance.playSound(SoundSource.PLAYERS, CustomNpcs.MODID + ":book.down", player.getX(), player.getY(), player.getZ(), 1.0f, 0.75f + 0.25f * rnd.nextFloat());
                   step = 14;
-                  tick = (int) (21 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(21, true);
                }
                break;
             } // close book
@@ -1616,8 +1594,7 @@ public class GuiLog
                matrixStack.popPose();
                if (tick == 0) {
                   step = 14;
-                  tick = (int) (101 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-                  milliTick = tick - 1;
+                  setNextTick(101, true);
                   save();
                   if (type == -1) { setScreen(new InventoryScreen(player)); }
                   else { setScreen(null); }
@@ -1795,7 +1772,7 @@ public class GuiLog
                  .setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
                  .setColor(questLogColor)
                  .setCustomFont(ClientProxy.LogFont);
-         addCheckBox(6, x1, y += (int) (14.0f * scaleH), "quest.screen.log.is.fast", "quest.screen.log.is.slow", compassData.questLogIsFast)
+         addCheckBox(6, x1, y += (int) (14.0f * scaleH), "quest.screen.log.is.fast", "quest.screen.log.is.slow", CustomNpcs.IsFastAnimationGUI)
                  .setSize((int) (104.0f * scaleW), (int) (fontHeight * scaleH))
                  .setColor(questLogColor)
                  .setCustomFont(ClientProxy.LogFont);
@@ -1817,8 +1794,7 @@ public class GuiLog
    public boolean keyPressed(int key, int key_1, int key_2) {
       if (step >= 0) { return true; }
       if (isEscKey(key) || isInventoryKey(key)) {
-         tick = (int) (15 / (compassData.questLogIsFast ? 3.0f : 1.0f));
-         milliTick = tick;
+         setNextTick(15, false);
          step = type + 7;
          type = isEscKey(key) ? -2 : -1;
          return true;
@@ -1978,6 +1954,11 @@ public class GuiLog
          }
       }
       return lines;
+   }
+
+   private void setNextTick(int time, boolean isNext) {
+      tick = (int) (time / (CustomNpcs.IsFastAnimationGUI ? 3.0f : 1.0f));
+      milliTick = tick - (isNext ? 1 : 0);
    }
 
 }

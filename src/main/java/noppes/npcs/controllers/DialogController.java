@@ -13,6 +13,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.OptionType;
 import noppes.npcs.api.handler.IDialogHandler;
 import noppes.npcs.api.handler.data.IDialogCategory;
+import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.constants.EnumAvailabilityQuest;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.packets.Packets;
@@ -49,6 +50,7 @@ public class DialogController implements IDialogHandler {
          if (file.exists()) { guiSettings.load(NbtIo.read(new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file)))))); }
          else { saveSettings(); }
       } catch (Exception e) { LogWriter.except(e); }
+      YDEController.getInstance().onDialogsLoaded();
       LogWriter.info("Done loading Dialogs");
       CustomNpcs.debugData.end(null);
    }

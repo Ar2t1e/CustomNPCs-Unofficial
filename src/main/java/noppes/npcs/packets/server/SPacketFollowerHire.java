@@ -55,8 +55,9 @@ public class SPacketFollowerHire extends PacketServerBasic {
                   }
                   PlayerData.get(player).game.addMoney(role.rentalMoney * -1);
                }
-            } else {
-               ItemStack currency = role.rentalItems.getItem(0);
+            }
+            else {
+               ItemStack currency = role.rentalItems.getItem(pos);
                if (currency.isEmpty()) {
                   CustomNpcs.debugData.end("Packets");
                   return;

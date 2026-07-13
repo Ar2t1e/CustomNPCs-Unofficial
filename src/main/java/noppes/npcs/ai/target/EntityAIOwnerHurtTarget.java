@@ -12,33 +12,29 @@ public class EntityAIOwnerHurtTarget extends TargetGoal {
    LivingEntity theTarget;
    private int timestamp;
 
-   public EntityAIOwnerHurtTarget(EntityNPCInterface npc) {
-      super(npc, false);
-      this.npc = npc;
-      this.setFlags(EnumSet.of(Flag.TARGET));
+   public EntityAIOwnerHurtTarget(EntityNPCInterface npcIn) {
+      super(npcIn, false);
+      npc = npcIn;
+      setFlags(EnumSet.of(Flag.TARGET));
    }
 
+   @Override
    public boolean canUse() {
-      if (this.npc.isFollower() && this.npc.role.defendOwner()) {
-         LivingEntity entity = this.npc.getOwner();
-         if (entity == null) {
-            return false;
-         } else {
-            this.theTarget = entity.getLastHurtMob();
-            int i = entity.getLastHurtMobTimestamp();
-            return i != timestamp && this.canAttack(this.theTarget, TargetingConditions.DEFAULT);
+      if (npc.isFollower() && npc.role.defendOwner()) {
+         LivingEntity entity = npc.getOwner();
+         if (entity != null) {
+            theTarget = entity.getLastHurtMob();
+            return entity.getLastHurtMobTimestamp() != timestamp && canAttack(theTarget, TargetingConditions.DEFAULT);
          }
-      } else {
-         return false;
       }
+      return false;
    }
 
+   @Override
    public void start() {
-      this.npc.setTarget(this.theTarget);
-      LivingEntity entity = this.npc.getOwner();
-      if (entity != null) {
-         timestamp = entity.getLastHurtMobTimestamp();
-      }
+      npc.setTarget(theTarget);
+      LivingEntity entity = npc.getOwner();
+      if (entity != null) { timestamp = entity.getLastHurtMobTimestamp(); }
       super.start();
    }
 

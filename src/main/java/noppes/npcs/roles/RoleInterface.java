@@ -36,6 +36,7 @@ public abstract class RoleInterface implements INPCRole {
 
    public void delete() { }
 
+   @SuppressWarnings("unused")
    public void aiDeathExecute(Entity attackingEntity) { }
 
    public boolean aiShouldExecute() {

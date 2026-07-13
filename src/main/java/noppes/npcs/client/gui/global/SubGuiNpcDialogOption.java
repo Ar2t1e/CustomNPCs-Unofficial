@@ -84,36 +84,38 @@ public class SubGuiNpcDialogOption
       addButton(1, x1, guiTop + 62, false, option.optionType.get(), options)
               .setSize(92, 20)
               .setHoverTexts("dialog.option.hover.type." + option.optionType.get());
-      if (option.optionType == OptionType.DIALOG_OPTION) {
-         data.clear();
-         DialogController dData = DialogController.instance;
-         List<Component> keys = new ArrayList<>();
-         int pos = -1, i = 0;
-         DialogOption.OptionDialogID del = null;
-         for (DialogOption.OptionDialogID od : option.dialogs) {
-            if (od.dialogId <= 0) { del = od; }
-            Component key;
-            Dialog d = dData.get(od.dialogId);
-            if (d == null) {
-               key = Component.empty()
-                       .append(Component.literal("ID: " + od.dialogId).withStyle(ChatFormatting.GRAY))
-                       .append(Component.literal(" Dialog Not Found!").withStyle(ChatFormatting.RED));
-            }
-            else { key = d.getKey(); }
-            data.put(key, od);
-            keys.add(key);
-            if (key.getString().equals(select.getString())) { pos = i; }
-            i++;
-         }
-         if (del != null) { option.dialogs.remove(del); }
-         if (!data.containsKey(select)) { select = Component.empty(); }
-         addLabel(4, x0, guiTop + 84, "gui.options");
 
-         if (scroll == null) { scroll = addScroll(0).setSize(141, 116); }
-         scroll.setList(new ArrayList<>())
-                 .setUnsortedList(keys);
-         if (!select.getString().isEmpty()) { scroll.setSelected(select); }
-         add(scroll.setPos(x0, guiTop + 96));
+
+      data.clear();
+      List<Component> keys = new ArrayList<>();
+      int pos = -1, i = 0;
+      DialogOption.OptionDialogID del = null;
+      for (DialogOption.OptionDialogID od : option.dialogs) {
+         if (od.dialogId <= 0) { del = od; }
+         Component key;
+         Dialog d = DialogController.instance.get(od.dialogId);
+         if (d == null) {
+            key = Component.empty()
+                    .append(Component.literal("ID: " + od.dialogId).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" Dialog Not Found!").withStyle(ChatFormatting.RED));
+         }
+         else { key = d.getKey(); }
+         data.put(key, od);
+         keys.add(key);
+         if (key.getString().equals(select.getString())) { pos = i; }
+         i++;
+      }
+      if (del != null) { option.dialogs.remove(del); }
+
+      if (scroll == null) { scroll = addScroll(0).setSize(141, 116); }
+      scroll.setList(new ArrayList<>())
+              .setUnsortedList(keys);
+      if (!select.getString().isEmpty()) { scroll.setSelected(select); }
+      add(scroll.setPos(x0, guiTop + 96));
+      if (!data.containsKey(select)) { select = Component.empty(); }
+
+      if (option.optionType == OptionType.DIALOG_OPTION) {
+         addLabel(4, x0, guiTop + 84, "gui.options");
          addButton(3, x2, guiTop + 96, "gui.add")
                  .setSize(50, 20)
                  .setHoverTexts("dialog.option.hover.add");
@@ -139,14 +141,7 @@ public class SubGuiNpcDialogOption
                  .setHoverTexts(Component.translatable("dialog.option.hover.availability",
                          Util.instance.getOldFormattedText(select)));
       } // next dialog
-      else {
-         addButton(8, x1, guiTop + 192, "availability.available")
-                 .setSize(80, 20)
-                 .setIsEnabled(scroll.hasSelected())
-                 .setHoverTexts(Component.translatable("dialog.option.hover.availability",
-                         Util.instance.getOldFormattedText(select)));
-      }
-      if (option.optionType == OptionType.COMMAND_BLOCK) { // command
+      else if (option.optionType == OptionType.COMMAND_BLOCK) { // command
          addTextField(4, x0, guiTop + 84, 248, 20, option.command)
                  .setMaxStringLength(Short.MAX_VALUE)
                  .setHoverTexts(Component.translatable("command.hover.text", Short.MAX_VALUE));

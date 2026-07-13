@@ -43,9 +43,9 @@ public class ItemSoulstoneEmpty extends Item {
             if (name == null) { name = "generic"; }
             stone.addTagElement("Name", StringTag.valueOf(name));
             if (entity instanceof EntityNPCInterface npc) {
-               stone.addTagElement("DisplayName", StringTag.valueOf(entity.getName().getString()));
-               if (npc.role.getEnumType() != RoleType.COMPANION) {
-                  RoleCompanion role = (RoleCompanion)npc.role;
+               stone.addTagElement("DisplayName", StringTag.valueOf(Component.Serializer.toJson(entity.getName())));
+               if (npc.role.getEnumType() == RoleType.COMPANION) {
+                  RoleCompanion role = (RoleCompanion) npc.role;
                   stone.addTagElement("ExtraText", StringTag.valueOf("companion.stage,: ," + role.stage.name));
                }
             }
@@ -66,14 +66,8 @@ public class ItemSoulstoneEmpty extends Item {
       if ((CustomNpcs.OpsOnly && CommonUtil.isOp(player)) ||
               CustomNpcsPermissions.hasPermission((ServerPlayer) player, CustomNpcsPermissions.SOULSTONE_ALL)) { return true; }
       if (entity instanceof EntityNPCInterface npc) {
-         if (npc.role.getEnumType() != RoleType.COMPANION) {
-            RoleCompanion role = (RoleCompanion)npc.role;
-            if (role.getOwner() == player) { return true; }
-         }
-         if (npc.role.getType() == 2) {
-            RoleFollower role = (RoleFollower)npc.role;
-            if (role.getOwner() == player) { return !role.refuseSoulStone; }
-         }
+         if (npc.role instanceof RoleCompanion role && role.getOwner() == player) { return true; }
+         else if (npc.role instanceof RoleFollower role && role.getOwner() == player) { return !role.refuseSoulStone; }
          return CustomNpcs.SoulStoneNPCs;
       }
       return entity instanceof Animal && CustomNpcs.SoulStoneAnimals;

@@ -23,6 +23,7 @@ import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.resource.PathPackResources;
 import net.minecraftforge.resource.ResourcePackLoader;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.mixin.minecraftforge.client.gui.widget.IScrollPanelMixin;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
@@ -76,9 +77,10 @@ public class ModListScreenMixin {
                     }
                 }
             }
+            Object modInfo = npcs$modInfo.get(parent);
             if (selected == null) {
                 configButton.active = false;
-                if (npcs$clearInfo != null) { npcs$clearInfo.invoke(npcs$modInfo.get(parent)); }
+                if (npcs$clearInfo != null) { npcs$clearInfo.invoke(modInfo); }
                 ci.cancel();
                 return;
             }
@@ -189,13 +191,23 @@ public class ModListScreenMixin {
                     lines.add(null);
                 }
             }
+            lines.add(null);
 
             if (npcs$setInfo != null) {
-                npcs$setInfo.invoke(npcs$modInfo.get(parent), lines, logoData.getLeft(), logoData.getRight());
+                npcs$setInfo.invoke(modInfo, lines, logoData.getLeft(), logoData.getRight());
                 ci.cancel();
             }
         }
         catch (Exception e) { LogWriter.error(e); }
+    }
+
+    @Inject(method = "setSelected", at = @At("TAIL"))
+    public void npcs$setSelected(ModListWidget.ModEntry entry, CallbackInfo ci) {
+        try {
+            if (npcs$modInfo == null) { npcs$modInfo = ModListScreen.class.getDeclaredField("modInfo"); }
+            ((IScrollPanelMixin) npcs$modInfo.get(this)).setScrollDistance(-2);
+        }
+        catch (Exception ignored) {}
     }
 
 }

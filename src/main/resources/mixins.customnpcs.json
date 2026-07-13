@@ -122,6 +122,7 @@
     "client.sounds.MusicManagerMixin",
     "com.mojang.blaze3d.audio.ChannelMixin",
     "minecraftforge.client.gui.ModListScreenMixin",
+    "minecraftforge.client.gui.widget.IScrollPanelMixin",
     "minecraftforge.fluids.IForgeFlowingFluidMixin",
     "mojang.blaze3d.vertex.IPoseStackMixin",
     "multiplayer.IPlayerInfoMixin",

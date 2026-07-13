@@ -99,10 +99,16 @@ public class GuiSliderNop extends AbstractWidget implements IComponentGui {
       RenderSystem.enableBlend();
       RenderSystem.defaultBlendFunc();
       RenderSystem.enableDepthTest();
-      // left background
-      graphics.blit(WIDGETS_LOCATION, getX(), getY(), 0, 46, getWidth() / 2, getHeight());
-      // right background
-      graphics.blit(WIDGETS_LOCATION, getX() + getWidth() / 2, getY(), 200 - getWidth() / 2, 46, getWidth() / 2, getHeight());
+      int h0 = height / 2;
+      int h1 = height - h0;
+      int x = getX();
+      int y = getY();
+      int wp = width / 2;
+      // background
+      graphics.blit(WIDGETS_LOCATION, x, y, 0, 46, wp, h0); // left up
+      graphics.blit(WIDGETS_LOCATION, x, y + h0, 0, 66 - h1, wp, h1); // left down
+      graphics.blit(WIDGETS_LOCATION, x + wp, y, 200 - wp, 46, wp, h0); // right up
+      graphics.blit(WIDGETS_LOCATION, x + wp, y + h0, 200 - wp, 66 - h1, wp, h1); // right down
       // scroll
       renderBg(graphics);
       GuiButtonNop.renderString(graphics, getMessage(), getX(), getY(), getX() + getWidth(), getY() + getHeight(),
@@ -139,7 +145,7 @@ public class GuiSliderNop extends AbstractWidget implements IComponentGui {
    public void onRelease(double x, double y) {
       if (sliderValue != startValue) {
          super.playDownSound(Minecraft.getInstance().getSoundManager());
-         if (listener instanceof ISliderListener parent) { parent.mouseDragged(this); }
+         if (listener instanceof ISliderListener parent) { parent.mouseReleased(this); }
          startValue = sliderValue;
       }
    }

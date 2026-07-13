@@ -33,14 +33,25 @@ public class ItemSoulstoneFilled extends Item {
    public void appendHoverText(@Nonnull ItemStack stack, Level level, @Nonnull List<Component> list, @Nonnull TooltipFlag flag) {
       CompoundTag compound = stack.getTag();
       if (compound != null && compound.contains("Entity", 10)) {
-         Component name = Component.translatable(compound.getString("Name"));
+         MutableComponent name = Component.translatable(compound.getString("Name"));
          if (compound.contains("DisplayName")) {
             String key = compound.getString("DisplayName");
-            MutableComponent displayName = Component.Serializer.fromJson(key);
-            if (displayName == null) { displayName = Component.translatable(key); }
-            name = displayName.append(" (").append(name).append(")");
+            MutableComponent displayName = Component.empty();
+            try {
+               MutableComponent preName = Component.Serializer.fromJson(key);
+               if (preName != null) {
+                  preName.withStyle(ChatFormatting.BLUE);
+                  displayName.append(preName);
+               }
+            } catch (Exception ignored) { }
+            if (displayName.getString().isEmpty()) { displayName.append(Component.translatable(key).withStyle(ChatFormatting.BLUE)); }
+            if (flag == TooltipFlag.ADVANCED) {
+               name = displayName.append(Component.literal(" (").withStyle(ChatFormatting.DARK_GRAY))
+                       .append(name.withStyle(ChatFormatting.DARK_GRAY))
+                       .append(Component.literal(")").withStyle(ChatFormatting.DARK_GRAY));
+            }
          }
-         list.add(Component.literal(ChatFormatting.BLUE.getName()).append(name));
+         list.add(name);
          if (stack.getTag().contains("ExtraText")) {
             MutableComponent text = Component.literal("");
             String[] split = compound.getString("ExtraText").split(",");

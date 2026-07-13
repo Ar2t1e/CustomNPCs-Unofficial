@@ -13,6 +13,7 @@ import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IScrollData;
 import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
 import java.util.*;
@@ -127,6 +128,7 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 
    @Override
    public void mouseReleased(GuiSliderNop slider) {
+      LogWriter.info("[DEBUG] ");
       if (!data.containsKey(select)) { return; }
       setValue(data.get(select), (int) (slider.sliderValue * 600.0f - 500.0f));
    }

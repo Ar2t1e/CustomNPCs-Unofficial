@@ -14,6 +14,7 @@ import noppes.npcs.containers.ContainerNPCFollowerHire;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketFollowerHire;
 import noppes.npcs.roles.RoleFollower;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -57,42 +58,29 @@ public class GuiNpcFollowerHire extends GuiContainerNPCInterface<ContainerNPCFol
    }
 
    @Override
-   protected void renderLabels(@NotNull GuiGraphics graphics, int x, int y) {
-      long time = (System.currentTimeMillis() - role.hiredTime) / 50L;
-      graphics.drawString(font, Component.translatable("follower.health")
-              .append(": " + npc.getHealth() + "/" + npc.getMaxHealth()), 62, 70, CustomNpcResourceListener.DefaultTextColor);
-      if (!role.infiniteDays) {
-         graphics.drawString(font, Component.translatable("follower.daysleft")
-                 .append(" " + Util.instance.ticksToElapsedTime((role.getDays() * 28800L) - time, false, true, false)), 62, 82, CustomNpcResourceListener.DefaultTextColor);
-      }
-      graphics.drawString(font, Component.translatable("follower.lastday")
-              .append(": " + Util.instance.ticksToElapsedTime(time, false, true, false)), 62, 94, CustomNpcResourceListener.DefaultTextColor);
-   }
-
-   @Override
    protected void renderBg(@NotNull GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
       int l = (width - imageWidth) / 2;
       int i1 = (height - imageHeight) / 2;
       graphics.blit(background, l, i1, 0, 0, imageWidth, imageHeight);
       int index = 0;
-      for(int slot = 0; slot < role.inventory.getContainerSize(); ++slot) {
-         ItemStack itemstack = role.inventory.getItem(slot);
+      for(int slot = 0; slot < role.rentalItems.getContainerSize(); ++slot) {
+         ItemStack itemstack = role.rentalItems.getItem(slot);
          if (!NoppesUtilServer.isItemStackNull(itemstack)) {
             int days = 1;
-            if (role.rates.containsKey(slot)) {
-               days = role.rates.get(slot);
-            }
-            int yOffset = index * 26;
-            int x = guiLeft + 78;
+            if (role.rates.containsKey(slot)) { days = role.rates.get(slot); }
+            int yOffset = index * 18;
+            int x = guiLeft + 89;
             int y = guiTop + yOffset + 10;
-            graphics.renderItem(itemstack, x + 11, y);
-            graphics.renderItemDecorations(font, itemstack, x + 11, y);
+            graphics.blit(GuiBasic.RESOURCE_SLOT, x - 1, y - 1, 0, 0, 18, 18);
+            graphics.renderItem(itemstack, x, y);
+            graphics.renderItemDecorations(font, itemstack, x, y);
             Component daysS = Component.empty()
                     .append(" = " + days + " ")
                     .append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-            graphics.drawString(font, daysS, x + 27, y + 4,
-                    CustomNpcResourceListener.DefaultTextColor);
-            if (isMouseHover(mouseX, mouseY, x - guiLeft + 11, y - guiTop, 16, 16)) {
+            graphics.drawString(font, daysS, x + 16, y + 4,
+                    CustomNpcResourceListener.DefaultTextColor,
+                    false);
+            if (isMouseHover(mouseX, mouseY, x, y, 16, 16)) {
                graphics.renderTooltip(font, itemstack, mouseX, mouseY);
             }
             ++index;
@@ -104,7 +92,9 @@ public class GuiNpcFollowerHire extends GuiContainerNPCInterface<ContainerNPCFol
                  .append(Util.instance.getTextReducedNumber(role.rentalMoney, true, true, false))
                  .append(" " + CustomNpcs.displayCurrencies + " = " + days + " ")
                  .append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
-         graphics.drawString(font, daysS, guiLeft + 90, guiTop + 68, CustomNpcResourceListener.DefaultTextColor);
+         graphics.drawString(font, daysS, guiLeft + 90, guiTop + 69,
+                 CustomNpcResourceListener.DefaultTextColor,
+                 false);
       }
    }
 

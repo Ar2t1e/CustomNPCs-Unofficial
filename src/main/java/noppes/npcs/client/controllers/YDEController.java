@@ -31,10 +31,6 @@ public class YDEController {
     public static int leftTabColor = new Color(0x6C00FF).getRGB();
     public static int rightTabColor = new Color(0x5A8A8C).getRGB();
 
-
-    /**
-     * <world map name; <node ID, node>>
-     */
     protected final Map<String, YDEData> levels = new HashMap<>();
     public String lastCategory = "";
     public Map<String, Integer> lastNode = new HashMap<>();
@@ -44,44 +40,37 @@ public class YDEController {
         return instance;
     }
 
-    // load all data:
     private YDEController() {
+        load();
+    }
+
+    public void load() {
         CompoundTag compound = new CompoundTag();
         File file = new File(CustomNpcs.Dir, "yde_data.dat");
         if (file.exists()) {
             try { compound = NbtIo.readCompressed(file); }
             catch (Exception e) { LogWriter.error(e); }
         }
-        else { save(); }
-        for (String worldName : compound.getCompound("levels").getAllKeys()) {
+        CompoundTag levelsTag = compound.getCompound("levels");
+        for (String worldName : levelsTag.getAllKeys()) {
             if (worldName.contains("_") || worldName.contains(";")) {
-                levels.put(worldName, new YDEData(compound.getCompound(worldName)));
+                YDEData data = new YDEData();
+                data.load(levelsTag.getCompound(worldName));
+                levels.put(worldName, data);
             }
         }
-        if (compound.contains("BackColor", 3)) { backColor = (compound.getInt("BackColor") & 0xFFFFFF) | alpha; }
-        if (compound.contains("BackHoverColor", 3)) { backHoverColor = (compound.getInt("BackHoverColor") & 0xFFFFFF) | alpha; }
-        if (compound.contains("TextColor", 3)) { textColor = (compound.getInt("TextColor") & 0xFFFFFF) | 0xFF000000; }
-        if (compound.contains("WindowLineColor", 3)) { windowLineColor = (compound.getInt("WindowLineColor") & 0xFFFFFF) | alpha; }
-        if (compound.contains("GridColor", 3)) { gridColor = (compound.getInt("GridColor") & 0xFFFFFF) | alpha; }
+        loadColors(compound);
+        loadLastState(compound);
+    }
 
-        if (compound.contains("GridColorEmpty", 3)) { gridColorEmpty = compound.getInt("GridColorEmpty"); }
-        if (compound.contains("SelectLineColor", 3)) { selectLineColor = compound.getInt("SelectLineColor"); }
-        if (compound.contains("ComponentLineColor", 3)) { componentLineColor = compound.getInt("ComponentLineColor"); }
-        if (compound.contains("HoverLineColor", 3)) { hoverLineColor = compound.getInt("HoverLineColor"); }
-
-        if (compound.contains("LeftTabColor", 3)) { leftTabColor = compound.getInt("LeftTabColor"); }
-        if (compound.contains("RightTabColor", 3)) { rightTabColor = compound.getInt("RightTabColor"); }
-
-        lastCategory = compound.getString("LastCategory");
-        lastNode.clear();
-        for (int i = 0; i < compound.getList("LastNode", 10).size(); i++) {
-            CompoundTag nbt = compound.getList("LastNode", 10).getCompound(i);
-            lastNode.put(nbt.getString("K"), nbt.getInt("V"));
+    public void onDialogsLoaded() {
+        for (YDEData data : levels.values()) {
+            data.check();
         }
+        save();
     }
 
     public @Nonnull YDEData getLevelData(String levelKey) {
-        //levels.clear();
         if (!levels.containsKey(levelKey)) { levels.put(levelKey, new YDEData()); }
         return levels.get(levelKey).check();
     }
@@ -120,9 +109,33 @@ public class YDEController {
 
         try {
             NbtIo.writeCompressed(compound, new File(CustomNpcs.Dir, "yde_data.dat"));
-            //if (CustomNpcs.VerboseDebug) { NBTJsonUtil.SaveFile(new File(CustomNpcs.Dir, "yde_data.json"), compound); }
         }
         catch (Exception e) { LogWriter.error(e); }
+    }
+
+    private void loadColors(CompoundTag compound) {
+        if (compound.contains("BackColor", 3)) { backColor = (compound.getInt("BackColor") & 0xFFFFFF) | alpha; }
+        if (compound.contains("BackHoverColor", 3)) { backHoverColor = (compound.getInt("BackHoverColor") & 0xFFFFFF) | alpha; }
+        if (compound.contains("TextColor", 3)) { textColor = (compound.getInt("TextColor") & 0xFFFFFF) | 0xFF000000; }
+        if (compound.contains("WindowLineColor", 3)) { windowLineColor = (compound.getInt("WindowLineColor") & 0xFFFFFF) | alpha; }
+        if (compound.contains("GridColor", 3)) { gridColor = (compound.getInt("GridColor") & 0xFFFFFF) | alpha; }
+
+        if (compound.contains("GridColorEmpty", 3)) { gridColorEmpty = compound.getInt("GridColorEmpty"); }
+        if (compound.contains("SelectLineColor", 3)) { selectLineColor = compound.getInt("SelectLineColor"); }
+        if (compound.contains("ComponentLineColor", 3)) { componentLineColor = compound.getInt("ComponentLineColor"); }
+        if (compound.contains("HoverLineColor", 3)) { hoverLineColor = compound.getInt("HoverLineColor"); }
+
+        if (compound.contains("LeftTabColor", 3)) { leftTabColor = compound.getInt("LeftTabColor"); }
+        if (compound.contains("RightTabColor", 3)) { rightTabColor = compound.getInt("RightTabColor"); }
+    }
+
+    private void loadLastState(CompoundTag compound) {
+        lastCategory = compound.getString("LastCategory");
+        lastNode.clear();
+        for (int i = 0; i < compound.getList("LastNode", 10).size(); i++) {
+            CompoundTag nbt = compound.getList("LastNode", 10).getCompound(i);
+            lastNode.put(nbt.getString("K"), nbt.getInt("V"));
+        }
     }
 
 }

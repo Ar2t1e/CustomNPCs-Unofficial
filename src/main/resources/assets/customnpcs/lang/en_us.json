@@ -2285,6 +2285,7 @@
   "property.questlogcolor.hover": "Text color for the quest log GUI",
   "property.recalculatelr.hover": "Whether to recalculate characteristics when changing level and rarity in the NPC stat settings GUI",
   "property.replacecustombackground.hover": "Replace the background in the GUI menu",
+  "property.isfastanimationgui.hover": "Animation of the GUI mod will be fast",
   "property.resistanceboss.hover": "Parameters for calculating NPC resistances (0=-100%, 1=0%, 2=100% [melee, arrow, explosion, knockback] Boss rarity)",
   "property.resistanceelite.hover": "Parameters for calculating NPC resistances (0=-100%, 1=0%, 2=100% [melee, arrow, explosion, knockback] Elite rarity)",
   "property.resistancenormal.hover": "Parameters for calculating NPC resistances (0=-100%, 1=0%, 2=100% [melee, arrow, explosion, knockback] rarity Normal)",

@@ -89,7 +89,7 @@ import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.GuiNbtBook;
 import noppes.npcs.client.gui.GuiNpcPather;
 import noppes.npcs.client.gui.player.GuiLog;
-import noppes.npcs.client.gui.player.GuiMailmanWrite;
+import noppes.npcs.client.gui.player.GuiMailbox;
 import noppes.npcs.client.gui.player.GuiOpenCase;
 import noppes.npcs.client.gui.player.tabs.InventoryTabFactions;
 import noppes.npcs.client.gui.player.tabs.InventoryTabQuests;
@@ -2238,7 +2238,7 @@ public class ClientEventHandler {
             else { RenderSystem.setShaderColor(0.85f, 0.85f, 0.85f, 0.5f + 0.45f * (3000.0f - (float) time) / 1500.f); }
             matrixStack.scale(0.5f, 0.5f, 0.5f);
             RenderSystem.enableBlend();
-            graphics.blit(GuiMailmanWrite.icons, -16, -16, 0, 0, 32, 32);
+            graphics.blit(GuiMailbox.icons, -16, -16, 0, 0, 32, 32);
             matrixStack.popPose();
         }
     }

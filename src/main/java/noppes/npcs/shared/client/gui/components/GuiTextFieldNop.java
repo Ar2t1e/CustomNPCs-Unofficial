@@ -415,12 +415,14 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
       return this;
    }
 
+   @SuppressWarnings("UnusedReturnValue")
    public GuiTextFieldNop setNumbersOnly() {
       numbersOnly = true;
       doublesOnly = false;
       return this;
    }
 
+   @SuppressWarnings("unused")
    public GuiTextFieldNop setDoublesOnly() {
       numbersOnly = false;
       doublesOnly = true;
@@ -441,6 +443,7 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
       return this;
    }
 
+   @SuppressWarnings("unused")
    public boolean isLatinAlphabetOnly() { return latinAlphabetOnly; }
 
    public GuiTextFieldNop setLatinAlphabetOnly(boolean isLatinAlphabetOnly) {
@@ -448,7 +451,7 @@ public class GuiTextFieldNop extends EditBox implements IComponentGui {
       return this;
    }
 
-
+   @SuppressWarnings("unused")
    public boolean isAllowUppercase() { return allowUppercase; }
 
    public GuiTextFieldNop setAllowUppercase(boolean isAllowUppercase) {

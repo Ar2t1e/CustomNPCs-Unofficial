@@ -156,8 +156,8 @@ public class BorderController implements IBorderHandler {
 
     private void loadRegions(File file) throws IOException {
         DataInputStream stream = new DataInputStream(new BufferedInputStream(new GZIPInputStream(new FileInputStream(file))));
-        try { loadRegions(NbtIo.readCompressed(stream)); }
-        catch (Exception e) { loadRegions(NbtIo.read(stream)); }
+        try { loadRegions(NbtIo.read(stream)); }
+        catch (Exception e) { loadRegions(NbtIo.readCompressed(stream)); }
         stream.close();
     }
 

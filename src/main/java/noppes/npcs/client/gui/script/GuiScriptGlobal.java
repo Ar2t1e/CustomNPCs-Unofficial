@@ -11,9 +11,9 @@ public class GuiScriptGlobal extends GuiNPCInterface {
    public GuiScriptGlobal() {
       super();
       setBackground("smallbg.png");
+
       imageWidth = 176;
       imageHeight = 222;
-      drawDefaultBackground = false;
    }
 
    @Override
@@ -24,26 +24,19 @@ public class GuiScriptGlobal extends GuiNPCInterface {
                  .setSize(100, 20);
          switch (i) {
             case 1:
-               button.setHoverTexts("script.hover.npcs");
-               button.setIsEnabled(false)
-                       .setDisplayText("NPC");
+               button.setHoverTexts("script.hover.npcs").setDisplayText("NPC");
                break;
             case 2:
-               button.setHoverTexts("script.hover.forge")
-                       .setDisplayText("Forge");
+               button.setHoverTexts("script.hover.forge").setDisplayText("Forge");
                break;
             case 3:
-               button.setHoverTexts("script.hover.potion")
-                       .setIsEnabled(false)
-                       .setDisplayText("gui.help.potions");
+               button.setHoverTexts("script.hover.potion").setDisplayText("gui.help.potions");
                break;
             case 4:
-               button.setHoverTexts("script.hover.client")
-                       .setDisplayText("gui.client");
+               button.setHoverTexts("script.hover.client").setDisplayText("gui.client");
                break;
             default:
-               button.setHoverTexts("script.hover.players")
-                       .setDisplayText("playerdata.players");
+               button.setHoverTexts("script.hover.players").setDisplayText("playerdata.players");
                break;
          }
       }
