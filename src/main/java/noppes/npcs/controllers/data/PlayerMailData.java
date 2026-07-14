@@ -49,7 +49,7 @@ public class PlayerMailData implements IPlayerData {
 		if (mail.timeWhenReceived <= 0L) {
 			mail.timeWhenReceived = 100000L;
 		}
-		mail.timeWillCome = 1000L * ((long) CustomNpcs.MailTimeWhenLettersWillBeReceived[0]
+		mail.timeWillCome = mail.timeWhenReceived + 1000L * ((long) CustomNpcs.MailTimeWhenLettersWillBeReceived[0]
 				+ (long) (Math.random() * (double) (CustomNpcs.MailTimeWhenLettersWillBeReceived[1]
 				- CustomNpcs.MailTimeWhenLettersWillBeReceived[0])));
 		boolean found = true;

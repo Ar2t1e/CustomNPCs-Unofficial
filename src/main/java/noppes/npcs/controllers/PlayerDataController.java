@@ -24,7 +24,6 @@ import noppes.npcs.controllers.data.PlayerMail;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.NBTJsonUtil;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class PlayerDataController {
@@ -55,10 +54,7 @@ public class PlayerDataController {
 						CustomNpcs.debugData.end(null);
 						return;
 					}
-                    if (!banksDirTemp.exists()) {
-						banksDirTemp.mkdirs();
-					}
-					if (nbt.hasKey("BankData", 9)) {
+					if ((banksDirTemp.exists() || banksDirTemp.mkdirs()) && nbt.hasKey("BankData", 9)) {
 						for (int i = 0; i < nbt.getTagList("BankData", 10).tagCount(); i++) {
 							NBTTagCompound nbtOldBank = nbt.getTagList("BankData", 10).getCompoundTagAt(i);
 							NBTTagCompound nbtBD = new NBTTagCompound();
@@ -94,34 +90,23 @@ public class PlayerDataController {
 							}
 							nbtBD.setTag("ceils", list);
 							File bankFile = new File(banksDirTemp, bankID + ".dat");
-							if (!bankFile.exists()) {
-								try {
-									bankFile.createNewFile();
-								} catch (Exception e) { LogWriter.error(e); }
+							if (!bankFile.exists() && !bankFile.createNewFile()) {
+								LogWriter.error("Not create player bank data ");
 							}
-							try {
-								CompressedStreamTools.writeCompressed(nbtBD, Files.newOutputStream(bankFile.toPath()));
-							} catch (Exception e) { LogWriter.error(e); }
+							CompressedStreamTools.writeCompressed(nbtBD, Files.newOutputStream(bankFile.toPath()));
 						}
 					}
 
 					// main
 					File playerDirTemp = new File(dir, uuid);
-					if (!playerDirTemp.exists()) {
-						playerDirTemp.mkdirs();
+					if (playerDirTemp.exists() || playerDirTemp.mkdirs()) {
+						File tempFile = new File(playerDirTemp, name + ".json");
+						if (tempFile.exists() || tempFile.createNewFile()) {
+							nbt.removeTag("BankData");
+							Util.instance.saveFile(tempFile, nbt);
+						}
+						Util.instance.removeFile(playerDir);
 					}
-					File tempFile = new File(playerDirTemp, name + ".json");
-					if (!tempFile.exists()) {
-						try {
-							tempFile.createNewFile();
-						} catch (Exception e) { LogWriter.error(e); }
-					}
-					try {
-						nbt.removeTag("BankData");
-						Util.instance.saveFile(tempFile, nbt);
-					} catch (Exception e) { LogWriter.error(e); }
-
-					Util.instance.removeFile(playerDir);
 				} catch (Exception e) {
 					LogWriter.error("Error loading Old file: " + playerDir.getAbsolutePath(), e);
 				}
@@ -138,6 +123,7 @@ public class PlayerDataController {
 		}
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	public @Nullable PlayerData getDataFromUsername(@Nullable MinecraftServer server, @Nullable String userPartNameOrUUID) {
 		if (userPartNameOrUUID == null || userPartNameOrUUID.isEmpty()) { return null; }
 		if (server == null) { server = CustomNpcs.Server; }
@@ -156,20 +142,23 @@ public class PlayerDataController {
 			if (dirs != null) {
 				for (File playerDir : dirs) {
 					if (!playerDir.isDirectory()) { continue; }
-					for (File file : Objects.requireNonNull(playerDir.listFiles())) {
-						if (file.isFile() && file.getName().endsWith(".json")) {
-							String uuid = playerDir.getName();
-							String name = file.getName().replace(".json", "");
-							if (name.toLowerCase().contains(userPartNameOrUUID.toLowerCase()) || uuid.equalsIgnoreCase(userPartNameOrUUID)) {
-								if (server != null) {
-									EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(name);
-									if (player != null) { return PlayerData.get(player); }
+					File[] files = playerDir.listFiles();
+					if (files != null) {
+						for (File file : files) {
+							if (file.isFile() && file.getName().endsWith(".json")) {
+								String uuid = playerDir.getName();
+								String name = file.getName().replace(".json", "");
+								if (name.toLowerCase().contains(userPartNameOrUUID.toLowerCase()) || uuid.equalsIgnoreCase(userPartNameOrUUID)) {
+									if (server != null) {
+										EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(name);
+										if (player != null) { return PlayerData.get(player); }
+									}
+									PlayerData data = new PlayerData();
+									data.setNBT(PlayerData.loadPlayerData(uuid, name));
+									return data;
 								}
-								PlayerData data = new PlayerData();
-								data.setNBT(PlayerData.loadPlayerData(uuid, name));
-								return data;
+								break;
 							}
-							break;
 						}
 					}
 				}
@@ -186,10 +175,13 @@ public class PlayerDataController {
 			if (playerDir.getName().equalsIgnoreCase(user_name_or_uuid)) {
 				return playerDir;
 			}
-			for (File file : Objects.requireNonNull(playerDir.listFiles())) {
-				if (file.isFile() && file.getName().endsWith(".json")
-						&& file.getName().replace(".json", "").equalsIgnoreCase(user_name_or_uuid)) {
-					return playerDir;
+			File[] files = playerDir.listFiles();
+			if (files != null) {
+				for (File file : files) {
+					if (file.isFile() && file.getName().endsWith(".json")
+							&& file.getName().replace(".json", "").equalsIgnoreCase(user_name_or_uuid)) {
+						return playerDir;
+					}
 				}
 			}
 		}
@@ -199,13 +191,14 @@ public class PlayerDataController {
 	public List<String> getPlayerNames() {
 		List<String> list = new ArrayList<>();
 		for (File playerDir : Objects.requireNonNull(Objects.requireNonNull(CustomNpcs.getWorldSaveDirectory("playerdata")).listFiles())) {
-			if (!playerDir.isDirectory()) {
-				continue;
-			}
-			for (File file : Objects.requireNonNull(playerDir.listFiles())) {
-				if (file.isFile() && file.getName().endsWith(".json")) {
-					list.add(file.getName().replace(".json", ""));
-					break;
+			if (!playerDir.isDirectory()) { continue; }
+			File[] files = playerDir.listFiles();
+			if (files != null) {
+				for (File file : files) {
+					if (file.isFile() && file.getName().endsWith(".json")) {
+						list.add(file.getName().replace(".json", ""));
+						break;
+					}
 				}
 			}
 		}
@@ -231,11 +224,21 @@ public class PlayerDataController {
 	}
 
 	public String hasPlayer(String user_name_or_uuid) {
-		File playerDir = this.getPlayerDirectory(user_name_or_uuid);
-		if (playerDir == null) {
-			return "";
+		File playerDir = getPlayerDirectory(user_name_or_uuid);
+		String realName = "";
+		if (playerDir != null) {
+			File[] files = playerDir.listFiles();
+			if (files != null) {
+				for (File file : files) {
+					if (file.isFile() && file.getName().endsWith(".json")
+							&& file.getName().replace(".json", "").equalsIgnoreCase(user_name_or_uuid)) {
+						realName = file.getName().replace(".json", "");
+						break;
+					}
+				}
+			}
 		}
-		return playerDir.getName();
+		return realName;
 	}
 
 }

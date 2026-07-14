@@ -61,29 +61,32 @@ public class SPacketPlayerMailSend extends PacketServerBasic {
       if (username.equalsIgnoreCase(player.getName()) && !(CustomNpcs.MailSendToYourself || player.isCreative())) {
          NoppesUtilServer.sendGuiError(player, 2);
       }
-      else if (PlayerDataController.instance.hasPlayer(username).isEmpty()) {
-         NoppesUtilServer.sendGuiError(player, 0);
-      }
-      else if (!player.isCreative() && cost > PlayerData.get(player).game.getMoney()) {
-         NoppesUtilServer.sendGuiError(player, 3);
-      }
       else {
-         PlayerMail mail = new PlayerMail();
-         String s = player.getDisplayNameString();
-         if (!s.equals(player.getName())) { s = s + "(" + player.getName() + ")"; }
-         mail.load(compound);
-         if (!mail.title.isEmpty()) {
-            mail.sender = s;
-            for (int i = 0; i < 4; i++) { mail.items.set(i, ((ContainerMail) player.openContainer).mail.items.get(i)); }
-            NBTTagCompound comp = new NBTTagCompound();
-            comp.setString("username", username);
-            NoppesUtilServer.sendGuiClose(player, comp);
-            EntityNPCInterface npc2 = NoppesUtilServer.getEditingNpc(player);
-            if (npc2 == null || !EventHooks.onNPCRole(npc2, new RoleEvent.MailmanEvent(player, npc2.wrappedNPC, mail))) {
-               PlayerDataController.instance.addPlayerMessage(player.getServer(), username, mail);
-            }
+         String name = PlayerDataController.instance.hasPlayer(username);
+         if (name.isEmpty()) {
+            NoppesUtilServer.sendGuiError(player, 0);
          }
-         else { NoppesUtilServer.sendGuiError(player, 1); }
+         else if (!player.isCreative() && cost > PlayerData.get(player).game.getMoney()) {
+            NoppesUtilServer.sendGuiError(player, 3);
+         }
+         else {
+            PlayerMail mail = new PlayerMail();
+            String s = player.getDisplayNameString();
+            if (!s.equals(player.getName())) { s = s + "(" + player.getName() + ")"; }
+            mail.load(compound);
+            if (!mail.title.isEmpty()) {
+               mail.sender = s;
+               for (int i = 0; i < 4; i++) { mail.items.set(i, ((ContainerMail) player.openContainer).mail.items.get(i)); }
+               NBTTagCompound comp = new NBTTagCompound();
+               comp.setString("username", name);
+               NoppesUtilServer.sendGuiClose(player, comp);
+               EntityNPCInterface npc2 = NoppesUtilServer.getEditingNpc(player);
+               if (npc2 == null || !EventHooks.onNPCRole(npc2, new RoleEvent.MailmanEvent(player, npc2.wrappedNPC, mail))) {
+                  PlayerDataController.instance.addPlayerMessage(player.getServer(), name, mail);
+               }
+            }
+            else { NoppesUtilServer.sendGuiError(player, 1); }
+         }
       }
       CustomNpcs.debugData.end("Packets");
    }

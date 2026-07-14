@@ -9,6 +9,7 @@ import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerMail;
 import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiData;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.PacketServerBasic;
 
@@ -46,14 +47,18 @@ public class SPacketPlayerMailRansom extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         PlayerData data = PlayerData.get(player);
         PlayerMail mail = data.mailData.get(id);
+        NBTTagCompound compound = new NBTTagCompound();
         if (mail != null && mail.ransom > 0) {
             if (!player.isCreative() && data.game.getMoney() < mail.ransom) { NoppesUtilServer.sendGuiError(player, 3); }
             else {
                 data.game.addMoney(mail.ransom * -1L);
                 mail.ransom = 0;
+                mail.returned = true;
+                compound = mail.save();
                 Packets.send(player, new PacketSyncUpdate(0, 12, data.mailData.save(new NBTTagCompound())));
             }
         }
+        Packets.send(player, new PacketGuiData(compound));
         CustomNpcs.debugData.end("Packets");
     }
 

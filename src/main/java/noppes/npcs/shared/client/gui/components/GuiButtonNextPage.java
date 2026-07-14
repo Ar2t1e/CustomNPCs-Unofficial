@@ -11,9 +11,11 @@ public class GuiButtonNextPage extends GuiButtonNop {
    protected static final ResourceLocation resource = new ResourceLocation("textures/gui/book.png");
    protected final boolean isLeftButton;
 
-   public GuiButtonNextPage(IGuiInterface gui, int id, int x, int y, boolean par4, OnPress press) {
-      super(gui, id, x, y, 23, 13, Component.empty(), press);
-      isLeftButton = par4;
+   public GuiButtonNextPage(IGuiInterface gui, int id, int x, int y, boolean isLeft, OnPress press) {
+      super(gui, id, Component.empty(), x, y, press);
+      width = 23;
+      height = 13;
+      isLeftButton = isLeft;
    }
 
    @Override
@@ -22,7 +24,9 @@ public class GuiButtonNextPage extends GuiButtonNop {
          mouseX -= offsetHoverX;
          mouseY -= offsetHoverY;
       }
-      isHovered = visible && mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
+      int x = getX();
+      int y = getY();
+      isHovered = visible && mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
       if (visible && resource != null) {
          Minecraft mc = Minecraft.getMinecraft();
          mc.getTextureManager().bindTexture(resource);
@@ -34,9 +38,9 @@ public class GuiButtonNextPage extends GuiButtonNop {
          GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
          int u = 0;
          int v = 192;
-         if (isHovered) { u += 23; }
-         if (!isLeftButton) { v += 13; }
-         drawTexturedModalRect(getX(), getY(), u, v, 23, 13);
+         if (isHovered) { u += width; }
+         if (!isLeftButton) { v += height; }
+         drawTexturedModalRect(x, y, u, v, width, height);
          GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
          GlStateManager.popMatrix();
          GlStateManager.disableBlend();
