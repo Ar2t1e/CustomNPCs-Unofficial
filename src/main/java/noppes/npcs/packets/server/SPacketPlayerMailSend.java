@@ -2,6 +2,7 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import noppes.npcs.CustomNpcs;
@@ -56,29 +57,33 @@ public class SPacketPlayerMailSend extends PacketServerBasic {
       if (username.equalsIgnoreCase(player.getName().getString()) && !(CustomNpcs.MailSendToYourself || player.isCreative())) {
          NoppesUtilServer.sendGuiError(player, 2);
       }
-      else if (PlayerDataController.instance.hasPlayer(username).isEmpty()) {
-         NoppesUtilServer.sendGuiError(player, 0);
-      }
-      else if (!player.isCreative() && cost > PlayerData.get(player).game.getMoney()) {
-         NoppesUtilServer.sendGuiError(player, 3);
-      }
       else {
-         PlayerMail mail = new PlayerMail();
-         String s = player.getDisplayName().getString();
-         if (!s.equals(player.getName().getString())) { s = s + "(" + player.getName() + ")"; }
-         mail.load(compound);
-         if (!mail.title.isEmpty()) {
-            mail.sender = s;
-            for (int i = 0; i < 4; i++) { mail.items.set(i, ((ContainerMail) player.containerMenu).mail.items.get(i)); }
-            CompoundTag comp = new CompoundTag();
-            comp.putString("username", username);
-            NoppesUtilServer.sendGuiClose(player, comp);
-            EntityNPCInterface npc2 = NoppesUtilServer.getEditingNpc(player);
-            if (npc2 == null || !EventHooks.onNPCRole(npc2, new RoleEvent.MailmanEvent(player, npc2.wrappedNPC, mail))) {
-               PlayerDataController.instance.addPlayerMessage(player.getServer(), username, mail);
-            }
+         String name = PlayerDataController.instance.hasPlayer(username);
+         if (name.isEmpty()) {
+            NoppesUtilServer.sendGuiError(player, 0);
          }
-         else { NoppesUtilServer.sendGuiError(player, 1); }
+         else if (!player.isCreative() && cost > PlayerData.get(player).game.getMoney()) {
+            NoppesUtilServer.sendGuiError(player, 3);
+         }
+         else {
+            PlayerMail mail = new PlayerMail();
+            String s = player.getDisplayName().getString();
+            if (!s.equals(player.getName().getString())) { s = s + "(" + player.getName() + ")"; }
+            mail.load(compound);
+            if (!mail.title.isEmpty()) {
+               mail.sender = s;
+               for (int i = 0; i < 4; i++) { mail.items.set(i, ((ContainerMail) player.containerMenu).mail.items.get(i)); }
+               CompoundTag comp = new CompoundTag();
+               comp.putString("username", name);
+               NoppesUtilServer.sendGuiClose(player, comp);
+               EntityNPCInterface npc2 = NoppesUtilServer.getEditingNpc(player);
+               if (npc2 == null || !EventHooks.onNPCRole(npc2, new RoleEvent.MailmanEvent(player, npc2.wrappedNPC, mail))) {
+                  PlayerDataController.instance.addPlayerMessage(player.getServer(), name, mail);
+                  player.sendSystemMessage(Component.translatable("mailbox.success", name));
+               }
+            }
+            else { NoppesUtilServer.sendGuiError(player, 1); }
+         }
       }
       CustomNpcs.debugData.end("Packets");
    }

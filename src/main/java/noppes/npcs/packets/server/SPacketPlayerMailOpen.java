@@ -55,7 +55,6 @@ public class SPacketPlayerMailOpen extends PacketServerBasic {
    @Override
    protected void handle() {
       CustomNpcs.debugData.start("Packets");
-      player.closeContainer();
       if (canEdit && canSend) {
          NoppesUtilServer.openContainerGui(player, EnumGuiType.PlayerMailOpen, (buf) -> {
             buf.writeBoolean(true);

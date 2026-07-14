@@ -198,7 +198,7 @@ public class YDEData {
     private void buildBranchRecursive(DialogBranch branch, int column, YDENode node) {
         branch.addNode(node, column);
         if (node instanceof YDEDialog dialogNode) {
-            LogWriter.info("[DEBUG] column "+column+"; dialog: "+(dialogNode.dialog != null ? dialogNode.dialog.title : dialogNode.dialogId));
+            //LogWriter.info("[DEBUG] column "+column+"; dialog: "+(dialogNode.dialog != null ? dialogNode.dialog.title : dialogNode.dialogId));
             if (dialogNode.dialog != null) {
                 // quest (this column)
                 if (dialogNode.dialog.quest > -1) {
@@ -233,7 +233,7 @@ public class YDEData {
             }
         } // dialog
         else if (node instanceof YDEOption optionNode) {
-            LogWriter.info("[DEBUG] column "+column+"; option: "+optionNode.option.title+"; dialogId: "+optionNode.dialogId);
+            //LogWriter.info("[DEBUG] column "+column+"; option: "+optionNode.option.title+"; dialogId: "+optionNode.dialogId);
             if (optionNode.option.hasDialogs()) {
                 for (DialogOption.OptionDialogID od : optionNode.option.dialogs) {
                     YDEDialog nextDialog = getDialog(od.dialogId);

@@ -106,10 +106,13 @@ public class PlayerDataController {
       for (File playerDir : Objects.requireNonNull(Objects.requireNonNull(CustomNpcs.getLevelSaveDirectory("playerdata")).listFiles())) {
          if (!playerDir.isDirectory()) { continue; }
          if (playerDir.getName().equalsIgnoreCase(user_name_or_uuid)) { return playerDir; }
-         for (File file : Objects.requireNonNull(playerDir.listFiles())) {
-            if (file.isFile() && file.getName().endsWith(".json")
-                    && file.getName().replace(".json", "").equalsIgnoreCase(user_name_or_uuid)) {
-               return playerDir;
+         File[] files = playerDir.listFiles();
+         if (files != null) {
+            for (File file : files) {
+               if (file.isFile() && file.getName().endsWith(".json")
+                       && file.getName().replace(".json", "").equalsIgnoreCase(user_name_or_uuid)) {
+                  return playerDir;
+               }
             }
          }
       }
@@ -176,6 +179,7 @@ public class PlayerDataController {
       return null;
    }
 
+   @SuppressWarnings("unused")
    public List<PlayerData> getAllPlayerDatas(@Nullable MinecraftServer server, @Nullable String userPartNameOrUUID) {
       if (server == null) { server = CustomNpcs.Server; }
       ArrayList<PlayerData> list = new ArrayList<>();
@@ -224,7 +228,20 @@ public class PlayerDataController {
 
    public String hasPlayer(String user_name_or_uuid) {
       File playerDir = getPlayerDirectory(user_name_or_uuid);
-      return playerDir == null ? "" : playerDir.getName();
+      String realName = "";
+      if (playerDir != null) {
+         File[] files = playerDir.listFiles();
+         if (files != null) {
+            for (File file : files) {
+               if (file.isFile() && file.getName().endsWith(".json")
+                       && file.getName().replace(".json", "").equalsIgnoreCase(user_name_or_uuid)) {
+                  realName = file.getName().replace(".json", "");
+                  break;
+               }
+            }
+         }
+      }
+      return realName;
    }
 
 }

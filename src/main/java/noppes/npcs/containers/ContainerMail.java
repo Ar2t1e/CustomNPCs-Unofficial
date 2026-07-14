@@ -1,6 +1,6 @@
 package noppes.npcs.containers;
 
-import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -60,24 +60,24 @@ public class ContainerMail extends ContainerNpcInterface {
    @Override
    public void removed(@NotNull Player playerIn) {
       super.removed(player);
-      if (!player.level().isClientSide) { return; }
-      if (!canEdit) {
-         PlayerMailData data = CustomNpcs.proxy.getPlayerData(player).mailData;
-         for (PlayerMail m : data.playerMails) {
-            if (m.timeWhenReceived == mail.timeWhenReceived && m.sender.equals(mail.sender)) {
-               m.load(mail.save());
-               break;
+      if (playerIn instanceof ServerPlayer) {
+         if (!canEdit) {
+            PlayerMailData data = CustomNpcs.proxy.getPlayerData(player).mailData;
+            for (PlayerMail m : data.playerMails) {
+               if (m.timeWhenReceived == mail.timeWhenReceived && m.sender.equals(mail.sender)) {
+                  m.load(mail.save());
+                  break;
+               }
             }
          }
-      }
-      else if (!sendMail) {
-         for (int i = 0; i < 4; i++) {
-            Slot slot = getSlot(i);
-            if (!slot.hasItem()) { continue;}
-            ItemEntity entityItem = new ItemEntity(player.level(), player.getY(), player.getY() + 0.16f, player.getZ(), slot.getItem());
-            entityItem.setPickUpDelay(1);
-            entityItem.setThrower(player.getUUID());
-            player.level().addFreshEntity(entityItem);
+         else if (!sendMail) {
+            for (int i = 0; i < 4; i++) {
+               Slot slot = getSlot(i);
+               if (!slot.hasItem()) { continue;}
+               ItemStack itemstack = slot.getItem();
+               if (playerIn.isAlive() && !((ServerPlayer) playerIn).hasDisconnected()) { playerIn.getInventory().placeItemBackInInventory(itemstack); }
+               else { playerIn.drop(itemstack, false); }
+            }
          }
       }
    }

@@ -1565,7 +1565,8 @@ public class GuiLog
                   if (temp > 0) {
                      graphics.blit(GuiLog.ql.get(1), 0, 0, 0, 0, 128, 175);
                   }
-               } else {
+               }
+               else {
                   part = (float) tick + partialTicks;
                   cos = (float) Math.cos(90.0d * part / ((double) milliTick / 2.0d) * Math.PI / 180.0d);
                   if (cos < 0.0f) {
@@ -1593,8 +1594,6 @@ public class GuiLog
                graphics.blit(GuiLog.ql.get(2), 0, 0, 0, 0, 128, 175);
                matrixStack.popPose();
                if (tick == 0) {
-                  step = 14;
-                  setNextTick(101, true);
                   save();
                   if (type == -1) { setScreen(new InventoryScreen(player)); }
                   else { setScreen(null); }

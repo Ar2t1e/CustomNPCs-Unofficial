@@ -76,7 +76,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
             setNextTick(15);
             closeType = 1;
             break;
-         } // close 1
+         } // write
          case 2: {
             if (selected == null) { return; }
             ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
@@ -133,7 +133,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
             setNextTick(15);
             closeType = 0;
             break;
-         } // close 0
+         } // exit
       }
    }
 
@@ -346,31 +346,35 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
       super.render(graphics, mouseX, mouseY, partialTicks);
       if (step != 3 || hasSubGui() || !CustomNpcs.ShowDescriptions) { return; }
       List<Component> hover = new ArrayList<>();
-      if (scroll != null && scroll.hasSelected()) {
-         PlayerMail mail = scrollData.get(scroll.getNormalSelected());
-         hover.add(Component.empty()
-                         .append(Component.translatable("mailbox.sender").withStyle(ChatFormatting.GRAY))
-                         .append(Component.literal(" \"").withStyle(ChatFormatting.GRAY))
-                         .append(Component.literal(mail.sender).withStyle(ChatFormatting.RESET))
-                         .append(Component.literal("\"").withStyle(ChatFormatting.GRAY))
-                 );
-         long timeWhenReceived = System.currentTimeMillis() - mail.timeWhenReceived - mail.timeWillCome;
-         if (CustomNpcs.MailTimeWhenLettersWillBeDeleted > 0) {
-            long timeToRemove = CustomNpcs.MailTimeWhenLettersWillBeDeleted * 86400000L - timeWhenReceived;
-            if (timeToRemove < 0L) {
-               Packets.sendServer(new SPacketPlayerMailDelete(0, mail.timeWhenReceived, mail.sender));
-               return;
+      if (scroll != null && scroll.getHover() >= 0) {
+         List<Component> list = scroll.getNormalList();
+         if (scroll.getHover() < list.size()) {
+            PlayerMail mail = scrollData.get(list.get(scroll.getHover()));
+            hover.add(Component.empty()
+                    .append(Component.translatable("mailbox.sender").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" \"").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(mail.sender).withStyle(ChatFormatting.RESET))
+                    .append(Component.literal("\"").withStyle(ChatFormatting.GRAY))
+            );
+            long timeWhenReceived = System.currentTimeMillis() - mail.timeWhenReceived - mail.timeWillCome;
+            if (CustomNpcs.MailTimeWhenLettersWillBeDeleted > 0) {
+               long timeToRemove = CustomNpcs.MailTimeWhenLettersWillBeDeleted * 86400000L - timeWhenReceived;
+               if (timeToRemove < 0L) {
+                  Packets.sendServer(new SPacketPlayerMailDelete(0, mail.timeWhenReceived, mail.sender));
+                  return;
+               }
+               hover.add(Component.translatable("mailbox.when.removed",
+                               Util.instance.ticksToElapsedTime(timeToRemove / 50, false, true, false))
+                       .withStyle(ChatFormatting.GRAY));
             }
-            hover.add(Component.translatable("mailbox.when.removed",
-                            Util.instance.ticksToElapsedTime(timeToRemove / 50, false, true, false))
-                    .withStyle(ChatFormatting.GRAY));
-         }
-         if (mail.beenRead) {
-            hover.add(Component.translatable("mailbox.when.read").withStyle(ChatFormatting.GREEN));
-         } else {
-            hover.add(Component.translatable("mailbox.when.received",
-                            Util.instance.ticksToElapsedTime(timeWhenReceived / 50, false, true, false))
-                    .withStyle(ChatFormatting.GRAY));
+            if (mail.beenRead) {
+               hover.add(Component.translatable("mailbox.when.read").withStyle(ChatFormatting.GREEN));
+            }
+            else {
+               hover.add(Component.translatable("mailbox.when.received",
+                               Util.instance.ticksToElapsedTime(timeWhenReceived / 50, false, true, false))
+                       .withStyle(ChatFormatting.GRAY));
+            }
          }
       }
       if (!hover.isEmpty()) {
@@ -478,7 +482,7 @@ public class GuiMailbox extends GuiNPCInterface implements IGuiData, ICustomScro
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-      if (!hasSubGui() && step == 3 && (isEscKey(keyCode) || isInventoryKey(keyCode))) {
+      if (!hasSubGui() && step == 3 && isEscKey(keyCode)) {
          step = 4;
          setNextTick(15);
          closeType = 0;
