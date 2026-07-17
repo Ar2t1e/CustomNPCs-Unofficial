@@ -2128,11 +2128,13 @@ public class ClientEventHandler extends Gui {
 							title = Component.translatable("gui.kill").getFormattedText() + ": " + n + ": " + select.getProgress() + "/" + select.getMaxProgress();
 						}
 					}
-				} else if (qData.isCompleted && qData.quest.completion == EnumQuestCompletion.Npc && qData.quest.getCompleterNpc() != null) {
-					point = new double[] { qData.quest.completerPos[0] - 0.5d, qData.quest.completerPos[1] + 0.5d, qData.quest.completerPos[2] + 0.5d };
+				} else if (qData.isCompleted && qData.quest.completion == EnumQuestCompletion.Npc && !qData.quest.completer.isEmpty()) {
+					point = new double[] { qData.quest.completer.getPos().getX() - 0.5d,
+							qData.quest.completer.getPos().getY() + 0.5d,
+							qData.quest.completer.getPos().getZ() + 0.5d };
 					taskType = EnumQuestTask.DIALOG.ordinal();
 					taskColor = 0x72CA00;
-					if (mc.world.provider.getDimension() != qData.quest.completerPos[3]) {
+					if (mc.world.provider.getDimension() != qData.quest.completer.getDimension()) {
 						taskType = 7;
 					} else {
 						AxisAlignedBB bb = new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).offset(point[0], point[1], point[2]).grow(64.0d, 128.0d, 64.0d);

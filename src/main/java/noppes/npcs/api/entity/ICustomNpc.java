@@ -1,6 +1,5 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.EntityCreature;
 import noppes.npcs.api.ITimers;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.INPCAdvanced;
@@ -14,9 +13,10 @@ import noppes.npcs.api.entity.data.INPCStats;
 import noppes.npcs.api.handler.data.IDialog;
 import noppes.npcs.api.handler.data.IFaction;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.entity.EntityNPCInterface;
 
-@SuppressWarnings("all")
-public interface ICustomNpc<T extends EntityCreature> extends IEntityLiving<T> {
+@SuppressWarnings("unused")
+public interface ICustomNpc<T extends EntityNPCInterface> extends IEntityLiving<T> {
 
 	String executeCommand(@ParamName("command") String command);
 

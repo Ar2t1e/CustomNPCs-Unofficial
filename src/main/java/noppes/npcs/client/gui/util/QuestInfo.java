@@ -10,7 +10,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.handler.data.IQuestObjective;
 import noppes.npcs.client.gui.player.GuiLog;
@@ -40,27 +39,7 @@ public class QuestInfo {
     public QuestInfo(QuestData qd, World worldIn) {
         world = worldIn;
         qData = qd;
-        if (qd.quest.completer != null) {
-            NBTTagCompound compound = new NBTTagCompound();
-            qd.quest.completer.writeToNBTOptional(compound);
-            compound.setUniqueId("UUID", UUID.randomUUID());
-            Entity e = EntityList.createEntityFromNBT(compound, world);
-            if (e instanceof EntityNPCInterface) { npc = (EntityNPCInterface) e; }
-            else {
-                npc = (EntityNPCInterface) EntityList.createEntityByIDFromName(new ResourceLocation(CustomNpcs.MODID, "customnpc"), world);
-                if (npc != null) { npc.readEntityFromNBT(compound); }
-            }
-        } else {
-            npc = (EntityNPCInterface) EntityList.createEntityByIDFromName(new ResourceLocation(CustomNpcs.MODID, "customnpc"), world);
-            qd.quest.completer = npc;
-            if (npc != null) {
-                qd.quest.completerPos[0] = (int) npc.posX;
-                qd.quest.completerPos[1] = (int) (npc.posY + 0.5d);
-                qd.quest.completerPos[2] = (int) npc.posZ;
-                qd.quest.completerPos[3] = npc.world.provider.getDimension();
-            }
-        }
-        npc = Util.instance.copyToGUI(npc, world, false);
+        npc = qd.quest.completer.getNpc();
     }
 
     public Map<Integer, List<String>> getText(int first, EntityPlayer player) {
@@ -73,7 +52,7 @@ public class QuestInfo {
         preLines.add(Component.translatable("gui.quest", ": ").getFormattedText() + TextFormatting.BOLD +
                 Component.translatable(qData.quest.title).getFormattedText());
         // completion npc name
-        if (qData.quest.completion == EnumQuestCompletion.Npc && qData.quest.completer != null) {
+        if (qData.quest.completion == EnumQuestCompletion.Npc && !qData.quest.completer.isEmpty()) {
             preLines.add(Component.translatable("quest.completewith", qData.quest.completer.getName()).getFormattedText());
         }
         // all objectives

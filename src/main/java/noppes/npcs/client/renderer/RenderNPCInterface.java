@@ -125,11 +125,15 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 		float zOffset = 0.0f;
 		if (npc.isEntityAlive()) {
 			if (npc.isPlayerSleeping()) {
-				xOffset = (float) (-Math.cos(Math.toRadians(180 - npc.ais.orientation)));
-				zOffset = (float) (-Math.sin(Math.toRadians(npc.ais.orientation)));
-				yOffset += 0.14f;
+				//xOffset = (float) (-Math.cos(Math.toRadians(180 - npc.ais.orientation)));
+				//zOffset = (float) (-Math.sin(Math.toRadians(npc.ais.orientation)));
+				//yOffset += 0.14f;
+				float orientationRad = (float) Math.toRadians(npc.ais.orientation);
+				xOffset = (float)(Math.cos(orientationRad) * 0.5F);
+				zOffset = (float)(-Math.sin(orientationRad) * 0.5F);
+				yOffset += 0.0575F;
 			} else if (npc.currentAnimation == 1 || npc.isRiding()) {
-				yOffset -= 0.5f - ((EntityCustomNpc) npc).modelData.getLegsY() * 0.8f;
+				yOffset -= 0.3f - ((EntityCustomNpc) npc).modelData.getLegsY() * 0.8f; // 0.5F - ((...
 			}
 		}
 		xOffset = xOffset / 5.0f * npc.display.getSize();

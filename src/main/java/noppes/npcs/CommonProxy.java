@@ -324,4 +324,8 @@ public class CommonProxy implements IGuiHandler {
 		return recipe;
 	}
 
+	public @Nullable World getOverWorld() {
+		if (CustomNpcs.Server != null) { return CustomNpcs.Server.getWorld(0); }
+		return null;
+	}
 }

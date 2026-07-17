@@ -1502,10 +1502,6 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 				deathTime = 0;
 				updateHitbox();
 			}
-			else if (!isAttacking() && getNavigator().noPath() && currentAnimation != ais.animationType) {
-				currentAnimation = ais.animationType;
-				updateHitbox();
-			}
 		}
 		// if killed
 		wasKilled = isKilled();
@@ -1855,7 +1851,6 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		if (animation != 4 && aiAttackTarget instanceof EntityAICommanderTarget) {
 			((EntityAICommanderTarget) aiAttackTarget).baseAnimation = animation;
 		}
-		updateAnimationClient();
 	}
 
 	public void setDataWatcher(EntityDataManager dataManagerIn) { dataManager = dataManagerIn; }
@@ -2044,12 +2039,6 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		Packets.sendNearby(this, new PacketNpcUpdate(getEntityId(), writeSpawnData()));
 		updateClient = false;
 		updateNavClient();
-	}
-
-	public void updateAnimationClient() {
-		if (isServerWorld()) {
-			Packets.sendAll(new PacketNpcCustomAnimation(world.provider.getDimension(), getEntityId(), currentAnimation));
-		}
 	}
 
 	public void updateNavClient() {

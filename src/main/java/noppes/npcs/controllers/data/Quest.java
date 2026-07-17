@@ -4,8 +4,6 @@ import java.util.*;
 
 import com.google.common.base.Predicate;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -37,6 +35,7 @@ import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.constants.EnumRewardType;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.QuestController;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.client.gui.util.quests.QuestInterface;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
@@ -44,9 +43,11 @@ import noppes.npcs.entity.data.DropSet;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketQuestCompletion;
 import noppes.npcs.packets.client.PacketSyncUpdate;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterface>, IDropSetData {
 
@@ -65,7 +66,6 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	public int version = VersionCompatibility.ModRev;
 	public int[] forgetDialogues = new int[0];
 	public int[] forgetQuests = new int[0];
-	public int[] completerPos = new int[] { 0, 0, 0, 0 };
 	public String command = "";
 	public String completeText = "";
 	public String logText = "";
@@ -80,10 +80,11 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	public PlayerMail mail = new PlayerMail();
 	public QuestInterface questInterface = new QuestInterface();
 	public EnumQuestRepeat repeat = EnumQuestRepeat.NONE;
-	public EnumQuestCompletion completion = EnumQuestCompletion.Npc;
+	public EnumQuestCompletion completion = EnumQuestCompletion.Instant;
 	public EnumRewardType rewardType = EnumRewardType.RANDOM_ONE;
-	public EntityNPCInterface completer = null;
-	private UUID completerUUID = null;
+
+	public final CompleterNPCData completer = new CompleterNPCData();
+
 	public final Map<Integer, DropSet> rewardItems = new TreeMap<>();
 
 	public Quest(QuestCategory categoryIn) { category = categoryIn; }
@@ -169,40 +170,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 		}
 		forgetDialogues = compound.getIntArray("ForgetDialogues");
 		forgetQuests = compound.getIntArray("ForgetQuests");
-		completer = null;
-		completerUUID = null;
-		if (compound.hasKey("CompleterPos", 11)) {
-			completerPos = compound.getIntArray("CompleterPos");
-		}
-		try {
-			String name = compound.getCompoundTag("CompleterNpc").getString("Name");
-			if (compound.hasKey("CompleterNpc", 8)) { name = compound.getString("CompleterNpc"); } // OLD
-			else if (compound.hasKey("CompleterNpc", 10) &&
-					compound.getCompoundTag("CompleterNpc").hasKey("UUIDMost", 4) &&
-					compound.getCompoundTag("CompleterNpc").hasKey("UUIDLeast", 4)) {
-				completerUUID = compound.getCompoundTag("CompleterNpc").getUniqueId("UUID");
-			}
-			World[] worlds = new World[0];
-			if (CustomNpcs.Server != null) { worlds = CustomNpcs.Server.worlds; }
-			else if (CustomNpcs.proxy.getPlayer() != null) { worlds = new World[] { CustomNpcs.proxy.getPlayer().world }; }
-			for (World world : worlds) {
-				for (EntityNPCInterface entity : world.getEntities(EntityNPCInterface.class, this)) {
-					if (entity.getName().equals(name)) {
-						completer = entity;
-						if (completerUUID == null) { completerUUID = entity.getUniqueID(); }
-						break;
-					}
-				}
-				if (completer != null) { break; }
-			}
-			if (completer == null && worlds.length > 0 && worlds[0] != null) {
-				Entity e = EntityList.createEntityFromNBT(compound.getCompoundTag("CompleterNpc"), worlds[0]);
-				if (e instanceof EntityNPCInterface) {
-					completer = (EntityNPCInterface) e;
-					completerUUID = e.getUniqueID();
-				}
-			}
-		} catch (Throwable t) { LogWriter.error("Error: ", t); }
+		completer.load(compound);
 	}
 
 	@Override
@@ -243,18 +211,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 		compound.setIntArray("ForgetDialogues", forgetDialogues);
 		compound.setIntArray("ForgetQuests", forgetQuests);
 
-		if (completer != null) {
-			NBTTagCompound npcNbt = new NBTTagCompound();
-			completer.writeToNBTOptional(npcNbt);
-			compound.setTag("CompleterNpc", npcNbt);
-			if (completerPos[0] == 0 && completerPos[1] == 0 && completerPos[2] == 0 && completerPos[3] == 0) {
-				completerPos[0] = (int) completer.posX;
-				completerPos[1] = (int) (completer.posY + 0.5d);
-				completerPos[2] = (int) completer.posZ;
-				completerPos[3] = completer.world.provider.getDimension();
-			}
-		}
-		compound.setIntArray("CompleterPos", completerPos);
+		completer.save(compound);
 
 		NBTTagList dropList = new NBTTagList();
 		int s = 0;
@@ -353,10 +310,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	public IQuestObjective addTask() { return questInterface.addTask(EnumQuestTask.ITEM); }
 
 	@Override
-	public ICustomNpc<?> getCompleterNpc() {
-		if (completer == null) { return null; }
-		return (ICustomNpc<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(completer);
-	}
+	public ICustomNpc<?> getCompleterNpc() { return completer.getINpc(); }
 
 	@Override
 	public int getExtraButton() { return extraButton; }
@@ -415,7 +369,9 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	public void setCancelable(boolean cancelableIn) { cancelable = cancelableIn; }
 
 	@Override
-	public void setCompleterNpc(ICustomNpc<?> npc) { completer = (EntityNPCInterface) npc.getMCEntity(); }
+	public void setCompleterNpc(ICustomNpc<?> npc) {
+		if (npc != null) { completer.reset(npc.getMCEntity()); }
+	}
 
 	@Override
 	public void setExtraButton(int type) {
@@ -464,7 +420,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	}
 
 	@Override
-	public boolean apply(EntityNPCInterface entity) { return completerUUID == null || entity.getUniqueID().equals(completerUUID); }
+	public boolean apply(EntityNPCInterface npc) { return completer.isNpc(npc); }
 
 	@Override
 	public List<String> getLogText() {
@@ -608,6 +564,97 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 			return stack;
 		}
 
+	}
+
+	public static class CompleterNPCData {
+
+		private NBTTagCompound spawnData;
+		private String name;
+		private int dimension;
+		private BlockPos npcPos;
+		private UUID uuid;
+		private boolean strict;
+
+		public CompleterNPCData() { clear(); }
+
+		public void load(NBTTagCompound compound) {
+			clear();
+			if (compound.hasKey("CompleterPos", 11)) {
+				int[] pos = compound.getIntArray("CompleterPos");
+				npcPos = new BlockPos(pos[0], pos[1], pos[2]);
+				dimension = pos[3];
+			}
+			else if (compound.hasKey("CompleterPos", 4)) { npcPos = BlockPos.fromLong(compound.getLong("CompleterPos")); }
+			if (compound.hasKey("CompleterPosDimension", 3)) { dimension = compound.getInteger("CompleterPosDimension"); }
+			try { uuid = compound.getUniqueId("CompleterUUID"); } catch (Exception ignored) {}
+			if (compound.hasKey("CompleterIsStrict", 1)) { strict = compound.getBoolean("CompleterIsStrict"); }
+			if (compound.hasKey("CompleterNpc", 10)) { spawnData = compound.getCompoundTag("CompleterNpc"); }
+		}
+
+		public NBTTagCompound save(NBTTagCompound compound) {
+			compound.setInteger("CompleterPosDimension", dimension);
+			compound.setLong("CompleterPos", npcPos.toLong());
+			compound.setUniqueId("CompleterUUID", uuid);
+			compound.setBoolean("CompleterIsStrict", strict);
+			compound.setTag("CompleterNpc", spawnData);
+			return compound;
+		}
+
+		private void clear() {
+			spawnData = new NBTTagCompound();
+			name = "";
+			uuid = UUID.randomUUID();
+			dimension = 0;
+			npcPos = BlockPos.ORIGIN;
+			strict = false;
+		}
+
+		public void reset(@Nullable EntityNPCInterface npcIn) {
+			if (npcIn != null) {
+				spawnData = npcIn.writeSpawnData();
+				spawnData.getCompoundTag("Puppet").setBoolean("PuppetAnimate", false);
+				dimension = npcIn.homeDimensionId;
+				npcPos = npcIn.getPosition();
+				uuid = npcIn.getUniqueID();
+				strict = true;
+			}
+		}
+
+		public @Nullable EntityNPCInterface getNpc() {
+			World world = CustomNpcs.proxy.getOverWorld();
+			EntityNPCInterface npc = null;
+			if (world != null) {
+				npc = new EntityCustomNpc(world);
+				npc.readSpawnData(spawnData);
+				npc.display.setName(name);
+				npc.display.setShowName(1);
+			}
+			return npc;
+		}
+
+		public @Nullable ICustomNpc<?> getINpc() {
+			EntityNPCInterface npc = getNpc();
+			return npc == null ? null : (ICustomNpc<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(npc);
+		}
+
+		public @Nonnull String getName() { return name; }
+
+		public @Nonnull BlockPos getPos() { return npcPos; }
+
+		public int getDimension() { return dimension; }
+
+		public boolean isEmpty() { return name.isEmpty() || spawnData.hasNoTags(); }
+
+		public boolean isStrict() { return strict; }
+
+		public void setStrict(boolean isStrict) { strict = isStrict; }
+
+		public boolean isNpc(@Nullable EntityNPCInterface npc) {
+			if (npc != null && npc.getName().equals(name)) {
+				return !strict || npc.getUniqueID().equals(uuid);
+			}
+			return false;
+		}
 	}
 
 }

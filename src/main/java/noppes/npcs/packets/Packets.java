@@ -150,7 +150,6 @@ public class Packets {
         register(PacketNpcNavigation.class);
         register(PacketNpcTarget.class);
         register(PacketMenuSave.class);
-        register(PacketNpcCustomAnimation.class);
         register(PacketCustomAnimationSet.class);
         register(PacketCustomAnimationStop.class);
         register(PacketCustomAnimationBaseSet.class);

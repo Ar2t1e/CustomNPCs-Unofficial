@@ -10,6 +10,7 @@ import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.gui.*;
 import noppes.npcs.client.gui.questtypes.*;
+import noppes.npcs.constants.EnumQuestCompletion;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketQuestMinID;
 import noppes.npcs.packets.server.SPacketQuestOpen;
@@ -71,12 +72,9 @@ public class SubGuiQuestEdit
 		int y = guiTop + 5;
 		int w  = 60;
 		int lId = 0;
-		if (quest.completer == null && npc != null) {
-			quest.completer = npc;
-			quest.completerPos[0] = (int) Math.floor(npc.posX);
-			quest.completerPos[1] = (int) (Math.floor(npc.posY) + 0.5d);
-			quest.completerPos[2] = (int) Math.floor(npc.posZ);
-			quest.completerPos[3] = npc.world.provider.getDimension();
+		if (quest.completer.isEmpty() && npc != null) {
+			quest.completion = EnumQuestCompletion.Npc;
+			quest.completer.reset(npc);
 		}
 		if (scrollTasks == null) { scrollTasks = addScroll(6).setSize(209, 118); }
 		else if (scrollTasks.hasSelected()) { selectTask = scrollTasks.getNormalSelected(); }
@@ -464,7 +462,7 @@ public class SubGuiQuestEdit
 				case KILL:
 				case AREAKILL: setSubGui(new SubGuiNpcQuestTypeKill(npc, questObjective, this)); break;
 				case LOCATION: setSubGui(new SubGuiNpcQuestTypeLocation(npc, questObjective, this)); break;
-				case MANUAL: setSubGui(new SubGuiNpcQuestTypeDialog(npc, questObjective, this)); break;
+				case MANUAL: setSubGui(new SubGuiNpcQuestTypeManual(npc, questObjective, this)); break;
 				default: {
 					SubGuiNpcQuestTypeItem.parent = this;
 					Packets.sendServer(new SPacketQuestOpen(EnumGuiType.QuestTypeItem, quest.save(new NBTTagCompound()), quest.questInterface.getPos(questObjective)));

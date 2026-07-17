@@ -10,8 +10,6 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.wrapper.NBTWrapper;
-import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.client.PacketNpcCustomAnimation;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
@@ -232,9 +230,7 @@ public class AnimationConfig implements IAnimation {
 	public void startToNpc(EntityCustomNpc npcEntity) {
 		if (npcEntity != null && npcEntity.modelData != null && npcEntity.modelData.entityClass == null) {
 			npcEntity.animation.tryRunAnimation(this, type);
-			if (npcEntity.world != null && !npcEntity.world.isRemote) {
-				Packets.sendAll(new PacketNpcCustomAnimation(npcEntity.world.provider.getDimension(), getId(), 3));
-			}
+			if (npcEntity.world != null && !npcEntity.world.isRemote) { npcEntity.setCurrentAnimation(3); }
 		}
 	}
 

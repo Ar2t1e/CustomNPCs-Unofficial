@@ -867,4 +867,10 @@ public class ClientProxy extends CommonProxy {
 		}
 	}
 
+	@Override
+	public @Nullable World getOverWorld() {
+		if (Minecraft.getMinecraft().world != null) { return Minecraft.getMinecraft().world; }
+		return null;
+	}
+
 }
