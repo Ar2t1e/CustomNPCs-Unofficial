@@ -2342,6 +2342,8 @@
   "quest.combined": "Combination",
   "quest.complete": "Complete",
   "quest.completed": "Quest Complete",
+  "quest.completer.strict.true": "Strictly specified NPC",
+  "quest.completer.strict.false": "Any NPC with the same name",
   "quest.completedtext": "Completed text",
   "quest.completewith": "Complete at \"%s\"",
   "quest.dialog": "Dialog",
@@ -2372,6 +2374,7 @@
   "quest.hover.compass.settings": "Customize Quest Compass",
   "quest.hover.compass.track": "The quest compass will track the selected quest<br>§7Works only if the compass is configured in quest tasks",
   "quest.hover.compass.true": "Reset quest tracking at the Quest Compass",
+  "quest.hover.completer.strict": "Strict quest completion check takes into account the NPC's unique ID<br>Otherwise, a name match is sufficient<br>§cImportant!§7 Strict completion check does not take into account linked NPCs",
   "quest.hover.edit.dialog.add": "Select a dialog<br>§7Select from already created dialogs!",
   "quest.hover.edit.dialog.del": "Reset the dialog from setup",
   "quest.hover.edit.dialog.name": "Select a dialog<br>§7This displays the name of the customized dialog to be read by the player",
@@ -3105,5 +3108,14 @@
   "yde.lmb": "LMB",
   "yde.node.exit": "Delete this element",
   "yde.node.lock": "Lock this element's offset",
-  "yde.rmb": "RMB"
+  "yde.rmb": "RMB",
+  "command.dump.started.true": "§e[§2CustomNPCs§e]§7: [%s§7] Tracking started. Wait until the system performs at least 2 memory cleanups...",
+  "command.dump.started.false": "§e[§2CustomNPCs§e]§7: [%s§7] Remembering the current memory state. Enter this command again later...",
+  "command.dump.not.running": "§e[§2CustomNPCs§e]§7: [%s§7]§c Tracking has either already been completed or has not been started",
+  "command.dump.second": "§e[§2CustomNPCs§e]§7: [%s§7] Second memory snapshot at: %s§7. Generating report...",
+  "command.dump.stopped.early": "§e[§2CustomNPCs§e]§7: [%s§7]§6 Stopped too early §7(no baseline captured)",
+  "command.dump.first": "§e[§2CustomNPCs§e]§7: [%s§7] First snapshot of memory at: %s",
+  "command.dump.refirst": "§e[§2CustomNPCs§e]§7: [%s§7] Overwriting first snapshot at: %s",
+  "command.dump.saved":"§e[§2CustomNPCs§e]§7: [%s§7] Report saved: %s§7 (path copied to clipboard)",
+  "command.dump.copy.path":"§7(path copied to clipboard)"
 }

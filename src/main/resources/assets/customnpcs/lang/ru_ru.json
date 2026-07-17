@@ -2329,6 +2329,8 @@
   "quest.combined": "Комбинация",
   "quest.complete": "Завершено",
   "quest.completed": "Задание Завершено",
+  "quest.completer.strict.true": "Строго указанный NPC",
+  "quest.completer.strict.false": "Любой NPC с таким же именем",
   "quest.completedtext": "Текст по Завершению",
   "quest.completewith": "Завершить у \"%s\"",
   "quest.dialog": "Задание на диалог",
@@ -2359,6 +2361,7 @@
   "quest.hover.compass.settings": "Настроить Квестовый компас",
   "quest.hover.compass.track": "Квестовый компас будет отслеживать выбранный квест<br>§7Работает только если компас настроен в задачах квеста",
   "quest.hover.compass.true": "Сбросить отслеживание квеста у Квестового компаса",
+  "quest.hover.completer.strict": "Строгая проверка при сдаче квеста учитывает уникальный ID NPC<br>Иначе достаточно соответствия по имени<br>§cВажно!§7 Строгая проверка не учитывает связанных NPC",
   "quest.hover.edit.dialog.add": "Выбрать диалог<br>§7Выбор из уже созданных!",
   "quest.hover.edit.dialog.del": "Сбросить диалог из настройки",
   "quest.hover.edit.dialog.name": "Выберите диалог<br>§7Здесь отображается имя настроенного диалога для прочтения игроком",
@@ -3065,5 +3068,14 @@
   "yde.lmb": "ЛКМ",
   "yde.node.exit": "Удалить этот элемент",
   "yde.node.lock": "Заблокировать смещение этого элемента",
-  "yde.rmb": "ПКМ"
+  "yde.rmb": "ПКМ",
+  "command.dump.started.true": "§e[§2CustomNPCs§e]§7: [%s§7] Отслеживание началось. Подождите пока система совершит хотя бы 2 очистки памяти...",
+  "command.dump.started.false": "§e[§2CustomNPCs§e]§7: [%s§7] Запоминаю текущее состояние памяти. Введите эту команду ещё раз чуть позже...",
+  "command.dump.not.running": "§e[§2CustomNPCs§e]§7: [%s§7]§c Отслеживание ранее либо уже завершено, либо не было запущено",
+  "command.dump.second": "§e[§2CustomNPCs§e]§7: [%s§7] Второй снимок памяти при: %s§7. Формирую отчет...",
+  "command.dump.stopped.early": "§e[§2CustomNPCs§e]§7: [%s§7]§6 Остановка произошла слишком рано §7(базовый уровень не был зафиксирован)",
+  "command.dump.first": "§e[§2CustomNPCs§e]§7: [%s§7] Первый снимок памяти при: %s",
+  "command.dump.refirst": "§e[§2CustomNPCs§e]§7: [%s§7] Перезапись первого снимка памяти при: %s",
+  "command.dump.saved":"§e[§2CustomNPCs§e]§7: [%s§7] Отчёт сохранён в: %s",
+  "command.dump.copy.path":"§7(путь скопирован в буфер)"
 }

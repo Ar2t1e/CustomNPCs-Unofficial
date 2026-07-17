@@ -40,6 +40,7 @@ import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.wrapper.DataObject;
 import noppes.npcs.api.wrapper.WrapperNpcAPI;
 import noppes.npcs.client.ClientProxy;
+import noppes.npcs.command.CmdHeapAnalyzer;
 import noppes.npcs.command.CmdNoppes;
 import noppes.npcs.command.CmdSchematics;
 import noppes.npcs.config.ConfigLoader;
@@ -294,6 +295,7 @@ public class CustomNpcs {
    private void postLoad(FMLLoadCompleteEvent event) {
       proxy.postload();
       CustomItems.registerDispenser();
+      CmdHeapAnalyzer.cleanupOldHprof();
    }
 
    private void setup(FMLCommonSetupEvent event) {
@@ -378,6 +380,7 @@ public class CustomNpcs {
       MarcetController.getInstance().save();
       WrapperNpcAPI.clearCache();
       Server = null;
+      CmdHeapAnalyzer.cleanupOldHprof();
       debugData.end("Mod");
    }
 

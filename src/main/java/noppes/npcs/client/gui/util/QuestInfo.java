@@ -11,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.ForgeRegistries;
-import noppes.npcs.CustomEntities;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.handler.data.IQuestObjective;
 import noppes.npcs.client.gui.player.GuiLog;
@@ -21,7 +20,6 @@ import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.constants.EnumRewardType;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.controllers.data.QuestData;
-import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DropSet;
 import noppes.npcs.util.Util;
@@ -42,29 +40,7 @@ public class QuestInfo {
     public QuestInfo(QuestData qd, Level levelIn) {
         level = levelIn;
         qData = qd;
-        if (qd.quest.completer != null) {
-            CompoundTag compound = new CompoundTag();
-            qd.quest.completer.save(compound);
-            compound.putUUID("UUID", UUID.randomUUID());
-            Optional<Entity> type = EntityType.create(compound, level);
-            if (type.isPresent()) {
-                Entity entity = type.get();
-                if (entity instanceof EntityNPCInterface) { npc = (EntityNPCInterface) entity; }
-            }
-            if (npc == null) {
-                npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, level);
-                npc.load(compound);
-            }
-        }
-        else {
-            npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, level);
-            qd.quest.completer = npc;
-            qd.quest.completerPos[0] = (int) npc.position().x;
-            qd.quest.completerPos[1] = (int) (npc.position().y + 0.5d);
-            qd.quest.completerPos[2] = (int) npc.position().z;
-            qd.quest.completerPosDimension = level.dimension();
-        }
-        npc = Util.instance.copyToGUI(npc, level, false);
+        npc = qd.quest.completer.getNpc();
     }
 
     public Map<Integer, List<String>> getText(int first, Player player) {
@@ -77,8 +53,8 @@ public class QuestInfo {
         preLines.add(Util.instance.getOldFormattedText(Component.translatable("gui.quest", ": ")) + ChatFormatting.BOLD +
                 Util.instance.getOldFormattedText(Component.translatable(qData.quest.title)));
         // completion npc name
-        if (qData.quest.completion == EnumQuestCompletion.Npc && qData.quest.completer != null) {
-            preLines.add(Util.instance.getOldFormattedText(Component.translatable("quest.completewith", qData.quest.completer.getName().getString())));
+        if (qData.quest.completion == EnumQuestCompletion.Npc) {
+            preLines.add(Util.instance.getOldFormattedText(Component.translatable("quest.completewith", qData.quest.completer.getName())));
         }
         // all objectives
         IQuestObjective[] allObj = qData.quest.getObjectives(player);

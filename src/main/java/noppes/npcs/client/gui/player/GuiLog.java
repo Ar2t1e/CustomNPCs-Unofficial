@@ -1132,7 +1132,7 @@ public class GuiLog
                hover.add(Component.empty()
                        .append(Component.translatable("gui.progress", ": ").withStyle(ChatFormatting.GRAY))
                        .append(Component.literal(progress).withStyle(j >= objs.length ? ChatFormatting.GREEN : ChatFormatting.RED)));
-               if (quest.completion == EnumQuestCompletion.Npc && quest.completer != null) {
+               if (quest.completion == EnumQuestCompletion.Npc && !quest.completer.isEmpty()) {
                   hover.add(Component.translatable("quest.completewith", quest.completer.getName()));
                }
             }

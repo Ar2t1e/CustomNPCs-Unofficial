@@ -87,7 +87,9 @@ public abstract class ModelDataShared {
       for(i = 0; i < list.size(); ++i) {
          MpmPartData part = new MpmPartData();
          part.setNbt(list.getCompound(i));
-         if (part.partId.equals(ModelEyeData.RESOURCE) || part.partId.equals(ModelEyeData.RESOURCE_RIGHT) || part.partId.equals(ModelEyeData.RESOURCE_LEFT)) {
+         if (part.partId.equals(ModelEyeData.RESOURCE) ||
+                 part.partId.equals(ModelEyeData.RESOURCE_RIGHT) ||
+                 part.partId.equals(ModelEyeData.RESOURCE_LEFT)) {
             part = new ModelEyeData();
             part.setNbt(list.getCompound(i));
          }

@@ -708,7 +708,6 @@ public class ScriptPlayerEventHandler {
             }
          }
       } catch (Throwable ignored) {}
-
       String path;
       try {
          Enumeration<URL> resources = ClassLoader.getSystemClassLoader().getResources(packageName);
@@ -831,6 +830,22 @@ public class ScriptPlayerEventHandler {
          else { drops.set(i, iStack.getMCItemStack()); }
       }
       CustomNpcs.debugData.end(player);
+   }
+
+   @SubscribeEvent
+   @SuppressWarnings("all")
+   public void cnpcLivingJumpEvent(net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent event) {
+      if (!(event.getEntity() instanceof Player player) ) { return; }
+      if (player instanceof ServerPlayer sPlayer) {
+         try {
+         }
+         catch (Exception e) { LogWriter.error(e); }
+      }
+      else {
+         try {
+         }
+         catch (Exception e) { LogWriter.error(e); }
+      }
    }
 
 }

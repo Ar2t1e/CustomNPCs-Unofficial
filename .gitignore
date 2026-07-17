@@ -19,6 +19,8 @@ build
 
 # other
 CreaterAPITypeJS.java
+HprofAnalyzer.java
+dumps
 eclipse
 run
 libs.ink

@@ -156,21 +156,8 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 	public void render(T npc, float entityYaw, float partialTicks, @Nonnull PoseStack matrixStack, @Nonnull MultiBufferSource buffer, int packedLight) {
 		if (npc.isKilled()) { shadowRadius = 0.0F; }
 		if (!npc.isKilled() || !npc.stats.hideKilledBody || npc.deathTime <= 20) {
-			float xOffset = 0.0F;
-			float yOffset = npc.currentAnimation == 0 ? npc.ais.bodyOffsetY / 10.0F - 0.5F : 0.0F;
-			float zOffset = 0.0F;
-			if (npc.isAlive()) {
-				if (npc.isSleeping()) {
-					xOffset = (float)(-Math.cos(Math.toRadians(180 - npc.ais.orientation)));
-					zOffset = (float)(-Math.sin(Math.toRadians(npc.ais.orientation)));
-					yOffset += 0.14F;
-				}
-				//else if (npc.currentAnimation == 1 || npc.isPassenger() && npc instanceof EntityCustomNpc) { yOffset -= -0.5F - ((EntityCustomNpc) npc).modelData.getLegsY() * 0.8F; }
-			}
-			xOffset = xOffset / 5.0F * (float)npc.display.getSize();
-			yOffset = yOffset / 5.0F * (float)npc.display.getSize();
-			zOffset = zOffset / 5.0F * (float)npc.display.getSize();
-			matrixStack.translate(xOffset, yOffset, zOffset);
+			Vec3 renderOffset = getRenderOffset(npc, 0.0F);
+			matrixStack.translate(renderOffset.x, renderOffset.y, renderOffset.z);
 			//if ((npc.display.getBossbar() == 1 || npc.display.getBossbar() == 2 && npc.isAttacking()) && !npc.isKilled() && npc.deathTime <= 20 && npc.canNpcSee(Minecraft.getInstance().player)) { }
 			if (npc.ais.getStandingType() == 3 && !npc.isWalking() && !npc.isInteracting()) {
 				npc.yBodyRotO = npc.yBodyRot = (float) npc.ais.orientation;
@@ -188,6 +175,32 @@ public class RenderNPCInterface<T extends EntityNPCInterface, M extends EntityMo
 			}
 			finally { currentNpc = null; }
 		}
+	}
+
+	@Override
+	public @Nonnull Vec3 getRenderOffset(T npc, float partialTicks) {
+		float xOffset = 0.0F;
+		float yOffset = npc.currentAnimation == 0 ? npc.ais.bodyOffsetY / 10.0F - 0.5F : 0.0F;
+		float zOffset = 0.0F;
+		if (npc.isAlive()) {
+			if (npc.isSleeping()) {
+				float orientationRad = (float) Math.toRadians(npc.ais.orientation);
+				xOffset = (float)(Math.cos(orientationRad) * 0.5F);
+				zOffset = (float)(-Math.sin(orientationRad) * 0.5F);
+				yOffset += 0.0575F;
+			}
+			else if (npc.currentAnimation != 1 && !npc.isPassenger()) {
+				if (npc.isCrouching()) {
+					yOffset = (float)((double) yOffset - 0.125D);
+				}
+			}
+			else if (npc instanceof EntityCustomNpc cNpc) {
+				yOffset -= 0.3F - cNpc.modelData.getLegsY() * 0.8F;
+			}
+		}
+		return new Vec3(xOffset * ((float)npc.display.getSize() / 5.0F),
+				yOffset * ((float)npc.display.getSize() / 5.0F),
+				zOffset * ((float)npc.display.getSize() / 5.0F));
 	}
 
 	@Override

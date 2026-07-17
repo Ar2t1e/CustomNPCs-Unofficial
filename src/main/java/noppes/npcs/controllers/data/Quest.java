@@ -4,22 +4,15 @@ import com.google.common.base.Predicate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntArrayTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import noppes.npcs.*;
@@ -40,6 +33,7 @@ import noppes.npcs.constants.EnumRewardType;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.QuestController;
 import noppes.npcs.db.DatabaseColumn;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DropSet;
 import noppes.npcs.packets.Packets;
@@ -51,6 +45,8 @@ import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterface>, IDropSetData {
@@ -62,7 +58,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
    @DatabaseColumn(name = "repeat_type", type = DatabaseColumn.Type.ENUM)
    public EnumQuestRepeat repeat = EnumQuestRepeat.NONE;
    @DatabaseColumn(name = "completion_type", type = DatabaseColumn.Type.ENUM)
-   public EnumQuestCompletion completion = EnumQuestCompletion.Npc;
+   public EnumQuestCompletion completion = EnumQuestCompletion.Instant;
    @DatabaseColumn(name = "category", type = DatabaseColumn.Type.VARCHAR)
    public QuestCategory category;
    @DatabaseColumn(name = "log_text", type = DatabaseColumn.Type.TEXT)
@@ -108,10 +104,6 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
    public int[] forgetDialogues = new int[0];
    @DatabaseColumn(name = "forget_quests", type = DatabaseColumn.Type.JSON)
    public int[] forgetQuests = new int[0];
-   @DatabaseColumn(name = "completer_pos", type = DatabaseColumn.Type.JSON)
-   public int[] completerPos = new int[] { 0, 0, 0 };
-   @DatabaseColumn(name = "completer_pos_dimension", type = DatabaseColumn.Type.VARCHAR)
-   public ResourceKey<Level> completerPosDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("minecraft", "overworld"));
    @DatabaseColumn(name = "next_quest_title", type = DatabaseColumn.Type.TEXT)
    public String nextQuestTitle = "";
    @DatabaseColumn(name = "reward_text", type = DatabaseColumn.Type.TEXT)
@@ -124,9 +116,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
    @DatabaseColumn(name = "reward_type", type = DatabaseColumn.Type.ENUM)
    public EnumRewardType rewardType = EnumRewardType.RANDOM_ONE;
    @DatabaseColumn(name = "completer", type = DatabaseColumn.Type.VARCHAR)
-   public EntityNPCInterface completer = null;
-   @DatabaseColumn(name = "completer_uuid", type = DatabaseColumn.Type.JSON)
-   private UUID completerUUID = null;
+   public final CompleterNPCData completer = new CompleterNPCData();
 
    public Quest(QuestCategory categoryIn) { category = categoryIn; }
 
@@ -195,51 +185,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
       if (step < 0) { step *= -1; }
       forgetDialogues = compound.getIntArray("ForgetDialogues");
       forgetQuests = compound.getIntArray("ForgetQuests");
-      completer = null;
-      completerUUID = null;
-      if (compound.contains("CompleterPos", 11)) {
-         completerPos = compound.getIntArray("CompleterPos");
-         completerPosDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("CompleterPosDimension")));
-      }
-      try {
-         String name = compound.getCompound("CompleterNpc").getString("Name");
-         if (compound.contains("CompleterNpc", 8)) { name = compound.getString("CompleterNpc"); } // OLD
-         else if (compound.contains("CompleterNpc", 10) &&
-                 compound.getCompound("CompleterNpc").contains("UUID") &&
-                 Objects.requireNonNull(compound.getCompound("CompleterNpc").get("UUID")).getType() == IntArrayTag.TYPE) {
-               completerUUID = compound.getCompound("CompleterNpc").getUUID("UUID");
-         }
-         List<Level> levels = new ArrayList<>();
-         if (CustomNpcs.Server != null) {
-            for (ServerLevel level : CustomNpcs.Server.getAllLevels()) { levels.add(level); }
-         }
-         else if (CustomNpcs.proxy.getPlayer() != null) { levels.add(CustomNpcs.proxy.getPlayer().level()); }
-         try {
-            for (Level level : levels) {
-               for (EntityNPCInterface npc : level.getEntities(CustomEntities.entityCustomNpc,
-                       new AABB(Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE),
-                       this)) {
-                  if (npc.getName().getString().equals(name)) {
-                     completer = npc;
-                     if (completerUUID == null) { completerUUID = npc.getUUID(); }
-                     break;
-                  }
-               }
-               if (completer != null) { break; }
-            }
-         }
-         catch (Exception ignored) { }
-         if (completer == null && !levels.isEmpty() && levels.get(0) != null) {
-            Optional<Entity> type = EntityType.create(compound, levels.get(0));
-            if (type.isPresent()) {
-               Entity entity = type.get();
-               if (entity instanceof EntityNPCInterface npc) {
-                  completer = npc;
-                  completerUUID = npc.getUUID();
-               }
-            }
-         }
-      } catch (Exception e) { LogWriter.error(e); }
+      completer.load(compound);
    }
 
    @Override
@@ -280,20 +226,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
       compound.putInt("Step", step);
       compound.putIntArray("ForgetDialogues", forgetDialogues);
       compound.putIntArray("ForgetQuests", forgetQuests);
-
-      if (completer != null) {
-         CompoundTag npcNbt = new CompoundTag();
-         completer.save(npcNbt);
-         compound.put("CompleterNpc", npcNbt);
-         if (completerPos[0] == 0 && completerPos[1] == 0 && completerPos[2] == 0 && completerPosDimension.location().toString().equals("minecraft:overworld")) {
-            completerPos[0] = (int) Math.floor(completer.getX());
-            completerPos[1] = (int) Math.floor((completer.getY() + 0.5d));
-            completerPos[2] = (int) Math.floor(completer.getZ());
-            completerPosDimension = completer.level().dimension();
-         }
-      }
-      compound.putIntArray("CompleterPos", completerPos);
-      compound.putString("CompleterPosDimension", completerPosDimension.location().toString());
+      completer.save(compound);
 
       ListTag dropList = new ListTag();
       int s = 0;
@@ -373,7 +306,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
    public QuestObjective[] getObjectives(Player player) {
       if (player == null) { throw new CustomNPCsException("Player is NULL"); }
       PlayerData data = PlayerData.get(player);
-      if (data == null || !data.questData.activeQuests.containsKey(id)) { throw new CustomNPCsException("Player doesnt have this quest active"); }
+      if (!data.questData.activeQuests.containsKey(id)) { throw new CustomNPCsException("Player doesnt have this quest active"); }
       return questInterface.getObjectives(player);
    }
 
@@ -392,10 +325,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
    public IQuestObjective addTask() { return questInterface.addTask(EnumQuestTask.ITEM); }
 
    @Override
-   public ICustomNpc<?> getCompleterNpc() {
-      if (completer == null) { return null; }
-      return (ICustomNpc<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(completer);
-   }
+   public ICustomNpc<?> getCompleterNpc() { return completer.getINpc(); }
 
    @Override
    public int getExtraButton() { return extraButton; }
@@ -456,7 +386,9 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
    public void setCancelable(boolean cancelableIn) { cancelable = cancelableIn; }
 
    @Override
-   public void setCompleterNpc(ICustomNpc<?> npc) { completer = (EntityNPCInterface) npc.getMCEntity(); }
+   public void setCompleterNpc(ICustomNpc<?> npc) {
+      if (npc != null) { completer.reset(npc.getMCEntity()); }
+   }
 
    @Override
    public void setExtraButton(int type) {
@@ -503,7 +435,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
    }
 
    @Override
-   public boolean apply(EntityNPCInterface npc) { return completerUUID == null || npc.getUUID().equals(completerUUID); }
+   public boolean apply(EntityNPCInterface npc) { return completer.isNpc(npc); }
 
    @Override
    public List<String> getLogText() {
@@ -644,6 +576,99 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
             }
          }
          return stack;
+      }
+
+   }
+
+   public static class CompleterNPCData {
+
+      private CompoundTag spawnData;
+      private String name;
+      private ResourceKey<Level> dimension;
+      private BlockPos npcPos;
+      private UUID uuid;
+      private boolean strict;
+
+      public CompleterNPCData() { clear(); }
+
+      public void load(CompoundTag compound) {
+         clear();
+         if (compound.contains("CompleterPosDimension", Tag.TAG_STRING)) {
+            dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(compound.getString("CompleterPosDimension")));
+         }
+         if (compound.contains("CompleterPos", Tag.TAG_INT_ARRAY)) {
+            int[] pos = compound.getIntArray("CompleterPos");
+            npcPos = new BlockPos(pos[0], pos[1], pos[2]);
+         }
+         else if (compound.contains("CompleterPos", Tag.TAG_LONG)) { npcPos = BlockPos.of(compound.getLong("CompleterPos")); }
+         try { uuid = compound.getUUID("CompleterUUID"); } catch (Exception ignored) {}
+         if (compound.contains("CompleterIsStrict", Tag.TAG_BYTE)) { strict = compound.getBoolean("CompleterIsStrict"); }
+         if (compound.contains("CompleterNpc", Tag.TAG_COMPOUND)) { spawnData = compound.getCompound("CompleterNpc"); }
+      }
+
+      public CompoundTag save(CompoundTag compound) {
+         compound.putString("CompleterPosDimension", dimension.location().toString());
+         compound.putLong("CompleterPos", npcPos.asLong());
+         compound.putUUID("CompleterUUID", uuid);
+         compound.putBoolean("CompleterIsStrict", strict);
+         compound.put("CompleterNpc", spawnData);
+         return compound;
+      }
+
+      private void clear() {
+         spawnData = new CompoundTag();
+         name = "";
+         uuid = UUID.randomUUID();
+         dimension = Level.OVERWORLD;
+         npcPos = BlockPos.ZERO;
+         strict = false;
+      }
+
+      public void reset(@Nullable EntityNPCInterface npcIn) {
+         if (npcIn != null) {
+            spawnData = npcIn.writeSpawnData();
+            spawnData.getCompound("Puppet").putBoolean("PuppetAnimate", false);
+            dimension = npcIn.homeDimensionId;
+            npcPos = npcIn.getOnPos();
+            uuid = npcIn.getUUID();
+            strict = true;
+         }
+      }
+
+      public @Nullable EntityNPCInterface getNpc() {
+         Level level = CustomNpcs.proxy.getOverWorld();
+         EntityNPCInterface npc = null;
+         if (level != null) {
+            npc = new EntityCustomNpc(CustomEntities.entityCustomNpc, level);
+            npc.readSpawnData(spawnData);
+            npc.display.setName(name);
+            npc.display.setShowName(1);
+         }
+         return npc;
+      }
+
+      public @Nullable ICustomNpc<?> getINpc() {
+         EntityNPCInterface npc = getNpc();
+         return npc == null ? null : (ICustomNpc<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(npc);
+      }
+
+      public @Nonnull String getName() { return name; }
+
+      public @Nonnull BlockPos getPos() { return npcPos; }
+
+      public @Nonnull ResourceKey<Level> getDimension() { return dimension; }
+
+      public boolean isEmpty() { return name.isEmpty() && spawnData.isEmpty(); }
+
+      public boolean isStrict() { return strict; }
+
+      public void setStrict(boolean isStrict) { strict = isStrict; }
+
+      public boolean isNpc(@Nullable EntityNPCInterface npc) {
+         if (npc != null && npc.getName().getString().equals(name)) {
+            return !strict || uuid.equals(npc.getUUID());
+         }
+         return false;
       }
 
    }

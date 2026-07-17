@@ -2,13 +2,10 @@ package noppes.npcs.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
@@ -22,8 +19,6 @@ import noppes.npcs.CustomEntities;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.command.arguments.PlayerDataArgument;
 import noppes.npcs.command.arguments.URLArgument;
-import noppes.npcs.controllers.PlayerDataController;
-import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
 
 public class CmdNoppes {
@@ -56,6 +51,7 @@ public class CmdNoppes {
               .then(CmdPlayer.register())
               .then(CmdWorld.register())
               .then(CmdPermissions.register())
+              .then(CmdHeapAnalyzer.register())
       );
       // New from Unofficial (BetaZavr)
       dispatcher.register(CmdMoney.register());

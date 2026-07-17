@@ -30,7 +30,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.player.Player;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
@@ -141,26 +140,6 @@ public class RenderCustomNpc<T extends EntityCustomNpc, M extends HumanoidModel<
 				}
 			}
 		};
-	}
-
-	@Override
-	public @Nonnull Vec3 getRenderOffset(T npc, float partialTicks) {
-		float xOffset = 0.0F;
-		float yOffset = npc.currentAnimation == 0 ? npc.ais.bodyOffsetY / 10.0F - 0.5F : 0.0F;
-		float zOffset = 0.0F;
-		if (npc.isAlive()) {
-			if (npc.isSleeping()) {
-				xOffset = (float)(-Math.cos(Math.toRadians(180 - npc.ais.orientation)));
-				zOffset = (float)(-Math.sin(Math.toRadians(npc.ais.orientation)));
-				yOffset += 0.14F;
-			} else if (npc.currentAnimation != 1 && !npc.isPassenger()) {
-				if (npc.isCrouching()) {
-					yOffset = (float)((double)yOffset - 0.125D);
-				}
-			}
-			else { yOffset -= 0.5F - npc.modelData.getLegsY() * 0.8F; }
-		}
-		return new Vec3(xOffset, yOffset * ((float)npc.display.getSize() / 5.0F), zOffset);
 	}
 
 	void hideParts() {

@@ -1,6 +1,5 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.world.entity.Mob;
 import noppes.npcs.api.ITimers;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.INPCAdvanced;
@@ -13,8 +12,10 @@ import noppes.npcs.api.entity.data.INPCStats;
 import noppes.npcs.api.handler.data.IDialog;
 import noppes.npcs.api.handler.data.IFaction;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.entity.EntityNPCInterface;
 
-public interface ICustomNpc<T extends Mob> extends IMob<T> {
+@SuppressWarnings("unused")
+public interface ICustomNpc<T extends EntityNPCInterface> extends IMob<T> {
 
    INPCDisplay getDisplay();
 

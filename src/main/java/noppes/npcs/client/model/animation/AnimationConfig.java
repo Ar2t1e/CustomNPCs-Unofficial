@@ -18,8 +18,6 @@ import noppes.npcs.api.entity.data.IAnimation;
 import noppes.npcs.api.entity.data.IAnimationFrame;
 import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.entity.EntityCustomNpc;
-import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.client.PacketNpcCustomAnimation;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ValueUtil;
 
@@ -236,9 +234,7 @@ public class AnimationConfig implements IAnimation {
         if (npcEntity != null && npcEntity.modelData != null && npcEntity.modelData.entity == null) {
             npcEntity.animation.tryRunAnimation(this, type);
             npcEntity.level();
-            if (!npcEntity.level().isClientSide()) {
-                Packets.sendAll(new PacketNpcCustomAnimation(npcEntity.level().dimension(), getId(), 3));
-            }
+            if (!npcEntity.level().isClientSide()) { npcEntity.setCurrentAnimation(3); }
         }
     }
 

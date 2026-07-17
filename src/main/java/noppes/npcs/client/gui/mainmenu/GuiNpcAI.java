@@ -213,7 +213,8 @@ public class GuiNpcAI extends GuiNPCInterface2 implements ITextfieldListener, IG
    }
 
    @Override
-   public void save() { Packets.sendServer(new SPacketMenuSave(EnumMenuType.AI, ai.save(new CompoundTag()))); }
+   public void save() {
+      Packets.sendServer(new SPacketMenuSave(EnumMenuType.AI, ai.save(new CompoundTag()))); }
 
    @Override
    public void setGuiData(CompoundTag compound) {

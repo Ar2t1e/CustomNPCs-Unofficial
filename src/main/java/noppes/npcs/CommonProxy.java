@@ -142,4 +142,9 @@ public class CommonProxy {
 
    }
 
+   public @Nullable Level getOverWorld() {
+      if (CustomNpcs.Server != null) { return CustomNpcs.Server.getLevel(Level.OVERWORLD); }
+      return null;
+   }
+
 }

@@ -12,7 +12,9 @@ import net.minecraft.world.level.Level;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.EntityUtil;
-import noppes.npcs.client.parts.*;
+import noppes.npcs.client.parts.ModelData;
+import noppes.npcs.client.parts.ModelEyeData;
+import noppes.npcs.client.parts.MpmPartData;
 import noppes.npcs.constants.EnumParts;
 
 import javax.annotation.Nonnull;
@@ -23,16 +25,6 @@ public class EntityCustomNpc extends EntityNPCFlying {
 
    public EntityCustomNpc(EntityType<? extends PathfinderMob> type, Level world) {
       super(type, world);
-      if (CustomNpcs.EnableDefaultEyes) {
-         MpmPart part = MpmPartReader.PARTS.get(ModelEyeData.RESOURCE);
-         if (part != null) {
-            MpmPartData data = new MpmPartData();
-            data.partId = part.id;
-            data.usePlayerSkin = part.defaultUsePlayerSkins;
-            modelData.mpmParts.add(data);
-            modelData.refreshParts();
-         }
-      }
    }
 
    @Override
@@ -99,7 +91,8 @@ public class EntityCustomNpc extends EntityNPCFlying {
    public @Nonnull EntityDimensions getDimensions(@Nonnull Pose pos) {
       if (modelData == null) {
          return new EntityDimensions(0.6F, 1.8F, false);
-      } else {
+      }
+      else {
          Entity entity = modelData.getEntity(this);
          if (entity == null) {
             float height = 1.9F - modelData.getBodyY() + (modelData.getPartConfig(EnumParts.HEAD).scaleY - 1.0F) / 2.0F;

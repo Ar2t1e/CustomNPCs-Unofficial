@@ -2364,13 +2364,13 @@ public class ClientEventHandler {
                                     }
                                 }
                             }
-                            else if (qData.isCompleted && qData.quest.completion == EnumQuestCompletion.Npc
-                                    && qData.quest.getCompleterNpc() != null) {
-                                point = new double[] { qData.quest.completerPos[0] - 0.5d, qData.quest.completerPos[1] + 0.5d,
-                                        qData.quest.completerPos[2] + 0.5d };
+                            else if (qData.isCompleted && qData.quest.completion == EnumQuestCompletion.Npc && !qData.quest.completer.isEmpty()) {
+                                point = new double[] { qData.quest.completer.getPos().getX() - 0.5d,
+                                        qData.quest.completer.getPos().getY() + 0.5d,
+                                        qData.quest.completer.getPos().getZ() + 0.5d };
                                 taskType = EnumQuestTask.DIALOG.ordinal();
                                 taskColor = 0x72CA00;
-                                if (!mc.level.dimension().equals(qData.quest.completerPosDimension)) { taskType = 7; }
+                                if (!mc.level.dimension().equals(qData.quest.completer.getDimension())) { taskType = 7; }
                                 else {
                                     AABB bb = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).move(point[0], point[1], point[2]).inflate(64.0d, 128.0d, 64.0d);
                                     List<EntityNPCInterface> ents = mc.level.getEntitiesOfClass(EntityNPCInterface.class, bb);

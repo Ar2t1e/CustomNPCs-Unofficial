@@ -14,9 +14,6 @@ public class GuiButtonYesNo extends GuiButtonNop {
       setSize(50, 20);
    }
 
-   @Override
-   protected boolean isValidClickButton(int mouseButton) { return mouseButton == 0; }
-
    public boolean getBoolean() { return getValue() == 1; }
 
 }

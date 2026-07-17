@@ -67,7 +67,12 @@ public class SPacketMenuSave extends PacketServerBasic {
          case DISPLAY: npc.display.load(data); break;
          case STATS: npc.stats.load(data); break;
          case INVENTORY: npc.inventory.load(data); npc.updateAI = true; break;
-         case AI: npc.ais.load(data); npc.setHealth(npc.getMaxHealth()); npc.updateAI = true; break;
+         case AI: {
+            npc.ais.load(data);
+            npc.setHealth(npc.getMaxHealth());
+            npc.updateAI = true;
+            break;
+         }
          case ADVANCED: npc.advanced.load(data); npc.updateAI = true; break;
          case MODEL: ((EntityCustomNpc) npc).modelData.load(data); break;
          case TRANSFORM: {

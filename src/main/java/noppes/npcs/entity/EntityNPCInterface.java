@@ -233,6 +233,7 @@ public abstract class EntityNPCInterface
    public EnumNPCAnimationType animationType = EnumNPCAnimationType.PUPPET;
    public JobPuppet puppet = new JobPuppet(this);
    public Entity lookAt = null;
+   @SuppressWarnings("unused")
    public float[] lookPos = new float[] { 0.0f, 0.0f };
    public boolean updateLook = false;
 
@@ -352,10 +353,6 @@ public abstract class EntityNPCInterface
       if (!isClientSide()) {
          if (wasKilled != isKilled()) {
             deathTime = 0;
-            refreshDimensions();
-         }
-         else if (!isAttacking() && getNavigation().isDone() && currentAnimation != ais.animationType) {
-            currentAnimation = ais.animationType;
             refreshDimensions();
          }
       }
@@ -523,7 +520,6 @@ public abstract class EntityNPCInterface
          }
          else {
             // New from Unofficial (BetaZavr)
-            //
             EntityDataAccessor<Byte> hand_states = ((ILivingEntityMixin) this).getHandStates();
             ItemStack stack = getMainHandItem();
             // imitation of using items
@@ -577,7 +573,6 @@ public abstract class EntityNPCInterface
                animation.resetWalkAndStandAnimations();
             });
          }
-         
          if (wasKilled != isKilled() && wasKilled) { reset(); }
          if (level().isDay() && !isClientSide() && stats.burnInSun) {
             float f = getLightLevelDependentMagicValue();
@@ -603,12 +598,6 @@ public abstract class EntityNPCInterface
       Packets.sendNearby(this, new PacketNpcUpdate(getId(), writeSpawnData()));
       updateClient = false;
       updateNavClient();
-   }
-
-   public void updateAnimationClient() {
-      if (!isClientSide()) {
-         Packets.sendAll(new PacketNpcCustomAnimation(level().dimension(), getId(), currentAnimation));
-      }
    }
 
    public void updateNavClient() {
@@ -1831,7 +1820,6 @@ public abstract class EntityNPCInterface
       currentAnimation = animation;
       entityData.set(Animation, animation);
       if (animation != 4 && aiAttackTarget instanceof EntityAICommanderTarget aiTarget) { aiTarget.baseAnimation = animation; }
-      updateAnimationClient();
    }
 
    public boolean isFollower() {

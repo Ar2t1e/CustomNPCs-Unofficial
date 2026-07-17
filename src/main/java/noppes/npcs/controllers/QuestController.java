@@ -244,7 +244,7 @@ public class QuestController implements IQuestHandler {
             try {
                NBTJsonUtil.SaveFile(file, quest.savePartial(new CompoundTag()));
                if (file1.exists() && !file1.delete()) { LogWriter.error("Error delete " + file1 + "; no access or file not uploaded!"); }
-               if (file.renameTo(file1)) { LogWriter.error("Error rename " + file + "; no access or file not uploaded!"); }
+               if (!file.renameTo(file1)) { LogWriter.error("Error rename " + file + "; no access or file not uploaded!"); }
                Packets.sendAll(new PacketSyncUpdate(category.id, 2, quest.save(new CompoundTag())));
             } catch (Exception e) {
                LogWriter.error(e);

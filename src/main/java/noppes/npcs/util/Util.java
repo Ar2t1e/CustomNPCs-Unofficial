@@ -129,7 +129,9 @@ public class Util implements IMethods {
         if (!directory.isDirectory()) { return directory.delete(); }
         File[] list = directory.listFiles();
         if (list != null) {
-            for (File tempFile : list) { removeFile(tempFile); }
+            for (File tempFile : list) {
+                if (!removeFile(tempFile)) { LogWriter.info("Not removing file \"" + tempFile + "\""); }
+            }
         }
         return directory.delete();
     }

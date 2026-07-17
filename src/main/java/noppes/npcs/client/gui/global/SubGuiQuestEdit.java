@@ -15,6 +15,7 @@ import noppes.npcs.client.gui.select.SubGuiQuestSelection;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.constants.EnumQuestCompletion;
 import noppes.npcs.constants.EnumQuestRepeat;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.QuestController;
@@ -71,12 +72,9 @@ public class SubGuiQuestEdit
       int y = guiTop + 5;
       int w  = 60;
       int lId = 0;
-      if (quest.completer == null && npc != null) {
-          quest.completer = npc;
-          quest.completerPos[0] = (int) Math.floor(npc.getX());
-          quest.completerPos[1] = (int) (Math.floor(npc.getY()) + 0.5d);
-          quest.completerPos[2] = (int) Math.floor(npc.getZ());
-          quest.completerPosDimension = npc.level().dimension();
+      if (quest.completer.isEmpty() && npc != null) {
+         quest.completion = EnumQuestCompletion.Npc;
+         quest.completer.reset(npc);
       }
       if (scrollTasks == null) { scrollTasks = addScroll(6).setSize(209, 118); }
       else if (scrollTasks.hasSelected()) { selectTask = scrollTasks.getNormalSelected(); }

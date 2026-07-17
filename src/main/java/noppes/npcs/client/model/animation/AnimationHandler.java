@@ -41,12 +41,11 @@ public class AnimationHandler {
    }
 
    public static void animateBipedPost(ModelData data, HumanoidModel<? extends LivingEntity> bipedModel, LivingEntity livingEntity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-      EntityNPCInterface npc = (EntityNPCInterface)livingEntity;
+      EntityNPCInterface npc = (EntityNPCInterface) livingEntity;
       if (livingEntity.isSleeping() && bipedModel.head.xRot < 0.0F) {
          bipedModel.head.xRot = 90.0F;
          bipedModel.hat.xRot = 90.0F;
       }
-
       AnimationBase animation = getAnimationFor(npc.currentAnimation);
       if (animation != null) {
          animation.animatePost(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, livingEntity, bipedModel, npc.animationStart);
@@ -69,6 +68,7 @@ public class AnimationHandler {
 
    public static void addAnimation(int enumAnimation, AnimationBase animationBase) { ANIMATIONS.put(enumAnimation, animationBase); }
 
+   @SuppressWarnings("unused")
    public static HashMap<Integer, AnimationBase> getAllAnimations() { return ANIMATIONS; }
 
    public static AnimationBase getAnimationFor(int animation) { return ANIMATIONS.get(animation); }

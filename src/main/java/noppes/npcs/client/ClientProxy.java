@@ -646,4 +646,10 @@ public class ClientProxy extends CommonProxy {
       }
    }
 
+   @Override
+   public @Nullable Level getOverWorld() {
+      if (Minecraft.getInstance().level != null) { return Minecraft.getInstance().level; }
+      return null;
+   }
+
 }

@@ -23,7 +23,6 @@ import noppes.npcs.constants.EnumQuestCompletion;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.Util;
 
 // New from Unofficial (BetaZavr)
 public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldListener {
@@ -41,7 +40,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
         imageHeight = 217;
 
         quest = q;
-        showNpc = Util.instance.copyToGUI(quest.completer, player.level(), false);
+        showNpc = quest.completer.getNpc();
     }
 
     @Override
@@ -49,7 +48,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
         switch (button.id) {
             case 0: setSubGui(new SubGuiTextureSelection(this, 0, showNpc, quest.icon.toString(), ".png", 3)); break; // icon select
             case 1: quest.completion = EnumQuestCompletion.values()[button.getValue()]; break; // completion type
-            case 2: setSubGui(new SubGuiNPCSelection(quest.completer)); break; // select npc
+            case 2: setSubGui(new SubGuiNPCSelection(quest.completer.getNpc())); break; // select npc
             case 3: setSubGui(new SubGuiTextureSelection(this, 1, showNpc, quest.texture == null ? "" : quest.texture.toString(), ".png", 3)); break; // texture select
             case 4: setSubGui(new GuiTextAreaScreen(0, quest.rewardText)); break; // reward text
             case 5: {
@@ -60,6 +59,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
             case 6: setSubGui(new GuiTextAreaScreen(1, quest.extraButtonText)); break; // extra button hover text
             case 7: quest.showProgressInChat = ((GuiCheckBoxNop) button).selected(); break;
             case 8: quest.showProgressInWindow = ((GuiCheckBoxNop) button).selected(); break;
+            case 9: quest.completer.setStrict(((GuiCheckBoxNop) button).selected()); break;
             case 66: onClose(); break;
         }
     }
@@ -108,7 +108,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
             matrixStack.popPose();
 
             // Name
-            Component name = Component.empty().append(Component.literal(quest.completer != null ? quest.completer.getName().getString() : "Empty"));
+            Component name = Component.literal(quest.completer.getName());
             u += 1;
             v += 51;
             matrixStack.pushPose();
@@ -187,19 +187,21 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
     public void init() {
         super.init();
         int x0 = guiLeft + 5;
-        int x1 = guiLeft + 115;
-        int x2 = guiLeft + 149;
+        int x1 = x0 + 110;
+        int x2 = x1 + 34;
         int y = guiTop + 5;
         int lId = 0;
         // icon
-        addLabel(lId++, x0, y + 2, "quest.icon");
+        addLabel(lId++, x0, y + 2, "quest.icon")
+                .setSize(142, 10);
         addButton(0, x2, y, "availability.select")
                 .setSize(60, 14)
                 .setHoverTexts("quest.hover.edit.quest.icon.sel");
         addTextField(0, x0, y += 16, 203, 16, quest.icon.toString())
                 .setHoverTexts("quest.hover.edit.quest.icon.path");
         // texture description
-        addLabel(lId++, x0, (y += 18) + 2, "quest.texture");
+        addLabel(lId++, x0, (y += 18) + 2, "quest.texture")
+                .setSize(142, 10);
         addButton(3, x2, y, "availability.select")
                 .setSize(60, 14)
                 .setHoverTexts("quest.hover.edit.quest.texture.sel");
@@ -207,32 +209,38 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
                 .setHoverTexts("quest.hover.edit.quest.texture.path");
         // completion npc
         addButton(1, x0, y += 19, false, quest.completion.ordinal(), "quest.npc", "quest.instant")
-                .setSize(100, 14)
+                .setSize(108, 14)
                 .setHoverTexts("quest.hover.edit.quest.completion");
         addButton(2, x1, y, "availability.select")
                 .setSize(60, 14)
                 .setHoverTexts("quest.hover.edit.quest.completion.npc");
+        addCheckBox(9, guiLeft + 5, y += 18, "quest.completer.strict.true", "quest.completer.strict.false", quest.completer.isStrict())
+                .setSize(170, 14)
+                .setHoverTexts("quest.hover.completer.strict");
         // reward text
-        addLabel(lId++, guiLeft + 5, (y += 16) + 2, "quest.questrewardtext");
+        addLabel(lId++, guiLeft + 5, (y += 16) + 2, "quest.questrewardtext")
+                .setSize(108, 10);
         addButton(4, x1, y, quest.rewardText.isEmpty() ? "selectServer.edit" : "advanced.editing mode")
                 .setSize(60, 14)
                 .setHoverTexts("quest.hover.edit.reward.text");
         // extra button
-        addLabel(lId++, guiLeft + 5, (y += 16) + 2, "quest.extra.button.type");
+        addLabel(lId++, guiLeft + 5, (y += 16) + 2, "quest.extra.button.type")
+                .setSize(108, 10);
         addButton(5, x1, y, true, quest.extraButton, "gui.none", "1", "2", "3", "4", "5")
                 .setSize(60, 14)
                 .setHoverTexts("quest.hover.extra.button.type", EnumScriptType.QUEST_LOG_BUTTON.function);
         // extra button text
-        addLabel(lId, guiLeft + 5, (y += 16) + 2, "quest.extra.button.text");
+        addLabel(lId, guiLeft + 5, (y += 16) + 2, "quest.extra.button.text")
+                .setSize(108, 10);
         addButton(6, x1, y, "selectServer.edit")
                 .setSize(60, 14)
                 .setIsEnabled(quest.extraButton > 0).setHoverTexts("quest.hover.extra.button.text");
         // progress in chat / window
         addCheckBox(7, x0, (y += 17), "quest.show.progress.in.chat", null, quest.showProgressInChat)
-                .setSize(239, 14)
+                .setSize(242, 14)
                 .setHoverTexts("quest.hover.show.in.chat");
         addCheckBox(8, x0, y + 16, "quest.show.progress.in.window", null, quest.showProgressInWindow)
-                .setSize(239, 14)
+                .setSize(242, 14)
                 .setHoverTexts("quest.hover.show.in.window");
         // exit
         addButton(66, x0, guiTop + imageHeight - 19, "gui.done")
@@ -263,7 +271,7 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
                 return bo;
             }
             if (isMouseHover(mouseX, mouseY, guiLeft + 182, guiTop + 95, 65, 65)) {
-                setSubGui(new SubGuiNPCSelection(quest.completer));
+                setSubGui(new SubGuiNPCSelection(quest.completer.getNpc()));
             }
         }
         return bo;
@@ -291,10 +299,12 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
                 return;
             }
             Entity entity = player.level().getEntity(gui.selectEntity.getId());
-            if (!(entity instanceof EntityNPCInterface)) { return; }
-            quest.completer = Util.instance.copyToGUI((EntityNPCInterface) entity, player.level(), false);
-            showNpc = Util.instance.copyToGUI((EntityNPCInterface) entity, player.level(), false);
-            init();
+            if (entity instanceof EntityNPCInterface cNpc) {
+                quest.completer.reset(cNpc);
+                showNpc = quest.completer.getNpc();
+                init();
+            }
+
         }
     }
 

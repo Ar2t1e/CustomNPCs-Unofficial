@@ -65,6 +65,7 @@ public class ModelEyeData extends MpmPartData {
       [r.nextInt(23)];
    }
 
+   @Override
    public CompoundTag getNbt() {
       CompoundTag compound = super.getNbt();
       compound.putBoolean("Glint", glint);
@@ -81,6 +82,7 @@ public class ModelEyeData extends MpmPartData {
       return compound;
    }
 
+   @Override
    public void setNbt(CompoundTag compound) {
       super.setNbt(compound);
       glint = compound.getBoolean("Glint");
@@ -108,8 +110,10 @@ public class ModelEyeData extends MpmPartData {
       }
    }
 
+   @Override
    public ResourceLocation getUrlTexture() {
       ResourceLocation url = super.getUrlTexture();
       return url == null ? MissingTextureAtlasSprite.getLocation() : url;
    }
+
 }

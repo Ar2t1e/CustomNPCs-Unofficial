@@ -148,7 +148,6 @@ public class Packets {
       register(PacketNpcNavigation.class);
       register(PacketNpcTarget.class);
       register(PacketMenuSave.class);
-      register(PacketNpcCustomAnimation.class);
       register(PacketCustomAnimationSet.class);
       register(PacketCustomAnimationStop.class);
       register(PacketCustomAnimationBaseSet.class);
@@ -160,6 +159,7 @@ public class Packets {
       register(PacketNpcRarityTitleSet.class);
       register(PacketBorderData.class);
       register(PacketBorderClear.class);
+      register(PacketHeapAnalyzer.class);
 
       // Client -> Server
       register(SPacketBankGet.class);

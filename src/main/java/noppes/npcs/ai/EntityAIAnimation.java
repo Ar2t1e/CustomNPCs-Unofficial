@@ -26,7 +26,7 @@ public class EntityAIAnimation extends Goal {
          if (!hasNavigation()) { return npc.currentAnimation != temp; }
          temp = 0;
       }
-      if (hasNavigation() && !isWalkingAnimation(npc.currentAnimation)) { return npc.currentAnimation != 0; }
+      if (hasNavigation() && notWalkingAnimation(npc.currentAnimation)) { return npc.currentAnimation != 0; }
       return npc.currentAnimation != npc.ais.animationType;
    }
 
@@ -36,11 +36,12 @@ public class EntityAIAnimation extends Goal {
       else {
          int type = npc.ais.animationType;
          if (removed) { type = 2; }
-         else if (!isWalkingAnimation(npc.ais.animationType) && hasNavigation()) { type = 0; }
+         else if (notWalkingAnimation(npc.ais.animationType) && hasNavigation()) { type = 0; }
          else if (temp != 0) {
             if (hasNavigation()) { temp = 0; }
             else { type = temp;}
          }
+         // if (this.npc.stats.ranged.getHasAimAnimation() && this.npc.isAttacking()) { type = 6; } // <- AI target
          setAnimation(type);
       }
    }
@@ -56,14 +57,12 @@ public class EntityAIAnimation extends Goal {
       };
    }
 
-   @SuppressWarnings("all")
-   public static boolean isWalkingAnimation(int animation) { return getWalkingAnimationGuiIndex(animation) != 0; }
+   public static boolean notWalkingAnimation(int animation) { return getWalkingAnimationGuiIndex(animation) == 0; }
 
    private void setAnimation(int animation) {
       npc.setCurrentAnimation(animation);
       npc.refreshDimensions();
       npc.setPos(npc.getX(), npc.getY(), npc.getZ());
-      npc.updateAnimationClient();
    }
 
    private boolean hasNavigation() { return isAttacking || npc.ais.shouldReturnHome() && !isAtStartPoint && !npc.isFollower() || hasPath; }

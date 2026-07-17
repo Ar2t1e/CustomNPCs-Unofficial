@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -91,42 +92,43 @@ public class SubGuiNPCSelection
     @Override
     public void setGuiData(CompoundTag compound) {
         ListTag nbtList = compound.getList("Data", 10);
-        List<Component> list = new ArrayList<>();
         dataIDs.clear();
-        Component mainKey = Component.empty()
-                .append(Component.literal("ID:-1 ").withStyle(ChatFormatting.GREEN))
-                .append(Component.literal(main.getName() + " ").withStyle(ChatFormatting.RESET))
-                .append(Component.literal(df.format(-1.0f)).withStyle(ChatFormatting.GRAY));
-        dataIDs.put(mainKey, -1);
+        if (minecraft == null) { minecraft = Minecraft.getInstance(); }
+        if (minecraft.level == null) { return; }
+        List<Component> list = new ArrayList<>();
         LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
         for (int i = 0; i < nbtList.size(); ++i) {
             CompoundTag nbt = nbtList.getCompound(i);
-            int id = nbt.getInt("K");
-            ChatFormatting type = switch (nbt.getInt("C")) {
-                case 1 -> ChatFormatting.GREEN;
-                case 2 -> ChatFormatting.RED;
-                case 3 -> ChatFormatting.YELLOW;
-                case 4 -> ChatFormatting.AQUA;
-                default -> ChatFormatting.GRAY;
+            int id = nbt.getInt("Id");
+            MutableComponent name = Component.Serializer.fromJson(nbt.getString("Name"));
+            if (name == null) { name = Component.literal("not_name"); }
+            ChatFormatting type = switch (nbt.getInt("Type")) {
+                case 1 -> ChatFormatting.GREEN; // friendly
+                case 2 -> ChatFormatting.RED; // aggressive
+                case 3 -> ChatFormatting.YELLOW; // neutral
+                case 4 -> ChatFormatting.AQUA; // player
+                default -> ChatFormatting.GRAY; // not living
             };
-            String distance = df.format(nbt.getFloat("V"));
+            Component distance = Component.literal(df.format(nbt.getFloat("Distance"))).withStyle(ChatFormatting.GOLD);
             MutableComponent key = Component.empty()
-                    .append(Component.literal("ID:" + id).withStyle(type))
-                    .append(Component.literal(" " + nbt.getString("N")).withStyle(ChatFormatting.RESET))
-                    .append(Component.literal(" (" + distance + ")").withStyle(ChatFormatting.GRAY));
+                    .append(Component.literal("ID:" + id + " ").withStyle(type))
+                    .append(name.copy().withStyle(ChatFormatting.RESET))
+                    .append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
+                    .append(distance)
+                    .append(Component.literal(")").withStyle(ChatFormatting.GRAY));
             list.add(key);
-            dataIDs.put(key, nbt.getInt("K"));
+            dataIDs.put(key, id);
 
             List<Component> hoverList = new ArrayList<>();
             hoverList.add(Component.literal("Name: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(nbt.getString("N")).withStyle(ChatFormatting.WHITE)));
+                    .append(name.copy().withStyle(ChatFormatting.WHITE)));
             hoverList.add(Component.literal("Entity ID: ").withStyle(ChatFormatting.GRAY)
                     .append(Component.literal("" + id).withStyle(type)));
             hoverList.add(Component.literal("Distance to: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(distance).withStyle(ChatFormatting.GOLD))
+                    .append(distance)
                     .append(Component.literal(" blocks").withStyle(ChatFormatting.GRAY)));
             hoverList.add(Component.literal("Class Type: ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(nbt.getString("S")).withStyle(ChatFormatting.WHITE)));
+                    .append(Component.literal(nbt.getString("Class")).withStyle(ChatFormatting.WHITE)));
             hts.put(i, hoverList);
         }
         scroll.setUnsortedList(list);
