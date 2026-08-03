@@ -290,7 +290,6 @@ extends LayerInterface<T> {
 
 		GlStateManager.pushMatrix();
 		model.bipedHead.postRender(0.0625f);
-		if (npc.isSneaking()) { GlStateManager.translate(0.0F, -0.2F, 0.0F); }
 		GlStateManager.scale(scale, scale, -scale);
 		GlStateManager.translate(0.0f, (((playerdata.eyes.type != 0) ? 1 : 2) - playerdata.eyes.eyePos), 0.0f);
 		GlStateManager.enableRescaleNormal(); // Normalization of vertex normals
@@ -389,6 +388,8 @@ extends LayerInterface<T> {
 		int hoverColor = 0xFF00 | (int) Math.ceil((-12.25f * t + 255.0f) * (t > 20 ? -1.0f : 1.0f)) << 24;
 
 		GlStateManager.disableLighting();
+		float lastBrightnessX = OpenGlHelper.lastBrightnessX;
+		float lastBrightnessY = OpenGlHelper.lastBrightnessY;
 		int i = npc.getBrightnessForRender();
 		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, i % 65536.0F, i / 65536.0F);
 
@@ -409,11 +410,11 @@ extends LayerInterface<T> {
 		drawBrows(selectType, hoverColor);
 
 		mc.entityRenderer.setupFogColor(false);
+		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, lastBrightnessX, lastBrightnessY);
 		GlStateManager.depthMask(true);
 		GlStateManager.disableBlend();
 		GlStateManager.shadeModel(GL11.GL_FLAT);
 		GlStateManager.disableCull();
-		GlStateManager.disableRescaleNormal();
 		GlStateManager.enableLighting();
 		GlStateManager.popMatrix();
 

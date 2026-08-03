@@ -2030,6 +2030,7 @@ public class ClientEventHandler extends Gui {
 		PlayerCompassData compassData = playerData.compass;
 
 		if (CustomNpcs.TypeShowQuestCompass == 4 || !compassData.getShowOfPlayer()) return;
+		if (CustomNpcs.HideCompassInFirstPerson) return;
 
 		// Compass requirement check
 		boolean isShow = true;
@@ -2499,6 +2500,14 @@ public class ClientEventHandler extends Gui {
 			}
 			GlStateManager.popMatrix();
 			GlStateManager.popMatrix();
+			RenderHelper.disableStandardItemLighting();
+			GlStateManager.disableLighting();
+			GlStateManager.disableBlend();
+			GlStateManager.enableDepth();
+			GlStateManager.enableAlpha();
+			GlStateManager.color(0.0f, 0.0f, 0.0f, 0.0f);
+			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+			mc.getTextureManager().bindTexture(Gui.ICONS);
 		}
 	}
 

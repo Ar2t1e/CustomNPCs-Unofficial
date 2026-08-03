@@ -135,11 +135,11 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 		GlStateManager.pushMatrix();
 		if (isAWShow && ArmourersWorkshopApi.getSkinNBTUtils().hasSkinDescriptor(stack)) {
 			renderHeldAWItem(ArmourersWorkshopApi.getSkinNBTUtils().getSkinDescriptor(stack), entity.isSneaking(), handSide, distance, scale);
+			GlStateManager.popMatrix();
 			return;
 		}
 		model.postRenderArm(scale, handSide);
 		boolean isLeft = handSide == EnumHandSide.LEFT;
-		if (entity.isSneaking()) { GlStateManager.translate(0.0F, 0.2F, 0.0F); }
 		GlStateManager.rotate(-90.0F, 1.0F, 0.0F, 0.0F);
 		GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
 		GlStateManager.translate((isLeft ? -1.0F : 1.0F) / 16.0F, 0.125f, -0.625f);
@@ -276,7 +276,6 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 		CustomSkinModelRenderHelper modelRenderer = CustomSkinModelRenderHelper.getInstance();
 		IWardrobeCap wardrobe = ArmourersWorkshopApi.getEntityWardrobeCapability(npc);
 		GlStateManager.pushMatrix();
-		if (isSneaking) { GlStateManager.translate(0.0F, 0.2F, 0.0F); }
 		model.postRenderArm(scale, handSide);
 		boolean isLeft = handSide == EnumHandSide.LEFT;
 		try {
@@ -311,7 +310,6 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 			GlStateManager.popMatrix();
 			return;
 		}
-		GlStateManager.disableRescaleNormal();
 		GlStateManager.popMatrix();
 	}
 

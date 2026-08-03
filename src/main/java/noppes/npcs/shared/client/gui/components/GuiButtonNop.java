@@ -95,6 +95,16 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     public boolean visible = true;
     public int packedFGColor;
 
+    private static int customColorOf(ITextComponent component) {
+        int color = ((IStyleMixin) component.getStyle()).npcs$getColor();
+        if (color != 0) { return color; }
+        for (ITextComponent sibling : component.getSiblings()) {
+            color = customColorOf(sibling);
+            if (color != 0) { return color; }
+        }
+        return 0;
+    }
+
     public static void renderString(@Nonnull Component message,
                                     int left, int top, int right, int bottom, int color, boolean showShadow,
                                     boolean centered, ClientProxy.FontContainer customFont) {
@@ -107,7 +117,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         }
         int width = right - left;
         GlStateManager.pushMatrix();
-        int c = ((IStyleMixin) message.getStyle()).npcs$getColor();
+        int c = customColorOf(message.getParent());
         if (c != 0) {
             int alpha = color >>> 24;
             if (color == 0 || (color & 0xFFFFFF) == 0xFFFFFF) { color = (alpha << 24) | (c & 0xFFFFFF); }
@@ -122,11 +132,10 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             }
         }
         if (textWidth > width) {
+            boolean wasScissor = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);
             GL11.glEnable(GL11.GL_SCISSOR_TEST);
             ScaledResolution sw = new ScaledResolution(Minecraft.getMinecraft());
-            double d4 = sw.getScaledWidth() < mc.displayWidth
-                    ? (int) Math.round((double) mc.displayWidth / (double) sw.getScaledWidth())
-                    : 1;
+            double d4 = sw.getScaleFactor();
             GL11.glScissor((int) ((double) left * d4),
                     (int) ((double) mc.displayHeight - (double) bottom * d4),
                     Math.max(0, (int) ((double) (right - left) * d4)),
@@ -139,7 +148,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             double d3 = ValueUtil.lerp(d2, 0.0, centerX);
             if (customFont != null) { customFont.draw(message, left - (int) d3, height, color); }
             else { mc.fontRenderer.drawString(message.getFormattedText(), left - (int) d3, height, color, showShadow); }
-            GL11.glDisable(GL11.GL_SCISSOR_TEST);
+            if (!wasScissor) { GL11.glDisable(GL11.GL_SCISSOR_TEST); }
         } // moved
         else {
             if (centered) {
@@ -383,7 +392,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 GlStateManager.popMatrix();
             }
         }
-        GlStateManager.color(2.0F, 2.0F, 2.0F, 1.0F);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         GlStateManager.pushMatrix();
         @Nonnull Component label = getMessage();
@@ -403,7 +412,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             if (customFont != null) { customFont.draw(label, getX() + 2, getY(), color); }
             else { mc.fontRenderer.drawString(label.getFormattedText(), getX() + 2.0f - mc.fontRenderer.getStringWidth(label.getFormattedText()) / 2.0f, getY(), color, showShadow); }
         }
-        GlStateManager.color(2.0F, 2.0F, 2.0F, 1.0F);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         GlStateManager.popMatrix();
         if (renderStacks != null && renderStacks.length != 0 && (listener == null || !listener.hasSubGui())) {
@@ -428,14 +437,15 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 if (ticks > step * renderStacks.length) { ticks = 0; }
             }
         }
-        GlStateManager.disableBlend();
-        GlStateManager.color(2.0F, 2.0F, 2.0F, 1.0F);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double mouseScrolled) {
-        if (display != null && display.length != 0 && isHovered) {
-            setDisplay((displayValue + (mouseScrolled > 0 ? -1 : 1)) % display.length);
+        if (display != null && display.length != 0 && isHovered && mouseScrolled != 0.0d) {
+            setDisplay(displayValue + (mouseScrolled > 0 ? 1 : -1));
+            if (onPress != null) { onPress(); }
+            else if (listener != null) { listener.buttonEvent(this); }
             return true;
         }
         return false;
@@ -453,8 +463,9 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     }
 
     public GuiButtonNop setDisplay(int value) {
-        displayValue = ValueUtil.onlyPositiveInt(value, display.length);
-        setDisplayText(display[value]);
+        if (display == null || display.length == 0) { return this; }
+        displayValue = ((value % display.length) + display.length) % display.length;
+        setDisplayText(display[displayValue]);
         return this;
     }
 
@@ -548,12 +559,12 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
 
     public GuiButtonNop setVariants(Object ... variants) {
-        Set<Component> lines = new LinkedHashSet<>();
+        List<Component> lines = new ArrayList<>();
         for (Object o : variants) {
             if (o == null) { lines.add(Component.empty()); }
             else if (o instanceof Component) { lines.add(((Component) o)); }
-            else if (o instanceof List<?>) {
-                for (Object line : ((List<?>) o)) {
+            else if (o instanceof Iterable<?>) {
+                for (Object line : ((Iterable<?>) o)) {
                     if (line == null) { lines.add(Component.empty()); }
                     else if (line instanceof Component) { lines.add(((Component) line)); }
                     else { lines.add(Component.translatable("" + line)); }
@@ -562,32 +573,33 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             else { lines.add(Component.translatable("" + o)); }
         }
         display = lines.toArray(new Component[0]);
-        displayValue = variants.length == 0 ? 0 : displayValue % variants.length;
-        if (displayValue >= 0 && displayValue < display.length) {
+        displayValue = display.length == 0 ? 0 : ((displayValue % display.length) + display.length) % display.length;
+        if (displayValue < display.length) {
             setDisplayText(display[displayValue]);
         }
         return this;
     }
 
     public int getState() {
-        boolean lbm = Mouse.isButtonDown(0) && isHovered;
+        boolean hover = isHovered && (listener == null || !listener.hasSubGui());
+        boolean lbm = Mouse.isButtonDown(0) && hover;
         if (texture == null) {
             int i = 1;
             if (!enabled) { i = 0; }
-            else if (lbm && (listener == null || !listener.hasSubGui())) { i = 2; }
+            else if (hover) { i = 2; }
             return i;
         }
         if (isAnim) {
             if (!enabled) { return 1; }
-            return isHoveredOrFocused() && (listener == null || !listener.hasSubGui()) ? lbm ? 3 : 2 : 0;
+            return hover ? lbm ? 3 : 2 : 0;
         }
         if (isSimple) {
             int i = 0;
             if (!enabled) { i = 2; }
-            else if (isHoveredOrFocused() && (listener == null || !listener.hasSubGui())) { i = lbm ? 2 : 1; }
+            else if (hover) { i = lbm ? 2 : 1; }
             return i;
         }
-        if (isHoveredOrFocused() && (listener == null || !listener.hasSubGui())) {
+        if (hover) {
             return (enabled ? 1 : 4) + (lbm ? 1 : 0);
         }
         return enabled ? 0 : 3;
@@ -677,7 +689,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             if (isValidClickButton(mouseButton)) {
                 boolean flag = clicked(mouseX, mouseY);
                 if (flag) {
-                    onClick(mouseX, mouseY);
+                    if (mouseButton == 0) { onClick(mouseX, mouseY); }
                     if (listener != null) { listener.mouseButtonEvent(this, mouseButton); }
                     return true;
                 }

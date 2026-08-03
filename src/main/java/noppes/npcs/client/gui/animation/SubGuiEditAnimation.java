@@ -202,8 +202,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			case 4: {
 				if (anim == null) { return; }
 				if (GuiScreen.isShiftKeyDown()) { // Shift pressed
-					SubGuiEditText subgui = new SubGuiEditText(0, "" + anim.frames.size());
-					subgui.numbersOnly = new int[] { 0, anim.frames.size(), anim.frames.size() };
+					SubGuiEditText subgui = new SubGuiEditText(0, "" + (anim.frames.size() + 1));
+					subgui.numbersOnly = new int[] { 0, anim.frames.size() + 1, anim.frames.size() + 1 };
 					setSubGui(subgui);
 				} else {
 					frame = (AnimationFrameConfig) anim.addFrame(-1, frame);
@@ -2343,8 +2343,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 
 	@Override
 	public void save() {
-		if (anim != null) { Packets.sendAll(new SPacketAnimationChange(2, anim.save())); }
-		Packets.sendAll(new SPacketAnimationChange(3, new NBTTagCompound()));
+		if (anim != null) { Packets.sendServer(new SPacketAnimationChange(2, anim.save())); }
+		Packets.sendServer(new SPacketAnimationChange(3, new NBTTagCompound()));
 	}
 
 	private void setPart(PartConfig partConfig) {
@@ -2900,7 +2900,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			getButton(53).setIsVisible(onlyCurrentPart);
 			if (onlyCurrentPart) {
 				int s = npcPart.animation.getAnimationSpeedTicks();
-				Object[] ticks = new Component[s];
+				Object[] ticks = new Component[s + 1];
 				for (int i = 0; i <= s; i++) { ticks[i] = Component.literal(i + "/" + s); }
 				getButton(53).setVariants(ticks);
 			}

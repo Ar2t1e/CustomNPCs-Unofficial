@@ -536,7 +536,7 @@ public class GuiDialogInteract extends GuiNPCInterface implements IGuiClose {
 		if (!textures.isEmpty()) {
 			for (int linePos : textures.keySet()) {
 				DialogTexture dt = textures.get(linePos);
-				if (dt.left < guiLeft) { continue; }
+				dt.left = guiLeft + 1 + ClientProxy.Font.width(dt.line.getName() + ": ");
 				int tys = fontHeight * (linePos - lineStart);
 				int tye = tys + dt.vS / 2;
 				if (tye >= 0 && tys <= dialogHeight - 4) {
@@ -623,18 +623,8 @@ public class GuiDialogInteract extends GuiNPCInterface implements IGuiClose {
 			}
 			else { scrollO = null; }
 			// Dialog
-			int drag = Mouse.getDWheel() / 120;
-			if (lineTotal > lineVisibleSize && drag != 0 && isMouseHover(mouseX, mouseY, guiLeft, 0, guiSettings.dialogWidth, dialogHeight)) {
-				lineStart -= drag;
-				if (lineStart < 0) { lineStart = 0; }
-				else if (lineStart > lineTotal - lineVisibleSize) { lineStart = lineTotal - lineVisibleSize; }
-			}
 			// cursor select option
 			if (isMouseHover(mouseX, mouseY, guiLeft, dialogHeight, guiSettings.dialogWidth, height - dialogHeight)) { // options text
-				if (selectedSize > selectedVisibleSize && drag != 0) {
-					selectedStart -= drag;
-					checkSelected();
-				}
 				int y = (int) Math.floor(((double) mouseY - (double) dialogHeight) / (double) fontHeight);
 				i = 0;
 				int optPos = 0;

@@ -342,12 +342,14 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
             }
         }
         if (numbersOnly) {
-            return Character.isDigit(typedChar) || (typedChar == '-' && selectAll || getCursorPosition() == 0 && !text.contains("" + typedChar));
+            return Character.isDigit(typedChar)
+                    || (typedChar == '-' && (selectAll || getCursorPosition() == 0) && !text.contains("-"));
         }
         if (doublesOnly) {
             boolean hasDot = text.contains(".") || text.contains(",");
-            return Character.isDigit(typedChar) || (typedChar == '-' && selectAll || getCursorPosition() == 0 && !text.contains("" + typedChar))
-                    || (!hasDot || selectAll && (typedChar == '.' || typedChar == ','));
+            return Character.isDigit(typedChar)
+                    || (typedChar == '-' && (selectAll || getCursorPosition() == 0) && !text.contains("-"))
+                    || ((typedChar == '.' || typedChar == ',') && (selectAll || !hasDot));
         }
         if (resourceLocationType != 0) {
             if (typedChar == ':' && (resourceLocationType != 1 || text.contains(":"))) { return false; }
@@ -391,9 +393,9 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
 
     public void unFocused() {
         if (numbersOnly) {
-            if (isEmpty() || !isInteger()) { setValue(def + ""); }
-            else if (getInteger() < min) { setValue(min + ""); }
-            else if (getInteger() > max) { setValue(max + ""); }
+            if (isEmpty() || !isLong()) { setValue(def + ""); }
+            else if (getLong() < min) { setValue(min + ""); }
+            else if (getLong() > max) { setValue(max + ""); }
         }
         else if (doublesOnly) {
             if (isEmpty() || !isDouble()) { setValue(defD + ""); }
@@ -415,22 +417,16 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     public boolean mouseScrolled(double mouseX, double mouseY, double mouseScrolled) {
         if (isHovered && (doublesOnly || numbersOnly) && mouseScrolled != 0) {
             if (doublesOnly) {
-                double d = getDouble();
-                double v = maxD - minD;
-                double f = (mouseScrolled < 0 ? -v : v) / (double) width;
-                double t = d + f;
-                if (t < minD) { t = t - minD + maxD; }
-                else if (t > maxD) { t = t - maxD + minD; }
+                double d = isDouble() ? getDouble() : defD;
+                double step = Math.max((maxD - minD) / 100.0d, 0.001d);
+                double t = d + (mouseScrolled > 0 ? step : -step);
                 setValue("" + ValueUtil.correctDouble(Math.round(t * 1000.0d) / 1000.0d, minD, maxD));
             }
             else {
-                int i = getInteger();
-                int v = (int) (max - min);
-                int f = (mouseScrolled < 0 ? -v : v) / width;
-                int t = i + f;
-                if (t < min) { t = t - (int) (min + max); }
-                else if (t > max) { t = t - (int) (max + min); }
-                setValue("" + ValueUtil.correctInt((int) (Math.round((double) t * 1000.0d) / 1000.0d), (int) min, (int) max));
+                long i = isLong() ? getLong() : def;
+                long step = Math.max((max - min) / 100L, 1L);
+                long t = i + (mouseScrolled > 0 ? step : -step);
+                setValue("" + ValueUtil.correctLong(t, min, max));
             }
             if (listener instanceof ITextfieldListener) { ((ITextfieldListener) listener).unFocused(this); }
             return true;
@@ -517,6 +513,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
         tessellator.draw();
         GlStateManager.disableColorLogic();
         GlStateManager.enableTexture2D();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     public GuiTextFieldNop setMaxStringLength(int length) {
@@ -724,12 +721,13 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     @Override
     public GuiTextFieldNop setIsFocused(boolean isFocused) {
         if (canLoseFocus || isFocused) {
+            boolean wasFocused = focused;
             focused = isFocused;
             if (isFocused) {
                 cursorCounter = 0;
                 activeTextfield = this;
             }
-            else if (activeTextfield == this) { unFocused(); }
+            else if (wasFocused) { unFocused(); }
         }
         return this;
     }

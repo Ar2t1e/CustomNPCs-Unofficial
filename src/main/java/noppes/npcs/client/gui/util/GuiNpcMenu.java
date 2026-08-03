@@ -1,5 +1,6 @@
 package noppes.npcs.client.gui.util;
 
+import net.minecraft.init.Enchantments;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.packets.Packets;
@@ -112,7 +113,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 					Component.empty()
 							.append(Component.translatable("stats.rangedproperties").withStyle(TextFormatting.GRAY))
 							.append(Component.literal(" ").withStyle(TextFormatting.GRAY))
-							.append(Component.translatable("enchantment.minecraft.power").withStyle(TextFormatting.GRAY))
+							.append(Component.translatable(Enchantments.POWER.getName()).withStyle(TextFormatting.GRAY))
 							.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
 							.append(Component.translatable("" + npc.stats.ranged.getStrength()).withStyle(TextFormatting.RESET))
 							.append(Component.literal(";").withStyle(TextFormatting.GRAY)));
@@ -234,6 +235,7 @@ public class GuiNpcMenu implements GuiYesNoCallback {
 	}
 
 	private void close() {
+		Keyboard.enableRepeatEvents(false);
 		if (parent instanceof GuiContainerNPCInterface2<?>) { ((GuiContainerNPCInterface2<?>) parent).backGui = null; }
 		else if (parent instanceof GuiNPCInterface2) { ((GuiNPCInterface2) parent).backGui = null; }
 		if (parent != null) { parent.onClose(); }

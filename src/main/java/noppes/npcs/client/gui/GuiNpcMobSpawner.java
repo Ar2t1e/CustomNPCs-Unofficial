@@ -33,9 +33,9 @@ import org.lwjgl.input.Keyboard;
 public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICustomScrollListener {
 
 	protected static int showingClones = 0;
+	protected static int activeTab = 1;
 	protected final BlockPos pos;
 	protected final List<String> list = new ArrayList<>();
-	protected int activeTab = 1;
 	protected GuiCustomScrollNop scroll;
 
 	// New from Unofficial (BetaZavr)
@@ -58,27 +58,27 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
 		else { scroll.clear();}
 		add(scroll.setPos(guiLeft + 4, guiTop + 4).setSelect(sel));
 		// clones
-		GuiMenuTopButton button = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones")
-				.setIsEnabled(showingClones == 0);
+		GuiMenuTopButton button = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones");
+		button.active = showingClones == 0;
 		// entities
-		button = addTopButton(4, button.getX() + button.getWidth(), button.getY(), "spawner.entities")
-				.setIsEnabled(showingClones == 1);
+		GuiMenuTopButton buttonEntities = addTopButton(4, button.getX() + button.getWidth(), button.getY(), "spawner.entities");
+		buttonEntities.active = showingClones == 1;
 		// server
-		addTopButton(5, button.getX() + button.getWidth(), button.getY(), "gui.server")
-				.setIsEnabled(showingClones == 2);
+		addTopButton(5, buttonEntities.getX() + buttonEntities.getWidth(), buttonEntities.getY(), "gui.server")
+				.active = showingClones == 2;
 		int x = guiLeft + 171;
 		int y = guiTop + 6;
 		addButton(1, x, y, "gui.spawn").setSize(82, 20);
-		addButton(2, x, y + 94, "spawner.mobspawner")
+		addButton(2, x, y + 142, "spawner.mobspawner")
 				.setSize(82, 20);
-		addButton(66, x, y + 116, "gui.done")
+		addButton(66, x, y + 164, "gui.done")
 				.setSize(80, 20)
 				.setHoverTexts("hover.exit");
 		if (showingClones != 0 && showingClones != 2) { showEntities(); }
 		else {
 			for (int id = 0; id < 9; id++) {
 				addSideButton(21 + id, guiLeft, guiTop + 3 + id * 21, Component.translatable("gui.tab").append(" " + (id + 1)))
-						.setIsEnabled(activeTab == id + 1);
+						.active = activeTab == id + 1;
 			}
 			addButton(6, guiLeft + 170, guiTop + 30, "gui.remove")
 					.setSize(82, 20);
@@ -129,19 +129,16 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
 				if (scroll.hasSelected()) {
 					String name = scroll.getSelected();
 					if (!name.isEmpty()) {
-						scroll.setSelect(scroll.getSelectedIndex() - 1);
-						if (scroll.getSelectedIndex() < 0) {
-							if (scroll.getList() == null || scroll.getList().isEmpty()) { scroll.setSelect(-1); }
-							else { scroll.setSelect(0); }
-						}
-						sel = scroll.getSelectedIndex();
+						int next = scroll.getSelectedIndex() - 1;
+						if (next < 0) { next = scroll.getList() == null || scroll.getList().size() <= 1 ? -1 : 0; }
+						sel = next;
 						selectNpc = null;
+						scroll.clearSelection();
 						if (showingClones == 2) {
-							Packets.sendServer(new SPacketCloneRemove(scroll.getSelected(), activeTab));
+							Packets.sendServer(new SPacketCloneRemove(name, activeTab));
 							return;
 						}
-						ClientCloneController.Instance.removeClone(scroll.getSelected(), activeTab);
-						scroll.clearSelection();
+						ClientCloneController.Instance.removeClone(name, activeTab);
 						initGui();
 					}
 				}
