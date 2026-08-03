@@ -162,6 +162,7 @@ public class Packets {
         register(PacketNpcRarityTitleSet.class);
         register(PacketBorderData.class);
         register(PacketBorderClear.class);
+        register(PacketHeapAnalyzer.class);
 
         // Client -> Server
         register(SPacketBankGet.class);

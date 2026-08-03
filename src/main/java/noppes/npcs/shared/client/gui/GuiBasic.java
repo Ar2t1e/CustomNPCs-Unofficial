@@ -86,9 +86,12 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public GuiWrapper wrapper = new GuiWrapper(this);
 
     // Mod Resources
+    @SuppressWarnings("unused")
     public static final DecimalFormat df = new DecimalFormat("#.#");
     public static final DecimalFormat df2 = new DecimalFormat("#.##");
+    @SuppressWarnings("unused")
     public static final DecimalFormat df3 = new DecimalFormat("#.###");
+    @SuppressWarnings("unused")
     public static final DecimalFormat df4 = new DecimalFormat("#.####");
     public static final ResourceLocation MONEY = new ResourceLocation(CustomNpcs.MODID, "textures/items/coin_gold.png");
     public static final ResourceLocation DONAT = new ResourceLocation(CustomNpcs.MODID, "textures/items/coin_donat.png");
@@ -232,7 +235,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
             mouseDragged(mouseX, mouseY, eventButton, dx, dy);
         }
         int dWheel = Mouse.getEventDWheel();
-        if (dWheel != 0) { mouseScrolled(mouseX, mouseY, dWheel / 120); }
+        if (dWheel != 0) { mouseScrolled(mouseX, mouseY, (double) dWheel / 120); }
     }
 
     @Override

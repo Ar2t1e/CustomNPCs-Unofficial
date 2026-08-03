@@ -40,6 +40,7 @@ public class CommandNoppes extends CommandBase {
 		registerCommand(new CmdPlayers());
 		registerCommand(new CmdDimensions());
 		registerCommand(new CmdPermissions());
+		registerCommand(new CmdHeapAnalyzer());
 	}
 
 	@Override
@@ -166,6 +167,7 @@ public class CommandNoppes extends CommandBase {
 		return sender.canUseCommand(thisPer, getName());
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	public static int getPermissionLevel(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) {
 		int per = 4;
 		if (sender instanceof EntityPlayerMP) {
