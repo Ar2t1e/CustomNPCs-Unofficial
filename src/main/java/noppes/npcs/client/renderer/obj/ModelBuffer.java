@@ -57,7 +57,7 @@ public class ModelBuffer {
 	 * @param model - generated custom model
 	 */
 	public static void render(ParameterizedModel model) {
-		if (ModelBuffer.MODELS.size() > 500) { clear(); }
+		trimCache();
 		if (model != null) {
 			try { model.render(); }
 			catch (Exception e) {
@@ -83,7 +83,7 @@ public class ModelBuffer {
 		if (modelLocation == null || NOT_FOUND.contains(modelLocation)) { return null; }
 		ParameterizedModel model = new ParameterizedModel(modelLocation, visibleMeshes, materialTextures, reverseNormals, colorMask, isDynamic);
 		boolean found = false;
-		for (ParameterizedModel pm : ModelBuffer.MODELS) {
+		for (ParameterizedModel pm : MODELS) {
 			if (pm.equals(model)) {
 				model = pm;
 				found = true;
@@ -92,11 +92,13 @@ public class ModelBuffer {
 		}
 		if (model.objModel == null) { model.load(); }
 		if (model.objModel == null) { NOT_FOUND.add(modelLocation); return null; }
-		if (!found) { ModelBuffer.MODELS.add(model); }
+		if (!found) { MODELS.add(model); }
 		return model;
 	}
 
-	public static void clear() { ModelBuffer.MODELS.clear(); }
+	private static void trimCache() {
+		while (MODELS.size() > 500) { MODELS.remove(0); }
+	}
 
 	// Armor
 	public static ResourceLocation getMainOBJTexture(ResourceLocation objModel) {
@@ -128,10 +130,10 @@ public class ModelBuffer {
 			return null;
 		}
 		if (entity instanceof EntityNPCInterface) { return defModel; }
-		if (ModelBuffer.objModel == null) {
-			ModelBuffer.objModel = new ModelOBJPlayerArmor(armor);
+		if (objModel == null) {
+			objModel = new ModelOBJPlayerArmor(armor);
 		}
-		return ModelBuffer.objModel;
+		return objModel;
 	}
 
 	public static IBakedModel getIBakedModel(CustomArmor armor) {

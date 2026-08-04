@@ -63,8 +63,8 @@ public class ServerTickHandler {
 				EntityNPCInterface npc = null;
 				if (fs.npc != null) { npc = fs.npc; }
 				if (npc == null) {
-					Entity e = Util.instance.getEntityByUUID(fs.id, player.world);
-					if (e instanceof EntityNPCInterface) { npc = (EntityNPCInterface) e; }
+					Entity cNpc = Util.instance.getEntityByUUID(fs.id, player.world, false);
+					if (cNpc instanceof EntityNPCInterface) { npc = (EntityNPCInterface) cNpc; }
 				}
 				if (npc == null || npc.isDead || !(npc.role instanceof RoleFollower)) { del.add(fs); }
 				else {
@@ -150,9 +150,9 @@ public class ServerTickHandler {
 	public void onServerTick(TickEvent.ServerTickEvent event) {
 		if (event.side == Side.CLIENT || event.phase == TickEvent.Phase.END) { return; }
 		CustomNpcs.debugData.start(null);
-		BorderController.getInstance().update();
 		++ticks;
 		// New from Unofficial (BetaZavr)
+		if (ticks % 5 == 0) { BorderController.getInstance().update(); }
 		if (ticks % 20 == 0) {
 			SchematicController.Instance.updateBuilding();
 			MarcetController.getInstance().update();

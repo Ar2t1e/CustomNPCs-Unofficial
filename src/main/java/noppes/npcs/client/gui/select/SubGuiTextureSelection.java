@@ -176,7 +176,7 @@ public class SubGuiTextureSelection extends ResourceSelection {
     @Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
 		super.scrollClicked(scroll);
-		if (!scroll.getNormalSelected().equals(back) && selectDir != null && selectedName(scroll).toLowerCase().endsWith(suffix)) {
+		if (!scroll.getNormalSelected().equals(back) && selectDir != null && scroll.getSelected().toLowerCase().endsWith(suffix)) {
 			if (npc != null && type >= 0 && type <= 2 && resource != null) {
 				applyTexture(resource.toString());
 				npc.textureLocation = null;

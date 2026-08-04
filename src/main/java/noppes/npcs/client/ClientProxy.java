@@ -577,8 +577,7 @@ public class ClientProxy extends CommonProxy {
 		return playerData;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes"})
-	@Deprecated
+	@SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 	@Override
 	public void load() {
 		Minecraft mc = Minecraft.getMinecraft();

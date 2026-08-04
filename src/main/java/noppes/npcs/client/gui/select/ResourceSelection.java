@@ -13,7 +13,6 @@ import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.client.renderer.texture.ITextureManagerMixin;
 import noppes.npcs.mixin.client.renderer.texture.ITextureMapMixin;
-import noppes.npcs.mixin.client.resources.*;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
@@ -43,7 +42,6 @@ public class ResourceSelection
 
 
     public static Map<String, Map<String, TreeMap<ResourceLocation, Long>>> resourcesData = new ConcurrentHashMap<>();
-
     private static final Set<String> loadingSuffixes = ConcurrentHashMap.newKeySet();
 
     protected final Map<String, TreeMap<ResourceLocation, Long>> data = new TreeMap<>(); // (Directory, Files)
@@ -117,11 +115,11 @@ public class ResourceSelection
         super.initGui();
         guiLeft += offsetX;
         int h = guiTop + imageHeight - 25;
-        addButton(2, guiLeft + 271, h, "gui.done")
-                .setSize(90, 20)
+        addButton(2, guiLeft + 296, h, "gui.done")
+                .setSize(65, 20)
                 .setHoverTexts("selection.hover.done");
         addButton(1, guiLeft + 5, h, "gui.cancel")
-                .setSize(90, 20)
+                .setSize(65, 20)
                 .setHoverTexts("hover.back");
         if (scroll == null) { scroll = addScroll(0).setSize(scrollWidth, 180); }
         Component domain = Component.literal("All Data in Game (mods)/");
@@ -132,14 +130,19 @@ public class ResourceSelection
             Map<String, Long> ds = new TreeMap<>();
             Map<String, Long> fs = new TreeMap<>();
             String path = selectDir.getResourcePath();
-            TreeMap<ResourceLocation, Long> files = data.get(selectDir.getResourceDomain());
-            if (files == null) { files = new TreeMap<>(); }
+            TreeMap<ResourceLocation, Long> files = data.getOrDefault(selectDir.getResourceDomain(), new TreeMap<>());
             for (ResourceLocation res : files.keySet()) {
-                String resPath = res.getResourcePath();
-                if (!path.isEmpty() && resPath.indexOf(path + "/") != 0) { continue; }
-                String key = path.isEmpty() ? resPath : resPath.substring(path.length() + 1);
-                if (key.contains("/")) { ds.put(key.substring(0, key.indexOf("/")), files.get(res)); }
-                else if (suffix.isEmpty() || resPath.toLowerCase().endsWith(suffix)) { fs.put(key, files.get(res)); }
+                if (!res.getResourcePath().contains("/")) {
+                    fs.put(res.getResourcePath(), files.get(res));
+                }
+                else if (res.getResourcePath().indexOf(path) == 0) {
+                    String key = res.getResourcePath().substring(path.length() + 1);
+                    if (key.contains("/")) {
+                        ds.put(key.substring(0, key.indexOf("/")), data.get(selectDir.getResourceDomain()).get(res));
+                    } else if ((suffix.isEmpty() || res.getResourcePath().toLowerCase().endsWith(suffix))) {
+                        fs.put(res.getResourcePath().substring(res.getResourcePath().lastIndexOf("/") + 1), data.get(selectDir.getResourceDomain()).get(res));
+                    }
+                }
             }
             String txrName = resource != null ? resource.getResourcePath() : "";
             if (!txrName.isEmpty()) {
@@ -210,7 +213,7 @@ public class ResourceSelection
             initGui();
         }
         else if (selectDir != null) {
-            String name = selectedName(scroll);
+            String name = scroll.getSelected();
             if (name.isEmpty()) { return; }
             if (!name.toLowerCase().endsWith(suffix)) {
                 if (suffix.equals(".ogg")) { resource = new ResourceLocation(selectDir.getResourceDomain(), name); }
@@ -222,8 +225,8 @@ public class ResourceSelection
                 resource = new ResourceLocation(selectDir.getResourceDomain(), selectDir.getResourcePath() + "/" + name);
             }
         }
-        else if (data.containsKey(selectedName(scroll))) {
-            String domain = selectedName(scroll);
+        else if (data.containsKey(scroll.getSelected())) {
+            String domain = scroll.getSelected();
             String res = null, def = null;
             for (ResourceLocation loc : data.get(domain).keySet()) {
                 if (def == null) {
@@ -242,14 +245,22 @@ public class ResourceSelection
         }
     }
 
-    /** Row text without the {@code §} formatting codes the scroll adds for display. */
-    protected String selectedName(GuiCustomScrollNop scroll) { return scroll.getNormalSelected().getString(); }
-
     @Override
     public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
         if (resource != null) {
             onClose();
             if (parent != null) { parent.initGui(); }
+        }
+    }
+
+    @Override
+    public void updateScreen() {
+        super.updateScreen();
+        if (!data.isEmpty()) { return; }
+        Map<String, TreeMap<ResourceLocation, Long>> cache = resourcesData.get(suffix);
+        if (cache != null && !cache.isEmpty()) {
+            data.putAll(cache);
+            initGui();
         }
     }
 
@@ -351,16 +362,16 @@ public class ResourceSelection
     private static void progressFile(Map<String, TreeMap<ResourceLocation, Long>> map, String suffix, File file) {
         try {
             if (!file.isDirectory() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip"))) {
-                ZipFile zip = new ZipFile(file);
-                try {
+                try (ZipFile zip = new ZipFile(file)) {
                     Enumeration<? extends ZipEntry> entries = zip.entries();
                     while (entries.hasMoreElements()) {
                         ZipEntry zipentry = entries.nextElement();
                         String entryName = zipentry.getName();
-                        if (entryName.contains("assets")) { addFile(map, suffix, entryName, zipentry.getSize()); }
+                        if (entryName.contains("assets")) {
+                            addFile(map, suffix, entryName, zipentry.getSize());
+                        }
                     }
                 }
-                finally { zip.close(); }
             } else if (file.isDirectory()) {
                 checkFolder(map, suffix, file);
             }
@@ -379,8 +390,7 @@ public class ResourceSelection
 
     private static void addFile(Map<String, TreeMap<ResourceLocation, Long>> map, String suffix, ResourceLocation location, long size) {
         if (!suffix.isEmpty() && !location.getResourcePath().toLowerCase().endsWith(suffix)) { return; }
-        TreeMap<ResourceLocation, Long> domain = map.get(location.getResourceDomain());
-        if (domain == null) { map.put(location.getResourceDomain(), domain = new TreeMap<>()); }
+        TreeMap<ResourceLocation, Long> domain = map.computeIfAbsent(location.getResourceDomain(), k -> new TreeMap<>());
         domain.putIfAbsent(location, size);
     }
 
@@ -412,17 +422,6 @@ public class ResourceSelection
         scanSources(map, suffix);
         data.putAll(map);
         resourcesData.put(suffix, map);
-    }
-
-    @Override
-    public void updateScreen() {
-        super.updateScreen();
-        if (!data.isEmpty()) { return; }
-        Map<String, TreeMap<ResourceLocation, Long>> cache = resourcesData.get(suffix);
-        if (cache != null && !cache.isEmpty()) {
-            data.putAll(cache);
-            initGui();
-        }
     }
 
     protected void addPath(Path path) {

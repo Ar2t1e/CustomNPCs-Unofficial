@@ -137,9 +137,9 @@ public class PlayerOverlayData implements IPlayerData {
     public ScreenSize getWindowSize() { return screenSize; }
 
     public boolean isShowElementType(RenderGameOverlayEvent.ElementType type) {
-        Boolean value = showElementTypes.get(RenderGameOverlayEvent.ElementType.ALL);
-        if (value == null || !value) { return false; }
-        value = showElementTypes.get(type);
+        if (showElementTypes.containsKey(RenderGameOverlayEvent.ElementType.ALL) &&
+                !showElementTypes.get(RenderGameOverlayEvent.ElementType.ALL)) { return false; }
+        Boolean value = showElementTypes.get(type);
         if (value == null) { value = showElementTypes.computeIfAbsent(type, k -> Boolean.TRUE); }
         return value;
     }

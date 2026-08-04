@@ -59,6 +59,7 @@ public class SpawnData extends WeightedRandom.Item {
 	}
 
 	// New from Unofficial (BetaZavr)
+	@SuppressWarnings("unused")
 	public void setClone(int tab, String name) { compoundEntity = new CloneSpawnData(tab, name).getCompound(); }
 
 	public @Nonnull NBTTagCompound getCompound() { return compoundEntity; }

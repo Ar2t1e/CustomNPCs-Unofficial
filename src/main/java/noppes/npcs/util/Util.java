@@ -2,6 +2,7 @@ package noppes.npcs.util;
 
 import java.awt.*;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
@@ -16,6 +17,7 @@ import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import net.minecraft.entity.*;
@@ -102,6 +104,7 @@ public class Util implements IMethods {
 	}};
 	public static final Util instance = new Util();
 	private static final Gson gson = new Gson();
+	protected static Field entityStorage;
 	public static Object temp;
 
 	static {
@@ -290,46 +293,63 @@ public class Util implements IMethods {
 		return Util.instance.getAngles3D(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ, target.posX, target.posY + target.getEyeHeight(), target.posZ);
 	}
 
-	public Entity getEntityByUUID(UUID uuid, World startWorld) {
-		if (startWorld == null) { return null; }
-		Entity e = getEntityInWorld(uuid, startWorld);
-		if (e == null) {
-			MinecraftServer server = CustomNpcs.Server != null ? CustomNpcs.Server
-					: startWorld.getMinecraftServer() != null ? startWorld.getMinecraftServer()
-							: CustomNpcs.proxy.getPlayer() != null && CustomNpcs.proxy.getPlayer().world != null
-									&& CustomNpcs.proxy.getPlayer().world.getMinecraftServer() != null
-											? CustomNpcs.proxy.getPlayer().world.getMinecraftServer()
-											: null;
-			if (server != null) {
-				for (WorldServer world : server.worlds) {
-					if (world.equals(startWorld)) {
-						continue;
+	@SuppressWarnings({ "JavaReflectionMemberAccess", "unchecked" })
+	public Entity getEntityByUUID(UUID uuid, World startWorld, boolean onlyInLevel) {
+		Entity entity = null;
+		if (startWorld != null) {
+			entity = getEntityInWorld(uuid, startWorld);
+			if (entity == null) {
+				if (entityStorage == null) {
+					try {
+						Class<?> clientWorld = Class.forName("net.minecraft.client.multiplayer.WorldClient");
+						try { entityStorage = clientWorld.getDeclaredField("field_73032_d"); } catch (Exception ignored) { }
+						if (entityStorage == null) {
+							try { entityStorage = clientWorld.getDeclaredField("entityList"); } catch (Exception ignored) { }
+						}
 					}
-					e = getEntityInWorld(uuid, world);
-					if (e != null) {
-						return e;
+					catch (Exception ignored) {}
+				}
+				if (entityStorage != null) {
+					try {
+						entityStorage.setAccessible(true);
+						entity = Iterables.find((Set<Entity>) entityStorage.get(startWorld),
+								e -> e.getUniqueID().equals(uuid), null);
+					}
+					catch (Exception ignored) {}
+				}
+			}
+			if (entity == null && !onlyInLevel) {
+				EntityPlayer player = CustomNpcs.proxy.getPlayer();
+				MinecraftServer server = CustomNpcs.Server != null ? CustomNpcs.Server
+						: startWorld.getMinecraftServer() != null ? startWorld.getMinecraftServer()
+						: player != null && player.world.getMinecraftServer() != null ? player.world.getMinecraftServer()
+						: null;
+				if (server != null) {
+					for (World w : server.worlds) {
+						if (w.provider.getDimension() != startWorld.provider.getDimension()) {
+							entity = getEntityInWorld(uuid, w);
+							if (entity != null) { break; }
+						}
 					}
 				}
 			}
 		}
-		return e;
+		return entity;
 	}
 
-	public Entity getEntityInWorld(UUID uuid, World world) {
-		for (Entity entity : world.loadedEntityList) {
-			if (entity.getUniqueID().equals(uuid)) {
-				return entity;
-			}
-		}
-		List<Entity> unloadedEntityList = ((IWorldMixin) world).getUnloadedEntityList();
-		if (unloadedEntityList != null) {
-			for (Entity entity : unloadedEntityList) {
-				if (entity.getUniqueID().equals(uuid)) {
-					return entity;
-				}
-			}
-		}
-		return null;
+	private Entity getEntityInWorld(UUID uuid, World world) {
+		if (uuid == null || world == null) { return null; }
+		Entity entity = world.getPlayerEntityByUUID(uuid);
+		return entity != null ? entity :
+				world.loadedEntityList.stream()
+				.filter(e -> uuid.equals(e.getUniqueID()))
+				.findFirst()
+				.orElseGet(() -> {
+					List<Entity> unloaded = ((IWorldMixin) world).getUnloadedEntityList();
+					return unloaded != null ? unloaded.stream()
+							.filter(e -> uuid.equals(e.getUniqueID()))
+							.findFirst().orElse(null) : null;
+				});
 	}
 
 	@Override
@@ -589,6 +609,7 @@ public class Util implements IMethods {
 		return directory.delete();
 	}
 
+	@SuppressWarnings("UnusedReturnValue")
 	public boolean removeItem(EntityPlayerMP player, ItemStack stack, boolean ignoreDamage, boolean ignoreNBT) {
 		if (player == null || stack == null || stack.isEmpty()) {
 			return false;

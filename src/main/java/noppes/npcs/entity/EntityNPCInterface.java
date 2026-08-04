@@ -112,10 +112,8 @@ import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.model.animation.AnimationFrameConfig;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.client.model.part.ModelPartConfig;
-import noppes.npcs.constants.EnumAnimationStages;
+import noppes.npcs.constants.*;
 import noppes.npcs.constants.EnumNPCAnimationType;
-import noppes.npcs.constants.EnumParts;
-import noppes.npcs.constants.EnumSeeTarget;
 import noppes.npcs.containers.NpcMiscInventory;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.FactionController;
@@ -1532,10 +1530,11 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	}
 
 	public boolean processInteract(@Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
-		if (!isServerWorld()) { return !isAttacking(); }
 		if (hand != EnumHand.MAIN_HAND) { return true; }
 		ItemStack stack = player.getHeldItem(hand);
         Item item = stack.getItem();
+		if (!isServerWorld()) { return item == CustomItems.moving || item instanceof INPCToolItem || !isAttacking(); }
+
         if (item == CustomItems.moving) {
             setAttackTarget(null);
 			ItemNpcMovingPath.register(this, stack, player);
@@ -1544,6 +1543,11 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		else if (item instanceof INPCToolItem) {
             setAttackTarget(null);
             setRevengeTarget(null);
+			if (item == CustomItems.wand && player instanceof EntityPlayerMP
+					&& (!CustomNpcs.OpsOnly || Objects.requireNonNull(player.getServer()).getPlayerList().canSendCommands(player.getGameProfile()))
+					&& CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.NPC_GUI)) {
+				NoppesUtilServer.sendOpenGui((EntityPlayerMP) player, EnumGuiType.MainMenuDisplay, this);
+			}
             return true;
         }
         if (!ais.aiDisabled && EventHooks.onNPCInteract(this, player)) { return false; }

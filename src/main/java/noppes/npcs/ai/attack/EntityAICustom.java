@@ -8,6 +8,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.constants.AiMutex;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.entity.EntityProjectile;
 import noppes.npcs.mixin.entity.ai.IEntityAITasksMixin;
 
 public abstract class EntityAICustom extends EntityAIBase {
@@ -98,7 +99,7 @@ public abstract class EntityAICustom extends EntityAIBase {
 	}
 
 	protected void tryMoveToTarget() {
-		if (!CustomNpcs.ShowCustomAnimation || !npc.animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.INIT, AnimationKind.INTERACT, AnimationKind.DIES)) {
+		if (!CustomNpcs.ShowCustomAnimation || !npc.animation.isAnimated(AnimationKind.INIT, AnimationKind.DIES)) {
 			double baseSpeed = npc.ais.canSprint ? 1.5d : 1.3d;
 			if (target.equals(npc.combatHandler.priorityTarget)) { baseSpeed = npc.ais.canSprint ? 1.6d : 1.4d; }
 			double dist = npc.getDistance(target.posX, target.posY, target.posZ);
@@ -111,7 +112,7 @@ public abstract class EntityAICustom extends EntityAIBase {
 
 	protected void tryToCauseDamage() {
 		if (isRanged) {
-			if (rangedTick > 0 || distance > range || !canSeeToAttack || npc.stats.ranged.getFireType() == 2) {
+			if (rangedTick > 0 || distance > range || (!canSeeToAttack && npc.stats.ranged.getFireType() != 2)) {
 				if (rangedTick == 0 && !canSeeToAttack) { rangedTick = 5; }
 				startRangedAttack = false;
 				return;
@@ -150,7 +151,7 @@ public abstract class EntityAICustom extends EntityAIBase {
 			boolean indirect = false;
 			switch (npc.stats.ranged.getFireType()) {
 				case 1: {
-					indirect = (distance > range / 2.0);
+					indirect = (distance < range / 2.0);
 					break;
 				}
 				case 2: {
@@ -170,6 +171,10 @@ public abstract class EntityAICustom extends EntityAIBase {
 	 */
 	@Override
 	public void updateTask() {
+		if (target != null && (!CustomNpcs.ShowCustomAnimation
+				|| !npc.animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.INIT, AnimationKind.INTERACT, AnimationKind.DIES))) {
+			npc.getLookHelper().setLookPositionWithEntity(target, 30.0f, npc.getVerticalFaceSpeed());
+		}
 		inMove = !npc.getNavigator().noPath();
 		tacticalRange = npc.ais.getTacticalRange();
 		distance = npc.getDistance(target.posX, target.getEntityBoundingBox().minY, target.posZ);
@@ -177,6 +182,8 @@ public abstract class EntityAICustom extends EntityAIBase {
 		if (isRanged) {
 			rangedTick--;
 			range = npc.stats.ranged.getRange();
+			double reach = EntityProjectile.maxBallisticRange(npc.stats.ranged.getSpeed() / 10.0d, npc.getEyeHeight());
+			if (reach > 0.0d && reach < range) { range = reach; }
 		} else {
 			meleeTick--;
 			range = npc.stats.melee.getRange();

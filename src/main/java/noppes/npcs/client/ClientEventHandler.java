@@ -714,6 +714,22 @@ public class ClientEventHandler extends Gui {
 		}
 	}
 
+	@SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
+	public static void onFogDensity(EntityViewRenderEvent.FogDensity event) {
+		Entity entity = event.getEntity();
+		World world = entity.world;
+		BlockPos pos = new BlockPos(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ);
+		IBlockState state = world.getBlockState(pos);
+
+		if (state.getBlock() instanceof CustomBlockLiquid) {
+			Fluid fluid = ((CustomBlockLiquid) state.getBlock()).getFluid();
+			if (fluid instanceof CustomFluid) {
+				event.setDensity(fluid.getDensity() / 1000.0f);
+				event.setCanceled(true);
+			}
+		}
+	}
+
 	private boolean isInRange(EntityPlayer player, double posX, double posY, double posZ) {
 		double y = Math.abs(player.posY - posY);
 		if (posY >= 0.0 && y > 16.0) { return false; }
@@ -2684,20 +2700,4 @@ public class ClientEventHandler extends Gui {
 		}
 	}
 
-	@SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
-	public static void onFogDensity(EntityViewRenderEvent.FogDensity event) {
-		LogWriter.info("[DEBUG] ");
-		Entity entity = event.getEntity();
-		World world = entity.world;
-		BlockPos pos = new BlockPos(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ);
-		IBlockState state = world.getBlockState(pos);
-
-		if (state.getBlock() instanceof CustomBlockLiquid) {
-			Fluid fluid = ((CustomBlockLiquid) state.getBlock()).getFluid();
-			if (fluid instanceof CustomFluid) {
-				event.setDensity(fluid.getDensity() / 1000.0f);
-				event.setCanceled(true);
-			}
-		}
-	}
 }

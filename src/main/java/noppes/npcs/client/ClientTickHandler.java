@@ -8,7 +8,6 @@ import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import noppes.npcs.*;
 import noppes.npcs.api.handler.data.IKeySetting;
-import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.*;
 import noppes.npcs.controllers.KeyController;
 import noppes.npcs.controllers.PlayerSkinController;
@@ -126,20 +125,23 @@ public class ClientTickHandler {
 			EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.TICK, new PlayerEvent.UpdateEvent((IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(mc.player)));
 		}
 		// sounds
-		try	{
-			for (MusicData md : new ArrayList<>(musics)) {
-				if (md != null) {
-					if (md.playing()) { md.createClientEvent(event, mc.player, 1); }
-					else if (md.stopped()) {
-						md.createClientEvent(event, mc.player, 2);
-						musics.remove(md);
-						if (mc.world != null && mc.getConnection() != null) { Packets.sendServer(new SPacketPlayerSound(false, md)); }
-					}
+		try {
+			Iterator<MusicData> it = musics.iterator();
+			while (it.hasNext()) {
+				MusicData md = it.next();
+				if (md == null) {
+					it.remove();
+					continue;
 				}
-				else { musics.remove(null); }
+				if (md.playing()) {
+					md.createClientEvent(event, mc.player, 1);
+				} else if (md.stopped()) {
+					md.createClientEvent(event, mc.player, 2);
+					it.remove();
+					if (mc.world != null && mc.getConnection() != null) { Packets.sendServer(new SPacketPlayerSound(false, md)); }
+				}
 			}
-		}
-		catch (Exception e) { musics.clear(); }
+		} catch (Exception ignored) { }
         // any 0.5 sec
 		if (ticks % 10 == 0) {
 			// markets update
@@ -179,10 +181,6 @@ public class ClientTickHandler {
 			}
 			// music bards
 			if (mc.player != null) { MusicController.Instance.checkBards(mc.player); }
-		}
-		// clear hash
-		if (ticks % 60 == 0) {
-			ModelBuffer.clear();
 		}
 		// mails
 		if (checkMails || CustomNpcs.MailWindow != -1 && ticks % 100 == 0) {

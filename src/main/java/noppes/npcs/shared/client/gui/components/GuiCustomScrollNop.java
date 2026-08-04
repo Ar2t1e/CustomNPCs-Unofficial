@@ -292,7 +292,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
                         (i == hover ? CustomNpcs.HoverColor.getRGB() : CustomNpcs.MainColor.getRGB()), true, false, customFont);
             }
             if (multipleSelection && selectedList.contains(i) ||
-                    hover == i ||
+                    isSimpleSelect && hover == i ||
                     !multipleSelection && selected == i) {
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(left - 2.0f, top - 3.0f, 0.0f);
@@ -581,7 +581,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
 
     public List<String> getList() {
         List<String> retList = new ArrayList<>();
-        for (Component line : list) { retList.add(line.getString()); }
+        for (Component line : list) { retList.add(line.getFormattedText()); }
         return retList;
     }
 
