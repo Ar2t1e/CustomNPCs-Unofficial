@@ -675,7 +675,7 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         selected = i < 0 ? -1 : i >= list.size() ? list.size() - 1 : i;
     }
 
-    public GuiCustomScrollNop setSelect(int index) {
+    public GuiCustomScrollNop setSelected(int index) {
         if (index < 0) { selected = -1; }
         else if (index < list.size()) { selected = index; }
         return this;

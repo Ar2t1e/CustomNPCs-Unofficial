@@ -55,10 +55,10 @@ public class GuiNPCDialogNpcOptions
 		}
 		if (scroll == null) { scroll = addScroll(0).setSize(210, 196); }
 		scroll.setUnsortedList(dialogs);
-		if (selectedSlot >= 0 && data.containsKey(selectedSlot)) { scroll.setSelect(selectedSlot); }
+		if (selectedSlot >= 0 && data.containsKey(selectedSlot)) { scroll.setSelected(selectedSlot); }
 		else {
 			selectedSlot = -1;
-			scroll.setSelect(-1);
+			scroll.setSelected(-1);
 		}
 		add(scroll.setPos(guiLeft + 5, guiTop + 14));
 		// add

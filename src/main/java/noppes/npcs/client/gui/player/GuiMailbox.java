@@ -357,7 +357,7 @@ public class GuiMailbox extends GuiNPCInterface
 							}
 							Packets.sendServer(new SPacketPlayerMailOpen(false, false, selected.timeWhenReceived, selected.sender));
 							selected = null;
-							scroll.setSelect(-1);
+							scroll.setSelected(-1);
 						}
 						GlStateManager.disableBlend();
 						GlStateManager.popMatrix();

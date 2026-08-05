@@ -1,7 +1,6 @@
 package noppes.npcs.client.gui.global;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -9,7 +8,6 @@ import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.gui.select.SubGuiColorSelector;
 import noppes.npcs.client.gui.SubGuiNpcFactionOptions;
@@ -199,7 +197,7 @@ public class GuiNpcManageFactions
 				break;
 			} // select frend factions
 			case 8: {
-				setSubGui(new GuiTextAreaScreen(0, ITextComponent.Serializer.componentToJson(faction.description)));
+				setSubGui(new GuiTextAreaScreen(0, faction.description.getFormattedText()));
 				break;
 			} // description set
 			case 9: {
@@ -349,7 +347,7 @@ public class GuiNpcManageFactions
 			initGui();
 		}
 		if (subgui instanceof GuiTextAreaScreen) {
-			faction.description = Component.jsonToComponent(((GuiTextAreaScreen) subgui).text).getParent();
+			faction.description = Component.translatable(((GuiTextAreaScreen) subgui).text).getParent();
 		}
 		else if (subgui instanceof SubGuiColorSelector) {
 			faction.color = ((SubGuiColorSelector) subgui).color;

@@ -3,7 +3,6 @@ package noppes.npcs.ai.selector;
 import com.google.common.base.Predicate;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
@@ -28,6 +27,7 @@ public class NPCAttackSelector implements Predicate<EntityLivingBase> {
 				entity != npc &&
 				npc.isInRange(entity, npc.stats.aggroRange) &&
 				entity.getHealth() >= 0.1F) {
+			if (npc.aiAttackTarget != null && !npc.aiAttackTarget.canNewAttack()) { return false; }
 			if (npc.ais.directLOS != EnumSeeTarget.NONE && !npc.canSee(entity)) { return false; }
 			if (!npc.isFollower() && npc.ais.shouldReturnHome()) {
 				int allowedDistance = npc.stats.aggroRange * 2;
@@ -57,10 +57,10 @@ public class NPCAttackSelector implements Predicate<EntityLivingBase> {
 				return false;
 			}
 			if (entity instanceof EntityNPCInterface) {
-				if (((EntityNPCInterface) entity).isKilled()) { return false; }
-				if (npc.advanced.attackOtherFactions) { return npc.faction.isAggressiveToNpc((EntityNPCInterface) entity); }
+				EntityNPCInterface cNpc = (EntityNPCInterface) entity;
+				if (!cNpc.isKilled() && npc.advanced.attackOtherFactions) { return npc.faction.isAggressiveToNpc(cNpc); }
 			}
-			return npc.aiAttackTarget == null || npc.aiAttackTarget.canNewAttack();
+			return false;
 		}
 		return false;
 	}

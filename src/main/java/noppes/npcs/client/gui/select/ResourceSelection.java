@@ -171,7 +171,7 @@ public class ResourceSelection
             }
             list.add(0, back);
             scroll.setUnsortedList(list).setSuffixes(suffixes);
-            if (scroll.getSelectedIndex() != pos) { scroll.setSelect(pos); }
+            if (scroll.getSelectedIndex() != pos) { scroll.setSelected(pos); }
             domain = Component.empty().append(Component.literal(selectDir.getResourceDomain() + "/" + path));
             while (font.getStringWidth(domain.getFormattedText()) > 250 && path.contains("/")) {
                 path = path.substring(path.indexOf("/") + 1);

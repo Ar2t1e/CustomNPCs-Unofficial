@@ -12,6 +12,7 @@ import noppes.npcs.packets.server.SPacketDeadLootsGet;
 import noppes.npcs.packets.server.SPacketDeadLootsOpen;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiLabel;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IScrollData;
 
@@ -38,7 +39,6 @@ public class GuiNPCDeadInventory extends GuiContainerNPCInterface<ContainerDead>
 
     @Override
     public void drawDefaultBackground() {
-        super.drawDefaultBackground();
         if (npc.isEntityAlive()) { onClose(); }
         int size = menu.size - 1;
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -75,10 +75,13 @@ public class GuiNPCDeadInventory extends GuiContainerNPCInterface<ContainerDead>
         for (Slot slot : menu.inventorySlots) { drawTexturedModalRect(slot.xPos, slot.yPos, 0, 0, 18, 18); }
         GlStateManager.popMatrix();
         // title
-        Component textComponent = Component.translatable("inv.loot.0", npc.getName());
-        if (menu.pos > -1) { textComponent.append(Component.translatable("inv.loot.1", menu.playerParent)); }
-        String customTitle = textComponent.getFormattedText();
-        font.drawString(customTitle, (width - font.getStringWidth(customTitle)) / 2, guiTop + 24, CustomNpcResourceListener.DefaultTextColor);
+        GuiLabel label = getLabel(0);
+        if (label != null) {
+            Component textComponent = Component.translatable("inv.loot.0", npc.getName());
+            if (menu.pos > -1) { textComponent.append(Component.translatable("inv.loot.1", menu.playerParent)); }
+            label.setMessage(textComponent);
+            label.setSize(xSize - 16, 10);
+        }
     }
 
     @Override
@@ -92,10 +95,13 @@ public class GuiNPCDeadInventory extends GuiContainerNPCInterface<ContainerDead>
         super.initGui();
         int size = menu.size - 1;
         if (size > 0) { guiTop -= size * 9; }
+        addLabel(0, guiLeft + 8, guiTop + 24, "inv.loot.players")
+                .setSize(xSize - 16, 10)
+                .setColor(CustomNpcResourceListener.DefaultTextColor);
         if (player.isCreative()) {
             if (scroll == null) { scroll = addScroll(0).setSize(100, ySize - 50); }
             add(scroll.setPos(guiLeft + xSize - 1, guiTop + 35));
-            addLabel(0, guiLeft + xSize, guiTop + 25, "inv.loot.players");
+            addLabel(1, guiLeft + xSize, guiTop + 24, "inv.loot.players");
         }
     }
 

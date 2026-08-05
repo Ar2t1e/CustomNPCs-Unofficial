@@ -505,8 +505,10 @@ public class ClientEventHandler extends Gui {
 			renderCompassOverlay(event.getResolution());
 			renderNbtBookOverlay(event.getResolution());
 		}
-		event.setCanceled(mc.currentScreen instanceof GuiOpenCase ||
-				!CustomNpcs.proxy.getPlayerData(mc.player).overlay.isShowElementType(event.getType()));
+		if (mc != null) {
+			event.setCanceled(mc.currentScreen instanceof GuiOpenCase ||
+					!CustomNpcs.proxy.getPlayerData(mc.player).overlay.isShowElementType(event.getType()));
+		}
 	}
 
 	/** Any Regions */
@@ -597,7 +599,9 @@ public class ClientEventHandler extends Gui {
 				float w = e.width / 2;
 				if (e.getDistance(mc.player) - w <= 5.0) {
 					AxisAlignedBB col= e.getCollisionBoundingBox();
-					if (col == null) { col = new AxisAlignedBB(-w, 0.0, -w, w, e.height, w); }
+					if (col == null || (e instanceof EntityNPCInterface && ((EntityNPCInterface) e).display.getHitboxState() == 2)) {
+						col = new AxisAlignedBB(-w, 0.0, -w, w, e.height, w);
+					}
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(e.posX, e.posY,  e.posZ);
 					RenderGlobal.drawSelectionBoundingBox(col,  0.8f, 0.8f, 0.8f, 0.8f);
@@ -1180,13 +1184,8 @@ public class ClientEventHandler extends Gui {
 		tessellator = Tessellator.getInstance();
 		buffer = tessellator.getBuffer();
 		buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-		if (type) {
-			r = 0.75f;
-			g = 0.0f;
-		} else {
-			r = 0.0f;
-			g = 0.0f;
-		}
+		if (type) { r = 0.75f; g = 0.0f; }
+		else { r = 0.0f; g = 0.0f; }
 		b = 0.75f;
 		pre = null;
 		for (int i = 0; i < list.size(); i++) {
@@ -1246,6 +1245,10 @@ public class ClientEventHandler extends Gui {
 		GlStateManager.disableBlend();
 		GlStateManager.popMatrix();
 		// Block Poses
+		int guiSelect = -1;
+		if (mc.currentScreen instanceof GuiNpcPather && ((GuiNpcPather) mc.currentScreen).scroll != null) {
+			guiSelect = ((GuiNpcPather) mc.currentScreen).scroll.getSelectedIndex();
+		}
 		for (int i = 0; i < list.size(); i++) {
 			if (i == 0) {
 				r = 0.8f;
@@ -1266,9 +1269,12 @@ public class ClientEventHandler extends Gui {
 			GlStateManager.disableTexture2D();
 			GlStateManager.depthMask(false);
 			GlStateManager.translate(pos[0] - dx + 0.5d, pos[1] - dy + 0.5d + yo, pos[2] - dz + 0.5d);
-			double m = i == 0 ? -0.125d : -0.075d;
-			double n = i == 0 ? 0.125d : 0.075d;
-			RenderGlobal.drawSelectionBoundingBox((new AxisAlignedBB(m, m, m, n, n, n)), r, g, b, 1.0f);
+			double s = i == 0 ? 0.125d : 0.075d;
+			RenderGlobal.drawSelectionBoundingBox((new AxisAlignedBB(-s, -s, -s, s, s, s)), r, g, b, 1.0f);
+			if (guiSelect == i) {
+				s *= 1.75d;
+				RenderGlobal.drawSelectionBoundingBox((new AxisAlignedBB(-s, -s, -s, s, s, s)), 0.0f, 1.0f, 1.0f, 0.8f);
+			}
 			GlStateManager.depthMask(true);
 			GlStateManager.enableTexture2D();
 			GlStateManager.disableBlend();
@@ -2046,7 +2052,7 @@ public class ClientEventHandler extends Gui {
 		PlayerCompassData compassData = playerData.compass;
 
 		if (CustomNpcs.TypeShowQuestCompass == 4 || !compassData.getShowOfPlayer()) return;
-		if (CustomNpcs.HideCompassInFirstPerson) return;
+		if (mc.gameSettings.thirdPersonView == 0 && CustomNpcs.HideCompassInFirstPerson) return;
 
 		// Compass requirement check
 		boolean isShow = true;

@@ -1,7 +1,6 @@
 package noppes.npcs.shared.client.gui.components.custom;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
@@ -9,7 +8,6 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.gui.ICustomGuiComponent;

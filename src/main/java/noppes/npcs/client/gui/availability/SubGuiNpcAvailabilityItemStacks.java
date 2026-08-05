@@ -205,7 +205,7 @@ public class SubGuiNpcAvailabilityItemStacks
     public void scrollClicked(GuiCustomScrollNop scroll) {
         if (!dataIDs.containsKey(scroll.getNormalSelected())) { return; }
         cont.slot.setSlotIndex(dataIDs.get(scroll.getNormalSelected()), true);
-        scroll.setSelect(cont.slot.getSlotIndex());
+        scroll.setSelected(cont.slot.getSlotIndex());
         Packets.sendServer(new SPacketSetSlotIndex(cont.slot.getSlotIndex()));
         initGui();
     }

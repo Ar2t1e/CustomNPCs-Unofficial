@@ -206,8 +206,8 @@ public class GuiNpcHealer
 					int id = potions.get(displays_0.get(options.getNormalSelected()));
 					HealerSettings hs = new HealerSettings(id, range, speed, amplifier, type);
 					job.effects.put(id, hs);
-					options.setSelect(-1);
-					configured.setSelect(-1);
+					options.setSelected(-1);
+					configured.setSelected(-1);
 					initGui();
 				}
 				break;
@@ -215,8 +215,8 @@ public class GuiNpcHealer
 			case 12: {
 				if (displays_1.containsKey(configured.getNormalSelected())) {
 					job.effects.remove(potions.get(displays_1.get(configured.getNormalSelected())));
-					options.setSelect(-1);
-					configured.setSelect(-1);
+					options.setSelected(-1);
+					configured.setSelected(-1);
 					initGui();
 				}
 				break;
@@ -229,15 +229,15 @@ public class GuiNpcHealer
 					HealerSettings hs = new HealerSettings(id, range, speed, amplifier, type);
 					job.effects.put(id, hs);
 				}
-				options.setSelect(-1);
-				configured.setSelect(-1);
+				options.setSelected(-1);
+				configured.setSelected(-1);
 				initGui();
 				break;
 			} // >>
 			case 14: {
 				job.effects.clear();
-				options.setSelect(-1);
-				configured.setSelect(-1);
+				options.setSelected(-1);
+				configured.setSelected(-1);
 				initGui();
 				break;
 			} // <<
@@ -269,8 +269,8 @@ public class GuiNpcHealer
 			int id = potions.get(displays_0.get(options.getNormalSelected()));
 			HealerSettings hs = new HealerSettings(id, range, speed, amplifier, type);
 			job.effects.put(id, hs);
-			options.setSelect(-1);
-			configured.setSelect(-1);
+			options.setSelected(-1);
+			configured.setSelected(-1);
 			initGui();
 		}
 		else {

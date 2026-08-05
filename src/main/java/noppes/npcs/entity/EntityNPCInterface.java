@@ -209,7 +209,6 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	public ICustomNpc<?> wrappedNPC;
 	public boolean updateAI = true;
 	private boolean isOldSneaking;
-	public final Map<Entity, double[]> hitboxRiding = new HashMap<>();
 
 	// New from Unofficial (GoodBird)
 	public final HashSet<Integer> tracking = new HashSet<>();
@@ -217,6 +216,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 
 	// New from Unofficial (BetaZavr)
 	public static final DataParameter<Float> AimRotationYaw = EntityDataManager.createKey(EntityNPCInterface.class, DataSerializers.FLOAT); // fix bug while aiming
+	public final Map<Entity, double[]> hitboxRiding = new HashMap<>();
 	protected long initTime;
 	public DataAnimation animation;
 	public EntityAICustom aiAttackTarget = null;
@@ -1242,52 +1242,26 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 
 	@SuppressWarnings("ConstantConditions")
 	public void onLivingUpdate() {
-		if (CustomNpcs.FreezeNPCs) { return; }
-		if (!hitboxRiding.isEmpty()) {
-			if (display.getHitboxState() != 2 || isKilled()) { hitboxRiding.clear(); }
-			else {
-				for (Map.Entry<Entity, double[]> entry : new ArrayList<>(hitboxRiding.entrySet())) {
-					Entity entity = entry.getKey();
-					if (entity instanceof EntityPlayer && isServerWorld()) { continue; }
-					boolean isSetPos = !isPassenger(entity) && entity.motionY <= 0.0f;
-					if (isSetPos) {
-						AxisAlignedBB npcBB = getEntityBoundingBox();
-						AxisAlignedBB entityBB = entity.getEntityBoundingBox();
-						if (!getNavigator().noPath()) { npcBB = npcBB.grow(width * 0.25, 0.0, width * 0.25); }
-						isSetPos = npcBB.minX < entityBB.maxX &&
-								npcBB.maxX > entityBB.minX &&
-								npcBB.minZ < entityBB.maxZ &&
-								npcBB.maxZ > entityBB.minZ;
-					}
-					if (isSetPos) {
-						double[] addPos = entry.getValue();
-						if (motionY <= 0.0f) {
-							addPos[0] -= entity.motionX * 1.5;
-							addPos[1] -= entity.motionZ * 1.5;
-							if (motionX != 0.0f || motionZ != 0.0f) {
-								entity.motionX *= 0.75;
-								entity.motionZ *= 0.75;
-							}
-						}
-						double x = posX - addPos[0];
-						double y = posY + height * 1.025;
-						double z = posZ - addPos[1];
-						entity.onGround = true;
-						entity.setPosition(x, y, z);
-						entity.velocityChanged = true;
-						if (entity instanceof EntityPlayer) {
-							CustomNpcs.proxy.updatePlayerPos();
-						}
-					}
-					else {
-						entity.motionX += motionX * 1.1;
-						entity.motionY += motionY;
-						entity.motionZ += motionZ * 1.1;
-						hitboxRiding.remove(entity);
+		// Solid hitbox: auto-detect entities that have landed on top of this NPC
+		if (display.getHitboxState() == 2 && !isKilled() && ticksExisted % 2 == 0) {
+			AxisAlignedBB npcBB = getEntityBoundingBox();
+			for (Entity entity : world.getEntitiesWithinAABBExcludingEntity(this,
+					npcBB.grow(0.25D, 0.5D, 0.25D).offset(0.0D, 0.25D, 0.0D))) {
+				if (entity == this || hitboxRiding.containsKey(entity) || isPassenger(entity) || !entity.canBeCollidedWith()) continue;
+				AxisAlignedBB entityBB = entity.getEntityBoundingBox();
+				boolean onTop = entityBB.minY >= npcBB.maxY - 0.25D && entityBB.minY <= npcBB.maxY + 0.25D;
+				if (onTop) {
+					if (npcBB.minX < entityBB.maxX && npcBB.maxX > entityBB.minX &&
+							npcBB.minZ < entityBB.maxZ && npcBB.maxZ > entityBB.minZ) {
+						hitboxRiding.put(entity, new double[] { posX - entity.posX, posZ - entity.posZ });
 					}
 				}
 			}
-		} // custom mechanics for transporting entities on yourself
+		}
+		if (CustomNpcs.FreezeNPCs) { return; }
+		if (display.getHitboxState() != 2 || isKilled()) {
+			if (!hitboxRiding.isEmpty()) { hitboxRiding.clear(); }
+		}
 		if (isAIDisabled()) { super.onLivingUpdate(); }
 		else {
 			++totalTicksAlive;
@@ -1451,7 +1425,55 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 
 	@Override
 	public void onUpdate() {
+		double prevTickX = posX;
+		double prevTickY = posY;
+		double prevTickZ = posZ;
 		super.onUpdate();
+		double dx = posX - prevTickX;
+		double dy = posY - prevTickY;
+		double dz = posZ - prevTickZ;
+
+		// Solid hitbox: move entities that are standing on top of this NPC by the same delta
+		if (display.getHitboxState() == 2 && !isKilled() && (dx != 0.0D || dy != 0.0D || dz != 0.0D)) {
+			for (Iterator<Map.Entry<Entity, double[]>> it = hitboxRiding.entrySet().iterator(); it.hasNext(); ) {
+				Map.Entry<Entity, double[]> entry = it.next();
+				Entity entity = entry.getKey();
+				if (entity == null || entity.isDead ||
+						(entity instanceof EntityPlayerMP && ((EntityPlayerMP) entity).connection == null)) {
+					it.remove();
+					continue;
+				}
+
+				AxisAlignedBB npcBB = getEntityBoundingBox();
+				AxisAlignedBB entityBB = entity.getEntityBoundingBox();
+
+				// Lenient bounds so entities don't fall off at edges while the NPC is moving
+				double grow = (Math.abs(motionX) > 0.001D || Math.abs(motionZ) > 0.001D) ? 0.25D : 0.0D;
+				boolean overlapX = npcBB.minX - grow < entityBB.maxX && npcBB.maxX + grow > entityBB.minX;
+				boolean overlapZ = npcBB.minZ - grow < entityBB.maxZ && npcBB.maxZ + grow > entityBB.minZ;
+				boolean onTop = entityBB.minY >= npcBB.maxY - 0.6D && entityBB.minY <= npcBB.maxY + 0.6D;
+
+				if (overlapX && overlapZ && onTop && !isPassenger(entity)) {
+					// Move entity by the exact same delta as the NPC
+					double newX = entity.posX + dx;
+					double newY = entity.posY + dy;
+					double newZ = entity.posZ + dz;
+
+					// If the NPC moved down, keep the entity on top of the hitbox
+					if (dy < 0.0D || newY < npcBB.maxY) { newY = npcBB.maxY + 0.001D; }
+
+					entity.motionY = Math.max(entity.motionY, 0.0D);
+					entity.onGround = true;
+					entity.fallDistance = 0.0F;
+					entity.setPosition(newX, newY, newZ);
+					entity.velocityChanged = true;
+					entry.setValue(new double[] { posX - entity.posX, posZ - entity.posZ });
+				} else {
+					it.remove();
+				}
+			}
+		}
+
 		if (animation != null) { animation.updateTime(); }
 		if (!ais.aiDisabled && ticksExisted % 10 == 0) {
 			// fixing NPC data leak when initializing from the server
@@ -2225,21 +2247,12 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 
 	public float getEyeHeight() { return eyeHeight; }
 
-	@SuppressWarnings("unused")
-	public void addRidingEntity(Entity entity) {
-		if (!hitboxRiding.containsKey(entity) && display.getHitboxState() == 2 && !isPassenger(entity)) {
-			if (Math.abs(entity.getEntityBoundingBox().minY - getEntityBoundingBox().maxY) < 0.1) {
-				hitboxRiding.put(entity, new double[] { posX - entity.posX, posZ - entity.posZ });
-			}
-		}
-	}
-
+	@Override
 	public void fall(float distance, float modifier) {
 		for (Entity entity : hitboxRiding.keySet()) { entity.fall(distance, modifier); }
 		if (!stats.noFallDamage || (role.getEnumType() == RoleType.FOLLOWER && role.isFollowing())) { return; }
 		super.fall(distance, modifier);
 	}
-
 
 	public boolean canSee(Entity entity) { return getEntitySenses().canSee(entity); }
 
@@ -2335,16 +2348,17 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	}
 
 	// New from Unofficial (BetaZavr)
-	@Nullable
-	public AxisAlignedBB getCollisionBoundingBox() {
+	@Override
+	public @Nullable AxisAlignedBB getCollisionBoundingBox() {
 		if (display.getHitboxState() == 2) { return getEntityBoundingBox(); }
 		return null;
 	}
 
+	@Override
 	public AxisAlignedBB getCollisionBox(@Nonnull Entity entity) {
-		/*if (display.getHitboxState() == 2 && !isPassenger(entity)) {
+		if (display.getHitboxState() == 2 && !isPassenger(entity)) {
 			return entity.getEntityBoundingBox();
-		}*/
+		}
 		return null;
 	}
 

@@ -229,7 +229,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 						data.clear();
 						selected = Component.empty();
 						selectedPlayer = Component.empty();
-						scroll.setSelect(-1);
+						scroll.setSelected(-1);
 						initButtons();
 					}
 					NoppesUtil.openGUI(player, this);
@@ -265,7 +265,7 @@ public class GuiNpcManagePlayerData extends GuiNPCInterface2
 					data.clear();
 					selected = Component.empty();
 					selectedPlayer = Component.empty();
-					scroll.setSelect(-1);
+					scroll.setSelected(-1);
 					selection = EnumPlayerData.Players;
 					initButtons();
 				}

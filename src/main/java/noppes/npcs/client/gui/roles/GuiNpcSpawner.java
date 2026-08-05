@@ -53,24 +53,24 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 		super.initGui();
 		if (aliveScroll == null) { aliveScroll = addScroll(1).setSize(172, 101); }
 		if (!isDead) {
-			if (slot >= 0 && slot < aliveScroll.getList().size()) { aliveScroll.setSelect(slot); }
+			if (slot >= 0 && slot < aliveScroll.getList().size()) { aliveScroll.setSelected(slot); }
 			else {
 				slot = -1;
-				aliveScroll.setSelect(-1);
+				aliveScroll.setSelected(-1);
 				select = null;
 			}
 		}
-		else { aliveScroll.setSelect(-1); }
+		else { aliveScroll.setSelected(-1); }
 		add(aliveScroll.setPos(guiLeft + 5, guiTop + 14));
 		if (deadScroll == null) { deadScroll = addScroll(0).setSize(172, 101); }
 		if (isDead) {
-			if (slot >= 0 && slot < deadScroll.getList().size()) { deadScroll.setSelect(slot); }
+			if (slot >= 0 && slot < deadScroll.getList().size()) { deadScroll.setSelected(slot); }
 			else {
 				slot = -1;
-				deadScroll.setSelect(-1);
+				deadScroll.setSelected(-1);
 				select = null;
 			}
-		} else { deadScroll.setSelect(-1); }
+		} else { deadScroll.setSelected(-1); }
 		add(deadScroll.setPos(guiLeft + 180, guiTop + 14));
 		addLabel(1, guiLeft + 6, guiTop + 4, "spawner.list.0")
 				.setHoverTexts(Component.translatable("spawner.hover.list.0")
@@ -354,7 +354,7 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 	public void scrollClicked(GuiCustomScrollNop scroll) {
 		slot = scroll.getSelectedIndex();
 		isDead = scroll.id == 0;
-		(isDead ? aliveScroll : deadScroll).setSelect(-1);
+		(isDead ? aliveScroll : deadScroll).setSelected(-1);
 		initGui();
 	}
 
@@ -393,11 +393,11 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 		if (compound.hasKey("SetDead", 1)) {
 			isDead = compound.getBoolean("SetDead");
 			slot = -1;
-			(isDead ? deadScroll : aliveScroll).setSelect(slot);
+			(isDead ? deadScroll : aliveScroll).setSelected(slot);
 		}
 		if (compound.hasKey("SetPos", 3)) {
 			slot = compound.getInteger("SetPos");
-			(isDead ? deadScroll : aliveScroll).setSelect(slot);
+			(isDead ? deadScroll : aliveScroll).setSelected(slot);
 		}
 		initGui();
 	}

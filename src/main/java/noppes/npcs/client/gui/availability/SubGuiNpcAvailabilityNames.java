@@ -93,7 +93,7 @@ public class SubGuiNpcAvailabilityNames
 		}
 		scroll.setNormalList(new ArrayList<>(data.keySet()));
 		if (isSelect) { scroll.setSelected(select); }
-		else { scroll.setSelect(-1); }
+		else { scroll.setSelected(-1); }
 		add(scroll.setPos(guiLeft + 6, guiTop + 14));
 		int p = 0;
 		if (isSelect) { p = data.get(select).ordinal(); }

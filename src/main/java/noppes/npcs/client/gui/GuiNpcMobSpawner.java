@@ -56,7 +56,7 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
 		guiTop += 10;
 		if (scroll == null) { scroll = addScroll(0).setSize(165, 210); }
 		else { scroll.clear();}
-		add(scroll.setPos(guiLeft + 4, guiTop + 4).setSelect(sel));
+		add(scroll.setPos(guiLeft + 4, guiTop + 4).setSelected(sel));
 		// clones
 		GuiMenuTopButton button = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones");
 		button.active = showingClones == 0;
@@ -158,13 +158,13 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
 		List<String> list = new ArrayList<>();
 		for (int i = 0; i < nbtList.tagCount(); ++i) { list.add(nbtList.getStringTagAt(i)); }
 		scroll.setList(list)
-				.setSelect(sel);
+				.setSelected(sel);
 	}
 
 	private void showEntities() {
 		list.clear();
 		list.addAll(EntityUtil.getAllEntities(minecraft.world, false).keySet());
-		scroll.setList(list).setSelect(sel);
+		scroll.setList(list).setSelected(sel);
 	}
 
 	private void showClones() {
@@ -173,7 +173,7 @@ public class GuiNpcMobSpawner extends GuiNPCInterface implements IGuiData, ICust
 		} else {
 			list.clear();
 			list.addAll(ClientCloneController.Instance.getClones(activeTab));
-			scroll.setList(list).setSelect(sel);
+			scroll.setList(list).setSelected(sel);
 			resetEntity();
 		}
 	}

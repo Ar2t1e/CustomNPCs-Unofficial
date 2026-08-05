@@ -127,7 +127,7 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 				npcIn.lookPos[0] = ValueUtil.correctInt(mouseX - guiLeft - 350, -45, 45);
 				npcIn.lookPos[1] = ValueUtil.correctInt((mouseY - guiTop - 135) * -1, -45, 45);
 			} else {
-				npcIn.lookPos[0] = ValueUtil.correctInt(mouseX - guiLeft - 340, -45, 45);
+				npcIn.lookPos[0] = ValueUtil.correctInt(mouseX - guiLeft - xOffset - 200, -45, 45);
 				npcIn.lookPos[1] = ValueUtil.correctInt((mouseY - guiTop - 100) * -1, -45, 45);
 			}
 			npcIn.display.setShowName(1);
@@ -136,12 +136,13 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 		if (this instanceof GuiCreationParts && ((GuiCreationParts) this).getPart() instanceof GuiPartEyes) {
 			showEntity.ticksExisted = player.ticksExisted;
 			GlStateManager.pushMatrix();
-			GlStateManager.translate(0.0f, 0.0f, -300.0f);
-			drawNpc(showEntity, xOffset + 210, 425, 6.0f, 0, 0, 0);
+			GlStateManager.translate(0.0f, 0.0f, -70.0f);
+			drawNpc(showEntity, xOffset + 210, 425, 6.0f, 0, 0, 1);
 			GlStateManager.popMatrix();
 		}
 		else {
-			drawNpc(showEntity, xOffset + 200, 200, 2.0f, (int) (GuiCreationScreenInterface.rotation * 360.0f - 180.0f), 0, 1);
+			drawNpc(showEntity, xOffset + 200, 200, 2.0f, (int) (GuiCreationScreenInterface.rotation * 360.0f - 180.0f),
+					0,  this instanceof GuiCreationScale ? 1 : 0);
 		}
 	}
 
@@ -216,7 +217,7 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 	public void mouseDragged(GuiSliderNop slider) {
 		if (slider.id == 500) {
 			GuiCreationScreenInterface.rotation = slider.sliderValue;
-			slider.setString("" + (GuiCreationScreenInterface.rotation * 360.0f));
+			slider.setString(Math.round((GuiCreationScreenInterface.rotation * 3600.0f)) / 10.0f);
 		}
 	}
 

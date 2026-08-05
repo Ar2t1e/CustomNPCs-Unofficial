@@ -7,6 +7,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.NBTTags;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumMenuType;
@@ -17,14 +18,17 @@ import noppes.npcs.packets.server.SPacketMenuGet;
 import noppes.npcs.packets.server.SPacketMenuSave;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
 public class GuiNpcPather
 		extends GuiNPCInterface
-		implements IGuiData {
+		implements IGuiData, ICustomScrollListener, ITextfieldListener {
 
-	protected GuiCustomScrollNop scroll;
 	protected final DataAI ai;
+	public GuiCustomScrollNop scroll;
 
 	public GuiNpcPather(EntityNPCInterface npc) {
 		super();
@@ -62,17 +66,41 @@ public class GuiNpcPather
 			}
 		}
 		super.initGui();
+		List<int[]> path = ai.getMovingPath();
 		List<Component> list = new ArrayList<>();
-		for (int[] arr : ai.getMovingPath()) { list.add(Component.literal("x:" + arr[0] + " y:" + arr[1] + " z:" + arr[2])); }
-		if (scroll == null) { scroll = addScroll(0).setSize(160, 177); }
-		add(scroll.setUnsortedList(list).setPos(guiLeft + 7, guiTop + 16).setSelect(sel));
-		int y = guiTop + 40 + scroll.height;
-		addButton(0, guiLeft + 7, y, "gui.down")
-				.setSize(52, 20);
-		addButton(1, guiLeft + 61, y, "gui.up")
-				.setSize(52, 20);
-		addButton(2, guiLeft + 115, y, "selectServer.delete")
-				.setSize(52, 20);
+		int i = 0;
+		int[] pos = new int[] { 0, 0, 0 };
+		for (int[] arr : path) {
+			list.add(Component.empty()
+					.append(Component.literal(i+": ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("[" + arr[0] + ", " + arr[1] + ", " + arr[2] + "]").withStyle(TextFormatting.RESET)));
+			if (scroll != null && scroll.getSelectedIndex() == i) { pos = arr; }
+			i++;
+		}
+		if (scroll == null) { scroll = addScroll(0).setSize(166, 187).disabledSearch(); }
+		int x0 = guiLeft + 5;
+		add(scroll.setUnsortedList(list).setPos(x0, guiTop + 16).setSelected(sel));
+		int y = guiTop + 19 + scroll.height;
+		int wb = (scroll.width - 4) / 3;
+		int x1 = x0 + 2 + wb;
+		int x2 = x1 + 2 + wb;
+		int lId = 0;
+		addLabel(lId++, x0, y + 2, "X:")
+				.setSize(12, 10);
+		addTextField(0, x0 + 11, y, wb - 12, 14, pos[0]);
+		addLabel(lId++, x1, y + 2, "Y:")
+				.setSize(12, 10);
+		addTextField(1, x1 + 11, y, wb - 12, 14, pos[1]);
+		addLabel(lId, x2, y + 2, "Z:")
+				.setSize(12, 10);
+		addTextField(2, x2 + 11, y, wb - 12, 14, pos[2]);
+		y += 17;
+		addButton(0, x0, y, "gui.down")
+				.setSize(wb, 16);
+		addButton(1, x1, y, "gui.up")
+				.setSize(wb, 16);
+		addButton(2, x2, y, "selectServer.delete")
+				.setSize(wb, 16);
 	}
 
 	@Override
@@ -109,7 +137,7 @@ public class GuiNpcPather
 					List<int[]> list = ai.getMovingPath();
 					if (list.size() <= 1) { return; }
 					list.remove(scroll.getSelectedIndex());
-					scroll.setSelect(scroll.getSelectedIndex() - 1);
+					scroll.setSelected(scroll.getSelectedIndex() - 1);
 					ai.setMovingPath(list);
 					initGui();
 					break;
@@ -129,6 +157,24 @@ public class GuiNpcPather
 	public void setGuiData(NBTTagCompound compound) {
 		ai.load(compound);
 		initGui();
+	}
+
+	@Override
+	public void scrollClicked(GuiCustomScrollNop scroll) { initGui(); }
+
+	@Override
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
+
+	@Override
+	public void unFocused(GuiTextFieldNop textField) {
+		int i = 0;
+		for (int[] arr : ai.getMovingPath()) {
+			if (scroll != null && scroll.getSelectedIndex() == i) {
+				arr[textField.id] = textField.getInteger();
+				break;
+			}
+			i++;
+		}
 	}
 
 }

@@ -1755,7 +1755,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			partNames.widthTexture = 256;
 			partNames.heightTexture = 256;
 			partNames.setColorLine(CustomNpcs.colorAnimHoverPart);
-			partNames.add(scrollParts.setSelect(part.id));
+			partNames.add(scrollParts.setSelected(part.id));
 			partNames.addButton(48, partNames.getX() + 4, partNames.getY() + 125, "ai.movement")
 					.setSize(67, 12);
 		}
@@ -1998,7 +1998,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		 }
 		 else if (scroll.id == 1 && anim.type == AnimationKind.ATTACKING) {
 			 setHitbox(dataHitboxes.get(scroll.getNormalSelected()));
-			 if (scrollParts != null) { scrollParts.setSelect(-1); }
+			 if (scrollParts != null) { scrollParts.setSelected(-1); }
 			 initGui();
 		 }
 		initGui();

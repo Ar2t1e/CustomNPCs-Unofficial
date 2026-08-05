@@ -143,7 +143,7 @@ public class SubGuiQuestEdit
 		boolean hasTask = !selectTask.getFormattedText().isEmpty();
 		if (hasTask) {
 			if (!tasksData.containsKey(selectTask)) {
-				scrollTasks.setSelect(-1);
+				scrollTasks.setSelected(-1);
 				selectTask = Component.empty(); }
 			else {
 				scrollTasks.setSelected(selectTask);

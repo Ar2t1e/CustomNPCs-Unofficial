@@ -49,6 +49,22 @@ public class EntityMixin implements IEntityIMixin {
             if (!(parent instanceof EntityNPCInterface) || ((EntityNPCInterface) parent).display.getHitboxState() != 2) { ci.cancel(); }
         }
     }
+    @Inject(method = "isRidingSameEntity", at = @At("HEAD"), cancellable = true)
+    public void npcs$isRidingSameEntity(Entity entityIn, CallbackInfoReturnable<Boolean> cir) {
+        Entity self = (Entity) (Object) this;
+        if (self instanceof EntityNPCInterface && ((EntityNPCInterface) self).hitboxRiding.containsKey(entityIn)) {
+            EntityNPCInterface npc = (EntityNPCInterface) self;
+            if (!npc.getNavigator().noPath() && npc.hitboxRiding.containsKey(entityIn)) {
+                cir.setReturnValue(true);
+            }
+        }
+        if (entityIn instanceof EntityNPCInterface && ((EntityNPCInterface) entityIn).hitboxRiding.containsKey(self)) {
+            EntityNPCInterface npc = (EntityNPCInterface) entityIn;
+            if (!npc.getNavigator().noPath() && npc.hitboxRiding.containsKey(self)) {
+                cir.setReturnValue(true);
+            }
+        }
+    }
 
     @Override
     public Data npcs$getStoredData() { return npcs$storeddata; }

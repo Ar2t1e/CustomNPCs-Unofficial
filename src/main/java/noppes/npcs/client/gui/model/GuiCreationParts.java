@@ -630,7 +630,7 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 			else { stack = lm.getStack(); }
 			Packets.sendServer(new SPacketItemChange("ContainerLayer", 0, stack));
 			scrollIn.setUnsortedList(playerdata.getLayerKeys());
-			scrollIn.setSelect(selectPos);
+			scrollIn.setSelected(selectPos);
 			addLabel(20, x0, y, "part.layers.info.0")
 					.setColor(CustomNpcs.MainColor.getRGB());
 			int y1 = y + 141;

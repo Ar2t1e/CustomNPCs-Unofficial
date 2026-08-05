@@ -11,7 +11,6 @@ import noppes.npcs.shared.client.gui.GuiBasicContainer;
 import noppes.npcs.shared.client.gui.components.custom.CustomGuiEntityDisplay;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
-import noppes.npcs.shared.common.util.LogWriter;
 
 public class GuiWrapper {
 

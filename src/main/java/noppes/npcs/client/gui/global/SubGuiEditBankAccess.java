@@ -57,10 +57,10 @@ public class SubGuiEditBankAccess extends GuiNPCInterface
 				if (!scroll.hasSelected() || i >= names.size()) { return; }
 				if (sel.equals(scroll.getSelected())) { sel = ""; }
 				names.remove(i);
-				scroll.setSelect(i - 1);
+				scroll.setSelected(i - 1);
 				if (i == 0) {
-					if (names.isEmpty()) { scroll.setSelect(-1); }
-					else { scroll.setSelect(0); }
+					if (names.isEmpty()) { scroll.setSelected(-1); }
+					else { scroll.setSelected(0); }
 				}
 				initGui();
 				break;

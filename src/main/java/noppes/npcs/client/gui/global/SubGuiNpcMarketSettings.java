@@ -70,7 +70,7 @@ public class SubGuiNpcMarketSettings extends GuiNPCInterface
 				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
 					if (agree && data.containsKey(scroll.getNormalSelected()) && marcet.sections.size() > 1) {
 						marcet.sections.remove(data.get(scroll.getNormalSelected()));
-						scroll.setSelect(scroll.getSelectedIndex() - 1);
+						scroll.setSelected(scroll.getSelectedIndex() - 1);
 						initGui();
 					}
 					NoppesUtil.openGUI(player, this);

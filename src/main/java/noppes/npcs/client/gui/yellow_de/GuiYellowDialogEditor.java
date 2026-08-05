@@ -585,7 +585,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                         .setUnsortedList(list)
                         .setSuffixes(Lists.newArrayList(s0, s1, s2, s3, Component.empty(),
                                 Component.empty(), Component.empty()))
-                        .setSelect(-1);
+                        .setSelected(-1);
             }
         }
         else {
@@ -1355,7 +1355,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                     .setSuffixes(Lists.newArrayList(s0, s1, s2, s3, Component.empty(), s5))
                     .setHoverTexts(htm)
                     .setIgnoreSelected(Lists.newArrayList(ignore))
-                    .setSelect(-1);
+                    .setSelected(-1);
         }
     }
 

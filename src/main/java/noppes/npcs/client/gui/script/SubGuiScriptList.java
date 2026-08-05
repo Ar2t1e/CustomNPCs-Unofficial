@@ -186,7 +186,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 				String file;
 				try { file = base.getHoversTexts().get(base.getSelectedIndex()).get(0).getFormattedText(); } catch (Exception e) { return; }
 				container.scripts.add(file);
-				base.setSelect(-1);
+				base.setSelected(-1);
 				initGui();
 				break;
 			} // >
@@ -195,7 +195,7 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 				String file;
 				try { file = selected.getHoversTexts().get(selected.getSelectedIndex()).get(0).getFormattedText(); } catch (Exception e) { return; }
 				container.scripts.remove(file);
-				selected.setSelect(-1);
+				selected.setSelected(-1);
 				initGui();
 				break;
 			} // <
@@ -206,13 +206,13 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 						container.scripts.add(name);
 					}
 				}
-				base.setSelect(-1);
+				base.setSelected(-1);
 				initGui();
 				break;
 			} // >>
 			case 4: {
 				container.scripts.clear();
-				base.setSelect(-1);
+				base.setSelected(-1);
 				initGui();
 				break;
 			} // <<
@@ -226,11 +226,11 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 			if (scroll.getSelected().equals(back.getFormattedText())) {
 				if (path.lastIndexOf("/") == -1) { path = ""; }
 				else { path = path.substring(0, path.lastIndexOf("/")); }
-				base.setSelect(-1);
+				base.setSelected(-1);
 			} else if (scroll.getNormalSelected().getStyle().getColor() == TextFormatting.GOLD) {
 				if (!path.isEmpty()) { path += "/"; }
 				path += scroll.getSelected();
-				base.setSelect(-1);
+				base.setSelected(-1);
 			}
 		}
 		initGui();
@@ -244,12 +244,12 @@ public class SubGuiScriptList extends GuiNPCInterface implements ICustomScrollLi
 		if (file.isEmpty()) { return; }
 		if (scroll.id == 0) {
 			container.scripts.add(file);
-			base.setSelect(-1);
+			base.setSelected(-1);
 			initGui();
 		}
 		if (scroll.id == 1) {
 			container.scripts.remove(file);
-			selected.setSelect(-1);
+			selected.setSelected(-1);
 			initGui();
 		}
 	}

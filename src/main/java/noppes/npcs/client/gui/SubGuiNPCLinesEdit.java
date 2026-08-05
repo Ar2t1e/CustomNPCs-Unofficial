@@ -52,7 +52,7 @@ public class SubGuiNPCLinesEdit extends GuiNPCInterface
 			case 1: {
 				if (!data.containsKey(select)) { return; }
 				lines.remove(data.get(select));
-				if (scroll != null && scroll.hasSelected()) { scroll.setSelect(scroll.getSelectedIndex() - 1); }
+				if (scroll != null && scroll.hasSelected()) { scroll.setSelected(scroll.getSelectedIndex() - 1); }
 				initGui();
 				break;
 			} // remove
