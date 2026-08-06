@@ -136,7 +136,6 @@ public class AnimationController implements IAnimationHandler {
 		return emotions.get(nbtEmotion.getInteger("ID"));
 	}
 
-
 	public void loadAnimations() {
 		CustomNpcs.debugData.start(null);
 		LogWriter.info("Start load animations");

@@ -7,6 +7,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.constants.AnimationKind;
@@ -168,6 +169,7 @@ public class DataAnimation implements INPCAnimation {
 
 	// used to select a new animation in EntityNPCInterface
 	public AnimationConfig tryRunAnimation(AnimationKind type) {
+		if (!CustomNpcs.ShowCustomAnimation) { return null; }
 		AnimationConfig anim = animationHandler.selectAnimation(type);
 		if (anim == null) { return null; }
 		return tryRunAnimation(anim, type);
@@ -201,8 +203,6 @@ public class DataAnimation implements INPCAnimation {
 	public boolean getSwing() { return animationHandler.isSwing; }
 
 	public void setSwing(boolean bo) { animationHandler.isSwing = bo; }
-
-	public EnumAnimationStages getAnimationStage() { return animationHandler.stage; }
 
 	public boolean getAnimationPartShow(int partId) {
 		return animationHandler.currentFrame == null || !animationHandler.currentFrame.parts.containsKey(partId) || animationHandler.currentFrame.parts.get(partId).show;
@@ -351,5 +351,7 @@ public class DataAnimation implements INPCAnimation {
 		}
 		throw new CustomNPCsException("Animation type must be between 0 and " + (AnimationKind.values().length - 1));
 	}
+
+	public EnumAnimationStages getAnimationStage() { return animationHandler == null ? EnumAnimationStages.Waiting : animationHandler.stage; }
 
 }

@@ -420,4 +420,34 @@ public class AnimationFrameConfig implements IAnimationFrame {
 		}
 	}
 
+	/**
+	 * Deep-copies another frame's parts and metadata into this frame.
+	 * Used to snap preFrame to a keyframe boundary without interpolation drift.
+	 */
+	public void copyFrom(@Nonnull AnimationFrameConfig other) {
+		smooth = other.smooth;
+		showMainHand = other.showMainHand;
+		showOffHand = other.showOffHand;
+		showHelmet = other.showHelmet;
+		showBody = other.showBody;
+		showLegs = other.showLegs;
+		showFeets = other.showFeets;
+		holdRightType = other.holdRightType;
+		holdLeftType = other.holdLeftType;
+		holdRightStack = other.holdRightStack;
+		holdLeftStack = other.holdLeftStack;
+
+		parts.clear();
+		for (Map.Entry<Integer, PartConfig> entry : other.parts.entrySet()) {
+			PartConfig src = entry.getValue();
+			PartConfig pc = new PartConfig(entry.getKey(), AnimationFrameConfig.getPartType(entry.getKey()));
+			pc.show = src.show;
+			pc.disable = src.disable;
+			System.arraycopy(src.rotation, 0, pc.rotation, 0, pc.rotation.length);
+			System.arraycopy(src.offset, 0, pc.offset, 0, pc.offset.length);
+			System.arraycopy(src.scale, 0, pc.scale, 0, pc.scale.length);
+			parts.put(entry.getKey(), pc);
+		}
+	}
+
 }

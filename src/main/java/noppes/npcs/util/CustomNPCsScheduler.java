@@ -12,7 +12,8 @@ public class CustomNPCsScheduler {
 		CustomNPCsScheduler.executor.schedule(task, 0L, TimeUnit.MILLISECONDS);
 	}
 
-	public static void runTack(Runnable task, int delayMilliSeconds) {
+	public static void runTack(Runnable task, long delayMilliSeconds) {
 		CustomNPCsScheduler.executor.schedule(task, delayMilliSeconds, TimeUnit.MILLISECONDS);
 	}
+
 }

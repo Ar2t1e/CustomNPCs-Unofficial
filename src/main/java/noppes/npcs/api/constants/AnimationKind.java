@@ -22,7 +22,11 @@ public enum AnimationKind {
 	INTERACT(17, false, false),
 	BLOCKED(18, false, true),
 	EDITING_All(19, false, true),
-	EDITING_PART(20, false, true);
+	EDITING_PART(20, false, true),
+	SITTING(21, true, false),
+	SLEEPING(22, true, false),
+	SNEAK_STAND(23, true, false),
+	SNEAK_WALK(24, true, false);
 
 	public static AnimationKind get(int type) {
 		for (AnimationKind ak : AnimationKind.values()) {
@@ -40,29 +44,31 @@ public enum AnimationKind {
 	}
 
 	boolean isMovement;
-	boolean isQuickStart;
+	boolean isQuick;
 	final int type;
 	AnimationKind parent = null;
 
-	AnimationKind(int i, boolean movement, boolean quickStart) {
+	AnimationKind(int i, boolean movement, boolean quick) {
 		type = i;
 		isMovement = movement;
-		isQuickStart = quickStart;
+		isQuick = quick;
 	}
 
 	public int get() { return type; }
 
 	public boolean isMovement() { return isMovement; }
 
-	public boolean isQuickStart() { return isQuickStart; }
+	public boolean isQuick() { return isQuick; }
 
+	@SuppressWarnings("unused")
 	public void setEditingBooleans(AnimationKind parentEnum) {
 		if (this != AnimationKind.EDITING_All && this != AnimationKind.EDITING_PART) { return; }
 		parent = parentEnum;
 		isMovement = parentEnum.isMovement;
-		isQuickStart = parentEnum.isQuickStart;
+		isQuick = parentEnum.isQuick;
 	}
 
+	@SuppressWarnings("unused")
 	public AnimationKind getParentEnum() { return parent; }
 
 }

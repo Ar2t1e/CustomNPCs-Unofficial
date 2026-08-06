@@ -46,7 +46,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 		addButton(4, r0, (y += 22), "dialog.dialogs")
 				.setSize(110, 20)
 				.setHoverTexts("global.hover.dialogs", !permissions[2] ? notEdit : null);
-		addButton(5, r0 + 112, y, "GUI")
+		addButton(5, r0 + 120, y, "GUI")
 				.setSize(20, 20)
 				.setHoverTexts("global.hover.dialogs.gui", !permissions[2] ? notEdit : null);
 		addButton(20, r0 + 120, y + 22, "global.game.edit")

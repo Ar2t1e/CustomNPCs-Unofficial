@@ -11,6 +11,7 @@ import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.util.Util;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class UtilYDE {
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(1, DefaultVertexFormats.POSITION_COLOR); // 1 = GL_LINES
+        bufferbuilder.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
 
         if (p0[0] == p1[0] || p0[1] == p1[1]) {
             bufferbuilder.pos(p0[0], p0[1], zDepth)
@@ -47,7 +48,8 @@ public class UtilYDE {
             bufferbuilder.pos(p1[0], p1[1], zDepth)
                     .color(r, g, b, alpha)
                     .endVertex();
-        } else {
+        }
+        else {
             // spline
             int steps = (int) (Math.min(Math.abs(p0[0] - p1[0]), Math.abs(p0[1] - p1[1])));
             float x3 = p0[0] + (p1[0] - p0[0]) / 2.0f;
@@ -62,7 +64,8 @@ public class UtilYDE {
                 float[] p3 = new float[] {(float) pos0.getX(), (float) pos0.getZ()};
                 float[] p4 = new float[] {(float) pos1.getX(), (float) pos1.getZ()};
                 points = quinticBezier(p0, p2, p3, p4, p5, p1, steps);
-            } else {
+            }
+            else {
                 points = cubicBezier(p0,
                         new float[] { x3, p0[1] + y3 },
                         new float[] { x3, p1[1] - y3 },
@@ -138,7 +141,8 @@ public class UtilYDE {
         float f = 0.00390625F;
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
+        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+
         bufferbuilder.pos(0.0d, 14.0d, 0.0d).tex(0.0f, 32.0f * f).endVertex();
         bufferbuilder.pos(14.0d, 14.0d, 0.0d).tex(14.0f * f, 32.0f * f).endVertex();
         bufferbuilder.pos(14.0d, 0.0d, 0.0d).tex(14.0f * f, 18.0f * f).endVertex();
@@ -153,7 +157,7 @@ public class UtilYDE {
                             float r, float g, float b, float a) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         bufferbuilder.pos(x0, y0, 0.0d).color(r, g, b, a).endVertex();
         bufferbuilder.pos(x0, y1, 0.0d).color(r, g, b, a).endVertex();
         bufferbuilder.pos(x1, y1, 0.0d).color(r, g, b, a).endVertex();

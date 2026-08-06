@@ -242,6 +242,7 @@ public class GuiBoundarySetting extends GuiNPCInterface
 		tessellator.draw();
 		GlStateManager.enableTexture2D();
 		GlStateManager.disableBlend();
+		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 
 	private void drawRegion(int work, double mu, double mv, double su, double sv, double sy) {

@@ -29,13 +29,6 @@ public class SPacketToolMounter extends PacketServerBasic {
    private int tab = -1;
    private NBTTagCompound compound = new NBTTagCompound();
 
-   private SPacketToolMounter(int typeIn, String nameIn, int tabIn, NBTTagCompound compoundIn) {
-      type = typeIn;
-      name = nameIn;
-      tab = tabIn;
-      compound = compoundIn;
-   }
-
    public SPacketToolMounter(int typeIn, String nameIn, int tabIn) {
       type = typeIn;
       name = nameIn;
@@ -92,9 +85,9 @@ public class SPacketToolMounter extends PacketServerBasic {
             }
          }
          else if (type == 1) {
-            entity = (Entity) ServerCloneController.Instance.spawn(data.mounted.posX, data.mounted.posY, data.mounted.posZ,
+            entity = ServerCloneController.Instance.spawn(data.mounted.posX, data.mounted.posY, data.mounted.posZ,
                     tab, name,
-                    Objects.requireNonNull(NpcAPI.Instance()).getIWorld(player.world));
+                    Objects.requireNonNull(NpcAPI.Instance()).getIWorld(player.world)).getMCEntity();
             if (entity != null) { entity.startRiding(data.mounted, true); }
          }
          else if (type == 2) {

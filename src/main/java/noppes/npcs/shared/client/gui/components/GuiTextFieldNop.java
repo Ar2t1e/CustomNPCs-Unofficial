@@ -751,7 +751,9 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     }
 
     @Override
-    public void tick() { ++cursorCounter; }
+    public void tick() {
+        ++cursorCounter;
+    }
 
     public int getX() { return x; }
 

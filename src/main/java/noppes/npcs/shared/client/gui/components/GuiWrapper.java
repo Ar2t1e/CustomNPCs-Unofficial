@@ -145,10 +145,11 @@ public class GuiWrapper {
     }
 
     public void setFocus(IComponentGui focused) {
-        if (focused != null && !focused.isHovered()) { return; }
+        if ((focused != null && !focused.isHovered()) || focused instanceof GuiCustomWindowNop) { return; }
         for (IComponentGui component : new ArrayList<>(components)) {
             component.setIsFocused(component == focused);
             if (component instanceof GuiCustomScrollNop) { ((GuiCustomScrollNop) component).textField.setIsFocused(component == focused); }
+            if (component instanceof GuiCustomWindowNop) { ((GuiCustomWindowNop) component).wrapper.setFocus(focused); }
         }
         if (focused instanceof GuiSliderNop && lastFocusedComponent != focused) { ((GuiSliderNop) focused).onRelease(0.0D, 0.0D); }
         lastFocusedComponent = focused;

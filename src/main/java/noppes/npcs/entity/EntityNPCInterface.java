@@ -11,7 +11,6 @@ import com.google.common.base.Predicate;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockStairs;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -108,8 +107,6 @@ import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.api.wrapper.data.DataBlock;
 import noppes.npcs.client.EntityUtil;
 import noppes.npcs.client.SkinUtil;
-import noppes.npcs.client.model.animation.AnimationConfig;
-import noppes.npcs.client.model.animation.AnimationFrameConfig;
 import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.client.model.part.ModelPartConfig;
 import noppes.npcs.constants.*;
@@ -250,7 +247,6 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		maxHurtResistantTime = ais.getMaxHurtResistantTime();
 		stepHeight = ais.stepheight;
 		initTime = System.currentTimeMillis();
-		animation.tryRunAnimation(AnimationKind.INIT);
 		homeDimensionId = world.provider.getDimension();
 	}
 
@@ -280,17 +276,20 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
+	@Override
 	public void addTrackingPlayer(@Nonnull EntityPlayerMP player) {
 		super.addTrackingPlayer(player);
 		bossInfo.addPlayer(player);
 	}
 
+	@Override
 	public void addVelocity(double d, double d1, double d2) {
 		if (isWalking() && !isKilled()) {
 			super.addVelocity(d, d1, d2);
 		}
 	}
 
+	@Override
 	protected float applyArmorCalculations(@Nonnull DamageSource source, float damage) {
 		if (role instanceof RoleCompanion) {
 			damage = ((RoleCompanion) role).getDamageAfterArmorAbsorb(source, damage);
@@ -298,6 +297,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return damage;
 	}
 
+	@Override
 	protected void applyEntityAttributes() {
 		super.applyEntityAttributes();
 		abilities = new DataAbilities(this);
@@ -319,27 +319,15 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		getEntityAttribute(SharedMonsterAttributes.FLYING_SPEED).setBaseValue((getSpeed() * 2.0f));
 	}
 
+	@Override
 	public boolean attackEntityAsMob(@Nonnull Entity entity) { // this NPCs attempt to damage the target <- EntityAICustom
-		AnimationConfig anim = animation.tryRunAnimation(AnimationKind.ATTACKING);
-		if (anim != null) {
-			boolean found = false;
-			for (AnimationFrameConfig frame : anim.frames.values()) {
-				if (frame.isNowDamage() && frame.damageDelay != 0) {
-					final int time = frame.damageDelay * 50;
-					CustomNPCsScheduler.runTack(() -> tryAttackEntityAsMob(entity, frame.id), time);
-					found = true;
-				}
-			}
-			if (!found) {
-				final int time = (anim.totalTicks - 1) * 50;
-				CustomNPCsScheduler.runTack(() -> tryAttackEntityAsMob(entity, anim.frames.size() - 1), time);
-			}
-			return false;
+		if (animateAi != null) {
+			return animateAi.playAttackEntityCustomAnimation(entity);
 		}
 		return tryAttackEntityAsMob(entity, 0);
 	}
 
-	private boolean tryAttackEntityAsMob(Entity target, int frameID) {
+	public boolean tryAttackEntityAsMob(Entity target, int frameID) {
 		if (ais.aiDisabled || target == null || !target.isEntityAlive()) { return false; }
 		Set<Entity> entityList = new HashSet<>();
 		entityList.add(target);
@@ -506,11 +494,11 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 		if (!isKilled()) {
 			if (isHurt && damage > 0.0f) {
-				animation.tryRunAnimation(AnimationKind.HIT);
+				if (animateAi != null) { animateAi.playHitCustomAnimation(); }
 			}
-			else  {
-				AnimationConfig anim = animation.tryRunAnimation(AnimationKind.BLOCKED);
-				if (anim == null && !damagesource.isProjectile() && attackingEntity != null) { blockUsingShield(attackingEntity); }
+			else if (!damagesource.isProjectile() && attackingEntity != null) {
+				if (animateAi != null) { animateAi.playBlockedCustomAnimation(); }
+				blockUsingShield(attackingEntity);
 			}
 		}
 		return isHurt;
@@ -598,6 +586,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return isDamaged;
 	}
 
+	@Override
 	public void attackEntityWithRangedAttack(@Nonnull EntityLivingBase entity, float distanceFactor) {
 		if (ais.aiDisabled) { return; }
 		ItemStack proj = ItemStackWrapper.MCItem(inventory.getProjectile());
@@ -711,11 +700,13 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		chasingPosY += d1 * 0.25D;
 	}
 
+	@Override
 	protected void damageEntity(@Nonnull DamageSource damageSrc, float damageAmount) {
 		super.damageEntity(damageSrc, damageAmount);
 		combatHandler.damage(damageSrc, damageAmount);
 	}
 
+	@Override
 	protected int decreaseAirSupply(int par1) {
 		if (!stats.canDrown) { return par1; }
 		return super.decreaseAirSupply(par1);
@@ -743,12 +734,15 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
+	@Override
 	protected void dropEquipment(boolean wasRecentlyHit, int lootingModifier) {
 	}
 
+	@Override
 	protected void dropFewItems(boolean wasRecentlyHit, int lootingModifier) {
 	}
 
+	@Override
 	protected void entityInit() {
 		super.entityInit();
 		dataManager.register(RoleData, "");
@@ -770,10 +764,12 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return Math.max(1, stats.aggroRange - 1);
 	}
 
+	@Override
 	public boolean getAlwaysRenderNameTagForRender() {
 		return true;
 	}
 
+	@Override
 	public @Nonnull Iterable<ItemStack> getArmorInventoryList() {
 		ArrayList<ItemStack> list = new ArrayList<>();
 		for (int i = 0; i < 4; ++i) {
@@ -782,6 +778,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return list;
 	}
 
+	@Override
 	public float getBlockPathWeight(@Nonnull BlockPos pos) {
 		if (ais.movementType == 2) {
 			return (world.getBlockState(pos).getMaterial() == Material.WATER) ? 10.0f : 0.0f;
@@ -793,10 +790,12 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return weight;
 	}
 
+	@Override
 	public boolean getCanSpawnHere() {
 		return getBlockPathWeight(new BlockPos(posX, getEntityBoundingBox().minY, posZ)) >= 0.0f && world.getBlockState(new BlockPos(this).down()).canEntitySpawn(this);
 	}
 
+	@Override
 	public Entity getCommandSenderEntity() {
 		if (!isServerWorld()) { return this; }
 		EntityUtil.Copy(this, EntityNPCInterface.CommandPlayer);
@@ -805,13 +804,13 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return EntityNPCInterface.CommandPlayer;
 	}
 
+	@Override
 	public @Nonnull EnumCreatureAttribute getCreatureAttribute() {
 		return (stats == null) ? EnumCreatureAttribute.UNDEFINED : stats.creatureType;
 	}
 
-	public SoundEvent getDeathSound() {
-		return null;
-	}
+	@Override
+	public SoundEvent getDeathSound() { return null; }
 
 	private Dialog getDialog(EntityPlayer player) {
 		Set<Integer> newDS = new HashSet<>();
@@ -858,6 +857,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return EntityNPCInterface.ChatEventPlayer;
 	}
 
+	@Override
 	public @Nonnull Iterable<ItemStack> getHeldEquipment() {
 		List<ItemStack> list = new ArrayList<>();
 		list.add(ItemStackWrapper.MCItem(inventory.weapons.get(0)));
@@ -865,6 +865,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return list;
 	}
 
+	@Override
 	public @Nonnull ItemStack getHeldItemMainhand() {
 		IItemStack item;
 		if (isAttacking()) {
@@ -879,6 +880,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return ItemStackWrapper.MCItem(item);
 	}
 
+	@Override
 	public @Nonnull ItemStack getHeldItemOffhand() {
 		IItemStack item;
 		if (isAttacking()) {
@@ -891,6 +893,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return ItemStackWrapper.MCItem(item);
 	}
 
+	@Override
 	public @Nonnull ItemStack getItemStackFromSlot(@Nonnull EntityEquipmentSlot slot) {
 		if (slot == EntityEquipmentSlot.MAINHAND) {
 			return getHeldItemMainhand();
@@ -903,10 +906,13 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 
 	public String getJobData() { return dataManager.get(EntityNPCInterface.RoleData); }
 
+	@Override
 	public boolean getLeashed() { return false; }
 
+	@Override
 	public int getMaxSpawnedInChunk() { return 8; }
 
+	@Override
 	public @Nonnull String getName() {
 		if (display == null) { return "Display is null!"; }
 		return display.getName();
@@ -921,14 +927,17 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return null;
 	}
 
+	@Override
 	public @Nonnull BlockPos getPosition() {
 		return new BlockPos(posX, posY, posZ);
 	}
 
+	@Override
 	public @Nonnull Vec3d getPositionVector() {
 		return new Vec3d(posX, posY, posZ);
 	}
 
+	@Override
 	public @Nonnull EnumPushReaction getPushReaction() {
 		return display.getHitboxState() == 0 ? super.getPushReaction() : EnumPushReaction.IGNORE;
 	}
@@ -993,6 +1002,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return dataManager.get(EntityNPCInterface.Attacking);
 	}
 
+	@Override
 	public boolean isEntityAlive() {
 		boolean bo = super.isEntityAlive();
 		if (!bo || ais != null && ais.aiDisabled) { return bo; }
@@ -1039,8 +1049,10 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 				&& ticksExisted - lastInteract < 180);
 	}
 
+	@Override
 	public boolean isInvisible() { return display.getVisible() == 1; }
 
+	@Override
 	public boolean isInvisibleToPlayer(@Nonnull EntityPlayer player) {
 		return isInvisible() && !(player.getHeldItemMainhand().getItem() instanceof INPCToolItem)
 				&& display.getAvailability().isAvailable(player);
@@ -1094,6 +1106,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return ais.getMovingType() != 0 || isAttacking() || isFollower() || dataManager.get(EntityNPCInterface.Walking);
 	}
 
+	@Override
 	public void knockBack(@Nonnull Entity entity, float strength, double ratioX, double ratioZ) {
 		super.knockBack(entity, strength * (2.0f - stats.resistances.get("knockback")), ratioX, ratioZ);
 	}
@@ -1134,6 +1147,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
+	@Override
 	@SuppressWarnings("ConstantConditions")
 	public void onDeath(@Nonnull DamageSource damagesource) {
 		setSprinting(false);
@@ -1215,12 +1229,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 			if (event.line != null) {
 				saySurrounding(Line.formatTarget((Line) event.line, (attackingEntity instanceof EntityLivingBase) ? (EntityLivingBase) attackingEntity : null));
 			}
-		}
-		AnimationConfig anim = animation.tryRunAnimation(AnimationKind.DIES);
-		if (anim != null) {
-			motionX = 0.0d;
-			motionY = 0.0d;
-			motionZ = 0.0d;
+			if (animateAi != null) { animateAi.playDeathCustomAnimation(); }
 		}
 		super.onDeath(damagesource);
 	}
@@ -1240,6 +1249,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		else { super.onDeathUpdate(); }
 	}
 
+	@Override
 	@SuppressWarnings("ConstantConditions")
 	public void onLivingUpdate() {
 		// Solid hitbox: auto-detect entities that have landed on top of this NPC
@@ -1360,46 +1370,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 				isAirBorne = canFly() && world.getBlockState(getPosition().down()).getMaterial() == Material.AIR;
 			}
 			// New from Unofficial (BetaZavr)
-			if (CustomNpcs.ShowCustomAnimation) {
-				CustomNPCsScheduler.runTack(() -> {
-					// Jump
-					if (!animation.getJump() && !isKilled() && getHealth() > 0.0f && world != null && !(isInWater() || isInLava()) && ais.getNavigationType() == 0 && !onGround && motionY > 0.0d) {
-						BlockPos posUnderfoot = getPosition().down();
-						BlockPos posAhead = getPosition().add(motionX, 0, motionZ).down();
-						boolean canJumpHere = !(world.getBlockState(posUnderfoot).getBlock() instanceof BlockStairs);
-						boolean canLandThere = !(world.getBlockState(posAhead).getBlock() instanceof BlockStairs);
-						if (canJumpHere && canLandThere) {
-							animation.setJump(true);
-							animation.tryRunAnimation(AnimationKind.JUMP);
-						}
-					}
-					else if (animation.getJump() && onGround && animation.getAnimationStage() != EnumAnimationStages.Started) {
-						animation.setJump(false);
-						if (animation.isAnimated(AnimationKind.JUMP)) {
-							animation.stopAnimation();
-						}
-					}
-					// Swing
-					if (!animation.getSwing() && swingProgress > 0.0f) {
-						animation.setSwing(true);
-						if (!animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.AIM, AnimationKind.SHOOT)) {
-							AnimationConfig anim = animation.tryRunAnimation(AnimationKind.SWING);
-							if (anim != null) {
-								swingProgress = 0.0f;
-								swingProgressInt = 0;
-								prevSwingProgress = 0.0f;
-								isSwingInProgress = false;
-							}
-						}
-					}
-					else if (animation.getSwing() && swingProgress == 0.0f) {
-						animation.setSwing(false);
-					}
-					// walking or standing
-					animation.resetWalkAndStandAnimations();
-				});
-			}
-
+			if (animateAi != null) { animateAi.livingUpdate(); }
 			if (wasKilled != isKilled() && wasKilled) { reset(); }
 			if (world.isDaytime() && isServerWorld() && stats.burnInSun) {
 				float f = getBrightness();
@@ -1536,6 +1507,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		advanced.playSound(isBlocked ? 5 : 2, getSoundVolume(), getSoundPitch());
 	}
 
+	@Override
 	public void playLivingSound() {
 		if (!isEntityAlive()) {
 			return;
@@ -1543,6 +1515,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		advanced.playSound((getAttackTarget() != null) ? 1 : 0, getSoundVolume(), getSoundPitch());
 	}
 
+	@Override
 	protected void playStepSound(@Nonnull BlockPos pos, @Nonnull Block block) {
 		if (advanced.getSound(4) != null) {
 			advanced.playSound(4, 0.15f, 1.0f);
@@ -1551,6 +1524,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
+	@Override
 	public boolean processInteract(@Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
 		if (hand != EnumHand.MAIN_HAND) { return true; }
 		ItemStack stack = player.getHeldItem(hand);
@@ -1578,13 +1552,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 			return !isAttacking();
 		}
 		addInteract(player);
-		if (lookAi == null || !lookAi.fastRotation) {
-			AnimationConfig anim = animation.tryRunAnimation(AnimationKind.INTERACT);
-			if (anim != null ) {
-				lookAi.fastRotation = true;
-				CustomNPCsScheduler.runTack(() -> lookAi.fastRotation = false , anim.totalTicks * 50);
-			}
-		}
+		if (animateAi != null && (lookAi == null || !lookAi.fastRotation)) { animateAi.playInteractCustomAnimation(); }
 		Dialog dialog = getDialog(player);
 		PlayerData pd = PlayerData.get(player);
 		if (!faction.getIsHidden() && !pd.factionData.factionData.containsKey(faction.id)) {
@@ -1600,6 +1568,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return true;
 	}
 
+	@Override
 	public void readEntityFromNBT(@Nonnull NBTTagCompound compound) {
 		super.readEntityFromNBT(compound);
 		npcVersion = compound.getInteger("ModRev");
@@ -1630,6 +1599,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		if (compound.hasKey("Puppet")) { puppet.load(compound.getCompoundTag("Puppet")); }
 	}
 
+	@Override
 	public void readSpawnData(ByteBuf buf) { readSpawnData((new FriendlyByteBuf(buf)).readNbt()); }
 
 	public void readSpawnData(NBTTagCompound compound) {
@@ -1684,6 +1654,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		if (compound.hasKey("Puppet")) { puppet.load(compound.getCompoundTag("Puppet")); }
 	}
 
+	@Override
 	public void removeTrackingPlayer(@Nonnull EntityPlayerMP player) {
 		super.removeTrackingPlayer(player);
 		bossInfo.removePlayer(player);
@@ -1759,15 +1730,17 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		if (getOwner() != null) { getOwner().setLastAttackedEntity(Objects.requireNonNull(EntityList.newEntity(EntityPainting.class, world))); }
 		bossInfo.setVisible(display.getBossbar() == 1);
 		job.reset();
-		animation.stopAnimation();
-		animation.tryRunAnimation(AnimationKind.INIT);
+		EventHooks.onNPCInit(this);
+
+		// New from Unofficial (BetaZavr)
+		if (animateAi != null) {
+			animation.stopAnimation();
+			animateAi.playInitCustomAnimation();
+		}
 		updateClient = true;
 		stepHeight = ais.stepheight;
 		lookPos[0] = 0.0f;
 		lookPos[1] = 0.0f;
-		EventHooks.onNPCInit(this);
-
-		// New from Unofficial (BetaZavr)
 		puppet.reset();
 		setFlag(1, false);
 	}
@@ -1841,6 +1814,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	/**
 	 * dataManager.set(EntityNPCInterface.Attacking, boolean); in to CombatHandler
 	 */
+	@Override
     public void setAttackTarget(EntityLivingBase entity) {
 		if ((!(entity instanceof EntityPlayer) || !((EntityPlayer) entity).capabilities.disableDamage) && (entity == null || entity != getOwner()) && getAttackTarget() != entity) {
 			// New from Unofficial (BetaZavr): priority target
@@ -1885,6 +1859,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 
 	public void setDataWatcher(EntityDataManager dataManagerIn) { dataManager = dataManagerIn; }
 
+	@Override
 	public void setDead() {
 		hasDied = true;
 		removePassengers();
@@ -1918,12 +1893,14 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		stats.immuneToFire = immuneToFire;
 	}
 
+	@Override
 	public void setInWeb() {
 		if (!stats.ignoreCobweb) {
 			super.setInWeb();
 		}
 	}
 
+	@Override
 	public void setItemStackToSlot(@Nonnull EntityEquipmentSlot slot, @Nonnull ItemStack item) {
 		if (slot == EntityEquipmentSlot.MAINHAND) {
 			inventory.weapons.put(0, Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(item));
@@ -1947,6 +1924,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
+	@Override
 	public void setPortal(@Nonnull BlockPos pos) {
 	}
 
@@ -2002,6 +1980,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		dataManager.set(EntityNPCInterface.RoleData, s);
 	}
 
+	@Override
 	public void setSwingingArms(boolean swingingArms) {
 	}
 
@@ -2015,10 +1994,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		float acc = 20.0f - MathHelper.floor(accuracy / 5.0f);
 		projectile.shoot(varX, varY, varZ, angle, acc);
 		world.spawnEntity(projectile);
-		animation.tryRunAnimation(AnimationKind.SHOOT);
-		if (animation.isAnimated(AnimationKind.AIM)) {
-			animation.stopAnimation();
-		}
+		if (animateAi != null) { animateAi.playShootCustomAnimation(); }
 		return projectile;
 	}
 
@@ -2026,6 +2002,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return shoot(entity.posX, entity.getEntityBoundingBox().minY + entity.height / 2.0f, entity.posZ, accuracy, proj, indirect);
 	}
 
+	@Override
 	public boolean shouldDismountInWater(@Nonnull Entity rider) {
 		return false;
 	}
@@ -2055,6 +2032,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		}
 	}
 
+	@Override
 	public void travel(float f1, float f2, float f3) {
 		double d0 = posX;
 		double d2 = posY;
@@ -2163,6 +2141,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		setMoveType();
 	}
 
+	@Override
 	public void writeEntityToNBT(@Nonnull NBTTagCompound compound) {
 		super.writeEntityToNBT(compound);
 		display.save(compound);
@@ -2241,10 +2220,10 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		return compound;
 	}
 
-	public void writeSpawnData(ByteBuf buffer) {
-		new FriendlyByteBuf(buffer).writeNbt(writeSpawnData());
-	}
+	@Override
+	public void writeSpawnData(ByteBuf buffer) { new FriendlyByteBuf(buffer).writeNbt(writeSpawnData()); }
 
+	@Override
 	public float getEyeHeight() { return eyeHeight; }
 
 	@Override

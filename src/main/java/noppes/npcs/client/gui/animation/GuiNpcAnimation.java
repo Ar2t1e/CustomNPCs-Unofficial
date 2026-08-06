@@ -66,11 +66,15 @@ public class GuiNpcAnimation extends GuiNPCInterface
 		dataType.put(Component.translatable("puppet." + AnimationKind.BASE.name().toLowerCase().replace("_", "")), AnimationKind.BASE);
 		dataType.put(Component.translatable("puppet." + AnimationKind.INTERACT.name().toLowerCase().replace("_", "")), AnimationKind.INTERACT);
 		dataType.put(Component.translatable("puppet." + AnimationKind.BLOCKED.name().toLowerCase().replace("_", "")), AnimationKind.BLOCKED);
+		dataType.put(Component.translatable("puppet." + AnimationKind.SITTING.name().toLowerCase().replace("_", "")), AnimationKind.SITTING);
+		dataType.put(Component.translatable("puppet." + AnimationKind.SLEEPING.name().toLowerCase().replace("_", "")), AnimationKind.SLEEPING);
 		dataType.put(Component.translatable("puppet." + AnimationKind.STANDING.name().toLowerCase().replace("_", "")), AnimationKind.STANDING);
+		dataType.put(Component.translatable("puppet." + AnimationKind.SNEAK_STAND.name().toLowerCase().replace("_", "")), AnimationKind.SNEAK_STAND);
 		dataType.put(Component.translatable("puppet." + AnimationKind.FLY_STAND.name().toLowerCase().replace("_", "")), AnimationKind.FLY_STAND);
 		dataType.put(Component.translatable("puppet." + AnimationKind.WATER_STAND.name().toLowerCase().replace("_", "")), AnimationKind.WATER_STAND);
 		dataType.put(Component.translatable("puppet." + AnimationKind.REVENGE_STAND.name().toLowerCase().replace("_", "")), AnimationKind.REVENGE_STAND);
 		dataType.put(Component.translatable("puppet." + AnimationKind.WALKING.name().toLowerCase().replace("_", "")), AnimationKind.WALKING);
+		dataType.put(Component.translatable("puppet." + AnimationKind.SNEAK_WALK.name().toLowerCase().replace("_", "")), AnimationKind.SNEAK_WALK);
 		dataType.put(Component.translatable("puppet." + AnimationKind.FLY_WALK.name().toLowerCase().replace("_", "")), AnimationKind.FLY_WALK);
 		dataType.put(Component.translatable("puppet." + AnimationKind.WATER_WALK.name().toLowerCase().replace("_", "")), AnimationKind.WATER_WALK);
 		dataType.put(Component.translatable("puppet." + AnimationKind.REVENGE_WALK.name().toLowerCase().replace("_", "")), AnimationKind.REVENGE_WALK);
@@ -80,7 +84,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
 		super(npcIn);
 		setBackground("menubg.png");
 		imageWidth = 420;
-		imageHeight = 200;
+		imageHeight = 217;
 		closeOnEsc = true;
 
 		animation = new DataAnimation(npcIn);
@@ -194,9 +198,11 @@ public class GuiNpcAnimation extends GuiNPCInterface
 		for (int i = 0; i < 5; i++) {
 			GlStateManager.translate(0.0f, 22.0f, 0.0f);
 			int c = color;
-			if (getButton(i) != null && getButton(i).isHoveredOrFocused()) {
-				c = 0xA0FFFF00;
-				hoverButton = i;
+			if (getButton(i) != null) {
+				if (getButton(i).isHoveredOrFocused()) {
+					c = 0xA0FFFF00;
+					hoverButton = i;
+				}
 			}
 			drawHorizontalLine(0, 0, 0, color);
 			drawHorizontalLine(0, 1, 1, color);
@@ -327,7 +333,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
 				.setIsEnabled(anim != null)
 				.setHoverTexts("animation.hover.anim.copy");
 		// del
-		boolean isOP = anim != null && (!anim.immutable || player.getName().startsWith("BetaZavr"));
+		boolean isOP = anim != null && !anim.immutable;
 		addButton(2, x, y += 22, "gui.remove")
 				.setSize(60, 20)
 				.setIsEnabled(isOP)
@@ -335,7 +341,7 @@ public class GuiNpcAnimation extends GuiNPCInterface
 		// edit
 		addButton(3, x, y + 22, "gui.edit")
 				.setSize(60, 20)
-				.setIsEnabled(isOP)
+				.setIsEnabled(isOP || player.getName().startsWith("BetaZavr"))
 				.setHoverTexts("animation.hover.anim.edit");
 		resetAnimation();
 	}

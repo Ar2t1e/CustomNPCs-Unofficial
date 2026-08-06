@@ -18,6 +18,8 @@ import noppes.npcs.shared.client.gui.listeners.*;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
@@ -36,7 +38,7 @@ public class GuiCustomWindowNop extends GuiBasic
     public int id;
     protected int guiLeft;
     protected int guiTop;
-
+    protected double[] mouseMovedPos = new double[] { -1.0d, -1.0d };
 
     protected boolean isHovered;
     protected boolean isHeadHovered;
@@ -136,8 +138,8 @@ public class GuiCustomWindowNop extends GuiBasic
                 GlStateManager.popMatrix();
 
                 if (title != null && !title.getFormattedText().isEmpty()) {
-                    GuiButtonNop.renderString(title, guiLeft + 3, guiTop + 1,
-                            guiLeft + imageWidth - 10, guiTop + 11,
+                    GuiButtonNop.renderString(title, getX() + 3, getY() + 1,
+                            getX() + imageWidth - 10, getY() + 11,
                             YDEController.textColor, false, false, customFont);
                 }
             }
@@ -175,11 +177,11 @@ public class GuiCustomWindowNop extends GuiBasic
                     else { drawTexturedModalRect(0, 0, 0, 0, imageWidth, imageHeight); }
                 }
                 GlStateManager.translate(3.0f, 3.0f, 0.0f);
-                drawTopRect(right - 3);
+                drawTopRect(right - 1);
                 GlStateManager.popMatrix();
                 if (title != null && !title.getFormattedText().isEmpty()) {
-                    GuiButtonNop.renderString(title, guiLeft + 4, guiTop + 2,
-                            guiLeft + imageWidth - 20, guiTop + 11,
+                    GuiButtonNop.renderString(title, getX() + 4, getY() + 2,
+                            getX() + imageWidth - 20, getY() + 11,
                             CustomNpcs.MainColor.getRGB() | 255 << 24, false, false, null);
                 }
             }
@@ -205,16 +207,20 @@ public class GuiCustomWindowNop extends GuiBasic
             wrapper.mouseY = mouseY;
             int x = hasSubGui() ? 0 : mouseX;
             int y = hasSubGui() ? 0 : mouseY;
-            int right = getX() + imageWidth;
-            int bottom = guiTop + imageHeight;
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0f, 0.0f, id);
             if (drawDefaultBackground) { drawDefaultBackground(); }
             for (IComponentGui component : new ArrayList<>(wrapper.components)) {
                 component.render(x, y, partialTicks);
             }
             if (wrapper.subgui == null) {
                 if (point != null && customFont == null) {
-                    float xc = (float) right / 2.0f;
-                    float yc = (float) bottom / 2.0f;
+                    float xc, yc;
+                    int[] cr = point.getCenter();
+                    if (getX() + imageWidth / 2 < cr[0]) { xc = (float) getX() + imageWidth - 4; }
+                    else { xc = (float) getX() + 4; }
+                    if (getY() + 10 < cr[1]) { yc = (float) getY() + 10; }
+                    else { yc = (float) getY() + 4; }
                     double dist = Math.sqrt((mouseY - yc) * (mouseY - yc) + (mouseX - xc) * (mouseX - xc));
                     double base = Math.sqrt(Math.pow(imageWidth, 2.0d) + Math.pow(imageHeight, 2.0d)) / 2.0d;
                     if (dist <= base * 2.0d) {
@@ -222,7 +228,6 @@ public class GuiCustomWindowNop extends GuiBasic
                         double b = -2.0d * a  * base;
                         float alpha = (float) (a * dist + b);
                         if (alpha < 0.0f) { alpha = 0.0f; } else if (alpha > 1.0f) { alpha = 1.0f; }
-                        int[] cr = point.getCenter();
                         int color = colorLine + ((int) (alpha * 255.0f) << 24);
                         GuiBoundarySetting.drawLine(cr[0], cr[1], xc, yc, color, 2);
                     }
@@ -237,11 +242,29 @@ public class GuiCustomWindowNop extends GuiBasic
                     hoverText.clear();
                 }
             }
+            GlStateManager.popMatrix();
+            if (!isLock && mouseMovedPos[0] > 0.0d && mouseMovedPos[1] > 0.0d) {
+                if (Mouse.isButtonDown(0)) {
+                    x = (int) (mouseX - mouseMovedPos[0]);
+                    y = (int) (mouseY - mouseMovedPos[1]);
+                    if (Math.abs(x) > 0 || Math.abs(y) > 0) {
+                        mouseMovedPos[0] = mouseX;
+                        mouseMovedPos[1] = mouseY;
+                        moveTo(x, y);
+                    }
+                }
+                else {
+                    mouseMovedPos[0] = -1.0d;
+                    mouseMovedPos[1] = -1.0d;
+                }
+            }
         }
     }
 
     @Override
-    public int[] getCenter() { return new int[] { guiLeft + width / 2, guiTop + height / 2}; }
+    public int[] getCenter() {
+        return new int[] { guiLeft + width / 2, guiTop + height };
+    }
 
     @Override
     public List<Component> getHoversText() { return hoverText; }
@@ -262,9 +285,7 @@ public class GuiCustomWindowNop extends GuiBasic
         for (IComponentGui component : new ArrayList<>(wrapper.components)) { component.moveTo(addX, addY); }
     }
 
-    public void transferTo(int newX, int newY) {
-        moveTo(newX - guiLeft, newY - guiTop);
-    }
+    public void transferTo(int newX, int newY) { moveTo(newX - guiLeft, newY - guiTop); }
 
     @Override
     public GuiCustomWindowNop setHoverTexts(Object... components) {
@@ -314,18 +335,19 @@ public class GuiCustomWindowNop extends GuiBasic
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (!enabled || !visible) { return false; }
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        boolean bo = wrapper.mouseClicked(mouseX, mouseY, mouseButton);
+        if (!bo && !isLock && mouseButton == 0 && isHeadHovered) {
+            mouseMovedPos[0] = mouseX;
+            mouseMovedPos[1] = mouseY;
+            bo = true;
+        }
+        return bo;
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
         if (enabled && visible && isHovered) {
-            boolean bo = wrapper.mouseDragged(mouseX, mouseY, mouseButton, dx, dy);
-            if (!bo && !isLock && mouseButton == 0 && isHeadHovered) {
-                moveTo((int) (dx), (int) (dy));
-                bo = true;
-            }
-            return bo;
+            return wrapper.mouseDragged(mouseX, mouseY, mouseButton, dx, dy);
         }
         return false;
     }
@@ -458,14 +480,14 @@ public class GuiCustomWindowNop extends GuiBasic
         GlStateManager.enableBlend();
         GlStateManager.disableAlpha();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.shadeModel(7425);
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
 
         buffer.pos(0.0f, 0.0f, zLevel).color(r, g, b, 1.0f).endVertex();
-        buffer.pos(0.0f, 19.0f, zLevel).color(r, g, b, 1.0f).endVertex();
-        buffer.pos(width - 6.0f, 19.0f, zLevel).color(r, g, b, 0.5f).endVertex();
+        buffer.pos(0.0f, 8.0f, zLevel).color(r, g, b, 1.0f).endVertex();
+        buffer.pos(width - 6.0f, 8.0f, zLevel).color(r, g, b, 0.5f).endVertex();
         buffer.pos(width - 6.0f, 0.0f, zLevel).color(r, g, b, 0.5f).endVertex();
 
         tessellator.draw();

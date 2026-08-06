@@ -4,6 +4,7 @@ import java.util.*;
 
 import noppes.npcs.api.util.IModelRenderer;
 import noppes.npcs.client.model.animation.AnimationFrameConfig;
+import noppes.npcs.client.model.animation.PartConfig;
 import noppes.npcs.client.model.part.ModelPartConfig;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import org.lwjgl.opengl.GL11;
@@ -885,7 +886,10 @@ public class ModelRendererAlt
 
 	public void putAnimation(DataAnimation animation) {
 		AnimationFrameConfig preFrame = animation.getPreFrame();
-		if (preFrame == null || !preFrame.parts.containsKey(partId)) { return; }
+		if (preFrame == null) return;
+		if (!preFrame.parts.containsKey(partId)) {
+			preFrame.parts.put(partId, new PartConfig(partId, part));
+		}
 		preFrame.parts.get(partId).show = showModel;
 
 		preFrame.parts.get(partId).rotation[0] = rotateAngleX;

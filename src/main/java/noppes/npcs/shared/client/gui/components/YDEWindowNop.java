@@ -74,7 +74,7 @@ public class YDEWindowNop extends GuiCustomWindowNop {
                     .setColor(YDEController.textColor)
                     .setCustomFont(UtilYDE.FONT);
             GuiTextArea compArea;
-            add(compArea = new GuiTextArea(0, guiLeft + 4, guiTop + (y += 32), w - 2, imageHeight - y - 4, yde_dialog.dialog.text)
+            add(compArea = new GuiTextArea(0, getX() + 4, getY() + (y += 32), w - 2, imageHeight - y - 4, yde_dialog.dialog.text)
                     .setColor(YDEController.textColor)
                     .setCustomFont(AREA_FONT));
             compArea.isYDE = true;

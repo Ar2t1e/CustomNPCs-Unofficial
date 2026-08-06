@@ -16,6 +16,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
+import noppes.npcs.api.constants.AnimationType;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -131,7 +132,7 @@ public class CustomAnimationHandler {
                 ticks += activeAnimation.endingFrameTicks.get(activeAnimation.editFrame - 1);
             }
         }
-        speedTicks = activeAnimation.type.isQuickStart() ? 4 : 10;
+        speedTicks = activeAnimation.type.isQuick() ? 4 : 10;
         boolean isEdit = activeAnimation.type == AnimationKind.EDITING_All || activeAnimation.type == AnimationKind.EDITING_PART;
         switch (stage) {
             case Started: {
@@ -164,7 +165,9 @@ public class CustomAnimationHandler {
                 }
                 nextFrame = activeAnimation.frames.get(Math.min(animationFrame + 1, activeAnimation.frames.size() - 1));
                 speedTicks = currentFrame.speed;
-                if (activeAnimation.endingFrameTicks.containsKey(animationFrame - 1)) { ticks -= activeAnimation.endingFrameTicks.get(animationFrame - 1); }
+                if (activeAnimation.endingFrameTicks.containsKey(animationFrame - 1)) {
+                    ticks -= activeAnimation.endingFrameTicks.get(animationFrame - 1);
+                }
                 break;
             }
             case Ending: {
@@ -493,7 +496,7 @@ public class CustomAnimationHandler {
             }
         }
         if (stage == EnumAnimationStages.Started) {
-            speed = activeAnimation.type.isQuickStart() ? 4 : 10;
+            speed = activeAnimation.type.isQuick() ? 4 : 10;
             if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStages.Started)); }
             else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStages.Started)); }
             if (ticks >= speed) {
@@ -557,7 +560,7 @@ public class CustomAnimationHandler {
         }
         if (stage == EnumAnimationStages.Ending) {
             canSetBaseRotationAngles = true;
-            speed = activeAnimation.type.isQuickStart() ? 4 : 10;
+            speed = activeAnimation.type.isQuick() ? 4 : 10;
             if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStages.Ending)); }
             else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStages.Ending)); }
             if (ticks >= speed) {
@@ -583,10 +586,7 @@ public class CustomAnimationHandler {
         IScriptHandler handler = null;
         if (!entity.isServerWorld()) { handler = ScriptController.Instance.clientScripts; }
         else if (entity instanceof EntityNPCInterface) { handler = ((EntityNPCInterface) entity).script; }
-        else if (entity instanceof EntityPlayer) {
-            PlayerData data = PlayerData.get((EntityPlayer) entity);
-            if (data != null) { handler = data.scriptData; }
-        }
+        else if (entity instanceof EntityPlayer) { handler = PlayerData.get((EntityPlayer) entity).scriptData; }
         if (handler != null) { EventHooks.onEvent(handler, event.nameEvent, event); }
     }
 
@@ -600,14 +600,14 @@ public class CustomAnimationHandler {
         for (AnimationConfig ac : list) {
             if (waitData.containsKey(ac.id) && waitData.get(ac.id) > System.currentTimeMillis()) { continue; }
             if (ac.chance <= rnd.nextFloat()) {
-                if (!type.isQuickStart()) { waitData.put(ac.id, System.currentTimeMillis() + (long) ((1.0f - ac.chance) * 10000.0f)); }
+                if (!type.isQuick()) { waitData.put(ac.id, System.currentTimeMillis() + (long) ((1.0f - ac.chance) * 10000.0f)); }
                 continue;
             }
             selectList.add(ac);
         }
         AnimationConfig anim = null;
         if (!selectList.isEmpty()) { anim = selectList.get(rnd.nextInt(selectList.size())).copy(); }
-        if (anim == null && type.isQuickStart() && !list.isEmpty()) { anim = list.get(rnd.nextInt(list.size())).copy(); }
+        if (anim == null && type.isQuick() && !list.isEmpty()) { anim = list.get(rnd.nextInt(list.size())).copy(); }
         return anim;
     }
 
@@ -687,7 +687,8 @@ public class CustomAnimationHandler {
 
     public void setRotationAngles(float ignoredLimbSwing, float ignoredLimbSwingAmount, float ignoredAgeInTicks, float ignoredNetHeadYaw, float ignoredHeadPitch, float ignoredScaleFactor, float partialTicks) {
         AnimationKind base = getCurrentMovementAnimation();
-        if (base != null && (activeAnimation == null || (activeAnimation.type.isMovement() && activeAnimation.id != movementAnimation.get(base)))) {
+        if (base != null && movementAnimation.containsKey(base) &&
+                (activeAnimation == null || (activeAnimation.type.isMovement() && activeAnimation.id != movementAnimation.get(base)))) {
             AnimationConfig anim = AnimationController.getInstance().getAnimation(movementAnimation.get(base));
             if (anim != null) {
                 if (!waitData.containsKey(anim.getId()) || waitData.get(anim.getId()) <= System.currentTimeMillis()) {
@@ -733,9 +734,19 @@ public class CustomAnimationHandler {
             }
             // try to get ANY
             if (base == null) {
-                // NORMAL
-                if (entity.onGround) {
-                    if (isMoving) { base = AnimationKind.WALKING; } else { base = AnimationKind.STANDING; }
+                // SITTING
+                if (entity.getRidingEntity() != null ||
+                        (entity instanceof EntityNPCInterface && ((EntityNPCInterface) entity).currentAnimation == AnimationType.SIT.get())) {
+                    base = AnimationKind.SITTING;
+                }
+                // SLEEPING
+                if (entity.isEntityAlive() && entity.isPlayerSleeping()) { base = AnimationKind.SLEEPING; }
+                // NORMAL + sneak / sitting
+                if (base == null && entity.onGround) {
+                    boolean isSneaking = entity.isSneaking() ||
+                            (entity instanceof EntityNPCInterface && ((EntityNPCInterface) entity).ais.animationType == AnimationType.SNEAK.get());
+                    if (isMoving) { base = isSneaking ? AnimationKind.SNEAK_WALK : AnimationKind.WALKING; }
+                    else { base = isSneaking ? AnimationKind.SNEAK_STAND : AnimationKind.STANDING; }
                     if (!movementAnimation.containsKey(base)) { base = null; }
                 }
                 // FLY
@@ -850,4 +861,5 @@ public class CustomAnimationHandler {
         for (AnimationKind animationType : data.keySet()) { data.get(animationType).clear(); }
         movementAnimation.clear();
     }
+
 }
