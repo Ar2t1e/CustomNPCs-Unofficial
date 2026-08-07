@@ -1,14 +1,13 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.controllers.OverlayController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketOverlayHide extends PacketBasic {
 
    protected static int channelId;
-   private int id;
+   public int id;
 
    public PacketOverlayHide() { }
 
@@ -24,10 +23,6 @@ public class PacketOverlayHide extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      OverlayController.getInstance().removeOverlay(id);
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

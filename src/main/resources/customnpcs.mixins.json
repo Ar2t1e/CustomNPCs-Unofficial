@@ -34,7 +34,6 @@
     "item.IItemFoodMixin",
     "item.IItemSwordMixin",
     "item.IItemToolMixin",
-    "item.ItemStackMixin",
     "item.crafting.IIngredientMixin",
     "minecraftforge.event.entity.living.ILivingAttackEventMixin",
     "nbt.INBTTagListMixin",
@@ -116,6 +115,7 @@
     "client.util.IRecipeBookClientMixin",
     "client.world.storage.WorldSummaryMixin",
     "fml.client.GuiModListMixin",
+    "item.ItemStackMixin",
     "minecraftforge.client.IItemModelMesherForgeMixin"
   ],
   "server": [],

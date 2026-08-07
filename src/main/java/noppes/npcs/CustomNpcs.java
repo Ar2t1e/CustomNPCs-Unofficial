@@ -511,7 +511,7 @@ public class CustomNpcs {
 		// New from Unofficial (BetaZavr)
 		BankController.getInstance().update();
 		AnimationController.getInstance().save();
-		ScriptController.Instance.saveItemTextures();
+		if (ScriptController.Instance != null) { ScriptController.Instance.saveItemTextures(); }
 		ItemScripted.Resources.clear();
 		PlayerSkinController.getInstance().save();
 		PlayerSkinController.unload();

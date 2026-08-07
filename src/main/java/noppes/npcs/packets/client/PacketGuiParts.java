@@ -1,22 +1,19 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.custom.GuiCustom;
-import noppes.npcs.entity.EntityCustomNpc;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketGuiParts extends PacketBasic {
 
    protected static int channelId;
-   private int id;
-   private NBTTagCompound data;
+   public int id;
+   public NBTTagCompound data;
 
    public PacketGuiParts() { }
 
+   @SuppressWarnings("unused")
    public PacketGuiParts(int idIn, NBTTagCompound dataIn) {
       id = idIn;
       data = dataIn;
@@ -38,19 +35,6 @@ public class PacketGuiParts extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      Entity entity = player.world.getEntityByID(id);
-      Minecraft mc = Minecraft.getMinecraft();
-      if (mc.currentScreen instanceof GuiCustom && entity instanceof EntityCustomNpc) {
-         /*GuiCreationNewParts parts = new GuiCreationNewParts(((GuiCustom) mc.currentScreen), ((EntityCustomNpc) entity));
-         gui.initCallback = () -> {
-            gui.add(parts);
-            parts.init();
-         };*/
-         ((GuiCustom) mc.currentScreen).setGuiData(data);
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

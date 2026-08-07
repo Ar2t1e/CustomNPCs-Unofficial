@@ -3,17 +3,16 @@ package noppes.npcs.packets.client;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.client.Client;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketGuiOpen extends PacketBasic {
 
    protected static int channelId;
-   private EnumGuiType gui;
-   private int windowId;
-   private FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+   public EnumGuiType gui;
+   public int windowId;
+   public FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
 
    public PacketGuiOpen() {}
 
@@ -51,13 +50,6 @@ public class PacketGuiOpen extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      CustomNpcs.proxy.openGui(NoppesUtilServer.getEditingNpc(player), gui, buffer);
-      if (windowId != 0 && player != null && player.openContainer != null && player.openContainer != player.inventoryContainer) {
-         player.openContainer.windowId = windowId;
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

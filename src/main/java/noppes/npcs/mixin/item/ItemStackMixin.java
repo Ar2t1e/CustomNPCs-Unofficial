@@ -41,7 +41,6 @@ public class ItemStackMixin {
             String loreText = Component.jsonToComponent(loreJson).getFormattedText();
             String originalLine = TextFormatting.DARK_PURPLE + "" + TextFormatting.ITALIC + loreJson;
             String targetLine = TextFormatting.DARK_PURPLE + "" + TextFormatting.ITALIC + loreText;
-
             for (int i = 0; i < tooltip.size(); i++) {
                 String current = tooltip.get(i);
                 if (current.startsWith(TextFormatting.DARK_PURPLE + "" + TextFormatting.ITALIC)) {

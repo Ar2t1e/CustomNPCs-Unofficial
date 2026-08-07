@@ -2,16 +2,14 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.controllers.MusicController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketStopSound extends PacketBasic {
 
     protected static int channelId;
-    private int category;
-    private ResourceLocation sound;
+    public int category;
+    public ResourceLocation sound;
 
     public PacketStopSound() { }
 
@@ -38,10 +36,6 @@ public class PacketStopSound extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        MusicController.Instance.stopSound(sound, SoundCategory.values()[category % SoundCategory.values().length]);
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

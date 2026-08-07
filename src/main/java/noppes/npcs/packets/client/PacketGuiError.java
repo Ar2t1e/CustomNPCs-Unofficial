@@ -1,17 +1,15 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.shared.client.gui.listeners.IGuiError;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketGuiError extends PacketBasic {
 
    protected static int channelId;
-   private int error;
-   private NBTTagCompound data;
+   public int error;
+   public NBTTagCompound data;
 
    public PacketGuiError() { }
 
@@ -30,12 +28,6 @@ public class PacketGuiError extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      if (Minecraft.getMinecraft().currentScreen instanceof IGuiError) {
-         ((IGuiError) Minecraft.getMinecraft().currentScreen).setError(error, data);
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

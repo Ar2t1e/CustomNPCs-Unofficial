@@ -9,7 +9,7 @@ import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.constants.AnimationType;
 import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.model.animation.AnimationFrameConfig;
-import noppes.npcs.constants.EnumAnimationStages;
+import noppes.npcs.constants.EnumAnimationStage;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.CustomNPCsScheduler;
 
@@ -137,7 +137,7 @@ public class EntityAIAnimation extends EntityAIBase {
 						anim = npc.animation.tryRunAnimation(AnimationKind.JUMP);
 					}
 				}
-				else if (npc.animation.getJump() && npc.onGround && npc.animation.getAnimationStage() != EnumAnimationStages.Started) {
+				else if (npc.animation.getJump() && npc.onGround && npc.animation.getAnimationStage() != EnumAnimationStage.Started) {
 					npc.animation.setJump(false);
 					if (npc.animation.isAnimated(AnimationKind.JUMP)) { npc.animation.stopAnimation(); }
 				}

@@ -1,8 +1,7 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.controllers.MarcetController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketClearMarcets extends PacketBasic {
@@ -19,13 +18,6 @@ public class PacketClearMarcets extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (!MarcetController.hasLocalServerData()) {
-            MarcetController.getInstance().markets.clear();
-            MarcetController.getInstance().deals.clear();
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

@@ -2,13 +2,11 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.client.gui.player.GuiDialogInteract;
-import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.common.PacketBasic;
@@ -16,8 +14,8 @@ import noppes.npcs.shared.common.PacketBasic;
 public class PacketDialog extends PacketBasic {
 
    protected static int channelId;
-   private int entityId;
-   private int dialogId;
+   public int entityId;
+   public int dialogId;
 
    public PacketDialog() { }
 
@@ -42,17 +40,7 @@ public class PacketDialog extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      WorldClient world = Minecraft.getMinecraft().world;
-      if (world == null) { return; }
-      Entity entity = world.getEntityByID(entityId);
-      if (entity instanceof EntityNPCInterface) {
-         Dialog dialog = DialogController.instance.dialogs.get(dialogId);
-         openDialog(dialog, (EntityNPCInterface) entity, player);
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
    public static void openDialog(Dialog dialog, EntityNPCInterface npc, EntityPlayer player) {
       GuiScreen gui = Minecraft.getMinecraft().currentScreen;

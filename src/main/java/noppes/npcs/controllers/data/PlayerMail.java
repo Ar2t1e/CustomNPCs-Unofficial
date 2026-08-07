@@ -99,7 +99,7 @@ public class PlayerMail implements IInventory, IPlayerMail {
 		return compound;
 	}
 
-	public boolean isValid() { return !title.isEmpty() && !message.getKeySet().isEmpty() && !sender.isEmpty(); }
+	public boolean isValid() { return !title.isEmpty() && !message.hasNoTags() && !sender.isEmpty(); }
 
 	public boolean hasQuest() { return getQuest() != null; }
 

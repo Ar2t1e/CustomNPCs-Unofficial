@@ -3,7 +3,6 @@ package noppes.npcs.client.gui.yellow_de.data;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import noppes.npcs.client.ClientProxy;
@@ -35,11 +34,16 @@ public class UtilYDE {
 
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
-        RenderHelper.enableGUIStandardItemLighting();
+        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        // In 1.12.2 fixed-function pipeline, if GL_TEXTURE_2D stays enabled from renderDot(),
+        // the line color gets multiplied by the bound texture at (0,0) UV, often making it invisible.
+        GlStateManager.disableTexture2D();
+        // Default 1px line is invisible at GUI scales; 2px makes the spline actually visible
+        GL11.glLineWidth(2.0F);
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.begin(1, DefaultVertexFormats.POSITION_COLOR); // 1 = GL_LINES
 
         if (p0[0] == p1[0] || p0[1] == p1[1]) {
             bufferbuilder.pos(p0[0], p0[1], zDepth)
@@ -48,10 +52,10 @@ public class UtilYDE {
             bufferbuilder.pos(p1[0], p1[1], zDepth)
                     .color(r, g, b, alpha)
                     .endVertex();
-        }
-        else {
+        } else {
             // spline
-            int steps = (int) (Math.min(Math.abs(p0[0] - p1[0]), Math.abs(p0[1] - p1[1])));
+            // Prevent 0 segments when points are close; 20 is enough for a smooth curve
+            int steps = Math.max(20, (int) (Math.min(Math.abs(p0[0] - p1[0]), Math.abs(p0[1] - p1[1]))));
             float x3 = p0[0] + (p1[0] - p0[0]) / 2.0f;
             float y3 = (p1[1] - p0[1]) / 40.0f;
             List<float[]> points;
@@ -64,8 +68,7 @@ public class UtilYDE {
                 float[] p3 = new float[] {(float) pos0.getX(), (float) pos0.getZ()};
                 float[] p4 = new float[] {(float) pos1.getX(), (float) pos1.getZ()};
                 points = quinticBezier(p0, p2, p3, p4, p5, p1, steps);
-            }
-            else {
+            } else {
                 points = cubicBezier(p0,
                         new float[] { x3, p0[1] + y3 },
                         new float[] { x3, p1[1] - y3 },
@@ -84,6 +87,8 @@ public class UtilYDE {
         }
         tessellator.draw();
 
+        GL11.glLineWidth(1.0F);
+        GlStateManager.enableTexture2D();
         GlStateManager.disableBlend();
         GlStateManager.popMatrix();
     }
@@ -141,8 +146,7 @@ public class UtilYDE {
         float f = 0.00390625F;
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
         bufferbuilder.pos(0.0d, 14.0d, 0.0d).tex(0.0f, 32.0f * f).endVertex();
         bufferbuilder.pos(14.0d, 14.0d, 0.0d).tex(14.0f * f, 32.0f * f).endVertex();
         bufferbuilder.pos(14.0d, 0.0d, 0.0d).tex(14.0f * f, 18.0f * f).endVertex();
@@ -157,7 +161,7 @@ public class UtilYDE {
                             float r, float g, float b, float a) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
         bufferbuilder.pos(x0, y0, 0.0d).color(r, g, b, a).endVertex();
         bufferbuilder.pos(x0, y1, 0.0d).color(r, g, b, a).endVertex();
         bufferbuilder.pos(x1, y1, 0.0d).color(r, g, b, a).endVertex();

@@ -1,7 +1,7 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 import java.nio.charset.StandardCharsets;
@@ -14,9 +14,9 @@ public class PacketSpeak extends PacketBasic {
     protected static int channelId;
     private static final int maxChunkSizeInBytes = 32767;
 
-    private String languageKey;
-    private String text;
-    private float volume;
+    public String languageKey;
+    public String text;
+    public float volume;
 
     public PacketSpeak() { }
 
@@ -58,10 +58,6 @@ public class PacketSpeak extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        //MusicController.Instance.speak(languageKey, text, volume);
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

@@ -5,15 +5,16 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.MathHelper;
 import noppes.npcs.client.model.animation.EmotionConfig;
 import noppes.npcs.client.model.animation.EmotionFrame;
-import noppes.npcs.constants.EnumAnimationStages;
+import noppes.npcs.constants.EnumAnimationStage;
 import noppes.npcs.controllers.AnimationController;
 import noppes.npcs.util.ValueUtil;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 public class CustomEmotionHandler {
 
-    private final EntityLivingBase entity;
+    private final @Nonnull EntityLivingBase entity;
 
     // key = 0:eyeRight, 1:eyeLeft, 2:pupilRight, 3:pupilLeft, 4:browRight, 5:browLeft
     public final Map<Integer, Float[]> rotationAngles = new TreeMap<>();
@@ -23,20 +24,20 @@ public class CustomEmotionHandler {
     public EmotionFrame currentFrame;
     public EmotionFrame nextFrame;
 
-    public EnumAnimationStages stage = EnumAnimationStages.Waiting;
+    public EnumAnimationStage stage = EnumAnimationStage.Waiting;
     public long startEmotionTime = 0;
     public int baseEmotionId = -1;
     public int speedTicks;
     public int timeTicks;
 
-    public CustomEmotionHandler(EntityLivingBase main) {
+    public CustomEmotionHandler(@Nonnull EntityLivingBase main) {
         entity = main;
     }
 
     public EmotionConfig getEmotion() { return activeEmotion; }
 
     public void calculationEmotionData(float partialTicks) {
-        if (stage == EnumAnimationStages.Waiting || activeEmotion == null) { return; }
+        if (stage == EnumAnimationStage.Waiting || activeEmotion == null) { return; }
         int ticks = Math.max(0, (int) (entity.world.getTotalWorldTime() - startEmotionTime));
         // Speed ticks to next frame
         speedTicks = 0;
@@ -235,7 +236,7 @@ public class CustomEmotionHandler {
         if (emotion == null) { return null; }
         activeEmotion = emotion;
         startEmotionTime = entity.world.getTotalWorldTime();
-        stage = EnumAnimationStages.Started;
+        stage = EnumAnimationStage.Started;
         return activeEmotion;
     }
 
@@ -263,7 +264,7 @@ public class CustomEmotionHandler {
     }
 
     public boolean isAnimated() {
-        return ((activeEmotion != null && stage != EnumAnimationStages.Waiting) || AnimationController.getInstance().hasEmotion(baseEmotionId)) && entity.getHealth() > 0.0f;
+        return ((activeEmotion != null && stage != EnumAnimationStage.Waiting) || AnimationController.getInstance().hasEmotion(baseEmotionId)) && entity.getHealth() > 0.0f;
     }
 
     public void updateTime() {
@@ -271,32 +272,32 @@ public class CustomEmotionHandler {
         if (activeEmotion == null) {
             currentFrame = null;
             nextFrame = null;
-            stage = EnumAnimationStages.Waiting;
+            stage = EnumAnimationStage.Waiting;
             startEmotionTime = 0;
             timeTicks = -1;
             return;
         }
-        if (!AnimationController.getInstance().hasEmotion(activeEmotion.id) && stage != EnumAnimationStages.Ending && stage != EnumAnimationStages.Waiting) {
-            stage = EnumAnimationStages.Ending;
+        if (!AnimationController.getInstance().hasEmotion(activeEmotion.id) && stage != EnumAnimationStage.Ending && stage != EnumAnimationStage.Waiting) {
+            stage = EnumAnimationStage.Ending;
             startEmotionTime = entity.world.getTotalWorldTime() + 1;
             return;
         }
         int ticks = Math.max(0, (int) (entity.world.getTotalWorldTime() - startEmotionTime));
         int speed;
         if (activeEmotion.editFrame >= 0) {
-            stage = EnumAnimationStages.Run;
+            stage = EnumAnimationStage.Run;
             if (ticks >= activeEmotion.totalTicks) { startEmotionTime = entity.world.getTotalWorldTime() + 1; }
             return;
         }
-        if (stage == EnumAnimationStages.Started) {
+        if (stage == EnumAnimationStage.Started) {
             speed = 10;
             if (ticks >= speed) {
                 startEmotionTime += speed + 1;
-                stage = EnumAnimationStages.Run;
+                stage = EnumAnimationStage.Run;
             }
             return;
         }
-        if (stage == EnumAnimationStages.Looping) {
+        if (stage == EnumAnimationStage.Looping) {
             speed = activeEmotion.frames.get(activeEmotion.frames.size() - 1).speed;
             if (ticks >= speed) {
                 int lastFrameId = activeEmotion.frames.size();
@@ -309,26 +310,26 @@ public class CustomEmotionHandler {
                 } else {
                     startEmotionTime = entity.world.getTotalWorldTime() + activeEmotion.endingFrameTicks.get(frameId - 1) + 1;
                 }
-                if (frameId != lastFrameId - 1) { stage = EnumAnimationStages.Run; }
+                if (frameId != lastFrameId - 1) { stage = EnumAnimationStage.Run; }
             }
             return;
         }
-        if (stage == EnumAnimationStages.Run) {
+        if (stage == EnumAnimationStage.Run) {
             if (ticks >= activeEmotion.totalTicks) {
                 startEmotionTime = entity.world.getTotalWorldTime() + 1;
-                stage = EnumAnimationStages.Looping;
+                stage = EnumAnimationStage.Looping;
             }
             return;
         }
-        if (stage == EnumAnimationStages.Ending) {
+        if (stage == EnumAnimationStage.Ending) {
             speed = 10;
             if (ticks >= speed) {
                 startEmotionTime = 0;
-                stage = EnumAnimationStages.Waiting;
+                stage = EnumAnimationStage.Waiting;
             }
             return;
         }
-        if (stage == EnumAnimationStages.Waiting) {
+        if (stage == EnumAnimationStage.Waiting) {
             stopEmotion();
         }
     }

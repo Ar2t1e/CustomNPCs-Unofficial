@@ -1,8 +1,7 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.controllers.DropController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketDropTemplateClear extends PacketBasic {
@@ -19,10 +18,6 @@ public class PacketDropTemplateClear extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        DropController.getInstance().templates.clear();
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

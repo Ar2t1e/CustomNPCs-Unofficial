@@ -2,16 +2,13 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.controllers.SchematicController;
-import noppes.npcs.schematics.Schematic;
-import noppes.npcs.schematics.SchematicWrapper;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketSaveSchematic extends PacketBasic {
 
     protected static int channelId;
-    private NBTTagCompound data;
+    public NBTTagCompound data;
 
     public PacketSaveSchematic() { }
 
@@ -27,13 +24,6 @@ public class PacketSaveSchematic extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        Schematic schema = new Schematic("");
-        schema.load(data);
-        schema.save(player);
-        SchematicController.Instance.map.put(schema.getName(), new SchematicWrapper(schema));
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

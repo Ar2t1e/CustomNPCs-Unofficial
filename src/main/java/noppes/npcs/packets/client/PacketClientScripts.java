@@ -2,14 +2,13 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketClientScripts extends PacketBasic {
 
     protected static int channelId;
-    private NBTTagCompound compound;
+    public NBTTagCompound compound;
 
     public PacketClientScripts() { }
 
@@ -25,11 +24,6 @@ public class PacketClientScripts extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        ScriptController.HasStart = true;
-        ScriptController.Instance.setClientScripts(compound);
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

@@ -1,5 +1,5 @@
 package noppes.npcs.constants;
 
-public enum EnumAnimationStages {
+public enum EnumAnimationStage {
     Waiting, Started, Run, Looping, Ending
 }

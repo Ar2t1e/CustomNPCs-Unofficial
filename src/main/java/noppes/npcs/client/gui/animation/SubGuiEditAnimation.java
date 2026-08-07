@@ -17,7 +17,7 @@ import noppes.npcs.shared.client.gui.components.*;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.client.model.animation.*;
-import noppes.npcs.constants.EnumAnimationStages;
+import noppes.npcs.constants.EnumAnimationStage;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
@@ -187,7 +187,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			case 2: {
 				GuiNpcAnimation.backColor = (GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000);
 				getLabel(50).setColor(GuiNpcAnimation.backColor);
-				button.setColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080);
+				button.layerColor = GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080;
 				break;
 			} // back color
 			case 3: {
@@ -301,7 +301,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()).getParent(),
+							Component.translatable("animation.clear.part", "" + (part.id + 1),
+									scrollParts != null ? scrollParts.getSelected() : "").getParent(),
 							Component.translatable("message.delete").getParent());
 					setScreen(guiYesNo);
 				}
@@ -326,7 +327,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 						}
 						NoppesUtil.openGUI(player, this);
 					},
-							Component.translatable("animation.clear.part", "" + (part.id + 1), scrollParts.getSelected()).getParent(),
+							Component.translatable("animation.clear.part", "" + (part.id + 1),
+									scrollParts != null ? scrollParts.getSelected() : "").getParent(),
 							Component.translatable("gui.clearMessage").getParent());
 					setScreen(guiYesNo);
 				}
@@ -357,58 +359,58 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			case 13: {
 				if (meshType == 0) {
 					meshType = -1;
-					button.setColor(0xFF360C1C);
+					button.layerColor = 0xFF360C1C;
 				} else {
 					meshType = 0;
-					button.setColor(0xFFD93070);
+					button.layerColor = 0xFFD93070;
 				}
-				if (getButton(14) != null) { getButton(14).setColor(0xFF1A0C36); }
-				if (getButton(15) != null) { getButton(15).setColor(0xFF0C3620); }
-				if (getButton(16) != null) { getButton(16).setColor(0xFF35360C); }
+				if (getButton(14) != null) { getButton(14).layerColor = 0xFF1A0C36; }
+				if (getButton(15) != null) { getButton(15).layerColor = 0xFF0C3620; }
+				if (getButton(16) != null) { getButton(16).layerColor = 0xFF35360C; }
 				break;
 			} // reset mesh
 			case 14: {
 				if (meshType == 1) {
 					meshType = -1;
-					button.setColor(0xFF1A0C36);
+					button.layerColor = 0xFF1A0C36;
 				} else {
 					meshType = 1;
-					button.setColor(0xFF6830D9);
+					button.layerColor = 0xFF6830D9;
 				}
-				if (getButton(13) != null) { getButton(13).setColor(0xFF360C1C); }
-				if (getButton(15) != null) { getButton(15).setColor(0xFF0C3620); }
-				if (getButton(16) != null) { getButton(16).setColor(0xFF35360C); }
+				if (getButton(13) != null) { getButton(13).layerColor = 0xFF360C1C; }
+				if (getButton(15) != null) { getButton(15).layerColor = 0xFF0C3620; }
+				if (getButton(16) != null) { getButton(16).layerColor = 0xFF35360C; }
 				break;
 			} // xz mesh
 			case 15: {
 				if (meshType == 2) {
 					meshType = -1;
-					button.setColor(0xFF0C3620);
+					button.layerColor = 0xFF0C3620;
 				} else {
 					meshType = 2;
-					button.setColor(0xFF30D980);
+					button.layerColor = 0xFF30D980;
 				}
-				if (getButton(13) != null) { getButton(13).setColor(0xFF360C1C); }
-				if (getButton(14) != null) { getButton(14).setColor(0xFF1A0C36); }
-				if (getButton(16) != null) { getButton(16).setColor(0xFF35360C); }
+				if (getButton(13) != null) { getButton(13).layerColor = 0xFF360C1C; }
+				if (getButton(14) != null) { getButton(14).layerColor = 0xFF1A0C36; }
+				if (getButton(16) != null) { getButton(16).layerColor = 0xFF35360C; }
 				break;
 			} // xy mesh
 			case 16: {
 				if (meshType == 3) {
 					meshType = -1;
-					button.setColor(0xFF35360C);
+					button.layerColor = 0xFF35360C;
 				} else {
 					meshType = 3;
-					button.setColor(0xFFD7D930);
+					button.layerColor = 0xFFD7D930;
 				}
-				if (getButton(13) != null) { getButton(13).setColor(0xFF360C1C); }
-				if (getButton(14) != null) { getButton(14).setColor(0xFF1A0C36); }
-				if (getButton(15) != null) { getButton(15).setColor(0xFF0C3620); }
+				if (getButton(13) != null) { getButton(13).layerColor = 0xFF360C1C; }
+				if (getButton(14) != null) { getButton(14).layerColor = 0xFF1A0C36; }
+				if (getButton(15) != null) { getButton(15).layerColor = 0xFF0C3620; }
 				break;
 			} // xy mesh
 			case 17: {
 				showHitBox = !showHitBox;
-				button.setColor(showHitBox ? 0 : 0xFF808080);
+				button.layerColor = showHitBox ? 0 : 0xFF808080;
 				break;
 			} // show NPC hitbox
 			case 18: dispScale = 1.0f; break; // display reset scale
@@ -460,7 +462,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			} // select tool scale
 			case 26: {
 				ModelNpcAlt.editAnimDataSelect.showArmor = !ModelNpcAlt.editAnimDataSelect.showArmor;
-				button.setColor(ModelNpcAlt.editAnimDataSelect.showArmor ? 0xFFFF7200 : 0xFF6F3200);
+				button.layerColor = ModelNpcAlt.editAnimDataSelect.showArmor ? 0xFFFF7200 : 0xFF6F3200;
 				break;
 			} // show armor
 			case 27: {
@@ -475,10 +477,9 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			} // remove sound
 			case 29: {
 				if (partNames == null) { showPartNames(); }
-				GuiCustomWindowNop window = get(partNames.id, GuiCustomWindowNop.class);
-				if (window != null) {
-					window.visible = true;
+				if (partNames != null && !partNames.visible) {
 					button.setIsEnabled(false);
+					partNames.setIsVisible(true);
 				}
 				break;
 			} // show parts
@@ -554,10 +555,12 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			} // reset part set Y1 rot
 			case 35: {
 				if (tools == null) { showTools(); }
-				GuiCustomWindowNop window = get(tools.id, GuiCustomWindowNop.class);
-				if (window != null) {
-					window.visible = true;
+				if (tools != null && !tools.visible) {
 					button.setIsEnabled(false);
+					getButton(23).setIsVisible(true);
+					getButton(24).setIsVisible(true);
+					getButton(25).setIsVisible(true);
+					tools.setIsVisible(true);
 				}
 				break;
 			} // show window tools
@@ -622,21 +625,20 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				break;
 			} // show feet's
 			case 45: {
-				showHitBoxes();
-				GuiCustomWindowNop window = get(hitboxes.id, GuiCustomWindowNop.class);
-				if (window != null) {
-					window.visible = true;
+				if (hitboxes == null) { showHitBoxes(); }
+				if (hitboxes != null && !hitboxes.visible) {
 					button.setIsEnabled(false);
+					hitboxes.setIsVisible(true);
 				}
 				break;
 			} // show window hitbox
 			case 46: {
 				if (ModelNpcAlt.editAnimDataSelect.alpha >= 1.0f) {
 					ModelNpcAlt.editAnimDataSelect.alpha = 0.25f;
-					button.setColor(0xFF787758);
+					button.layerColor = 0xFF787758;
 				} else {
 					ModelNpcAlt.editAnimDataSelect.alpha = 1.0f;
-					button.setColor(0xFFFFFEBF);
+					button.layerColor = 0xFFFFFEBF;
 				}
 				break;
 			} // show alpha // show armor
@@ -651,7 +653,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 					npcPart.prevRotationYaw = baseRotation;
 					npcPart.rotationYawHead = npc.rotationYawHead;
 					npcPart.prevRotationYawHead = npc.prevRotationYawHead;
-					button.setColor(0xFF96FFC0);
+					button.layerColor = 0xFF96FFC0;
 				} else {
 					npcAnim.rotationYaw = 0.0f;
 					npcAnim.prevRotationYaw = 0.0f;
@@ -661,7 +663,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 					npcPart.prevRotationYaw = 0.0f;
 					npcPart.rotationYawHead = 0.0f;
 					npcPart.prevRotationYawHead = 0.0f;
-					button.setColor(0xFF426C53);
+					button.layerColor = 0xFF426C53;
 				}
 				break;
 			} // reset NPC rotation
@@ -715,6 +717,17 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				break;
 			} // set animation part tick
 			case 66: onClose(); break; // exit
+			case 2500: {
+				if (partNames != null && partNames.exit.equals(button)) { getButton(29).setIsEnabled(true); }
+				else if (tools != null && tools.exit.equals(button)) {
+					getButton(23).setIsVisible(false);
+					getButton(24).setIsVisible(false);
+					getButton(25).setIsVisible(false);
+					getButton(35).setIsEnabled(true);
+				}
+				else if (hitboxes != null && hitboxes.exit.equals(button)) { getButton(45).setIsEnabled(true); }
+				break;
+			} // exit
 		}
 	}
 
@@ -760,7 +773,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		}
 		if (getLabel(51) != null) {
 			GuiLabel label = getLabel(51);
-			EnumAnimationStages stage = showNPC.animation.getAnimationStage();
+			EnumAnimationStage stage = showNPC.animation.getAnimationStage();
 			int t = showNPC.animation.getAnimationTicks();
 			int s = showNPC.animation.getAnimationSpeedTicks();
 
@@ -837,7 +850,9 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		}
 		hoverRight = isMouseHover(mouseX, mouseY, winU + 3, winV + y + 1, 16, 16);
 		if (hoverRight) {
-			Gui.drawRect(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
+			if (frame.getHoldRightStackType() == 3) {
+				drawRect(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
+			}
 			if (stack != null && !stack.isEmpty()) {
 				List<String> list = stack.getMCItemStack().getTooltip(player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL);
 				if (!list.isEmpty()) { setHoverText(list); }
@@ -846,9 +861,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		if (stack != null && !stack.isEmpty()) {
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(1.0f, 1.0f, 0.0f);
-			RenderHelper.enableStandardItemLighting();
+			RenderHelper.enableGUIStandardItemLighting();
 			mc.getRenderItem().renderItemAndEffectIntoGUI(stack.getMCItemStack(), 0, 0);
-			RenderHelper.disableStandardItemLighting();
 			GlStateManager.popMatrix();
 		}
 		y += 20;
@@ -868,7 +882,9 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		}
 		hoverLeft = isMouseHover(mouseX, mouseY, winU + 3, winV + y + 1, 16, 16);
 		if (hoverLeft) {
-			Gui.drawRect(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
+			if (frame.getHoldLeftStackType() == 3) {
+				drawRect(1, 1, 17, 17, new Color(0x80FFFFFF).getRGB());
+			}
 			if (stack != null && !stack.isEmpty()) {
 				List<String> list = stack.getMCItemStack().getTooltip(player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL);
 				if (!list.isEmpty()) { setHoverText(list); }
@@ -877,9 +893,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		if (stack != null && !stack.isEmpty()) {
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(1.0f, 1.0f, 0.0f);
-			RenderHelper.enableStandardItemLighting();
+			RenderHelper.enableGUIStandardItemLighting();
 			mc.getRenderItem().renderItemAndEffectIntoGUI(stack.getMCItemStack(), 0, 0);
-			RenderHelper.disableStandardItemLighting();
 			GlStateManager.popMatrix();
 		}
 		GlStateManager.popMatrix();
@@ -929,6 +944,9 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			GL11.glDisable(GL11.GL_SCISSOR_TEST);
 			GlStateManager.popMatrix();
 
+			GL11.glDisable(GL11.GL_DEPTH_TEST);
+			GlStateManager.depthMask(false);
+
 			GlStateManager.pushMatrix();
 				GlStateManager.translate(0.0f, 0.0f, 950.0f);
 				// axis xyz vector
@@ -975,14 +993,11 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			Gui.drawRect(workU + 1, workV + 1, workU + workS - 1, workV + workS - 1, GuiNpcAnimation.backColor);
 			GlStateManager.popMatrix();
 		}
-		GlStateManager.pushMatrix();
-			GlStateManager.translate(0.0f, 0.0f, 975.0f);
-			super.drawScreen(mouseX, mouseY, partialTicks);
-		GlStateManager.popMatrix();
+		super.drawScreen(mouseX, mouseY, partialTicks);
+		GlStateManager.depthMask(true);
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
 		getButton(7).setIsEnabled(!isMotion && ((isHitbox && hitbox != null) || (anim != null && part != null && part.id != 6 && part.id != 7)));
 		getButton(8).setIsEnabled(!isMotion && ((isHitbox && hitbox != null) || (anim != null && addedPartConfig != null && part != null && part.id > 7)));
-		if (hasSubGui() || !CustomNpcs.ShowDescriptions) { return; }
-		drawHoverText(null);
 	}
 
 	@Override
@@ -1066,36 +1081,36 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		// back color
 		addButton(2, workU + 2, workV + 23, "")
 				.setSize(8, 8)
-				.setColor(GuiNpcAnimation.backColor == 0xFF000000 ? new Color(0xFF00FFFF).getRGB() : new Color(0xFF008080).getRGB())
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.color");
+				.setHoverTexts("animation.hover.color")
+				.layerColor = GuiNpcAnimation.backColor == 0xFF000000 ? new Color(0xFF00FFFF).getRGB() : new Color(0xFF008080).getRGB();
 		addButton(26, workU + 2, workV + 31, "")
 				.setSize(8, 8)
-				.setColor(ModelNpcAlt.editAnimDataSelect.showArmor ? new Color(0xFFFF7200).getRGB() : new Color(0xFF6F3200).getRGB())
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.show.armor");
+				.setHoverTexts("animation.hover.show.armor")
+				.layerColor = ModelNpcAlt.editAnimDataSelect.showArmor ? new Color(0xFFFF7200).getRGB() : new Color(0xFF6F3200).getRGB();
 		addButton(46, workU + 2, workV + 39, "")
 				.setSize(8, 8)
-				.setColor(ModelNpcAlt.editAnimDataSelect.alpha >= 1.0f ? new Color(0xFFFFFEBF).getRGB() : new Color(0xFF787758).getRGB())
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.show.alpha");
+				.setHoverTexts("animation.hover.show.alpha")
+				.layerColor = ModelNpcAlt.editAnimDataSelect.alpha >= 1.0f ? new Color(0xFFFFFEBF).getRGB() : new Color(0xFF787758).getRGB();
 		addButton(47, workU + 2, workV + 47, "")
 				.setSize(8, 8)
-				.setColor(baseRotation == 0.0f || baseRotation == npcAnim.rotationYaw ? new Color(0xFF96FFC0).getRGB() : new Color(0xFF426C53).getRGB())
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.base.rot");
+				.setHoverTexts("animation.hover.base.rot")
+				.layerColor = baseRotation == 0.0f || baseRotation == npcAnim.rotationYaw ? new Color(0xFF96FFC0).getRGB() : new Color(0xFF426C53).getRGB();
 		// frame
 		addLabel(lId++, x, (y += 23) - 10, "animation.frames");
 		Object[] lFrames = new Object[anim.frames.size()];
@@ -1180,28 +1195,37 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				.setHoverTexts("animation.hover.stack.type."+type);
 		// Part
 		addLabel(lId++, x, y += 13, isMotion ? "animation.motion" :  isHitbox ? "animation.hitbox" : "animation.parts");
-		// show part names
-		addButton(29, workU + 2, y, "")
-				.setSize(8, 8)
-				.setColor(CustomNpcs.colorAnimHoverPart + 0xFF000000)
-				.setTexture(ANIMATION_BUTTONS)
-				.setDefBack(false)
-				.setIsAnim(true)
-				.setUV(232, 0, 24, 24)
-				.setIsEnabled(partNames == null || !partNames.visible)
-				.setHoverTexts("animation.hover.show.parts");
 		// show hitbox names
 		if (anim.type == AnimationKind.ATTACKING) {
-			addButton(45, workU + 2, y + 12, "")
+			addButton(45, workU + 2, y, "")
 					.setSize(8, 8)
-					.setColor(0xFFFAF700)
 					.setTexture(ANIMATION_BUTTONS)
 					.setDefBack(false)
 					.setIsAnim(true)
 					.setUV(232, 0, 24, 24)
-					.setIsEnabled(hitboxes == null || !hitboxes.visible)
-					.setHoverTexts("animation.hover.show.hitboxes");
+					.setIsEnabled(hitboxes != null && hitboxes.visible)
+					.setHoverTexts("animation.hover.show.hitboxes")
+					.layerColor = 0xFFFAF700;
 		}
+		// show part names
+		addButton(29, workU + 2, y + 10, "")
+				.setSize(8, 8)
+				.setTexture(ANIMATION_BUTTONS)
+				.setDefBack(false)
+				.setIsAnim(true)
+				.setUV(232, 0, 24, 24)
+				.setIsEnabled(partNames != null && partNames.visible)
+				.setHoverTexts("animation.hover.show.parts")
+				.layerColor = CustomNpcs.colorAnimHoverPart + 0xFF000000;
+		// show tools
+		addButton(35, workU + 2, y + 20, "")
+				.setSize(8, 8)
+				.setTexture(ANIMATION_BUTTONS)
+				.setDefBack(false)
+				.setIsAnim(true)
+				.setIsEnabled(tools != null && tools.visible)
+				.setUV(232, 0, 24, 24)
+				.setHoverTexts("animation.hover.show.tools");
 		// scrolls data set
 		dataParts.clear();
 		List<Component> lParts = new ArrayList<>();
@@ -1262,9 +1286,9 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
 				.setIsEnabled(!isMotion && !isHitbox)
-				.setColor(CustomNpcs.colorAnimHoverPart)
 				.setHoverTexts("animation.hover.part.color")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = CustomNpcs.colorAnimHoverPart;
 		// Chance
 		float ch = Math.round(anim.chance * 100000.0f) / 1000.0f;
 		addLabel(lId++, x, (y += 14) + 1, Component.translatable("drop.chance").append(":"));
@@ -1282,18 +1306,18 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.select.sound")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		addButton(28, x + 135 - 8, y, "X")
 				.setSize(8, 8)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.del.sound")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		// Emotion data
 		addLabel(lId++, x, y += 26, Component.translatable("advanced.emotion").append(":"));
 		addTextField(4, x, y + 10, 48, 12, "" + frame.getStartEmotion())
@@ -1307,54 +1331,54 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				.setTexture(ANIMATION_BUTTONS_SLOTS)
 				.setDefBack(false)
 				.setUV(0, frame.showMainHand ? 0 : 96, 24, 24)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.0")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		// show equipment offhand
 		addButton(40, x + 16, y, "")
 				.setSize(12, 12)
 				.setTexture(ANIMATION_BUTTONS_SLOTS)
 				.setDefBack(false)
 				.setUV(24, frame.showOffHand ? 0 : 96, 24, 24)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.1")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		// show equipment helmet
 		addButton(41, x + 30, y, "")
 				.setSize(12, 12)
 				.setTexture(ANIMATION_BUTTONS_SLOTS)
 				.setDefBack(false)
 				.setUV(48, frame.showHelmet ? 0 : 96, 24, 24)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.2")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		// show equipment body
 		addButton(42, x + 44, y, "")
 				.setSize(12, 12)
 				.setTexture(ANIMATION_BUTTONS_SLOTS)
 				.setDefBack(false)
 				.setUV(72, frame.showBody ? 0 : 96, 24, 24)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.3")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		// show equipment legs
 		addButton(43, x + 58, y, "")
 				.setSize(12, 12)
 				.setTexture(ANIMATION_BUTTONS_SLOTS)
 				.setDefBack(false)
 				.setUV(96, frame.showLegs ? 0 : 96, 24, 24)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.4")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		// show equipment feet's
 		addButton(44, x + 72, y, "")
 				.setSize(12, 12)
 				.setTexture(ANIMATION_BUTTONS_SLOTS)
 				.setDefBack(false)
 				.setUV(120, frame.showFeets ? 0 : 96, 24, 24)
-				.setColor(0xFFDC0000)
 				.setHoverTexts("animation.hover.5")
-				.setShowShadow(false);
+				.setShowShadow(false)
+				.layerColor = 0xFFDC0000;
 		// exit
 		addButton(66, x, winV + winH - 12, "gui.back")
 				.setSize(50, 10)
@@ -1368,84 +1392,84 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		// simple mesh
 		addButton(13, workU + 25, workV + 2, "")
 				.setSize(8, 8)
-				.setColor(meshType == 0 ? 0xFFD93070 : 0xFF360C1C)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts(Component.translatable("animation.hover.mesh.0").append(hAgain));
+				.setHoverTexts(Component.translatable("animation.hover.mesh.0").append(hAgain))
+				.layerColor = meshType == 0 ? 0xFFD93070 : 0xFF360C1C;
 		// xz mesh
 		addButton(14, workU + 34, workV + 2, "")
 				.setSize(8, 8)
-				.setColor(meshType == 1 ? 0xFF6830D9 : 0xFF1A0C36)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts(Component.translatable("animation.hover.mesh.1").append(hAgain));
+				.setHoverTexts(Component.translatable("animation.hover.mesh.1").append(hAgain))
+				.layerColor = meshType == 1 ? 0xFF6830D9 : 0xFF1A0C36;
 		// xy mesh
 		addButton(15, workU + 43, workV + 2, "")
 				.setSize(8, 8)
-				.setColor(meshType == 2 ? 0xFF30D980 : 0xFF0C3620)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts(Component.translatable("animation.hover.mesh.2").append(hAgain));
+				.setHoverTexts(Component.translatable("animation.hover.mesh.2").append(hAgain))
+				.layerColor = meshType == 2 ? 0xFF30D980 : 0xFF0C3620;
 		// zy mesh
 		addButton(16, workU + 52, workV + 2, "")
 				.setSize(8, 8)
-				.setColor(meshType == 3 ? 0xFFD7D930 : 0xFF35360C)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts(Component.translatable("animation.hover.mesh.3").append(hAgain));
+				.setHoverTexts(Component.translatable("animation.hover.mesh.3").append(hAgain))
+				.layerColor = meshType == 3 ? 0xFFD7D930 : 0xFF35360C;
 		// show hit box
 		addButton(17, workU + 61, workV + 2, "")
 				.setSize(8, 8)
-				.setColor(showHitBox ? 0 : 0xFF808080)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts(Component.translatable("animation.hover.hitbox").append(hAgain));
+				.setHoverTexts(Component.translatable("animation.hover.hitbox").append(hAgain))
+				.layerColor = showHitBox ? 0 : 0xFF808080;
 		// align xy
 		addButton(49, workU + 79, workV + 2, "x")
 				.setSize(8, 8)
-				.setColor(0xFF8555BA)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.align.xy");
+				.setHoverTexts("animation.hover.align.xy")
+				.layerColor = 0xFF8555BA;
 		// align zy
 		addButton(50, workU + 79, workV + 11, "z")
 				.setSize(8, 8)
-				.setColor(0xFF8555BA)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.align.zy");
+				.setHoverTexts("animation.hover.align.zy")
+				.layerColor = 0xFF8555BA;
 		// align xz
 		addButton(51, workU + 88, workV + 2, "y")
 				.setSize(8, 8)
-				.setColor(0xFF8555BA)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.align.xz");
+				.setHoverTexts("animation.hover.align.xz")
+				.layerColor = 0xFF8555BA;
 		// align revers
 		addButton(52, workU + 97, workV + 11, "r")
 				.setSize(8, 8)
-				.setColor(0xFF557DBA)
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 96, 0, 0)
-				.setHoverTexts("animation.hover.align.revers");
+				.setHoverTexts("animation.hover.align.revers")
+				.layerColor = 0xFF557DBA;
 		// reset scale
 		addButton(18, workU + workS - 10, workV + 2, "")
 				.setSize(8, 8)
@@ -1490,45 +1514,36 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 				.setSize(108, 10)
 				.setHoverTexts("animation.hover.part.all.ticks")
 				.setIsVisible(onlyCurrentPart);
-		// show tools
-		addButton(35, workU + 5, y, "")
-				.setSize(8, 8)
-				.setTexture(ANIMATION_BUTTONS)
-				.setDefBack(false)
-				.setIsAnim(true)
-				.setIsEnabled(tools == null || !tools.visible)
-				.setUV(232, 0, 24, 24)
-				.setHoverTexts("animation.hover.show.tools");
 		// tool pos
 		addButton(23, workU + 2, y += 10, "")
 				.setSize(14, 14)
-				.setColor(toolType == 1 ? new Color(0xFFFF4040).getRGB() : new Color(0xFFFFFFFF).getRGB())
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
-				.setIsEnabled(tools == null || !tools.visible)
+				.setIsEnabled(tools == null || tools.visible)
 				.setUV(0, 0, 24, 24)
-				.setHoverTexts("animation.hover.tool.0");
+				.setHoverTexts("animation.hover.tool.0")
+				.layerColor = toolType == 1 ? new Color(0xFFFF4040).getRGB() : new Color(0xFFFFFFFF).getRGB();
 		// tool rot
 		addButton(24, workU + 2, y += 16, "")
 				.setSize(14, 14)
-				.setColor(toolType == 0 ? new Color(0xFF40FF40).getRGB() : new Color(0xFFFFFFFF).getRGB())
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
-				.setIsEnabled(!isHitbox && !isMotion)
+				.setIsEnabled((tools == null || tools.visible) && !isHitbox && !isMotion)
 				.setUV(24, 0, 24, 24)
-				.setHoverTexts("animation.hover.tool.1");
+				.setHoverTexts("animation.hover.tool.1")
+				.layerColor = toolType == 0 ? new Color(0xFF40FF40).getRGB() : new Color(0xFFFFFFFF).getRGB();
 		// tool scale
 		addButton(25, workU + 2, y + 16, "")
 				.setSize(14, 14)
-				.setColor(toolType == 2 ? new Color(0xFF4040FF).getRGB() : new Color(0xFFFFFFFF).getRGB())
 				.setTexture(ANIMATION_BUTTONS)
 				.setDefBack(false)
 				.setIsAnim(true)
-				.setIsEnabled(!isMotion)
+				.setIsEnabled((tools == null || tools.visible) && !isMotion)
 				.setUV(48, 0, 24, 24)
-				.setHoverTexts("animation.hover.tool.2");
+				.setHoverTexts("animation.hover.tool.2")
+				.layerColor = toolType == 2 ? new Color(0xFF4040FF).getRGB() : new Color(0xFFFFFFFF).getRGB();
 		resetAnimation();
 		// Parts window
 		boolean vPN = partNames == null || partNames.visible;
@@ -1547,7 +1562,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 
 	private void showHitBoxes() {
 		if (hitboxes == null) {
-			hitboxes = new GuiCustomWindowNop(this, 12, workU + 18, workV + 12, 120, 118,
+			hitboxes = new GuiCustomWindowNop(this, 12, workU + 18, workV + 12, 120, 106,
 					Component.translatable("gui.hitboxes", ":"))
 					.addClose((window) -> getButton(45).setIsEnabled(get(2, GuiCustomWindowNop.class) != null));
 			hitboxes.widthTexture = 256;
@@ -1585,9 +1600,10 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			x = tools.getX();
 			y = tools.getY();
 		}
-		tools = new GuiCustomWindowNop(this, 11, x, y,
-				146, notNormal ? 71 : 48, Component.translatable("gui.tools").append(":"))
-				.addClose((window) -> getButton(35).setIsEnabled(get(1, GuiCustomWindowNop.class) != null));
+		tools = new GuiCustomWindowNop(this, 11, x, y, 146, notNormal ? 71 : 48,
+				Component.translatable("gui.tools").append(":"))
+				.addClose((window) -> getButton(35)
+						.setIsEnabled(get(1, GuiCustomWindowNop.class) != null));
 		tools.widthTexture = 256;
 		tools.heightTexture = 256;
 		x = 4;
@@ -1679,9 +1695,9 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 					.setDefBack(false)
 					.setIsAnim(true)
 					.setUV(0, 96, 0, 0)
-					.setColor(0xFFDC0000)
 					.setHoverTexts("animation.hover.reset." + toolType, i == 0 ? "X" : i == 1 ? "Y" : "Z")
-					.setShowShadow(false);
+					.setShowShadow(false)
+					.layerColor = 0xFFDC0000;
 		}
 		if (!isHitbox && notNormal) {
 			y += 33;
@@ -1701,8 +1717,8 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 					.setIsAnim(true)
 					.setUV(0, 96, 0, 0)
 					.setShowShadow(false)
-					.setColor(0xFFDC0000)
-					.setHoverTexts("animation.hover.reset.0", "X 1");
+					.setHoverTexts("animation.hover.reset.0", "X 1")
+					.layerColor = 0xFFDC0000;
 			y += 11;
 			tools.addLabel(4, x, y, "Y1:");
 			sliderValue = part.rotation[4] * 0.318310f + 0.5f;
@@ -1720,27 +1736,25 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 					.setIsAnim(true)
 					.setUV(0, 96, 0, 0)
 					.setShowShadow(false)
-					.setColor(0xFFDC0000)
-					.setHoverTexts("animation.hover.reset.0", "Y 1");
+					.setHoverTexts("animation.hover.reset.0", "Y 1")
+					.layerColor = 0xFFDC0000;
 		}
+		tools.setPoint(getButton(35));
 		switch(toolType) {
 			case 1: {
-				tools.setPoint(getButton(23));
 				tools.setColorLine(0xFF8080);
 				break;
 			}
 			case 2: {
-				tools.setPoint(getButton(25));
 				tools.setColorLine(0x8080FF);
 				break;
 			}
 			default: {
-				tools.setPoint(getButton(24));
 				tools.setColorLine(0x80FF80);
 				break;
 			}
 		}
-		if (getButton(35) != null) { getButton(35).setColor(tools.getColorLine() + 0xFF000000); }
+		if (getButton(35) != null) { getButton(35).layerColor = tools.getColorLine() + 0xFF000000; }
 		add(tools);
 	}
 
@@ -1756,7 +1770,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 					.setSize(67, 12);
 		}
 		if (scrollParts == null) {
-			scrollParts = addScroll(0).setSize(67, 130)
+			scrollParts = partNames.addScroll(0).setSize(67, 130)
 					.setHoverTexts("animation.hover.part.sel")
 					.disabledSearch();
 		}
@@ -2581,7 +2595,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		// work place
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(0.0f, 0.0f, -300.0f);
-		Gui.drawRect(workU + 1, workV + 1, workU + workS - 1, workV + workS - 1, GuiNpcAnimation.backColor);
+		drawRect(workU + 1, workV + 1, workU + workS - 1, workV + workS - 1, GuiNpcAnimation.backColor);
 		GlStateManager.popMatrix();
 
 		// blocks

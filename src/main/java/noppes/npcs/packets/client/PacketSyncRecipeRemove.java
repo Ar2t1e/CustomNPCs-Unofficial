@@ -2,17 +2,18 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.ResourceLocation;
-import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketSyncRecipeRemove extends PacketBasic {
 
     protected static int channelId;
-    private ResourceLocation id;
-    private int type;
+    public ResourceLocation id;
+    public int type;
 
     public PacketSyncRecipeRemove() { }
 
+    @SuppressWarnings("unused")
     public PacketSyncRecipeRemove(ResourceLocation idIn, int typeIn) {
         id = idIn;
         type = typeIn;
@@ -34,16 +35,6 @@ public class PacketSyncRecipeRemove extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        /*if (type == 6) {
-            RecipeController.instance.globalRecipes.remove(id);
-            RecipeController.instance.reloadGlobalRecipes();
-        }
-        else if (type == 7) {
-            RecipeController.instance.anvilRecipes.remove(id);
-        }*/
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

@@ -2,16 +2,15 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.ResourceLocation;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.controllers.MusicController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketPlayMusic extends PacketBasic {
 
    protected static int channelId;
-   private ResourceLocation name;
-   private boolean streaming;
-   private boolean looping;
+   public ResourceLocation name;
+   public boolean streaming;
+   public boolean looping;
 
    public PacketPlayMusic() { }
 
@@ -39,11 +38,6 @@ public class PacketPlayMusic extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      if (streaming) { MusicController.Instance.playStreaming(name, player, looping); }
-      else { MusicController.Instance.playMusic(name, player, looping); }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

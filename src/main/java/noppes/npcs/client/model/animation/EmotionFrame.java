@@ -53,7 +53,7 @@ implements IEmotionPart {
 	public void setEndBlink(boolean bo) { endBlink = bo; }
 	
 	public void readFromNBT(NBTTagCompound compound) {
-		if (compound.getKeySet().isEmpty()) { return; }
+		if (compound.hasNoTags()) { return; }
 		id = compound.getInteger("Part");
 		setSpeed(compound.getInteger("Speed"));
 		setEndDelay(compound.getInteger("EndDelay"));

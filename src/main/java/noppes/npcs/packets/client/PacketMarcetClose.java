@@ -1,17 +1,13 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.player.GuiNPCTrader;
-import noppes.npcs.controllers.MarcetController;
-import noppes.npcs.controllers.data.Marcet;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketMarcetClose extends PacketBasic {
 
     protected static int channelId;
-    private int marcetID;
+    public int marcetID;
 
     public PacketMarcetClose() { }
 
@@ -27,15 +23,6 @@ public class PacketMarcetClose extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        Marcet m = MarcetController.getInstance().getMarcet(marcetID);
-        if (m != null) {
-            if (Minecraft.getMinecraft().currentScreen instanceof GuiNPCTrader &&
-                    GuiNPCTrader.marcet != null &&
-                    GuiNPCTrader.marcet.getId() == marcetID) { ((GuiNPCTrader) Minecraft.getMinecraft().currentScreen).onClose(); }
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

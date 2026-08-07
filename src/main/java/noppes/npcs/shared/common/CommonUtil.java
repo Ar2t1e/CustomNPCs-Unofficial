@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.packets.Packets;
@@ -39,7 +40,7 @@ public class CommonUtil {
                     isSend = true;
                 }
             }
-            WorldServer world = CustomNpcs.Server.getWorld(0);
+            WorldServer world = DimensionManager.getWorld(0);
             if (world != null && world.getGameRules().getBoolean("logAdminCommands")) { LogWriter.info(component.getFormattedText()); }
         }
         if (!isSend) {

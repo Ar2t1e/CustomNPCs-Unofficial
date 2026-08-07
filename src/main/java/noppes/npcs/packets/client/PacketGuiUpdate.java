@@ -1,9 +1,7 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketGuiUpdate extends PacketBasic {
@@ -20,11 +18,6 @@ public class PacketGuiUpdate extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      Minecraft mc = Minecraft.getMinecraft();
-      if (mc.currentScreen instanceof IGuiInterface) { mc.currentScreen.setWorldAndResolution(mc, mc.currentScreen.width, mc.currentScreen.height); }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

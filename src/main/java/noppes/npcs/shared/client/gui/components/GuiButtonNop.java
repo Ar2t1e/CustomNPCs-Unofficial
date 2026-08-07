@@ -320,22 +320,22 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         }
         isHovered = visible && mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
         if (!visible) { return; }
-        GlStateManager.enableDepth();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
-        GlStateManager.enableBlend();
         Minecraft mc = Minecraft.getMinecraft();
         if (render != null) { render.onRender(this, mouseX, mouseY, partialTicks); }
         else {
-            int state = getState();
-            if (hasDefBack) {
-                drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFF202020);
-                drawRect(x, y, x + width, y + height, 0xFFA0A0A0);
-            }
+            GlStateManager.enableDepth();
+            GlStateManager.enableBlend();
             if (layerColor != 0) {
                 GlStateManager.color((float) (layerColor >> 16 & 255) / 255.0f,
                         (float) (layerColor >> 8 & 255) / 255.0f,
                         (float) (layerColor & 255) / 255.0f,
                         (float) (layerColor >> 24 & 255) / 255.0f);
+            }
+            else { GlStateManager.color(1.0F, 1.0F, 1.0F, alpha); }
+            int state = getState();
+            if (hasDefBack) {
+                drawRect(x - 1, y - 1, x + width + 1, y + height + 1, 0xFF202020);
+                drawRect(x, y, x + width, y + height, 0xFFA0A0A0);
             }
             if (texture == null) {
                 mc.getTextureManager().bindTexture(WIDGETS_LOCATION);
@@ -365,7 +365,6 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 mc.getTextureManager().bindTexture(texture);
                 GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
                 GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
                 if (isSimple) {
                     int w0 = width / 2;
                     int w1 = width - w0;
@@ -484,8 +483,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     }
 
     public int getFGColor() {
-        if (packedFGColor != 0) { return packedFGColor; }
-        else if (!enabled) { return CustomNpcs.NotEnableColor.getRGB(); }
+        if (!enabled) { return CustomNpcs.NotEnableColor.getRGB(); }
         else if (isHovered) { return CustomNpcs.HoverColor.getRGB(); }
         return CustomNpcs.ButtonColor.getRGB();
     }

@@ -1,8 +1,7 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.command.CmdHeapAnalyzer;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketHeapAnalyzer extends PacketBasic {
@@ -11,8 +10,8 @@ public class PacketHeapAnalyzer extends PacketBasic {
 
     public enum State { START, STOP, MANUAL }
 
-    private State type;
-    private int count;
+    public State type;
+    public int count;
 
     public PacketHeapAnalyzer() { }
 
@@ -37,14 +36,6 @@ public class PacketHeapAnalyzer extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        switch (type) {
-            case START: CmdHeapAnalyzer.startTracking(null, count); break;
-            case STOP: CmdHeapAnalyzer.stopTracking(null, count); break;
-            case MANUAL: CmdHeapAnalyzer.doManual(null, count); break;
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

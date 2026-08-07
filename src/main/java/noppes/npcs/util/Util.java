@@ -1175,7 +1175,7 @@ public class Util implements IMethods {
 		if (tag == null) { return null; }
 		if (tag instanceof NBTTagCompound) {
 			NBTTagCompound compound = (NBTTagCompound) tag;
-			if (compound.getKeySet().isEmpty()) { return null; }
+			if (compound.hasNoTags()) { return null; }
 			if (compound.getBoolean("IsBindings")) {
 				ScriptEngine engine = ScriptController.Instance.getEngineByName("ECMAScript");
 				if (engine == null) { return null; }

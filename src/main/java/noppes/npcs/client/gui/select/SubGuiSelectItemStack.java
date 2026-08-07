@@ -39,6 +39,7 @@ public class SubGuiSelectItemStack extends GuiBasic {
         hoverPos = -2;
 
         GlStateManager.pushMatrix();
+        RenderHelper.enableGUIStandardItemLighting();
         mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
         drawTexturedModalRect(x, y, 0, 0, 18, 18);
@@ -51,9 +52,7 @@ public class SubGuiSelectItemStack extends GuiBasic {
             GlStateManager.pushMatrix();
             GlStateManager.translate(x + 1.0f, y + 1.0f, 0.0f);
             GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-            RenderHelper.enableStandardItemLighting();
             mc.getRenderItem().renderItemAndEffectIntoGUI(stack, 0, 0);
-            RenderHelper.disableStandardItemLighting();
             GlStateManager.translate(0.0f, 0.0f, 200.0f);
             GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
             drawString(mc.fontRenderer, "" + stack.getCount(), 16 - mc.fontRenderer.getStringWidth("" + stack.getCount()), 9, new Color(0xFFFFFFFF).getRGB());

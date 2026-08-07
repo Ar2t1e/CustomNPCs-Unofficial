@@ -132,7 +132,7 @@ extends ModelPartData {
 
 	@Override
 	public void load(NBTTagCompound compound) {
-		if (compound.getKeySet().isEmpty()) { return; }
+		if (compound.hasNoTags()) { return; }
 		super.load(compound);
 		glint = compound.getBoolean("Glint");
 		
@@ -184,16 +184,16 @@ extends ModelPartData {
 	}
 
 	public void update(EntityNPCInterface npc) {
-		if (!isEnabled() || !npc.isEntityAlive() || (npc.getName().indexOf("1_")!=0 && !npc.isServerWorld())) { return; }
-		if (blinkStart < 0L) { ++blinkStart; }
-		else if (blinkStart == 0L) {
-			if (npc.isDead || npc.isPlayerSleeping()) { return; }
-			if (rnd.nextInt(150) == 1) { // 140
-				blinkStart = System.currentTimeMillis();
-				Packets.sendNearby(npc, new PacketEyeBlink(npc.getEntityId()));
-            }
-		} else if (System.currentTimeMillis() - blinkStart > 300L) {
-			blinkStart = -20L;
+		if (isEnabled() && npc != null && npc.isEntityAlive() && npc.getName().indexOf("1_") == 0 && npc.isServerWorld()) {
+			if (blinkStart < 0L) { ++blinkStart; }
+			else if (blinkStart == 0L) {
+				if (npc.isDead || npc.isPlayerSleeping()) { return; }
+				if (rnd.nextInt(150) == 1) { // 140
+					blinkStart = System.currentTimeMillis();
+					Packets.sendNearby(npc, new PacketEyeBlink(npc.getEntityId()));
+				}
+			}
+			else if (System.currentTimeMillis() - blinkStart > 300L) { blinkStart = -20L; }
 		}
 	}
 

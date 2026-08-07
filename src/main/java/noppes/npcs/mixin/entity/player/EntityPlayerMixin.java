@@ -7,7 +7,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.mixin.entity.player.IEntityPlayerMixin;
 import noppes.npcs.client.model.animation.AnimationConfig;
-import noppes.npcs.constants.EnumAnimationStages;
+import noppes.npcs.constants.EnumAnimationStage;
 import noppes.npcs.entity.data.DataAnimation;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,7 +48,7 @@ public class EntityPlayerMixin implements IEntityPlayerMixin {
         if (CustomNpcs.ShowCustomAnimation) {
             EntityPlayer player = (EntityPlayer) (Object) this;
             // Jump
-            if (npcs$animation.getJump() && player.onGround && npcs$animation.getAnimationStage() != EnumAnimationStages.Started) {
+            if (npcs$animation.getJump() && player.onGround && npcs$animation.getAnimationStage() != EnumAnimationStage.Started) {
                 npcs$animation.setJump(false);
                 if (npcs$animation.isAnimated(AnimationKind.JUMP)) {
                     npcs$animation.stopAnimation();

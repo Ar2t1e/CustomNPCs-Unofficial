@@ -1,17 +1,15 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketNpcLookPos extends PacketBasic {
 
     protected static int channelId;
-    private int dimensionId;
-    private int npcId;
-    private int lookId;
+    public int dimensionId;
+    public int npcId;
+    public int lookId;
 
     public PacketNpcLookPos() { }
 
@@ -39,16 +37,6 @@ public class PacketNpcLookPos extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (player.world.provider.getDimension() == dimensionId) {
-            Entity e = player.world.getEntityByID(npcId);
-            if (e instanceof EntityNPCInterface) {
-                if (lookId < 0) { ((EntityNPCInterface) e).lookAt = null; }
-                else { ((EntityNPCInterface) e).lookAt = player.world.getEntityByID(lookId); }
-            }
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

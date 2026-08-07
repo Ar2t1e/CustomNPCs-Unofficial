@@ -1,21 +1,19 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.pathfinding.PathPoint;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.client.Client;
 import noppes.npcs.mixin.pathfinding.IPathMixin;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketNpcNavigation extends PacketBasic {
 
     protected static int channelId;
-    private int entityId;
-    private Path path;
+    public int entityId;
+    public Path path;
 
     public PacketNpcNavigation() { }
 
@@ -66,12 +64,7 @@ public class PacketNpcNavigation extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        Entity entity = player.world.getEntityByID(entityId);
-        if (entity instanceof EntityNPCInterface) { ((EntityNPCInterface) entity).navigating = path; }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
     private PathPoint readPathPoint(PacketBuffer buf) {
         PathPoint point = new PathPoint(buf.readInt(), buf.readInt(), buf.readInt());

@@ -1,19 +1,17 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.gui.INpcMenuGui;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketPermissionMenu extends PacketBasic {
 
     protected static int channelId;
-    private boolean display;
-    private boolean stats;
-    private boolean ai;
-    private boolean inventory;
-    private boolean advanced;
+    public boolean display;
+    public boolean stats;
+    public boolean ai;
+    public boolean inventory;
+    public boolean advanced;
 
     public PacketPermissionMenu() { }
 
@@ -47,12 +45,6 @@ public class PacketPermissionMenu extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (Minecraft.getMinecraft().currentScreen instanceof INpcMenuGui) {
-            ((INpcMenuGui) Minecraft.getMinecraft().currentScreen).setMenuData(display, stats, ai, inventory, advanced);
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

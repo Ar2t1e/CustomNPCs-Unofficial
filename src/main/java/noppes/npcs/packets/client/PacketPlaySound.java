@@ -2,20 +2,19 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.SoundCategory;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.controllers.MusicController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketPlaySound extends PacketBasic {
 
    protected static int channelId;
-   private String name;
-   private SoundCategory category;
-   private double x;
-   private double y;
-   private double z;
-   private float volume;
-   private float pitch;
+   public String name;
+   public SoundCategory category;
+   public double x;
+   public double y;
+   public double z;
+   public float volume;
+   public float pitch;
 
    public PacketPlaySound() { }
 
@@ -55,10 +54,6 @@ public class PacketPlaySound extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      MusicController.Instance.playSound(category, name, x, y, z, volume, pitch);
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

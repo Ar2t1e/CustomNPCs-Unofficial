@@ -2,15 +2,13 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.GuiNpcMobSpawnerAdd;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketGuiCloneOpen extends PacketBasic {
 
    protected static int channelId;
-   private NBTTagCompound data;
+   public NBTTagCompound data;
 
    public PacketGuiCloneOpen() { }
 
@@ -26,10 +24,6 @@ public class PacketGuiCloneOpen extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      NoppesUtil.openGUI(player, new GuiNpcMobSpawnerAdd(data));
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

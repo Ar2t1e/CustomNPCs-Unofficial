@@ -1,14 +1,11 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.client.gui.player.GuiOpenCase;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 import java.util.*;
@@ -16,8 +13,8 @@ import java.util.*;
 public class PacketOpenCase extends PacketBasic {
 
     protected static int channelId;
-    private final Map<ItemStack, Integer> map = new LinkedHashMap<>();
-    private int dealID;
+    public final Map<ItemStack, Integer> map = new LinkedHashMap<>();
+    public int dealID;
 
     public PacketOpenCase() { }
 
@@ -36,11 +33,6 @@ public class PacketOpenCase extends PacketBasic {
             }
             if (!found) { map.put(stack, stack.getCount()); }
         }
-    }
-
-    public PacketOpenCase(int dealIDIn, Map<ItemStack, Integer> mapIn) {
-        dealID = dealIDIn;
-        map.putAll(mapIn);
     }
 
     @Override
@@ -72,13 +64,6 @@ public class PacketOpenCase extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (!map.isEmpty()) {
-            Minecraft mc = Minecraft.getMinecraft();
-            mc.displayGuiScreen(new GuiOpenCase((GuiContainer) mc.currentScreen, dealID, map));
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

@@ -1,21 +1,18 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.UUID;
 
 public class PacketNpcVisibleFalse extends PacketBasic {
 
    protected static int channelId;
-   private int id;
-   private UUID uuid;
+   public int id;
+   public UUID uuid;
 
    public PacketNpcVisibleFalse() { }
 
@@ -40,15 +37,6 @@ public class PacketNpcVisibleFalse extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      WorldClient world = (WorldClient) player.world;
-      List<EntityNPCInterface> npcInterfaces = world.getEntities(EntityNPCInterface.class, entity -> entity.getUniqueID().equals(uuid) && entity.getEntityId() == id);
-      for (EntityNPCInterface npc : npcInterfaces) {
-         if (npc == null) { continue; }
-         world.removeEntity(npc);
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

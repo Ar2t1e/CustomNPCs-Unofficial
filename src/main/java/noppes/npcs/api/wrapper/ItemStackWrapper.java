@@ -374,7 +374,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 	@Override
 	public boolean hasNbt() {
 		NBTTagCompound compound = this.item.getTagCompound();
-		return compound != null && !compound.getKeySet().isEmpty();
+		return compound != null && !compound.hasNoTags();
 	}
 
 	@Override

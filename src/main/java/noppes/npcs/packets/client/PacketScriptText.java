@@ -1,12 +1,7 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.script.GuiScriptInterface;
-import noppes.npcs.controllers.ScriptContainer;
-import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 import java.util.HashMap;
@@ -15,13 +10,13 @@ import java.util.Map;
 public class PacketScriptText extends PacketBasic {
 
     protected static int channelId;
-    private static final Map<Integer, String[]> data = new HashMap<>();
+    public static final Map<Integer, String[]> data = new HashMap<>();
 
-    private int tab;
-    private int id;
-    private int maxIDs;
-    private String part;
-    private boolean isSetClient;
+    public int tab;
+    public int id;
+    public int maxIDs;
+    public String part;
+    public boolean isSetClient;
 
     public PacketScriptText() { }
 
@@ -55,37 +50,6 @@ public class PacketScriptText extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (!data.containsKey(tab)) { data.put(tab, new String[maxIDs]); }
-        data.get(tab)[id] = part;
-        boolean done = true;
-        StringBuilder total = new StringBuilder();
-        for (String str : data.get(tab)) {
-            if (str == null) {
-                done = false;
-                break;
-            }
-            total.append(str);
-        }
-        if (done) {
-            if (Minecraft.getMinecraft().currentScreen instanceof GuiScriptInterface) {
-                ((GuiScriptInterface) Minecraft.getMinecraft().currentScreen).setTabScript(tab, total.toString());
-            }
-            if (isSetClient) {
-                ScriptContainer container = ScriptController.Instance.clientScripts.getScripts().get(tab);
-                if (container != null) {
-                    container.script = total.toString();
-                    container.setInit(false);
-                    ScriptController.Instance.clientScripts.init();
-                    if (ScriptController.Instance.clientScripts.isEnabled()) {
-                        player.sendMessage(Component.translatable("scripts.client.received.server").getParent());
-                    }
-                }
-            }
-            data.remove(tab);
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

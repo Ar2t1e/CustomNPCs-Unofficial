@@ -3,26 +3,21 @@ package noppes.npcs.packets.client;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.Vector;
 import java.util.Map.Entry;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
-import noppes.npcs.shared.client.gui.listeners.IScrollData;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketGuiScrollData extends PacketBasic {
 
-   private static final Map<UUID, Map<String, Integer>> scrollData = new HashMap<>();
+   public static final Map<UUID, Map<String, Integer>> scrollData = new HashMap<>();
    protected static int channelId;
 
-   private Map<String, Integer> data;
-   private UUID id;
-   private int step;
-   private int size;
+   public Map<String, Integer> data;
+   public UUID id;
+   public int step;
+   public int size;
 
    public PacketGuiScrollData() { }
 
@@ -59,18 +54,6 @@ public class PacketGuiScrollData extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      if (!scrollData.containsKey(id)) { scrollData.put(id, new HashMap<>()); }
-      scrollData.get(id).putAll(data);
-      if (step == size) {
-         GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-         while (gui instanceof IGuiInterface && ((IGuiInterface) gui).hasSubGui()) { gui = ((IGuiInterface) gui).getSubGui(); }
-         Map<String, Integer> map = scrollData.get(id);
-         if (gui instanceof IScrollData) { ((IScrollData) gui).setData(new Vector<>(map.keySet()), map); }
-         scrollData.remove(id);
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

@@ -35,6 +35,7 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
@@ -44,6 +45,7 @@ import noppes.npcs.client.gui.player.GuiMailmanWrite;
 import noppes.npcs.client.gui.player.GuiOpenCase;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.client.gui.yellow_de.data.UtilYDE;
+import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.client.util.CrashesData;
@@ -580,14 +582,14 @@ public class ClientEventHandler extends Gui {
 		if (CustomNpcs.ShowHitboxWhenHoldTools && mainStack.getItem() instanceof INPCToolItem ||
 				offStack.getItem() instanceof INPCToolItem) {
 			AxisAlignedBB aabb = new AxisAlignedBB(-5.0, -5.0, -5.0, 5.0, 5.0, 5.0).offset(mc.player.getPosition());
-			List<Entity> list = new ArrayList<>();
-			try { list = mc.player.world.getEntitiesWithinAABB(Entity.class, aabb); } catch (Exception ignored) { }
-			list.remove(mc.player);
+			List<Entity> entities = new ArrayList<>();
+			try { entities = mc.player.world.getEntitiesWithinAABB(Entity.class, aabb); } catch (Exception ignored) { }
+			entities.remove(mc.player);
 			Entity rayTrE;
 			if (mc.objectMouseOver == null || mc.objectMouseOver.entityHit == null) {
 				rayTrE = Util.instance.getLookEntity(mc.player, (mainStack.getItem() instanceof ItemNbtBook ? CustomNpcs.proxy.getPlayerData(mc.player).game.renderDistance : null), false);
 			} else { rayTrE = mc.objectMouseOver.entityHit; }
-			if (rayTrE != null && !list.contains(rayTrE)) { list.add(rayTrE); }
+			if (rayTrE != null && !entities.contains(rayTrE)) { entities.add(rayTrE); }
 			GlStateManager.pushMatrix();
 			GlStateManager.enableBlend();
 			GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -595,19 +597,32 @@ public class ClientEventHandler extends Gui {
 			GlStateManager.disableTexture2D();
 			GlStateManager.depthMask(false);
 			GlStateManager.translate(-dx, -dy, -dz);
-			for (Entity e : list) {
-				float w = e.width / 2;
-				if (e.getDistance(mc.player) - w <= 5.0) {
-					AxisAlignedBB col= e.getCollisionBoundingBox();
-					if (col == null || (e instanceof EntityNPCInterface && ((EntityNPCInterface) e).display.getHitboxState() == 2)) {
-						col = new AxisAlignedBB(-w, 0.0, -w, w, e.height, w);
+			for (Entity entity : entities) {
+				float w = entity.width / 2;
+				if (entity.getDistance(mc.player) - w <= 5.0) {
+					AxisAlignedBB col= entity.getCollisionBoundingBox();
+					if (col == null || (entity instanceof EntityNPCInterface && ((EntityNPCInterface) entity).display.getHitboxState() == 2)) {
+						col = new AxisAlignedBB(-w, 0.0, -w, w, entity.height, w);
 					}
 					GlStateManager.pushMatrix();
-					GlStateManager.translate(e.posX, e.posY,  e.posZ);
+					GlStateManager.translate(entity.posX, entity.posY,  entity.posZ);
 					RenderGlobal.drawSelectionBoundingBox(col,  0.8f, 0.8f, 0.8f, 0.8f);
-					if (e.equals(rayTrE)) { // hover entity
+					if (entity.equals(rayTrE)) { // hover entity
 						GlStateManager.glLineWidth(3.0F);
-						RenderGlobal.drawSelectionBoundingBox(col.grow(e.width / 20.0),  0.8f, 0.3f, 0.6f, 1.0f);
+						RenderGlobal.drawSelectionBoundingBox(col.grow(entity.width / 20.0),  0.8f, 0.3f, 0.6f, 1.0f);
+					}
+					if (entity instanceof EntityNPCInterface) {
+						AnimationConfig anim = ((EntityNPCInterface) entity).animation.getAnimation();
+						if (anim != null && anim.type == AnimationKind.ATTACKING) {
+							List<AxisAlignedBB> hitBoxes = anim.getDamageHitboxes((EntityLivingBase) entity, ((EntityNPCInterface) entity).animation.getAnimationCurrentFrameID());
+							if (hitBoxes != null && !hitBoxes.isEmpty()) {
+								GlStateManager.glLineWidth(2.0F);
+								GlStateManager.translate(-entity.posX, -entity.posY,  -entity.posZ);
+								for (AxisAlignedBB hitBox : hitBoxes) {
+									RenderGlobal.drawSelectionBoundingBox(hitBox,  1.0f, 0.0f, 0.0f, 0.5f);
+								}
+							}
+						}
 					}
 					GlStateManager.popMatrix();
 				}

@@ -13,6 +13,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.PlayerDataController;
 import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
@@ -212,7 +213,8 @@ public class CmdMoney extends CommandBase {
     private PlayerData getData(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender,
                                @Nullable String player, @Nullable CustomNpcsPermissions.Permission permission) throws CommandException {
         if (player != null && permission != null && (!(sender instanceof EntityPlayerMP) ||
-                !CustomNpcsPermissions.hasPermission((EntityPlayerMP) sender, CustomNpcsPermissions.MONEY_MANAGER))) {
+                !CustomNpcsPermissions.hasPermission((EntityPlayerMP) sender, CustomNpcsPermissions.MONEY_MANAGER)) ||
+                !CustomNpcsPermissions.hasPermission((EntityPlayerMP) sender, permission)) {
             throw new CommandException("availability.permission");
         }
         if (player == null) {
@@ -228,7 +230,7 @@ public class CmdMoney extends CommandBase {
     public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
         List<String> list = new ArrayList<>();
         int per = CommandNoppes.getPermissionLevel(server, sender);
-        if (args.length == 0) {
+        if (args.length == 1) {
             list.add("get");
             list.add("pay");
             if (per > 4) {
@@ -236,7 +238,7 @@ public class CmdMoney extends CommandBase {
                 list.add("add");
             }
         }
-        else if (args.length == 1) {
+        else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("get") || args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("add")) {
                 list.add("money");
                 list.add("donat");
@@ -245,13 +247,14 @@ public class CmdMoney extends CommandBase {
                 list.addAll(PlayerDataController.instance.getPlayerNames());
             }
         }
-        else if (args.length == 2) {
+        else if (args.length == 3) {
             if ((sender instanceof EntityPlayerMP) &&
                     (args[0].equalsIgnoreCase("get") || args[0].equalsIgnoreCase("set") ||
                             args[0].equalsIgnoreCase("add"))) {
                 CustomNpcsPermissions.Permission permission;
                 if (args[1].equalsIgnoreCase("money")) { permission = CustomNpcsPermissions.MONEY_MANAGER; }
                 else { permission = CustomNpcsPermissions.DONAT_MANAGER; }
+                LogWriter.info("[DEBUG] "+CustomNpcsPermissions.hasPermission((EntityPlayerMP) sender, permission));
                 if (CustomNpcsPermissions.hasPermission((EntityPlayerMP) sender, permission)) {
                     list.addAll(PlayerDataController.instance.getPlayerNames());
                 }

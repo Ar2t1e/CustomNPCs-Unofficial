@@ -3,13 +3,13 @@ package noppes.npcs.packets.client;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.ITextComponent;
-import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketScriptError extends PacketBasic {
 
     protected static int channelId;
-    private ITextComponent component;
+    public ITextComponent component;
 
     public PacketScriptError() { }
 
@@ -25,10 +25,6 @@ public class PacketScriptError extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (CustomNpcs.DisplayErrorInChat && component != null && !component.getFormattedText().isEmpty()) { player.sendMessage(component); }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

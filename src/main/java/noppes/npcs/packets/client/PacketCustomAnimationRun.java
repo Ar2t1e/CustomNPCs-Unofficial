@@ -1,13 +1,8 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.AnimationKind;
-import noppes.npcs.api.mixin.entity.player.IEntityPlayerMixin;
-import noppes.npcs.client.model.animation.AnimationConfig;
-import noppes.npcs.controllers.AnimationController;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 import java.util.UUID;
@@ -15,12 +10,12 @@ import java.util.UUID;
 public class PacketCustomAnimationRun extends PacketBasic {
 
     protected static int channelId;
-    private boolean isPlayer;
-    private int dimension;
-    private int id;
-    private UUID uuid;
-    private int animId;
-    private AnimationKind animType;
+    public boolean isPlayer;
+    public int dimension;
+    public int id;
+    public UUID uuid;
+    public int animId;
+    public AnimationKind animType;
 
     public PacketCustomAnimationRun() { }
 
@@ -57,21 +52,6 @@ public class PacketCustomAnimationRun extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (player.world.provider.getDimension() == dimension) {
-            AnimationConfig ac = AnimationController.getInstance().getAnimation(animId);
-            if (ac != null) {
-                if (isPlayer) { // is Player
-                    IEntityPlayerMixin pl = (IEntityPlayerMixin) player.world.getPlayerEntityByUUID(uuid);
-                    if (pl != null) { pl.npcs$getAnimation().tryRunAnimation(ac, animType); }
-                } else { // is NPC
-                    Entity entity = player.world.getEntityByID(id);
-                    if (entity instanceof EntityNPCInterface) { ((EntityNPCInterface) entity).animation.tryRunAnimation(ac, animType); }
-                }
-            }
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

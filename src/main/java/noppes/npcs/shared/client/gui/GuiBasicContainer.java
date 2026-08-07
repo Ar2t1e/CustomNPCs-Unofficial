@@ -126,7 +126,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
             mouseDragged(mouseX, mouseY, eventButton, dx, dy);
         }
         int dWheel = Mouse.getEventDWheel();
-        if (dWheel != 0) { mouseScrolled(mouseX, mouseY, dWheel / 120); }
+        if (dWheel != 0) { mouseScrolled(mouseX, mouseY, (double) dWheel / 120.0d); }
     }
 
     @Override
@@ -530,11 +530,18 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
             renderToolTip(getSlotUnderMouse().getStack(), mouseX, mouseY);
         }
         else if (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiNPCInterface.showHoverText) && !hoverText.isEmpty()) {
-            if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
-            if (hoverFont == null) { drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer); }
-            else { GuiBasic.renderTooltipInternal(mouseX, ValueUtil.correctInt(mouseY, 16, height), this, hoverFont, hoverText, bgScale); }
+            drawHover(mouseX, mouseY);
             hoverText.clear();
         }
+    }
+
+    public void drawHover(int mouseX, int mouseY) {
+        Component addHoverText = Component.translatable("hover.alt.h");
+        if (!hoverIsGame && !Util.instance.equalsDeleteColor(hoverText.get(hoverText.size() - 1).getFormattedText(), addHoverText.getFormattedText(), false)) {
+            hoverText.add(addHoverText);
+        }
+        if (hoverFont == null) { drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer); }
+        else { GuiBasic.renderTooltipInternal(mouseX, ValueUtil.correctInt(mouseY, 16, height), this, hoverFont, hoverText, bgScale); }
     }
 
     protected List<String> toHoverText() {
@@ -652,13 +659,13 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     public void drawHoverText(String text, Object... args) {
         if (!CustomNpcs.ShowDescriptions) { return; }
         if (text == null) {
-            if (!hoverText.isEmpty()) { drawHoveringText(toHoverText(), wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop, fontRenderer); }
+            if (!hoverText.isEmpty()) { drawHover(wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop); }
             hoverText.clear();
             return;
         }
         setHoverText(text, args);
         if (!hoverText.isEmpty()) {
-            drawHoveringText(toHoverText(), wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop, fontRenderer);
+            drawHover(wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop);
             hoverText.clear();
         }
     }

@@ -1,20 +1,15 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.api.gui.INpcMenuGui;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketNpcRarityTitleSet extends PacketBasic {
 
     protected static int channelId;
-    private int npcId;
-    private NBTTagCompound compound;
+    public int npcId;
+    public NBTTagCompound compound;
 
     public PacketNpcRarityTitleSet() { }
 
@@ -39,19 +34,6 @@ public class PacketNpcRarityTitleSet extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        Entity e = player.world.getEntityByID(npcId);
-        if (e instanceof EntityNPCInterface) {
-            if (Minecraft.getMinecraft().currentScreen instanceof INpcMenuGui && NoppesUtilServer.getEditingNpc(player) == e) {
-                CustomNpcs.debugData.end("Packets");
-                return;
-            }
-            ((EntityNPCInterface) e).stats.setLevel(compound.getInteger("NPCLevel"));
-            ((EntityNPCInterface) e).stats.setRarity(compound.getInteger("NPCRarity"));
-            ((EntityNPCInterface) e).stats.setRarityTitle(compound.getString("RarityTitle"));
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

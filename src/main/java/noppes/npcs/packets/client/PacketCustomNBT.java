@@ -2,16 +2,13 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.EventHooks;
-import noppes.npcs.api.event.PlayerEvent;
-import noppes.npcs.constants.EnumScriptType;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketCustomNBT extends PacketBasic {
 
     protected static int channelId;
-    private NBTTagCompound data;
+    public NBTTagCompound data;
 
     public PacketCustomNBT() { }
 
@@ -27,10 +24,6 @@ public class PacketCustomNBT extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        EventHooks.onEvent(CustomNpcs.proxy.getPlayerData(player).scriptData, EnumScriptType.PACKAGE_FROM,
-                new PlayerEvent.PlayerPackage(CustomNpcs.proxy.getPlayerData(player).scriptData.getIPlayer(), data));
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
+
 }

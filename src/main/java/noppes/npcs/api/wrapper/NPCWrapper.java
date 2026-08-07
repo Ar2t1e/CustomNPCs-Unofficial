@@ -32,6 +32,8 @@ import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.controllers.data.Faction;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketNpcRotationUpdate;
 import noppes.npcs.util.ValueUtil;
 
 public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrapper<T> implements ICustomNpc<T> {
@@ -232,9 +234,10 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 	@Override
 	public void setRotation(float rotation) {
 		super.setRotation(rotation);
-		if (this.entity.ais.orientation != (int) this.entity.rotationYaw) {
-			this.entity.ais.orientation = (int) this.entity.rotationYaw;
-			this.entity.updateClient = true;
+		int r = (int) rotation;
+		if (entity.ais.orientation != r) {
+			entity.ais.orientation = r;
+			Packets.sendNearby(entity, new PacketNpcRotationUpdate(entity.getEntityId(), entity.ais.orientation));
 		}
 	}
 

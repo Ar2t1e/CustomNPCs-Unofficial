@@ -235,7 +235,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
             mouseDragged(mouseX, mouseY, eventButton, dx, dy);
         }
         int dWheel = Mouse.getEventDWheel();
-        if (dWheel != 0) { mouseScrolled(mouseX, mouseY, (double) dWheel / 120); }
+        if (dWheel != 0) { mouseScrolled(mouseX, mouseY, (double) dWheel / 120.0d); }
     }
 
     @Override
@@ -593,9 +593,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
             GlStateManager.translate(0.0F, 0.0F, -60.0F);
         }
         else if (!hoverText.isEmpty() && (hoverIsGame || (CustomNpcs.ShowDescriptions && GuiBasic.showHoverText))) {
-            if (!hoverIsGame) { hoverText.add(Component.translatable("hover.alt.h")); }
-            if (hoverFont == null) { drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer); }
-            else { renderTooltipInternal(mouseX, ValueUtil.correctInt(mouseY, 16, height), this, hoverFont, hoverText, bgScale); }
+            drawHover(mouseX, mouseY);
             hoverText.clear();
         }
     }
@@ -670,6 +668,15 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         GlStateManager.disableBlend();
         GlStateManager.enableAlpha();
         GlStateManager.enableTexture2D();
+    }
+
+    public void drawHover(int mouseX, int mouseY) {
+        Component addHoverText = Component.translatable("hover.alt.h");
+        if (!hoverIsGame && !Util.instance.equalsDeleteColor(hoverText.get(hoverText.size() - 1).getFormattedText(), addHoverText.getFormattedText(), false)) {
+            hoverText.add(addHoverText);
+        }
+        if (hoverFont == null) { drawHoveringText(toHoverText(), mouseX, mouseY, fontRenderer); }
+        else { renderTooltipInternal(mouseX, ValueUtil.correctInt(mouseY, 16, height), this, hoverFont, hoverText, bgScale); }
     }
 
     protected List<String> toHoverText() {
@@ -757,13 +764,13 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public void drawHoverText(String text, Object... args) {
         if (!CustomNpcs.ShowDescriptions) { return; }
         if (text == null) {
-            if (!hoverText.isEmpty()) { drawHoveringText(toHoverText(), wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop, fontRenderer); }
+            if (!hoverText.isEmpty()) { drawHover(wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop); }
             hoverText.clear();
             return;
         }
         setHoverText(text, args);
         if (!hoverText.isEmpty()) {
-            drawHoveringText(toHoverText(), wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop, fontRenderer);
+            drawHover(wrapper.mouseX - guiLeft, wrapper.mouseY - guiTop);
             hoverText.clear();
         }
     }

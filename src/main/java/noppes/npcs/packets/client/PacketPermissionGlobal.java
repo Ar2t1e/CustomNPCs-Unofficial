@@ -1,26 +1,24 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.gui.mainmenu.GuiNpcGlobalMainMenu;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketPermissionGlobal extends PacketBasic {
 
     protected static int channelId;
-    private boolean banks;
-    private boolean factions;
-    private boolean dialogs;
-    private boolean quests;
-    private boolean transports;
-    private boolean players_data;
-    private boolean recipes;
-    private boolean natural_spawns;
-    private boolean linkeds;
-    private boolean markets;
-    private boolean auctions;
-    private boolean mails;
+    public boolean banks;
+    public boolean factions;
+    public boolean dialogs;
+    public boolean quests;
+    public boolean transports;
+    public boolean players_data;
+    public boolean recipes;
+    public boolean natural_spawns;
+    public boolean linkeds;
+    public boolean markets;
+    public boolean auctions;
+    public boolean mails;
 
     public PacketPermissionGlobal() {}
 
@@ -77,12 +75,6 @@ public class PacketPermissionGlobal extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        if (Minecraft.getMinecraft().currentScreen instanceof GuiNpcGlobalMainMenu) {
-            ((GuiNpcGlobalMainMenu) Minecraft.getMinecraft().currentScreen).setMenuData(banks, factions, dialogs, quests, transports, players_data, recipes, natural_spawns, linkeds, markets, auctions, mails);
-        }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

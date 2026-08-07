@@ -27,9 +27,11 @@ public class Resistances {
 			if (f.getType() != DamageSource.class) { continue; }
 			try {
 				if (!f.isAccessible()) { f.setAccessible(true); }
-				String name = ((DamageSource) f.get(DamageSource.class)).damageType;
-				if (name.equals("generic") || name.equals("outOfWorld")) { continue; }
-				allDamageNames.add(name);
+				DamageSource source = (DamageSource) f.get(DamageSource.class);
+				if (source != null && source.damageType != null) {
+					if (source.damageType.equals("generic") || source.damageType.equals("outOfWorld")) { continue; }
+					allDamageNames.add(source.damageType);
+				}
 			}
 			catch (Exception e) { LogWriter.error(e); }
 		}

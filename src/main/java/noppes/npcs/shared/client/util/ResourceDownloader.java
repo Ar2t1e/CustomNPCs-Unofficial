@@ -28,13 +28,11 @@ public class ResourceDownloader {
                     Minecraft.getMinecraft().getTextureManager().loadTexture(resource.location, resource);
                     active.remove(resource.location);
                 });
-
                 try {
                     Thread.sleep(400L);
                 } catch (InterruptedException var2) {
                     LogWriter.error(var2);
                 }
-
             });
         }
     }

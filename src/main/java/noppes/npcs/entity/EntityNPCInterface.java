@@ -38,6 +38,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.network.play.server.SPacketEntityMetadata;
 import net.minecraft.pathfinding.*;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
@@ -55,6 +56,7 @@ import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.ServerChatEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.internal.FMLMessage;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
@@ -1661,6 +1663,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 	}
 
 	public void reset() {
+		boolean needsSync = hasDied;
 		baseWidth = 0.6f;
 		baseHeight = 1.9f;
 		baseEyeHeight = 1.615f;
@@ -1730,6 +1733,18 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		if (getOwner() != null) { getOwner().setLastAttackedEntity(Objects.requireNonNull(EntityList.newEntity(EntityPainting.class, world))); }
 		bossInfo.setVisible(display.getBossbar() == 1);
 		job.reset();
+		if (needsSync) {
+			EntityRegistry.EntityRegistration er = EntityRegistry.instance().lookupModSpawn(this.getClass(), false);
+			if (er != null) {
+				for (EntityPlayerMP player : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) {
+					if (display.isVisibleTo(player) || player.isSpectator() || player.getHeldItemMainhand().getItem() == CustomItems.wand) {
+						Packets.send(player, new PacketUpdatePhysics(this, new FMLMessage.EntitySpawnMessage(er, this, er.getContainer())));
+						player.connection.sendPacket(new SPacketEntityMetadata(getEntityId(), getDataManager(), true));
+						Packets.send(player, new PacketNpcUpdate(getEntityId(), writeSpawnData()));
+					}
+				}
+			}
+		}
 		EventHooks.onNPCInit(this);
 
 		// New from Unofficial (BetaZavr)

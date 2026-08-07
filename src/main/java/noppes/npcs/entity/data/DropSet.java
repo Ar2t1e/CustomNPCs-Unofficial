@@ -222,7 +222,7 @@ public class DropSet implements IInventory, ICustomDrop {
 			}
 		}
 		if (dItem.hasTagCompound()) {
-			if (dItem.getTagCompound() != null && dItem.getTagCompound().getKeySet().isEmpty()) {
+			if (dItem.getTagCompound() != null && dItem.getTagCompound().hasNoTags()) {
 				dItem.setTagCompound(null);
 			}
 		}

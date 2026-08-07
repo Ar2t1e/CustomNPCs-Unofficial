@@ -396,17 +396,14 @@ public class Packets {
             CHANNELS.put(channelId, NetworkRegistry.INSTANCE.newSimpleChannel(PROTOCOL + "_" + channelId));
         }
         try {
+            Side side = PacketServerBasic.class.isAssignableFrom(packetClass) ? Side.SERVER : Side.CLIENT;
+            LogWriter.debug(totalIndex + " - register packet["+index+"]; channel["+channelId+"] "+packetClass.getSimpleName()+"; Side: " + side);
+
             Field channel = packetClass.getDeclaredField("channelId");
             channel.setAccessible(true);
             channel.set(null, channelId);
-
-            Side side = PacketServerBasic.class.isAssignableFrom(packetClass) ? Side.SERVER : Side.CLIENT;
-
-            LogWriter.debug(totalIndex + " -register packet["+index+"]; channel["+channelId+"] "+packetClass.getSimpleName()+"; Side: " + side);
-
             Method register = SimpleNetworkWrapper.class.getMethod("registerMessage",
                     Class.class, Class.class, int.class, Side.class);
-
             register.invoke(CHANNELS.get(channelId), InnerHandler.class, packetClass, index++, side);
             totalIndex++;
         }
@@ -423,8 +420,8 @@ public class Packets {
         @Override
         public IMessage onMessage(MSG msg, MessageContext ctx) {
             msg.ctx = ctx;
-            if (ctx.side == Side.CLIENT) { CustomNPCsScheduler.runTack(msg::handleClient); }
-            else if (ctx.side == Side.SERVER && msg instanceof PacketServerBasic) { CustomNPCsScheduler.runTack(((PacketServerBasic) msg)::handleServer); }
+            if (ctx.side == Side.CLIENT) { msg.handleClient(); }
+            else if (ctx.side == Side.SERVER && msg instanceof PacketServerBasic) { ((PacketServerBasic) msg).handleServer(); }
             return null;
         }
     }
@@ -445,6 +442,7 @@ public class Packets {
     }
 
     public static <MSG extends PacketBasic> void sendNearby(Entity entity, MSG msg) {
+        if (entity == null || entity.isDead) { return; }
         logged(msg, true);
         CHANNELS.get(msg.getChannelId()).sendToAllTracking(msg, entity);
     }

@@ -1,8 +1,7 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.containers.ContainerNPCBank;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 import javax.annotation.Nonnull;
@@ -10,7 +9,7 @@ import javax.annotation.Nonnull;
 public class PacketBankSetPlayer extends PacketBasic {
 
     protected static int channelId;
-    private String name;
+    public String name;
 
     public PacketBankSetPlayer() { }
 
@@ -26,10 +25,6 @@ public class PacketBankSetPlayer extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        ContainerNPCBank.editPlayerBankData = name.isEmpty() ? null : name;
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

@@ -65,7 +65,7 @@ public class SPacketSchematicsTileBuild extends PacketServerBasic {
       CustomNpcs.debugData.start("Packets");
       TileEntity tile = player.world.getTileEntity(pos);
       SchematicWrapper wrapper;
-      if (tile instanceof TileBuilder && compound.getKeySet().isEmpty()) {
+      if (tile instanceof TileBuilder && compound.hasNoTags()) {
          wrapper = ((TileBuilder) tile).getSchematic();
          wrapper.init(pos.add(1, ((TileBuilder) tile).yOffset, 1), player.world, ((TileBuilder) tile).rotation * 90);
          SchematicController.Instance.build(((TileBuilder) tile).getSchematic(), player);

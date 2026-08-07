@@ -1,16 +1,15 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketDetectHeldItem extends PacketBasic {
 
     protected static int channelId;
-    private int slotID;
-    private NBTTagCompound data;
+    public int slotID;
+    public NBTTagCompound data;
 
     public PacketDetectHeldItem() { }
 
@@ -35,12 +34,6 @@ public class PacketDetectHeldItem extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        ItemStack stack = new ItemStack(data);
-        if (slotID >= 0) { player.inventory.setInventorySlotContents(slotID, stack); }
-        else { player.inventory.setItemStack(stack); }
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

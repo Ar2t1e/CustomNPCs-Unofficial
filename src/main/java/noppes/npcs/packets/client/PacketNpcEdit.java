@@ -1,18 +1,13 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.entity.Entity;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketNpcEdit extends PacketBasic {
 
    protected static int channelId;
-   private int id;
+   public int id;
 
    public PacketNpcEdit() { }
 
@@ -28,15 +23,6 @@ public class PacketNpcEdit extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      WorldClient world = Minecraft.getMinecraft().world;
-      if (world != null) {
-         Entity entity = world.getEntityByID(id);
-         if (entity instanceof EntityNPCInterface) { NoppesUtilServer.setEditingNpc(player, (EntityNPCInterface) entity); }
-         else { NoppesUtilServer.setEditingNpc(player, null); }
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

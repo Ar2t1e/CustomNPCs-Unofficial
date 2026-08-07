@@ -1,20 +1,15 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.NpcAPI;
-import noppes.npcs.api.wrapper.ItemStackWrapper;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
-
-import java.util.Objects;
 
 public class PacketItemUpdate extends PacketBasic {
 
    protected static int channelId;
-   private int id;
-   private NBTTagCompound data;
+   public int id;
+   public NBTTagCompound data;
 
    public PacketItemUpdate() { }
 
@@ -39,13 +34,6 @@ public class PacketItemUpdate extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      ItemStack stack = player.inventory.getStackInSlot(id);
-      if (!stack.isEmpty()) {
-         ((ItemStackWrapper) Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(stack)).setMCNbt(data);
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

@@ -1,26 +1,22 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.EnumParticleTypes;
-import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
-
-import java.util.Random;
 
 public class PacketParticle extends PacketBasic {
 
    protected static int channelId;
-   private double posX;
-   private double posY;
-   private double posZ;
-   private float height;
-   private float width;
-   private String name;
+   public double posX;
+   public double posY;
+   public double posZ;
+   public float height;
+   public float width;
+   public String name;
 
    public PacketParticle() { }
 
+   @SuppressWarnings("unused")
    public PacketParticle(double x, double y, double z, float heightIn, float widthIn, String nameIn) {
       posX = x;
       posY = y;
@@ -54,19 +50,6 @@ public class PacketParticle extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      WorldClient world = Minecraft.getMinecraft().world;
-      if (world != null) {
-         Random rand = world.rand;
-         if (name.equals("heal")) {
-            for (int k = 0; k < 6; ++k) {
-               world.spawnParticle(EnumParticleTypes.SPELL_INSTANT, posX + (rand.nextDouble() - 0.5) * width, posY + rand.nextDouble() * height, posZ + (rand.nextDouble() - 0.5) * width, 0.0, 0.0, 0.0);
-               world.spawnParticle(EnumParticleTypes.SPELL, posX + (rand.nextDouble() - 0.5) * width, posY + rand.nextDouble() * height, posZ + (rand.nextDouble() - 0.5) * width, 0.0, 0.0, 0.0);
-            }
-         }
-      }
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

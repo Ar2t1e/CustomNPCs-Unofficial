@@ -28,7 +28,7 @@ import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.model.animation.AnimationConfig;
 import noppes.npcs.client.model.animation.AnimationFrameConfig;
 import noppes.npcs.client.model.animation.PartConfig;
-import noppes.npcs.constants.EnumAnimationStages;
+import noppes.npcs.constants.EnumAnimationStage;
 import noppes.npcs.controllers.AnimationController;
 import noppes.npcs.controllers.IScriptHandler;
 import noppes.npcs.controllers.ScriptController;
@@ -37,11 +37,12 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 public class CustomAnimationHandler {
 
-    private final EntityLivingBase entity;
+    private final @Nonnull EntityLivingBase entity;
 
     // Animation run
     /**
@@ -56,8 +57,8 @@ public class CustomAnimationHandler {
     public AnimationConfig activeAnimation = null;
     public final Map<AnimationKind, Integer> movementAnimation = new HashMap<>();
 
-    public long startAnimationTime = 0;
-    public EnumAnimationStages stage = EnumAnimationStages.Waiting;
+    protected long startAnimationTime = 0;
+    public EnumAnimationStage stage = EnumAnimationStage.Waiting;
     private boolean completeAnimation = false;
     private ResourceLocation animationSound = null;
     public boolean isCyclical = false;
@@ -76,7 +77,7 @@ public class CustomAnimationHandler {
     public boolean isSwing = false;
     private final Random rnd = new Random();
 
-    public CustomAnimationHandler(EntityLivingBase main) {
+    public CustomAnimationHandler(@Nonnull EntityLivingBase main) {
         entity = main;
         checkData();
     }
@@ -100,7 +101,7 @@ public class CustomAnimationHandler {
     public void stopAnimation() {
         if (activeAnimation != null) {
             if (activeAnimation.type != AnimationKind.EDITING_All && activeAnimation.type != AnimationKind.EDITING_PART) {
-                int ticks = (int) (entity.world.getTotalWorldTime() - startAnimationTime);
+                int ticks = (int) (getCurrentTime() - startAnimationTime);
                 int animationFrame = activeAnimation.getAnimationFrameByTime(ticks);
                 int startFrameTime = 0;
                 if (activeAnimation.endingFrameTicks.containsKey(animationFrame - 1)) {
@@ -114,7 +115,7 @@ public class CustomAnimationHandler {
         startAnimationTime = 0;
         completeAnimation = false;
         activeAnimation = null;
-        stage = EnumAnimationStages.Waiting;
+        stage = EnumAnimationStage.Waiting;
         isJump = false;
         isSwing = false;
         canSetBaseRotationAngles = true;
@@ -123,8 +124,8 @@ public class CustomAnimationHandler {
     }
 
     public void calculationAnimationData(float partialTicks) {
-        if (stage == EnumAnimationStages.Waiting || activeAnimation == null) { return; }
-        int ticks = Math.max(0, (int) (entity.world.getTotalWorldTime() - startAnimationTime));
+        if (stage == EnumAnimationStage.Waiting || activeAnimation == null) { return; }
+        int ticks = Math.max(0, (int) (getCurrentTime() - startAnimationTime));
         if (activeAnimation.type == AnimationKind.EDITING_PART) {
             partialTicks = 0.0f;
             ticks = activeAnimation.editTick;
@@ -278,29 +279,37 @@ public class CustomAnimationHandler {
         movementAnimation.clear();
         AnimationController aData = AnimationController.getInstance();
         Map<Integer, Integer> remap = new HashMap<>();
-        if (compound.hasKey("AllAnimationsData", 9) && entity != null && entity.isServerWorld()) {
-            boolean changed = false;
-            for (int i = 0; i < compound.getTagList("AllAnimationsData", 10).tagCount(); i++) {
-                NBTTagCompound nbt = compound.getTagList("AllAnimationsData", 10).getCompoundTagAt(i);
-                int oldId = nbt.getInteger("ID");
-                String name = nbt.getString("Name");
-                AnimationConfig exist = aData.getAnimation(oldId);
-                if (exist != null && exist.getName().equals(name)) { continue; }
-                AnimationConfig byName = aData.getAnimation(name);
-                if (byName != null) {
-                    remap.put(oldId, byName.id);
-                    continue;
+        if (compound.hasKey("AllAnimationsData", 9)) {
+            if (entity.isServerWorld()) {
+                boolean changed = false;
+                for (int i = 0; i < compound.getTagList("AllAnimationsData", 10).tagCount(); i++) {
+                    NBTTagCompound nbt = compound.getTagList("AllAnimationsData", 10).getCompoundTagAt(i);
+                    int oldId = nbt.getInteger("ID");
+                    String name = nbt.getString("Name");
+                    AnimationConfig exist = aData.getAnimation(oldId);
+                    if (exist != null && exist.getName().equals(name)) { continue; }
+                    AnimationConfig byName = aData.getAnimation(name);
+                    if (byName != null) {
+                        remap.put(oldId, byName.id);
+                        continue;
+                    }
+                    AnimationConfig anim = aData.createNewAnim();
+                    int newId = anim.id;
+                    anim.load(nbt);
+                    anim.id = newId;
+                    anim.immutable = false;
+                    Packets.sendAll(new PacketSyncUpdate(newId, 9, anim.save()));
+                    remap.put(oldId, newId);
+                    changed = true;
                 }
-                AnimationConfig anim = aData.createNewAnim();
-                int newId = anim.id;
-                anim.load(nbt);
-                anim.id = newId;
-                anim.immutable = false;
-                Packets.sendAll(new PacketSyncUpdate(newId, 9, anim.save()));
-                remap.put(oldId, newId);
-                changed = true;
+                if (changed) { aData.save(); }
+            } else {
+                // Client side: load animation configs into local AnimationController so they can be played
+                for (int i = 0; i < compound.getTagList("AllAnimationsData", 10).tagCount(); i++) {
+                    NBTTagCompound nbt = compound.getTagList("AllAnimationsData", 10).getCompoundTagAt(i);
+                    aData.loadAnimation(nbt);
+                }
             }
-            if (changed) { aData.save(); }
         }
         for (int c = 0; c < compound.getTagList("AllAnimations", 10).tagCount(); c++) {
             NBTTagCompound nbtCategory = compound.getTagList("AllAnimations", 10).getCompoundTagAt(c);
@@ -321,7 +330,7 @@ public class CustomAnimationHandler {
             }
             else if (tagType == 9) { // NEW version
                 int listType = ((NBTTagList) nbtCategory.getTag("Animations")).getTagType();
-                if (listType == 10 && entity != null && this.entity.isServerWorld()) { // OLD in main CNPCs mod
+                if (listType == 10 && entity.isServerWorld()) { // OLD in main CNPCs mod
                     for (int i = 0; i < nbtCategory.getTagList("Animations", 10).tagCount(); i++) {
                         NBTTagCompound nbt = nbtCategory.getTagList("Animations", 10).getCompoundTagAt(i);
                         int id = nbt.getInteger("ID");
@@ -360,7 +369,7 @@ public class CustomAnimationHandler {
             Collections.sort(list);
             data.put(type, list);
         }
-        if (compound.hasKey("MovementAnimations", 9) && entity != null && (entity.world == null || entity.world.isRemote)) {
+        if (compound.hasKey("MovementAnimations", 9) && (entity.world == null || entity.world.isRemote)) {
             for (int c = 0; c < compound.getTagList("MovementAnimations", 10).tagCount(); c++) {
                 NBTTagCompound nbt = compound.getTagList("MovementAnimations", 10).getCompoundTagAt(c);
                 int id = nbt.getInteger("ID");
@@ -372,9 +381,26 @@ public class CustomAnimationHandler {
                 AnimationConfig anim = AnimationController.getInstance().getAnimation(movementAnimation.get(base));
                 if (anim != null) {
                     runAnimation(anim, base);
-                    stage = EnumAnimationStages.Run;
+                    stage = EnumAnimationStage.Run;
                 }
             }
+        }
+        int id = compound.getInteger("activeAnimation");
+        if ((id > -1 && activeAnimation == null) || (id == -1 && activeAnimation != null)) {
+            activeAnimation = aData.getAnimation(id);
+            if (activeAnimation != null) {
+                currentFrame = activeAnimation.frames.get(compound.getInteger("currentFrame"));
+                nextFrame = activeAnimation.frames.get(compound.getInteger("nextFrame"));
+            }
+            timeTicks = compound.getInteger("timeTicks");
+            speedTicks = compound.getInteger("speedTicks");
+            stage = EnumAnimationStage.values()[compound.getInteger("stage") % EnumAnimationStage.values().length];
+            startAnimationTime = compound.getLong("startAnimationTime");
+            isJump = compound.getBoolean("speedTicks");
+            isSwing = compound.getBoolean("speedTicks");
+            completeAnimation = compound.getBoolean("completeAnimation");
+            isCyclical = compound.getBoolean("isCyclical");
+            canSetBaseRotationAngles = compound.getBoolean("canSetBaseRotationAngles");
         }
         checkData();
     }
@@ -392,8 +418,7 @@ public class CustomAnimationHandler {
             allAnimations.appendTag(nbtCategory);
         }
         compound.setTag("AllAnimations", allAnimations);
-
-        if (entity != null && entity.world != null && !entity.world.isRemote) {
+        if (entity.world != null && !entity.world.isRemote) {
             AnimationController aData = AnimationController.getInstance();
             Set<Integer> usedIds = new TreeSet<>();
             for (List<Integer> ids : data.values()) {
@@ -407,8 +432,7 @@ public class CustomAnimationHandler {
             }
             if (fullData.tagCount() > 0) { compound.setTag("AllAnimationsData", fullData); }
         }
-
-        if (entity != null && entity.world != null && !entity.world.isRemote && !movementAnimation.isEmpty()) {
+        if (entity.world != null && !entity.world.isRemote && !movementAnimation.isEmpty()) {
             NBTTagList movementAnimations = new NBTTagList();
             for (AnimationKind ak : new ArrayList<>(movementAnimation.keySet())) {
                 NBTTagCompound nbt = new NBTTagCompound();
@@ -418,6 +442,21 @@ public class CustomAnimationHandler {
             }
             compound.setTag("MovementAnimations", movementAnimations);
         }
+        if (activeAnimation != null) { compound.setInteger("activeAnimation", activeAnimation.id); }
+        else { compound.setInteger("activeAnimation", -1); }
+        if (currentFrame != null) { compound.setInteger("currentFrame", currentFrame.id); }
+        else { compound.setInteger("currentFrame", -1); }
+        if (nextFrame != null) { compound.setInteger("nextFrame", nextFrame.id); }
+        else { compound.setInteger("nextFrame", -1); }
+        compound.setInteger("timeTicks", timeTicks);
+        compound.setInteger("speedTicks", speedTicks);
+        compound.setInteger("stage", stage.ordinal());
+        compound.setLong("startAnimationTime", startAnimationTime);
+        compound.setBoolean("speedTicks", isJump);
+        compound.setBoolean("speedTicks", isSwing);
+        compound.setBoolean("completeAnimation", completeAnimation);
+        compound.setBoolean("isCyclical", isCyclical);
+        compound.setBoolean("canSetBaseRotationAngles", canSetBaseRotationAngles);
     }
 
     /**
@@ -425,10 +464,10 @@ public class CustomAnimationHandler {
      */
     public boolean isAnimated() {
         // no animation
-        if (activeAnimation == null || stage == EnumAnimationStages.Waiting) { return false; }
+        if (activeAnimation == null || stage == EnumAnimationStage.Waiting) { return false; }
         if (activeAnimation.type == AnimationKind.DIES && entity.getHealth() <= 0.0f) { return true; }
         boolean isEdit = activeAnimation.type == AnimationKind.EDITING_All || activeAnimation.type == AnimationKind.EDITING_PART;
-        return entity.isServerWorld() ? !completeAnimation : stage != EnumAnimationStages.Waiting || isEdit || activeAnimation.type.isMovement();
+        return entity.isServerWorld() ? !completeAnimation : stage != EnumAnimationStage.Waiting || isEdit || activeAnimation.type.isMovement();
     }
 
     public boolean isAnimated(AnimationKind ... types) {
@@ -445,18 +484,18 @@ public class CustomAnimationHandler {
             currentFrame = null;
             nextFrame = null;
             completeAnimation = false;
-            stage = EnumAnimationStages.Waiting;
+            stage = EnumAnimationStage.Waiting;
             startAnimationTime = 0;
             canSetBaseRotationAngles = true;
             timeTicks = -1;
             return;
         }
-        if (!AnimationController.getInstance().hasAnimation(activeAnimation.id) && stage != EnumAnimationStages.Ending && stage != EnumAnimationStages.Waiting) {
-            stage = EnumAnimationStages.Ending;
-            startAnimationTime = entity.world.getTotalWorldTime() + 1;
+        if (!AnimationController.getInstance().hasAnimation(activeAnimation.id) && stage != EnumAnimationStage.Ending && stage != EnumAnimationStage.Waiting) {
+            stage = EnumAnimationStage.Ending;
+            startAnimationTime = entity.world.getWorldTime() + 1;
             return;
         }
-        int ticks = Math.max(0, (int) (entity.world.getTotalWorldTime() - startAnimationTime));
+        int ticks = Math.max(0, (int) (getCurrentTime() - startAnimationTime));
         int speed;
         if (activeAnimation.type == AnimationKind.EDITING_PART) {
             ticks = activeAnimation.editTick;
@@ -465,17 +504,17 @@ public class CustomAnimationHandler {
             }
         }
         boolean isEdit = activeAnimation.type == AnimationKind.EDITING_All || activeAnimation.type == AnimationKind.EDITING_PART;
-        if (!isEdit && activeAnimation.type.isMovement() && stage != EnumAnimationStages.Ending && stage != EnumAnimationStages.Waiting) {
+        if (!isEdit && activeAnimation.type.isMovement() && stage != EnumAnimationStage.Ending && stage != EnumAnimationStage.Waiting) {
             if (!movementAnimation.containsKey(activeAnimation.type)) {
-                stage = EnumAnimationStages.Ending;
-                startAnimationTime = entity.world.getTotalWorldTime() + 1;
+                stage = EnumAnimationStage.Ending;
+                startAnimationTime = getCurrentTime() + 1;
                 return;
             }
             boolean isMoving = Util.instance.isMoving(entity);
             boolean isWalk = activeAnimation.type.name().toLowerCase().contains("walk");
             if (isWalk != isMoving) {
-                stage = EnumAnimationStages.Ending;
-                startAnimationTime = entity.world.getTotalWorldTime() + 1;
+                stage = EnumAnimationStage.Ending;
+                startAnimationTime = getCurrentTime() + 1;
                 return;
             }
             boolean isRav = activeAnimation.type.name().toLowerCase().contains("revenge");
@@ -489,26 +528,26 @@ public class CustomAnimationHandler {
                     stop = !((EntityNPCInterface) entity).isAttacking();
                 }
                 if (stop) {
-                    stage = EnumAnimationStages.Ending;
-                    startAnimationTime = entity.world.getTotalWorldTime() + 1;
+                    stage = EnumAnimationStage.Ending;
+                    startAnimationTime = getCurrentTime() + 1;
                     return;
                 }
             }
         }
-        if (stage == EnumAnimationStages.Started) {
+        if (stage == EnumAnimationStage.Started) {
             speed = activeAnimation.type.isQuick() ? 4 : 10;
-            if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStages.Started)); }
-            else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStages.Started)); }
+            if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStage.Started)); }
+            else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStage.Started)); }
             if (ticks >= speed) {
                 startAnimationTime += speed + 1;
-                stage = EnumAnimationStages.Run;
+                stage = EnumAnimationStage.Run;
             }
             return;
         }
-        if (stage == EnumAnimationStages.Looping) {
+        if (stage == EnumAnimationStage.Looping) {
             speed = activeAnimation.frames.get(activeAnimation.frames.size() - 1).speed;
-            if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStages.Looping)); }
-            else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStages.Looping)); }
+            if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStage.Looping)); }
+            else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStage.Looping)); }
             if (ticks >= speed) {
                 int lastFrameId = activeAnimation.frames.size();
                 int frameId = 0;
@@ -518,15 +557,15 @@ public class CustomAnimationHandler {
                     frameId = lastFrameId - 1;
                 }
                 if (frameId == 0) {
-                    startAnimationTime = entity.world.getTotalWorldTime() + 1;
-                } else {
-                    startAnimationTime = entity.world.getTotalWorldTime() + activeAnimation.endingFrameTicks.get(frameId - 1) + 1;
+                    startAnimationTime = getCurrentTime() + 1;
+                } else if (activeAnimation.endingFrameTicks.containsKey(frameId - 1)) {
+                    startAnimationTime = getCurrentTime() + activeAnimation.endingFrameTicks.get(frameId - 1) + 1;
                 }
-                if (frameId != lastFrameId - 1) { stage = EnumAnimationStages.Run; }
+                if (frameId != lastFrameId - 1) { stage = EnumAnimationStage.Run; }
             }
             return;
         }
-        if (stage == EnumAnimationStages.Run) {
+        if (stage == EnumAnimationStage.Run) {
             canSetBaseRotationAngles = false;
             if (ticks == 0) {
                 AnimationKind type = activeAnimation.type.getParentEnum() != null ? activeAnimation.type.getParentEnum() : activeAnimation.type;
@@ -543,38 +582,38 @@ public class CustomAnimationHandler {
                 }
                 int frameTime = ticks - startFrameTime;
                 if (frameTime == 0) {
-                    startEvent(new AnimationEvent.NextFrameEvent(entity, activeAnimation, animationFrame, 0, EnumAnimationStages.Run));
+                    startEvent(new AnimationEvent.NextFrameEvent(entity, activeAnimation, animationFrame, 0, EnumAnimationStage.Run));
                 } else {
-                    startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, animationFrame, frameTime, EnumAnimationStages.Run));
+                    startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, animationFrame, frameTime, EnumAnimationStage.Run));
                 }
             }
             else {
-                startAnimationTime = entity.world.getTotalWorldTime() + 1;
+                startAnimationTime = getCurrentTime() + 1;
                 if (activeAnimation.type != AnimationKind.EDITING_PART) {
-                    stage = isCyclical ? EnumAnimationStages.Looping : EnumAnimationStages.Ending;
+                    stage = isCyclical ? EnumAnimationStage.Looping : EnumAnimationStage.Ending;
                     canSetBaseRotationAngles = true;
                 }
                 completeAnimation = true;
             }
             return;
         }
-        if (stage == EnumAnimationStages.Ending) {
+        if (stage == EnumAnimationStage.Ending) {
             canSetBaseRotationAngles = true;
             speed = activeAnimation.type.isQuick() ? 4 : 10;
-            if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStages.Ending)); }
-            else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStages.Ending)); }
+            if (ticks == 0) { startEvent(new AnimationEvent.StartEvent(entity, activeAnimation, -1, 0, EnumAnimationStage.Ending)); }
+            else { startEvent(new AnimationEvent.UpdateEvent(entity, activeAnimation, -1, ticks, EnumAnimationStage.Ending)); }
             if (ticks >= speed) {
                 if (activeAnimation.type == AnimationKind.EDITING_All) {
-                    startAnimationTime = entity.world.getTotalWorldTime() + 1;
-                    stage = EnumAnimationStages.Started;
+                    startAnimationTime = getCurrentTime() + 1;
+                    stage = EnumAnimationStage.Started;
                 } else {
                     startAnimationTime = 0;
-                    stage = EnumAnimationStages.Waiting;
+                    stage = EnumAnimationStage.Waiting;
                 }
             }
             return;
         }
-        if (stage == EnumAnimationStages.Waiting) {
+        if (stage == EnumAnimationStage.Waiting) {
             canSetBaseRotationAngles = true;
             stopAnimation();
         }
@@ -644,9 +683,9 @@ public class CustomAnimationHandler {
         activeAnimation.editTick = anim.editTick;
         activeAnimation.editFrame = anim.editFrame;
         activeAnimation.type = type;
-        stage = EnumAnimationStages.Started;
-        if (type == AnimationKind.EDITING_PART) { stage = EnumAnimationStages.Run; }
-        startAnimationTime = entity.world.getTotalWorldTime();
+        stage = EnumAnimationStage.Started;
+        if (type == AnimationKind.EDITING_PART) { stage = EnumAnimationStage.Run; }
+        startAnimationTime = getCurrentTime();
         completeAnimation = false;
         calculationAnimationData(0.0f);
     }
@@ -798,7 +837,7 @@ public class CustomAnimationHandler {
     public boolean canSetBaseRotationAngles() { return canSetBaseRotationAngles; }
 
     public boolean canBeAnimated() {
-        return stage != EnumAnimationStages.Waiting || (!movementAnimation.isEmpty() && (activeAnimation == null || activeAnimation.type.isMovement()) && entity.world.getTotalWorldTime() % 3 == 0);
+        return stage != EnumAnimationStage.Waiting || (!movementAnimation.isEmpty() && (activeAnimation == null || activeAnimation.type.isMovement()) && getCurrentTime() % 3 == 0);
     }
 
     public ItemStack getCurrentHeldStack(boolean isMainHand) {
@@ -861,5 +900,7 @@ public class CustomAnimationHandler {
         for (AnimationKind animationType : data.keySet()) { data.get(animationType).clear(); }
         movementAnimation.clear();
     }
+
+    private long getCurrentTime() { return entity.world.getTotalWorldTime(); }
 
 }

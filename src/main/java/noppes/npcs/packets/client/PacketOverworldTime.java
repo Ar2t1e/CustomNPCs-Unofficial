@@ -1,13 +1,13 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketOverworldTime extends PacketBasic {
 
     protected static int channelId;
-    private long overworldTime;
+    public long overworldTime;
 
     public PacketOverworldTime() { }
 
@@ -23,10 +23,6 @@ public class PacketOverworldTime extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        CustomNpcs.debugData.start("Packets");
-        CustomNpcs.proxy.getPlayerData(player).questData.overworldTime = overworldTime;
-        CustomNpcs.debugData.end("Packets");
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

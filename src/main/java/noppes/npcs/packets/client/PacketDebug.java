@@ -1,13 +1,13 @@
 package noppes.npcs.packets.client;
 
 import net.minecraft.network.FriendlyByteBuf;
-import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketDebug extends PacketBasic {
 
     protected static int channelId;
-    private boolean isLogOrClear;
+    public boolean isLogOrClear;
 
     public PacketDebug() { }
 
@@ -23,9 +23,6 @@ public class PacketDebug extends PacketBasic {
     public int getChannelId() { return channelId; }
 
     @Override
-    protected void handle() {
-        if (isLogOrClear) { CustomNpcs.debugData.logging(); }
-        else { CustomNpcs.debugData.clear(); }
-    }
+    protected void handle() { Client.processPacket(this); }
 
 }

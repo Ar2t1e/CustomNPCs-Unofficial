@@ -1,17 +1,14 @@
 package noppes.npcs.packets.client;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.ClientProxy;
+import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
 
 public class PacketConfigFont extends PacketBasic {
 
    protected static int channelId;
-   private String font;
-   private int size;
+   public String font;
+   public int size;
 
    public PacketConfigFont() { }
 
@@ -36,21 +33,6 @@ public class PacketConfigFont extends PacketBasic {
    public int getChannelId() { return channelId; }
 
    @Override
-   protected void handle() {
-      CustomNpcs.debugData.start("Packets");
-      Runnable run = () -> {
-         if (font != null && !font.isEmpty()) {
-            CustomNpcs.FontType = font;
-            CustomNpcs.FontSize = size;
-            ClientProxy.Font.clear();
-            ClientProxy.Font = new ClientProxy.FontContainer(CustomNpcs.FontType, CustomNpcs.FontSize);
-            CustomNpcs.Config.updateConfig();
-            player.sendMessage(new TextComponentTranslation("Font set to %s", ClientProxy.Font.getName()));
-         }
-         else { player.sendMessage(new TextComponentTranslation("Current font is %s", ClientProxy.Font.getName())); }
-      };
-      Minecraft.getMinecraft().addScheduledTask(run);
-      CustomNpcs.debugData.end("Packets");
-   }
+   protected void handle() { Client.processPacket(this); }
 
 }

@@ -20,9 +20,11 @@ import noppes.npcs.constants.*;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.*;
 
+import javax.annotation.Nonnull;
+
 public class DataAnimation implements INPCAnimation {
 
-	public final EntityLivingBase entity;
+	public final @Nonnull EntityLivingBase entity;
 
 	private final CustomAnimationHandler animationHandler;
 	private final CustomEmotionHandler emotionHandler;
@@ -32,7 +34,7 @@ public class DataAnimation implements INPCAnimation {
 	public final Map<EnumParts, Boolean> showArmorParts = new HashMap<>();
 	public final Map<EnumParts, Boolean> showAWParts = new HashMap<>();
 
-	public DataAnimation(EntityLivingBase main) {
+	public DataAnimation(@Nonnull EntityLivingBase main) {
 		entity = main;
 		animationHandler = new CustomAnimationHandler(main);
 		emotionHandler = new CustomEmotionHandler(main);
@@ -75,7 +77,7 @@ public class DataAnimation implements INPCAnimation {
 	public void reset() {
 		stopAnimation();
 		stopEmotion();
-		if (entity == null || !entity.isServerWorld()) { return; }
+		if (!entity.isServerWorld()) { return; }
 		Packets.sendAll(new PacketCustomAnimationSet(entity instanceof EntityPlayer, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), save(new NBTTagCompound())));
 	}
 
@@ -102,7 +104,7 @@ public class DataAnimation implements INPCAnimation {
 	public void stopAnimation() {
 		if (animationHandler.activeAnimation != null) {
 			if (animationHandler.activeAnimation.hasEmotion()) { stopEmotion(); }
-			if (entity != null && entity.isServerWorld()) {
+			if (entity.isServerWorld()) {
 				Packets.sendAll(new PacketCustomAnimationStop(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID()));
 			}
 		}
@@ -110,7 +112,7 @@ public class DataAnimation implements INPCAnimation {
 			animationHandler.movementAnimation.clear();
 			Map<Integer, Integer> map = animationHandler.resetWalkAndStandAnimations();
 			if (map == null) { map = new HashMap<>(); }
-			if (entity != null && entity.isServerWorld()) {
+			if (entity.isServerWorld()) {
 				Packets.sendAll(new PacketCustomAnimationBaseSet(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), map));
 			}
 		}
@@ -118,7 +120,7 @@ public class DataAnimation implements INPCAnimation {
 	}
 
 	public void stopEmotion() {
-		if (entity != null && entity.isServerWorld() && emotionHandler.activeEmotion != null) {
+		if (entity.isServerWorld() && emotionHandler.activeEmotion != null) {
 			Packets.sendAll(new PacketCustomEmotionStop(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID()));
 		}
 		emotionHandler.stopEmotion();
@@ -160,7 +162,7 @@ public class DataAnimation implements INPCAnimation {
 
 	// a new motion animation is selected
 	public void resetWalkAndStandAnimations() {
-		if (entity == null || entity.world.getTotalWorldTime() % 20 != 0) { return; }
+		if (entity.world.getTotalWorldTime() % 20 != 0) { return; }
 		Map<Integer, Integer> map = animationHandler.resetWalkAndStandAnimations();
 		if (entity.isServerWorld() && map != null) {
 			Packets.sendAll(new PacketCustomAnimationBaseSet(entity instanceof EntityPlayerMP, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), map));
@@ -177,7 +179,6 @@ public class DataAnimation implements INPCAnimation {
 
 	// (Player or NPC) -> this.reset(AnimationKind), or PacketHandlerClient, or Animation GUI
 	public AnimationConfig tryRunAnimation(AnimationConfig anim, AnimationKind type) {
-		if (entity == null) { return null; }
 		if (anim != null && anim.frames.isEmpty()) { anim = null; }
 		if (anim == null && animationHandler.activeAnimation != null && !animationHandler.activeAnimation.type.isMovement()) {
 			stopAnimation();
@@ -251,7 +252,6 @@ public class DataAnimation implements INPCAnimation {
 	public void setActiveEmotion(EmotionConfig emotion) { emotionHandler.activeEmotion = emotion; }
 
 	public void tryRunEmotion(EmotionConfig emotion) {
-		if (entity == null) { return; }
 		if (emotion != null && emotion.frames.isEmpty()) { emotion = null; }
 		if (emotion == null) {
 			stopEmotion();
@@ -306,7 +306,7 @@ public class DataAnimation implements INPCAnimation {
 
 	@Override
 	public void update() {
-		if (entity == null || !entity.isServerWorld()) { return; }
+		if (!entity.isServerWorld()) { return; }
 		Packets.sendAll(new PacketCustomAnimationSet(entity instanceof EntityPlayer, entity.world.provider.getDimension(), entity.getEntityId(), entity.getUniqueID(), save(new NBTTagCompound())));
 	}
 
@@ -352,6 +352,6 @@ public class DataAnimation implements INPCAnimation {
 		throw new CustomNPCsException("Animation type must be between 0 and " + (AnimationKind.values().length - 1));
 	}
 
-	public EnumAnimationStages getAnimationStage() { return animationHandler == null ? EnumAnimationStages.Waiting : animationHandler.stage; }
+	public EnumAnimationStage getAnimationStage() { return animationHandler == null ? EnumAnimationStage.Waiting : animationHandler.stage; }
 
 }
