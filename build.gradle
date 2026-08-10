@@ -47,26 +47,34 @@ minecraft {
 
     runs {
         client {
-            workingDirectory project.file('run/client')
+            workingDirectory = project.file('run/client')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            property 'fml.coreMods.load', mod_group + '.mixin.NpcMixinCore'
+            property 'fml.coreMods.load', "${mod_group}.mixin.NpcMixinCore".toString()
             properties 'mixin.env.remapRefMap': 'true'
-            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg".toString()
             property "mixin.debug", 'true'
             property "mixin.debug.verify", 'false'
-            args '--username=BetaZavr' + new Random().nextInt(10), '--tweakClass', 'org.spongepowered.asm.launch.MixinTweaker', '--mixin', mod_id + ".mixins.json"
+            args "--username=BetaZavr${new Random().nextInt(10)}".toString(),
+                    '--tweakClass',
+                    'org.spongepowered.asm.launch.MixinTweaker',
+                    '--mixin',
+                    "${mod_id}.mixins.json".toString()
         }
         server {
-            workingDirectory project.file('run/server')
+            workingDirectory = project.file('run/server')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            property 'fml.coreMods.load', mod_group + '.mixin.NpcMixinCore'
+            property 'fml.coreMods.load', "${mod_group}.mixin.NpcMixinCore".toString()
             properties 'mixin.env.remapRefMap': 'true'
-            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg".toString()
             property "mixin.debug", 'true'
             property "mixin.debug.verify", 'false'
-            args '--tweakClass', 'org.spongepowered.asm.launch.MixinTweaker', '--mixin', mod_id + ".mixins.json"//, 'nogui'
+            args '--tweakClass',
+                    'org.spongepowered.asm.launch.MixinTweaker',
+                    '--mixin',
+                    "${mod_id}.mixins.json".toString()
+                    //, 'nogui'
         }
     }
 }
@@ -100,16 +108,16 @@ processResources {
     inputs.property 'mcversion', minecraft_version
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
-        expand  'modid'         : mod_id,
-                'name'          : mod_name,
-                'version'       : mod_version,
-                'mcversion'     : minecraft_version,
-                'description'   : mod_description,
-                'credits'       : mod_credits,
-                'logoFile'      : mod_logoFile,
-                'authors'       : mod_authors,
-                'url'           : mod_url,
-                'updateUrl'     : mod_update_url
+        expand  'mod_id'            : mod_id,
+                'mod_name'          : mod_name,
+                'mod_version'       : mod_version,
+                'minecraft_version' : minecraft_version,
+                'mod_description'   : mod_description,
+                'mod_credits'       : mod_credits,
+                'mod_logoFile'      : mod_logoFile,
+                'mod_authors'       : mod_authors.replace(", ", "\", \""),
+                'mod_url'           : mod_url,
+                'mod_update_url'    : mod_update_url
     }
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'

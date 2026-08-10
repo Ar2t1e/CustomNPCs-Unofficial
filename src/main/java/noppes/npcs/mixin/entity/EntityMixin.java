@@ -18,18 +18,6 @@ public class EntityMixin implements IEntityIMixin {
 
     @Unique protected final Data npcs$storeddata = new Data();
 
-    @Override
-    public void npcs$copyDataFromOld(Entity entity) {
-        NBTTagCompound nbttagcompound = entity.writeToNBT(new NBTTagCompound());
-        nbttagcompound.removeTag("Dimension");
-        ((Entity) (Object) this).readFromNBT(nbttagcompound);
-        timeUntilPortal = entity.timeUntilPortal;
-        IEntityMixin parent = (IEntityMixin) this;
-        parent.setLastPortalPos(((IEntityMixin) entity).getLastPortalPos());
-        parent.setLastPortalVec(((IEntityMixin) entity).getLastPortalVec());
-        parent.setTeleportDirection(((IEntityMixin) entity).getTeleportDirection());
-    }
-
     @Inject(method = "writeToNBT", at = @At("RETURN"), cancellable = true)
     public void npcs$writeToNBT(CallbackInfoReturnable<NBTTagCompound> cir) {
         NBTTagCompound compound = cir.getReturnValue();
@@ -64,6 +52,18 @@ public class EntityMixin implements IEntityIMixin {
                 cir.setReturnValue(true);
             }
         }
+    }
+
+    @Override
+    public void npcs$copyDataFromOld(Entity entity) {
+        NBTTagCompound nbttagcompound = entity.writeToNBT(new NBTTagCompound());
+        nbttagcompound.removeTag("Dimension");
+        ((Entity) (Object) this).readFromNBT(nbttagcompound);
+        timeUntilPortal = entity.timeUntilPortal;
+        IEntityMixin parent = (IEntityMixin) this;
+        parent.setLastPortalPos(((IEntityMixin) entity).getLastPortalPos());
+        parent.setLastPortalVec(((IEntityMixin) entity).getLastPortalVec());
+        parent.setTeleportDirection(((IEntityMixin) entity).getTeleportDirection());
     }
 
     @Override

@@ -125,7 +125,7 @@ public class ScriptController {
 			factories.put(factory.getLanguageName().toLowerCase(), factory);
 		}
 		catch (Exception e) { LogWriter.info("Kotlin JS is missed"); }
-		// Any
+		// Any (Lua, Python, Ruby ...)
 		for (ScriptEngineFactory factory : manager.getEngineFactories()) {
 			try {
 				if (factory.getExtensions().isEmpty()) {
@@ -151,7 +151,7 @@ public class ScriptController {
 		// ECMAScript Nashorn
 		try {
 			LogWriter.debug("Try create Nashorn Script Engine");
-			Class<?> c = Class.forName("jdk.nashorn.api.scripting.NashornScriptEngineFactory");
+			Class<?> c = ClassLoader.getSystemClassLoader().loadClass("jdk.nashorn.api.scripting.NashornScriptEngineFactory");
 			ScriptEngineFactory factory = (ScriptEngineFactory) c.newInstance();
 			factory.getScriptEngine();
 			try {
@@ -181,7 +181,7 @@ public class ScriptController {
 			manager.registerEngineName(name.toLowerCase(), factory);
 			manager.registerEngineMimeType("application/" + name.toLowerCase(), factory);
 			if (isNotRegister) { manager.registerEngineExtension("js", factory); }
-		} catch (Exception e) { LogWriter.info("Nashorn JS is missed"); }
+		} catch (Exception e) { LogWriter.error("Nashorn JS is missed", e); }
 		if (isClient) { loadAgreements(); }
 		CustomNpcs.debugData.end(null);
 	}

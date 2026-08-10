@@ -59,14 +59,12 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends TileE
 						GlStateManager.SourceFactor.SRC_ALPHA,
 						GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA
 				);
-				// === ЕДИНЫЙ СЛОЙ: не пишем в буфер глубины ===
 				GlStateManager.depthMask(false);
 
 				shader.use();
 				try {
 					shader.set1f("Alpha", ValueUtil.correctFloat(te.getAlpha(), 0.15f, 1.0f));
 					shader.set1f("GameTime", (Minecraft.getSystemTime() % 800000L) / 800000.0F);
-					// x,y,z здесь относительно камеры — именно так и нужно для getPasses
 					shader.set1i("PortalLayers", getPasses(x * x + y * y + z * z));
 
 					ShaderProgram.texUnit(GL13.GL_TEXTURE0);
@@ -100,13 +98,11 @@ public class BlockPortalRenderer<T extends CustomTileEntityPortal> extends TileE
 						GL11.glBlendFunc(prevBlendSrc, prevBlendDst);
 					}
 
-					// Восстанавливаем программу ВСЕГДА, даже если это 0 (fixed pipeline)
 					GL20.glUseProgram(prevProgram);
 
 					if (prevLight) GlStateManager.enableLighting();
 					else GlStateManager.disableLighting();
 
-					// === Восстанавливаем запись глубины ===
 					GlStateManager.depthMask(prevDepthMask);
 				}
 			}

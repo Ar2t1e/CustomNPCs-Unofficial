@@ -95,7 +95,7 @@ public class Component {
                 return Util.instance.deleteColor(((TextComponentTranslation) parent).getKey());
             }
         }
-        return parent.getUnformattedText();
+        return parent.getFormattedText();
     }
 
     public Component withStyle(TextFormatting ... textFormats) {

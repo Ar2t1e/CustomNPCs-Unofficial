@@ -19,6 +19,7 @@ public class WorldSummaryMixin implements IWorldSummaryMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     public void init(WorldInfo info, String fileNameIn, String displayNameIn, long sizeOnDiskIn, boolean requiresConversionIn, CallbackInfo ci) {
-        this.npcs$agreementName = info.getWorldName() + ";" + info.getSeed();
+        npcs$agreementName = info.getWorldName() + ";" + info.getSeed();
     }
+
 }

@@ -46,6 +46,8 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 		super(npc);
 		job = (JobSpawner) npc.job;
 		backGui = EnumGuiType.MainMenuAdvanced;
+
+		Packets.sendServer(new SPacketNpcJobGet());
 	}
 
 	@Override
@@ -211,6 +213,7 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 				.setMinMaxDefault(0, 6000, (int) (job.getCooldown() / 50L))
 				.setIsVisible(!aliveScroll.getList().isEmpty())
 				.setHoverTexts("spawner.hover.cooldown");
+		resetEntity();
 	}
 
 	@Override
@@ -285,11 +288,7 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 	}
 
 	@Override
-	public void save() {
-		NBTTagCompound compound = job.save(new NBTTagCompound());
-		job.removeCompound(compound);
-		Packets.sendServer(new SPacketNpcJobSave(compound));
-	}
+	public void save() { }
 
 	@Override
 	public void subGuiClosed(GuiScreen gui) {
@@ -327,7 +326,18 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		if (!hasSubGui()) {
 			GlStateManager.pushMatrix();
-			if (select != null) { drawNpc(select, 385, 92, 1.0f, (int) (3 * player.world.getTotalWorldTime() % 360), 0, 0); }
+			if (select != null) {
+				int rot;
+				int cursor;
+				if (isMouseHover(mouseX, mouseY, guiLeft + 182, guiTop + 5, 59, 84)) {
+					rot = 0;
+					cursor = 0;
+				} else {
+					rot = (int) (3L * minecraft.world.getTotalWorldTime() % 360L);
+					cursor = 1;
+				}
+				drawNpc(select, 385, 92, 1.0f, rot, 0, cursor);
+			}
 			GlStateManager.translate(0.0f, 0.0f, 1.0f);
 			drawVerticalLine(guiLeft + 178, guiTop + 4, guiTop + imageHeight + 12, 0xFF404040);
 			drawVerticalLine(guiLeft + 353, guiTop + 4, guiTop + imageHeight + 12, 0xFF404040);
@@ -368,7 +378,7 @@ public class GuiNpcSpawner extends GuiNPCInterface2
 			return;
 		} // Entity set
 		// job data
-		if (compound.hasKey("SpawnerWhenAlive", 3)) { job.load(compound); }
+		if (compound.hasKey("SpawnerCooldownSetting", 4)) { job.load(compound); }
 		// Setts
 		for (int j = 0; j < 2; j++) {
 			boolean type = j == 0;

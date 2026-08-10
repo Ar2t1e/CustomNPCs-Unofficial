@@ -71,16 +71,16 @@ public class SubGuiNpcMobSpawnerSelector extends GuiBasic
 		if (scroll == null) { scroll = addScroll(0).setSize(165, 188); }
 		else { scroll.clear(); }
 		add(scroll.setPos(guiLeft + 4, guiTop + 26));
-		GuiMenuTopButton tab = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones")
-				.setIsEnabled(showingClones == 0);
-		tab = addTopButton(4, tab.getX() + tab.getWidth(), tab.getY(), "spawner.entities")
-				.setIsEnabled(showingClones == 1);
-		addTopButton(5, tab.getX() + tab.getWidth(), tab.getY(), "gui.server")
-				.setIsEnabled(showingClones == 2);
+		GuiMenuTopButton tab = addTopButton(3, guiLeft + 4, guiTop - 17, "spawner.clones");
+		tab.active = showingClones == 0;
+		tab = addTopButton(4, tab.getX() + tab.getWidth(), tab.getY(), "spawner.entities");
+		tab.active = showingClones == 1;
+		tab = addTopButton(5, tab.getX() + tab.getWidth(), tab.getY(), "gui.server");
+		tab.active = showingClones == 2;
 		if (showingClones == 0 || showingClones == 2) {
-			for (int id = 1; id < 10; id++) {
-				addSideButton(21 + id, guiLeft, guiTop + 4 + (id - 1) * 21, Component.translatable("gui.tab").append(" " + id))
-						.setIsEnabled(id == activeTab);
+			for (int id = 0; id < 9; id++) {
+				addSideButton(21 + id, guiLeft, guiTop + 4 + id * 21, Component.translatable("gui.tab").append(" " + (id + 1)))
+						.active = activeTab == id + 1;
 			}
 			showClones();
 		}
@@ -155,7 +155,18 @@ public class SubGuiNpcMobSpawnerSelector extends GuiBasic
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
-		if (select != null) { drawNpc(select, 210, 80, 1.0f, (int) (3 * player.world.getTotalWorldTime() % 360), 0, 0); }
+		if (select != null) {
+			int rot;
+			int cursor;
+			if (isMouseHover(mouseX, mouseY, guiLeft + 182, guiTop + 5, 59, 84)) {
+				rot = 0;
+				cursor = 0;
+			} else {
+				rot = (int) (3L * minecraft.world.getTotalWorldTime() % 360L);
+				cursor = 1;
+			}
+			drawNpc(select, 210, 80, 1.0f, rot, 0, cursor);
+		}
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(0.0f, 0.0f, 1.0f);
 		Gui.drawRect(guiLeft + 181, guiTop + 4, guiLeft + 242, guiTop + 90, new Color(0xFF808080).getRGB());

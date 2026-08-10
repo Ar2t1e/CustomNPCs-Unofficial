@@ -1449,7 +1449,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                         .setUV(0, 80, 200, 20)
                         .setColor(YDEController.textColor)
                         .setSize(50, h0)
-                        .setIsFocused(tabId == 0);
+                        .active = tabId == 0;
                 rightTab.yde_scroll.addTopButton(1, 0, 0, "availability.available")
                         .setIsEnabled(rightTab.yde_scroll.availability != null)
                         .setCustomFont(UtilYDE.FONT)
@@ -1459,7 +1459,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                         .setUV(0, 80, 200, 20)
                         .setColor(YDEController.textColor)
                         .setSize(50, h0)
-                        .setIsFocused(tabId == 1);
+                        .active = tabId == 1;
                 rightTab.yde_scroll.addTopButton(2, 0, 0, "mailbox.write")
                         .setCustomFont(UtilYDE.FONT)
                         .setTexture(YDE_BUTTONS)
@@ -1468,7 +1468,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                         .setUV(0, 80, 200, 20)
                         .setColor(YDEController.textColor)
                         .setSize(50, h0)
-                        .setIsFocused(tabId == 2);
+                        .active = tabId == 2;
                 int lId = 0;
                 if (tabId == 0) {} // main
                 if (tabId == 1) {
@@ -1488,7 +1488,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                         .setUV(0, 80, 200, 20)
                         .setColor(YDEController.textColor)
                         .setSize(50, h0)
-                        .setIsFocused(tabId == 0);
+                        .active = tabId == 0;
                 rightTab.yde_scroll.addTopButton(1, 0, 0, "availability.available")
                         .setIsEnabled(rightTab.yde_scroll.availability != null)
                         .setCustomFont(UtilYDE.FONT)
@@ -1498,7 +1498,7 @@ public class GuiYellowDialogEditor extends GuiBasic
                         .setUV(0, 80, 200, 20)
                         .setColor(YDEController.textColor)
                         .setSize(50, h0)
-                        .setIsFocused(tabId == 1);
+                        .active = tabId == 1;
                 int lId = 0;
                 int lH = UtilYDE.FONT.getHeight() + 2;
                 int w = rightTab.yde_scroll.width - 12;

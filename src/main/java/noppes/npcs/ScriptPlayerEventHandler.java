@@ -16,12 +16,12 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.api.mixin.entity.IEntityLivingBaseIMixin;
 import noppes.npcs.api.mixin.entity.player.IEntityPlayerMixin;
-import noppes.npcs.api.mixin.fml.common.eventhandler.IEventBusMixin;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.api.mixin.tileentity.ITileEntityBanner;
 import noppes.npcs.entity.data.DataInventory;
+import noppes.npcs.mixin.fml.common.eventhandler.IEventBusMixin;
 import noppes.npcs.mixin.minecraftforge.event.entity.living.ILivingAttackEventMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketAchievement;
@@ -891,7 +891,7 @@ public class ScriptPlayerEventHandler {
 								break;
 							}
 						}
-						isClient = false;
+						isClient = c.getName().startsWith("net.minecraftforge.client.event");
 						for (Class<?> nae : isClientEvents) {
 							if (nae.isAssignableFrom(c)) {
 								isClient = true;
@@ -912,11 +912,11 @@ public class ScriptPlayerEventHandler {
 						if (!isClient) {
 							ForgeEventHandler.eventNames.put(c, eventName);
 							ForgeEventHandler.clientEventNames.put(c, eventName);
-							((IEventBusMixin) MinecraftForge.EVENT_BUS).npcs$Register(c, handler, m);
+							((IEventBusMixin) MinecraftForge.EVENT_BUS).invokeRegister(c, handler, m, CustomNpcs.mod);
 						}
 						else {
 							ForgeEventHandler.clientEventNames.put(c, eventName);
-							if (threadIsClient) { ((IEventBusMixin) MinecraftForge.EVENT_BUS).npcs$Register(c, handler, m); }
+							if (threadIsClient) { ((IEventBusMixin) MinecraftForge.EVENT_BUS).invokeRegister(c, handler, m, CustomNpcs.mod); }
 						}
 						LogWriter.debug("Add Forge "+(isClient ? "client" : "common")+" Event " +c.getName());
 					}
@@ -942,7 +942,7 @@ public class ScriptPlayerEventHandler {
 							String eventName = ForgeEventHandler.getEventName(c2);
 							if (ForgeEventHandler.eventNames.containsValue(eventName)) { continue; }
 							// Add
-							((IEventBusMixin) PixelmonHelper.EVENT_BUS).npcs$Register(c2, handler, m);
+							((IEventBusMixin) PixelmonHelper.EVENT_BUS).invokeRegister(c2, handler, m, CustomNpcs.mod);
 							ForgeEventHandler.eventNames.put(c2, eventName);
 							LogWriter.debug("Add Pixelmon Event[" + ForgeEventHandler.eventNames.size() + "]; " + c2.getName());
 						}

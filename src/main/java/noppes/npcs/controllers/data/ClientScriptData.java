@@ -68,15 +68,20 @@ public class ClientScriptData
 		// Stored Data
 		File saveDir = new File(CustomNpcs.Dir, "client_default");
 		if (saveDir.exists() || saveDir.mkdirs()) {
-			ScriptController.Instance.compound = new NBTTagCompound();
+			NBTTagCompound compound = new NBTTagCompound();
 			File sData = new File(saveDir, "world_data.json");
 			try {
 				if (!sData.exists()) { Util.instance.saveFile(sData, NBTJsonUtil.Convert(new NBTTagCompound())); }
-				else { ScriptController.Instance.compound = NBTJsonUtil.LoadFile(sData); }
+				else { compound = NBTJsonUtil.LoadFile(sData); }
 				LogWriter.debug("Load default client stored data - done");
 			}
 			catch (Exception e) { LogWriter.error("Error Default loading: " + sData.getName(), e); }
-			storedData.setNbt(ScriptController.Instance.compound);
+			if (compound.hasKey("IsMap", 3) && compound.hasKey("Content", 10)) { storedData.setNbt(compound); }
+			else {
+				for (String key : compound.getKeySet()) {
+					storedData.put(key, Util.instance.readObjectFromNbt(compound.getTag(key)));
+				}
+			} // OLD
 		}
         // Modules
 		String language = getLanguage().toLowerCase();
@@ -118,7 +123,7 @@ public class ClientScriptData
 		File saveDir = new File(CustomNpcs.Dir, "client_default");
 		if (saveDir.exists() || saveDir.mkdirs()) {
 			try {
-				Util.instance.saveFile(new File(saveDir, "world_data.json"), NBTJsonUtil.Convert(ScriptController.Instance.compound));
+				Util.instance.saveFile(new File(saveDir, "world_data.json"), NBTJsonUtil.Convert(storedData.getNbt().getMCNBT()));
 				LogWriter.debug("Save Default Client stored data - done");
 			} catch (Exception e) {
 				LogWriter.error("Error Default saving: \"world_data.json\"", e);

@@ -2616,7 +2616,6 @@ public class ClientEventHandler extends Gui {
 							.append(Component.literal(" [" + ForgeRegistries.BLOCKS.getKey(state.getBlock()) + "] ").withStyle(TextFormatting.GRAY))
 							.append(Component.literal(state.getBlock().getLocalizedName()).withStyle(TextFormatting.RESET));
 
-					// Из 1.20.1: state info вместо meta
 					String stateText = state.toString();
 					if (stateText.contains("[")) {
 						stateText = stateText.substring(stateText.indexOf("["));

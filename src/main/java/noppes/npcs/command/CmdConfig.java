@@ -1,6 +1,8 @@
 package noppes.npcs.command;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import net.minecraft.block.Block;
@@ -13,6 +15,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
@@ -26,19 +29,14 @@ import javax.annotation.Nonnull;
 
 public class CmdConfig extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return 2; }
 
 	@Override
-	public String getDescription() {
-		return "Some config things you can set";
-	}
+	public String getDescription() { return "Some config things you can set"; }
 
 	@Nonnull
-	public String getName() {
-		return "config";
-	}
+	public String getName() { return "config"; }
 
 	@SubCommand(desc = "Set how many active chunkloaders you can have", usage = "<number>", permission = 4)
 	public void chunkloaders(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
@@ -60,32 +58,22 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Add debug info to log", usage = "<true/false>", permission = 4)
+	@SubCommand(desc = "Add debug info to log", permission = 4)
 	public void debug(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length == 0) {
 			CustomNpcs.VerboseDebug = !CustomNpcs.VerboseDebug;
 			sender.sendMessage(new TextComponentTranslation("command.debug." + CustomNpcs.VerboseDebug));
 		}
+		else if (args[0].equals("start")) { CustomNpcs.debugData.startDebugging(sender); }
+		else if (args[0].equals("stop")) { CustomNpcs.debugData.stopDebugging(sender); }
 		else {
-			if (args[0].equals("start")) {
-				CustomNpcs.debugData.startDebugging(sender);
-			} else if (args[0].equals("stop")) {
-				CustomNpcs.debugData.stopDebugging(sender);
-			} else {
-				try {
-					CustomNpcs.VerboseDebug = Boolean.getBoolean(args[0]);
-					sender.sendMessage(new TextComponentTranslation("command.debug." + CustomNpcs.VerboseDebug));
-				} catch (Exception e) {
-					throw new CommandException("\""+args[0]+"\" is not a subcommand or boolean value");
-                }
-            }
+			try {
+				CustomNpcs.VerboseDebug = Boolean.parseBoolean(args[0].toLowerCase());
+				sender.sendMessage(new TextComponentTranslation("command.debug." + CustomNpcs.VerboseDebug));
+			} catch (Exception e) {
+				throw new CommandException("\""+args[0]+"\" is not a subcommand or boolean value");
+			}
 		}
-	}
-
-
-	@SubCommand(desc = "Will display the current mod debug report", permission = 2)
-	public void report(MinecraftServer server, ICommandSender sender, String[] args) {
-
 	}
 
 	@SubCommand(desc = "Get/Set font", usage = "[type] [size]", permission = 2)
@@ -99,9 +87,9 @@ public class CmdConfig extends CommandNoppesBase {
 			} catch (Exception e) { LogWriter.error(e); }
 		}
 		StringBuilder font = new StringBuilder();
-        for (String arg : args) {
-            font.append(" ").append(arg);
-        }
+		for (String arg : args) {
+			font.append(" ").append(arg);
+		}
 		Packets.send((EntityPlayerMP) sender, new PacketConfigFont(font.toString().trim(), size));
 	}
 
@@ -192,6 +180,20 @@ public class CmdConfig extends CommandNoppesBase {
 			CustomNpcs.Config.updateConfig();
 			this.sendMessage(sender, "Invisible NPCs is now " + CustomNpcs.EnableInvisibleNpcs);
 		}
+	}
+
+	@Override
+	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
+		List<String> list = new ArrayList<>();
+		if (args.length == 2) {
+			if (args[0].equals("debug")) {
+				list.add("true");
+				list.add("false");
+				list.add("start");
+				list.add("stop");
+			}
+		}
+		return list;
 	}
 
 }

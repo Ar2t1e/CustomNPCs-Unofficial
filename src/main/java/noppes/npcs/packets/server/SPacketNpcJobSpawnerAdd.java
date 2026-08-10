@@ -27,8 +27,8 @@ public class SPacketNpcJobSpawnerAdd extends PacketServerBasic {
 
     public SPacketNpcJobSpawnerAdd(boolean isDeadIn, String nameIn, int tabIn, NBTTagCompound compoundIn) {
         isDead = isDeadIn;
-        tab = tabIn;
         name = nameIn;
+        tab = tabIn;
         spawnerData = compoundIn;
     }
 
@@ -44,14 +44,15 @@ public class SPacketNpcJobSpawnerAdd extends PacketServerBasic {
     @Override
     public void encode(FriendlyByteBuf buf) {
         buf.writeBoolean(isDead);
-        buf.writeInt(tab);
         buf.writeUtf(name);
+        buf.writeInt(tab);
         buf.writeNbt(spawnerData);
     }
 
     @Override
     public void decode(FriendlyByteBuf buf) {
         isDead = buf.readBoolean();
+        name = buf.readUtf();
         tab = buf.readInt();
         spawnerData = buf.readAnySizeNbt();
     }
@@ -71,11 +72,11 @@ public class SPacketNpcJobSpawnerAdd extends PacketServerBasic {
                     ((JobSpawnerCloneData) sd).setName(name);
                     ((JobSpawnerCloneData) sd).setTab(tab);
                 }
-            }
+            } // server
             else if (!spawnerData.hasNoTags()) {
                 sd = job.get(isDead).add(false);
                 if (sd instanceof JobSpawnerNbtData) { ((JobSpawnerNbtData) sd).load(spawnerData); }
-            }
+            } // client
             NBTTagCompound compound = new NBTTagCompound();
             compound.setBoolean("JobData", true);
             job.save(compound);

@@ -25,8 +25,9 @@ import net.minecraft.util.EnumHandSide;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import noppes.npcs.entity.EntityCustomNpc;
+import noppes.npcs.mixin.client.renderer.entity.IRenderLivingBaseMixin;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.api.mixin.client.renderer.entity.IRenderLivingBaseMixin;
 import noppes.npcs.client.model.ModelBipedAlt;
 import noppes.npcs.client.model.ModelNpcAlt;
 import noppes.npcs.client.model.ModelRendererAlt;
@@ -34,8 +35,10 @@ import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import noppes.npcs.client.util.aw.CustomSkinModelRenderHelper;
 import noppes.npcs.constants.EnumParts;
 
+import java.util.List;
+
 @SideOnly(Side.CLIENT)
-public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterface<T> {
+public class LayerCustomHeldItem<T extends EntityCustomNpc> extends LayerInterface<T> {
 
 	public LayerCustomHeldItem(RenderLiving<?> livingEntityRendererIn) {
 		super(livingEntityRendererIn);
@@ -147,7 +150,14 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 		if (isAnimated && stack.getItem() instanceof ItemArmor && render != null) {
 			ItemArmor itemarmor = (ItemArmor) stack.getItem();
 			EntityEquipmentSlot slot = itemarmor.getEquipmentSlot();
-			LayerRenderer<?> layer = ((IRenderLivingBaseMixin) render).npcs$getLayer(LayerArmorBase.class);
+			LayerRenderer<?> layer = null;
+			List<LayerRenderer<T>> layers = ((IRenderLivingBaseMixin) render).getLayerRenderers();
+			for (LayerRenderer<T> lr : layers) {
+				if (LayerArmorBase.class.isAssignableFrom(lr.getClass())) {
+					layer = lr;
+					break;
+				}
+			}
 			ModelBiped modelArmor = null;
 			ResourceLocation location = null;
 			ResourceLocation locationColor = null;
@@ -271,7 +281,7 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 		GlStateManager.popMatrix();
 	}
 
-	private void renderHeldAWItem(ISkinDescriptor skinDescriptor, boolean isSneaking, EnumHandSide handSide, double distance, float scale) {
+	private void renderHeldAWItem(ISkinDescriptor skinDescriptor, boolean ignoredIsSneaking, EnumHandSide handSide, double distance, float scale) {
 		ArmourersWorkshopUtil awu  = ArmourersWorkshopUtil.getInstance();
 		CustomSkinModelRenderHelper modelRenderer = CustomSkinModelRenderHelper.getInstance();
 		IWardrobeCap wardrobe = ArmourersWorkshopApi.getEntityWardrobeCapability(npc);

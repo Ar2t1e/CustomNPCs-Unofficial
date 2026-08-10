@@ -318,6 +318,7 @@ public class JobSpawner extends JobInterface implements IJobSpawner {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public void removeCompound(NBTTagCompound compound) {
 		for (int i = 0; i < 2; i++) {
 			String keyOld = "DataEntitysWhen" + (i == 0 ? "Alive" : "Dead");
@@ -468,7 +469,7 @@ public class JobSpawner extends JobInterface implements IJobSpawner {
 
 	private boolean isEmpty(boolean isDead) {
 		for (IJobSpawner.IJobSpawnerData sd : data.get(isDead).dataEntitys.values()) {
-			if (!sd.isValid()) { return false; }
+			if (sd.isValid()) { return false; }
 		}
 		return true;
 	}

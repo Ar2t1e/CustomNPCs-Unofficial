@@ -56,7 +56,14 @@ public class ServerCloneController implements ICloneHandler {
 	public File getDir() {
 		File dir = CustomNpcs.getWorldSaveDirectory();
 		if (dir != null) {
-			dir = new File(dir, "clones");
+			try {
+				// Normalize the path to resolve '..' and symbolic links
+				dir = new File(dir.getCanonicalFile(), "clones");
+			}
+			catch (Exception e) {
+				// Fallback to absolute path if canonicalization fails
+				dir = new File(dir.getAbsoluteFile(), "clones");
+			}
 			if (dir.exists() || dir.mkdir()) { return dir; }
 		}
 		return dir;
@@ -84,7 +91,7 @@ public class ServerCloneController implements ICloneHandler {
 	public @Nullable NBTTagCompound getCloneData(@Nullable ICommandSender player, String name, int tab) {
 		File dir = getDir();
 		if (dir == null || name == null || name.isEmpty()) { return null; }
-		name = Util.instance.sanitizeFilename(name);
+		name = Util.instance.sanitizeFilename(Util.instance.deleteColor(name));
 		File file = new File(dir, tab + "/" + name + ".json");
 		if (!file.exists()) {
 			if (player != null) {
@@ -134,7 +141,7 @@ public class ServerCloneController implements ICloneHandler {
 	}
 
 	public boolean removeClone(String name, int tab) {
-		File file = new File(getDir(), tab + "/" + Util.instance.sanitizeFilename(name) + ".json");
+		File file = new File(getDir(), tab + "/" + Util.instance.sanitizeFilename(Util.instance.deleteColor(name)) + ".json");
 		return file.exists() && file.delete();
 	}
 

@@ -84,7 +84,7 @@ import javax.annotation.Nullable;
 
 @Mod(modid = CustomNpcs.MODID,
 		name = CustomNpcs.MODNAME,
-		version = "2.4",
+		version = "4.433",
 		acceptedMinecraftVersions = "1.12, 1.12.1, 1.12.2",
 		guiFactory = "noppes.npcs.config.CustomNpcsGuiFactory")
 public class CustomNpcs {
@@ -368,7 +368,7 @@ public class CustomNpcs {
 
 	@Mod.EventHandler
 	public void preload(FMLPreInitializationEvent ev) {
-		Dir = new File(new File(ev.getModConfigurationDirectory(), ".."), MODID);
+        Dir = new File(new File(ev.getModConfigurationDirectory(), ".."), MODID);
 		if (!Dir.exists() && !Dir.mkdir()) {
 			throw new RuntimeException("Impossible error: Failed to create sections important for the " + MODNAME + " mod!");
 		}

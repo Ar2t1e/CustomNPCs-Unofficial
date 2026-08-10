@@ -14,10 +14,9 @@ import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
@@ -86,12 +85,8 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 	}
 
 	@Override
-	protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-		super.drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
-		drawPreview(mouseX, mouseY);
-	}
-
-	protected void drawPreview(int mouseX, int mouseY) {
+	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+		super.drawScreen(mouseX, mouseY, partialTicks);
 		entity = playerdata.getEntity(npc);
 		showEntity = entity;
 		if (showEntity == null && npc != null || (showEntity == npc)) {
@@ -140,11 +135,10 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 		}
 		if (this instanceof GuiCreationParts && ((GuiCreationParts) this).getPart() instanceof GuiPartEyes) {
 			showEntity.ticksExisted = player.ticksExisted;
-			int scale = new ScaledResolution(mc).getScaleFactor();
-			GL11.glEnable(GL11.GL_SCISSOR_TEST);
-			GL11.glScissor(guiLeft * scale, mc.displayHeight - (guiTop + ySize) * scale, xSize * scale, ySize * scale);
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(0.0f, 0.0f, -70.0f);
 			drawNpc(showEntity, xOffset + 210, 425, 6.0f, 0, 0, 1);
-			GL11.glDisable(GL11.GL_SCISSOR_TEST);
+			GlStateManager.popMatrix();
 		}
 		else {
 			drawNpc(showEntity, xOffset + 200, 200, 2.0f, (int) (GuiCreationScreenInterface.rotation * 360.0f - 180.0f),

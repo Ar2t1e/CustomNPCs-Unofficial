@@ -4,7 +4,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
@@ -22,15 +21,26 @@ import java.util.Objects;
 public class JobSpawnerCloneData implements IJobSpawner.IJobSpawnerData {
 
     protected final @Nonnull EntityNPCInterface parent;
-    protected int count;
-    protected int tab;
-    protected String name;
-    protected ITextComponent title;
+    protected int count = 1;
+    protected int tab = 0;
+    protected String name = "";
+    protected Component title = null;
 
     public JobSpawnerCloneData(@Nonnull EntityNPCInterface npc) { parent = npc; }
 
     @Override
-    public ITextComponent getTitle() { return title; }
+    public Component getTitle() {
+        if (title == null) {
+            NBTTagCompound compound = ServerCloneController.Instance.getCloneData(null, name, tab);
+            if (compound != null) {
+                ServerCloneController.Instance.cleanTags(compound);
+                Entity entity = EntityList.createEntityFromNBT(compound, parent.world);
+                title = entity != null ? Component.literal(entity.getName()) : Component.literal(compound.getString("id"));
+            }
+            else { title = Component.literal("NotFound"); }
+        }
+        return title;
+    }
 
     @Override
     public int getCount() { return count; }
@@ -63,19 +73,17 @@ public class JobSpawnerCloneData implements IJobSpawner.IJobSpawnerData {
     public void load(@Nonnull NBTTagCompound nbt) {
         tab = nbt.getInteger("tab");
         name = nbt.getString("name");
-        title = Component.jsonToComponent(nbt.getString("title")).getParent();
     }
 
     public @Nonnull NBTTagCompound save() {
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setInteger("tab", tab);
         nbt.setString("name", name);
-        nbt.setString("title", ITextComponent.Serializer.componentToJson(title));
         return nbt;
     }
 
     @Override
-    public String toString() { return "JobSpawnerCloneData{ Name: \"" + getTitle() + "\", tab: " + tab + ", name: " + name + "}"; }
+    public String toString() { return "JobSpawnerCloneData{ Name: \"" + getTitle().getString() + "\", tab: " + tab + ", name: " + name + "}"; }
 
     public String getName() { return name; }
 

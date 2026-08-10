@@ -4,8 +4,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IEntity;
@@ -20,14 +18,20 @@ import java.util.Objects;
 public class JobSpawnerNbtData implements IJobSpawner.IJobSpawnerData {
 
 	protected final @Nonnull EntityNPCInterface parent;
-	protected int count;
-	protected NBTTagCompound compound;
-	protected Component title;
+	protected int count = 1;
+	protected NBTTagCompound compound = new NBTTagCompound();
+	protected Component title = null;
 
 	public JobSpawnerNbtData(@Nonnull EntityNPCInterface npc) { parent = npc; }
 
 	@Override
-	public ITextComponent getTitle() { return title.getParent(); }
+	public Component getTitle() {
+		if (title == null) {
+			Entity entity = EntityList.createEntityFromNBT(compound, parent.world);
+			title = entity != null ? Component.literal(entity.getName()) : Component.literal(compound.getString("id"));
+		}
+		return title;
+	}
 
 	@Override
 	public int getCount() { return count; }
@@ -56,15 +60,11 @@ public class JobSpawnerNbtData implements IJobSpawner.IJobSpawnerData {
 
 	public boolean isClientClone() { return compound.getBoolean("ClientClone"); }
 
-	public void load(@Nonnull NBTTagCompound nbt) {
-		compound = nbt;
-		Entity entity = EntityList.createEntityFromNBT(compound, parent.world);
-		title = (entity != null ? Component.literal(entity.getName()) : Component.literal(nbt.getString("id"))).withStyle(TextFormatting.RESET);
-	}
+	public void load(@Nonnull NBTTagCompound nbt) { compound = nbt; }
 
 	public @Nonnull NBTTagCompound save() { return compound; }
 
 	@Override
-	public String toString() { return "JobSpawnerNbtData{ Name: \"" + getTitle() + "\", isClientClone: " + isClientClone() + "}"; }
+	public String toString() { return "JobSpawnerNbtData{ Name: \"" + getTitle().getString() + "\", isClientClone: " + isClientClone() + "}"; }
 
 }

@@ -106,6 +106,8 @@ import noppes.npcs.client.renderer.RenderNpcSlime;
 import noppes.npcs.client.renderer.RenderProjectile;
 import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
+import noppes.npcs.mixin.client.particle.IParticleFlameMixin;
+import noppes.npcs.mixin.client.particle.IParticleSmokeNormalMixin;
 import noppes.npcs.mixin.minecraftforge.client.IItemModelMesherForgeMixin;
 import noppes.npcs.mixin.client.util.IRecipeBookClientMixin;
 import noppes.npcs.shared.client.gui.util.TrueTypeFont;
@@ -131,8 +133,6 @@ import noppes.npcs.entity.EntityProjectile;
 import noppes.npcs.entity.data.DataAnimation;
 import noppes.npcs.items.custom.CustomArmor;
 import noppes.npcs.items.ItemScripted;
-import noppes.npcs.api.mixin.client.particle.IParticleFlameMixin;
-import noppes.npcs.api.mixin.client.particle.IParticleSmokeNormalMixin;
 import noppes.npcs.mixin.client.settings.IKeyBindingMixin;
 import noppes.npcs.client.particles.CustomParticleSettings;
 import noppes.npcs.potions.PotionData;
@@ -748,8 +748,8 @@ public class ClientProxy extends CommonProxy {
 		if (fx == null) {
 			return;
 		}
-		if (particle == EnumParticleTypes.FLAME) { ((IParticleFlameMixin) fx).npcs$setFlameScale(scale); }
-		else if (particle == EnumParticleTypes.SMOKE_NORMAL) { ((IParticleSmokeNormalMixin) fx).npcs$setSmokeParticleScale(scale); }
+		if (particle == EnumParticleTypes.FLAME) { ((IParticleFlameMixin) fx).setFlameScale(ValueUtil.onlyPositiveFloat(scale, Float.MAX_VALUE)); }
+		else if (particle == EnumParticleTypes.SMOKE_NORMAL) { ((IParticleSmokeNormalMixin) fx).setSmokeParticleScale(ValueUtil.onlyPositiveFloat(scale, Float.MAX_VALUE)); }
 	}
 
 	// New from Unofficial (BetaZavr)

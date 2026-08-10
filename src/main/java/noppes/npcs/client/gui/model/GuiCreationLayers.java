@@ -11,10 +11,10 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.api.mixin.client.renderer.entity.IRenderLivingBaseMixin;
 import noppes.npcs.client.renderer.RenderCustomNpc;
 import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.client.renderer.entity.IRenderLivingBaseMixin;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
@@ -23,7 +23,7 @@ import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class GuiCreationLayers  extends GuiCreationScreenInterface<ContainerLayer> implements ICustomScrollListener {
+public class GuiCreationLayers<T extends EntityLivingBase>  extends GuiCreationScreenInterface<ContainerLayer> implements ICustomScrollListener {
 
     private GuiCustomScrollNop scroll;
 
@@ -40,6 +40,7 @@ public class GuiCreationLayers  extends GuiCreationScreenInterface<ContainerLaye
     }
 
     @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public void initGui() {
         GuiTextFieldNop.unfocus();
         super.initGui();
@@ -74,7 +75,8 @@ public class GuiCreationLayers  extends GuiCreationScreenInterface<ContainerLaye
         if (customModel != null) {
             render = mc.getRenderManager().getEntityRenderObject(customModel);
             if (render instanceof RenderLivingBase) {
-                for (LayerRenderer<?> layer : ((IRenderLivingBaseMixin) render).npcs$getLayers()) {
+                List<LayerRenderer<T>> layers = ((IRenderLivingBaseMixin) render).getLayerRenderers();
+                for (LayerRenderer<T> layer : layers) {
                     Component name = Component.literal(layer.getClass().getSimpleName());
                     if (name.getString().isEmpty()) { continue; }
                     if (!map.containsKey(name)) {

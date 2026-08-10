@@ -1,6 +1,6 @@
 package noppes.npcs.api.entity.data.role;
 
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.interfaces.ParamName;
@@ -37,7 +37,7 @@ public interface IJobSpawner {
 
 	interface IJobSpawnerData {
 
-		ITextComponent getTitle();
+		Component getTitle();
 
 		int getCount();
 
