@@ -112,7 +112,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
     public void setValue(@Nullable Object object) {
         setValue(object instanceof Component ? ((Component) object).getFormattedText() :
                 object instanceof ITextComponent ? ((ITextComponent) object).getFormattedText() :
-                    object == null ? "" : object.toString());
+                        object == null ? "" : object.toString());
     }
 
     public void setValue(String textIn) {
@@ -720,7 +720,7 @@ public class GuiTextFieldNop extends Gui implements IComponentGui {
 
     @Override
     public GuiTextFieldNop setIsFocused(boolean isFocused) {
-        if (canLoseFocus || isFocused) {
+        if (visible && (canLoseFocus || isFocused)) {
             boolean wasFocused = focused;
             focused = isFocused;
             if (isFocused) {

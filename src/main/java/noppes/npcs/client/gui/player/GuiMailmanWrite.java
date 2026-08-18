@@ -7,6 +7,7 @@ import java.util.List;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.util.*;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.client.gui.GuiBasic;
@@ -142,7 +143,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
 					if (agree) {
 						Packets.sendServer(new SPacketPlayerMailDelete(0, mail.timeWhenReceived, mail.sender));
-						CustomNpcs.proxy.getPlayerData(player).mailData.playerMails.remove(mail);
+						PlayerData.get(player).mailData.playerMails.remove(mail);
 						aType = 2;
 						animClose();
 					}
@@ -160,7 +161,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 			} // ransom
 			case 7: {
 				Packets.sendServer(new SPacketPlayerMailReturn(mail.timeWhenReceived));
-				CustomNpcs.proxy.getPlayerData(player).mailData.playerMails.remove(mail);
+				PlayerData.get(player).mailData.playerMails.remove(mail);
 				aType = 1;
 				animClose();
 				break;
@@ -288,7 +289,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 				getButton(6).layerColor = 0;
 				if (!((ContainerMail) inventorySlots).canEdit && !((ContainerMail) inventorySlots).canSend) {
 					if (mail.ransom > 0) {
-						getButton(6).setIsEnabled(player.isCreative() || CustomNpcs.proxy.getPlayerData(player).game.getMoney() >= mail.ransom);
+						getButton(6).setIsEnabled(player.isCreative() || PlayerData.get(player).game.getMoney() >= mail.ransom);
 					}
 					else { getButton(6).setIsEnabled(mail.money > 0); }
 				}
@@ -605,7 +606,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 			type = !player.isCreative() && username.equals(player.getName()) && !CustomNpcs.MailSendToYourself ? 3 : 0;
 			if (type == 0) { type = getTextField(0) != null && getTextField(0).getValue().isEmpty() ? 1 : 0; } // player
 			if (type == 0) { type = mail.title.isEmpty() ? 4 : 0; } // title
-			if (type == 0 && !player.isCreative()) { type = CustomNpcs.proxy.getPlayerData(player).game.getMoney() < totalCost ? 2 : 0; } // money
+			if (type == 0 && !player.isCreative()) { type = PlayerData.get(player).game.getMoney() < totalCost ? 2 : 0; } // money
 			if (type == 0 && !hasMail) { type = 5; } // empty
 			getButton(0).setIsEnabled(type == 0);
 		}
@@ -1286,7 +1287,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		// Player Money
 		if (mc != null && ((ContainerMail) inventorySlots).canSend) {
-			String text = Util.instance.getTextReducedNumber(CustomNpcs.proxy.getPlayerData(player).game.getMoney(), true, true,
+			String text = Util.instance.getTextReducedNumber(PlayerData.get(player).game.getMoney(), true, true,
 					false) + CustomNpcs.displayCurrencies;
 			int x = guiLeft + 166;
 			int y = guiTop + 150;
@@ -1361,7 +1362,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 			addLabel(6, x + 102, y + 4, CustomNpcs.displayCurrencies);
 			addTextField(3, x + 48, y, 50, 16, "" + mail.money)
 					.setMinMaxDefault(0,
-							(int) (player.isCreative() ? Integer.MAX_VALUE : CustomNpcs.proxy.getPlayerData(player).game.getMoney()),
+							(int) (player.isCreative() ? Integer.MAX_VALUE : PlayerData.get(player).game.getMoney()),
 							mail.money)
 					.setHoverTexts("mailbox.hover.money");
 			addLabel(7, x, (y += 19) + 4, "mailbox.ransom");

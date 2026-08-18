@@ -386,6 +386,8 @@ public class Packets {
         register(SPacketDeadLootsOpen.class);
         register(SPacketNpcRarityTitleGet.class);
         register(SPacketRemoveLoadFile.class);
+        register(SPacketDimensionDelete.class);
+        register(SPacketDimensionRecreate.class);
 
     }
 
@@ -432,7 +434,7 @@ public class Packets {
 
     public static <MSG extends PacketBasic> void sendDelayed(EntityPlayerMP player, MSG msg, int delay) {
         logged(msg, true);
-        CustomNPCsScheduler.runTack(() -> CHANNELS.get(msg.getChannelId()).sendTo(msg, player), delay);
+        CustomNPCsScheduler.runTack(() -> send(player, msg), delay);
     }
 
     public static <MSG extends PacketBasic> void sendNearby(World level, BlockPos pos, int range, MSG msg) {
@@ -468,7 +470,7 @@ public class Packets {
 
     private static <MSG extends IMessage> void logged(MSG msg, boolean onClients) {
         if (onClients == msg instanceof PacketServerBasic) {
-            LogWriter.warn("Packet \"" + msg.getClass().getSimpleName() + "\" is sent from the wrong side!");
+            LogWriter.warn("Packet \"" + msg.getClass().getSimpleName() + "\" is sent from the wrong side! Can be client: "+onClients);
         }
         if (CustomNpcs.VerboseDebug && !ignoredDebug.contains(msg.getClass())) {
             StringBuilder message = new StringBuilder(("" + Util.instance.getSide()));

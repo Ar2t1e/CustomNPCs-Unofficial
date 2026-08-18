@@ -186,7 +186,7 @@ public class EntityWrapper<T extends Entity> implements IEntity<T> {
 		ResourceLocation resourcelocation = EntityList.getKey(entity);
 		if (getType() == 1) { resourcelocation = new ResourceLocation("player"); }
 		if (resourcelocation != null) { compound.setString("id", resourcelocation.toString()); }
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
+		return new NBTWrapper(compound);
 	}
 
 	@Override
@@ -214,7 +214,7 @@ public class EntityWrapper<T extends Entity> implements IEntity<T> {
 	public String getName() { return entity.getName(); }
 
 	@Override
-	public INbt getNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(entity.getEntityData()); }
+	public INbt getNbt() { return new NBTWrapper(entity.getEntityData()); }
 
 	@Override
 	public float getPitch() { return entity.rotationPitch; }

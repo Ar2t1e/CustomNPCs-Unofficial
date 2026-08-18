@@ -13,6 +13,7 @@ import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.controllers.TransportController;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.TransportLocation;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
@@ -57,13 +58,16 @@ public class GuiTransportSelection extends GuiNPCInterface
 				title = Component.translatable(loc.category.title).append(": ").append(Component.translatable(loc.name));
 			}
 		}
-		addLabel(0, guiLeft + (imageWidth - fontRenderer.getStringWidth(title.getString())) / 2, guiTop + 10, title);
+		addLabel(0, guiLeft + (imageWidth - fontRenderer.getStringWidth(title.getString())) / 2, guiTop + 8, title)
+				.setSize(imageWidth - 10, 10);
 		addButton(0, guiLeft + 10, guiTop + 192, "transporter.travel")
 				.setSize(156, 20);
 		if (scroll == null) { scroll = addScroll(0).setSize(156, 165); }
 		List<Component> list = new ArrayList<>(data.keySet());
 		add(scroll.setPos(guiLeft + 10, guiTop + 20)
 				.setNormalList(list));
+		if (list.size() * (font.FONT_HEIGHT + 3) < 165) { scroll.setSize(156, 170).disabledSearch(); }
+		else { scroll.enabledSearch().setSize(156, 165); }
 		if (!data.isEmpty()) {
 			List<Component> suffixes = new ArrayList<>();
 			for (Component name : list) {
@@ -73,7 +77,7 @@ public class GuiTransportSelection extends GuiNPCInterface
 					TextFormatting color = TextFormatting.GREEN;
 					if (loc.money > 0 || !loc.inventory.isEmpty()) {
 						if (loc.money > 0) {
-							if (loc.money > CustomNpcs.proxy.getPlayerData(player).game.getMoney()) { color = TextFormatting.RED; }
+							if (loc.money > PlayerData.get(player).game.getMoney()) { color = TextFormatting.RED; }
 							sfx = Component.empty()
 									.append(Component.literal(Util.instance.getTextReducedNumber(loc.money, true, true, false)
 													+ CustomNpcs.displayCurrencies)
@@ -190,7 +194,7 @@ public class GuiTransportSelection extends GuiNPCInterface
 				button.setIsEnabled(canTransport && select != null);
 				if (!button.isEnabled() && button.isHoveredOrFocused()) {
 					if (select == null) { setHoverText(Component.translatable("transporter.hover.not.select")); }
-					else if (select.money > CustomNpcs.proxy.getPlayerData(player).game.getMoney()) { setHoverText(Component.translatable("transporter.hover.not.money")); }
+					else if (select.money > PlayerData.get(player).game.getMoney()) { setHoverText(Component.translatable("transporter.hover.not.money")); }
 					else { setHoverText(Component.translatable("transporter.hover.not.item")); }
 				}
 			}
@@ -201,7 +205,7 @@ public class GuiTransportSelection extends GuiNPCInterface
 	@Override
 	public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
 		data.clear();
-		for (String key : dataMap.keySet()) { data.put(Component.translatable(key), dataMap.get(key)); }
+		for (String key : dataList) { data.put(Component.translatable(key), dataMap.get(key)); }
 		initGui();
 	}
 

@@ -8,7 +8,6 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.BankController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketBankSetPlayer;
@@ -52,7 +51,7 @@ public class ContainerNPCBank extends Container {
 				bd.addListener(sPlayer);
 			}
 		}
-		else { bd = CustomNpcs.proxy.getPlayerData(player).bankData.get(bank.id); }
+		else { bd = PlayerData.get(player).bankData.get(bank.id); }
 		bd.load(nbtBD);
 		data = bd;
 		items = Objects.requireNonNull(data.get(ceil));

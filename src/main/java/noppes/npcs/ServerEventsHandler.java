@@ -50,7 +50,7 @@ import noppes.npcs.controllers.data.MarkData;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.QuestData;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemSoulstoneEmpty;
 import noppes.npcs.packets.Packets;
@@ -246,10 +246,10 @@ public class ServerEventsHandler {
 			else if (source instanceof EntityNPCInterface && ((EntityNPCInterface) source).getOwner() instanceof EntityPlayer) { player = (EntityPlayer) ((EntityNPCInterface) source).getOwner(); }
 			else if (source instanceof EntityTameable && ((EntityTameable) source).getOwner() instanceof EntityPlayer) { player = (EntityPlayer)((EntityTameable) source).getOwner(); }
 			else { player = null; }
-			if (player != null) {
-				CustomNPCsScheduler.runTack(() -> doKillQuest(player, event.getEntityLiving(), true));
+			if (player != null && player.getServer() != null) {
+				CustomNPCsScheduler.runTack(() ->  doKillQuest(player, event.getEntityLiving(), true));
 				if (event.getEntity() instanceof EntityNPCInterface) {
-					CustomNPCsScheduler.runTack(() -> doFactionPoints(player, (EntityNPCInterface)event.getEntity()));
+					CustomNPCsScheduler.runTack(() ->  doFactionPoints(player, (EntityNPCInterface)event.getEntity()));
 				}
 			}
 		}
@@ -383,7 +383,7 @@ public class ServerEventsHandler {
 	public void cnpcWorldUnload(net.minecraftforge.event.world.WorldEvent.Unload event) {
 		CustomNpcs.debugData.start(null);
 		int dimensionID = event.getWorld().provider.getDimension();
-		if (!event.getWorld().isRemote) { DimensionHandler.getInstance().unload(event.getWorld(), dimensionID); }
+		if (!event.getWorld().isRemote) { DimensionController.getInstance().unload(event.getWorld(), dimensionID); }
 		CustomNpcs.debugData.end(null);
 	}
 
@@ -397,4 +397,26 @@ public class ServerEventsHandler {
 		CustomNpcs.debugData.end(event.getEntity());
 	}
 
+	/*
+	@SubscribeEvent
+	@SuppressWarnings("all")
+	public void npcLivingJumpEvent(net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent event) {
+		if (!(event.getEntityLiving() instanceof EntityPlayer)) { return; }
+		EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+		CustomNPCsScheduler.runTack(() -> {
+			if (player instanceof EntityPlayerMP) {
+				try {
+					LogWriter.info("[DEBUG] "+player.world);
+				}
+				catch (Exception e) { LogWriter.error(e); }
+			}
+			else {
+				try {
+					LogWriter.info("[DEBUG] "+player.world);
+				}
+				catch (Exception e) { LogWriter.error(e); }
+			}
+		});
+	}
+	/**/
 }

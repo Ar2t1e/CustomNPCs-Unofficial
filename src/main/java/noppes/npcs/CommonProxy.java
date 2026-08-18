@@ -58,6 +58,7 @@ public class CommonProxy implements IGuiHandler {
 		switch (gui) {
 			case AvailabilityStack: { return new ContainerAvailabilityInv(player); }
 			case CustomContainer: {
+				buffer.readInt(); // npc id
 				TileEntity tile = player.world.getTileEntity(BlockPos.fromLong(buffer.readLong()));
 				if (tile instanceof CustomTileEntityChest) {
 					return ((CustomTileEntityChest) tile).createContainer(player.inventory, player);
@@ -176,16 +177,12 @@ public class CommonProxy implements IGuiHandler {
 
 	public EntityPlayer getPlayer() { return null; }
 
-	public PlayerData getPlayerData(EntityPlayer player) {
-		if (player == null) { return null; }
-		return PlayerData.get(player);
-	}
-
 	@Override
 	public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
 		if (ID > EnumGuiType.values().length) { return null; }
 		EnumGuiType gui = EnumGuiType.values()[ID];
 		FriendlyByteBuf buffer = new FriendlyByteBuf();
+		buffer.writeInt(-1); // npc id
 		buffer.writeBlockPos(new BlockPos(x, y, z));
 		return getContainer(gui, player, buffer);
 	}

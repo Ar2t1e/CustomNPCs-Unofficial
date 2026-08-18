@@ -9,7 +9,7 @@ import noppes.npcs.shared.common.PacketServerBasic;
 
 import java.util.List;
 
-public class SPacketRemoveLoadFile  extends PacketServerBasic {
+public class SPacketRemoveLoadFile extends PacketServerBasic {
 
     protected static int channelId;
     private String name;

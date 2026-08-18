@@ -169,8 +169,10 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 				return;
 			} // down
 			case 11: {
-				isIdSort = ((GuiCheckBoxNop) button).selected();
-				initGui();
+				if (button instanceof GuiCheckBoxNop) {
+					isIdSort = ((GuiCheckBoxNop) button).selected();
+					initGui();
+				}
 				return;
 			} // sort type
 		}
@@ -276,7 +278,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 				}
 			}
 		}
-		PlayerData playerData = CustomNpcs.proxy.getPlayerData(player);
+		PlayerData playerData = PlayerData.get(player);
 		// Market level
 		if (marcet.showXP) {
 			mc.getTextureManager().bindTexture(INV);
@@ -535,7 +537,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 			}
 		}
 		// section deals
-		int level = CustomNpcs.proxy.getPlayerData(player).game.getMarcetLevel(marcet.getId());
+		int level = PlayerData.get(player).game.getMarcetLevel(marcet.getId());
 		List<Deal> dealInTrade = new ArrayList<>();
 		List<Deal> caseInTrade = new ArrayList<>();
 		List<Deal> dealNotTrade = new ArrayList<>();
@@ -648,7 +650,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 			if (wait || selectDealData.deal.getType() == 1) { canBuy.add(1); }
 			if (selectDealData.deal.getMaxCount() != 0 && selectDealData.deal.getAmount() <= 0) { canBuy.add(6); }
 			if (!selectDealData.deal.availability.isAvailable(player)) { canBuy.add(2); }
-			PlayerData pd = CustomNpcs.proxy.getPlayerData(player);
+			PlayerData pd = PlayerData.get(player);
 			if (selectDealData.buyMoney > 0 && pd.game.getMoney() < selectDealData.buyMoney) { canBuy.add(3); }
 			if (selectDealData.buyDonat > 0 && pd.game.getDonat() < selectDealData.buyDonat) { canBuy.add(7); }
 			if (!Util.instance.canRemoveItems(player.inventory.mainInventory, selectDealData.buyItems, selectDealData.ignoreDamage, selectDealData.ignoreNBT)) { canBuy.add(4); }
@@ -799,10 +801,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 		super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
 	}
 
-	@Override
-	public void save() { }
-
-	@Override
+    @Override
 	public void setGuiData(NBTTagCompound compound) {
 		wait = false;
 		marcet = MarcetController.getInstance().getMarcet(marcet.getId());

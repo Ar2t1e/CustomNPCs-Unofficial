@@ -1,8 +1,11 @@
 package noppes.npcs.client.gui.elements;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockDoor;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
@@ -10,8 +13,10 @@ import net.minecraft.util.ResourceLocation;
 import noppes.npcs.*;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.blocks.custom.CustomBlockLiquid;
+import noppes.npcs.blocks.custom.CustomBlockPortal;
 import noppes.npcs.blocks.custom.CustomBlockSlab;
 import noppes.npcs.blocks.custom.CustomCauldron;
+import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.client.particles.CustomParticleSettings;
 import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
@@ -19,6 +24,7 @@ import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +44,7 @@ public class GuiManageCustomElements extends GuiBasic implements ICustomScrollLi
 
     // 0 = Blocks, 1 = Items, 2 = Particles
     protected int currentType = 0;
-    protected final Object[] typeNames = { Component.translatable("stat.blocksButton"),
+    protected final Object[] typeNames = { Component.translatable("soundCategory.block"),
             Component.translatable("stat.itemsButton"),
             Component.translatable("part.particles") };
 
@@ -88,7 +94,7 @@ public class GuiManageCustomElements extends GuiBasic implements ICustomScrollLi
         addLabel(0, x0, y, "gui.manage.types")
                 .setSize(120, 10);
         addLabel(1, x1, y + 18, "gui.manage.elements")
-                .setSize(100, 10);
+                .setSize(92, 10);
         addButton(0, x0, y += 12, true, currentType, typeNames)
                 .setSize(120, 16)
                 .layerColor = currentType == 1 ? 0xFFBEE72E : currentType == 2 ? 0xFFE72E97 : 0xFF2EA8E7;
@@ -109,7 +115,10 @@ public class GuiManageCustomElements extends GuiBasic implements ICustomScrollLi
             refreshElementsList();
             scrollElements.type = currentType;
         }
-        if (scrollElements.type != currentType) { refreshElementsList(); }
+        if (scrollElements.type != currentType) {
+            refreshElementsList();
+            scrollElements.type = currentType;
+        }
         add(scrollElements.setSize(120, 166)
                 .setPos(x1, y));
         if (!scrollElements.hasSelected()) { scrollElements.setSelectedIndex(0); }
@@ -136,19 +145,42 @@ public class GuiManageCustomElements extends GuiBasic implements ICustomScrollLi
     }
 
     private void openEditor(boolean isNew) {
-        if (scrollSubtypes.hasSelected()) {
+        if (scrollSubtypes.hasSelected() && scrollElements != null) {
+            int elementType = scrollSubtypes.getSelectedIndex();
+            ICustomElement element = isNew ? null : existingElements.get(scrollElements.getNormalSelected());
             // TODO: open creation GUI for selectedSubtype under currentType
             switch (currentType) {
                 case 1: {
-
+                    switch (elementType) {
+                        //case 1: setSubGui(new SubGuiElementItemWeapon(element)); break;
+                        //case 2: setSubGui(new SubGuiElementItemTool(element)); break;
+                        //case 3: setSubGui(new SubGuiElementItemArmor(element)); break;
+                        //case 4: setSubGui(new SubGuiElementItemShield(element)); break;
+                        //case 5: setSubGui(new SubGuiElementItemBow(element)); break;
+                        //case 6: setSubGui(new SubGuiElementItemFood(element)); break;
+                        //case 7: setSubGui(new SubGuiElementItemFood(element)); break;
+                        //case 8: setSubGui(new SubGuiElementItemFishingRod(element)); break;
+                        //default: setSubGui(new SubGuiElementItemSimple(element)); break;
+                    }
                     break;
                 } // item
                 case 2: {
-
+                    switch (elementType) {
+                        //case 1: setSubGui(new SubGuiElementParticleObj(element)); break;
+                        //default: setSubGui(new SubGuiElementParticleSimple(element)); break;
+                    }
                     break;
                 } // particle
                 default:  {
-
+                    switch (elementType) {
+                        case 0: setSubGui(new SubGuiElementBlockSimple(element)); break;
+                        //case 1: setSubGui(new SubGuiElementBlockLiquid(element)); break;
+                        //case 2: setSubGui(new SubGuiElementBlockChest(element)); break;
+                        //case 3: setSubGui(new SubGuiElementBlockStairs(element)); break;
+                        //case 4: setSubGui(new SubGuiElementBlockSlab(element)); break;
+                        //case 5: setSubGui(new SubGuiElementBlockPortal(element)); break;
+                        //case 6: setSubGui(new SubGuiElementBlockDoor(element)); break;
+                    }
                     break;
                 } // block
             }
@@ -158,7 +190,7 @@ public class GuiManageCustomElements extends GuiBasic implements ICustomScrollLi
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         super.drawScreen(mouseX, mouseY, partialTicks);
-        drawPreviewSlot();
+        if (!hasSubGui()) { drawPreviewSlot(partialTicks); }
     }
 
     @Override
@@ -179,79 +211,125 @@ public class GuiManageCustomElements extends GuiBasic implements ICustomScrollLi
     /**
      * Draws the slot background and the preview of the hovered/selected element inside it.
      */
-    private void drawPreviewSlot() {
-        int slotX = scrollElements.getX() + scrollElements.getWidth() - 28;
-        int slotY = scrollElements.getY() - 30;
+    private void drawPreviewSlot(float partialTicks) {
+        int slotS = 28;
+        int slotX = scrollElements.getX() + scrollElements.getWidth() - slotS;
+        int slotY = scrollElements.getY() - slotS - 2;
         // Draw slot background
-        mc.getTextureManager().bindTexture(RESOURCE_SLOT);
-        drawTexturedModalRect(slotX, slotY, 0, 0, 16, 16);
-        drawTexturedModalRect(slotX, slotY + 16, 0, 8, 16, 10);
-        drawTexturedModalRect(slotX + 16, slotY, 8, 0, 10, 16);
-        drawTexturedModalRect(slotX + 16, slotY + 16, 8, 8, 10, 10);
+        drawRect(slotX, slotY, slotX + slotS, slotY + slotS, 0xFF373737);
+        drawRect(slotX + 1, slotY + 1, slotX + slotS - 1, slotY + slotS - 1, 0xFF8B8B8B);
         if (scrollElements != null) {
             ICustomElement select;
             int hover = scrollElements.getHover();
             if (scrollElements.getHover() < 0) { select = existingElements.get(scrollElements.getNormalSelected()); }
             else { select = existingElements.get(scrollElements.getNormalList().get(hover)); }
-
             if (select != null) {
-                RenderHelper.enableGUIStandardItemLighting();
-                if (select instanceof Item || select instanceof Block) {
-                    ItemStack stack;
-                    if (select instanceof Item) { stack = new ItemStack((Item) select); }
-                    else { stack = new ItemStack((Block) select); }
+                GL11.glDisable(GL11.GL_DEPTH_TEST);
+                GlStateManager.depthMask(false);
+                if (select instanceof Block) {
+                    RenderHelper.enableGUIStandardItemLighting();
+                    renderBlockInSlot((Block) select, slotX + slotS / 2, slotY + slotS / 2, partialTicks);
+                }
+                else if (select instanceof CustomParticleSettings) {
+                    renderParticleInSlot((CustomParticleSettings) select, slotX, slotY);
+                }
+                else if (select instanceof Item) {
+                    RenderHelper.enableGUIStandardItemLighting();
+                    ItemStack stack = new ItemStack((Item) select);
                     GlStateManager.pushMatrix();
-                    GlStateManager.translate(slotX + 12.5f, slotY + 12.5f, 50.0f);
-                    if (select instanceof CustomBlockLiquid) {
-                        GlStateManager.translate(0.0f, 4.5f, 0.0f);
-                        GlStateManager.rotate(-30.0f, 1.0f, 0.0f, 0.0f);
-                        GlStateManager.rotate(-45.0f, 0.0f, 0.0f, 1.0f);
-                        GlStateManager.scale(18.0f, -18.0f, 18.0f);
-                    }
-                    else {
-                        GlStateManager.rotate(-30.0f, 1.0f, 0.0f, 0.0f);
-                        long time = 5000L;
-                        GlStateManager.rotate((System.currentTimeMillis() % time) * 360.0f / time, 0.0f, 1.0f, 0.0f);
-                        GlStateManager.scale(16.0f, -16.0f, 16.0f);
-                    }
+                    GlStateManager.translate(slotX + slotS / 2.0f, slotY + slotS / 2.0f, 50.0f);
+                    GlStateManager.rotate(-30.0f, 1.0f, 0.0f, 0.0f);
+                    long time = 5000L;
+                    GlStateManager.rotate((System.currentTimeMillis() % time) * 360.0f / time, 0.0f, 1.0f, 0.0f);
+                    GlStateManager.scale(16.0f, -16.0f, 16.0f);
                     mc.getRenderItem().renderItem(stack, ItemCameraTransforms.TransformType.NONE);
                     GlStateManager.popMatrix();
                 }
-                else if (select instanceof CustomParticleSettings) {
-                    CustomParticleSettings particle = (CustomParticleSettings) select;
-                    String name = NoppesUtilServer.validPath(particle.nbtData.hasKey("Texture", 8) ?
-                            particle.nbtData.getString("Texture") :
-                            particle.nbtData.getString("RegistryName"));
-                    ResourceLocation texture = new ResourceLocation(CustomNpcs.MODID, "textures/particle/" + name + ".png");
-                    if (particle.nbtData.hasKey("OBJModel", 8)) {
-                        ResourceLocation obj = new ResourceLocation(CustomNpcs.MODID, "models/particle/" + particle.nbtData.getString("OBJModel") + ".obj");
-                        if (objParticle == null || !objParticle.modelLocation.equals(obj)) {
-                            objParticle = ModelBuffer.getParameterizedModel(obj, null, null, false, 0, false);
-                        }
-                        if (objParticle != null) {
-                            float particleScale = particle.nbtData.getFloat("Scale") * 26.0f;
-                            GlStateManager.pushMatrix();
-                            GlStateManager.translate(slotX + 13.0f, slotY + 13.0f, 50.0f);
-                            GlStateManager.rotate(30.0f, 1.0f, 0.0f, 0.0f);
-                            long time = 5000L;
-                            GlStateManager.rotate((System.currentTimeMillis() % time) * 360.0f / time, 0.0f, 1.0f, 0.0f);
-                            GlStateManager.scale(particleScale, particleScale, particleScale);
-                            ModelBuffer.render(objParticle);
-                            GlStateManager.popMatrix();
-                            texture = null;
-                        }
-                    }
-                    if (texture != null) {
-                        mc.getTextureManager().bindTexture(texture);
-                        GlStateManager.pushMatrix();
-                        GlStateManager.translate(slotX, slotY, 0.0f);
-                        GlStateManager.scale(0.1015325f, 0.1015325f, 1.0f);
-                        drawTexturedModalRect(0, 0, 0, 0, 256, 256);
-                        GlStateManager.popMatrix();
-                    }
-                }
                 RenderHelper.disableStandardItemLighting();
+                GlStateManager.depthMask(true);
+                GL11.glEnable(GL11.GL_DEPTH_TEST);
             }
+        }
+    }
+
+    /**
+     * Renders a block inside the preview field using the same matrix setup as SubGuiEditAnimation.
+     */
+    private void renderBlockInSlot(Block block, int centerX, int centerY, float partialTicks) {
+        IBlockState state = block.getDefaultState();
+
+        // GL setup — exactly like in SubGuiEditAnimation.drawWork()
+        mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        mc.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
+        GlStateManager.enableRescaleNormal();
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.enableDepth();
+        GlStateManager.depthFunc(GL11.GL_LEQUAL);
+
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(centerX, centerY, 50.0f);
+        GlStateManager.rotate(-30.0f, 1.0f, 0.0f, 0.0f);
+        long time = 5000L;
+        GlStateManager.rotate((System.currentTimeMillis() % time) * 360.0f / time, 0.0f, 1.0f, 0.0f);
+        float scale = -16.0f * 3.0f;
+        GlStateManager.scale(scale, scale, scale);
+        // Center the block on its origin
+        GlStateManager.translate(-0.5f, -0.5f, 0.5f);
+        if (block instanceof BlockDoor) {
+            GlStateManager.translate(-0.4f, -0.5f, 0.0f);
+        }
+        if (block instanceof CustomBlockPortal || block instanceof CustomBlockLiquid) {
+            GlStateManager.translate(0.0f, 0.0f, -1.0f);
+        }
+        ClientEventHandler.renderBlock(minecraft.world, state, player.getPosition(), partialTicks);
+        GlStateManager.popMatrix();
+
+        // Restore GL state
+        GlStateManager.disableDepth();
+        GlStateManager.disableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.disableRescaleNormal();
+    }
+
+    /**
+     * Renders a particle preview inside the field.
+     * For textured particles: draws the texture scaled to fit.
+     * For OBJ particles: renders the model rotated.
+     */
+    private void renderParticleInSlot(CustomParticleSettings particle, int x, int y) {
+        String name = NoppesUtilServer.validPath(particle.nbtData.hasKey("Texture", 8) ?
+                particle.nbtData.getString("Texture") :
+                particle.nbtData.getString("RegistryName"));
+        ResourceLocation texture = new ResourceLocation(CustomNpcs.MODID, "textures/particle/" + name + ".png");
+        if (particle.nbtData.hasKey("OBJModel", 8)) {
+            ResourceLocation obj = new ResourceLocation(CustomNpcs.MODID, "models/particle/" + particle.nbtData.getString("OBJModel") + ".obj");
+            if (objParticle == null || !objParticle.modelLocation.equals(obj)) {
+                objParticle = ModelBuffer.getParameterizedModel(obj, null, null, false, 0, false);
+            }
+            if (objParticle != null) {
+                float particleScale = particle.nbtData.getFloat("Scale") * 26.0f;
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(x + 13.0f, y + 13.0f, 50.0f);
+                GlStateManager.rotate(30.0f, 1.0f, 0.0f, 0.0f);
+                long time = 5000L;
+                GlStateManager.rotate((System.currentTimeMillis() % time) * 360.0f / time, 0.0f, 1.0f, 0.0f);
+                GlStateManager.scale(particleScale, particleScale, particleScale);
+                ModelBuffer.render(objParticle);
+                GlStateManager.popMatrix();
+                texture = null;
+            }
+        }
+        if (texture != null) {
+            mc.getTextureManager().bindTexture(texture);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(x, y, 0.0f);
+            GlStateManager.scale(0.1015325f, 0.1015325f, 1.0f);
+            drawTexturedModalRect(0, 0, 0, 0, 256, 256);
+            GlStateManager.popMatrix();
         }
     }
 

@@ -115,6 +115,11 @@ public class GuiCustomScrollNop extends Gui implements IComponentGui {
         return this;
     }
 
+    public GuiCustomScrollNop enabledSearch() {
+        hasSearch = true;
+        return this;
+    }
+
     private int textFieldHeight() { return hasSearch ? 22 : 0; }
 
     private void reset() {

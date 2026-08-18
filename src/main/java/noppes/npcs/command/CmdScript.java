@@ -27,7 +27,7 @@ import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
 
 import javax.annotation.Nonnull;
 
@@ -186,7 +186,7 @@ public class CmdScript extends CommandNoppesBase {
 		int id;
 		try {
 			int dimID = Integer.parseInt(args[0]);
-			if (!DimensionManager.isDimensionRegistered(dimID) || DimensionHandler.getInstance().isDelete(dimID)) {
+			if (!DimensionManager.isDimensionRegistered(dimID) || DimensionController.getInstance().isDelete(dimID)) {
 				throw new CommandException("DimensionID: " + dimID + " - not found");
 			}
 			world = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(dimID);

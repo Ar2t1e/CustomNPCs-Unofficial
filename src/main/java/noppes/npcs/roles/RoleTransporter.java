@@ -90,7 +90,7 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 	public void transport(EntityPlayerMP player, int location) {
 		TransportLocation loc = TransportController.getInstance().getTransport(location);
 		PlayerData playerdata = PlayerData.get(player);
-		if (loc != null && (loc.isDefault() || playerdata.transportData.transports.contains(loc.id))) {
+		if (loc != null && loc.id > -1 && (loc.isDefault() || playerdata.transportData.transports.contains(loc.id))) {
 			RoleEvent.TransporterUseEvent event = new RoleEvent.TransporterUseEvent(player, npc.wrappedNPC, loc.copy());
 			if (!EventHooks.onNPCRole(npc, event) && event.location != null) {
 				loc = (TransportLocation) event.location;
@@ -143,7 +143,7 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 	}
 
 	private void unlock(EntityPlayer player, TransportLocation loc) {
-		PlayerTransportData data = CustomNpcs.proxy.getPlayerData(player).transportData;
+		PlayerTransportData data = PlayerData.get(player).transportData;
 		if (!data.transports.contains(transportId) && player instanceof EntityPlayerMP) {
 			RoleEvent.TransporterUnlockedEvent event = new RoleEvent.TransporterUnlockedEvent(player, npc.wrappedNPC);
 			if (!EventHooks.onNPCRole(npc, event)) {
@@ -153,15 +153,6 @@ public class RoleTransporter extends RoleInterface implements IRoleTransporter {
 						Component.translatable(loc.category.title).getFormattedText()), true));
 			}
 		}
-
-		if (data.transports.contains(transportId)) { return; }
-		RoleEvent.TransporterUnlockedEvent event = new RoleEvent.TransporterUnlockedEvent(player, npc.wrappedNPC);
-		if (EventHooks.onNPCRole(npc, event)) { return; }
-		data.transports.add(transportId);
-		player.sendMessage(Component.translatable("transporter.unlock",
-				Component.translatable(loc.name).getFormattedText(),
-				Component.translatable(loc.category.title).getFormattedText())
-				.getParent());
 	}
 
 	@Override

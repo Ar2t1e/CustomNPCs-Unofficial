@@ -38,10 +38,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.*;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.event.NpcEvent.CustomNpcTeleport;
 import noppes.npcs.api.event.PlayerEvent.CustomTeleport;
 import noppes.npcs.api.item.INPCToolItem;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -248,7 +248,7 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 				CustomTeleport event = EventHooks.onPlayerTeleport((EntityPlayerMP) entityIn, p, pos, getHome ? homeId : id);
 				if (!event.isCanceled()) {
 					int dimension = event.dimension;
-					if (DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
+					if (!DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
 					SPacketDimensionTeleport.teleportPlayer((EntityPlayerMP) entityIn, dimension, event.pos.getX() + 0.5d,
 							event.pos.getY(), event.pos.getZ() + 0.5d, entityIn.rotationYaw,
 							entityIn.rotationPitch);
@@ -260,11 +260,11 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 					CustomNpcTeleport event = EventHooks.onNpcTeleport((EntityNPCInterface) entityIn, p, pos, getHome ? homeId : id);
 					if (event.isCanceled() || entityIn.isDead) { return; }
 					dimension = event.dimension;
-					if (DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
+					if (!DimensionManager.isDimensionRegistered(id)) { dimension = 0; }
 				}
 				MinecraftServer server = worldIn.getMinecraftServer();
 				if (server != null) {
-					WorldServer world = server.getWorld(getHome ? homeId : id);
+					WorldServer world = server.getWorld(dimension);
 					if (world != null && entityIn.world.provider.getDimension() != dimension) {
 						try { Util.instance.teleportEntity(server, entityIn, dimension, p); }
 						catch (CommandException e) { LogWriter.error("[DEBUG] ", e); }
@@ -310,7 +310,7 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public int getElementType() {

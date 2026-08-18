@@ -12,6 +12,7 @@ import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.util.CustomNPCsScheduler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -53,7 +54,7 @@ public abstract class PacketServerBasic extends PacketBasic {
                         }
                     }
                     MinecraftServer server = player.getServer();
-                    if (server != null) { server.addScheduledTask(() -> runHandle(prs.toString())); } else { runHandle(prs.toString()); }
+                    if (server != null) { CustomNPCsScheduler.runTack(() -> runHandle(prs.toString())); } else { runHandle(prs.toString()); }
                 }
             } catch (Exception e) { LOGGER.error(e); }
         }

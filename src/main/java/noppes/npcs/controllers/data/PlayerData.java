@@ -17,6 +17,7 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.client.ClientProxy;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.handler.ICustomPlayerData;
 import noppes.npcs.api.handler.capability.IPlayerDataHandler;
@@ -255,7 +256,9 @@ public class PlayerData implements IPlayerDataHandler, ICapabilityProvider, ICus
 	}
 
 	public static @Nonnull PlayerData get(@Nullable EntityPlayer player) {
-		if (player == null || player.world == null || player.world.isRemote) { return CustomNpcs.proxy.getPlayerData(player); }
+		if (player == null || player.world == null || player.world.isRemote) {
+			return ClientProxy.getPlayerData();
+		}
 		PlayerData data = (PlayerData) player.getCapability(PLAYERDATA_CAPABILITY, null);
 		if (data == null) {
 			LogWriter.warn("Hmmm. Why is a new \"PlayerData\" being created?");

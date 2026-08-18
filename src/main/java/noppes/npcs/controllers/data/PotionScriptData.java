@@ -4,12 +4,12 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.util.CustomNPCsScheduler;
 
 public class PotionScriptData
 extends BaseScriptData {
@@ -23,15 +23,15 @@ extends BaseScriptData {
 	@Override
 	public void runScript(String type, Event event) {
 		if (!isEnabled()) { return; }
-		try {
-			CustomNpcs.Server.addScheduledTask(() -> {
+		CustomNPCsScheduler.runTack(() -> {
+			try {
 				if (ScriptController.Instance.lastLoaded > this.lastInited) {
 					this.lastInited = ScriptController.Instance.lastLoaded;
 					if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) { EventHooks.onPotionInit(this); }
 				}
 				for (ScriptContainer script : scripts) { script.run(type, event); }
-			});
-		} catch (Exception e) { LogWriter.error("Error run script: ", e); }
+			} catch (Exception e) { LogWriter.error("Error run script: ", e); }
+		});
 	}
 
 	@Override

@@ -46,10 +46,10 @@ public class ItemNpcCloner extends Item implements INPCToolItem {
 
 	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (world.isRemote) {
-			PlayerData data = CustomNpcs.proxy.getPlayerData(player);
+			PlayerData data = PlayerData.get(player);
 			boolean summon = false;
 			ItemStack stackCloner = player.getHeldItemMainhand();
-			if (data != null && data.overlay.isPressedShift()) {
+			if (data.overlay.isPressedShift()) {
 				NBTTagCompound nbt = stackCloner.getTagCompound();
 				if (nbt != null && nbt.hasKey("Settings", 10)) {
 					NBTTagCompound nbtData = nbt.getCompoundTag("Settings");

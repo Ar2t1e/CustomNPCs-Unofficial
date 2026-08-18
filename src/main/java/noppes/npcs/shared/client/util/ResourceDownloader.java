@@ -6,34 +6,26 @@ import net.minecraft.util.ResourceLocation;
 import noppes.npcs.client.util.ImageDownloadAlt;
 import noppes.npcs.mixin.client.resources.ISkinManagerMixin;
 import noppes.npcs.shared.SharedReferences;
-import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomNPCsScheduler;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class ResourceDownloader {
     private static final Set<ResourceLocation> active = Collections.synchronizedSet(new HashSet<>());
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
     public static void load(ImageDownloadAlt resource) {
         if (!active.contains(resource.location)) {
             active.add(resource.location);
-            executor.execute(() -> {
+            CustomNPCsScheduler.runTack(() -> {
                 resource.loadTextureFromServer();
-                Minecraft.getMinecraft().addScheduledTask(() -> {
+                CustomNPCsScheduler.runTack(() -> {
                     Minecraft.getMinecraft().getTextureManager().loadTexture(resource.location, resource);
                     active.remove(resource.location);
                 });
-                try {
-                    Thread.sleep(400L);
-                } catch (InterruptedException var2) {
-                    LogWriter.error(var2);
-                }
-            });
+            }, 400);
         }
     }
 

@@ -100,6 +100,7 @@ public abstract class NpcAPI {
 
 	public abstract IKeyBinding getIKeyBinding();
 
+	@SuppressWarnings("unused")
 	public abstract INbt getINbt(@ParamName("nbtMC") NBTTagCompound nbtMC);
 
 	@SuppressWarnings("unused")
@@ -149,6 +150,7 @@ public abstract class NpcAPI {
 	@SuppressWarnings("unused")
 	public abstract INbt stringToNbt(@ParamName("str") String str);
 
+	@SuppressWarnings("unused")
 	public abstract ICustomPlayerData getPlayerData(@ParamName("player") IPlayer<?> player);
 
 	@SuppressWarnings("unused")

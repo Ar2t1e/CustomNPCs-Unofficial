@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.controllers.SyncController;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketSetBuildData;
 import noppes.npcs.shared.client.gui.GuiBasic;
@@ -48,7 +49,7 @@ public class GuiBuilderSchematic extends GuiBasic implements ICustomScrollListen
 		// base in mod:
 		for (String name : SchematicController.included) {
 			SchematicWrapper schema = SchematicController.Instance.load(name);
-			if (CustomNpcs.proxy.getPlayerData(null).game.op || schema.size <= CustomNpcs.MaxBuilderBlocks) {
+			if (PlayerData.get(Minecraft.getMinecraft().player).game.op || schema.size <= CustomNpcs.MaxBuilderBlocks) {
 				baseFiles.put(name, schema);
 			}
 		}
@@ -64,7 +65,7 @@ public class GuiBuilderSchematic extends GuiBasic implements ICustomScrollListen
 						Schematic sch = new Schematic(f.getName());
 						sch.load(compound);
 						SchematicWrapper schema = new SchematicWrapper(sch);
-						if (CustomNpcs.proxy.getPlayerData(null).game.op || schema.size <= CustomNpcs.MaxBuilderBlocks) {
+						if (PlayerData.get(Minecraft.getMinecraft().player).game.op || schema.size <= CustomNpcs.MaxBuilderBlocks) {
 							files.put(f.getName(), schema);
 						}
 					} catch (Exception e) { LogWriter.error(e); }
@@ -139,7 +140,7 @@ public class GuiBuilderSchematic extends GuiBasic implements ICustomScrollListen
 				GlStateManager.rotate(f0, 0.0f, 1.0f, 0.0f);
 				GlStateManager.translate(-w / 2.0f, -h / 2.0f, -l / 2.0f);
 
-				ClientEventHandler.renderSchem(schem, 0, 0, 0, 0);
+				ClientEventHandler.renderSchem(schem, 0, minecraft.player.getPosition(), 0, 0, 0);
 				GlStateManager.popMatrix();
 
 				GL11.glDisable(GL11.GL_SCISSOR_TEST);
@@ -154,7 +155,7 @@ public class GuiBuilderSchematic extends GuiBasic implements ICustomScrollListen
 		if (builder == null) { return; }
 		int type = builder.getType();
 		if (builder.getID() > -1) { addLabel(1, guiLeft + 120, guiTop + 4, "ID:" + builder.getID()); }
-		maxRange = CustomNpcs.proxy.getPlayerData(null).game.op ? 100 : 10;
+		maxRange = PlayerData.get(player).game.op ? 100 : 10;
 		if (schematics == null) { schematics = addScroll(0).setSize(110, 197); }
 		schematics.setList(new ArrayList<>(GuiBuilderSchematic.files.keySet()));
 		if (!builder.schematicName.isEmpty()) {

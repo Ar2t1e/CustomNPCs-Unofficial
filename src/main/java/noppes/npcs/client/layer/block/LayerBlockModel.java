@@ -13,6 +13,7 @@ import noppes.npcs.api.block.IBlock;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.util.ValueUtil;
 
@@ -96,7 +97,7 @@ public class LayerBlockModel implements ILayerBlockModel {
         nbtLayer.setByteArray("isRotate", isRotate);
         nbtLayer.setInteger("Id", id);
         nbtLayer.setInteger("Speed", rotateSpeed);
-        return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtLayer);
+        return new NBTWrapper(nbtLayer);
     }
 
     @Override

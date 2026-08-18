@@ -17,6 +17,7 @@ import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.util.*;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketPlayerMailDelete;
 import noppes.npcs.packets.server.SPacketPlayerMailGet;
@@ -102,7 +103,7 @@ public class GuiMailbox extends GuiNPCInterface
 				break;
 			} // delete specific
 			case 3: {
-				if (CustomNpcs.proxy.getPlayerData(player).mailData.playerMails.isEmpty()) { return; }
+				if (PlayerData.get(player).mailData.playerMails.isEmpty()) { return; }
 				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
 					if (agree && selected != null) {
 						Packets.sendServer(new SPacketPlayerMailDelete(1, selected.timeWhenReceived, selected.sender));
@@ -119,7 +120,7 @@ public class GuiMailbox extends GuiNPCInterface
 				break;
 			} // delete all only read letters
 			case 4: {
-				if (CustomNpcs.proxy.getPlayerData(player).mailData.playerMails.isEmpty()) { return; }
+				if (PlayerData.get(player).mailData.playerMails.isEmpty()) { return; }
 				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
 					if (agree && selected != null) {
 						Packets.sendServer(new SPacketPlayerMailDelete(2, selected.timeWhenReceived, selected.sender));
@@ -348,7 +349,7 @@ public class GuiMailbox extends GuiNPCInterface
 						} else if (closeType == 2 && selected != null) {
 							if (!selected.beenRead) {
 								selected.beenRead = true;
-								PlayerMail mail = CustomNpcs.proxy.getPlayerData(player).mailData.get(selected);
+								PlayerMail mail = PlayerData.get(player).mailData.get(selected);
 								if (mail != null) {
 									mail.beenRead = true;
 									ClientTickHandler.checkMails = true;
@@ -417,7 +418,7 @@ public class GuiMailbox extends GuiNPCInterface
 		List<PlayerMail> listR = new ArrayList<>();
 		List<PlayerMail> listN = new ArrayList<>();
 		long time = System.currentTimeMillis();
-		for (PlayerMail mail : CustomNpcs.proxy.getPlayerData(player).mailData.playerMails) {
+		for (PlayerMail mail : PlayerData.get(player).mailData.playerMails) {
 			if (time - mail.timeWhenReceived < mail.timeWillCome) { continue; }
 			if (mail.beenRead) { listR.add(mail); }
 			else { listN.add(mail); }
@@ -541,7 +542,7 @@ public class GuiMailbox extends GuiNPCInterface
 
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
-		CustomNpcs.proxy.getPlayerData(player).mailData.load(compound);
+		PlayerData.get(player).mailData.load(compound);
 		selected = null;
 		initGui();
 	}

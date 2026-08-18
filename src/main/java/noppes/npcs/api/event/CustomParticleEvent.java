@@ -1,13 +1,14 @@
 package noppes.npcs.api.event;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.handler.data.ICustomParticle;
 import noppes.npcs.api.interfaces.EventFunction;
 import noppes.npcs.client.particles.CustomParticle;
+import noppes.npcs.controllers.data.PlayerData;
 
 import javax.annotation.Nonnull;
 
@@ -24,7 +25,7 @@ public class CustomParticleEvent extends CustomNPCsEvent {
 	public CustomParticleEvent(@Nonnull CustomParticle particleIn, @Nonnull String nameIn) {
 		particle = particleIn;
 		name = nameIn;
-		player = CustomNpcs.proxy.getPlayerData(null).scriptData.getIPlayer();
+		player = PlayerData.get(Minecraft.getMinecraft().player).scriptData.getIPlayer();
 	}
 
 	@EventFunction(CREATE)

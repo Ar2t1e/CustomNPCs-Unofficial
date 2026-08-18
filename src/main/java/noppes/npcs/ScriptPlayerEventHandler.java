@@ -29,7 +29,6 @@ import noppes.npcs.packets.client.PacketChatBubble;
 import noppes.npcs.packets.client.PacketDetectHeldItem;
 import noppes.npcs.packets.client.PacketItemUpdate;
 import noppes.npcs.packets.server.SPacketContainerOpen;
-import noppes.npcs.packets.server.SPacketDimensionTeleport;
 import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.util.CustomNPCsScheduler;
 
@@ -54,7 +53,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -82,15 +80,12 @@ import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.event.ItemEvent;
 import noppes.npcs.api.event.PlayerEvent;
 import noppes.npcs.api.handler.data.IQuestObjective;
-import noppes.npcs.api.handler.data.IWorldInfo;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.api.wrapper.ItemScriptedWrapper;
 import noppes.npcs.client.ClientEventHandler;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumQuestTask;
-import noppes.npcs.dimensions.CustomWorldInfo;
-import noppes.npcs.dimensions.DimensionHandler;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.Resistances;
 import noppes.npcs.items.ItemBoundary;
@@ -759,11 +754,6 @@ public class ScriptPlayerEventHandler {
 				public void sendWindowProperty(@Nonnull Container containerIn, int varToUpdate, int newValue) {}
 			});
 			SyncController.syncPlayer(player);
-			if (data.game.logPos != null) { // protection against remote measurements
-				SPacketDimensionTeleport.teleportPlayer(player, data.game.logPosDimID, data.game.logPos[0], data.game.logPos[1],
-						data.game.logPos[2], player.rotationYaw, player.rotationPitch);
-			}
-			data.game.dimID = player.world.provider.getDimension();
 		}
 		CustomNpcs.debugData.end(event.player);
 	}
@@ -778,23 +768,6 @@ public class ScriptPlayerEventHandler {
 		if (data.bankData.lastBank != null) {
 			data.bankData.lastBank.save();
 			data.bankData.lastBank = null;
-		}
-		IWorldInfo dim = DimensionHandler.getInstance().getMCWorldInfo(player.world.provider.getDimension());
-		if (dim instanceof CustomWorldInfo) { // protection against remote measurements
-			data.game.logPos = new double[] { player.posX, player.posY, player.posZ };
-			data.game.logPosDimID = player.world.provider.getDimension();
-			WorldServer world = Objects.requireNonNull(player.getServer()).getWorld(0);
-			BlockPos coords = world.getSpawnCoordinate();
-			if (coords == null) { coords = world.getSpawnPoint(); }
-			coords = NoppesUtilServer.getSafeTpPos(world, coords, 1, 255);
-			double x = coords.getX();
-			double y = coords.getY();
-			double z = coords.getZ();
-			SPacketDimensionTeleport.teleportPlayer(player, world.provider.getDimension(), x, y, z,
-					player.rotationYaw, player.rotationPitch);
-		} else {
-			data.game.logPos = null;
-			data.game.logPosDimID = 0;
 		}
 		data.save(false);
 		CustomNpcs.debugData.end(event.player);

@@ -6,12 +6,12 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 
-import net.minecraft.block.BlockAir;
-import net.minecraft.block.ITileEntityProvider;
+import net.minecraft.block.*;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.gui.*;
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
+import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.init.Items;
@@ -23,6 +23,7 @@ import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathNavigate;
 import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.potion.Potion;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.*;
 import net.minecraft.util.text.TextFormatting;
@@ -32,6 +33,7 @@ import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.event.sound.PlaySoundSourceEvent;
 import net.minecraftforge.client.event.sound.PlayStreamingSourceEvent;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.IFluidBlock;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -41,6 +43,8 @@ import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
 import noppes.npcs.blocks.custom.CustomBlockLiquid;
+import noppes.npcs.blocks.custom.CustomChest;
+import noppes.npcs.blocks.custom.tiles.CustomTileEntityChest;
 import noppes.npcs.client.gui.player.GuiMailmanWrite;
 import noppes.npcs.client.gui.player.GuiOpenCase;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
@@ -66,6 +70,7 @@ import noppes.npcs.mixin.client.audio.ISoundHandlerMixin;
 import noppes.npcs.mixin.client.renderer.IBlockModelRendererMixin;
 import noppes.npcs.mixin.client.renderer.IBlockRendererDispatcherMixin;
 import noppes.npcs.mixin.pathfinding.IPathMixin;
+import noppes.npcs.mixin.tileentity.ITileEntityMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.client.gui.GuiBasic;
@@ -187,7 +192,7 @@ public class ClientEventHandler extends Gui {
 		}
 	}
 
-	public static void renderSchem(SchematicWrapper schem, int rotation, double x, double y, double z) {
+	public static void renderSchem(SchematicWrapper schem, int rotation, BlockPos startPos, double x, double y, double z) {
 		mc = Minecraft.getMinecraft();
 		if (mc.world == null || schem == null) { return; }
 		GlStateManager.pushMatrix();
@@ -217,7 +222,7 @@ public class ClientEventHandler extends Gui {
 					GlStateManager.enableRescaleNormal();
 					GlStateManager.translate((float)pos.getX(), (float)pos.getY(), (float)pos.getZ());
 					state = SchematicWrapper.rotationState(state, rotation);
-					try { renderBlock(state); }
+					try { renderBlock(mc.world, state, startPos.add(pos), mc.getRenderPartialTicks()); }
 					catch (Exception e) { LogWriter.error(e); }
 					GlStateManager.popAttrib();
 					GlStateManager.disableRescaleNormal();
@@ -291,37 +296,140 @@ public class ClientEventHandler extends Gui {
 		}
 	}
 
-	public static void renderBlock(IBlockState state) {
-		mc = Minecraft.getMinecraft();
-		WorldClient level = mc.world;
-		if (level != null) {
-			mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-			BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-			switch (state.getRenderType()) {
-				case MODEL:
-					IBakedModel ibakedmodel = dispatcher.getModelForState(state);
-					GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
-					BlockModelRenderer bmr = ((IBlockRendererDispatcherMixin) dispatcher).getBlockModelRenderer();
-					BlockColors bc = ((IBlockModelRendererMixin) bmr).getBlockColors();
-					int color = bc.colorMultiplier(state, null, null, 0);
-					if (EntityRenderer.anaglyphEnable) {
-						color = TextureUtil.anaglyphColor(color);
+	@SuppressWarnings("ConstantConditions")
+	public static void renderBlock(World world, IBlockState state, BlockPos pos, float partialTicks) {
+		if (world == null) { return; }
+		if (mc == null) { mc = Minecraft.getMinecraft(); }
+		mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+		BlockRendererDispatcher dispatcher = mc.getBlockRendererDispatcher();
+		Block block = state.getBlock();
+		// vanilla liquid
+		if (block instanceof BlockLiquid) {
+			BlockFluidRenderer fluidRenderer = ((IBlockRendererDispatcherMixin) dispatcher).getFluidRenderer();
+			Tessellator tess = Tessellator.getInstance();
+			BufferBuilder buf = tess.getBuffer();
+			buf.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+			fluidRenderer.renderFluid(world, state, pos, buf);
+			tess.draw();
+			return;
+		}
+		// custom forge liquid
+		if (block instanceof IFluidBlock) {
+			IBakedModel model = dispatcher.getModelForState(state);
+			if (model != null) {
+				BlockModelRenderer bmr = ((IBlockRendererDispatcherMixin) dispatcher).getBlockModelRenderer();
+				BlockColors bc = ((IBlockModelRendererMixin) bmr).getBlockColors();
+				int color = bc.colorMultiplier(state, world, pos, 0);
+				if (color == -1 || color == 0xFFFFFF) {
+					color = ((IFluidBlock) block).getFluid().getColor(); // ARGB
+				}
+				float a = ((color >> 24) & 0xFF) / 255.0F;
+				float r = ((color >> 16) & 0xFF) / 255.0F;
+				float g = ((color >> 8)  & 0xFF) / 255.0F;
+				float b = (color         & 0xFF) / 255.0F;
+				if (a < 1.0F) {
+					GlStateManager.enableBlend();
+					GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+				}
+				for (EnumFacing face : EnumFacing.values()) {
+					renderModelBlockQuads(model.getQuads(state, face, 0L), r, g, b);
+				}
+				renderModelBlockQuads(model.getQuads(state, null, 0L), r, g, b);
+				if (a < 1.0F) {
+					GlStateManager.disableBlend();
+				}
+			}
+			return;
+		}
+		// normal block
+		renderBlockPart(world, state, pos, partialTicks, dispatcher, 0, 0, 0);
+		// add next block
+		if (block instanceof BlockDoor) {
+			BlockDoor.EnumDoorHalf half = state.getValue(BlockDoor.HALF);
+			IBlockState other = state.withProperty(BlockDoor.HALF,
+					half == BlockDoor.EnumDoorHalf.LOWER ? BlockDoor.EnumDoorHalf.UPPER : BlockDoor.EnumDoorHalf.LOWER);
+			double oy = (half == BlockDoor.EnumDoorHalf.LOWER) ? 1.0 : -1.0;
+			renderBlockPart(world, other, pos.up((int) oy), partialTicks, dispatcher, 0, oy, 0);
+		}
+		else if (block instanceof BlockDoublePlant) {
+			BlockDoublePlant.EnumBlockHalf half = state.getValue(BlockDoublePlant.HALF);
+			IBlockState other = state.withProperty(BlockDoublePlant.HALF,
+					half == BlockDoublePlant.EnumBlockHalf.LOWER ? BlockDoublePlant.EnumBlockHalf.UPPER : BlockDoublePlant.EnumBlockHalf.LOWER);
+			double oy = (half == BlockDoublePlant.EnumBlockHalf.LOWER) ? 1.0 : -1.0;
+			renderBlockPart(world, other, pos.up((int) oy), partialTicks, dispatcher, 0, oy, 0);
+		}
+		else if (block instanceof BlockBed) {
+			EnumFacing facing = state.getValue(BlockBed.FACING);
+			BlockBed.EnumPartType part = state.getValue(BlockBed.PART);
+			IBlockState other = state.withProperty(BlockBed.PART,
+					part == BlockBed.EnumPartType.FOOT ? BlockBed.EnumPartType.HEAD : BlockBed.EnumPartType.FOOT);
+			int ox, oz;
+			if (part == BlockBed.EnumPartType.FOOT) {
+				ox = facing.getFrontOffsetX();
+				oz = facing.getFrontOffsetZ();
+			} else {
+				ox = -facing.getFrontOffsetX();
+				oz = -facing.getFrontOffsetZ();
+			}
+			renderBlockPart(world, other, pos.add(ox, 0, oz), partialTicks, dispatcher, ox, 0, oz);
+		}
+	}
+
+	private static void renderBlockPart(World world, IBlockState state, BlockPos pos, float partialTicks,
+										BlockRendererDispatcher dispatcher, double offX, double offY, double offZ) {
+		Block block = state.getBlock();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(offX, offY, offZ);
+		switch (state.getRenderType()) {
+			case MODEL:
+				IBakedModel model = dispatcher.getModelForState(state);
+				GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
+				BlockModelRenderer bmr = ((IBlockRendererDispatcherMixin) dispatcher).getBlockModelRenderer();
+				BlockColors bc = ((IBlockModelRendererMixin) bmr).getBlockColors();
+				int color = bc.colorMultiplier(state, world, pos, 0);
+				if (EntityRenderer.anaglyphEnable) { color = TextureUtil.anaglyphColor(color); }
+				float r = (float) (color >> 16 & 255) / 255.0F;
+				float g = (float) (color >> 8  & 255) / 255.0F;
+				float b = (float) (color       & 255) / 255.0F;
+				for (EnumFacing face : EnumFacing.values()) { renderModelBlockQuads(model.getQuads(state, face, 0L), r, g, b); }
+				renderModelBlockQuads(model.getQuads(state, null, 0L), r, g, b);
+				break;
+			case ENTITYBLOCK_ANIMATED:
+				ChestRenderer chestRenderer = ((IBlockRendererDispatcherMixin) dispatcher).getChestRenderer();
+				chestRenderer.renderChestBrightness(block, 1.0F);
+				break;
+
+			default:
+				break;
+		}
+		if (block.hasTileEntity(state)) {
+			TileEntity tile = block.createTileEntity(world, state);
+			if (tile != null) {
+				tile.setWorld(world);
+				tile.setPos(pos);
+				((ITileEntityMixin) tile).setBlockType(block);
+				if (tile instanceof CustomTileEntityChest && block instanceof CustomChest) {
+					CustomTileEntityChest cTile = (CustomTileEntityChest) tile;
+					CustomChest cBlock = (CustomChest) block;
+					cTile.isChest = cBlock.isChest;
+					if (cBlock.getCustomNbt().has("GUIColor", 3)) {
+						cTile.guiColor = cBlock.getCustomNbt().getInteger("GUIColor");
 					}
-					float r = (float) (color >> 16 & 255) / 255.0F;
-					float g = (float) (color >> 8 & 255) / 255.0F;
-					float b = (float) (color & 255) / 255.0F;
-					for (EnumFacing enumfacing : EnumFacing.values()) {
-						renderModelBlockQuads(ibakedmodel.getQuads(state, enumfacing, 0L), r, g, b);
+					if (cBlock.getCustomNbt().has("GUIColor", 11)) {
+						cTile.guiColor = -1;
+						cTile.guiColorArr = cBlock.getCustomNbt().getMCNBT().getIntArray("GUIColor");
 					}
-					renderModelBlockQuads(ibakedmodel.getQuads(state, null, 0L), r, g, b);
-					break;
-				case ENTITYBLOCK_ANIMATED:
-					ChestRenderer chestRenderer = ((IBlockRendererDispatcherMixin) dispatcher).getChestRenderer();
-					chestRenderer.renderChestBrightness(state.getBlock(), 1.0f);
-				default:
-					break;
+					cTile.chestTexture = new ResourceLocation(CustomNpcs.MODID, "textures/entity/chest/" + cBlock.getCustomName() + ".png");
+				}
+				TileEntitySpecialRenderer<TileEntity> renderer = TileEntityRendererDispatcher.instance.getRenderer(tile);
+				if (renderer != null) {
+					GlStateManager.pushMatrix();
+					try { renderer.render(tile, 0.0, 0.0, 0.0, partialTicks, -1, 1.0F); } catch (Exception ignored) {}
+					GlStateManager.popMatrix();
+				}
 			}
 		}
+		GlStateManager.popMatrix();
 	}
 
 	private static void renderSelectionBox(BlockPos pos) {
@@ -370,10 +478,10 @@ public class ClientEventHandler extends Gui {
 		}, 250);
 	}
 
-
 	public static void renderBalance(GuiScreen parent, int mouseX, int mouseY, int x, int y) {
 		if ((CustomNpcs.ShowMoney || CustomNpcs.ShowDonat) && parent != null && x !=0 && y != 0) {
-			PlayerData data = CustomNpcs.proxy.getPlayerData(null);
+			if (mc == null) { mc = Minecraft.getMinecraft(); }
+			PlayerData data = PlayerData.get(mc.player);
 			long money = data.game.getMoney();
 			long donat = data.game.getDonat();
 			int yM = y - (CustomNpcs.ShowMoney && CustomNpcs.ShowDonat ? 6 : 0);
@@ -508,7 +616,7 @@ public class ClientEventHandler extends Gui {
 		}
 		if (mc != null) {
 			event.setCanceled(mc.currentScreen instanceof GuiOpenCase ||
-					!CustomNpcs.proxy.getPlayerData(mc.player).overlay.isShowElementType(event.getType()));
+					!PlayerData.get(mc.player).overlay.isShowElementType(event.getType()));
 		}
 	}
 
@@ -519,12 +627,12 @@ public class ClientEventHandler extends Gui {
 		sw = new ScaledResolution(mc);
 		if (mc.player == null || mc.world == null) { return; }
 		CustomNpcs.debugData.start(mc.player);
-		PlayerData playerData = CustomNpcs.proxy.getPlayerData(mc.player);
+		PlayerData playerData = PlayerData.get(mc.player);
 		boolean isMoved = Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode()) ||
 				Keyboard.isKeyDown(mc.gameSettings.keyBindBack.getKeyCode()) ||
 				Keyboard.isKeyDown(mc.gameSettings.keyBindRight.getKeyCode()) ||
 				Keyboard.isKeyDown(mc.gameSettings.keyBindLeft.getKeyCode());
-		if (CustomNpcs.proxy.getPlayerData(mc.player).overlay.isMoved != isMoved) {
+		if (PlayerData.get(mc.player).overlay.isMoved != isMoved) {
 			playerData.overlay.isMoved = isMoved;
 			Packets.sendServer(new SPacketPlayerIsMoved(isMoved));
 		}
@@ -537,7 +645,7 @@ public class ClientEventHandler extends Gui {
 			CustomNpcs.debugData.started = System.currentTimeMillis();
 			CustomNpcs.debugData.startedTicks = ClientTickHandler.ticks;
 			ClientTickHandler.inGame = true;
-			PlayerData data = CustomNpcs.proxy.getPlayerData(mc.player);
+			PlayerData data = PlayerData.get(mc.player);
 			data.player = mc.player;
 			data.name = mc.player.getName();
 			data.uuid = mc.player.getUniqueID().toString();
@@ -562,6 +670,7 @@ public class ClientEventHandler extends Gui {
 						mc.player.world == tile.getWorld() &&
 						tile.getSchematic() != null) {
 					renderSchem(tile.getSchematic(), tile.rotation,
+							tile.getPos(),
 							tile.getPos().getX() - dx + 1.0f,
 							tile.getPos().getY() - dy + tile.yOffset,
 							tile.getPos().getZ() - dz + 1.0f);
@@ -586,7 +695,7 @@ public class ClientEventHandler extends Gui {
 			entities.remove(mc.player);
 			Entity rayTrE;
 			if (mc.objectMouseOver == null || mc.objectMouseOver.entityHit == null) {
-				rayTrE = Util.instance.getLookEntity(mc.player, (mainStack.getItem() instanceof ItemNbtBook ? CustomNpcs.proxy.getPlayerData(mc.player).game.renderDistance : null), false);
+				rayTrE = Util.instance.getLookEntity(mc.player, (mainStack.getItem() instanceof ItemNbtBook ? PlayerData.get(mc.player).game.renderDistance : null), false);
 			} else { rayTrE = mc.objectMouseOver.entityHit; }
 			if (rayTrE != null && !entities.contains(rayTrE)) { entities.add(rayTrE); }
 			GlStateManager.pushMatrix();
@@ -646,7 +755,7 @@ public class ClientEventHandler extends Gui {
 			if (mainStack.getTagCompound() != null && mainStack.getTagCompound().hasKey("RegionID", 3)) { id = mainStack.getTagCompound().getInteger("RegionID"); }
 			Zone3D reg = bData.getRegion(id);
 			// choosing a central position to create a new region
-			if ((CustomNpcs.proxy.getPlayerData(mc.player).overlay.isPressedShift() || reg == null) &&
+			if ((PlayerData.get(mc.player).overlay.isPressedShift() || reg == null) &&
 					mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit!= RayTraceResult.Type.MISS) {
 				final BlockPos pos = getPos(mc.objectMouseOver);
 				GlStateManager.pushMatrix();
@@ -1710,7 +1819,7 @@ public class ClientEventHandler extends Gui {
 						builder.schema = new SchematicWrapper(Schematic.create(mc.world, mc.player.getHorizontalFacing(), name, builder.schMap));
 					}
 				}
-				renderSchem(builder.schema, mc.player.getHorizontalFacing().getIndex() - 2,
+				renderSchem(builder.schema, mc.player.getHorizontalFacing().getIndex() - 2, pos,
 						pos.getX() - dx + 1.0f, pos.getY() - dy + 0.003f, pos.getZ() - dz + 1.0f);
 			}
 		}
@@ -1791,7 +1900,8 @@ public class ClientEventHandler extends Gui {
 
 	@SuppressWarnings("unchecked")
 	private void updateMiniMaps(boolean update) {
-		PlayerMiniMapData mm = CustomNpcs.proxy.getPlayerData(Minecraft.getMinecraft().player).minimap;
+		if (mc == null) { mc = Minecraft.getMinecraft(); }
+		PlayerMiniMapData mm = PlayerData.get(mc.player).minimap;
 		// Check save client Points:
 		List<MiniMapData> points = new ArrayList<>();
 		if (Loader.isModLoaded("journeymap")) {
@@ -1997,7 +2107,7 @@ public class ClientEventHandler extends Gui {
 			CustomNpcs.MailWindow = 1;
 			int[] offsets = new int[2];
 			float sr_rot = -45.0f, su = 12.0f, sv = -32.0f;
-			offsets[1] = (int) CustomNpcs.proxy.getPlayerData(mc.player).overlay.getWindowSize().getHeight() - 32;
+			offsets[1] = (int) PlayerData.get(mc.player).overlay.getWindowSize().getHeight() - 32;
 
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(offsets[0] + 16, offsets[1] + 16, 0);
@@ -2062,7 +2172,7 @@ public class ClientEventHandler extends Gui {
 		if (mc.world == null || mc.player == null) return;
 		if (!(mc.currentScreen == null || mc.currentScreen instanceof GuiChat || mc.currentScreen instanceof GuiLog)) return;
 
-		PlayerData playerData = CustomNpcs.proxy.getPlayerData(mc.player);
+		PlayerData playerData = PlayerData.get(mc.player);
 		PlayerCompassData compassData = playerData.compass;
 
 		if (CustomNpcs.TypeShowQuestCompass == 4 || !compassData.getShowOfPlayer()) return;
@@ -2556,7 +2666,7 @@ public class ClientEventHandler extends Gui {
 		if (!(mc.player.getHeldItemMainhand().getItem() instanceof ItemNbtBook ||
 				mc.player.getHeldItemOffhand().getItem() instanceof ItemNbtBook)) return;
 
-		PlayerData playerData = CustomNpcs.proxy.getPlayerData(mc.player);
+		PlayerData playerData = PlayerData.get(mc.player);
 		double distance = playerData.game.renderDistance;
 		Vec3d vec3d = mc.player.getPositionEyes(1.0f);
 		Vec3d vec3d1 = mc.player.getLook(1.0f);

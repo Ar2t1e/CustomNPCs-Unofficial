@@ -32,6 +32,7 @@ import noppes.npcs.api.handler.data.IBorder;
 import noppes.npcs.api.util.IRayTraceRotate;
 import noppes.npcs.api.util.IRayTraceVec;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.BorderController;
 import noppes.npcs.controllers.PlayerQuestController;
@@ -631,7 +632,7 @@ public class Zone3D implements IBorder, Predicate<Entity> {
 	public INbt getNbt() {
 		NBTTagCompound nbtRegion = new NBTTagCompound();
 		load(nbtRegion);
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtRegion);
+		return new NBTWrapper(nbtRegion);
 	}
 
 	@Override

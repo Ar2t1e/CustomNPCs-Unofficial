@@ -51,7 +51,7 @@ import noppes.npcs.containers.ContainerNpcInterface;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerMail;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.LRUHashMap;
@@ -138,7 +138,7 @@ public class WrapperNpcAPI extends NpcAPI {
 				if (player == null) {
 					continue;
 				}
-				list.add((IPlayer<?>) this.getIEntity(player));
+				list.add((IPlayer<?>) getIEntity(player));
 			}
 		}
 		return list.toArray(new IPlayer<?>[0]);
@@ -160,7 +160,7 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public IDimensionHandler getCustomDimension() { return DimensionHandler.getInstance(); }
+	public IDimensionHandler getCustomDimension() { return DimensionController.getInstance(); }
 
 	@Override
 	public IDialogHandler getDialogs() {
@@ -169,7 +169,7 @@ public class WrapperNpcAPI extends NpcAPI {
 
 	@Override
 	public IFactionHandler getFactions() {
-		this.checkWorld();
+		checkWorld();
 		return FactionController.instance;
 	}
 
@@ -326,7 +326,7 @@ public class WrapperNpcAPI extends NpcAPI {
 
 	@Override
 	public IQuestHandler getQuests() {
-		this.checkWorld();
+		checkWorld();
 		return QuestController.instance;
 	}
 
@@ -344,18 +344,15 @@ public class WrapperNpcAPI extends NpcAPI {
 			catch (Exception e) { throw new CustomNPCsException("Invalid UUID string: \"" + uuid + "\""); }
             EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uuidMC);
             if (player != null && player.getName().equals(name)) {
-                PlayerData data = CustomNpcs.proxy.getPlayerData(player);
-                if (data != null) {
-                    return getINbt(data.getNBT());
-                }
+				return new NBTWrapper(PlayerData.get(player).getNBT());
             }
         }
-		return getINbt(PlayerData.loadPlayerData(uuid, name));
+		return new NBTWrapper(PlayerData.loadPlayerData(uuid, name));
 	}
 
 	@Override
 	public IRecipeHandler getRecipes() {
-		this.checkWorld();
+		checkWorld();
 		return null;
 	}
 
@@ -379,7 +376,7 @@ public class WrapperNpcAPI extends NpcAPI {
 		if (defaultType < 0 || defaultType > 2) {
 			throw new CustomNPCsException("Default type cant be smaller than 0 or larger than 2");
 		}
-		if (this.hasPermissionNode(permission)) {
+		if (hasPermissionNode(permission)) {
 			throw new CustomNPCsException("Permission already exists");
 		}
 		DefaultPermissionLevel level = DefaultPermissionLevel.values()[defaultType];
@@ -403,7 +400,7 @@ public class WrapperNpcAPI extends NpcAPI {
 			throw new CustomNPCsException("Cant cast empty string to nbt");
 		}
 		try {
-			return this.getINbt(NBTJsonUtil.Convert(str));
+			return new NBTWrapper(NBTJsonUtil.Convert(str));
 		} catch (NBTJsonUtil.JsonException e) {
 			throw new CustomNPCsException(e, "Failed converting " + str);
 		}

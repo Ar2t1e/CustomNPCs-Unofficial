@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
 import net.minecraft.nbt.NBTTagList;
 import noppes.npcs.api.handler.data.IPlayerData;
 import noppes.npcs.controllers.MarcetController;
@@ -44,8 +43,6 @@ public class PlayerGameData implements IPlayerData {
 
 	public boolean updateClient; // ServerTickHandler.cnpcPlayerTick() 122
 	public boolean op = false; // ServerTickHandler.cnpcPlayerTick() 62
-	public double[] logPos; // back login [x, y, z]
-	public int logPosDimID = 0; // back login dimensionId
 	public double blockReachDistance = 6.0;
 	public double renderDistance = 128.0;
 	public int dimID = 0; // used to set spawn on dimension
@@ -67,13 +64,6 @@ public class PlayerGameData implements IPlayerData {
 					marketData.add(new MarkupData(nbt.getInteger("id"), nbt.getInteger("level"), nbt.getInteger("xp")));
 				}
 			}
-			logPos = null;
-			logPosDimID = 0;
-			if (gameNbt.hasKey("LoginPos", 9) && gameNbt.getTagList("LoginPos", 6).tagCount() > 3 && gameNbt.hasKey("LoginDimID", 3)) {
-				NBTTagList list = gameNbt.getTagList("LoginPos", 6);
-				logPos = new double[] { list.getDoubleAt(0), list.getDoubleAt(1), list.getDoubleAt(2), list.getDoubleAt(3) };
-				logPosDimID = gameNbt.getInteger("LoginDimID");
-			}
 			if (gameNbt.hasKey("Followers", 9)) {
 				followers.clear();
 				NBTTagList fls = gameNbt.getTagList("Followers", 10);
@@ -94,12 +84,6 @@ public class PlayerGameData implements IPlayerData {
 		NBTTagList markup = new NBTTagList();
 		for (MarkupData data : marketData) { markup.appendTag(data.getPlayerNBT()); }
 		gameNbt.setTag("MarketData", markup);
-		if (logPos != null) {
-			NBTTagList pos = new NBTTagList();
-			for (double d : logPos) { pos.appendTag(new NBTTagDouble(d)); }
-			gameNbt.setTag("LoginPos", pos);
-			gameNbt.setInteger("LoginDimID", logPosDimID);
-		}
 		NBTTagList fls = new NBTTagList();
 		for (FollowerSet fs : followers) {
 			NBTTagCompound nbt = new NBTTagCompound();

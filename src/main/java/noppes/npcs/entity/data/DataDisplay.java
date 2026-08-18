@@ -238,6 +238,7 @@ public class DataDisplay implements INPCDisplay {
 		return visible;
 	}
 
+	@SuppressWarnings("unused")
 	public boolean hasVisibleOptions() { return CustomNpcs.EnableInvisibleNpcs && availability.hasOptions(); }
 
 	public boolean isVisibleTo(EntityPlayerMP player) {
@@ -324,9 +325,9 @@ public class DataDisplay implements INPCDisplay {
 		}
 		if (compound.hasKey("HitBoxWidth", 5)) { width = ValueUtil.correctFloat(compound.getFloat("HitBoxWidth"), 0.0f, 5.0f); }
 		if (compound.hasKey("HitBoxHeight", 5)) { height = ValueUtil.correctFloat(compound.getFloat("HitBoxHeight"), 0.0f, 10.0f); }
-        if (hitboxState != (byte) 1 && (width != 0.0f || height != 0.0f)) {
-        	if (npc.baseHeight > 0.0f && height > 0.0f) { npc.baseEyeHeight = npc.baseEyeHeight / npc.baseHeight * height; }
-        	npc.baseWidth = width;
+		if (hitboxState != (byte) 1 && (width != 0.0f || height != 0.0f)) {
+			if (npc.baseHeight > 0.0f && height > 0.0f) { npc.baseEyeHeight = npc.baseEyeHeight / npc.baseHeight * height; }
+			npc.baseWidth = width;
         	npc.baseHeight = height;
         	npc.updateHitbox();
 		}

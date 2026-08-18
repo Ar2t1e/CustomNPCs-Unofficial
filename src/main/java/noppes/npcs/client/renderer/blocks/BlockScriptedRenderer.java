@@ -70,7 +70,7 @@ public class BlockScriptedRenderer<T extends TileScripted> extends TileEntitySpe
 					renderItem(itemModel.getMCItemStack());
 				}
 				else if (!blockModel.isEmpty()) {
-					renderBlock(tile, blockModel.getState());
+					renderBlock(tile, blockModel.getState(), partialTicks);
 				}
 				else {
 					String key = objModel + layer.getOBJVisibleMeshes() + layer.getOBJMaterialsReplase();
@@ -136,9 +136,9 @@ public class BlockScriptedRenderer<T extends TileScripted> extends TileEntitySpe
 		Minecraft.getMinecraft().getRenderItem().renderItem(item, ItemCameraTransforms.TransformType.NONE);
 	}
 
-	private void renderBlock(@Nonnull T tile, IBlockState state) {
+	private void renderBlock(@Nonnull T tile, IBlockState state, float partialTicks) {
 		GlStateManager.pushMatrix();
-		ClientEventHandler.renderBlock(state);
+		ClientEventHandler.renderBlock(tile.getWorld(), state, tile.getPos(), partialTicks);
 		GlStateManager.popMatrix();
 		if (random.nextInt(12) == 1) { state.getBlock().randomDisplayTick(state, tile.getWorld(), tile.getPos(), random); }
 	}

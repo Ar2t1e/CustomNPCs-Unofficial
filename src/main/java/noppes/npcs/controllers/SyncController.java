@@ -6,8 +6,6 @@ import java.util.Map;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.NBTTags;
@@ -17,6 +15,7 @@ import noppes.npcs.items.ItemScripted;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketSync;
 import noppes.npcs.packets.client.PacketSyncUpdate;
+import noppes.npcs.packets.server.SPacketDimensionsGet;
 import noppes.npcs.util.BuilderData;
 
 public class SyncController {
@@ -74,16 +73,7 @@ public class SyncController {
 	}
 
 	private static void syncAllDimensions(EntityPlayerMP player) {
-		DimensionController.load();
-		NBTTagCompound compound = new NBTTagCompound();
-		NBTTagList list = new NBTTagList();
-		for (WorldServer world : CustomNpcs.Server.worlds) {
-			DimensionData dd = DimensionController.get(world);
-			dd.isLoad = world.isBlockLoaded(BlockPos.ORIGIN);
-			list.appendTag(dd.save());
-		}
-		compound.setTag("Data", list);
-		Packets.send(player, new PacketSync(9, compound, true));
+		SPacketDimensionsGet.sendDimensionIDs(player);
 	}
 
 	private static void syncAllRecipes(EntityPlayerMP player) {

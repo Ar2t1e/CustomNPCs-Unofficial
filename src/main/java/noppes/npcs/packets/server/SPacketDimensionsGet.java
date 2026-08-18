@@ -1,16 +1,19 @@
 package noppes.npcs.packets.server;
 
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.WorldProvider;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
-import noppes.npcs.dimensions.CustomWorldInfo;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.api.handler.data.IWorldInfo;
+import noppes.npcs.controllers.data.DimensionData;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.packets.client.PacketSync;
 import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.packets.Packets;
@@ -43,24 +46,58 @@ public class SPacketDimensionsGet extends PacketServerBasic {
     @Override
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
+        sendDimensionIDs(player);
+        CustomNpcs.debugData.end("Packets");
+    }
+
+    public static void sendDimensionIDs(EntityPlayerMP player) {
         NBTTagCompound compound = new NBTTagCompound();
         NBTTagList list = new NBTTagList();
-        DimensionHandler dData = DimensionHandler.getInstance();
-        for (int id : DimensionManager.getStaticDimensionIDs()) {
-            WorldProvider provider = DimensionManager.createProviderFor(id);
-            NBTTagCompound nbt = new NBTTagCompound();
-            nbt.setBoolean("deleted", DimensionManager.getWorld(id) == null);
-            nbt.setBoolean("loaded", !DimensionManager.isWorldQueuedToUnload(id));
-            String name = provider.getDimensionType().getName();
-            if (dData.getMCWorldInfo(id) instanceof CustomWorldInfo) { name = ((CustomWorldInfo) dData.getMCWorldInfo(id)).getWorldName(); }
-            name += provider.getDimensionType().getSuffix();
-            nbt.setString("name", name);
-            nbt.setInteger("id", id);
-            list.appendTag(nbt);
+        DimensionController dData = DimensionController.getInstance();
+        DimensionType dimensionType;
+        for (int id : dData.getAllIDs()) {
+            DimensionData oldDD = dData.getData(id);
+            DimensionData dd = new DimensionData();
+            dd.dimensionId = id;
+            dd.isRemoved = DimensionManager.isWorldQueuedToUnload(id) || dData.isDelete(id);
+            IWorldInfo worldInfo = dData.getMCWorldInfo(id);
+            if (worldInfo != null) { dd.worldName = worldInfo.getMCLevelName(); }
+            WorldServer world = DimensionManager.getWorld(id);
+            if (world == null) {
+                for (WorldServer w : CustomNpcs.Server.worlds) {
+                    if (w.provider.getDimension() == id) {
+                        world = w;
+                        break;
+                    }
+                }
+            }
+            if (world != null) {
+                dd.isLoad = true;
+                if (dd.worldName.isEmpty()) { dd.worldName = world.getWorldInfo().getWorldName(); }
+                dd.spawnPos = world.getSpawnCoordinate();
+                if (dd.spawnPos == null) { dd.spawnPos = world.getSpawnPoint(); }
+                dimensionType = world.provider.getDimensionType();
+                dd.name = dimensionType.getName();
+                dd.suffix = dimensionType.getSuffix();
+            }
+            if (dd.name.isEmpty()) {
+                try {
+                    dimensionType = DimensionManager.getProviderType(id);
+                    if (dimensionType != null) {
+                        dd.name = dimensionType.getName();
+                        dd.suffix = dimensionType.getSuffix();
+                    }
+                }
+                catch (Exception ignored) { }
+            }
+            if (dd.name.isEmpty() && oldDD != null) {
+                dd.name = oldDD.name;
+                dd.suffix = oldDD.suffix;
+            }
+            list.appendTag(dd.save());
         }
         compound.setTag("Data", list);
         Packets.send(player, new PacketSync(9, compound, false));
-        CustomNpcs.debugData.end("Packets");
     }
 
 }

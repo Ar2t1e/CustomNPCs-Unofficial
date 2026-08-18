@@ -8,8 +8,8 @@ import noppes.npcs.blocks.custom.CustomBlockPortal;
 import noppes.npcs.blocks.custom.tiles.CustomTileEntityPortal;
 import noppes.npcs.client.gui.availability.SubGuiNpcAvailability;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
-import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.controllers.data.DimensionData;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketTileEntityGet;
 import noppes.npcs.packets.server.SPacketTileEntitySave;
@@ -19,6 +19,7 @@ import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,25 +67,24 @@ public class GuiPortalBlock extends GuiNPCInterface
         int color = new Color(0xFFFFFF).getRGB();
         // dimensions
         dataDimIDs.clear();
-        List<Integer> dimMap = DimensionController.getLineKeys();
-        Object[] dimIDs = new Object[dimMap.size()];
-        int i = 0;
+        List<Integer> dimMap = DimensionController.getInstance().getAllIDs();
+        List<Object> dimIDList = new ArrayList<>();
         int p = 0;
         for (Integer line : dimMap) {
-            DimensionData dd = DimensionController.get(line);
+            DimensionData dd = DimensionController.getInstance().getData(line);
             if (dd != null && line != nextDimension) {
-                dimIDs[i] = line;
-                dataDimIDs.put(i, dd);
-                if (line == dimension) { p = i; }
-                i++;
+                if (line == dimension) { p = dimIDList.size(); }
+                dataDimIDs.put(dimIDList.size(), dd);
+                dimIDList.add(line);
             }
         }
+        Object[] dimIDs = dimIDList.toArray();
         addLabel(lId++, xl, (y += 25) + 5, Component.translatable("parameter.dimension.id").append(":"))
                 .setSize(w, 10)
                 .setColor(color);
         addButton(5, x, y, true, p, dimIDs)
                 .setSize(160, 16)
-                .setHoverTexts(Component.translatable("portal.hover.dimension.id", dimIDs[p]));
+                .setHoverTexts(Component.translatable("portal.hover.dimension.id", dimIDs.length > p ? dimIDs[p] : "???"));
         // position
         int xp = x;
         addLabel(lId++, xl, (y += 24) + 3, "gui.position").setColor(color)
@@ -135,9 +135,11 @@ public class GuiPortalBlock extends GuiNPCInterface
             case 4: save(); setSubGui(new SubGuiNpcAvailability(tile.availability, this)); break;
             case 5: {
                 DimensionData dd = dataDimIDs.get(button.getValue());
-                dimension = dd.dimensionId;
-                position = dd.spawnPos;
-                initGui();
+                if (dd != null) {
+                    dimension = dd.dimensionId;
+                    position = dd.spawnPos;
+                    initGui();
+                }
                 break;
             }
             case 66: onClose(); break;

@@ -14,7 +14,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
 
 import javax.annotation.Nonnull;
@@ -41,7 +41,7 @@ public class CmdDimensions extends CommandNoppesBase {
 		if (args.length == 3) {
 			Set<Integer> s = new TreeSet<>();
 			for (int id : DimensionManager.getIDs()) {
-				if (DimensionHandler.getInstance().isDelete(id)) {
+				if (DimensionController.getInstance().isDelete(id)) {
 					continue;
 				}
 				s.add(id);
@@ -102,7 +102,7 @@ public class CmdDimensions extends CommandNoppesBase {
 		int dimId;
 		try {
 			dimId = Integer.parseInt(args[1]);
-			if (!DimensionManager.isDimensionRegistered(dimId) || DimensionHandler.getInstance().isDelete(dimId)) {
+			if (!DimensionManager.isDimensionRegistered(dimId) || DimensionController.getInstance().isDelete(dimId)) {
 				throw new CommandException("DimensionID: " + dimId + " - not found");
 			}
 		} catch (NumberFormatException ex) {

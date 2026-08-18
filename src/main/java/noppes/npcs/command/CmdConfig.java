@@ -70,6 +70,7 @@ public class CmdConfig extends CommandNoppesBase {
 		else if (args[0].equals("stop")) { CustomNpcs.debugData.stopDebugging(sender); }
 		else {
 			try {
+				//noppes.npcs.CreaterAPITypeJS.collectModClassFiles();
 				CustomNpcs.VerboseDebug = Boolean.parseBoolean(args[0].toLowerCase());
 				sender.sendMessage(new TextComponentTranslation("command.debug." + CustomNpcs.VerboseDebug));
 			} catch (Exception e) {

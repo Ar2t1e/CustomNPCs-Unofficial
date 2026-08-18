@@ -940,7 +940,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 			int c = w < mc.displayWidth ? (int) Math.round((double) mc.displayWidth / w) : 1;
 			GL11.glScissor((workU + 1) * c, mc.displayHeight - (workV + workS - 1) * c, (workS - 2) * c, (workS - 2) * c);
 			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-			drawWork();
+			drawWork(partialTicks);
 			GL11.glDisable(GL11.GL_SCISSOR_TEST);
 			GlStateManager.popMatrix();
 
@@ -2591,7 +2591,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		GlStateManager.popMatrix();
 	}
 
-	private void drawWork() {
+	private void drawWork(float partialTicks) {
 		// work place
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(0.0f, 0.0f, -300.0f);
@@ -2639,7 +2639,7 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 						} else if (blockType == 5) {
 							GlStateManager.translate(0.0f, 0.9375f, 0.0f);
 						}
-						ClientEventHandler.renderBlock(state);
+						ClientEventHandler.renderBlock(minecraft.world, state, player.getPosition().add(x, y, z), partialTicks);
 						GlStateManager.popMatrix();
 					}
 				}
@@ -2856,7 +2856,6 @@ public class SubGuiEditAnimation extends GuiNPCInterface
 		}
 
 		// model mesh rotation axes:
-
 		ModelNpcAlt.editAnimDataSelect.displayNpc = showNPC;
 		float r = showNPC.rotationYaw < 0.0f ? showNPC.rotationYaw + 360.0f : showNPC.rotationYaw;
 		float oy = 0.0f;

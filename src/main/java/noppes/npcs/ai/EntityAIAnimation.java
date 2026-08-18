@@ -113,7 +113,7 @@ public class EntityAIAnimation extends EntityAIBase {
 		AnimationConfig anim = npc.animation.tryRunAnimation(AnimationKind.INTERACT);
 		if (anim != null ) {
 			npc.lookAi.fastRotation = true;
-			CustomNPCsScheduler.runTack(() -> npc.lookAi.fastRotation = false , anim.totalTicks * 50L);
+			CustomNPCsScheduler.runTack(() -> npc.lookAi.fastRotation = false, anim.totalTicks * 50L);
 		}
 	}
 

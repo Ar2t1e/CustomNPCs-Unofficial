@@ -3,13 +3,10 @@ package noppes.npcs.api.wrapper.gui;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.gui.IEntityDisplay;
 import noppes.npcs.api.wrapper.NBTWrapper;
-
-import java.util.Objects;
 
 // New Unofficial (Goodbird)
 public class CustomGuiEntityDisplayWrapper
@@ -101,7 +98,7 @@ public class CustomGuiEntityDisplayWrapper
     @Override
     public CustomGuiEntityDisplayWrapper fromNBT(NBTTagCompound compound) {
         super.fromNBT(compound);
-        entityData = Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound.getCompoundTag("entity"));
+        entityData = new NBTWrapper(compound.getCompoundTag("entity"));
         entityId = compound.getInteger("entityId");
         setRotation(compound.getInteger("rotation"));
         setScale(compound.getFloat("scale"));

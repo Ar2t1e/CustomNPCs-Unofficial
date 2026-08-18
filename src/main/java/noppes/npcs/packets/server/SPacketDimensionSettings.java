@@ -2,11 +2,15 @@ package noppes.npcs.packets.server;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldInfo;
+import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.dimensions.CustomWorldInfo;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.dimensions.WorldCustom;
 import noppes.npcs.shared.common.PacketServerBasic;
 
 import java.util.Collections;
@@ -54,11 +58,26 @@ public class SPacketDimensionSettings extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         if (worldInfo instanceof CustomWorldInfo) {
             CustomWorldInfo wi = (CustomWorldInfo) worldInfo;
-            if (dimension == 0) { DimensionHandler.getInstance().createDimension(player, wi); }
+            if (dimension == 0) { DimensionController.getInstance().createNewDimension(player, wi); } // new
             else {
-                CustomWorldInfo cwi = (CustomWorldInfo) DimensionHandler.getInstance().getMCWorldInfo(dimension);
-                if (cwi != null) { cwi.load(wi.read()); }
-            }
+                CustomWorldInfo cwi = (CustomWorldInfo) DimensionController.getInstance().getMCWorldInfo(dimension);
+                if (cwi != null) {
+                    // Update stored world info
+                    cwi.load(wi.cloneNBTCompound(wi.getPlayerNBTTagCompound()));
+
+                    // If the world is currently loaded, update its live WorldInfo
+                    // so new chunks use the updated generator settings
+                    WorldServer world = DimensionManager.getWorld(dimension);
+                    if (world instanceof WorldCustom) {
+                        ((WorldCustom) world).updateWorldInfo(cwi);
+                    }
+
+                    // Mark handler dirty so changes are saved to world NBT
+                    DimensionController.getInstance().markDirty();
+
+                    player.sendMessage(Component.translatable("message.dimensions.updated", "" + dimension).getParent());
+                }
+            } // changed
         }
         CustomNpcs.debugData.end("Packets");
     }

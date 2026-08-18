@@ -685,7 +685,7 @@ public class FriendlyByteBuf extends ByteBuf {
     public CustomWorldInfo readWorldInfo() { return new CustomWorldInfo(ByteBufUtils.readTag(source)); }
 
     public void writeWorldInfo(WorldInfo wi) {
-        ByteBufUtils.writeTag(source, wi.cloneNBTCompound(null));
+        ByteBufUtils.writeTag(source, wi.cloneNBTCompound(wi.getPlayerNBTTagCompound()));
     }
 
     public UUID readUUID() { return new UUID(source.readLong(), source.readLong()); }

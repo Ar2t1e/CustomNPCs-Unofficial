@@ -20,7 +20,6 @@ import java.util.function.Function;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.BlockPos;
@@ -425,9 +424,7 @@ public class ScriptContainer {
 	}
 
 	private void handlerSync(String sync, Object arguments) {
-		if (Minecraft.getMinecraft().isCallingFromMinecraftThread()) { Minecraft.getMinecraft().addScheduledTask(() -> runSync(sync, arguments)); }
-		else if (CustomNpcs.Server != null && CustomNpcs.Server.isServerRunning()) { CustomNpcs.Server.addScheduledTask(() -> runSync(sync, arguments)); }
-		else { CustomNPCsScheduler.runTack(() -> runSync(sync, arguments)); }
+		CustomNPCsScheduler.runTack(() -> runSync(sync, arguments));
 	}
 
 	private void generateAsyncContext(String async, String sync, Object arguments) {

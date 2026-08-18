@@ -26,11 +26,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.event.CustomPotionEvent;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.util.ValueUtil;
 
 public class CustomPotion extends Potion implements ICustomElement {
@@ -154,7 +154,7 @@ public class CustomPotion extends Potion implements ICustomElement {
 	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public int getElementType() {

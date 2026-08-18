@@ -10,11 +10,10 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTabs;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 
@@ -46,7 +45,7 @@ public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 
 	@Override
 	public boolean getIsRepairable(@Nonnull ItemStack toRepair, @Nonnull ItemStack repair) {
-		if (this.repairItemStack.isEmpty()) {
+		if (repairItemStack.isEmpty()) {
 			return super.getIsRepairable(toRepair, repair);
 		}
         if (net.minecraftforge.oredict.OreDictionary.itemMatches(repairItemStack, repair, false)) {
@@ -56,7 +55,7 @@ public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 	}
 
 	@Override
-	public int getItemEnchantability() { return this.enchantability; }
+	public int getItemEnchantability() { return enchantability; }
 
 	@Override
 	public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> items) {
@@ -67,14 +66,14 @@ public class CustomFishingRod extends ItemFishingRod implements ICustomElement {
 	}
 
 	@Override
-	public String getCustomName() { return this.nbtData.getString("RegistryName"); }
+	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(this.nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public int getElementType() {
-		if (this.nbtData != null && this.nbtData.hasKey("ItemType", 1)) { return this.nbtData.getByte("ItemType"); }
+		if (nbtData != null && nbtData.hasKey("ItemType", 1)) { return nbtData.getByte("ItemType"); }
 		return 8;
 	}
 

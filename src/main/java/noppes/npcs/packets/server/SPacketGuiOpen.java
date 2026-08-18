@@ -1,7 +1,8 @@
 package noppes.npcs.packets.server;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -18,7 +19,6 @@ import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.controllers.TransportController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerTransportData;
 import noppes.npcs.controllers.data.TransportLocation;
@@ -89,8 +89,8 @@ public class SPacketGuiOpen extends PacketServerBasic {
                   buffer.writeInt(npc != null ? npc.getEntityId() : -1);
                   buffer.writeBlockPos(pos);
                })) {
-                  ArrayList<String> list = getScrollData(player, gui, npc);
-                  if (list != null && !list.isEmpty()) { NoppesUtilServer.sendScrollData(player, list); }
+                  Map<String, Integer> map = getScrollData(player, gui, npc);
+                  if (map != null && !map.isEmpty()) { NoppesUtilServer.sendScrollData(player, map); }
                }
             }
             catch (Exception e) { LogWriter.error(e); }
@@ -110,24 +110,21 @@ public class SPacketGuiOpen extends PacketServerBasic {
       }
    }
 
-   private static ArrayList<String> getScrollData(EntityPlayerMP player, EnumGuiType gui, EntityNPCInterface npc) {
+   private static Map<String, Integer> getScrollData(EntityPlayerMP player, EnumGuiType gui, EntityNPCInterface npc) {
       if (gui == EnumGuiType.PlayerTransporter) {
          RoleTransporter role = (RoleTransporter)npc.role;
-         ArrayList<String> list = new ArrayList<>();
+         Map<String, Integer> map = new HashMap<>();
          TransportLocation location = role.getLocation();
          if (location != null) {
-            String name = role.getLocation().name;
-            for (TransportLocation loc : location.category.getDefaultLocations()) {
-               if (!list.contains(loc.name)) { list.add(loc.name); }
-            }
             PlayerTransportData playerdata = PlayerData.get(player).transportData;
-            for (int i : playerdata.transports) {
-               TransportLocation loc = TransportController.getInstance().getTransport(i);
-               if (loc != null && location.category.locations.containsKey(loc.id) && !list.contains(loc.name)) { list.add(loc.name); }
+            for (TransportLocation loc : location.category.locations.values()) {
+               if (!map.containsKey(loc.name) && (loc.isDefault() || playerdata.transports.contains(loc.id))) {
+                  map.put(loc.name, loc.id);
+               }
             }
-            list.remove(name);
+            map.remove(location.name);
          }
-         return list;
+         return map;
       }
       return null;
    }

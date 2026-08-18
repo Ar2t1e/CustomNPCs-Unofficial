@@ -23,7 +23,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.ForgeModContainer;
@@ -70,8 +69,7 @@ import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.MarkData;
 import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.dimensions.CustomWorldProvider;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemScripted;
 import noppes.npcs.mixin.entity.ai.attributes.IRangedAttributeMixin;
@@ -292,7 +290,6 @@ public class CustomNpcs {
 	public static File Dir;
 	public static ConfigLoader Config;
 	public static ITextComponent prefix = new TextComponentString(((char) 167) + "e[" + ((char) 167) + "2" + MODNAME + ((char) 167) + "e]" + ((char) 167) + "r: ");
-	public static DimensionType customDimensionType;
 	public static ModContainer mod;
 	
 	public static int colorAnimHoverPart = new Color(0xFFFA7800).getRGB();
@@ -393,7 +390,6 @@ public class CustomNpcs {
 		Objects.requireNonNull(NpcAPI.Instance()).events().register(new AbilityEventHandler());
 		ForgeChunkManager.setForcedChunkLoadingCallback(this,
                 new ChunkController());
-		customDimensionType = DimensionType.register("CustomDimensions", "CustomNpcs", "CustomDimensions".hashCode(), CustomWorldProvider.class, false);
 		proxy.preload();
 		((IRangedAttributeMixin) SharedMonsterAttributes.MAX_HEALTH).setMaximumValue(Double.MAX_VALUE);
 		DataObject.load();
@@ -423,7 +419,7 @@ public class CustomNpcs {
                 }
             });
 		}
-		DimensionHandler.getInstance().loadDimensions();
+		DimensionController.getInstance().loadDimensions();
 	}
 
 	@Mod.EventHandler

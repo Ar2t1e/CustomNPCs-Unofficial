@@ -38,9 +38,7 @@ public class MarcetController implements IMarcetHandler {
 		}
 		return MarcetController.instance;
 	}
-	public static boolean hasLocalServerData() {
-		return FMLCommonHandler.instance().getMinecraftServerInstance() != null;
-	}
+	public static boolean isNotLocalServerData() { return FMLCommonHandler.instance().getMinecraftServerInstance() == null; }
 
 	private static boolean newInstance() {
 		if (MarcetController.instance == null) {
@@ -80,13 +78,11 @@ public class MarcetController implements IMarcetHandler {
 		DealMarkup dm = new DealMarkup();
 		if (deal != null) { dm.set(deal); }
 		if (marcet != null && !marcet.markup.isEmpty()) {
-			MarkupData md = marcet.markup.get(marcetLevel);
-			if (md == null) {
-				for (Map.Entry<Integer, MarkupData> entry : marcet.markup.entrySet()) {
-					if (md == null || entry.getKey() <= marcetLevel) { md = entry.getValue(); }
-				}
-			}
-			dm.set(md, countIn);
+			MarkupData md;
+			if (marcet.markup.containsKey(marcetLevel)) { md = marcet.markup.get(marcetLevel); }
+			else if (marcetLevel >= marcet.markup.size()) { md = marcet.markup.get(marcet.markup.size() - 1); }
+			else { md = marcet.markup.get(0); }
+			if (md != null) { dm.set(md, countIn); }
 		}
 		return dm;
 	}

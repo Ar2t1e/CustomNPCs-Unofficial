@@ -32,6 +32,7 @@ import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.event.BlockEvent;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.items.ItemNpcBlock;
@@ -187,7 +188,7 @@ public class CustomDoor extends BlockDoor implements ITileEntityProvider, ICusto
 	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public int getElementType() {

@@ -804,29 +804,42 @@ public class Util implements IMethods {
 		if (entity.world.isRemote || entity.isDead) {
 			return null;
 		}
-		ForgeHooks.onTravelToDimension(entity, dimensionId);
+		// BUG FIX: Respect Forge hook cancellation
+		if (!ForgeHooks.onTravelToDimension(entity, dimensionId)) {
+			return entity;
+		}
 		entity.world.profiler.startSection("changeDimension");
 		int dimensionStart = entity.dimension;
 		WorldServer worldserverStart = server.getWorld(dimensionStart);
 		WorldServer worldserverEnd = server.getWorld(dimensionId);
+
+		// BUG FIX: Handle null entity key gracefully
+		ResourceLocation entityKey = EntityList.getKey(entity.getClass());
+		if (entityKey == null) {
+			entity.world.profiler.endSection();
+			LogWriter.error("Cannot teleport entity " + entity.getClass().getName() + ": no EntityList key found");
+			return entity;
+		}
+
 		entity.dimension = dimensionId;
-		Entity newEntity = EntityList.createEntityByIDFromName(Objects.requireNonNull(EntityList.getKey(entity.getClass())), worldserverEnd);
+		Entity newEntity = EntityList.createEntityByIDFromName(entityKey, worldserverEnd);
 		if (newEntity != null) {
 			((IEntityIMixin) newEntity).npcs$copyDataFromOld(entity);
-			entity.world.removeEntity(entity);
 			newEntity.forceSpawn = true;
 			worldserverEnd.spawnEntity(newEntity);
-		}
-		try {
-            assert newEntity != null;
-            worldserverEnd.updateEntityWithOptionalForce(newEntity, true);
+			worldserverEnd.updateEntityWithOptionalForce(newEntity, true);
+			// BUG FIX: Only remove old entity after new one is successfully spawned
+			entity.world.removeEntity(entity);
 			entity.isDead = true;
-			entity.world.profiler.endSection();
 			worldserverStart.resetUpdateEntityTick();
 			worldserverEnd.resetUpdateEntityTick();
-			entity.world.profiler.endSection();
-		} catch (Exception e) { LogWriter.error(e); }
-		return newEntity;
+		} else {
+			// BUG FIX: Revert dimension if spawn failed
+			entity.dimension = dimensionStart;
+			LogWriter.error("Failed to create entity " + entityKey + " in dimension " + dimensionId);
+		}
+		entity.world.profiler.endSection();
+		return newEntity != null ? newEntity : entity;
 	}
 
 	public void updatePlayerInventory(EntityPlayerMP player) {

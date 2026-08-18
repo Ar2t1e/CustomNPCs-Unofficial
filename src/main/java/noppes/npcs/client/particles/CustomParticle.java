@@ -16,6 +16,7 @@ import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -300,7 +301,7 @@ public class CustomParticle extends Particle implements ICustomElement, ICustomP
 	public void setTotalAge(int ticks) { particleMaxAge = ValueUtil.correctInt(ticks, 0, Integer.MAX_VALUE); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public String getCustomName() { return nbtData.getString("RegistryName").toLowerCase(); }

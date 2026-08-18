@@ -50,7 +50,6 @@ import noppes.npcs.api.wrapper.gui.CustomGuiComponentWrapper;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.controllers.OverlayController;
 import noppes.npcs.client.gui.GuiAchievement;
-import noppes.npcs.client.gui.GuiNpcDimension;
 import noppes.npcs.client.gui.GuiNpcMobSpawnerAdd;
 import noppes.npcs.client.gui.GuiNpcRemoteEditor;
 import noppes.npcs.client.gui.custom.GuiCustom;
@@ -70,6 +69,7 @@ import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.controllers.data.Dialog;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityDialogNpc;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -84,6 +84,7 @@ import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.common.PacketBasic;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.BuilderData;
+import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.TempFile;
 import noppes.npcs.util.Util;
 
@@ -281,7 +282,7 @@ public class Client {
     }
 
     private static void packetConfigFont(PacketConfigFont msg) {
-        minecraft.addScheduledTask(() -> {
+        CustomNPCsScheduler.runTack(() -> {
             if (msg.font != null && !msg.font.isEmpty()) {
                 CustomNpcs.FontType = msg.font;
                 CustomNpcs.FontSize = msg.size;
@@ -504,7 +505,7 @@ public class Client {
                 break;
             } // factions
             case 2: {
-                if (!msg.data.hasNoTags()) { CustomNpcs.proxy.getPlayerData(msg.player).game.load(msg.data); }
+                if (!msg.data.hasNoTags()) { PlayerData.get(msg.player).game.load(msg.data); }
                 break;
             } // gameData
             case 3: {
@@ -532,7 +533,7 @@ public class Client {
                 break;
             } // quests
             case 4: {
-                if (!msg.data.hasNoTags()) { CustomNpcs.proxy.getPlayerData(msg.player).questData.load(msg.data); }
+                if (!msg.data.hasNoTags()) { PlayerData.get(msg.player).questData.load(msg.data); }
                 if (minecraft.currentScreen instanceof GuiLog) { minecraft.currentScreen.initGui(); }
                 break;
             } // questData
@@ -561,7 +562,7 @@ public class Client {
                 break;
             } // dialogs
             case 6: {
-                if (!msg.data.hasNoTags()) { CustomNpcs.proxy.getPlayerData(msg.player).overlay.load(msg.data); }
+                if (!msg.data.hasNoTags()) { PlayerData.get(msg.player).overlay.load(msg.data); }
                 break;
             } // overlay data
             case 7: {
@@ -569,12 +570,11 @@ public class Client {
                 break;
             } // recipes
             case 8: {
-                CustomNpcs.proxy.getPlayerData(msg.player).setNBT(msg.data);
+                PlayerData.get(msg.player).setNBT(msg.data);
                 break;
             } // playerData
             case 9: {
-                DimensionController.load(msg.data);
-                if (minecraft.currentScreen instanceof GuiNpcDimension) { ((GuiNpcDimension) minecraft.currentScreen).setGuiData(msg.data); }
+                DimensionController.getInstance().loadData(msg.data);
                 break;
             } // dimensions
             case 10: {
@@ -613,7 +613,7 @@ public class Client {
                 break;
             } // permissions
             case 15: {
-                if (!msg.data.hasNoTags()) { CustomNpcs.proxy.getPlayerData(msg.player).overlay.load(msg.data); }
+                if (!msg.data.hasNoTags()) { PlayerData.get(msg.player).overlay.load(msg.data); }
                 break;
             } // overlayData
             case 16: {
@@ -714,7 +714,7 @@ public class Client {
                     QuestController.instance.quests.put(quest.id, quest);
                     category.quests.put(quest.id, quest);
                 }
-                PlayerQuestData questData = CustomNpcs.proxy.getPlayerData(msg.player).questData;
+                PlayerQuestData questData = PlayerData.get(msg.player).questData;
                 for (QuestData qd : new ArrayList<>(questData.activeQuests.values())) {
                     if (qd.quest.id == quest.id) {
                         qd.quest = quest;
@@ -777,7 +777,7 @@ public class Client {
                 break;
             } // dialog gui settings
             case 12: {
-                if (msg.data.hasKey("MailData", 9)) { CustomNpcs.proxy.getPlayerData(msg.player).mailData.load(msg.data); }
+                if (msg.data.hasKey("MailData", 9)) { PlayerData.get(msg.player).mailData.load(msg.data); }
                 if (msg.data.hasKey("LettersBeDeleted", 3)) { CustomNpcs.MailTimeWhenLettersWillBeDeleted = msg.data.getInteger("LettersBeDeleted"); }
                 if (msg.data.hasKey("LettersBeReceived", 11)) {
                     int[] vs = msg.data.getIntArray("LettersBeReceived");
@@ -791,7 +791,7 @@ public class Client {
                 break;
             } // new mail info ou screen
             case 13: {
-                CustomNpcs.proxy.getPlayerData(msg.player).factionData.load(msg.data);
+                PlayerData.get(msg.player).factionData.load(msg.data);
                 break;
             } // faction data update
             case 14: {
@@ -943,7 +943,7 @@ public class Client {
             if (file.saveType == 1) {
                 LogWriter.info("Script Client file was received from the Server: \"" + msg.name + "\"");
                 File normalFile = new File(CustomNpcs.Dir, ScriptController.Instance.clientScripts.getLanguage().toLowerCase() + "/" + msg.name);
-                if (msg.player.isCreative() || CustomNpcs.proxy.getPlayerData(msg.player).game.op) {
+                if (msg.player.isCreative() || PlayerData.get(msg.player).game.op) {
                     String s = "" + file.size;
                     if (file.size > 999) {
                         s = Util.instance.getTextReducedNumber(file.size, false, false, false);
@@ -1155,7 +1155,7 @@ public class Client {
 
     private static void packetCustomNBT(PacketCustomNBT msg) {
         EventHooks.onEvent(ScriptController.Instance.clientScripts, EnumScriptType.PACKAGE_FROM,
-                new PlayerEvent.PlayerPackage(CustomNpcs.proxy.getPlayerData(msg.player).scriptData.getIPlayer(), msg.data));
+                new PlayerEvent.PlayerPackage(PlayerData.get(msg.player).scriptData.getIPlayer(), msg.data));
     }
 
     private static void packetStopSound(PacketStopSound msg) {
@@ -1163,7 +1163,7 @@ public class Client {
     }
 
     private static void packetClearMarcets() {
-        if (!MarcetController.hasLocalServerData()) {
+        if (MarcetController.isNotLocalServerData()) {
             MarcetController.getInstance().markets.clear();
             MarcetController.getInstance().deals.clear();
         }
@@ -1176,22 +1176,22 @@ public class Client {
     }
 
     private static void packetDealData(PacketDealData msg) {
-        if (!MarcetController.hasLocalServerData()) { MarcetController.getInstance().loadDeal(msg.data); }
+        if (MarcetController.isNotLocalServerData()) { MarcetController.getInstance().loadDeal(msg.data); }
         if (minecraft.currentScreen instanceof IGuiData) { ((IGuiData) minecraft.currentScreen).setGuiData(new NBTTagCompound()); }
     }
 
     private static void packetMarcetData(PacketMarcetData msg) {
-        if (!MarcetController.hasLocalServerData()) { MarcetController.getInstance().loadMarcet(msg.data); }
+        if (MarcetController.isNotLocalServerData()) { MarcetController.getInstance().loadMarcet(msg.data); }
         if (minecraft.currentScreen instanceof IGuiData) { ((IGuiData) minecraft.currentScreen).setGuiData(new NBTTagCompound()); }
     }
 
     private static void packetMarcetRemove(PacketMarcetRemove msg) {
-        if (!MarcetController.hasLocalServerData()) { MarcetController.getInstance().removeMarcet(msg.marcetID); }
+        if (MarcetController.isNotLocalServerData()) { MarcetController.getInstance().removeMarcet(msg.marcetID); }
         if (minecraft.currentScreen instanceof IGuiData) { ((IGuiData) minecraft.currentScreen).setGuiData(new NBTTagCompound()); }
     }
 
     private static void packetDealUpdate(PacketDealUpdate msg) {
-        if (!MarcetController.hasLocalServerData()) {
+        if (MarcetController.isNotLocalServerData()) {
             Marcet marcet = MarcetController.getInstance().getMarcet(msg.marcetID);
             if (marcet != null) {
                 Deal deal = marcet.getDeal(msg.dealData.getInteger("DealID"));
@@ -1239,7 +1239,7 @@ public class Client {
     }
 
     private static void packetOverworldTime(PacketOverworldTime msg) {
-        CustomNpcs.proxy.getPlayerData(msg.player).questData.overworldTime = msg.overworldTime;
+        PlayerData.get(msg.player).questData.overworldTime = msg.overworldTime;
     }
 
     private static void packetBankSetPlayer(PacketBankSetPlayer msg) {
@@ -1265,7 +1265,7 @@ public class Client {
             Bank bank = BankController.getInstance().getBank(id);
             if (bank == null) { bank = BankController.getInstance().addNewBank(); }
             bank.load(msg.data);
-            CustomNpcs.proxy.getPlayerData(msg.player).bankData.lastBank = null;
+            PlayerData.get(msg.player).bankData.lastBank = null;
         }
     }
 
@@ -1456,7 +1456,7 @@ public class Client {
 
     @SuppressWarnings("unchecked")
     private static void updateMinimap(PacketSyncUpdate msg) {
-        PlayerMiniMapData mm = CustomNpcs.proxy.getPlayerData(msg.player).minimap;
+        PlayerMiniMapData mm = PlayerData.get(msg.player).minimap;
         mm.load(msg.data);
         int isChanged = 0;
         if (mm.modName.endsWith("journeymap")) {

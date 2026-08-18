@@ -30,33 +30,26 @@ public class PlayerQuestController {
 
 	@SuppressWarnings("unused")
 	public static boolean hasActiveQuests(EntityPlayer player) {
-		PlayerData data = PlayerData.get(player);
-		return data != null && !data.questData.activeQuests.isEmpty();
+		return !PlayerData.get(player).questData.activeQuests.isEmpty();
 	}
 
 	public static boolean isQuestActive(EntityPlayer player, int questId) {
-		PlayerData data = PlayerData.get(player);
-		return data != null && !data.questData.activeQuests.containsKey(questId);
+		return !PlayerData.get(player).questData.activeQuests.containsKey(questId);
 	}
 
 	public static boolean isQuestCompleted(EntityPlayer player, int questId) {
 		PlayerData data = PlayerData.get(player);
-		if (data != null) {
-			QuestData q = data.questData.activeQuests.get(questId);
-			return q != null && q.isCompleted;
-		}
-		return false;
-	}
+        QuestData q = data.questData.activeQuests.get(questId);
+        return q != null && q.isCompleted;
+    }
 
 	public static boolean isQuestFinished(EntityPlayer player, int questId) {
-		PlayerData data = PlayerData.get(player);
-		return data != null && data.questData.hasFinishedQuest(questId);
+		return PlayerData.get(player).questData.hasFinishedQuest(questId);
 	}
 
 	public static boolean canQuestBeAccepted(EntityPlayer player, int questId) {
 		Quest quest = QuestController.instance.quests.get(questId);
-		PlayerData data = PlayerData.get(player);
-		if (quest == null || data == null) { return false; }
+		if (quest == null) { return false; }
 		PlayerQuestData questData = PlayerData.get(player).questData;
 		if (questData.activeQuests.containsKey(quest.id)) { return false; }
 		if (questData.hasFinishedQuest(quest.id) && quest.repeat != EnumQuestRepeat.REPEATABLE) {
@@ -79,11 +72,9 @@ public class PlayerQuestController {
 	public static void addActiveQuest(Quest quest, EntityPlayer player, boolean skipBeAccepted) {
 		if (player == null || quest == null || !quest.isSetUp()) { return; }
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return; }
-		PlayerQuestData questData = data.questData;
 		if (skipBeAccepted || data.scriptData.getIPlayer().canQuestBeAccepted(quest.id)) {
 			if (EventHooks.onQuestStarted(data.scriptData, quest)) { return; }
-			questData.activeQuests.put(quest.id, new QuestData(quest));
+			data.questData.activeQuests.put(quest.id, new QuestData(quest));
 			Packets.send((EntityPlayerMP) player, new PacketAchievement(Component.translatable("quest.newquest"), Component.translatable(quest.title), 2, new NBTTagCompound()));
 			Packets.send((EntityPlayerMP) player, new PacketChat(Component.translatable("quest.newquest").append(":").append(Component.translatable(quest.title))));
 			data.updateClient = true;
@@ -119,8 +110,7 @@ public class PlayerQuestController {
 
 	public static void setQuestFinished(Quest quest, EntityPlayer player) {
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return; }
-		PlayerQuestData questData = data.questData;
+        PlayerQuestData questData = data.questData;
 		data.minimap.removeQuestPoints(quest.id);
 		questData.finish(quest, player);
 		if (quest.repeat != EnumQuestRepeat.NONE) { // Change
@@ -138,8 +128,7 @@ public class PlayerQuestController {
 	public static Vector<Quest> getActiveQuests(EntityPlayer player) {
 		Vector<Quest> quests = new Vector<>();
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return quests; }
-		for (QuestData questdata : data.questData.activeQuests.values()) {
+        for (QuestData questdata : data.questData.activeQuests.values()) {
 			if (questdata.quest != null) { quests.add(questdata.quest); }
 		}
 		return quests;
@@ -148,8 +137,7 @@ public class PlayerQuestController {
 	// New from Unofficial (BetaZavr)
 	public static boolean getRemoveActiveQuest(EntityPlayer player, int id) {
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return false; }
-		PlayerQuestData questData = data.questData;
+        PlayerQuestData questData = data.questData;
 		data.minimap.removeQuestPoints(id);
 		if (!questData.activeQuests.containsKey(id)) { return false; }
 		HashMap<Integer, QuestData> newData = new HashMap<>();

@@ -1,15 +1,14 @@
 package noppes.npcs.controllers.data;
 
 import java.util.List;
-import java.util.Objects;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.handler.data.IKeySetting;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.controllers.KeyController;
 import noppes.npcs.mixin.client.settings.IKeyBindingMixin;
@@ -109,7 +108,7 @@ public class KeyConfig implements IKeySetting {
 	public String getName() { return name; }
 
 	@Override
-	public INbt getNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(save()); }
+	public INbt getNbt() { return new NBTWrapper(save()); }
 
 	public boolean isActive(int key, List<Integer> keyPress) {
 		if (keyId != key) { return false; }

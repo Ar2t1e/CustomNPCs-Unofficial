@@ -17,6 +17,7 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketRemoveLoadFile;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomDelayedTask;
 import org.lwjgl.input.Keyboard;
 
 import net.minecraft.client.Minecraft;
@@ -51,10 +52,13 @@ public class ClientTickHandler {
 	private World prevWorld;
 
 	// New from Unofficial (BetaZavr)
+	protected static List<CustomDelayedTask> delayedTasks = new ArrayList<>();
 	public static List<MusicData> musics = new ArrayList<>();
 	public static boolean checkMails = false;
 	public static boolean inGame = false;
 	public static long ticks = 0L;
+
+	public static void addTask(Runnable task, long delay) { delayedTasks.add(new CustomDelayedTask(task, delay)); }
 
 	public static void loadFiles() {
 		if (!ClientProxy.loadFiles.isEmpty()) {
@@ -91,7 +95,7 @@ public class ClientTickHandler {
 		if (event.phase == TickEvent.Phase.END) { return; }
 		CustomNpcs.debugData.start(null);
 		Minecraft mc = Minecraft.getMinecraft();
-		PlayerData data = CustomNpcs.proxy.getPlayerData(mc.player);
+		PlayerData data = PlayerData.get(mc.player);
 		if (mc.player != null && mc.player.openContainer instanceof ContainerPlayer) {
 			if (otherContainer) {
 				Packets.sendServer(new SPacketQuestCompletionCheckAll());
@@ -99,14 +103,12 @@ public class ClientTickHandler {
 			}
 		}
 		else { otherContainer = true; }
-
 		++ticks;
 		++RenderNPCInterface.LastTextureTick;
 		if (prevWorld != mc.world) {
 			prevWorld = mc.world;
 			MusicController.Instance.stopSounds();
 		}
-
 		// New from Unofficial (BetaZavr)
 		// Set in game
 		if (mc.player == null) {
@@ -209,6 +211,16 @@ public class ClientTickHandler {
 				data.overlay.keyPress.clear();
 			}
 		}
+		// Process delayed tasks
+		Iterator<CustomDelayedTask> it = delayedTasks.iterator();
+		while (it.hasNext()) {
+			CustomDelayedTask delayedTask = it.next();
+			delayedTask.ticksRemaining--;
+			if (delayedTask.ticksRemaining <= 0) {
+				it.remove();
+				delayedTask.task.run();
+			}
+		}
 		CustomNpcs.debugData.end(null);
 	}
 
@@ -247,7 +259,7 @@ public class ClientTickHandler {
 			boolean isMetaPressed = Keyboard.isKeyDown(Keyboard.KEY_LMETA) || Keyboard.isKeyDown(Keyboard.KEY_RMETA);
 			String openGui = mc.currentScreen == null ? "" : mc.currentScreen.getClass().getName();
 			Packets.sendServer(new SPacketPlayerKeyPressed(key, isCtrlPressed, isShiftPressed, isAltPressed, isMetaPressed, isDown, openGui));
-			PlayerData data = CustomNpcs.proxy.getPlayerData(mc.player);
+			PlayerData data = PlayerData.get(mc.player);
 			if (mc.currentScreen == null) {
 				if (isDown) { data.overlay.keyPress.add(key); }
 				else { data.overlay.keyPress.remove(key); }
@@ -309,7 +321,7 @@ public class ClientTickHandler {
 			Minecraft mc = Minecraft.getMinecraft();
 			Packets.sendServer(new SPacketPlayerMousePressed(key, isDown, dWheel, isCtrlPressed, isShiftPressed, isAltPressed, isMetaPressed,
 					mc.currentScreen == null ? "" : mc.currentScreen.getClass().getName()));
-			PlayerData data = CustomNpcs.proxy.getPlayerData(mc.player);
+			PlayerData data = PlayerData.get(mc.player);
 			if (isDown) { data.overlay.mousePress.add(key); }
 			else { data.overlay.mousePress.remove(key); }
 		}

@@ -1,6 +1,5 @@
 package noppes.npcs.items.custom;
 
-import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
@@ -24,7 +23,7 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTabs;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.mixin.item.IItemToolMixin;
 import noppes.npcs.util.Util;
 
@@ -120,7 +119,7 @@ implements ICustomElement {
 	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public int getElementType() {

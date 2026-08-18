@@ -20,16 +20,15 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomTabs;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.constants.CustomBlockTypes;
 import noppes.npcs.items.custom.CustomItem;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 @SuppressWarnings("all")
 public abstract class CustomBlockSlab extends BlockSlab implements ICustomElement {
@@ -41,8 +40,8 @@ public abstract class CustomBlockSlab extends BlockSlab implements ICustomElemen
 		public CustomBlockSlabDouble(NBTTagCompound nbtBlock) {
 			super(nbtBlock);
 			String name = "custom_double_" + nbtBlock.getString("RegistryName");
-			this.setRegistryName(CustomNpcs.MODID, name.toLowerCase());
-			this.setUnlocalizedName(name.toLowerCase());
+			setRegistryName(CustomNpcs.MODID, name.toLowerCase());
+			setUnlocalizedName(name.toLowerCase());
 		}
 
 		@Override
@@ -54,7 +53,7 @@ public abstract class CustomBlockSlab extends BlockSlab implements ICustomElemen
 		}
 
 		public void setSingle(CustomBlockSlabSingle block) {
-			this.singleBlock = block;
+			singleBlock = block;
 		}
 
 	}
@@ -66,9 +65,9 @@ public abstract class CustomBlockSlab extends BlockSlab implements ICustomElemen
 		public CustomBlockSlabSingle(NBTTagCompound nbtBlock, CustomBlockSlabDouble addblock) {
 			super(nbtBlock);
 			String name = "custom_" + nbtBlock.getString("RegistryName");
-			this.setRegistryName(CustomNpcs.MODID, name.toLowerCase());
-			this.setUnlocalizedName(name.toLowerCase());
-			this.doubleBlock = addblock;
+			setRegistryName(CustomNpcs.MODID, name.toLowerCase());
+			setUnlocalizedName(name.toLowerCase());
+			doubleBlock = addblock;
 		}
 
 		@Override
@@ -97,42 +96,42 @@ public abstract class CustomBlockSlab extends BlockSlab implements ICustomElemen
 
 	public CustomBlockSlab(NBTTagCompound nbtBlock) {
 		super(CustomItem.getMaterial(nbtBlock.getString("Material")));
-		this.useNeighborBrightness = !this.isDouble();
+		useNeighborBrightness = !isDouble();
 
-		IBlockState iblockstate = this.blockState.getBaseState();
+		IBlockState iblockstate = blockState.getBaseState();
 
-		if (!this.isDouble()) {
+		if (!isDouble()) {
 			iblockstate = iblockstate.withProperty(HALF, BlockSlab.EnumBlockHalf.BOTTOM);
 		}
-		this.setDefaultState(iblockstate.withProperty(VARIANT, CustomBlockTypes.TreeType.NORMAL));
+		setDefaultState(iblockstate.withProperty(VARIANT, CustomBlockTypes.TreeType.NORMAL));
 
-		this.nbtData = nbtBlock;
+		nbtData = nbtBlock;
 
-		this.enableStats = true;
-		this.blockSoundType = SoundType.STONE;
-		this.blockParticleGravity = 1.0F;
-		this.lightOpacity = this.fullBlock ? 255 : 0;
-		this.translucent = !this.blockMaterial.blocksLight();
-		this.setHardness(0.0f);
-		this.setResistance(10.0f);
+		enableStats = true;
+		blockSoundType = SoundType.STONE;
+		blockParticleGravity = 1.0F;
+		lightOpacity = fullBlock ? 255 : 0;
+		translucent = !blockMaterial.blocksLight();
+		setHardness(0.0f);
+		setResistance(10.0f);
 
 		if (nbtBlock.hasKey("Hardness", 5)) {
-			this.setHardness(nbtBlock.getFloat("Hardness"));
+			setHardness(nbtBlock.getFloat("Hardness"));
 		}
 		if (nbtBlock.hasKey("Resistance", 5)) {
-			this.setResistance(nbtBlock.getFloat("Resistance"));
+			setResistance(nbtBlock.getFloat("Resistance"));
 		}
 		if (nbtBlock.hasKey("LightLevel", 5)) {
-			this.setLightLevel(nbtBlock.getFloat("LightLevel"));
+			setLightLevel(nbtBlock.getFloat("LightLevel"));
 		}
 
-		this.setSoundType(CustomBlock.getNbtSoundType(nbtBlock.getString("SoundType")));
-		this.setCreativeTab(CustomTabs.BLOCKS);
+		setSoundType(CustomBlock.getNbtSoundType(nbtBlock.getString("SoundType")));
+		setCreativeTab(CustomTabs.BLOCKS);
 	}
 
 	@Override
 	protected @Nonnull BlockStateContainer createBlockState() {
-		return this.isDouble() ? new BlockStateContainer(this, VARIANT) : new BlockStateContainer(this, HALF, VARIANT);
+		return isDouble() ? new BlockStateContainer(this, VARIANT) : new BlockStateContainer(this, HALF, VARIANT);
 	}
 
 	@Override
@@ -162,8 +161,8 @@ public abstract class CustomBlockSlab extends BlockSlab implements ICustomElemen
 
 	@Override
 	public @Nonnull IBlockState getStateForPlacement(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ, int meta, @Nonnull EntityLivingBase placer) {
-		if (this.isDouble()) {
-			return this.getDefaultState();
+		if (isDouble()) {
+			return getDefaultState();
 		}
 		IBlockState iblockstate = super.getStateForPlacement(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer)
 				.withProperty(HALF, BlockSlab.EnumBlockHalf.BOTTOM);
@@ -190,20 +189,20 @@ public abstract class CustomBlockSlab extends BlockSlab implements ICustomElemen
 	}
 
 	@Override
-	public @Nonnull String getUnlocalizedName(int meta) { return this.getUnlocalizedName() + this.getStateFromMeta(meta).getValue(VARIANT).getName().toLowerCase(); }
+	public @Nonnull String getUnlocalizedName(int meta) { return getUnlocalizedName() + getStateFromMeta(meta).getValue(VARIANT).getName().toLowerCase(); }
 
 	@Override
 	public @Nonnull IProperty<?> getVariantProperty() { return VARIANT; }
 
 	@Override
-	public String getCustomName() { return this.nbtData.getString("RegistryName"); }
+	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(this.nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public int getElementType() {
-		if (this.nbtData != null && this.nbtData.hasKey("BlockType", 1)) { return this.nbtData.getByte("BlockType"); }
+		if (nbtData != null && nbtData.hasKey("BlockType", 1)) { return nbtData.getByte("BlockType"); }
 		return 4;
 	}
 

@@ -239,7 +239,7 @@ public class GuiLog extends GuiNPCInterface
 		drawDefaultBackground = false;
 		hoverIsGame = true;
 
-		data = CustomNpcs.proxy.getPlayerData(player);
+		data = PlayerData.get(player);
 
 		type = t;
 		temp = 0;

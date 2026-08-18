@@ -3,9 +3,7 @@ package noppes.npcs.client.particles;
 import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
-
-import java.util.Objects;
+import noppes.npcs.api.wrapper.NBTWrapper;
 
 public class CustomParticleSettings implements ICustomElement {
 
@@ -34,7 +32,7 @@ public class CustomParticleSettings implements ICustomElement {
 	public String getCustomName() { return nbtData.getString("RegistryName").toLowerCase(); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public int getElementType() { return nbtData.hasKey("OBJModel", 8) && !nbtData.getString("OBJModel").isEmpty() ? 1 : 0; }

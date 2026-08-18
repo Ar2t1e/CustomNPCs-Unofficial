@@ -6,13 +6,13 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.event.NpcEvent;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.util.CustomNPCsScheduler;
 
 public class NpcScriptData
 extends BaseScriptData {
@@ -50,8 +50,8 @@ extends BaseScriptData {
 	@Override
 	public void runScript(String type, Event event) {
 		if (isEnabled()) {
-			try {
-				CustomNpcs.Server.addScheduledTask(() -> {
+			CustomNPCsScheduler.runTack(() -> {
+				try {
 					if (ScriptController.Instance.lastLoaded > lastInited) {
 						lastInited = ScriptController.Instance.lastLoaded;
 						if (!type.equalsIgnoreCase(EnumScriptType.INIT.function)) {
@@ -59,8 +59,8 @@ extends BaseScriptData {
 						}
 					}
 					for (ScriptContainer script : scripts) { script.run(type, event); }
-				});
-			} catch (Exception e) { LogWriter.error(e); }
+				} catch (Exception e) { LogWriter.error(e); }
+			});
 		}
 	}
 

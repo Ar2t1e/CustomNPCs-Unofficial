@@ -8,6 +8,8 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntityLockableLoot;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
@@ -46,9 +48,7 @@ public class CustomTileEntityChest extends TileEntityLockableLoot implements ITi
 
 	@Override
 	public void closeInventory(@Nonnull EntityPlayer player) {
-		if (world == null) {
-			return;
-		}
+		if (world == null) { return; }
 		--numPlayersUsing;
 		world.addBlockEvent(pos, getBlockType(), 1, numPlayersUsing);
 		world.notifyNeighborsOfStateChange(pos, getBlockType(), false);
@@ -99,6 +99,21 @@ public class CustomTileEntityChest extends TileEntityLockableLoot implements ITi
 			world.addBlockEvent(pos, getBlockType(), 1, numPlayersUsing);
 			world.notifyNeighborsOfStateChange(pos, getBlockType(), false);
 		}
+	}
+
+	@Override
+	public @Nonnull NBTTagCompound getUpdateTag() {
+		return writeToNBT(new NBTTagCompound());
+	}
+
+	@Override
+	public @Nullable SPacketUpdateTileEntity getUpdatePacket() {
+		return new SPacketUpdateTileEntity(pos, 0, getUpdateTag());
+	}
+
+	@Override
+	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
+		readFromNBT(pkt.getNbtCompound());
 	}
 
 	@Override
@@ -168,18 +183,18 @@ public class CustomTileEntityChest extends TileEntityLockableLoot implements ITi
 	@Override
 	public void update() {
 		if (numPlayersUsing < 0) { numPlayersUsing = 0; }
-        if (world != null && !world.isRemote && numPlayersUsing != 0
+        if (world != null && numPlayersUsing != 0
 				&& (world.getTotalWorldTime() + pos.getX() + pos.getY() + pos.getZ()) % 20 == 0) {
 			numPlayersUsing = 0;
-			for (EntityPlayer entityplayer : world.getEntitiesWithinAABB(EntityPlayer.class,
+			for (EntityPlayer player : world.getEntitiesWithinAABB(EntityPlayer.class,
 					new AxisAlignedBB((float) pos.getX() - 5.0F,
                             (float) pos.getY() - 5.0F,
 							(float) pos.getZ() - 5.0F,
                             (float) (pos.getX() + 1) + 5.0F,
                             (float) (pos.getY() + 1) + 5.0F,
                             (float) (pos.getZ() + 1) + 5.0F))) {
-				if (entityplayer.openContainer instanceof ContainerChestCustom) {
-					if (((ContainerChestCustom) entityplayer.openContainer).getPos().equals(pos)) {
+				if (player.openContainer instanceof ContainerChestCustom) {
+					if (((ContainerChestCustom) player.openContainer).getPos().equals(pos)) {
 						++numPlayersUsing;
 					}
 				}

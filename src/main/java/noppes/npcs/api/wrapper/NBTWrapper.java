@@ -3,10 +3,7 @@ package noppes.npcs.api.wrapper;
 import net.minecraft.nbt.*;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.util.NBTJsonUtil;
-
-import java.util.Objects;
 
 public class NBTWrapper implements INbt {
 
@@ -43,7 +40,7 @@ public class NBTWrapper implements INbt {
 
 	@Override
 	public INbt getCompound(String key) {
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound.getCompoundTag(key));
+		return new NBTWrapper(compound.getCompoundTag(key));
 	}
 
 	@Override
@@ -77,7 +74,7 @@ public class NBTWrapper implements INbt {
 		Object[] nbts = new Object[list.tagCount()];
 		for (int i = 0; i < list.tagCount(); ++i) {
 			if (list.getTagType() == 10) {
-				nbts[i] = Objects.requireNonNull(NpcAPI.Instance()).getINbt(list.getCompoundTagAt(i));
+				nbts[i] = new NBTWrapper(list.getCompoundTagAt(i));
 			} else if (list.getTagType() == 8) {
 				nbts[i] = list.getStringTagAt(i);
 			} else if (list.getTagType() == 6) {

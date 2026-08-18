@@ -87,8 +87,6 @@ public class SPacketTraderMarketSell extends PacketServerBasic {
         DealMarkup dm = MarcetController.getInstance().getBuyData(marcet, deal, data.game.getMarcetLevel(marcet.getId()), count);
         Entity entity = player.world.getEntityByID(npcID);
         if (entity instanceof EntityNPCInterface) { npc = (EntityNPCInterface) entity; }
-        Map<ItemStack, Integer> mainItem = new LinkedHashMap<>();
-        mainItem.put(dm.main, dm.count);
         if (marcet.isLimited) {
             boolean notSell = marcet.money < dm.sellMoney;
             if (!notSell && !dm.sellItems.isEmpty() &&
@@ -100,14 +98,13 @@ public class SPacketTraderMarketSell extends PacketServerBasic {
                 CustomNpcs.debugData.end("Packets");
                 return;
             }
+            marcet.money -= dm.sellMoney;
+            Map<ItemStack, Integer> mainItem = new LinkedHashMap<>();
+            mainItem.put(dm.main, dm.count);
+            marcet.addInventoryItems(mainItem);
+            marcet.removeInventoryItems(dm.sellItems);
         }
-        if (player.isCreative() ||
-                (Util.instance.canRemoveItems(player.inventory.mainInventory, mainItem, dm.ignoreDamage, dm.ignoreNBT)
-                        && Util.instance.removeItem(player, dm.main, dm.count, dm.ignoreDamage, dm.ignoreNBT))) {
-            if (marcet.isLimited) {
-                marcet.addInventoryItems(mainItem);
-                marcet.removeInventoryItems(dm.sellItems);
-            }
+        if (player.isCreative() || Util.instance.removeItem(player, dm.main, dm.ignoreDamage, dm.ignoreNBT)) {
             // Add Items
             if (!dm.sellItems.isEmpty()) {
                 boolean change = false;
@@ -126,10 +123,7 @@ public class SPacketTraderMarketSell extends PacketServerBasic {
                 }
             }
             // Add Money
-            if (dm.sellMoney > 0) {
-                data.game.addMoney(dm.sellMoney);
-                marcet.money -= dm.sellMoney;
-            }
+            if (dm.sellMoney > 0) { data.game.addMoney(dm.sellMoney); }
             if (deal.getMaxCount() != 0) { deal.setAmount(deal.getAmount() + dm.count); }
             if (CustomNpcs.SendMarcetInfo) { player.sendMessage(Component.translatable("mes.market.sell", dm.main.getDisplayName() + " x" + dm.count).getParent()); }
             data.game.addMarkupXP(marcet.getId(), count);

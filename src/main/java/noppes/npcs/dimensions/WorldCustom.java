@@ -2,8 +2,6 @@ package noppes.npcs.dimensions;
 
 import net.minecraft.profiler.Profiler;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.village.VillageCollection;
-import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.border.IBorderListener;
 import net.minecraft.world.border.WorldBorder;
@@ -17,67 +15,90 @@ public class WorldCustom extends WorldServer {
 	private final WorldServer delegate;
 	private final IBorderListener borderListener;
 
-	public WorldCustom(WorldInfo worldInfo, MinecraftServer server, ISaveHandler saveHandlerIn, int dimensionId, WorldServer delegate, Profiler profilerIn) {
+	public WorldCustom(CustomWorldInfo worldInfo, MinecraftServer server, ISaveHandler saveHandlerIn,
+					   int dimensionId, WorldServer delegateIn, Profiler profilerIn) {
 		super(server, saveHandlerIn, worldInfo, dimensionId, profilerIn);
-		this.delegate = delegate;
-		this.borderListener = new IBorderListener() {
+		delegate = delegateIn;
+		WorldBorder borderIn = getWorldBorder();
+		borderListener = new IBorderListener() {
+			@Override
 			public void onCenterChanged(@Nonnull WorldBorder border, double x, double z) {
-				WorldCustom.this.getWorldBorder().setCenter(x, z);
+				borderIn.setCenter(x, z);
 			}
 
+			@Override
 			public void onDamageAmountChanged(@Nonnull WorldBorder border, double newAmount) {
-				WorldCustom.this.getWorldBorder().setDamageAmount(newAmount);
+				borderIn.setDamageAmount(newAmount);
 			}
 
+			@Override
 			public void onDamageBufferChanged(@Nonnull WorldBorder border, double newSize) {
-				WorldCustom.this.getWorldBorder().setDamageBuffer(newSize);
+				borderIn.setDamageBuffer(newSize);
 			}
 
+			@Override
 			public void onSizeChanged(@Nonnull WorldBorder border, double newSize) {
-				WorldCustom.this.getWorldBorder().setTransition(newSize);
+				borderIn.setTransition(newSize);
 			}
 
+			@Override
 			public void onTransitionStarted(@Nonnull WorldBorder border, double oldSize, double newSize, long time) {
-				WorldCustom.this.getWorldBorder().setTransition(oldSize, newSize, time);
+				borderIn.setTransition(oldSize, newSize, time);
 			}
 
+			@Override
 			public void onWarningDistanceChanged(@Nonnull WorldBorder border, int newDistance) {
-				WorldCustom.this.getWorldBorder().setWarningDistance(newDistance);
+				borderIn.setWarningDistance(newDistance);
 			}
 
+			@Override
 			public void onWarningTimeChanged(@Nonnull WorldBorder border, int newTime) {
-				WorldCustom.this.getWorldBorder().setWarningTime(newTime);
+				borderIn.setWarningTime(newTime);
 			}
 
 		};
-		this.delegate.getWorldBorder().addListener(this.borderListener);
+		borderIn.addListener(borderListener);
 	}
 
 	@Override
 	public void flush() {
 		super.flush();
-		this.delegate.getWorldBorder().removeListener(this.borderListener); // Unlink ourselves, to prevent world leak.
+		delegate.getWorldBorder().removeListener(borderListener); // Unlink ourselves, to prevent world leak.
 	}
 
+	/**
+	 * Update the WorldInfo for this custom world.
+	 * Used when editing dimension settings.
+	 */
+	public void updateWorldInfo(WorldInfo info) {
+		worldInfo = info;
+		init();
+	}
+
+	/*
+	@Override
 	public @Nonnull World init() {
-		this.mapStorage = this.delegate.getMapStorage();
-		this.worldScoreboard = this.delegate.getScoreboard();
-		this.lootTable = this.delegate.getLootTableManager();
-		String s = VillageCollection.fileNameForProvider(this.provider);
-		VillageCollection villagecollection = (VillageCollection) this.perWorldStorage
+		mapStorage = delegate.getMapStorage();
+		worldScoreboard = delegate.getScoreboard();
+		lootTable = delegate.getLootTableManager();
+
+		String s = VillageCollection.fileNameForProvider(provider);
+		VillageCollection villagecollection = (VillageCollection) perWorldStorage
 				.getOrLoadData(VillageCollection.class, s);
 		if (villagecollection == null) {
-			this.villageCollection = new VillageCollection(this);
-			this.perWorldStorage.setData(s, this.villageCollection);
+			villageCollection = new VillageCollection(this);
+			perWorldStorage.setData(s, villageCollection);
 		} else {
-			this.villageCollection = villagecollection;
-			this.villageCollection.setWorldsForAll(this);
+			villageCollection = villagecollection;
+			villageCollection.setWorldsForAll(this);
 		}
-		return this;
+		return super.init();
 	}
 
+	@Override
 	protected void saveLevel() {
-		this.perWorldStorage.saveAllData();
+		perWorldStorage.saveAllData();
 	}
+	/**/
 
 }

@@ -278,7 +278,7 @@ public class GuiDialogInteract extends GuiNPCInterface implements IGuiClose {
 
 	@Override
 	public void save() {
-		PlayerData data = CustomNpcs.proxy.getPlayerData(player);
+		PlayerData data = PlayerData.get(player);
 		data.dialogData.addLogs(lines, npcSkin.toString());
 		NBTTagCompound compound = new NBTTagCompound();
 		data.dialogData.save(compound);

@@ -3,6 +3,7 @@ package noppes.npcs.items.custom;
 import java.util.*;
 
 import noppes.npcs.CustomTabs;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.mixin.item.IItemArmorMixin;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -25,7 +26,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.util.Util;
@@ -231,7 +231,7 @@ public class CustomArmor extends ItemArmor implements ICustomElement {
 	public String getCustomName() { return nbtData.getString("RegistryName"); }
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 
 	@Override
 	public boolean getIsRepairable(@Nonnull ItemStack toRepair, @Nonnull ItemStack repair) {

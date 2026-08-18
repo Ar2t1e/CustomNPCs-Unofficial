@@ -32,13 +32,12 @@ import noppes.npcs.CustomBlocks;
 import noppes.npcs.CustomTabs;
 import noppes.npcs.api.ICustomElement;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.blocks.BlockInterface;
 import noppes.npcs.mixin.block.properties.IPropertyIntegerMixin;
 import noppes.npcs.util.Util;
 
 import java.util.Collections;
-import java.util.Objects;
 
 public class CustomBlock extends BlockInterface implements ICustomElement {
 
@@ -353,7 +352,7 @@ public class CustomBlock extends BlockInterface implements ICustomElement {
 	}
 
 	@Override
-	public INbt getCustomNbt() { return Objects.requireNonNull(NpcAPI.Instance()).getINbt(nbtData); }
+	public INbt getCustomNbt() { return new NBTWrapper(nbtData); }
 	
 	@Override
 	public int getElementType() {

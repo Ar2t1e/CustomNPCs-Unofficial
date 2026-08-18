@@ -114,7 +114,6 @@ public class TransportController {
 			cat.title = "Default";
 			categories.put(cat.id, cat);
 		}
-		LogWriter.info("[DEBUG] categories "+categories.size()+"; locations: "+locations.size());
 	}
 
 	public void load(NBTTagCompound compound) {

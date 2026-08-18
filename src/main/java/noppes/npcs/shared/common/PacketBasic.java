@@ -10,6 +10,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.util.CustomNPCsScheduler;
 
 public abstract class PacketBasic implements IMessage {
 
@@ -21,7 +22,7 @@ public abstract class PacketBasic implements IMessage {
     public void handleClient() {
         player = Minecraft.getMinecraft().player;
         npc = NoppesUtilServer.getEditingNpc(player);
-        Minecraft.getMinecraft().addScheduledTask(this::handle);
+        CustomNPCsScheduler.runTack(this::handle);
     }
 
     @Override

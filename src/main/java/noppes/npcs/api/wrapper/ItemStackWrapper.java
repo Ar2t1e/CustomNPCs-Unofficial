@@ -41,7 +41,6 @@ import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.ItemType;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityLiving;
@@ -227,7 +226,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 	public INbt getItemNbt() {
 		NBTTagCompound compound = new NBTTagCompound();
 		this.item.writeToNBT(compound);
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
+		return new NBTWrapper(compound);
 	}
 
 	@Override
@@ -279,7 +278,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 		if (compound == null) {
 			this.item.setTagCompound(compound = new NBTTagCompound());
 		}
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
+		return new NBTWrapper(compound);
 	}
 
 	@Override

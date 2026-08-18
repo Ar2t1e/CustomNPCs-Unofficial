@@ -17,49 +17,45 @@ public class ContainerChestCustom extends Container {
 	public EntityPlayer player;
 	public CustomTileEntityChest customChest;
 
-	public ContainerChestCustom(InventoryPlayer playerInventory, CustomTileEntityChest customChest, EntityPlayer player) {
-		this.pos = customChest.getPos();
-		this.player = player;
-		this.customChest = customChest;
-		this.customChest.openInventory(player);
-		if (player.world.isRemote) {
-			this.customChest = customChest.copy();
-		}
-		int h = ((int) Math.ceil((double) this.customChest.getSizeInventory() / 9.0d) - 4) * 18;
+	public ContainerChestCustom(InventoryPlayer playerInventory, CustomTileEntityChest customChestIn, EntityPlayer playerIn) {
+		pos = customChestIn.getPos();
+		player = playerIn;
+		customChest = customChestIn;
+		customChest.openInventory(player);
+		if (player.world.isRemote) { customChest = customChest.copy(); }
+		int h = ((int) Math.ceil((double) customChest.getSizeInventory() / 9.0d) - 4) * 18;
 		int w = 0;
-		if (this.customChest.getSizeInventory() > 45) {
-			h = 18;
-		}
+		if (customChest.getSizeInventory() > 45) { h = 18; }
 		h -= 6;
 		// Inventory
-		if (this.customChest.getSizeInventory() > 45) { // Creative
+		if (customChest.getSizeInventory() > 45) { // Creative
 			w = 8;
-			this.height = 5 * 18;
-			for (int i = 0; i < this.customChest.getSizeInventory(); i++) {
-				this.addSlotToContainer(new Slot(this.customChest, i, -5000, -5000));
+			height = 5 * 18;
+			for (int i = 0; i < customChest.getSizeInventory(); i++) {
+				addSlotToContainer(new Slot(customChest, i, -5000, -5000));
 			}
 		} else { // 9x(2 / 5)
-			this.height = (int) Math.ceil((double) this.customChest.getSizeInventory() / 9.0d) * 18;
-			int u = 0, e = this.customChest.getSizeInventory();
-			if (this.customChest.getSizeInventory() % 9 != 0) {
-				e -= this.customChest.getSizeInventory() % 9;
+			height = (int) Math.ceil((double) customChest.getSizeInventory() / 9.0d) * 18;
+			int u = 0, e = customChest.getSizeInventory();
+			if (customChest.getSizeInventory() % 9 != 0) {
+				e -= customChest.getSizeInventory() % 9;
 			}
-			for (int i = 0; i < this.customChest.getSizeInventory(); i++) {
+			for (int i = 0; i < customChest.getSizeInventory(); i++) {
 				if (i >= e) {
-					u = (int) (((9.0d - ((double) this.customChest.getSizeInventory() % 9.0d)) / 2.0d) * 18.0d);
+					u = (int) (((9.0d - ((double) customChest.getSizeInventory() % 9.0d)) / 2.0d) * 18.0d);
 				}
-				this.addSlotToContainer(new Slot(this.customChest, i, 8 + u + (i % 9) * 18,
+				addSlotToContainer(new Slot(customChest, i, 8 + u + (i % 9) * 18,
 						18 + (int) Math.floor((double) i / 9.0d) * 18));
 			}
 		}
 		// Player Inventory
 		for (int r = 0; r < 3; ++r) {
 			for (int p = 0; p < 9; ++p) {
-				this.addSlotToContainer(new Slot(playerInventory, p + r * 9 + 9, 8 + w + p * 18, 103 + r * 18 + h));
+				addSlotToContainer(new Slot(playerInventory, p + r * 9 + 9, 8 + w + p * 18, 103 + r * 18 + h));
 			}
 		}
 		for (int p = 0; p < 9; ++p) {
-			this.addSlotToContainer(new Slot(playerInventory, p, 8 + w + p * 18, 161 + h));
+			addSlotToContainer(new Slot(playerInventory, p, 8 + w + p * 18, 161 + h));
 		}
 	}
 
@@ -69,26 +65,25 @@ public class ContainerChestCustom extends Container {
 	}
 
 	public BlockPos getPos() {
-		return this.pos;
+		return pos;
 	}
 
 	public void onContainerClosed(@Nonnull EntityPlayer playerIn) {
 		super.onContainerClosed(playerIn);
-		this.customChest.closeInventory(playerIn);
+		customChest.closeInventory(playerIn);
 	}
 
 	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer playerIn, int index) {
 		ItemStack itemstack = ItemStack.EMPTY;
-		Slot slot = this.inventorySlots.get(index);
+		Slot slot = inventorySlots.get(index);
 		if (slot != null && slot.getHasStack()) {
 			ItemStack itemstack1 = slot.getStack();
 			itemstack = itemstack1.copy();
-			if (index < this.customChest.items.size()) {
-				if (!this.mergeItemStack(itemstack1, this.customChest.items.size(), this.inventorySlots.size(),
-						true)) {
+			if (index < customChest.items.size()) {
+				if (!mergeItemStack(itemstack1, customChest.items.size(), inventorySlots.size(), true)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (!this.mergeItemStack(itemstack1, 0, this.customChest.items.size(), false)) {
+			} else if (!mergeItemStack(itemstack1, 0, customChest.items.size(), false)) {
 				return ItemStack.EMPTY;
 			}
 			if (itemstack1.isEmpty()) {

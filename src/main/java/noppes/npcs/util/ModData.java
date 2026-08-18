@@ -34,7 +34,7 @@ public class ModData {
         return exampleBlocks;
     }
 
-    private static NBTTagCompound getExampleBlock() {
+    public static NBTTagCompound getExampleBlock() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "blockexample");
         compound.setByte("BlockType", (byte) 0);
@@ -86,12 +86,12 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleFacingBlock() {
+    public static NBTTagCompound getExampleFacingBlock() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "facingblockexample");
         compound.setByte("BlockType", (byte) 0);
         compound.setString("BlockRenderType", "MODEL");
-            NBTTagCompound nbtProperty = new NBTTagCompound();
+        NBTTagCompound nbtProperty = new NBTTagCompound();
             nbtProperty.setByte("Type", (byte) 4);
             nbtProperty.setString("Name", "facing");
         compound.setTag("Property", nbtProperty);
@@ -107,7 +107,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleLiquid() {
+    public static NBTTagCompound getExampleLiquid() {
 
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "liquidexample");
@@ -156,7 +156,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleChest() {
+    public static NBTTagCompound getExampleChest() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "chestexample");
         compound.setByte("BlockType", (byte) 2);
@@ -181,7 +181,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleContainer() {
+    public static NBTTagCompound getExampleContainer() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "containerexample");
         compound.setByte("BlockType", (byte) 2);
@@ -208,7 +208,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleStairs() {
+    public static NBTTagCompound getExampleStairs() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "stairsexample");
         compound.setByte("BlockType", (byte) 3);
@@ -226,7 +226,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleSlab() {
+    public static NBTTagCompound getExampleSlab() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "slabexample");
         compound.setByte("BlockType", (byte) 4);
@@ -245,7 +245,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExamplePortal() {
+    public static NBTTagCompound getExamplePortal() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "portalexample");
         compound.setByte("BlockType", (byte) 5);
@@ -271,7 +271,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleDoor() {
+    public static NBTTagCompound getExampleDoor() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "doorexample");
         compound.setByte("BlockType", (byte) 6);
@@ -313,7 +313,7 @@ public class ModData {
         return exampleItems;
     }
 
-    private static NBTTagCompound getExampleItem() {
+    public static NBTTagCompound getExampleItem() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "itemexample");
         compound.setByte("ItemType", (byte) 0);
@@ -341,7 +341,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleWeapon() {
+    public static NBTTagCompound getExampleWeapon() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "weaponexample");
         compound.setByte("ItemType", (byte) 1);
@@ -366,7 +366,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleTool() {
+    public static NBTTagCompound getExampleTool() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "toolexample");
         compound.setByte("ItemType", (byte) 2);
@@ -396,7 +396,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleAxe() {
+    public static NBTTagCompound getExampleAxe() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "axeexample");
         compound.setByte("ItemType", (byte) 2);
@@ -420,7 +420,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleArmor() {
+    public static NBTTagCompound getExampleArmor() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "armorexample");
         compound.setByte("ItemType", (byte) 3);
@@ -491,7 +491,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleOBJArmor() {
+    public static NBTTagCompound getExampleOBJArmor() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "armorobjexample");
         compound.setByte("ItemType", (byte) 3);
@@ -944,7 +944,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleShield() {
+    public static NBTTagCompound getExampleShield() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "shieldexample");
         compound.setByte("ItemType", (byte) 4);
@@ -963,7 +963,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleBow() {
+    public static NBTTagCompound getExampleBow() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "bowexample");
         compound.setByte("ItemType", (byte) 5);
@@ -990,7 +990,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleFood() {
+    public static NBTTagCompound getExampleFood() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "foodexample");
         compound.setByte("ItemType", (byte) 6);
@@ -1028,7 +1028,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleFishingRod() {
+    public static NBTTagCompound getExampleFishingRod() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "fishingrodexample");
         compound.setByte("ItemType", (byte) 8);
@@ -1052,7 +1052,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExamplePotion() {
+    public static NBTTagCompound getExamplePotion() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "potionexample");
         compound.setByte("ItemType", (byte) 7);
@@ -1096,7 +1096,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExamplePotionModifier() {
+    public static NBTTagCompound getExamplePotionModifier() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("AttributeName", "generic.maxHealth");
         compound.setString("UUID", UUID.randomUUID().toString());
@@ -1132,7 +1132,7 @@ public class ModData {
         return exampleParticles;
     }
 
-    private static NBTTagCompound getExampleParticle() {
+    public static NBTTagCompound getExampleParticle() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "PARTICLE_EXAMPLE");
         compound.setBoolean("ShouldIgnoreRange", false);
@@ -1169,7 +1169,7 @@ public class ModData {
         return compound;
     }
 
-    private static NBTTagCompound getExampleOBJParticle() {
+    public static NBTTagCompound getExampleOBJParticle() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setString("RegistryName", "PARTICLE_OBJ_EXAMPLE");
         compound.setBoolean("ShouldIgnoreRange", false);

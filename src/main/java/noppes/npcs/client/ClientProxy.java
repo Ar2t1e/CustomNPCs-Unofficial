@@ -368,10 +368,10 @@ public class ClientProxy extends CommonProxy {
 			case CustomGui: returnGui = new GuiCustom((ContainerCustomGui) container); break;
 			case QuestCompleteText: returnGui = new GuiQuestCompletion(preEvent.buffer.readInt()); break;
 			case QuestLog: returnGui = new GuiLog(buffer.readInt()); break;
-            case DimensionSetting: returnGui = new GuiCreateDimension(buffer.readInt()); break;
 			case DeadInventory: returnGui = new GuiNPCDeadInventory(npc, (ContainerDead) container); break;
 			case CreationParts: returnGui = new GuiCreationParts(npc, (ContainerLayer) container); break;
 			// New from Unofficial (BetaZavr)
+			case DimensionSetting: returnGui = new GuiCreateDimension(buffer.readInt()); break;
 			case EditClientScript: returnGui = new GuiScriptClient(); break;
 			case PermissionsEdit: returnGui = new GuiPermissionsEdit(); break;
 			case BoundarySetting: returnGui = new GuiBoundarySetting(preEvent.buffer.readBlockPos()); break;
@@ -399,10 +399,9 @@ public class ClientProxy extends CommonProxy {
 	@Override
 	public EntityPlayer getPlayer() { return Minecraft.getMinecraft().player; }
 
-	@Override
-	public PlayerData getPlayerData(EntityPlayer player) {
+	public static PlayerData getPlayerData() {
 		if (playerData.player == null) {
-			if (player == null) { player = Minecraft.getMinecraft().player; }
+			EntityPlayer player = Minecraft.getMinecraft().player;
 			if (player != null) {
 				playerData.player = player;
 				playerData.playerLevel = player.experienceLevel;
