@@ -877,7 +877,7 @@ public class ClientEventHandler extends Gui {
 			}
 		}
 		catch (Exception ignored) { }
-    }
+	}
 
 	private BlockPos getPos(RayTraceResult result) {
 		int x = result.getBlockPos().getX();
@@ -1919,7 +1919,7 @@ public class ClientEventHandler extends Gui {
 				}
 				Collection<Object> waypoints = (Collection<Object>) ws.getDeclaredMethod("getAll")
 						.invoke(ws.getEnumConstants()[0]); // Collection<Object> waypoints =
-															// WaypointStore.INSTANCE.getAll();
+				// WaypointStore.INSTANCE.getAll();
 				for (Object waypoint : waypoints) {
 					Class<?> wc = waypoint.getClass();
 					MiniMapData mmd = new MiniMapData();
@@ -1934,11 +1934,11 @@ public class ClientEventHandler extends Gui {
 					Collection<Integer> dimensions = (Collection<Integer>) wc.getDeclaredMethod("getDimensions")
 							.invoke(waypoint);
 					mmd.dimIDs = new ArrayList<>();
-                    mmd.dimIDs.addAll(dimensions);
+					mmd.dimIDs.addAll(dimensions);
 
 					mmd.id = points.size();
 					points.add(mmd);
-					
+
 					MiniMapData mmp = mm.get(mmd);
 					if (mmp != null) { mmd.setQuest(mmp); } else { update = true; }
 				}
@@ -2077,7 +2077,7 @@ public class ClientEventHandler extends Gui {
 					mmd.dimIDs = new ArrayList<>(dimensions);
 					mmd.id = points.size();
 					points.add(mmd);
-					
+
 					MiniMapData mmp = mm.get(mmd);
 					if (mmp != null) { mmd.setQuest(mmp); } else { update = true; }
 				}
@@ -2637,7 +2637,7 @@ public class ClientEventHandler extends Gui {
 						m.put("#material", new ResourceLocation(CustomNpcs.MODID, "util/compass"));
 						m.put("#task", new ResourceLocation(CustomNpcs.MODID, "util/task_" + taskType));
 						COMPASS_FASE.put(taskType, ModelBuffer.getParameterizedModel(RESOURCE_COMPASS,
-										Collections.singletonList("fase"), m, false, 0, false));
+								Collections.singletonList("fase"), m, false, 0, false));
 
 					}
 					ModelBuffer.render(COMPASS_FASE.get(taskType));

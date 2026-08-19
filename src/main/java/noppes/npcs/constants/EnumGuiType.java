@@ -80,7 +80,8 @@ public enum EnumGuiType
 	QuestCompleteText,
 	QuestChooseReward,
 	CreationParts,
-	ManageCustomElements;
+	ManageCustomElements,
+	ManageDungeons;
 
 	public boolean hasContainer;
 	public final ResourceLocation resource;

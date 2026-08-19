@@ -13,7 +13,9 @@ public interface IDimensionHandler {
 
 	void deleteDimension(@ParamName("dimensionId") int dimensionId);
 
-	List<Integer> getAllIDs();
+    int copyDimension(int dimensionId);
+
+    List<Integer> getAllIDs();
 
 	IWorldInfo getMCWorldInfo(@ParamName("dimensionId") int dimensionId);
 

@@ -90,10 +90,11 @@ public class CustomNpcsPermissions {
 	public static final Permission TOOL_TELEPORTER = new Permission(CustomNpcs.MODID + ".tool.teleporter");
 	public static final Permission EDIT_PERMISSION = new Permission(CustomNpcs.MODID + ".edit.permission", false);
 	public static final Permission EDIT_CLIENT_SCRIPT = new Permission(CustomNpcs.MODID + ".edit.client.script", false);
-	public static final Permission EDIT_ELEMENTS = new Permission(CustomNpcs.MODID + ".edit.elements", false);
 	public static final Permission GLOBAL_MARKETS = new Permission(CustomNpcs.MODID + ".global.markets");
 	public static final Permission GLOBAL_AUCTIONS = new Permission(CustomNpcs.MODID + ".global.auctions");
 	public static final Permission GLOBAL_MAIL = new Permission(CustomNpcs.MODID + ".global.mail");
+	public static final Permission GLOBAL_ELEMENTS = new Permission(CustomNpcs.MODID + ".global.elements", false);
+	public static final Permission GLOBAL_DUNGEONS = new Permission(CustomNpcs.MODID + ".global.dungeons", false);
 	public static final Permission MONEY_MANAGER = new Permission(CustomNpcs.MODID + ".money.manager");
 	public static final Permission DONAT_MANAGER = new Permission(CustomNpcs.MODID + ".donat.manager", false);
 

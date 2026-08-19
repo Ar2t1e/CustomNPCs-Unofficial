@@ -3,7 +3,6 @@
   "package": "noppes.npcs.mixin",
   "refmap": "mixins.customnpcs.refmap.json",
   "mixins": [
-    "world.WorldMixin",
     "block.material.IMapColorMixin",
     "block.material.IMaterialMixin",
     "block.properties.IPropertyIntegerMixin",
@@ -61,6 +60,8 @@
     "util.text.translation.LanguageMapMixin",
     "world.DimensionTypeMixin",
     "world.IWorldMixin",
+    "world.IWorldProviderMixin",
+    "world.WorldMixin",
     "world.biome.IBiomeMixin",
     "world.storage.IWorldInfoMixin"
   ],

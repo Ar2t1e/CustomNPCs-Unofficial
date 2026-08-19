@@ -63,12 +63,12 @@ public class WrapperNpcAPI extends NpcAPI {
 	public static volatile LRUHashMap<Integer, WorldWrapper> worldCache = new LRUHashMap<>(300);
 	private static NpcAPI instance = null;
 	private static final Comparator<World> sorter = (w_0, w_1) -> {
-        String dimName0 = w_0.provider.getDimensionType().getName();
-        String dimName1 = w_1.provider.getDimensionType().getName();
-        if ("overworld".equals(dimName0)) { return -1; }
-        if ("overworld".equals(dimName1)) { return 1; }
-        return Integer.compare(w_0.provider.getDimension(), w_1.provider.getDimension());
-    };
+		String dimName0 = w_0.provider.getDimensionType().getName();
+		String dimName1 = w_1.provider.getDimensionType().getName();
+		if ("overworld".equals(dimName0)) { return -1; }
+		if ("overworld".equals(dimName1)) { return 1; }
+		return Integer.compare(w_0.provider.getDimension(), w_1.provider.getDimension());
+	};
 
 	public static EventBus EVENT_BUS = new EventBus();
 	private final List<World> worlds = Lists.newArrayList();
@@ -342,11 +342,11 @@ public class WrapperNpcAPI extends NpcAPI {
 			UUID uuidMC;
 			try { uuidMC = UUID.fromString(uuid); }
 			catch (Exception e) { throw new CustomNPCsException("Invalid UUID string: \"" + uuid + "\""); }
-            EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uuidMC);
-            if (player != null && player.getName().equals(name)) {
+			EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uuidMC);
+			if (player != null && player.getName().equals(name)) {
 				return new NBTWrapper(PlayerData.get(player).getNBT());
-            }
-        }
+			}
+		}
 		return new NBTWrapper(PlayerData.loadPlayerData(uuid, name));
 	}
 

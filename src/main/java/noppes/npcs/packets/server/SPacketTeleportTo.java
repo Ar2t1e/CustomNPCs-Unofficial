@@ -67,6 +67,7 @@ public class SPacketTeleportTo extends PacketServerBasic {
                     while (world.isAirBlock(coords) && coords.getY() > 0) { coords = coords.down(); }
                     if (coords.getY() == 0) { coords = world.getTopSolidOrLiquidBlock(coords); }
                 }
+                coords = coords.up();
             }
             SPacketDimensionTeleport.teleportPlayer(player, dimensionId, coords.getX(), coords.getY(), coords.getZ(),
                     player.rotationYaw, player.rotationPitch);

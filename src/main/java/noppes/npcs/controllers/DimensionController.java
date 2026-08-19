@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.*;
 import net.minecraft.world.storage.MapStorage;
+import net.minecraft.world.storage.WorldInfo;
 import net.minecraftforge.common.util.EnumHelper;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.gui.IDimensionGetter;
@@ -23,9 +24,6 @@ import noppes.npcs.packets.server.SPacketDimensionsGet;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
 
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -73,7 +71,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 
 	public DimensionController(String mapName) { super(mapName); }
 
-	protected final Map<Integer, DimensionData> data = new LinkedHashMap<>();
+	protected static final Map<Integer, DimensionData> data = new LinkedHashMap<>();
 	protected final Map<Integer, CustomWorldInfo> dimensionInfo = new TreeMap<>();
 	protected final Map<Integer, NBTTagCompound> providerInfo = new TreeMap<>();
 	protected final Map<Integer, UUID> toBeDeleted = new TreeMap<>();
@@ -86,7 +84,10 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	}
 
 	@Override
-	public void deleteDimension(int dimensionId) { deleteDimension(null, dimensionId); }
+	public void deleteDimension(int dimId) { deleteDimension(null, dimId); }
+
+	@Override
+	public int copyDimension(int dimId) { return copyDimension(null, dimId); }
 
 	@Override
 	public List<Integer> getAllIDs() {
@@ -102,7 +103,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	}
 
 	@Override
-	public IWorldInfo getMCWorldInfo(int dimensionId) { return dimensionInfo.get(dimensionId); }
+	public IWorldInfo getMCWorldInfo(int dimId) { return dimensionInfo.get(dimId); }
 
 	@Override
 	public INbt getProviderInfo(int id) {
@@ -161,33 +162,37 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	private void checkExample() {
 		if (!dimensionInfo.containsKey(100)) {
 			CustomWorldInfo cwi = new CustomWorldInfo(new NBTTagCompound());
+			cwi.dimensionId = 100;
 			cwi.setDimensionName("example");
-			cwi.setMCLevelName("Example Dimension");
+			cwi.setDisplayName("Example Dimension");
 			createNewDimension(null, cwi);
 			providerInfo.put(100, new NBTTagCompound());
 		}
 	}
 
 	public void createNewDimension(EntityPlayerMP player, CustomWorldInfo worldInfo) {
-		int id = findFreeDimensionID();
+		int id = worldInfo.dimensionId != 100 ? findFreeDimensionID() : 100;
 		worldInfo.dimensionId = id;
-		if (worldInfo.getDimensionName().startsWith("default_")) { worldInfo.setDimensionName(null); }
+		if (worldInfo.getDimensionName().startsWith("default_") && !worldInfo.getDimensionName().contains("_copy")) {
+			worldInfo.setDimensionName("default_" + id);
+			worldInfo.setDisplayName("default_" + id);
+		}
 		Function<String, Boolean> getFromName = name -> {
 			for (CustomWorldInfo customWorldInfo : dimensionInfo.values()) {
-				if (customWorldInfo.getMCLevelName().equals(name)) { return true; }
+				if (customWorldInfo.getDisplayName().equals(name)) { return true; }
 			}
             return false;
         };
-		String name = Util.instance.deleteColor(worldInfo.getMCLevelName());
+		String name = Util.instance.deleteColor(worldInfo.getDisplayName());
 		while (getFromName.apply(name)) { name += "_"; }
-		worldInfo.setMCLevelName(name);
+		worldInfo.setDisplayName(name);
 		dimensionInfo.put(id, worldInfo);
 		providerInfo.put(id, new NBTTagCompound());
 		DimensionType dimensionType = getDimensionType(id, worldInfo.getDimensionName());
 		if (!DimensionManager.isDimensionRegistered(id)) { DimensionManager.registerDimension(id, dimensionType); }
 		worldInfo.setDimensionName(dimensionType.getName());
 		if (player != null) {
-			player.sendMessage(Component.translatable("message.dimensions.created", worldInfo.getWorldName(), "" + id).getParent());
+			player.sendMessage(Component.translatable("message.dimensions.created", id, name).getParent());
 		}
 		syncWithClients();
 	}
@@ -211,61 +216,43 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		return dimensionType;
 	}
 
-	public void deleteDimension(ICommandSender sender, int dimID) {
-		if (dimID <= 100 || !dimensionInfo.containsKey(dimID)) {
-			if (sender != null) {
-				if (toBeDeleted.containsKey(dimID)) {
-					sender.sendMessage(Component.translatable("message.dimensions.err.del").getParent());
-				} else if (!dimensionInfo.containsKey(dimID)) {
-					sender.sendMessage(Component.translatable("message.dimensions.err.notmod").getParent());
+	public void deleteDimension(EntityPlayerMP player, int dimId) {
+		if (dimId <= 100 || !dimensionInfo.containsKey(dimId)) {
+			if (player != null) {
+				if (toBeDeleted.containsKey(dimId)) {
+					player.sendMessage(Component.translatable("message.dimensions.err.del").getParent());
+				} else if (!dimensionInfo.containsKey(dimId)) {
+					player.sendMessage(Component.translatable("message.dimensions.err.notmod").getParent());
 				}
 			}
 			return;
 		}
 		// remove all players
-		MinecraftServer server = sender == null ? CustomNpcs.Server : sender.getServer();
-		World world = DimensionManager.getWorld(dimID);
-		if (world != null && server != null && !world.playerEntities.isEmpty()) {
+		MinecraftServer server = player == null ? CustomNpcs.Server : player.getServer();
+		World world = DimensionManager.getWorld(dimId);
+		if (world != null && server != null) {
 			WorldServer overworld = server.getWorld(0);
-			BlockPos coords = overworld.getSpawnCoordinate();
-			if (coords == null) {
-				coords = overworld.getSpawnPoint();
-				if (!overworld.isAirBlock(coords)) {
-					coords = overworld.getTopSolidOrLiquidBlock(coords);
-				} else {
-					while (overworld.isAirBlock(coords) && coords.getY() > 0) {
-						coords = coords.down();
-					}
-					if (coords.getY() == 0) {
-						coords = overworld.getTopSolidOrLiquidBlock(coords);
-					}
-				}
+			BlockPos pos = overworld.getSpawnPoint();
+			if (!overworld.isAirBlock(pos)) { pos = overworld.getTopSolidOrLiquidBlock(pos); }
+			else {
+				while (overworld.isAirBlock(pos) && pos.getY() > 0) { pos = pos.down(); }
+				if (pos.getY() == 0) { pos = overworld.getTopSolidOrLiquidBlock(pos); }
 			}
-			List<EntityPlayerMP> players = new ArrayList<>();
-			for (EntityPlayer player : world.playerEntities) {
-				if (!(player instanceof EntityPlayerMP)) {
-					continue;
+			pos = pos.up();
+			for (EntityPlayerMP p : CustomNpcs.Server.getPlayerList().getPlayers()) {
+				if (p.world.provider.getDimension() == dimId) {
+					p.sendMessage(Component.translatable("message.dimensions.tp.isdelete").getParent());
+					SPacketDimensionTeleport.teleportPlayer(p, 0,
+							pos.getX(), pos.getY(), pos.getZ(),
+							p.rotationYaw, p.rotationPitch);
 				}
-				player.sendMessage(Component.translatable("message.dimensions.tp.isdelete").getParent());
-				players.add((EntityPlayerMP) player);
-			}
-			for (EntityPlayerMP player : players) {
-				SPacketDimensionTeleport.teleportPlayer(player, 0, coords.getX(), coords.getY(), coords.getZ(),
-						player.rotationYaw, player.rotationPitch);
 			}
 		}
-		Entity entitySender = null;
-		if (sender != null) { entitySender = sender.getCommandSenderEntity(); }
 		// remove
-		toBeDeleted.put(dimID, entitySender != null ? entitySender.getUniqueID() : null);
-		DimensionManager.unloadWorld(dimID);
-		if (DimensionManager.isDimensionRegistered(dimID)) { DimensionManager.unregisterDimension(dimID); }
-		IDimensionManagerMixin.getUnloadQueue().remove(dimID);
-		List<WorldServer> list = new ArrayList<>();
-		for (WorldServer w : CustomNpcs.Server.worlds) {
-			if (w.provider.getDimension() != dimID) { list.add(w); }
-		}
-		if (CustomNpcs.Server.worlds.length != list.size()) { CustomNpcs.Server.worlds = list.toArray(new WorldServer[0]); }
+		toBeDeleted.put(dimId, player != null ? player.getUniqueID() : null);
+		DimensionManager.unloadWorld(dimId);
+		if (DimensionManager.isDimensionRegistered(dimId)) { DimensionManager.unregisterDimension(dimId); }
+		IDimensionManagerMixin.getUnloadQueue().remove(dimId);
 		syncWithClients();
 	}
 
@@ -277,10 +264,10 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 
 	public boolean isDelete(int id) { return toBeDeleted.containsKey(id); }
 
-	private void loadDimension(int dimensionID, CustomWorldInfo worldInfo) {
+	private void loadDimension(int dimId, CustomWorldInfo worldInfo) {
 		WorldServer overworld = (WorldServer) CustomNpcs.Server.getEntityWorld();
 		try {
-			DimensionManager.getProviderType(dimensionID);
+			DimensionManager.getProviderType(dimId);
 		} catch (Exception e) {
 			LogWriter.error("Cannot Hot-load Dim: " + e);
 			return;
@@ -289,10 +276,10 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		ISaveHandler saveHandler = overworld.getSaveHandler();
 		assert mcServer != null;
 		EnumDifficulty difficulty = mcServer.getEntityWorld().getDifficulty();
-		WorldServer world = (WorldServer) (new WorldCustom(worldInfo, mcServer, saveHandler, dimensionID, overworld,
+		WorldServer world = (WorldServer) (new WorldCustom(worldInfo, mcServer, saveHandler, dimId, overworld,
 				mcServer.profiler).init());
 		world.addEventListener(new ServerWorldEventHandler(mcServer, world));
-		LogWriter.debug("Try Load World: " + dimensionID + "; world = " + world);
+		LogWriter.debug("Try Load World: " + dimId + "; world = " + world);
 		try {
 			Class.forName("org.orecruncher.dsurround.server.services.AtmosphereService");
 		} catch (ClassNotFoundException e) {
@@ -325,59 +312,43 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	 * Only unregister the dimension if it is actually being deleted.
 	 * Do NOT unregister on normal world unload (lazy loading).
 	 */
-	public void unload(World world, int dimensionID) {
-		if (toBeDeleted.containsKey(dimensionID)) {
-			if (dimensionInfo.containsKey(dimensionID)) {
-				DimensionManager.unregisterDimension(dimensionID);
-			}
-			UUID uniqueID = toBeDeleted.get(dimensionID);
-			toBeDeleted.remove(dimensionID);
-			dimensionInfo.remove(dimensionID);
-			providerInfo.remove(dimensionID);
-			((WorldServer) world).flush();
-			EntityPlayerMP player = null;
-			if (uniqueID != null) { player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uniqueID); }
-			if (Util.instance.removeFile(new File(DimensionManager.getCurrentSaveRootDirectory(), "DIM" + dimensionID)) && player != null) {
-				player.sendMessage(Component.translatable("message.dimensions.del.folder", "" + dimensionID).getParent());
-			}
-
-			syncWithClients();
-		}
-		// If not marked for deletion, let the world unload naturally.
-		// It will be re-created on next teleport via ensureDimensionLoaded().
+	public void unload() {
+        for (int dimId : toBeDeleted.keySet()) {
+            if (dimensionInfo.containsKey(dimId) && DimensionManager.isDimensionRegistered(dimId)) { DimensionManager.unregisterDimension(dimId); }
+            dimensionInfo.remove(dimId);
+            providerInfo.remove(dimId);
+        }
+		toBeDeleted.clear();
+		File saveRoot = CustomNpcs.getWorldSaveDirectory();
+		if (saveRoot != null) { Util.instance.removeFile(new File(saveRoot.getParentFile(), "data/CustomNpcsHandler.dat")); }
 	}
 
 	/**
 	 * Public accessor for lazy-loading a custom dimension.
 	 */
-	public void ensureDimensionLoaded(int dimensionID) {
-		if (dimensionInfo.containsKey(dimensionID) && DimensionManager.getWorld(dimensionID) == null) {
-			loadDimension(dimensionID, dimensionInfo.get(dimensionID));
+	public void ensureDimensionLoaded(int dimId) {
+		if (dimensionInfo.containsKey(dimId) && DimensionManager.getWorld(dimId) == null) {
+			loadDimension(dimId, dimensionInfo.get(dimId));
 		}
 	}
 
 	@SuppressWarnings("ConstantConditions")
-	public void recreateDimension(ICommandSender sender, int dimensionID) {
+	public void recreateDimension(EntityPlayerMP player, int dimId) {
 		List<Integer> allIDs = getAllIDs();
-		if (!allIDs.contains(dimensionID) || toBeDeleted.containsKey(dimensionID)) {
-			if (sender != null) {
-				if (toBeDeleted.containsKey(dimensionID)) { sender.sendMessage(Component.translatable("message.dimensions.err.del").getParent()); }
-				else if (!allIDs.contains(dimensionID)) { sender.sendMessage(Component.translatable("message.dimensions.err.not.found").getParent()); }
+		if (!allIDs.contains(dimId) ||
+				toBeDeleted.containsKey(dimId) ||
+				!DimensionManager.isDimensionRegistered(dimId)) {
+			if (player != null) {
+				if (toBeDeleted.containsKey(dimId)) { player.sendMessage(Component.translatable("message.dimensions.err.del").getParent()); }
+				else if (!allIDs.contains(dimId) || !DimensionManager.isDimensionRegistered(dimId)) {
+					player.sendMessage(Component.translatable("message.dimensions.err.not.found").getParent());
+				}
 			}
 			return;
 		}
-		if (sender != null) {
-			sender.sendMessage(Component.translatable("message.dimensions.recreate", "" + dimensionID).getParent());
-		}
-		// Check if dimension exists in controller
-		if (!DimensionManager.isDimensionRegistered(dimensionID)) {
-			if (sender != null) {
-				sender.sendMessage(Component.translatable("message.dimensions.err.restore.failed", "" + dimensionID).getParent());
-			}
-			return;
-		}
+		if (player != null) { player.sendMessage(Component.translatable("message.dimensions.recreate", "" + dimId).getParent()); }
 		// Determine evacuation target: Nether for Overworld, Overworld for others
-		int targetDim = (dimensionID == 0) ? -1 : 0;
+		int targetDim = (dimId == 0) ? -1 : 0;
 		WorldServer world = CustomNpcs.Server.getWorld(targetDim);
 		BlockPos pos = BlockPos.ORIGIN.up(60);
 		if (world != null) {
@@ -392,68 +363,108 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 				}
 			}
 		}
-		List<EntityPlayerMP> players = new ArrayList<>();
-		for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-			if (player.world.provider.getDimension() == dimensionID) {
-				player.sendMessage(Component.translatable("message.dimensions.tp.isdelete").getParent());
-				SPacketDimensionTeleport.teleportPlayer(player, targetDim,
-						pos.getX(), pos.getY(), pos.getZ(),
-						player.rotationYaw, player.rotationPitch);
-				players.add(player);
-			}
-		}
-		// files
-		File saveRoot = DimensionManager.getCurrentSaveRootDirectory();
-		if (dimensionID == 0) {
-			Util.instance.removeFile(new File(saveRoot, "region"));
-			Util.instance.removeFile(new File(saveRoot, "data"));
-			Util.instance.removeFile(new File(saveRoot, "forcedchunks.dat"));
-		} // overworld
-		else {
-			Util.instance.removeFile(new File(saveRoot, "DIM" + dimensionID));
-			DimensionManager.unloadWorld(dimensionID);
-		}
-		toBeDeleted.remove(dimensionID);
-		List<WorldServer> list = new ArrayList<>();
-		for (WorldServer w : CustomNpcs.Server.worlds) {
-			if (w.provider.getDimension() != dimensionID) { list.add(w); }
-		}
-		// Reinitialize the dimension so it regenerates from scratch
-		IDimensionManagerMixin.getUnloadQueue().remove(dimensionID);
-		DimensionManager.initDimension(dimensionID);
-		list.add(world = DimensionManager.getWorld(dimensionID));
-		CustomNpcs.Server.worlds = list.toArray(new WorldServer[0]);
-		if (sender != null) {
-			sender.sendMessage(Component.translatable("message.dimensions.restored", dimensionID).getParent());
-		}
-		syncWithClients();
-		if (!players.isEmpty() && world != null) {
-			pos = world.getSpawnCoordinate();
-			if (pos == null) {
-				pos = world.getSpawnPoint();
-				if (!world.isAirBlock(pos)) { pos = world.getTopSolidOrLiquidBlock(pos); }
-				else {
-					while (world.isAirBlock(pos) && pos.getY() > 0) { pos = pos.down(); }
-					pos = pos.up();
-					if (pos.getY() == 0) { pos = world.getTopSolidOrLiquidBlock(pos); }
+		if (CustomNpcs.Server != null) {
+			for (EntityPlayerMP p : CustomNpcs.Server.getPlayerList().getPlayers()) {
+				if (p.world.provider.getDimension() == dimId) {
+					p.sendMessage(Component.translatable("message.dimensions.tp.isdelete").getParent());
+					SPacketDimensionTeleport.teleportPlayer(p, targetDim,
+							pos.getX(), pos.getY(), pos.getZ(),
+							p.rotationYaw, p.rotationPitch);
 				}
 			}
-			BlockPos finalPos = pos;
-			CustomNPCsScheduler.runTack(() -> {
-				for (EntityPlayerMP player : players) {
-					SPacketDimensionTeleport.teleportPlayer(player, dimensionID,
-							finalPos.getX(), finalPos.getY(), finalPos.getZ(),
-							player.rotationYaw, player.rotationPitch);
-					if (player != sender) {
-						player.sendMessage(Component.translatable("message.dimensions.restored", dimensionID).getParent());
-					}
-				}
-			}, 2500);
 		}
-
+		DimensionManager.unloadWorld(dimId);
+		CustomNPCsScheduler.runTack(() -> {
+			// files
+			File saveRoot = DimensionManager.getCurrentSaveRootDirectory();
+			boolean error;
+			if (dimId == 0) {
+				error = !Util.instance.removeFile(new File(saveRoot, "region"));
+				error = error || !Util.instance.removeFile(new File(saveRoot, "data"));
+				error = error || !Util.instance.removeFile(new File(saveRoot, "forcedchunks.dat"));
+			} // overworld
+			else { error = !Util.instance.removeFile(new File(saveRoot, "DIM" + dimId)); }
+			if (error) {
+				if (player != null) { player.sendMessage(Component.translatable("message.dimensions.err.recreated", dimId).getParent()); }
+				return;
+			}
+			if (player != null) { player.sendMessage(Component.translatable("message.dimensions.recreated", dimId).getParent()); }
+			syncWithClients();
+		}, 500);
 	}
 
-	public void loadData(NBTTagCompound compound) {
+	public int copyDimension(EntityPlayerMP player, int dimId) {
+		List<Integer> allIDs = getAllIDs();
+		if (!allIDs.contains(dimId) ||
+				toBeDeleted.containsKey(dimId) ||
+				!DimensionManager.isDimensionRegistered(dimId)) {
+			if (player != null) {
+				if (toBeDeleted.containsKey(dimId)) { player.sendMessage(Component.translatable("message.dimensions.err.del").getParent()); }
+				else if (!allIDs.contains(dimId) || !DimensionManager.isDimensionRegistered(dimId)) {
+					player.sendMessage(Component.translatable("message.dimensions.err.not.found").getParent());
+				}
+			}
+			return dimId;
+		}
+		if (player != null) {
+			player.sendMessage(Component.translatable("message.dimensions.copy", "" + dimId).getParent());
+		}
+		WorldInfo parent = dimensionInfo.get(dimId);
+		// need to create a measurement directory if it doesn't exist yet.
+		WorldServer world = DimensionManager.getWorld(dimId);
+		boolean unload = world == null;
+		if (unload) {
+			DimensionManager.initDimension(dimId);
+			world = DimensionManager.getWorld(dimId);
+		}
+		if (parent == null) {
+			if (world != null) { parent = world.getWorldInfo(); }
+		}
+		if (parent == null) {
+			if (player != null) {
+				player.sendMessage(Component.translatable("message.dimensions.err.copy", "" + dimId).getParent());
+			}
+			return dimId;
+		}
+		// copy
+		CustomWorldInfo cwi = new CustomWorldInfo(parent.cloneNBTCompound(parent.getPlayerNBTTagCompound()));
+		cwi.setDimensionName(cwi.getDimensionName() + "_copy_" + dimId);
+		cwi.setDisplayName("Copy from " + dimId);
+		if (parent instanceof CustomWorldInfo) {
+			CustomWorldInfo pCwi = (CustomWorldInfo) parent;
+			if (!pCwi.getDimensionName().startsWith("default_")) { cwi.setDimensionName(pCwi.getDimensionName() + "_copy"); }
+			if (!pCwi.getDisplayName().isEmpty()) { cwi.setDisplayName(pCwi.getDisplayName() + " (copy from " + dimId + ")"); }
+		}
+		createNewDimension(player, cwi);
+		providerInfo.put(cwi.dimensionId, providerInfo.containsKey(dimId) ? providerInfo.get(dimId).copy() : new NBTTagCompound());
+
+		// files
+		File saveRoot = DimensionManager.getCurrentSaveRootDirectory();
+		if (!Util.instance.copyDirectory(new File(saveRoot, "DIM" + dimId), new File(saveRoot, "DIM" + cwi.dimensionId))) {
+			if (player != null) {
+				player.sendMessage(Component.translatable("message.dimensions.err.copy", "" + dimId).getParent());
+			}
+			return dimId;
+		}
+		if (unload) { DimensionManager.unloadWorld(dimId); }
+		syncWithClients();
+		return cwi.dimensionId;
+	}
+
+	public void restoreDimension(EntityPlayerMP player, int dimId) {
+		if (!toBeDeleted.containsKey(dimId)) {
+			if (player != null) {
+				player.sendMessage(Component.translatable("message.dimensions.err.restore").getParent());
+			}
+			return;
+		}
+		if (!DimensionManager.isDimensionRegistered(dimId)) { DimensionManager.registerDimension(dimId, getDimensionType(dimId, null)); }
+		IDimensionManagerMixin.getUnloadQueue().remove(dimId);
+		toBeDeleted.remove(dimId);
+		syncWithClients();
+	}
+
+	public static void loadData(NBTTagCompound compound) {
 		data.clear();
 		if (compound != null) {
 			for (int i = 0; i < compound.getTagList("Data", 10).tagCount(); i++) {
@@ -466,10 +477,13 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		}
 	}
 
-	public boolean hasData(int id) { return data.containsKey(id); }
+	public static boolean hasDimensionData(int id) { return data.containsKey(id); }
 
-	public @Nullable DimensionData getData(Integer id) { return data.get(id); }
+	public static @Nullable DimensionData getDimensionData(Integer id) { return data.get(id); }
 
-	public List<DimensionData> getDatas() { return new ArrayList<>(data.values()); }
+	public static List<DimensionData> getDimensionsData() { return new ArrayList<>(data.values()); }
 
+	public static void clearDimensionsData() { data.clear(); }
+
+	public static void addDimensionData(DimensionData dd) { data.put(dd.dimensionId, dd); }
 }

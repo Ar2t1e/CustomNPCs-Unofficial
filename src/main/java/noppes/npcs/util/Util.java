@@ -4,7 +4,11 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -596,15 +600,12 @@ public class Util implements IMethods {
 	@Override
 	public boolean removeFile(File directory) {
 		if (directory == null) { return false; }
+		if (!directory.exists()) { return true; }
 		LogWriter.debug("Trying remove file \"" + directory + "\"");
-		if (!directory.isDirectory()) {
-			return directory.delete();
-		}
+		if (!directory.isDirectory()) { return directory.delete(); }
 		File[] list = directory.listFiles();
 		if (list != null) {
-			for (File tempFile : list) {
-				removeFile(tempFile);
-			}
+			for (File tempFile : list) { removeFile(tempFile); }
 		}
 		return directory.delete();
 	}
@@ -645,6 +646,37 @@ public class Util implements IMethods {
 		}
 		updatePlayerInventory(player);
 		return false;
+	}
+
+	public boolean copyDirectory(File sourceDir, File targetDir) {
+		if (sourceDir == null || targetDir == null) return false;
+		java.nio.file.Path sourcePath = sourceDir.toPath();
+		java.nio.file.Path targetPath = targetDir.toPath();
+		LogWriter.debug("Trying copy directory \"" + sourceDir + "\" to \"" + targetDir + "\"");
+		try {
+			Files.createDirectories(targetPath);
+			Files.walkFileTree(sourcePath, new SimpleFileVisitor<java.nio.file.Path>() {
+				@Override
+				public FileVisitResult preVisitDirectory(java.nio.file.Path dir, BasicFileAttributes attrs) throws IOException {
+					java.nio.file.Path relativePath = sourcePath.relativize(dir);
+					java.nio.file.Path destinationDir = targetPath.resolve(relativePath);
+					Files.createDirectories(destinationDir);
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) throws IOException {
+					java.nio.file.Path relativePath = sourcePath.relativize(file);
+					java.nio.file.Path destinationFile = targetPath.resolve(relativePath);
+					Files.copy(file, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+					return FileVisitResult.CONTINUE;
+				}
+			});
+			return true;
+		} catch (IOException e) {
+			LogWriter.error("Failed to copy directory from " + sourceDir + " to " + targetDir, e);
+			return false;
+		}
 	}
 
 	/* Vanilla Teleport in world */

@@ -236,13 +236,13 @@ public class CustomBlockPortal extends BlockEndPortal implements ICustomElement 
 			if (blockTile instanceof CustomTileEntityPortal) { p = ((CustomTileEntityPortal) blockTile).getPosTp(getHome); }
 			if (p == null) {
 				WorldServer world = Objects.requireNonNull(worldIn.getMinecraftServer()).getWorld(getHome ? homeId : id);
-				p = world.getSpawnCoordinate();
-				if (p == null) { p = world.getSpawnPoint(); }
+				p = world.getSpawnPoint();
 				if (!world.isAirBlock(p)) { p = world.getTopSolidOrLiquidBlock(p); }
 				else if (!world.isAirBlock(p.up())) {
 					while (world.isAirBlock(p) && p.getY() > 0) { p = p.down(); }
 					if (p.getY() == 0) { p = world.getTopSolidOrLiquidBlock(p); }
 				}
+				p = p.up();
 			}
 			if (entityIn instanceof EntityPlayerMP) {
 				CustomTeleport event = EventHooks.onPlayerTeleport((EntityPlayerMP) entityIn, p, pos, getHome ? homeId : id);

@@ -33,9 +33,9 @@ public interface IWorldInfo {
 
 	void setMCGeneratorOptions(String options);
 
-	String getMCLevelName();
+	String getDisplayName();
 
-	void setMCLevelName(String name);
+	void setDisplayName(String name);
 
 	int getMCSpawnX();
 

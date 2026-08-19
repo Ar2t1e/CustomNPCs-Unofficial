@@ -7,6 +7,7 @@ import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.shared.common.PacketServerBasic;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SPacketDimensionDelete extends PacketServerBasic {
@@ -22,7 +23,7 @@ public class SPacketDimensionDelete extends PacketServerBasic {
     public boolean requiresNpc() { return false; }
 
     @Override
-    public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+    public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_TELEPORTER); }
 
     @Override
     public boolean toolAllowed(ItemStack item) { return true; }
@@ -40,7 +41,6 @@ public class SPacketDimensionDelete extends PacketServerBasic {
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
         DimensionController.getInstance().deleteDimension(player, dimension);
-        SPacketDimensionsGet.sendDimensionIDs(player);
         CustomNpcs.debugData.end("Packets");
     }
 

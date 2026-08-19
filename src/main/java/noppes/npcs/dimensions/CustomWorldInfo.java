@@ -16,18 +16,21 @@ import java.util.Map;
 
 public class CustomWorldInfo extends WorldInfo implements IWorldInfo {
 
-	public int dimensionId = 100;
+	public int dimensionId = 0;
 	protected String dimensionName;
+	protected String displayName;
 
 	public CustomWorldInfo(NBTTagCompound nbt) {
 		super(nbt);
 		dimensionName = "default_" + dimensionId;
+		displayName = dimensionName;
 	}
 
-	public CustomWorldInfo(WorldSettings settings, String levelName, int dimensionIdIn) {
+	public CustomWorldInfo(WorldSettings settings, String levelName, String displayNameIn, int dimensionIdIn) {
 		super(settings, levelName);
 		dimensionId = dimensionIdIn;
 		dimensionName = "default_" + dimensionIdIn;
+		displayName = displayNameIn;
 	}
 
 	@Override
@@ -39,6 +42,7 @@ public class CustomWorldInfo extends WorldInfo implements IWorldInfo {
 	public void load(NBTTagCompound nbt) {
 		dimensionId = nbt.hasKey("DimensionId", 3) ? nbt.getInteger("DimensionId") : 100;
 		dimensionName = nbt.hasKey("DimensionName", 8) ? nbt.getString("DimensionName") : "default_" + dimensionId;
+		displayName = nbt.hasKey("DisplayName", 8) ? nbt.getString("DisplayName") : dimensionName;
 		if (nbt.hasKey("Version", 10)) {
 			NBTTagCompound nbttagcompound = nbt.getCompoundTag("Version");
 			setMCVersionName(nbttagcompound.getString("Name"));
@@ -49,11 +53,11 @@ public class CustomWorldInfo extends WorldInfo implements IWorldInfo {
 		if (nbt.hasKey("generatorName", 8)) {
 			String s1 = nbt.getString("generatorName");
 			setTerrainType(WorldType.parseWorldType(s1));
-            if (getTerrainType().isVersioned()) {
-                int i = 0;
-                if (nbt.hasKey("generatorVersion", 99)) { i = nbt.getInteger("generatorVersion"); }
+			if (getTerrainType().isVersioned()) {
+				int i = 0;
+				if (nbt.hasKey("generatorVersion", 99)) { i = nbt.getInteger("generatorVersion"); }
 				setTerrainType(getTerrainType().getWorldTypeForGeneratorVersion(i));
-            }
+			}
 			if (nbt.hasKey("generatorOptions", 8)) { setMCGeneratorOptions(nbt.getString("generatorOptions")); }
 		}
 		setMCGameType(GameType.getByID(nbt.getInteger("GameType")));
@@ -65,7 +69,7 @@ public class CustomWorldInfo extends WorldInfo implements IWorldInfo {
 		setMCWorldTime(nbt.hasKey("DayTime", 99) ? nbt.getLong("DayTime") : getMCTotalTime());
 		setMCLastTimePlayed(nbt.getLong("LastPlayed"));
 		((IWorldInfoMixin) this).setSizeOnDisk(nbt.getLong("SizeOnDisk"));
-		setMCLevelName(nbt.getString("LevelName"));
+		setDisplayName(nbt.getString("LevelName"));
 		setMCVersionSave(nbt.getInteger("version"));
 		setMCCleanWeatherTime(nbt.getInteger("clearWeatherTime"));
 		setMCRainTime(nbt.getInteger("rainTime"));
@@ -105,6 +109,7 @@ public class CustomWorldInfo extends WorldInfo implements IWorldInfo {
 		NBTTagCompound compound = super.cloneNBTCompound(playerTag);
 		compound.setInteger("DimensionId", dimensionId);
 		compound.setString("DimensionName", dimensionName);
+		compound.setString("DisplayName", displayName);
 		return compound;
 	}
 
@@ -133,11 +138,11 @@ public class CustomWorldInfo extends WorldInfo implements IWorldInfo {
 	public void setMCGeneratorOptions(String options) { ((IWorldInfoMixin) this).setGeneratorOptions(options); }
 
 	@Override
-	public String getMCLevelName() { return ((IWorldInfoMixin) this).getLevelName(); }
+	public String getDisplayName() { return displayName; }
 
 	@Override
-	public void setMCLevelName(String name) {
-		if (name != null && !name.isEmpty()) { ((IWorldInfoMixin) this).setLevelName(name); }
+	public void setDisplayName(String name) {
+		if (name != null && !name.isEmpty()) { displayName = name; }
 	}
 
 	@Override

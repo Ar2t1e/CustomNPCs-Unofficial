@@ -285,12 +285,12 @@ public class SubGuiElementBlockSimple extends GuiBasic implements ITextfieldList
         GlStateManager.depthFunc(GL11.GL_LEQUAL);
 
         GlStateManager.pushMatrix();
-        GlStateManager.translate(centerX - 1.25f, centerY - 1.0f, 50.0f);
-        GlStateManager.rotate(-30.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager.translate(centerX - 1.25f, centerY - 1.0f, 0.0f);
+        GlStateManager.rotate(210.0f, 1.0f, 0.0f, 0.0f);
         long time = 10000L;
         GlStateManager.rotate((System.currentTimeMillis() % time) * 360.0f / time, 0.0f, 1.0f, 0.0f);
-        float scale = slotS / 1.75f;
-        GlStateManager.scale(-scale, -scale, -scale);
+        float scale = (float) slotS / 1.75f;
+        GlStateManager.scale(scale, scale, scale);
         GlStateManager.translate(-0.5f, -0.5f, 0.5f);
         ClientEventHandler.renderBlock(minecraft.world, state, player.getPosition(), partialTicks);
         GlStateManager.popMatrix();

@@ -110,10 +110,7 @@ public class CustomTileEntityPortal extends TileEntityEndPortal {
 			if (server != null) { sLevel = server.getWorld(dimensionId); }
 		}
 		if (pos == null) { pos  = new BlockPos(0, -1, 0); }
-		if (pos.getY() < 0 && sLevel != null) {
-			if (sLevel.getSpawnCoordinate() != null) { pos = new BlockPos(sLevel.getSpawnCoordinate()); }
-			else { pos = new BlockPos(sLevel.getSpawnPoint()); }
-		}
+		if (pos.getY() < 0 && sLevel != null) { pos = new BlockPos(sLevel.getSpawnPoint()); }
 		if (pos.getY() < 0) { pos.up(70 - pos.getY()); }
 		return NoppesUtilServer.getSafeTpPos(sLevel, pos, 253, 1);
 	}

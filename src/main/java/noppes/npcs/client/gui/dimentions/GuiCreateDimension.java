@@ -5,6 +5,7 @@ import java.util.Random;
 
 import net.minecraft.network.chat.Component;
 import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.controllers.data.DimensionData;
 import noppes.npcs.mixin.world.storage.IWorldInfoMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketDimensionSettings;
@@ -232,12 +233,16 @@ public class GuiCreateDimension extends GuiScreen {
 		// Clean the name from color codes and validate for ResourceLocation
 		String rawName = dimensionNameTextField.getText().trim();
 		String cleanName = Util.instance.deleteColor(rawName);
-		CustomWorldInfo worldInfo = new CustomWorldInfo(worldsettings, cleanName, dimensionId);
+		String levelName;
+		DimensionData dd = DimensionController.getDimensionData(0);
+		if (dd != null) { levelName = dd.worldName; }
+		else { levelName = mc.world.getWorldInfo().getWorldName(); }
+		CustomWorldInfo worldInfo = new CustomWorldInfo(worldsettings, levelName, cleanName, dimensionId);
 		if (dimensionId > 0) {
 			// Editing existing dimension — update in-place
 			CustomWorldInfo cwi = (CustomWorldInfo) DimensionController.getInstance().getMCWorldInfo(dimensionId);
 			if (cwi instanceof IWorldInfoMixin) {
-				((IWorldInfoMixin) cwi).setLevelName(cleanName);
+				cwi.setDisplayName(cleanName);
 				cwi.load(worldInfo.cloneNBTCompound(cwi.getPlayerNBTTagCompound()));
 				return cwi;
 			}

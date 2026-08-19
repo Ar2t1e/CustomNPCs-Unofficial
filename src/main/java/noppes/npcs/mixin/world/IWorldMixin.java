@@ -11,10 +11,12 @@ import java.util.List;
 @Mixin(value = World.class, priority = 502)
 public interface IWorldMixin {
 
-    @Accessor
-    List<Entity> getUnloadedEntityList();
+    @Accessor List<Entity> getUnloadedEntityList();
 
-    @Accessor
-    PathWorldListener getPathListener();
+    @Accessor PathWorldListener getPathListener();
+
+    @Accessor void setSpawnHostileMobs(boolean newSpawnHostileMobs);
+
+    @Accessor void setSpawnPeacefulMobs(boolean newSpawnPeacefulMobs);
 
 }

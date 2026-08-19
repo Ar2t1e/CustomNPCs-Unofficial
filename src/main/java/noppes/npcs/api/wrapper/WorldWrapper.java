@@ -328,10 +328,7 @@ public class WorldWrapper implements IWorld {
 
 	@Override
 	public IBlock getSpawnPoint() {
-		BlockPos pos = null;
-		if (world instanceof WorldServer) { pos = ((WorldServer) world).getSpawnCoordinate(); }
-		if (pos == null) { pos = world.getSpawnPoint(); }
-		return Objects.requireNonNull(NpcAPI.Instance()).getIBlock(world, pos);
+		return BlockWrapper.createNew(world, world.getSpawnPoint(), world.getBlockState(world.getSpawnPoint()));
 	}
 	@Override
 	public IData getStoreddata() { return storeddata; }

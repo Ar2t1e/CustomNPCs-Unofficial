@@ -110,24 +110,17 @@ public class CmdDimensions extends CommandNoppesBase {
 		}
 
 		WorldServer world = Objects.requireNonNull(sender.getServer()).getWorld(dimId);
-		BlockPos coords = world.getSpawnCoordinate();
+		BlockPos pos = world.getSpawnPoint();
 		double x, y, z;
-		if (coords == null) {
-			coords = world.getSpawnPoint();
-		}
-        if (!world.isAirBlock(coords)) {
-            coords = world.getTopSolidOrLiquidBlock(coords);
-        } else if (!world.isAirBlock(coords.up())) {
-            while (world.isAirBlock(coords) && coords.getY() > 0) {
-                coords = coords.down();
-            }
-            if (coords.getY() == 0) {
-                coords = world.getTopSolidOrLiquidBlock(coords);
-            }
+        if (!world.isAirBlock(pos)) { pos = world.getTopSolidOrLiquidBlock(pos); }
+		else if (!world.isAirBlock(pos.up())) {
+            while (world.isAirBlock(pos) && pos.getY() > 0) { pos = pos.down(); }
+            if (pos.getY() == 0) { pos = world.getTopSolidOrLiquidBlock(pos); }
         }
-        x = coords.getX();
-        y = coords.getY();
-        z = coords.getZ();
+		pos = pos.up();
+        x = pos.getX();
+        y = pos.getY();
+        z = pos.getZ();
         if (args.length == 5) {
 			try {
 				double dx = parseCoordinate(sender.getPosition().getX(), args[2], true).getResult();

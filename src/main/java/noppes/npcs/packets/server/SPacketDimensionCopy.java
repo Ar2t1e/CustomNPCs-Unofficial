@@ -10,14 +10,14 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import java.util.Collections;
 import java.util.List;
 
-public class SPacketDimensionRecreate extends PacketServerBasic {
+public class SPacketDimensionCopy extends PacketServerBasic {
 
     protected static int channelId;
     private int dimension;
 
-    public SPacketDimensionRecreate() { }
+    public SPacketDimensionCopy() { }
 
-    public SPacketDimensionRecreate(int dimensionIn) { dimension = dimensionIn; }
+    public SPacketDimensionCopy(int dimensionIn) { dimension = dimensionIn; }
 
     @Override
     public boolean requiresNpc() { return false; }
@@ -40,7 +40,7 @@ public class SPacketDimensionRecreate extends PacketServerBasic {
     @Override
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
-        DimensionController.getInstance().recreateDimension(player, dimension);
+        DimensionController.getInstance().copyDimension(player, dimension);
         CustomNpcs.debugData.end("Packets");
     }
 

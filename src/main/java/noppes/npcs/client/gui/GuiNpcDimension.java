@@ -79,10 +79,15 @@ public class GuiNpcDimension extends GuiNPCInterface
 				.setSize(60, 20)
 				.setIsEnabled(scroll.hasSelected() && DimensionManager.isDimensionRegistered(id) && !dData.isDelete(id))
 				.setHoverTexts("dimensions.hover.recreate");
+		// copy
+		addButton(6, x1, y += 22, "gui.copy")
+				.setSize(60, 20)
+				.setIsEnabled(scroll.hasSelected() && DimensionManager.isDimensionRegistered(id) && !dData.isDelete(id))
+				.setHoverTexts("dimensions.hover.copy");
 		// del
 		addButton(3, x1, y + 22, dData.isDelete(id) ? "gui.restore" : "gui.remove")
 				.setSize(60, 20)
-				.setIsEnabled(scroll.hasSelected() && id > 100 && dData.hasData(id))
+				.setIsEnabled(scroll.hasSelected() && id > 100 && DimensionController.hasDimensionData(id))
 				.setHoverTexts("dimensions.hover.del");
 	}
 
@@ -110,7 +115,7 @@ public class GuiNpcDimension extends GuiNPCInterface
 			case 3: {
 				if (data.containsKey(scroll.getNormalSelected())) {
 					int id = data.get(scroll.getNormalSelected());
-					if (dData.hasData(id) && !dData.isDelete(id)) {
+					if (DimensionController.hasDimensionData(id) && !dData.isDelete(id)) {
 						ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
 							if (agree) {
 								Packets.sendServer(new SPacketDimensionDelete(id));
@@ -121,6 +126,7 @@ public class GuiNpcDimension extends GuiNPCInterface
 								Component.translatable("message.delete").getParent());
 						setScreen(guiYesNo);
 					}
+					else { Packets.sendServer(new SPacketDimensionRestore(id)); }
 				}
 				break;
 			} // remove
@@ -128,7 +134,7 @@ public class GuiNpcDimension extends GuiNPCInterface
 			case 5: {
 				if (data.containsKey(scroll.getNormalSelected())) {
 					int id = data.get(scroll.getNormalSelected());
-					if (dData.hasData(id) && !dData.isDelete(id)) {
+					if (DimensionController.hasDimensionData(id) && !dData.isDelete(id)) {
 						ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
 							if (agree) { Packets.sendServer(new SPacketDimensionRecreate(id)); }
 							NoppesUtil.openGUI(player, this);
@@ -140,6 +146,15 @@ public class GuiNpcDimension extends GuiNPCInterface
 				}
 				break;
 			} // reset
+			case 6: {
+				if (data.containsKey(scroll.getNormalSelected())) {
+					int id = data.get(scroll.getNormalSelected());
+					if (DimensionController.hasDimensionData(id) && !dData.isDelete(id)) {
+						Packets.sendServer(new SPacketDimensionCopy(id));
+					}
+				}
+				break;
+			}
 		}
 	}
 
@@ -156,7 +171,7 @@ public class GuiNpcDimension extends GuiNPCInterface
 		List<Component> list = new ArrayList<>();
 		List<Component> suffixes = new ArrayList<>();
 		LinkedHashMap<Integer, List<Component>> htx = new LinkedHashMap<>();
-		for (DimensionData dd : DimensionController.getInstance().getDatas()) {
+		for (DimensionData dd : DimensionController.getDimensionsData()) {
 			TextFormatting color = dd.isRemoved ? TextFormatting.DARK_GRAY : TextFormatting.GRAY;
 			Component key = Component.empty()
 					.append(Component.literal("ID:").withStyle(color))
@@ -204,8 +219,8 @@ public class GuiNpcDimension extends GuiNPCInterface
 					.append(Component.literal(", Z:").withStyle(TextFormatting.GRAY))
 					.append(Component.literal(""+dd.spawnPos.getZ()).withStyle(TextFormatting.GOLD)));
 			hover.add(Component.empty()
-							.append(Component.literal("Spawn angle: ").withStyle(TextFormatting.GRAY))
-							.append(Component.literal(""+dd.spawnAngle).withStyle(TextFormatting.GOLD)));
+					.append(Component.literal("Spawn angle: ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(""+dd.spawnAngle).withStyle(TextFormatting.GOLD)));
 			htx.put(htx.size(), hover);
 		}
 		if (scroll != null) {
@@ -218,7 +233,11 @@ public class GuiNpcDimension extends GuiNPCInterface
 
 	private void tp() {
 		if (data.containsKey(scroll.getNormalSelected())) {
-			Packets.sendServer(new SPacketDimensionTeleport(data.get(scroll.getNormalSelected())));
+			int id = data.get(scroll.getNormalSelected());
+			DimensionData dd = DimensionController.getDimensionData(id);
+			if (dd == null || !dd.isRemoved) {
+				Packets.sendServer(new SPacketDimensionTeleport(id));
+			}
 			onClose();
 		}
 	}

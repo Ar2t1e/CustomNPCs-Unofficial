@@ -386,8 +386,10 @@ public class Packets {
         register(SPacketDeadLootsOpen.class);
         register(SPacketNpcRarityTitleGet.class);
         register(SPacketRemoveLoadFile.class);
+        register(SPacketDimensionCopy.class);
         register(SPacketDimensionDelete.class);
         register(SPacketDimensionRecreate.class);
+        register(SPacketDimensionRestore.class);
 
     }
 

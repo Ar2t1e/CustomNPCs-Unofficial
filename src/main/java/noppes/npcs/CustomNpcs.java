@@ -515,6 +515,7 @@ public class CustomNpcs {
 		DropController.getInstance().save();
 		MarcetController.getInstance().save();
 		WrapperNpcAPI.clearCache();
+		DimensionController.getInstance().unload();
 		Server = null;
 		debugData.end("Mod");
 	}

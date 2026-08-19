@@ -574,7 +574,7 @@ public class Client {
                 break;
             } // playerData
             case 9: {
-                DimensionController.getInstance().loadData(msg.data);
+                DimensionController.loadData(msg.data);
                 break;
             } // dimensions
             case 10: {
@@ -1225,7 +1225,8 @@ public class Client {
     private static void packetPermissionGlobal(PacketPermissionGlobal msg) {
         if (minecraft.currentScreen instanceof GuiNpcGlobalMainMenu) {
             ((GuiNpcGlobalMainMenu) minecraft.currentScreen).setMenuData(msg.banks, msg.factions, msg.dialogs, msg.quests,
-                    msg.transports, msg.players_data, msg.recipes, msg.natural_spawns, msg.linkeds, msg.markets, msg.auctions, msg.mails);
+                    msg.transports, msg.players_data, msg.recipes, msg.natural_spawns, msg.linkeds, msg.markets, msg.auctions,
+                    msg.mails, msg.elements, msg.dungeons);
         }
     }
 

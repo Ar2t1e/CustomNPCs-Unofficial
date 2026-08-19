@@ -19,7 +19,7 @@ import java.util.Arrays;
 public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 
 	// New from Unofficial (BetaZavr)
-	public boolean[] permissions = new boolean[12];
+	public boolean[] permissions = new boolean[14];
 
 	public GuiNpcGlobalMainMenu(EntityNPCInterface npc) {
 		super(npc, 6);
@@ -79,10 +79,16 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 				.setSize(110, 20)
 				.setIsEnabled(false)
 				.setHoverTexts("global.hover.auctions", !permissions[10] ? notEdit : null, "gui.wip");
-		addButton(19, r1, y + 22, "global.mail")
+		addButton(19, r1, y += 22, "global.mail")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.mail", !permissions[11] ? notEdit : null);
+		addButton(21, r1, y += 22, "global.elements")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.elements", !permissions[12] ? notEdit : null);
+		addButton(22, r1, y + 22, "global.dungeons")
 				.setSize(110, 20)
 				.setIsEnabled(false)
-				.setHoverTexts("global.hover.mail", !permissions[11] ? notEdit : null);
+				.setHoverTexts("global.hover.dungeons", !permissions[13] ? notEdit : null, "gui.wip");
 	}
 
 	@Override
@@ -106,9 +112,10 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 			case 18: break; // Auctions
 			case 19: NoppesUtil.requestOpenGUI(EnumGuiType.ManageMail); break;
 			case 20: NoppesUtil.requestOpenGUI(EnumGuiType.ManageGame); break;
+			case 21: NoppesUtil.requestOpenGUI(EnumGuiType.ManageCustomElements); break;
+			case 22: NoppesUtil.requestOpenGUI(EnumGuiType.ManageDungeons); break;
 		}
 	}
-
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
@@ -144,7 +151,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 
 	public void setMenuData(boolean banks, boolean factions, boolean dialogs, boolean quests, boolean transports,
 							boolean playersData, boolean recipes, boolean naturalSpawns, boolean linkeds, boolean markets,
-							boolean auctions, boolean mails) {
+							boolean auctions, boolean mails, boolean elements, boolean dungeons) {
 		permissions[0] = banks;
 		permissions[1] = factions;
 		permissions[2] = dialogs;
@@ -157,6 +164,8 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 		permissions[9] = markets;
 		permissions[10] = auctions;
 		permissions[11] = mails;
+		permissions[12] = elements;
+		permissions[13] = dungeons;
 		initGui();
 	}
 

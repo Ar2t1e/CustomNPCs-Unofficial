@@ -14,9 +14,6 @@ public interface IWorldInfoMixin {
 
     @Accessor void setGeneratorOptions(String options);
 
-    @Accessor String getLevelName();
-    @Accessor void setLevelName(String name);
-
     @Accessor("spawnX") void setCommonSpawnX(int x);
 
     @Accessor("spawnY") void setCommonSpawnY(int y);

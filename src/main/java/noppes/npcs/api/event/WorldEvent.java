@@ -1,12 +1,14 @@
 package noppes.npcs.api.event;
 
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import noppes.npcs.api.handler.data.IWorldProvider;
 import noppes.npcs.api.interfaces.EventFunction;
 import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.IWorld;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.constants.EnumScriptType;
+import noppes.npcs.dimensions.CustomWorldProvider;
 
 public class WorldEvent extends CustomNPCsEvent {
 
@@ -52,10 +54,26 @@ public class WorldEvent extends CustomNPCsEvent {
 
 	}
 
+	@EventFunction("any_provider_methods")
+	public static class ProviderEvent extends WorldEvent {
+
+		public IWorldProvider provider;
+		public Object result;
+		public final Object[] parameters;
+		public final int dimensionId;
+
+		public ProviderEvent(CustomWorldProvider providerIn, Object resultIn, Object ... parametersIn) {
+			super(null);
+			provider = providerIn;
+			dimensionId = providerIn.getMCDimensionType().getId();
+			result = resultIn;
+			parameters = parametersIn;
+		}
+
+	}
+
 	public IWorld world;
 
-	public WorldEvent(IWorld world) {
-		this.world = world;
-	}
+	public WorldEvent(IWorld worldIn) { world = worldIn; }
 
 }

@@ -271,20 +271,16 @@ public class GuiManageCustomElements extends GuiBasic implements ICustomScrollLi
         GlStateManager.depthFunc(GL11.GL_LEQUAL);
 
         GlStateManager.pushMatrix();
-        GlStateManager.translate(centerX, centerY, 50.0f);
-        GlStateManager.rotate(-30.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager.translate(centerX, centerY, 0.0f);
+        GlStateManager.rotate(210.0f, 1.0f, 0.0f, 0.0f);
         long time = 5000L;
         GlStateManager.rotate((System.currentTimeMillis() % time) * 360.0f / time, 0.0f, 1.0f, 0.0f);
-        float scale = -16.0f * 3.0f;
+        float scale = 16.0f;
         GlStateManager.scale(scale, scale, scale);
         // Center the block on its origin
         GlStateManager.translate(-0.5f, -0.5f, 0.5f);
-        if (block instanceof BlockDoor) {
-            GlStateManager.translate(-0.4f, -0.5f, 0.0f);
-        }
-        if (block instanceof CustomBlockPortal || block instanceof CustomBlockLiquid) {
-            GlStateManager.translate(0.0f, 0.0f, -1.0f);
-        }
+        if (block instanceof BlockDoor) { GlStateManager.translate(-0.4f, -0.5f, 0.0f); }
+        if (block instanceof CustomBlockPortal || block instanceof CustomBlockLiquid) { GlStateManager.translate(0.0f, 0.0f, -1.0f); }
         ClientEventHandler.renderBlock(minecraft.world, state, player.getPosition(), partialTicks);
         GlStateManager.popMatrix();
 

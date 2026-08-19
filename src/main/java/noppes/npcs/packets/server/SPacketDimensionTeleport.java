@@ -6,6 +6,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.ForgeHooks;
 import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.CustomNpcsPermissions;
@@ -58,28 +60,17 @@ public class SPacketDimensionTeleport extends PacketServerBasic {
             world = server.getWorld(id);
          }
       }
-
-      if (world == null) {
-         CustomNpcs.debugData.end("Packets");
-         return;
-      }
-
-      BlockPos coords = world.getSpawnCoordinate();
-      if (coords == null) {
-         coords = world.getSpawnPoint();
-         if (!world.isAirBlock(coords)) {
-            coords = world.getTopSolidOrLiquidBlock(coords);
-         } else {
-            while (world.isAirBlock(coords) && coords.getY() > 0) {
-               coords = coords.down();
-            }
-            if (coords.getY() == 0) {
-               coords = world.getTopSolidOrLiquidBlock(coords);
-            }
+      if (world != null) {
+         BlockPos pos = world.getSpawnPoint();
+         if (!world.isAirBlock(pos)) { pos = world.getTopSolidOrLiquidBlock(pos); }
+         else {
+            while (world.isAirBlock(pos) && pos.getY() > 0) { pos = pos.down(); }
+            if (pos.getY() == 0) { pos = world.getTopSolidOrLiquidBlock(pos); }
          }
+         pos = pos.up();
+         teleportPlayer(player, id, pos.getX(), pos.getY(), pos.getZ(),
+                 player.rotationYaw, player.rotationPitch);
       }
-      teleportPlayer(player, id, coords.getX(), coords.getY(), coords.getZ(),
-              player.rotationYaw, player.rotationPitch);
       CustomNpcs.debugData.end("Packets");
    }
 
@@ -90,10 +81,10 @@ public class SPacketDimensionTeleport extends PacketServerBasic {
       if (player.dimension != dimension) {
          MinecraftServer server = player.getServer();
          if (server != null) {
-            WorldServer world = server.getWorld(dimension);
+            WorldServer world = DimensionManager.getWorld(dimension);
             if (world != null) {
                // 1. Fire Forge travel event
-               net.minecraftforge.common.ForgeHooks.onTravelToDimension(player, dimension);
+               ForgeHooks.onTravelToDimension(player, dimension);
 
                // 2. Transfer dimension FIRST - this sends SPacketRespawn to client,
                //    which clears the old dimension's chunks

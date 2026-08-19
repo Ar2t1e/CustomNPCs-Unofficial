@@ -50,7 +50,6 @@ import noppes.npcs.controllers.data.MarkData;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerQuestData;
 import noppes.npcs.controllers.data.QuestData;
-import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemSoulstoneEmpty;
 import noppes.npcs.packets.Packets;
@@ -379,14 +378,6 @@ public class ServerEventsHandler {
 		CustomNpcs.debugData.end(null);
 	}
 
-	@SubscribeEvent
-	public void cnpcWorldUnload(net.minecraftforge.event.world.WorldEvent.Unload event) {
-		CustomNpcs.debugData.start(null);
-		int dimensionID = event.getWorld().provider.getDimension();
-		if (!event.getWorld().isRemote) { DimensionController.getInstance().unload(event.getWorld(), dimensionID); }
-		CustomNpcs.debugData.end(null);
-	}
-
 	// New from Unofficial (GoodBird)
 	@SubscribeEvent
 	public void cnpcStartTracking(PlayerEvent.StopTracking event) {
@@ -419,4 +410,5 @@ public class ServerEventsHandler {
 		});
 	}
 	/**/
+
 }

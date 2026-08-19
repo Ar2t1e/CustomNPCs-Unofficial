@@ -35,7 +35,7 @@ public class SPacketDimensionsGet extends PacketServerBasic {
     public List<CustomNpcsPermissions.Permission> getPermission() { return Collections.singletonList(CustomNpcsPermissions.TOOL_TELEPORTER); }
 
     @Override
-    public void  encode(FriendlyByteBuf buf) { }
+    public void encode(FriendlyByteBuf buf) { }
 
     @Override
     public void decode(FriendlyByteBuf buf) { }
@@ -54,31 +54,29 @@ public class SPacketDimensionsGet extends PacketServerBasic {
         NBTTagCompound compound = new NBTTagCompound();
         NBTTagList list = new NBTTagList();
         DimensionController dData = DimensionController.getInstance();
+        DimensionController.clearDimensionsData();
         DimensionType dimensionType;
         for (int id : dData.getAllIDs()) {
-            DimensionData oldDD = dData.getData(id);
+            DimensionData oldDD = DimensionController.getDimensionData(id);
             DimensionData dd = new DimensionData();
             dd.dimensionId = id;
             dd.isRemoved = DimensionManager.isWorldQueuedToUnload(id) || dData.isDelete(id);
             IWorldInfo worldInfo = dData.getMCWorldInfo(id);
-            if (worldInfo != null) { dd.worldName = worldInfo.getMCLevelName(); }
+            if (worldInfo != null) { dd.worldName = worldInfo.getDisplayName(); }
             WorldServer world = DimensionManager.getWorld(id);
-            if (world == null) {
-                for (WorldServer w : CustomNpcs.Server.worlds) {
-                    if (w.provider.getDimension() == id) {
-                        world = w;
-                        break;
-                    }
-                }
+            boolean unload = world == null;
+            dd.isLoad = !unload && !dd.isRemoved;
+            if (unload) {
+                DimensionManager.initDimension(id);
+                world = DimensionManager.getWorld(id);
             }
             if (world != null) {
-                dd.isLoad = true;
                 if (dd.worldName.isEmpty()) { dd.worldName = world.getWorldInfo().getWorldName(); }
-                dd.spawnPos = world.getSpawnCoordinate();
-                if (dd.spawnPos == null) { dd.spawnPos = world.getSpawnPoint(); }
+                dd.spawnPos = world.getSpawnPoint();
                 dimensionType = world.provider.getDimensionType();
                 dd.name = dimensionType.getName();
                 dd.suffix = dimensionType.getSuffix();
+                if (unload) { DimensionManager.unloadWorld(id); }
             }
             if (dd.name.isEmpty()) {
                 try {
@@ -95,6 +93,7 @@ public class SPacketDimensionsGet extends PacketServerBasic {
                 dd.suffix = oldDD.suffix;
             }
             list.appendTag(dd.save());
+            DimensionController.addDimensionData(dd);
         }
         compound.setTag("Data", list);
         Packets.send(player, new PacketSync(9, compound, false));

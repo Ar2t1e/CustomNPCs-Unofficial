@@ -71,7 +71,7 @@ public class GuiPortalBlock extends GuiNPCInterface
         List<Object> dimIDList = new ArrayList<>();
         int p = 0;
         for (Integer line : dimMap) {
-            DimensionData dd = DimensionController.getInstance().getData(line);
+            DimensionData dd = DimensionController.getDimensionData(line);
             if (dd != null && line != nextDimension) {
                 if (line == dimension) { p = dimIDList.size(); }
                 dataDimIDs.put(dimIDList.size(), dd);

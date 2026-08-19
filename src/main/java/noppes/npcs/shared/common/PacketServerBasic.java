@@ -33,7 +33,7 @@ public abstract class PacketServerBasic extends PacketBasic {
     public abstract boolean toolAllowed(ItemStack item);
 
     public void handleServer() {
-        if (ctx.side == Side.SERVER) {
+        if (ctx.side == Side.SERVER && ctx.getServerHandler() != null && ctx.getServerHandler().player != null) {
             player = ctx.getServerHandler().player;
             iPlayer = (PlayerWrapper<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player);
             npc = NoppesUtilServer.getEditingNpc(player);
