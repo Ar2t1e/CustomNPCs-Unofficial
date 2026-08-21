@@ -14,6 +14,12 @@ public class ClientEvent extends CustomNPCsEvent {
     public EntityNPCInterface npc;
     public GuiScreen returnGui;
 
+    public ClientEvent(EntityNPCInterface npcIn, GuiScreen returnGuiIn) {
+        super();
+        npc = npcIn;
+        returnGui = returnGuiIn;
+    }
+
     @Cancelable
     public static class PreGetGuiCustomNpcs extends ClientEvent {
 
@@ -64,12 +70,6 @@ public class ClientEvent extends CustomNPCsEvent {
             oldSubGui = oldSubGuiIn;
         }
 
-    }
-
-    public ClientEvent(EntityNPCInterface npcIn, GuiScreen returnGuiIn) {
-        super();
-        npc = npcIn;
-        returnGui = returnGuiIn;
     }
 
 }

@@ -7,6 +7,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.server.MinecraftServer;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.data.MarkData;
@@ -15,11 +16,10 @@ import javax.annotation.Nonnull;
 
 public class CmdMark extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
-	@SubCommand(desc = "Clear mark", usage = "<@e>", permission = 2)
+	@SubCommand(desc = "Clear mark", usage = "<@e>", isOpOnly = true)
 	public void clear(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		List<Entity> list = getEntityList(server, sender, args[0]);
 		for (Entity e : list) {
@@ -42,7 +42,7 @@ public class CmdMark extends CommandNoppesBase {
 		return "mark";
 	}
 
-	@SubCommand(desc = "Set mark (warning overrides existing marks)", usage = "<@e> <type> [color]", permission = 2)
+	@SubCommand(desc = "Set mark (warning overrides existing marks)", usage = "<@e> <type> [color]", isOpOnly = true)
 	public void set(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		List<Entity> list = getEntityList(server, sender, args[0]);
 		int type = 0;

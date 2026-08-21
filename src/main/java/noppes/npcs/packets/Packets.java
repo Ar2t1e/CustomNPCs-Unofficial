@@ -175,8 +175,7 @@ public class Packets {
         register(SPacketBankRemove.class);
         register(SPacketBankSave.class);
         register(SPacketBanksGet.class);
-        register(SPacketBankUnlock.class);
-        register(SPacketBankUpgrade.class);
+        register(SPacketBankBuy.class);
         register(SPacketCloneList.class);
         register(SPacketCloneNameCheck.class);
         register(SPacketCloneRemove.class);
@@ -390,6 +389,7 @@ public class Packets {
         register(SPacketDimensionDelete.class);
         register(SPacketDimensionRecreate.class);
         register(SPacketDimensionRestore.class);
+        register(SPacketCustomGuiKeyPressed.class);
 
     }
 

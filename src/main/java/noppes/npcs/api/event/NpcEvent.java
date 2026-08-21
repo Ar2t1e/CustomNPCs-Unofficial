@@ -11,20 +11,34 @@ import noppes.npcs.ai.CombatHandler;
 import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.IDamageSource;
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityLivingBase;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.IProjectile;
-import noppes.npcs.api.entity.data.IAnimation;
 import noppes.npcs.api.entity.data.ILine;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.constants.EnumScriptType;
-import noppes.npcs.controllers.AnimationController;
 
 public class NpcEvent extends CustomNPCsEvent {
+
+	public ICustomNpc<?> npc;
+
+	public NpcEvent(ICustomNpc<?> npcIn) {
+		super();
+		npc = npcIn;
+	}
+
+	@EventName(EnumScriptType.TIMER)
+	public static class TimerEvent extends NpcEvent {
+		public int id;
+
+		public TimerEvent(ICustomNpc<?> npc, int idIn) {
+			super(npc);
+			id = idIn;
+		}
+	}
 
 	@EventName(EnumScriptType.COLLIDE)
 	public static class CollideEvent extends NpcEvent {
@@ -32,25 +46,8 @@ public class NpcEvent extends CustomNPCsEvent {
 
 		public CollideEvent(ICustomNpc<?> npc, Entity entityIn) {
 			super(npc);
-			entity = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entityIn);
+			entity = API.getIEntity(entityIn);
 		}
-	}
-
-	@Cancelable
-	@EventName(EnumScriptType.CUSTOM_TELEPORT)
-	public static class CustomNpcTeleport extends NpcEvent {
-
-		public IPos pos;
-		public IPos portal;
-		public int dimension;
-
-		public CustomNpcTeleport(ICustomNpc<?> npc, IPos portalIn, IPos posIn, int dimensionIn) {
-			super(npc);
-			pos = posIn;
-			portal = portalIn;
-			dimension = dimensionIn;
-		}
-
 	}
 
 	@Cancelable
@@ -63,7 +60,7 @@ public class NpcEvent extends CustomNPCsEvent {
 
 		public NeedBlockDamage(ICustomNpc<?> npc, DamageSource damagesource, boolean isBlockedIn, int typeIn) {
 			super(npc);
-			damageSource = Objects.requireNonNull(NpcAPI.Instance()).getIDamageSource(damagesource);
+			damageSource = API.getIDamageSource(damagesource);
 			isBlocked = isBlockedIn;
 			type = typeIn;
 		}
@@ -80,9 +77,46 @@ public class NpcEvent extends CustomNPCsEvent {
 		public DamagedEvent(ICustomNpc<?> npc, Entity sourceIn, float damageIn, DamageSource damageSourceIn) {
 			super(npc);
 			clearTarget = false;
-			source = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(sourceIn);
+			source = API.getIEntity(sourceIn);
 			damage = damageIn;
-			damageSource = Objects.requireNonNull(NpcAPI.Instance()).getIDamageSource(damageSourceIn);
+			damageSource = API.getIDamageSource(damageSourceIn);
+		}
+	}
+
+	@EventName(EnumScriptType.RANGED_LAUNCHED)
+	public static class RangedLaunchedEvent extends NpcEvent {
+
+		public float damage;
+		public List<IProjectile<?>> projectiles = new ArrayList<>();
+		public IEntityLivingBase<?> target;
+
+		public RangedLaunchedEvent(ICustomNpc<?> npc, EntityLivingBase targetIn, float damageIn) {
+			super(npc);
+			target = (IEntityLivingBase<?>) API.getIEntity(targetIn);
+			damage = damageIn;
+		}
+	}
+
+	@Cancelable
+	@EventName(EnumScriptType.ATTACK_MELEE)
+	public static class MeleeAttackEvent extends NpcEvent {
+		public float damage;
+		public IEntityLivingBase<?> target;
+
+		public MeleeAttackEvent(ICustomNpc<?> npc, EntityLivingBase targetIn, float damageIn) {
+			super(npc);
+			target = (IEntityLivingBase<?>) API.getIEntity(targetIn);
+			damage = damageIn;
+		}
+	}
+
+	@EventName(EnumScriptType.KILL)
+	public static class KilledEntityEvent extends NpcEvent {
+		public IEntityLivingBase<?> entity;
+
+		public KilledEntityEvent(ICustomNpc<?> npc, EntityLivingBase entityIn) {
+			super(npc);
+			entity = (IEntityLivingBase<?>) API.getIEntity(entityIn);
 		}
 	}
 
@@ -104,11 +138,11 @@ public class NpcEvent extends CustomNPCsEvent {
 		public DiedEvent(ICustomNpc<?> npc, DamageSource damagesource, Entity entity, CombatHandler combatHandler) {
 			super(npc);
 			type = damagesource.damageType;
-			source = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity);
-			damageSource = Objects.requireNonNull(NpcAPI.Instance()).getIDamageSource(damagesource);
+			source = API.getIEntity(entity);
+			damageSource = API.getIDamageSource(damagesource);
 			for (EntityLivingBase e : combatHandler.aggressors.keySet()) {
 				double damage = combatHandler.aggressors.get(e);
-				damageMap.put(Objects.requireNonNull(NpcAPI.Instance()).getIEntity(e), damage);
+				damageMap.put(API.getIEntity(e), damage);
 				totalDamage += damage;
 				if (e instanceof EntityPlayer) { totalDamageOnlyPlayers = damage; }
 			}
@@ -116,7 +150,7 @@ public class NpcEvent extends CustomNPCsEvent {
 		
 		public IEntity<?>[] getEntitys() { return damageMap.keySet().toArray(new IEntity<?>[0]); }
 
-		@SuppressWarnings("all")
+		@SuppressWarnings("unused")
 		public double getDamageFromEntity(@ParamName("entity") IEntity<?> entity) {
 			if (damageMap.containsKey(entity)) { return damageMap.get(entity); }
 			else if (entity != null) {
@@ -131,13 +165,6 @@ public class NpcEvent extends CustomNPCsEvent {
 		
 	}
 
-	@EventName(EnumScriptType.INIT)
-	public static class InitEvent extends NpcEvent {
-		public InitEvent(ICustomNpc<?> npc) {
-			super(npc);
-		}
-	}
-
 	@Cancelable
 	@EventName(EnumScriptType.INTERACT)
 	public static class InteractEvent extends NpcEvent {
@@ -145,69 +172,7 @@ public class NpcEvent extends CustomNPCsEvent {
 
 		public InteractEvent(ICustomNpc<?> npc, EntityPlayer playerIn) {
 			super(npc);
-			player = (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(playerIn);
-		}
-	}
-
-	@EventName(EnumScriptType.KILL)
-	public static class KilledEntityEvent extends NpcEvent {
-		public IEntityLivingBase<?> entity;
-
-		public KilledEntityEvent(ICustomNpc<?> npc, EntityLivingBase entityIn) {
-			super(npc);
-			entity = (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entityIn);
-		}
-	}
-
-	@Cancelable
-	@EventName(EnumScriptType.ATTACK_MELEE)
-	public static class MeleeAttackEvent extends NpcEvent {
-		public float damage;
-		public IEntityLivingBase<?> target;
-
-		public MeleeAttackEvent(ICustomNpc<?> npc, EntityLivingBase targetIn, float damageIn) {
-			super(npc);
-			target = (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(targetIn);
-			damage = damageIn;
-		}
-	}
-
-	@EventName(EnumScriptType.RANGED_LAUNCHED)
-	public static class RangedLaunchedEvent extends NpcEvent {
-
-		public float damage;
-		public List<IProjectile<?>> projectiles = new ArrayList<>();
-		public IEntityLivingBase<?> target;
-
-		public RangedLaunchedEvent(ICustomNpc<?> npc, EntityLivingBase targetIn, float damageIn) {
-			super(npc);
-			target = (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(targetIn);
-			damage = damageIn;
-		}
-	}
-
-	@EventName(EnumScriptType.ANIMATION_STOP)
-	public static class StopAnimation extends NpcEvent {
-
-		public IAnimation animation;
-		public int type;
-
-		public StopAnimation(ICustomNpc<?> npc, int typeIn, int id) {
-			super(npc);
-			type = typeIn;
-			animation = AnimationController.getInstance().getAnimation(id);
-		}
-
-	}
-
-	@Cancelable
-	@EventName(EnumScriptType.TARGET)
-	public static class TargetEvent extends NpcEvent {
-		public IEntityLivingBase<?> entity;
-
-		public TargetEvent(ICustomNpc<?> npc, EntityLivingBase entityIn) {
-			super(npc);
-			entity = (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entityIn);
+			player = (IPlayer<?>) API.getIEntity(playerIn);
 		}
 	}
 
@@ -218,17 +183,18 @@ public class NpcEvent extends CustomNPCsEvent {
 
 		public TargetLostEvent(ICustomNpc<?> npc, EntityLivingBase entityIn) {
 			super(npc);
-			entity = (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entityIn);
+			entity = (IEntityLivingBase<?>) API.getIEntity(entityIn);
 		}
 	}
 
-	@EventName(EnumScriptType.TIMER)
-	public static class TimerEvent extends NpcEvent {
-		public int id;
+	@Cancelable
+	@EventName(EnumScriptType.TARGET)
+	public static class TargetEvent extends NpcEvent {
+		public IEntityLivingBase<?> entity;
 
-		public TimerEvent(ICustomNpc<?> npc, int idIn) {
+		public TargetEvent(ICustomNpc<?> npc, EntityLivingBase entityIn) {
 			super(npc);
-			id = idIn;
+			entity = (IEntityLivingBase<?>) API.getIEntity(entityIn);
 		}
 	}
 
@@ -237,7 +203,27 @@ public class NpcEvent extends CustomNPCsEvent {
 		public UpdateEvent(ICustomNpc<?> npc) { super(npc); }
 	}
 
-	public ICustomNpc<?> npc;
-	public NpcEvent(ICustomNpc<?> npcIn) { npc = npcIn; }
+	@EventName(EnumScriptType.INIT)
+	public static class InitEvent extends NpcEvent {
+		public InitEvent(ICustomNpc<?> npc) { super(npc); }
+	}
+
+	// New from Unofficial (BetaZavr)
+	@Cancelable
+	@EventName(EnumScriptType.CUSTOM_TELEPORT)
+	public static class CustomNpcTeleport extends NpcEvent {
+
+		public IPos pos;
+		public IPos portal;
+		public int dimension;
+
+		public CustomNpcTeleport(ICustomNpc<?> npc, IPos portalIn, IPos posIn, int dimensionIn) {
+			super(npc);
+			pos = posIn;
+			portal = portalIn;
+			dimension = dimensionIn;
+		}
+
+	}
 
 }

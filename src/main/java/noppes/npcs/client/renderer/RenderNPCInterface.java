@@ -113,7 +113,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 	@Override
 	protected void preRenderCallback(@Nonnull T npc, float f) {
 		renderColor(npc);
-		int size = npc.display.getSize();
+		float size = npc.display.getSize();
 		GlStateManager.scale(npc.scaleX / 5.0f * size, npc.scaleY / 5.0f * size, npc.scaleZ / 5.0f * size);
 	}
 

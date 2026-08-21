@@ -1365,7 +1365,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 			}
 			else {
 				// New from Unofficial (BetaZavr)
-				DataParameter<Byte> hand_states = ((IEntityLivingBaseMixin) this).getHandStates();
+				DataParameter<Byte> hand_states = IEntityLivingBaseMixin.getHandStates();
 				ItemStack stack = getHeldItemMainhand();
 				// imitation of using items
 				if (hand_states != null &&

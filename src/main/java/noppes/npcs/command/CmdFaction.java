@@ -10,6 +10,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.FactionController;
 import noppes.npcs.controllers.PlayerDataController;
@@ -20,14 +21,14 @@ import noppes.npcs.controllers.data.PlayerFactionData;
 import javax.annotation.Nonnull;
 
 public class CmdFaction extends CommandNoppesBase {
+
 	public List<PlayerData> data;
 	public Faction selectedFaction;
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
-	@SubCommand(desc = "Add points", usage = "<points>", permission = 2)
+	@SubCommand(desc = "Add points", usage = "<points>", isOpOnly = true)
 	public void add(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		int points;
 		try {
@@ -72,21 +73,15 @@ public class CmdFaction extends CommandNoppesBase {
 	}
 
 	@Override
-	public String getDescription() {
-		return "Faction operations";
-	}
+	public String getDescription() { return "Faction operations"; }
 
 	@Nonnull
-	public String getName() {
-		return "faction";
-	}
+	public String getName() { return "faction"; }
 
 	@Override
-	public String getUsage() {
-		return "<player> <faction> <command>";
-	}
+	public String getUsage() { return "<player> <faction> <command>"; }
 
-	@SubCommand(desc = "Reset points to default", permission = 2)
+	@SubCommand(desc = "Reset points to default", isOpOnly = true)
 	public void reset(MinecraftServer server, ICommandSender sender, String[] args) {
 		for (PlayerData playerdata : data) {
 			playerdata.factionData.factionData.put(selectedFaction.id, selectedFaction.defaultPoints);
@@ -99,7 +94,7 @@ public class CmdFaction extends CommandNoppesBase {
 		return false;
 	}
 
-	@SubCommand(desc = "Set points", usage = "<points>", permission = 2)
+	@SubCommand(desc = "Set points", usage = "<points>", isOpOnly = true)
 	public void set(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		int points;
 		try {
@@ -114,7 +109,7 @@ public class CmdFaction extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Subtract points", usage = "<points>", permission = 2)
+	@SubCommand(desc = "Subtract points", usage = "<points>", isOpOnly = true)
 	public void subtract(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		int points;
 		try {

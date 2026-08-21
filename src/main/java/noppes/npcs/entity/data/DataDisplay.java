@@ -53,7 +53,6 @@ public class DataDisplay implements INPCDisplay {
 	private byte showBossBar = 0;
 	private int markovGender = 0;
 	private int markovGeneratorId = new Random().nextInt(CustomNpcs.MARKOV_GENERATOR.length - 1);
-	private int modelSize = 5;
 	private int showName = 0;
 	private int skinColor = 0xFFFFFF;
 	private int visible = 0;
@@ -69,6 +68,8 @@ public class DataDisplay implements INPCDisplay {
 
 	// New from Unofficial (GoodBird)
 	protected boolean overlayGlowing = true;
+	protected float modelSize = 5.0F;
+	private int[] lineColors = new int[]{ 0xFF8D3800, 0xFFFEA53B, 0xFFAE5301 };
 
 	public DataDisplay(EntityNPCInterface npcIn) {
 		npc = npcIn;
@@ -185,28 +186,12 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public int getShadowType() {
-		if (shadowSize < 0.5f) {
-			return 0;
-		}
-		if (shadowSize < 1.0f) {
-			return 1;
-		}
-		if (shadowSize < 1.5f) {
-			return 2;
-		}
-		return 3;
-	}
-
-	@Override
 	public int getShowName() {
 		return showName;
 	}
 
 	@Override
-	public int getSize() {
-		return modelSize;
-	}
+	public float getSize() { return modelSize; }
 
 	@Override
 	public String getSkinPlayer() {
@@ -299,7 +284,6 @@ public class DataDisplay implements INPCDisplay {
 			}
 			loadProfile();
 		}
-		modelSize = ValueUtil.correctInt(compound.getInteger("Size"), 1, 30);
 		showName = compound.getInteger("ShowName");
 		if (compound.hasKey("SkinColor")) {
 			skinColor = compound.getInteger("SkinColor");
@@ -317,6 +301,15 @@ public class DataDisplay implements INPCDisplay {
 		}
 		npc.textureGlowLocation = null;
 		npc.textureCloakLocation = null;
+		VisibilityController.instance.trackNpc(npc);
+
+		// New from Unofficial (GoodBird)
+		if (compound.hasKey("Size", 99)) {
+			modelSize = ValueUtil.onlyPositiveFloat(compound.getFloat("Size"), Float.MAX_VALUE);
+		}
+		if (compound.hasKey("Size", 11)) { lineColors = compound.getIntArray("LineColors"); }
+
+		// New from Unofficial (BetaZavr)
 		npc.updateHitbox();
 		if (compound.hasKey("ShadowSize", 5)) {
 			shadowSize = ValueUtil.correctFloat(compound.getFloat("ShadowSize"), 0, 1.5f);
@@ -328,10 +321,9 @@ public class DataDisplay implements INPCDisplay {
 		if (hitboxState != (byte) 1 && (width != 0.0f || height != 0.0f)) {
 			if (npc.baseHeight > 0.0f && height > 0.0f) { npc.baseEyeHeight = npc.baseEyeHeight / npc.baseHeight * height; }
 			npc.baseWidth = width;
-        	npc.baseHeight = height;
-        	npc.updateHitbox();
+			npc.baseHeight = height;
+			npc.updateHitbox();
 		}
-		VisibilityController.instance.trackNpc(npc);
 	}
 
 	@Override
@@ -464,27 +456,6 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public void setShadowType(int type) {
-		if (type < 0) {
-			type *= -1;
-		}
-		switch (type % 4) {
-			case 0:
-				shadowSize = 0.0f;
-				break;
-			case 1:
-				shadowSize = 0.5f;
-				break;
-			case 2:
-				shadowSize = 1.0f;
-				break;
-			default:
-				shadowSize = 1.5f;
-				break;
-		}
-	}
-
-	@Override
 	public void setShowName(int type) {
 		if (type == showName) {
 			return;
@@ -494,12 +465,11 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public void setSize(int size) {
-		if (modelSize == size) {
-			return;
+	public void setSize(float size) {
+		if (modelSize != size) {
+			modelSize = ValueUtil.onlyPositiveFloat(size, Float.MAX_VALUE);
+			npc.updateClient = true;
 		}
-		modelSize = ValueUtil.correctInt(size, 1, 30);
-		npc.updateClient = true;
 	}
 
 	@Override
@@ -582,7 +552,6 @@ public class DataDisplay implements INPCDisplay {
 			NBTUtil.writeGameProfile(displayNbt2, playerProfile);
 			compound.setTag("SkinUsername", displayNbt2);
 		}
-		compound.setInteger("Size", modelSize);
 		compound.setInteger("ShowName", showName);
 		compound.setInteger("SkinColor", skinColor);
 		compound.setInteger("NpcVisible", visible);
@@ -593,15 +562,67 @@ public class DataDisplay implements INPCDisplay {
 		compound.setByte("BossBar", showBossBar);
 		compound.setInteger("BossColor", bossColor.ordinal());
 		compound.setBoolean("EnableInvisibleNpcs", CustomNpcs.EnableInvisibleNpcs);
+
+		// New from Unofficial (GoodBird)
+		compound.setFloat("Size", modelSize);
+		compound.setIntArray("LineColors", lineColors);
+
+		// New from Unofficial (BetaZavr)
 		compound.setFloat("ShadowSize", shadowSize);
 		compound.setFloat("HitBoxWidth", width);
 		compound.setFloat("HitBoxHeight", height);
+
 		return compound;
 	}
 
 	// New from Unofficial (GoodBird)
+	@Override
 	public boolean isOverlayGlowing() { return overlayGlowing; }
 
+	@Override
 	public void setOverlayGlowing(boolean glowing) { overlayGlowing = glowing; }
+
+	@Override
+	public int[] getLineColors() { return lineColors; }
+
+	@Override
+	public void setLineColors(int color1, int color2, int color3) { lineColors = new int[]{ color1, color2, color3}; }
+
+	// New from Unofficial (BetaZavr)
+	@Override
+	public float[] getDimensions() { return new float[] { width, height }; }
+
+	@Override
+	public void setDimensions(float widthIn, float heightIn) {
+		if (widthIn < 0 || heightIn < 0) { throw new CustomNPCsException("Width or height must be greater than 0. Now width: " + widthIn + "; height: " + heightIn); }
+		if (widthIn > 7.5f || heightIn > 15.0f) { throw new CustomNPCsException("Width must be less than 7.5 or height must be less than 15. Now width: " + widthIn + "; height: " + heightIn); }
+		width = widthIn;
+		height = heightIn;
+		if (hitboxState != (byte) 1 && (width != 0.0f || height != 0.0f)) {
+			npc.width = width;
+			npc.height = height;
+		}
+	}
+
+	public float getShadowSize() { return shadowSize; }
+
+	@Override
+	public int getShadowType() {
+		if (shadowSize < 0.5f) { return 0; }
+		if (shadowSize < 1.0f) { return 1; }
+		if (shadowSize < 1.5f) { return 2; }
+		return 3;
+	}
+
+	@Override
+	public void setShadowType(int type) {
+		if (type < 0) { type *= -1; }
+		switch (type % 4) {
+			case 0: shadowSize = 0.0f; break;
+			case 1: shadowSize = 0.5f; break;
+			case 2: shadowSize = 1.0f; break;
+			default: shadowSize = 1.5f; break;
+		}
+	}
 
 }

@@ -3,7 +3,7 @@ package noppes.npcs.api.entity.data;
 import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IPlayer;
 
-@SuppressWarnings("all")
+@SuppressWarnings("unused")
 public interface INPCDisplay {
 
 	int getBossbar();
@@ -24,11 +24,9 @@ public interface INPCDisplay {
 
 	String getOverlayTexture();
 
-	int getShadowType();
-
 	int getShowName();
 
-	int getSize();
+	float getSize();
 
 	String getSkinPlayer();
 
@@ -62,11 +60,9 @@ public interface INPCDisplay {
 
 	void setOverlayTexture(@ParamName("texture") String texture);
 
-	void setShadowType(@ParamName("type") int type);
-
 	void setShowName(@ParamName("type") int type);
 
-	void setSize(@ParamName("size") int size);
+	void setSize(@ParamName("size") float size);
 
 	void setSkinPlayer(@ParamName("name") String name);
 
@@ -83,5 +79,23 @@ public interface INPCDisplay {
 	boolean isNormalModel();
 
 	void setNormalModel(@ParamName("bo") boolean bo);
+
+	// New from Unofficial (GoodBird)
+	boolean isOverlayGlowing();
+
+	void setOverlayGlowing(@ParamName("glowing") boolean glowing);
+
+	int[] getLineColors();
+
+	void setLineColors(@ParamName("color1") int color1, @ParamName("color2") int color2, @ParamName("color3") int color3);
+
+	// New from Unofficial (BetaZavr)
+	float[] getDimensions();
+
+	void setDimensions(@ParamName("width") float widthIn, @ParamName("height") float heightIn);
+
+	int getShadowType();
+
+	void setShadowType(@ParamName("type") int type);
 
 }

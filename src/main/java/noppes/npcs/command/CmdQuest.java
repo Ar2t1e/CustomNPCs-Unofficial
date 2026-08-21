@@ -12,6 +12,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.PlayerDataController;
 import noppes.npcs.controllers.PlayerQuestController;
 import noppes.npcs.controllers.QuestController;
@@ -29,7 +30,7 @@ import javax.annotation.Nonnull;
 public class CmdQuest extends CommandNoppesBase {
 
 	@Override
-	public int getRequiredPermissionLevel() { return 2; }
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
 	@Override
 	public String getDescription() { return "Quest operations"; }
@@ -37,7 +38,7 @@ public class CmdQuest extends CommandNoppesBase {
 	@Override
 	public @Nonnull String getName() { return "quest"; }
 
-	@SubCommand(desc = "Finish a quest", usage = "<player> <quest>", permission = 2)
+	@SubCommand(desc = "Finish a quest", usage = "<player> <quest>", isOpOnly = true)
 	public void finish(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
 		Quest quest = getQuest(args[1]);
@@ -50,7 +51,7 @@ public class CmdQuest extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "get/set objectives for quests progress", usage = "<player> <quest> [objective] [value]", permission = 2)
+	@SubCommand(desc = "get/set objectives for quests progress", usage = "<player> <quest> [objective] [value]", isOpOnly = true)
 	public void objective(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		EntityPlayer player = CommandBase.getPlayer(server, sender, args[0]);
 		Quest quest = getQuest(args[1]);
@@ -83,7 +84,7 @@ public class CmdQuest extends CommandNoppesBase {
 		object.setProgress(value);
 	}
 
-	@SubCommand(desc = "reload quests from disk", permission = 2)
+	@SubCommand(desc = "reload quests from disk", isOpOnly = true)
 	public void reload(MinecraftServer server, ICommandSender sender, String[] args) {
 		new QuestController().load();
 		for (QuestCategory category : QuestController.instance.categories.values()) {
@@ -92,7 +93,7 @@ public class CmdQuest extends CommandNoppesBase {
 		Packets.sendAll(new PacketSync(3, new NBTTagCompound(), true));
 	}
 
-	@SubCommand(desc = "Removes a quest from finished and active quests", usage = "<player> <quest>", permission = 2)
+	@SubCommand(desc = "Removes a quest from finished and active quests", usage = "<player> <quest>", isOpOnly = true)
 	public void remove(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
 		Quest quest = getQuest(args[1]);
@@ -106,7 +107,7 @@ public class CmdQuest extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Start a quest", usage = "<player> <quest>", permission = 2)
+	@SubCommand(desc = "Start a quest", usage = "<player> <quest>", isOpOnly = true)
 	public void start(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
 		Quest quest = getQuest(args[1]);
@@ -116,7 +117,7 @@ public class CmdQuest extends CommandNoppesBase {
 		sender.sendMessage(Component.literal("Player \"" + player.getName() + "\" started the quest ID: " + quest.id).getParent());
 	}
 
-	@SubCommand(desc = "Stop a started quest", usage = "<player> <quest>", permission = 2)
+	@SubCommand(desc = "Stop a started quest", usage = "<player> <quest>", isOpOnly = true)
 	public void stop(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
 		Quest quest = getQuest(args[1]);

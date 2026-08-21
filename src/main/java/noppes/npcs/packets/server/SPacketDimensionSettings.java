@@ -58,7 +58,7 @@ public class SPacketDimensionSettings extends PacketServerBasic {
         CustomNpcs.debugData.start("Packets");
         if (worldInfo instanceof CustomWorldInfo) {
             CustomWorldInfo wi = (CustomWorldInfo) worldInfo;
-            if (dimension == 0) { DimensionController.getInstance().createNewDimension(player, wi); } // new
+            if (dimension == 0) { DimensionController.getInstance().createNewDimension(player, wi, true); } // new
             else {
                 CustomWorldInfo cwi = (CustomWorldInfo) DimensionController.getInstance().getMCWorldInfo(dimension);
                 if (cwi != null) {

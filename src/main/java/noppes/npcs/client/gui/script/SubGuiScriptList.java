@@ -4,11 +4,11 @@ import java.util.*;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import noppes.npcs.util.Util;
 

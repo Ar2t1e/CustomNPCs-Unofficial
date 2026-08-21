@@ -30,7 +30,7 @@ import javax.annotation.Nonnull;
 public class CmdConfig extends CommandNoppesBase {
 
 	@Override
-	public int getRequiredPermissionLevel() { return 2; }
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
 	@Override
 	public String getDescription() { return "Some config things you can set"; }
@@ -38,7 +38,7 @@ public class CmdConfig extends CommandNoppesBase {
 	@Nonnull
 	public String getName() { return "config"; }
 
-	@SubCommand(desc = "Set how many active chunkloaders you can have", usage = "<number>", permission = 4)
+	@SubCommand(desc = "Set how many active chunkloaders you can have", usage = "<number>", isOpOnly = true)
 	public void chunkloaders(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length == 0) {
 			this.sendMessage(sender, "ChunkLoaders: " + ChunkController.instance.size() + "/" + CustomNpcs.ChuckLoaders);
@@ -58,7 +58,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Add debug info to log", permission = 4)
+	@SubCommand(desc = "Add debug info to log", isOpOnly = true)
 	public void debug(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length == 0) {
 			CustomNpcs.VerboseDebug = !CustomNpcs.VerboseDebug;
@@ -77,7 +77,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Get/Set font", usage = "[type] [size]", permission = 2)
+	@SubCommand(desc = "Get/Set font", usage = "[type] [size]", isOpOnly = true)
 	public void font(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (!(sender instanceof EntityPlayerMP)) { return; }
 		int size = 18;
@@ -94,7 +94,7 @@ public class CmdConfig extends CommandNoppesBase {
 		Packets.send((EntityPlayerMP) sender, new PacketConfigFont(font.toString().trim(), size));
 	}
 
-	@SubCommand(desc = "Freezes/Unfreezes npcs", usage = "[true/false]", permission = 4)
+	@SubCommand(desc = "Freezes/Unfreezes npcs", usage = "[true/false]", isOpOnly = true)
 	public void freezenpcs(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (args.length == 0) {
 			this.sendMessage(sender, "Frozen NPCs: " + CustomNpcs.FreezeNPCs);
@@ -104,7 +104,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Disable/Enable the ice melting", usage = "[true/false]", permission = 4)
+	@SubCommand(desc = "Disable/Enable the ice melting", usage = "[true/false]", isOpOnly = true)
 	public void icemelts(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (args.length == 0) {
 			this.sendMessage(sender, "IceMelts: " + CustomNpcs.IceMeltsEnabled);
@@ -122,7 +122,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Disable/Enable the natural leaves decay", usage = "[true/false]", permission = 4)
+	@SubCommand(desc = "Disable/Enable the natural leaves decay", usage = "[true/false]", isOpOnly = true)
 	public void leavesdecay(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (args.length == 0) {
 			this.sendMessage(sender, "LeavesDecay: " + CustomNpcs.LeavesDecayEnabled);
@@ -140,7 +140,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Enables/Disables scripting", usage = "[true/false]", permission = 4)
+	@SubCommand(desc = "Enables/Disables scripting", usage = "[true/false]", isOpOnly = true)
 	public void scripting(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (args.length == 0) {
 			this.sendMessage(sender, "Scripting: " + CustomNpcs.EnableScripting);
@@ -151,7 +151,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Disable/Enable the vines growing", usage = "[true/false]", permission = 4)
+	@SubCommand(desc = "Disable/Enable the vines growing", usage = "[true/false]", isOpOnly = true)
 	public void vinegrowth(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (args.length == 0) {
 			this.sendMessage(sender, "VineGrowth: " + CustomNpcs.VineGrowthEnabled);
@@ -169,7 +169,7 @@ public class CmdConfig extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Enables/Disables invisible NPCs", usage = "[true/false]", permission = 4)
+	@SubCommand(desc = "Enables/Disables invisible NPCs", usage = "[true/false]", isOpOnly = true)
 	public void invisiblenpcs(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (!(sender instanceof EntityPlayerMP) || !CustomNpcsPermissions.hasPermission((EntityPlayerMP) sender, CustomNpcsPermissions.NPC_DISPLAY)) {
 			throw new CommandException(Component.translatable("availability.permission").getString());

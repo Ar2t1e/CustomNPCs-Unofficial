@@ -12,16 +12,11 @@ import noppes.npcs.dimensions.CustomWorldProvider;
 
 public class WorldEvent extends CustomNPCsEvent {
 
-	@EventName(EnumScriptType.SCRIPT_COMMAND)
-	public static class ScriptCommandEvent extends WorldEvent {
-		public String[] arguments;
-		public IPos pos;
+	public IWorld world;
 
-		public ScriptCommandEvent(IWorld world, IPos pos, String[] arguments) {
-			super(world);
-			this.arguments = arguments;
-			this.pos = pos;
-		}
+	public WorldEvent(IWorld worldIn) {
+		super();
+		world = worldIn;
 	}
 
 	@EventName(EnumScriptType.SCRIPT_TRIGGER)
@@ -32,14 +27,27 @@ public class WorldEvent extends CustomNPCsEvent {
 		public IEntity<?> entity;
 		public int id;
 
-		public ScriptTriggerEvent(int id, IWorld world, IPos pos, IEntity<?> entity, Object... arguments) {
+		public ScriptTriggerEvent(int idIn, IWorld world, IPos posIn, IEntity<?> entityIn, Object... argumentsIn) {
 			super(world);
-			this.id = id;
-			this.arguments = arguments;
-			this.pos = pos;
-			this.entity = entity;
+			id = idIn;
+			arguments = argumentsIn;
+			pos = posIn;
+			entity = entityIn;
 		}
 
+	}
+
+	// New from Unofficial (BetaZavr)
+	@EventName(EnumScriptType.SCRIPT_COMMAND)
+	public static class ScriptCommandEvent extends WorldEvent {
+		public String[] arguments;
+		public IPos pos;
+
+		public ScriptCommandEvent(IWorld world, IPos posIn, String[] argumentsIn) {
+			super(world);
+			arguments = argumentsIn;
+			pos = posIn;
+		}
 	}
 
 	@EventFunction("worldtick")
@@ -47,9 +55,9 @@ public class WorldEvent extends CustomNPCsEvent {
 
 		public TickEvent.ServerTickEvent event;
 
-		public ServerTickEvent(TickEvent.ServerTickEvent event) {
+		public ServerTickEvent(TickEvent.ServerTickEvent eventIn) {
 			super(null);
-			this.event = event;
+			event = eventIn;
 		}
 
 	}
@@ -65,15 +73,11 @@ public class WorldEvent extends CustomNPCsEvent {
 		public ProviderEvent(CustomWorldProvider providerIn, Object resultIn, Object ... parametersIn) {
 			super(null);
 			provider = providerIn;
-			dimensionId = providerIn.getMCDimensionType().getId();
+			dimensionId = providerIn.getDimension();
 			result = resultIn;
 			parameters = parametersIn;
 		}
 
 	}
-
-	public IWorld world;
-
-	public WorldEvent(IWorld worldIn) { world = worldIn; }
 
 }

@@ -4,7 +4,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import noppes.npcs.api.IContainerCustomChest;
 import noppes.npcs.containers.ContainerNpcInterface;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketCustomChestName;
 

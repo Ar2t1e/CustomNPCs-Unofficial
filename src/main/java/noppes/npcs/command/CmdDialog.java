@@ -8,6 +8,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.client.EntityUtil;
@@ -22,33 +23,27 @@ import javax.annotation.Nonnull;
 
 public class CmdDialog extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
 	@Override
-	public String getDescription() {
-		return "Dialog operations";
-	}
+	public String getDescription() { return "Dialog operations"; }
 
 	@Nonnull
-	public String getName() {
-		return "dialog";
-	}
+	public String getName() { return "dialog"; }
 
-	@SuppressWarnings("all")
-	@SubCommand(desc = "force read", usage = "<player> <dialog>", permission = 2)
+	@SubCommand(desc = "force read", usage = "<player> <dialog>", isOpOnly = true)
 	public void read(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
 		int dialogId;
 		try {
 			dialogId = Integer.parseInt(args[1]);
 		} catch (NumberFormatException ex) {
-			throw new CommandException("DialogID must be an integer");
+			throw new CommandException("DialogID must be an integer: " + args[1]);
 		}
 		List<PlayerData> data = PlayerDataController.instance.getPlayersData(sender, playername);
 		if (data.isEmpty()) {
-			throw new CommandException("Unknown player '%s'", playername);
+			throw new CommandException("Unknown player '" + playername + "'");
 		}
 		for (PlayerData playerdata : data) {
 			playerdata.dialogData.read(dialogId);
@@ -56,7 +51,7 @@ public class CmdDialog extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "reload dialogs from disk", permission = 2)
+	@SubCommand(desc = "reload dialogs from disk", isOpOnly = true)
 	public void reload(MinecraftServer server, ICommandSender sender, String[] args) {
 		DialogController.instance.load();
 		if (sender instanceof EntityPlayerMP) {
@@ -64,7 +59,7 @@ public class CmdDialog extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "show dialog", usage = "<player> <dialog> <name>", permission = 2)
+	@SubCommand(desc = "show dialog", usage = "<player> <dialog> <name>", isOpOnly = true)
 	public void show(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		List<EntityPlayerMP> players = CommandBase.getPlayers(server, sender, args[0]);
         int dialogId;
@@ -86,19 +81,18 @@ public class CmdDialog extends CommandNoppesBase {
 		}
 	}
 
-	@SuppressWarnings("all")
-	@SubCommand(desc = "force unread dialog", usage = "<player> <dialog>", permission = 2)
+	@SubCommand(desc = "force unread dialog", usage = "<player> <dialog>", isOpOnly = true)
 	public void unread(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String playername = args[0];
 		int dialogId;
 		try {
 			dialogId = Integer.parseInt(args[1]);
 		} catch (NumberFormatException ex) {
-			throw new CommandException("DialogID must be an integer");
+			throw new CommandException("DialogID must be an integer: " + args[1]);
 		}
 		List<PlayerData> data = PlayerDataController.instance.getPlayersData(sender, playername);
 		if (data.isEmpty()) {
-			throw new CommandException("Unknown player '%s'", playername);
+			throw new CommandException("Unknown player '" + playername + "'");
 		}
 		for (PlayerData playerdata : data) {
 			playerdata.dialogData.dialogsRead.remove(dialogId);

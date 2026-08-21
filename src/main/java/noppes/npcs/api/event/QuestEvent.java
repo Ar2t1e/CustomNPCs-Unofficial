@@ -14,34 +14,13 @@ import java.util.List;
 
 public class QuestEvent extends CustomNPCsEvent {
 
-	@Cancelable
-	@EventName(EnumScriptType.QUEST_CANCELED)
-	public static class QuestCanceledEvent extends QuestEvent {
-		public QuestCanceledEvent(IPlayer<?> player, IQuest quest) {
-			super(player, quest);
-		}
-	}
+	public IPlayer<?> player;
+	public IQuest quest;
 
-	@EventName(EnumScriptType.QUEST_COMPLETED)
-	public static class QuestCompletedEvent extends QuestEvent {
-		public QuestCompletedEvent(IPlayer<?> player, IQuest quest) {
-			super(player, quest);
-		}
-	}
-
-	@EventName(EnumScriptType.QUEST_LOG_BUTTON)
-	public static class QuestExtraButtonEvent extends QuestEvent {
-		public QuestExtraButtonEvent(IPlayer<?> player, IQuest quest) {
-			super(player, quest);
-		}
-	}
-
-	@Cancelable
-	@EventName(EnumScriptType.QUEST_START)
-	public static class QuestStartEvent extends QuestEvent {
-		public QuestStartEvent(IPlayer<?> player, IQuest quest) {
-			super(player, quest);
-		}
+	public QuestEvent(IPlayer<?> playerIn, IQuest questIn) {
+		super();
+		player = playerIn;
+		quest = questIn;
 	}
 
 	@EventName(EnumScriptType.QUEST_TURNING)
@@ -65,13 +44,27 @@ public class QuestEvent extends CustomNPCsEvent {
 		}
 	}
 
-	public IPlayer<?> player;
+	@EventName(EnumScriptType.QUEST_COMPLETED)
+	public static class QuestCompletedEvent extends QuestEvent {
+		public QuestCompletedEvent(IPlayer<?> player, IQuest quest) { super(player, quest); }
+	}
 
-	public IQuest quest;
+	@Cancelable
+	@EventName(EnumScriptType.QUEST_START)
+	public static class QuestStartEvent extends QuestEvent {
+		public QuestStartEvent(IPlayer<?> player, IQuest quest) { super(player, quest); }
+	}
 
-	public QuestEvent(IPlayer<?> player, IQuest quest) {
-		this.quest = quest;
-		this.player = player;
+	// New from Unofficial (BetaZavr)
+	@Cancelable
+	@EventName(EnumScriptType.QUEST_CANCELED)
+	public static class QuestCanceledEvent extends QuestEvent {
+		public QuestCanceledEvent(IPlayer<?> player, IQuest quest) { super(player, quest); }
+	}
+
+	@EventName(EnumScriptType.QUEST_LOG_BUTTON)
+	public static class QuestExtraButtonEvent extends QuestEvent {
+		public QuestExtraButtonEvent(IPlayer<?> player, IQuest quest) { super(player, quest); }
 	}
 
 }

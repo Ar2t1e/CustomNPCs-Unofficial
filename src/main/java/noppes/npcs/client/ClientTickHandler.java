@@ -3,6 +3,7 @@ package noppes.npcs.client;
 import java.util.*;
 
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
@@ -17,7 +18,6 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketRemoveLoadFile;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.util.CustomDelayedTask;
 import org.lwjgl.input.Keyboard;
 
 import net.minecraft.client.Minecraft;
@@ -52,13 +52,10 @@ public class ClientTickHandler {
 	private World prevWorld;
 
 	// New from Unofficial (BetaZavr)
-	protected static List<CustomDelayedTask> delayedTasks = new ArrayList<>();
 	public static List<MusicData> musics = new ArrayList<>();
 	public static boolean checkMails = false;
 	public static boolean inGame = false;
 	public static long ticks = 0L;
-
-	public static void addTask(Runnable task, long delay) { delayedTasks.add(new CustomDelayedTask(task, delay)); }
 
 	public static void loadFiles() {
 		if (!ClientProxy.loadFiles.isEmpty()) {
@@ -90,6 +87,7 @@ public class ClientTickHandler {
 
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public void cnpcClientTick(TickEvent.ClientTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) { return; }
@@ -163,7 +161,7 @@ public class ClientTickHandler {
 			// files
 			loadFiles();
 			// hand distance
-			if (mc.playerController != null) {
+			if (mc.playerController != null && mc.player != null && mc.player.getEntityAttribute(EntityPlayer.REACH_DISTANCE) != null) {
 				double reachDistance = mc.playerController.getBlockReachDistance();
 				if (mc.playerController.extendedReach()) { reachDistance = 6.0; }
 				if (data.game.blockReachDistance != reachDistance) {
@@ -209,16 +207,6 @@ public class ClientTickHandler {
 			if (!data.overlay.keyPress.isEmpty()) {
 				Packets.sendServer(new SPacketPlayerKeyPressed(-1, false, false, false, false, false, mc.currentScreen.getClass().getSimpleName()));
 				data.overlay.keyPress.clear();
-			}
-		}
-		// Process delayed tasks
-		Iterator<CustomDelayedTask> it = delayedTasks.iterator();
-		while (it.hasNext()) {
-			CustomDelayedTask delayedTask = it.next();
-			delayedTask.ticksRemaining--;
-			if (delayedTask.ticksRemaining <= 0) {
-				it.remove();
-				delayedTask.task.run();
 			}
 		}
 		CustomNpcs.debugData.end(null);

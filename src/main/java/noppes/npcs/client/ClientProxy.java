@@ -7,7 +7,6 @@ import java.util.List;
 
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import micdoodle8.mods.galacticraft.api.client.tabs.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -61,6 +60,7 @@ import noppes.npcs.api.wrapper.client.WrapperMinecraft;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.controllers.PresetController;
 import noppes.npcs.client.gui.elements.GuiManageCustomElements;
+import noppes.npcs.client.gui.player.tabs.*;
 import noppes.npcs.client.gui.yellow_de.GuiYellowDialogEditor;
 import noppes.npcs.client.particles.EntityEnderFX;
 import noppes.npcs.client.gui.*;
@@ -105,6 +105,7 @@ import noppes.npcs.client.renderer.RenderNpcDragon;
 import noppes.npcs.client.renderer.RenderNpcSlime;
 import noppes.npcs.client.renderer.RenderProjectile;
 import noppes.npcs.client.util.CustomNpcsLangPack;
+import noppes.npcs.client.util.TabRegistry;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import noppes.npcs.mixin.client.particle.IParticleFlameMixin;
 import noppes.npcs.mixin.client.particle.IParticleSmokeNormalMixin;
@@ -147,20 +148,20 @@ public class ClientProxy extends CommonProxy {
 
     public static void removeKeyFromMAP(Object parent) {
 		if (parent instanceof KeyBinding) {
-			((IKeyBindingMixin) parent).getMap().removeKey((KeyBinding) parent);
+			IKeyBindingMixin.getMap().removeKey((KeyBinding) parent);
 		}
 	}
 
 	public static void addKeyToAll(String name, Object parent) {
 		if (parent instanceof KeyBinding) {
-			((IKeyBindingMixin) parent).getAll().put(name, (KeyBinding) parent);
+			IKeyBindingMixin.getAll().put(name, (KeyBinding) parent);
 		}
 	}
 
 	public static void tryAddKeyToMap(Object parent) {
 		if (parent instanceof KeyBinding) {
 			KeyBinding keyBinding = (KeyBinding) parent;
-			KeyBindingMap map = ((IKeyBindingMixin) parent).getMap();
+			KeyBindingMap map = IKeyBindingMixin.getMap();
 			if (!map.lookupAll(keyBinding.getKeyCode()).contains(keyBinding)) { map.addKey(keyBinding.getKeyCode(), keyBinding); }
 		}
 	}
@@ -673,8 +674,7 @@ public class ClientProxy extends CommonProxy {
 		super.syncRecipe(book);
 		EntityPlayer player = getPlayer();
 		if (player != null && book instanceof RecipeBookClient) {
-			RecipeBookClient cBook = (RecipeBookClient) book;
-			Map<CreativeTabs, List<RecipeList>> RECIPES_BY_TAB = ((IRecipeBookClientMixin) cBook).getCollectionsByTab();
+			Map<CreativeTabs, List<RecipeList>> RECIPES_BY_TAB = IRecipeBookClientMixin.getCollectionsByTab();
 			RecipeController rData = RecipeController.getInstance();
 			for (int i = 0; i < 2; i++) {
 				boolean isGlobal = i == 0;

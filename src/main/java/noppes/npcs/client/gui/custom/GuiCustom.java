@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketCustomGuiKeyPressed;
 import noppes.npcs.packets.server.SPacketCustomGuiSubGuiClosed;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.GuiBasicContainer;
@@ -86,6 +87,7 @@ public class GuiCustom extends GuiBasicContainer<ContainerCustomGui> implements 
 	@Override
 	public boolean keyPressed(char typedChar, int keyCode) {
 		if (subgui != null) { return subgui.keyPressed(typedChar, keyCode); }
+		Packets.sendServer(new SPacketCustomGuiKeyPressed(keyCode));
 		if (components.keyPressed(typedChar, keyCode)) { return true; }
 		if (scrollingPanel.keyPressed(typedChar, keyCode)) { return true; }
 		return GuiBasic.isInventoryKey(keyCode) || super.keyPressed(typedChar, keyCode);
@@ -175,10 +177,13 @@ public class GuiCustom extends GuiBasicContainer<ContainerCustomGui> implements 
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public int getTotalGuiLeft() { return parent != null ? parent.getTotalGuiLeft() + getGuiLeft() : getGuiLeft(); }
 
+	@SuppressWarnings("unused")
 	public int getTotalGuiTop() { return parent != null ? parent.getTotalGuiTop() + getGuiTop() : getGuiTop(); }
 
+	@SuppressWarnings("unused")
 	public void addPanel(IComponentGui component) { scrollingPanel.components.put(component.getId(), component); }
 
 	public IComponentGui getComponent(UUID id) {

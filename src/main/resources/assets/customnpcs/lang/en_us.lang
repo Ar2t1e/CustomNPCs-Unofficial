@@ -3325,3 +3325,4 @@ element.hover.property.max=Maximum property value<br>§7From §6 0§7 to §6 64
 element.hover.property.done=Apply new block states
 element.hover.property.clear=Delete block states<br>§7Reset to default
 element.hover.show.axis=Show coordinate axes<br>§cRed§7 - front side<br>§9Blue§7 - bottom side
+schemas.no.available=No schemas available

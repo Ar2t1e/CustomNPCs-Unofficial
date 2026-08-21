@@ -50,6 +50,7 @@ import noppes.npcs.api.wrapper.gui.CustomGuiComponentWrapper;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.controllers.OverlayController;
 import noppes.npcs.client.gui.GuiAchievement;
+import noppes.npcs.client.gui.GuiNpcDimension;
 import noppes.npcs.client.gui.GuiNpcMobSpawnerAdd;
 import noppes.npcs.client.gui.GuiNpcRemoteEditor;
 import noppes.npcs.client.gui.custom.GuiCustom;
@@ -70,6 +71,7 @@ import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityDialogNpc;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -574,6 +576,9 @@ public class Client {
                 break;
             } // playerData
             case 9: {
+                if (minecraft.currentScreen instanceof GuiNpcDimension) {
+                    ((GuiNpcDimension) minecraft.currentScreen).currentDimId = msg.data.getInteger("CurrentDimensionId");
+                }
                 DimensionController.loadData(msg.data);
                 break;
             } // dimensions

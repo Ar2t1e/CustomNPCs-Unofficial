@@ -5,6 +5,7 @@ import net.minecraft.client.util.RecipeBookClient;
 import net.minecraft.creativetab.CreativeTabs;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.throwables.MixinException;
 
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,6 @@ import java.util.Map;
 @Mixin(value = RecipeBookClient.class, priority = 502)
 public interface IRecipeBookClientMixin {
 
-    @Accessor("RECIPES_BY_TAB") Map<CreativeTabs, List<RecipeList>> getCollectionsByTab();
+    @Accessor("RECIPES_BY_TAB") static Map<CreativeTabs, List<RecipeList>> getCollectionsByTab() { throw new MixinException("Mixin did not initialize properly."); }
 
 }

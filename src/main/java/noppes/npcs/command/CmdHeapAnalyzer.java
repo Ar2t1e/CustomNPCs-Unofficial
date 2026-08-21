@@ -127,7 +127,7 @@ public class CmdHeapAnalyzer extends CommandNoppesBase {
 
     /* ===================== PUBLIC API ===================== */
     @Override
-    public int getRequiredPermissionLevel() { return 4; }
+    public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
     @Override
     public String getDescription() { return "Heap memory analyzer"; }
@@ -135,7 +135,7 @@ public class CmdHeapAnalyzer extends CommandNoppesBase {
     @Override
     public @Nonnull String getName() { return "dump"; }
 
-    @SubCommand(desc = "Start auto heap tracking", usage = "[topCount]", permission = 4)
+    @SubCommand(desc = "Start auto heap tracking", usage = "[topCount]", isOpOnly = true)
     public void start(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         int count = 30;
         if (args.length > 0) {
@@ -145,7 +145,7 @@ public class CmdHeapAnalyzer extends CommandNoppesBase {
         startTracking(sender, count);
     }
 
-    @SubCommand(desc = "Stop auto heap tracking", usage = "[topCount]", permission = 4)
+    @SubCommand(desc = "Stop auto heap tracking", usage = "[topCount]", isOpOnly = true)
     public void stop(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         int count = 0;
         if (args.length > 0) {
@@ -155,7 +155,7 @@ public class CmdHeapAnalyzer extends CommandNoppesBase {
         stopTracking(sender, count);
     }
 
-    @SubCommand(desc = "Manual heap dump", usage = "[topCount]", permission = 4)
+    @SubCommand(desc = "Manual heap dump", usage = "[topCount]", isOpOnly = true)
     public void manual(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         int count = 30;
         if (args.length > 0) {

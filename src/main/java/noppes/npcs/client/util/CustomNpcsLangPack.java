@@ -91,10 +91,10 @@ public class CustomNpcsLangPack {
         if (inputStreamIn == null) return;
         for (String s : IOUtils.readLines(inputStreamIn, StandardCharsets.UTF_8)) {
             if (!s.isEmpty() && s.charAt(0) != '#') {
-                String[] astring = Iterables.toArray(locale.getSplitter().split(s), String.class);
+                String[] astring = Iterables.toArray(ILocaleMixin.getSplitter().split(s), String.class);
                 if (astring != null && astring.length == 2) {
                     String s1 = astring[0];
-                    String s2 = locale.getPattern().matcher(astring[1]).replaceAll("%$1s");
+                    String s2 = ILocaleMixin.getPattern().matcher(astring[1]).replaceAll("%$1s");
                     if (isEn) { enProperties.put(s1, s2); } else { properties.put(s1, s2); }
                     locale.getProperties().put(s1, s2);
                     languageMap.npcs$getLanguageList().put(s1, s2);

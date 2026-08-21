@@ -96,6 +96,7 @@ public class SPacketDimensionsGet extends PacketServerBasic {
             DimensionController.addDimensionData(dd);
         }
         compound.setTag("Data", list);
+        compound.setInteger("CurrentDimensionId", player.world.provider.getDimension());
         Packets.send(player, new PacketSync(9, compound, false));
     }
 

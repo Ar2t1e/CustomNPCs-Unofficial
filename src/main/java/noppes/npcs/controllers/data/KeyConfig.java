@@ -74,11 +74,11 @@ public class KeyConfig implements IKeySetting {
 			((IKeyBindingMixin) parent).setKeyDescription(name);
 			((IKeyBindingMixin) parent).setKeyCategory(category);
 			if (!oldName.equals(name)) {
-				((IKeyBindingMixin) parent).getAll().remove(oldName);
+				IKeyBindingMixin.getAll().remove(oldName);
 				ClientProxy.addKeyToAll(name, parent);
 			}
 			ClientProxy.tryAddKeyToMap(parent);
-			((IKeyBindingMixin) parent).getCategories().add(category);
+			IKeyBindingMixin.getCategories().add(category);
 		}
 		return parent;
 	}

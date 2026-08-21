@@ -10,7 +10,7 @@ import noppes.npcs.EventHooks;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.event.NpcEvent;
 import noppes.npcs.constants.EnumScriptType;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.util.CustomNPCsScheduler;
 

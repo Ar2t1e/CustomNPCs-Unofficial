@@ -1,7 +1,6 @@
 package noppes.npcs;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.entity.Entity;
@@ -28,16 +27,12 @@ import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.roles.RoleFollower;
 import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.util.CustomNPCsScheduler;
-import noppes.npcs.util.CustomDelayedTask;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.BuilderData;
 
 public class ServerTickHandler {
 
 	public static int ticks = 0;
-	protected static List<CustomDelayedTask> delayedTasks = new ArrayList<>();
-
-	public static void addTask(Runnable task, long delay) { delayedTasks.add(new CustomDelayedTask(task, delay)); }
 
 	@SubscribeEvent
 	public void cnpcPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -197,16 +192,6 @@ public class ServerTickHandler {
 		if (ticks % 1200 == 0) {
 			BankController.getInstance().update();
 			Packets.clearDelaySendMap();
-		}
-		// Process delayed packets on the server thread
-		Iterator<CustomDelayedTask> it = delayedTasks.iterator();
-		while (it.hasNext()) {
-			CustomDelayedTask delayedTask = it.next();
-			delayedTask.ticksRemaining--;
-			if (delayedTask.ticksRemaining <= 0) {
-				it.remove();
-				delayedTask.task.run();
-			}
 		}
 		CustomNpcs.debugData.end(null);
 	}

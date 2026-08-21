@@ -10,6 +10,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketScriptError;
@@ -34,7 +35,8 @@ public class CommonUtil {
         boolean isSend = false;
         if (CustomNpcs.Server != null) {
             for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
-                if (player.isCreative() && isOp(player)) {
+                if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.ADMIN) ||
+                        (player.isCreative() && isOp(player))) {
                     if (isScriptError) { Packets.send(player, new PacketScriptError(component)); }
                     else if (CustomNpcs.DisplayErrorInChat) { player.sendMessage(component.getParent()); }
                     isSend = true;

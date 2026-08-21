@@ -15,7 +15,7 @@ import noppes.npcs.NBTTags;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.constants.EnumScriptType;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 
 public class PlayerScriptData
@@ -74,9 +74,7 @@ extends BaseScriptData {
 				script = scripts.get(i);
 				if (!errored.contains(i)) {
 					script.run(type, event);
-					if (script.errored) {
-						errored.add(i);
-					}
+					if (script.isErrored()) { errored.add(i); }
 					for (Map.Entry<Long, String> entry : script.console.entrySet()) {
 						if (!console.containsKey(entry.getKey())) { console.put(entry.getKey(), " tab " + (i + 1) + ":\n" + entry.getValue()); }
 					}

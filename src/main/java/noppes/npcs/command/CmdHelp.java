@@ -7,6 +7,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.CommandNoppesBase;
 
 import javax.annotation.Nonnull;
@@ -15,9 +16,7 @@ public class CmdHelp extends CommandNoppesBase {
 
 	private final CommandNoppes parent;
 
-	public CmdHelp(CommandNoppes parent) {
-		this.parent = parent;
-	}
+	public CmdHelp(CommandNoppes parentIn) { parent = parentIn; }
 
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
@@ -52,13 +51,17 @@ public class CmdHelp extends CommandNoppesBase {
 			this.sendMessage(sender, "------" + command.getName() + " SubCommands------");
 			for (Map.Entry<String, Method> entry2 : command.subcommands.entrySet()) {
 				SubCommand sc = entry2.getValue().getAnnotation(SubCommand.class);
-				if (sc == null || sc.permission() > per) { continue; }
+				int permission = sc == null ? 0 :
+						sc.isOpOnly() ? CustomNpcs.NoppesCommandOpOnly ? 4 : 2 : sc.permission();
+				if (sc == null || permission > per) { continue; }
 				sender.sendMessage(Component.translatable(((char) 167) + "e" + entry2.getKey() + ((char) 167) + "r: " + sc.desc()).getParent());
 			}
 		}
 		else {
 			SubCommand sc = m.getAnnotation(SubCommand.class);
-			if (sc == null || sc.permission() > per) {
+			int permission = sc == null ? 0 :
+					sc.isOpOnly() ? CustomNpcs.NoppesCommandOpOnly ? 4 : 2 : sc.permission();
+			if (sc == null || permission > per) {
 				throw new CommandException("You are not allowed to use \""+command.getName().toLowerCase()+"\" command");
 			}
 			this.sendMessage(sender, "------" + command.getName() + "." + args[1].toLowerCase() + " Command------");

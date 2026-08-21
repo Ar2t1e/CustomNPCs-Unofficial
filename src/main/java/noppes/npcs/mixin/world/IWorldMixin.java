@@ -15,8 +15,4 @@ public interface IWorldMixin {
 
     @Accessor PathWorldListener getPathListener();
 
-    @Accessor void setSpawnHostileMobs(boolean newSpawnHostileMobs);
-
-    @Accessor void setSpawnPeacefulMobs(boolean newSpawnPeacefulMobs);
-
 }

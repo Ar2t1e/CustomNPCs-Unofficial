@@ -73,4 +73,16 @@ public class CustomGuiController {
 	public static CustomGuiWrapper getOpenGui(EntityPlayer player) {
 		return player.openContainer instanceof ContainerCustomGui ? ((ContainerCustomGui) player.openContainer).customGui : null;
 	}
+
+	public static void onKeyPressed(CustomGuiEvent.KeyPressedEvent event) {
+		EntityPlayer player = event.player.getMCEntity();
+		if (checkGui(event)) {
+			CustomGuiWrapper gui = getOpenGui(player);
+			if (gui != null && gui.getScriptHandler() != null) {
+				((CustomGuiWrapper) event.gui).getScriptHandler().run(EnumScriptType.KEY_GUI_UP.function, event);
+			}
+		}
+		WrapperNpcAPI.EVENT_BUS.post(event);
+	}
+
 }

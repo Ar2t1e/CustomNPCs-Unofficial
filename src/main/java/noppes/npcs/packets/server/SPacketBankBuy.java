@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.*;
+import noppes.npcs.api.event.RoleEvent;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.containers.NpcMiscInventory;
 import noppes.npcs.controllers.data.Bank;
@@ -16,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SPacketBankUpgrade extends PacketServerBasic {
+public class SPacketBankBuy extends PacketServerBasic {
 
    protected static int channelId;
    private int bankId;
@@ -25,9 +26,9 @@ public class SPacketBankUpgrade extends PacketServerBasic {
    private int scrollY;
    private int ceilPos;
 
-   public SPacketBankUpgrade() { }
+   public SPacketBankBuy() { }
 
-   public SPacketBankUpgrade(int bankIdIn, int ceilIn, int sizeIn, int scrollYIn, int ceilPosIn) {
+   public SPacketBankBuy(int bankIdIn, int ceilIn, int sizeIn, int scrollYIn, int ceilPosIn) {
       bankId = bankIdIn;
       ceil = ceilIn;
       size = sizeIn;
@@ -106,7 +107,11 @@ public class SPacketBankUpgrade extends PacketServerBasic {
                         if (cs.openDonat > 0) { data.game.addDonat(-cs.openDonat); }
                      }
                   }
-                  update = open && cont.data.openNew(ceil);
+                  if (open) {
+                     int slot = Math.min(cs.maxCells, inv.getSizeInventory() + size);
+                     RoleEvent.BankUnlockedEvent event = new RoleEvent.BankUnlockedEvent(player, npc.wrappedNPC, cont.data.bank, slot);
+                     update = !event.isCanceled() && cont.data.openNew(ceil);
+                  }
                } // open
                else {
                   boolean upgrade = true;
@@ -132,9 +137,13 @@ public class SPacketBankUpgrade extends PacketServerBasic {
                      }
                   }
                   if (upgrade) {
-                     inv.setNewSize(Math.min(cs.maxCells, inv.getSizeInventory() + size));
-                     cont.data.setChanged();
-                     update = true;
+                     int slot = Math.min(cs.maxCells, inv.getSizeInventory() + size);
+                     RoleEvent.BankUpgradedEvent event = new RoleEvent.BankUpgradedEvent(player, npc.wrappedNPC, cont.data.bank, slot);
+                     update = !event.isCanceled();
+                     if (update) {
+                        inv.setNewSize(slot);
+                        cont.data.setChanged();
+                     }
                   }
                } // upgrade
             }

@@ -679,12 +679,12 @@ public class ScriptPlayerEventHandler {
 			PlayerScriptData handler = data.scriptData;
 			ItemStack item = ((EntityPlayer) source).getHeldItemMainhand();
 			IEntity<?> target = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(event.getEntityLiving());
-			PlayerEvent.AttackEvent ev = new PlayerEvent.AttackEvent(handler.getIPlayer(), 1, target);
+			PlayerEvent.AttackEvent ev = new PlayerEvent.AttackEvent(handler.getIPlayer(), target, event.getSource());
 			event.setCanceled(EventHooks.onPlayerAttack(handler, ev));
 			if (event.isCanceled() || ev.isCanceled()) { ((ILivingAttackEventMixin) event).setAmount(0.0f); }
 			if (item.getItem() == CustomItems.scripter_item && !event.isCanceled()) {
 				ItemScriptedWrapper isw = ItemScripted.GetWrapper(item);
-				ItemEvent.AttackEvent eve = new ItemEvent.AttackEvent(isw, handler.getIPlayer(), 1, target);
+				ItemEvent.AttackEvent eve = new ItemEvent.AttackEvent(isw, handler.getIPlayer(), target, event.getSource());
 				eve.setCanceled(event.isCanceled());
 				event.setCanceled(EventHooks.onScriptItemAttack(isw, eve));
 			}

@@ -13,6 +13,15 @@ import noppes.npcs.constants.EnumScriptType;
 
 public class CustomGuiEvent extends CustomNPCsEvent {
 
+	public ICustomGui gui;
+	public IPlayer<?> player;
+
+	public CustomGuiEvent(IPlayer<?> playerIn, ICustomGui guiIn) {
+		super();
+		player = playerIn;
+		gui = guiIn;
+	}
+
 	@EventName(EnumScriptType.CUSTOM_GUI_BUTTON)
 	public static class ButtonEvent extends CustomGuiEvent {
 
@@ -28,9 +37,7 @@ public class CustomGuiEvent extends CustomNPCsEvent {
 
 	@EventName(EnumScriptType.CUSTOM_GUI_CLOSED)
 	public static class CloseEvent extends CustomGuiEvent {
-		public CloseEvent(IPlayer<?> player, ICustomGui gui) {
-			super(player, gui);
-		}
+		public CloseEvent(IPlayer<?> player, ICustomGui gui) { super(player, gui); }
 	}
 
 	@EventName(EnumScriptType.CUSTOM_GUI_SCROLL)
@@ -91,14 +98,6 @@ public class CustomGuiEvent extends CustomNPCsEvent {
 		}
 	}
 
-	public ICustomGui gui;
-	public IPlayer<?> player;
-
-	public CustomGuiEvent(IPlayer<?> playerIn, ICustomGui guiIn) {
-		player = playerIn;
-		gui = guiIn;
-	}
-
 	// New from Unofficial (BetaZavr)
 	@EventName(EnumScriptType.KEY_GUI_UP)
 	public static class KeyPressedEvent extends CustomGuiEvent {
@@ -106,7 +105,7 @@ public class CustomGuiEvent extends CustomNPCsEvent {
 
 		public KeyPressedEvent(IPlayer<?> player, ICustomGui gui, int k) {
 			super(player, gui);
-			this.key = k;
+			key = k;
 		}
 	}
 

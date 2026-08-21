@@ -24,12 +24,14 @@ public class GuiNpcDimension extends GuiNPCInterface
 
 	protected final HashMap<Component, Integer> data = new HashMap<>();
 	protected GuiCustomScrollNop scroll;
+	public int currentDimId;
 
 	public GuiNpcDimension() {
 		super();
 		setBackground("menubg.png");
 		imageWidth = 256;
 
+		currentDimId = minecraft.world.provider.getDimension();
 		Packets.sendServer(new SPacketDimensionsGet());
 	}
 
@@ -43,8 +45,7 @@ public class GuiNpcDimension extends GuiNPCInterface
 		if (scroll == null) { scroll = addScroll(0).setSize(sw, 199); }
 		if (!scroll.hasSelected()) {
 			for (Component key : data.keySet()) {
-				if (data.get(key) == (minecraft.player != null ?
-						minecraft.player.world.provider.getDimension() : 0)) {
+				if (data.get(key) == currentDimId) {
 					scroll.setSelected(key);
 					break;
 				}
@@ -77,7 +78,7 @@ public class GuiNpcDimension extends GuiNPCInterface
 		// reset
 		addButton(5, x1, y += 22, "gui.reset")
 				.setSize(60, 20)
-				.setIsEnabled(scroll.hasSelected() && DimensionManager.isDimensionRegistered(id) && !dData.isDelete(id))
+				.setIsEnabled(id != 0 && scroll.hasSelected() && DimensionManager.isDimensionRegistered(id) && !dData.isDelete(id))
 				.setHoverTexts("dimensions.hover.recreate");
 		// copy
 		addButton(6, x1, y += 22, "gui.copy")
@@ -224,6 +225,7 @@ public class GuiNpcDimension extends GuiNPCInterface
 			htx.put(htx.size(), hover);
 		}
 		if (scroll != null) {
+			scroll.clearSelection();
 			scroll.setUnsortedList(list)
 					.setSuffixes(suffixes)
 					.setHoverTexts(htx);

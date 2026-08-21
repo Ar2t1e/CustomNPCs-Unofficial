@@ -1,5 +1,6 @@
 package noppes.npcs.api.event;
 
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import noppes.npcs.api.interfaces.EventName;
@@ -9,8 +10,11 @@ import noppes.npcs.constants.EnumScriptType;
 @EventName(EnumScriptType.PACKAGE_RECEIVED)
 public class PackageReceived extends CustomNPCsEvent {
 
-	public final Packet<?> message;
+	public final Packet<INetHandler> message;
 
-	public PackageReceived(Packet<?> msg) { message = msg; }
+	public PackageReceived(Packet<INetHandler> msg) {
+		super();
+		message = msg;
+	}
 
 }

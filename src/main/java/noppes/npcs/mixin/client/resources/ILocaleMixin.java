@@ -11,9 +11,9 @@ import java.util.regex.Pattern;
 @Mixin(value = Locale.class, priority = 502)
 public interface ILocaleMixin {
 
-    @Accessor("SPLITTER") Splitter getSplitter();
+    @Accessor("SPLITTER") static Splitter getSplitter() { throw new IllegalStateException("Mixin did not initialize properly."); }
 
-    @Accessor("PATTERN") Pattern getPattern();
+    @Accessor("PATTERN") static Pattern getPattern() { throw new IllegalStateException("Mixin did not initialize properly."); }
 
     @Accessor Map<String, String> getProperties();
 

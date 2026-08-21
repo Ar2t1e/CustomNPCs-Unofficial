@@ -40,13 +40,12 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
+import noppes.npcs.api.wrapper.BlockWrapper;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.ParticleType;
 import noppes.npcs.api.constants.PotionEffectType;
-import noppes.npcs.api.entity.IProjectile;
 import noppes.npcs.api.event.ProjectileEvent;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.entity.data.DataRanged;
 
 import javax.annotation.Nonnull;
@@ -292,11 +291,11 @@ public class EntityProjectile extends EntityThrowable {
 			ProjectileEvent.ImpactEvent event;
 			if (movingobjectposition.entityHit != null) {
 				pos = movingobjectposition.entityHit.getPosition();
-				event = new ProjectileEvent.ImpactEvent((IProjectile<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this), 0,
+				event = new ProjectileEvent.ImpactEvent(this, 0,
 						movingobjectposition.entityHit);
 			} else {
 				pos = movingobjectposition.getBlockPos();
-				event = new ProjectileEvent.ImpactEvent((IProjectile<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this), 1, Objects.requireNonNull(NpcAPI.Instance()).getIBlock(world, pos));
+				event = new ProjectileEvent.ImpactEvent(this, 1, BlockWrapper.createNew(world, pos, world.getBlockState(pos)));
 			}
 			if (pos == BlockPos.ORIGIN) {
 				pos = new BlockPos(movingobjectposition.hitVec);

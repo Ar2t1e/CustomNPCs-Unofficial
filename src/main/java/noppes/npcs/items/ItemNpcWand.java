@@ -8,7 +8,6 @@ import javax.annotation.Nullable;
 
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
@@ -33,11 +32,12 @@ import noppes.npcs.util.Util;
 public class ItemNpcWand extends Item implements INPCToolItem {
 
 	public ItemNpcWand() {
-		this.setRegistryName(CustomNpcs.MODID, "npcwand");
-		this.setUnlocalizedName("npcwand");
-		this.setFull3D();
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomTabs.TOOLS);
+		super();
+		setRegistryName(CustomNpcs.MODID, "npcwand");
+		setUnlocalizedName("npcwand");
+		setFull3D();
+		maxStackSize = 1;
+		setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -63,7 +63,8 @@ public class ItemNpcWand extends Item implements INPCToolItem {
 		EntityPlayerMP player = (EntityPlayerMP) playerIn;
 		if (CustomNpcs.OpsOnly && !Objects.requireNonNull(player.getServer()).getPlayerList().canSendCommands(player.getGameProfile())) {
 			player.sendMessage(new TextComponentTranslation("availability.permission"));
-		} else if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.NPC_CREATE)) {
+		}
+		else if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.NPC_CREATE)) {
 			Entity rayTraceEntity = Util.instance.getLookEntity(player, 4.0d, false);
 			if (rayTraceEntity instanceof EntityNPCInterface) {
 				if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.NPC_GUI)) {
@@ -82,10 +83,6 @@ public class ItemNpcWand extends Item implements INPCToolItem {
 			player.sendMessage(new TextComponentTranslation("availability.permission"));
 		}
 		return EnumActionResult.SUCCESS;
-	}
-
-	public @Nonnull ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull World worldIn, @Nonnull EntityLivingBase playerIn) {
-		return stack;
 	}
 
 }

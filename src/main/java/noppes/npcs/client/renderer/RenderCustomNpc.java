@@ -146,7 +146,7 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 	protected void preRenderCallback(@Nonnull T npc, float f) {
 		if (renderEntity != null) {
 			//renderColor(npc);
-			int size = npc.display.getSize();
+			float size = npc.display.getSize();
 			if (entity instanceof EntityNPCInterface) {
 				((EntityNPCInterface) entity).display.setSize(5);
 			}

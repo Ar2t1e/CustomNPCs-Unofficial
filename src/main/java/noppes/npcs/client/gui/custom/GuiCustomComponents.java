@@ -25,7 +25,6 @@ import noppes.npcs.api.wrapper.gui.CustomGuiSliderWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiTextAreaWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiTextFieldWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiTexturedRectWrapper;
-import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.components.custom.CustomGuiAssetsSelector;
 import noppes.npcs.shared.client.gui.components.custom.CustomGuiButton;
 import noppes.npcs.shared.client.gui.components.custom.CustomGuiButtonList;

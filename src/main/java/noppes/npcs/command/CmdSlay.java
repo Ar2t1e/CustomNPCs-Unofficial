@@ -26,6 +26,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -34,28 +35,36 @@ import javax.annotation.Nonnull;
 
 public class CmdSlay extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
+
+	@Override
+	public String getDescription() { return "Kills given entity within range. Also has all, mobs, animal options. Can have multiple types"; }
+
+	@Nonnull
+	public String getName() { return "slay"; }
+
+	@Override
+	public String getUsage() { return "<type>.. [range]"; }
 
 	public Map<String, Class<?>> slayMap = new HashMap<>();
 
 	public CmdSlay() {
-        this.slayMap.put("all", EntityLivingBase.class);
-		this.slayMap.put("mobs", EntityMob.class);
-		this.slayMap.put("animals", EntityAnimal.class);
-		this.slayMap.put("items", EntityItem.class);
-		this.slayMap.put("xporbs", EntityXPOrb.class);
-		this.slayMap.put("npcs", EntityNPCInterface.class);
+        slayMap.put("all", EntityLivingBase.class);
+		slayMap.put("mobs", EntityMob.class);
+		slayMap.put("animals", EntityAnimal.class);
+		slayMap.put("items", EntityItem.class);
+		slayMap.put("xporbs", EntityXPOrb.class);
+		slayMap.put("npcs", EntityNPCInterface.class);
 		for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
 			String name = ent.getName();
 			Class<? extends Entity> cls = ent.getEntityClass();
 			if (EntityNPCInterface.class.isAssignableFrom(cls)) { continue; }
 			if (!EntityLivingBase.class.isAssignableFrom(cls)) { continue; }
-			this.slayMap.put(name.toLowerCase(), cls);
+			slayMap.put(name.toLowerCase(), cls);
 		}
-		this.slayMap.remove("monster");
-		this.slayMap.remove("mob");
+		slayMap.remove("monster");
+		slayMap.remove("mob");
 	}
 
 	private boolean delete(Entity entity, ArrayList<Class<?>> toDelete) {
@@ -80,7 +89,7 @@ public class CmdSlay extends CommandNoppesBase {
 		boolean deleteNPCs = false;
 		for (String delete : args) {
 			delete = delete.toLowerCase();
-			Class<?> cls = this.slayMap.get(delete);
+			Class<?> cls = slayMap.get(delete);
 			if (cls != null) {
 				toDelete.add(cls);
 			}
@@ -113,7 +122,7 @@ public class CmdSlay extends CommandNoppesBase {
 			if (entity instanceof EntityNPCInterface && !deleteNPCs) {
 				continue;
 			}
-			if (!this.delete(entity, toDelete)) {
+			if (!delete(entity, toDelete)) {
 				continue;
 			}
 			++count;
@@ -144,21 +153,8 @@ public class CmdSlay extends CommandNoppesBase {
 	}
 
 	@Override
-	public String getDescription() {
-		return "Kills given entity within range. Also has all, mobs, animal options. Can have multiple types";
-	}
-
-	@Nonnull
-	public String getName() {
-		return "slay";
-	}
-
 	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
-		return CommandBase.getListOfStringsMatchingLastWord(args, this.slayMap.keySet().toArray(new String[0]));
+		return CommandBase.getListOfStringsMatchingLastWord(args, slayMap.keySet().toArray(new String[0]));
 	}
 
-	@Override
-	public String getUsage() {
-		return "<type>.. [range]";
-	}
 }

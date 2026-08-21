@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.client.gui.ConfirmScreen;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.mixin.nbt.INBTTagLongArrayMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketScriptConsole;
@@ -27,8 +28,7 @@ import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.controllers.IScriptHandler;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.IScriptHandler;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.ClientScriptData;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
@@ -137,7 +137,7 @@ public class GuiScriptInterface extends GuiNPCInterface
 						.setSize(120, h).setList(methods);
 				addScroll(2).setPos(x, guiTop + 29 + h)
 						.setSize(120, h)
-						.setList(new ArrayList<>(ScriptContainer.Data.keySet()));
+						.setList(new ArrayList<>(ScriptContainer.DATA.keySet()));
 			} // functions
 		} // scripts
 		else {

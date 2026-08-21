@@ -65,7 +65,6 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 			} // not register
 		}
 		else { INSTANCE = new DimensionController(NAME); }
-		INSTANCE.checkExample();
 		return INSTANCE;
 	}
 
@@ -79,7 +78,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	@Override
 	public IWorldInfo createNewDimension() {
 		CustomWorldInfo cwi = new CustomWorldInfo(new NBTTagCompound());
-		createNewDimension(null, cwi);
+		createNewDimension(null, cwi, true);
 		return cwi;
 	}
 
@@ -129,14 +128,15 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	 */
 	@Override
 	public void readFromNBT(@Nonnull NBTTagCompound nbt) {
+		dimensionInfo.clear();
+		providerInfo.clear();
 		NBTTagList nbtList = nbt.getTagList("dimensions", 10);
 		if (nbtList.hasNoTags()) { nbtList = nbt.getTagList("dimensionInfo", 10); } // OLD
 		for (int i = 0; i < nbtList.tagCount(); i++) {
 			NBTTagCompound compound = nbtList.getCompoundTagAt(i);
-			dimensionInfo.put(compound.getInteger("dimensionID"),
-					new CustomWorldInfo(compound.getCompoundTag("worldInfo")));
-			providerInfo.put(compound.getInteger("dimensionID"),
-					compound.getCompoundTag("providerInfo"));
+			int id = compound.getInteger("dimensionID");
+			dimensionInfo.put(id, new CustomWorldInfo(compound.getCompoundTag("worldInfo")));
+			providerInfo.put(id, compound.getCompoundTag("providerInfo"));
 		}
 		checkExample();
 		update = false;
@@ -165,12 +165,11 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 			cwi.dimensionId = 100;
 			cwi.setDimensionName("example");
 			cwi.setDisplayName("Example Dimension");
-			createNewDimension(null, cwi);
-			providerInfo.put(100, new NBTTagCompound());
+			createNewDimension(null, cwi, false);
 		}
 	}
 
-	public void createNewDimension(EntityPlayerMP player, CustomWorldInfo worldInfo) {
+	public void createNewDimension(EntityPlayerMP player, CustomWorldInfo worldInfo, boolean isUpdating) {
 		int id = worldInfo.dimensionId != 100 ? findFreeDimensionID() : 100;
 		worldInfo.dimensionId = id;
 		if (worldInfo.getDimensionName().startsWith("default_") && !worldInfo.getDimensionName().contains("_copy")) {
@@ -194,7 +193,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		if (player != null) {
 			player.sendMessage(Component.translatable("message.dimensions.created", id, name).getParent());
 		}
-		syncWithClients();
+		if (isUpdating) { syncWithClients(); }
 	}
 
 	public DimensionType getDimensionType(int id, String name) {
@@ -335,7 +334,8 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	@SuppressWarnings("ConstantConditions")
 	public void recreateDimension(EntityPlayerMP player, int dimId) {
 		List<Integer> allIDs = getAllIDs();
-		if (!allIDs.contains(dimId) ||
+		if (dimId == 0 ||
+				!allIDs.contains(dimId) ||
 				toBeDeleted.containsKey(dimId) ||
 				!DimensionManager.isDimensionRegistered(dimId)) {
 			if (player != null) {
@@ -377,14 +377,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		CustomNPCsScheduler.runTack(() -> {
 			// files
 			File saveRoot = DimensionManager.getCurrentSaveRootDirectory();
-			boolean error;
-			if (dimId == 0) {
-				error = !Util.instance.removeFile(new File(saveRoot, "region"));
-				error = error || !Util.instance.removeFile(new File(saveRoot, "data"));
-				error = error || !Util.instance.removeFile(new File(saveRoot, "forcedchunks.dat"));
-			} // overworld
-			else { error = !Util.instance.removeFile(new File(saveRoot, "DIM" + dimId)); }
-			if (error) {
+			if (!Util.instance.removeFile(new File(saveRoot, "DIM" + dimId))) {
 				if (player != null) { player.sendMessage(Component.translatable("message.dimensions.err.recreated", dimId).getParent()); }
 				return;
 			}
@@ -435,7 +428,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 			if (!pCwi.getDimensionName().startsWith("default_")) { cwi.setDimensionName(pCwi.getDimensionName() + "_copy"); }
 			if (!pCwi.getDisplayName().isEmpty()) { cwi.setDisplayName(pCwi.getDisplayName() + " (copy from " + dimId + ")"); }
 		}
-		createNewDimension(player, cwi);
+		createNewDimension(player, cwi, true);
 		providerInfo.put(cwi.dimensionId, providerInfo.containsKey(dimId) ? providerInfo.get(dimId).copy() : new NBTTagCompound());
 
 		// files

@@ -82,7 +82,8 @@ public class CustomNpcsPermissions {
 	public static final Permission SOULSTONE_ALL = new Permission(CustomNpcs.MODID + ".soulstone.all");
 	public static final Permission SCENES = new Permission(CustomNpcs.MODID + ".scenes");
 
-	// in 1.20.1
+	// New from Unofficial (GoodBird)
+	public static final Permission ADMIN = new Permission(CustomNpcs.MODID + ".admin", false);
 	public static final Permission NPC_AI = new Permission(CustomNpcs.MODID + ".npc.ai");
 
 	// New from Unofficial (BetaZavr)

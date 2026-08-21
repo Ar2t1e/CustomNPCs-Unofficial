@@ -8,9 +8,10 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(value = WorldProvider.class, priority = 502)
 public interface IWorldProviderMixin {
 
-    @Accessor WorldType getTerrainType();
+    @Accessor("terrainType") WorldType gTerrainType();
 
-    @Accessor String getGeneratorSettings();
+    @Accessor("generatorSettings") String gGeneratorSettings();
 
-    @Accessor float[] getColorsSunriseSunset();
+    @Accessor("colorsSunriseSunset") float[] gColorsSunriseSunset();
+
 }

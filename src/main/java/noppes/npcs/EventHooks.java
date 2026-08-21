@@ -29,7 +29,6 @@ import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityItem;
 import noppes.npcs.api.entity.IPlayer;
-import noppes.npcs.api.entity.IProjectile;
 import noppes.npcs.api.event.NpcEvent.CustomNpcTeleport;
 import noppes.npcs.api.event.PlayerEvent.CustomTeleport;
 import noppes.npcs.api.event.WorldEvent.ScriptTriggerEvent;
@@ -46,9 +45,9 @@ import noppes.npcs.api.wrapper.WrapperNpcAPI;
 import noppes.npcs.constants.EnumScriptType;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.controllers.CustomGuiController;
-import noppes.npcs.controllers.IScriptBlockHandler;
-import noppes.npcs.controllers.IScriptHandler;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.IScriptBlockHandler;
+import noppes.npcs.controllers.scripts.IScriptHandler;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.ClientScriptData;
 import noppes.npcs.controllers.data.Dialog;
@@ -290,13 +289,6 @@ public class EventHooks {
 		onEvent(npc.script, EnumScriptType.TIMER, new NpcEvent.TimerEvent(npc.wrappedNPC, id));
 	}
 
-	public static void onPackageReceived(PackageReceived event, boolean isServerSide) {
-		IScriptHandler handler;
-		if (isServerSide) { handler = ScriptController.Instance.forgeScripts; }
-		else { handler = ScriptController.Instance.clientScripts; }
-		onEvent(handler, EnumScriptType.PACKAGE_RECEIVED, event);
-	}
-
 	public static boolean onPlayerAttack(PlayerScriptData handler, PlayerEvent.AttackEvent event) {
 		return onEvent(handler, EnumScriptType.ATTACK, event);
 	}
@@ -449,7 +441,7 @@ public class EventHooks {
 	}
 
 	public static void onProjectileTick(EntityProjectile projectile) {
-		ProjectileEvent.UpdateEvent event = new ProjectileEvent.UpdateEvent((IProjectile<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(projectile));
+		ProjectileEvent.UpdateEvent event = new ProjectileEvent.UpdateEvent(projectile);
 		for (ScriptContainer script : projectile.scripts) {
 			if (script.isValid()) {
 				script.run(EnumScriptType.PROJECTILE_TICK.function, event);
@@ -633,6 +625,16 @@ public class EventHooks {
 
 	public static boolean onPlayerPlace(PlayerScriptData handler, PlayerEvent.PlaceEvent event) {
 		return onEvent(handler, EnumScriptType.PLEASED, event);
+	}
+
+	public static void onCustomGuiKeyPressed(PlayerWrapper<?> player, ICustomGui gui, int keyId) {
+		CustomGuiController.onKeyPressed(new CustomGuiEvent.KeyPressedEvent(player, gui, keyId));
+	}
+
+	public static void onPackageReceived(PackageReceived event, boolean isServerSide) {
+		onEvent(isServerSide ?
+				ScriptController.Instance.forgeScripts :
+				ScriptController.Instance.clientScripts, EnumScriptType.PACKAGE_RECEIVED, event);
 	}
 
 }

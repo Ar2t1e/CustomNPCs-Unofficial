@@ -24,6 +24,7 @@ import noppes.npcs.EventHooks;
 import noppes.npcs.api.entity.data.IPlayerMiniMap;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
 import noppes.npcs.constants.EnumQuestTask;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.*;

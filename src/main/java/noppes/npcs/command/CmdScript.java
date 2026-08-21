@@ -14,6 +14,7 @@ import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.ForgeEventHandler;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketEventNames;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -25,7 +26,6 @@ import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.event.WorldEvent;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.constants.EnumScriptType;
-import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.DimensionController;
 
@@ -42,7 +42,7 @@ public class CmdScript extends CommandNoppesBase {
 	@Nonnull
 	public String getName() { return "script"; }
 
-	@SubCommand(desc = "List of available event names from all APIs in mod", permission = 4)
+	@SubCommand(desc = "List of available event names from all APIs in mod", isOpOnly = true)
 	public Boolean apilist(MinecraftServer server, ICommandSender sender, String[] args) {
 		Component message = Component.empty();
 		List<String> g = new ArrayList<>();
@@ -69,7 +69,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "List of available Forge event names", permission = 4)
+	@SubCommand(desc = "List of available Forge event names", isOpOnly = true)
 	public Boolean clientlist(MinecraftServer server, ICommandSender sender, String[] args) {
 		Component message = Component.empty();
 		List<String> g = new ArrayList<>(ForgeEventHandler.clientEventNames.values());
@@ -97,7 +97,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "List of available Forge event names", permission = 4)
+	@SubCommand(desc = "List of available Forge event names", isOpOnly = true)
 	public Boolean forgelist(MinecraftServer server, ICommandSender sender, String[] args) {
 		Component message = Component.empty();
 		List<String> g = new ArrayList<>(ForgeEventHandler.eventNames.values());
@@ -125,7 +125,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "Displays all script owners that have logs.", permission = 4)
+	@SubCommand(desc = "Displays all script owners that have logs.", isOpOnly = true)
 	public Boolean logs(MinecraftServer server, ICommandSender sender, String[] args) {
 		List<Component> list = new ArrayList<>();
 	 	for (ScriptContainer container : ScriptController.Instance.getErrored()) { list.add(container.noticeString()); }
@@ -139,7 +139,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "Reload scripts and saved data from disks script folder.", permission = 4)
+	@SubCommand(desc = "Reload scripts and saved data from disks script folder.", isOpOnly = true)
 	public Boolean reload(MinecraftServer server, ICommandSender sender, String[] args) {
 		ScriptController.Instance.loadCategories();
 		// Players
@@ -168,7 +168,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "Runs scriptCommand in the players scripts", usage = "[args]", permission = 4)
+	@SubCommand(desc = "Runs scriptCommand in the players scripts", usage = "[args]", isOpOnly = true)
 	public Boolean run(MinecraftServer server, ICommandSender sender, String[] args) {
 		IWorld world = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(sender.getEntityWorld());
 		BlockPos bpos = sender.getPosition();
@@ -178,7 +178,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "Attempts to execute on the specified object", usage = "<dimensionID> <x> <y> <z> <entity> <triggerID> [Strings]", permission = 4)
+	@SubCommand(desc = "Attempts to execute on the specified object", usage = "<dimensionID> <x> <y> <z> <entity> <triggerID> [Strings]", isOpOnly = true)
 	public Boolean trigger(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		IWorld world;
 		IPos pos = null;
@@ -225,7 +225,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "Display a list of all load script elements positions in chat", permission = 4)
+	@SubCommand(desc = "Display a list of all load script elements positions in chat", isOpOnly = true)
 	public Boolean list(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		Component positions;
 		String key = args.length > 0 ? args[0] : "all";

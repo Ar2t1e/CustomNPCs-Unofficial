@@ -101,7 +101,10 @@ public class TranslateUtil {
             hasInternet = false;
             LogWriter.error("Error: No internet connection", se);
         }
-        catch (Exception e) { LogWriter.error("Error trying to translate via Google", e); }
+        catch (Exception e) {
+            hasInternet = false;
+            LogWriter.error("Error trying to translate via Google", e);
+        }
         return originalText;
     }
 

@@ -12,6 +12,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.DimensionController;
@@ -21,20 +22,15 @@ import javax.annotation.Nonnull;
 
 public class CmdDimensions extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
 	@Override
-	public String getDescription() {
-		return "World operations";
-	}
+	public String getDescription() { return "World operations"; }
 
 	@Nonnull
 	@Override
-	public String getName() {
-		return "world";
-	}
+	public String getName() { return "world"; }
 
 	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
 		List<String> list = new ArrayList<>();
@@ -57,7 +53,7 @@ public class CmdDimensions extends CommandNoppesBase {
 		return list;
 	}
 
-	@SubCommand(desc = "Set spawn block in dimension", permission = 2)
+	@SubCommand(desc = "Set spawn block in dimension", isOpOnly = true)
 	public void setspawn(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (sender == null) {
 			return;

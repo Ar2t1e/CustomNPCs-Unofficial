@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -33,6 +34,9 @@ import noppes.npcs.api.wrapper.WrapperNpcAPI;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.blocks.tiles.TileScriptedDoor;
 import noppes.npcs.controllers.data.*;
+import noppes.npcs.controllers.scripts.IScriptExecutor;
+import noppes.npcs.controllers.scripts.Jsr223Executor;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemScripted;
 import noppes.npcs.packets.Packets;
@@ -46,39 +50,47 @@ import noppes.npcs.util.*;
 
 public class ScriptController {
 
-	private static final boolean isClient = Thread.currentThread().getName().toLowerCase().contains("client");
 	public static boolean HasStart = false;
 	public static ScriptController Instance;
 
-    public boolean isLoad = false;
 	public boolean shouldSave = false;
 
 	public long lastLoaded = 0L;
 	public long lastPlayerUpdate = 0L;
 	public NBTTagCompound compound = new NBTTagCompound();
-	public NBTTagCompound constants = new NBTTagCompound();
 	public File dir;
-	public File clientDir;
 	
 	public final Map<String, ScriptEngineFactory> factories = new TreeMap<>();
 	public final Map<String, String> languages = new TreeMap<>();
+	public final Map<String, String> scripts = new TreeMap<>();
+
+	public ForgeScriptData forgeScripts = new ForgeScriptData();
+	public PlayerScriptData playerScripts = new PlayerScriptData(null);
+	public File localDir;
+
+	// New fields from Unofficial (GoodBird)
+	public Map<String, Supplier<IScriptExecutor>> executorProviders = new HashMap<>();
+
+	// New fields from Unofficial (BetaZavr)
+	private static final boolean isClient = Util.instance.getSide().isClient();
+
 	public final Map<String, Long> sizes = new TreeMap<>();
 	public final Map<String, Long> clientSizes = new TreeMap<>();
-	public final Map<String, String> scripts = new TreeMap<>();
-	public final Map<String, String> clients = new TreeMap<>();
 	public final Map<String, File> encrypts = new TreeMap<>();
+	public Map<String, String> clients = new HashMap<>();
+	public File clientDir;
+
+	public ClientScriptData clientScripts = new ClientScriptData();
+	public PotionScriptData potionScripts = new PotionScriptData();
+	public NpcScriptData npcsScripts = new NpcScriptData();
+	public NBTTagCompound constants = new NBTTagCompound();
 
 	private static String currentAgreement;
-	private final List<String> agreements = new ArrayList<>();
+	private final List<String> agreements = new ArrayList<>(); // net.minecraft.client.gui.screens.multiplayer.SafetyScreen
 	private final List<ScriptContainer> errors = new ArrayList<>();
 	private final Map<Integer,List<Object>> elements = new TreeMap<>();
 
-	public ForgeScriptData forgeScripts = new ForgeScriptData();
-	public ClientScriptData clientScripts = new ClientScriptData();
-	public PlayerScriptData playerScripts = new PlayerScriptData(null);
-	public PotionScriptData potionScripts = new PotionScriptData();
-	public NpcScriptData npcsScripts = new NpcScriptData();
-	public File localDir;
+	public boolean isLoad = false;
 
 	public ScriptController() {
 		CustomNpcs.debugData.start(null);
@@ -95,8 +107,10 @@ public class ScriptController {
 			manager.registerEngineExtension("js", factory);
 			manager.registerEngineMimeType("application/rhino", factory);
 			LogWriter.info("Added script Library: \"rhino\"; type: \"RhinoScriptEngineFactory\"; files index: \".js\"");
-			languages.put(Util.instance.deleteColor(factory.getLanguageName()), ".js");
-			factories.put(factory.getLanguageName().toLowerCase(), factory);
+			String language = Util.instance.deleteColor(factory.getLanguageName());
+			languages.put(language, ".js");
+			factories.put(language.toLowerCase(), factory);
+			executorProviders.put(language.toLowerCase(), Jsr223Executor::new);
 		}
 		catch (Exception e) { LogWriter.info("Rhino JS is missed"); }
 		// Groovy
@@ -108,8 +122,10 @@ public class ScriptController {
 			manager.registerEngineExtension("groovy", factory);
 			manager.registerEngineMimeType("application/groovy", factory);
 			LogWriter.info("Added script Library: \"groovy\"; type: \"GroovyScriptEngineFactory\"; files index: \".groovy\"");
-			languages.put(Util.instance.deleteColor(factory.getLanguageName()), ".groovy");
-			factories.put(factory.getLanguageName().toLowerCase(), factory);
+			String language = Util.instance.deleteColor(factory.getLanguageName());
+			languages.put(language, ".groovy");
+			factories.put(language.toLowerCase(), factory);
+			executorProviders.put(language.toLowerCase(), Jsr223Executor::new);
 		}
 		catch (Exception e) { LogWriter.info("Groovy JS is missed"); }
 		// Kotlin
@@ -121,8 +137,10 @@ public class ScriptController {
 			manager.registerEngineExtension("kt", factory);
 			manager.registerEngineMimeType("application/kotlin", factory);
 			LogWriter.info("Added script Library: \"kotlin\"; type: \"KotlinJsr223JvmLocalScriptEngineFactory\"; files index: \".kt\"");
-			languages.put(Util.instance.deleteColor(factory.getLanguageName()), ".kt");
-			factories.put(factory.getLanguageName().toLowerCase(), factory);
+			String language = Util.instance.deleteColor(factory.getLanguageName());
+			languages.put(language, ".kt");
+			factories.put(language.toLowerCase(), factory);
+			executorProviders.put(language.toLowerCase(), Jsr223Executor::new);
 		}
 		catch (Exception e) { LogWriter.info("Kotlin JS is missed"); }
 		// Any (Lua, Python, Ruby ...)
@@ -138,12 +156,13 @@ public class ScriptController {
 				}
 				String ext = "." + factory.getExtensions().get(0).toLowerCase();
 				LogWriter.info("Added script Library: \"" + factory.getLanguageName() + "\"; type: \"" + factory.getClass().getSimpleName() + "\"; files index: \"" + ext + "\"");
-				String name = Util.instance.deleteColor(factory.getLanguageName());
-				if (name.toLowerCase().startsWith("lua")) { name = "LuaJ"; }
-				else if (name.toLowerCase().startsWith("python") || name.toLowerCase().startsWith("jython")) { name = "Jython"; }
-				else if (name.toLowerCase().startsWith("ruby")) { name = "JRuby"; }
-				languages.put(name, ext);
-				factories.put(name.toLowerCase(), factory);
+				String language = Util.instance.deleteColor(factory.getLanguageName());
+				if (language.toLowerCase().startsWith("lua")) { language = "LuaJ"; }
+				else if (language.toLowerCase().startsWith("python") || language.toLowerCase().startsWith("jython")) { language = "Jython"; }
+				else if (language.toLowerCase().startsWith("ruby")) { language = "JRuby"; }
+				languages.put(language, ext);
+				factories.put(language.toLowerCase(), factory);
+				executorProviders.put(language.toLowerCase(), Jsr223Executor::new);
 			} catch (Throwable t3) {
 				LogWriter.error("Error Added Script Library: \"" + factory.getLanguageName() + "\": " + t3);
 			}
@@ -161,25 +180,27 @@ public class ScriptController {
 				handle.invoke(factory, CustomNpcs.getWorldSaveDirectory("scripts/common_js"));
 			}
 			catch (Throwable t) { LogWriter.info("Nashorn Require is missed:"); }
-			String name = Util.instance.deleteColor(factory.getLanguageName()); // ECMAScript
+			String language = Util.instance.deleteColor(factory.getLanguageName()); // ECMAScript
 			boolean isNotRegister = true;
-			if (languages.containsKey(name)) {
-				String ext = languages.get(name);
-				ScriptEngineFactory fac = factories.get(Util.instance.deleteColor(name).toLowerCase());
+			if (languages.containsKey(language)) {
+				String ext = languages.get(language);
+				ScriptEngineFactory fac = factories.get(Util.instance.deleteColor(language).toLowerCase());
 				if (fac != null) {
 					String newName = fac.getClass().getSimpleName().replace("EngineFactory", "");
 					languages.put(newName, ext);
 					factories.put(newName.toLowerCase(), fac);
+					executorProviders.put(newName.toLowerCase(), Jsr223Executor::new);
 					manager.registerEngineName(newName.toLowerCase(), fac);
 					manager.registerEngineMimeType("application/" + newName.toLowerCase(), factory);
 					isNotRegister = !ext.equals(".js");
 				}
 			}
 			LogWriter.info("Added script Library: \"" + factory.getLanguageName() + "\"; type: \"" + factory.getClass().getSimpleName() + "\"; files index: \".js\"");
-			languages.put(name, ".js");
-			factories.put(name.toLowerCase(), factory);
-			manager.registerEngineName(name.toLowerCase(), factory);
-			manager.registerEngineMimeType("application/" + name.toLowerCase(), factory);
+			languages.put(language, ".js");
+			factories.put(language.toLowerCase(), factory);
+			executorProviders.put(language.toLowerCase(), Jsr223Executor::new);
+			manager.registerEngineName(language.toLowerCase(), factory);
+			manager.registerEngineMimeType("application/" + language.toLowerCase(), factory);
 			if (isNotRegister) { manager.registerEngineExtension("js", factory); }
 		} catch (Exception e) { LogWriter.error("Nashorn JS is missed", e); }
 		if (isClient) { loadAgreements(); }
@@ -506,7 +527,7 @@ public class ScriptController {
 				}
 				catch (Exception e) { LogWriter.except(e); }
 			}
-			ScriptContainer.reloadConstants();
+			reloadConstants();
 		} catch (Exception e) {
 			LogWriter.error("Error loading: " + file.getAbsolutePath(), e);
 			return false;
@@ -901,6 +922,8 @@ public class ScriptController {
 	}
 
 	// New from Unofficial (BetaZavr)
+	public static void reloadConstants() { ScriptContainer.DATA.remove("dump"); }
+
 	private void loadAgreements() {
 		agreements.clear();
 		LogWriter.error("Load player script agreements");
@@ -1060,7 +1083,5 @@ public class ScriptController {
 		}
 		return Component.literal(positions.toString());
 	}
-
-	public static void reloadConstants() { ScriptContainer.Data.remove("dump"); }
 
 }

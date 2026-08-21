@@ -39,204 +39,203 @@ public class ForgeEvent extends CustomNPCsEvent {
 	public final @Nullable IEntity<?> entity;
 
 	public ForgeEvent(Event eventIn) {
+		super();
 		event = eventIn;
 		IWorld iWorld = null;
 		IPos iPos = null;
 		IBlock iBlock = null;
 		IEntity<?> iEntity = null;
 		IPlayer<?> iPlayer = null;
-		if (API != null) {
-			if (eventIn instanceof net.minecraftforge.event.entity.EntityEvent) {
-				net.minecraftforge.event.entity.EntityEvent event = (net.minecraftforge.event.entity.EntityEvent) eventIn;
-				iEntity = event.getEntity() != null ? API.getIEntity(event.getEntity()) : null;
+		if (eventIn instanceof net.minecraftforge.event.entity.EntityEvent) {
+			net.minecraftforge.event.entity.EntityEvent event = (net.minecraftforge.event.entity.EntityEvent) eventIn;
+			iEntity = event.getEntity() != null ? API.getIEntity(event.getEntity()) : null;
+		}
+		if (eventIn instanceof net.minecraftforge.event.world.WorldEvent) {
+			net.minecraftforge.event.world.WorldEvent event = (net.minecraftforge.event.world.WorldEvent) eventIn;
+			iWorld = event.getWorld() != null ? API.getIWorld(event.getWorld()) : null;
+		}
+		if (!CustomNpcs.SimplifiedForgeEvents && eventIn != null) {
+			List<Field> fields = new ArrayList<>(Arrays.asList(eventIn.getClass().getDeclaredFields()));
+			for (Field field : eventIn.getClass().getFields()) {
+				if (!fields.contains(field)) { fields.add(field); }
 			}
-			if (eventIn instanceof net.minecraftforge.event.world.WorldEvent) {
-				net.minecraftforge.event.world.WorldEvent event = (net.minecraftforge.event.world.WorldEvent) eventIn;
-				iWorld = event.getWorld() != null ? API.getIWorld(event.getWorld()) : null;
+			List<Method> methods = new ArrayList<>(Arrays.asList(eventIn.getClass().getDeclaredMethods()));
+			for (Method method : eventIn.getClass().getMethods()) {
+				if (!methods.contains(method)) { methods.add(method); }
 			}
-			if (!CustomNpcs.SimplifiedForgeEvents && eventIn != null) {
-				List<Field> fields = new ArrayList<>(Arrays.asList(eventIn.getClass().getDeclaredFields()));
-				for (Field field : eventIn.getClass().getFields()) {
-					if (!fields.contains(field)) { fields.add(field); }
+			if (iEntity == null) {
+				for (Field field : fields) {
+					try {
+						if (Entity.class.isAssignableFrom(field.getType())) {
+							Object obj = field.get(eventIn);
+							if (obj instanceof Entity) {
+								iEntity = API.getIEntity((Entity) obj);
+								break;
+							}
+						}
+					}
+					catch (Exception ignored) { }
 				}
-				List<Method> methods = new ArrayList<>(Arrays.asList(eventIn.getClass().getDeclaredMethods()));
-				for (Method method : eventIn.getClass().getMethods()) {
-					if (!methods.contains(method)) { methods.add(method); }
-				}
-				if (iEntity == null) {
-					for (Field field : fields) {
+			}
+			if (iEntity == null) {
+				for (Method method : methods) {
+					if (method.getParameterCount() == 0 && Entity.class.isAssignableFrom(method.getReturnType())) {
 						try {
-							if (Entity.class.isAssignableFrom(field.getType())) {
-								Object obj = field.get(eventIn);
-								if (obj instanceof Entity) {
-									iEntity = API.getIEntity((Entity) obj);
-									break;
-								}
+							Object obj = method.invoke(eventIn);
+							if (obj instanceof Entity) {
+								iEntity = API.getIEntity((Entity) obj);
+								break;
 							}
 						}
 						catch (Exception ignored) { }
 					}
 				}
-				if (iEntity == null) {
-					for (Method method : methods) {
-						if (method.getParameterCount() == 0 && Entity.class.isAssignableFrom(method.getReturnType())) {
-							try {
-								Object obj = method.invoke(eventIn);
-								if (obj instanceof Entity) {
-									iEntity = API.getIEntity((Entity) obj);
-									break;
-								}
+			}
+			if (iEntity instanceof IPlayer<?>) { iPlayer = (IPlayer<?>) iEntity; }
+			if (iPlayer == null) {
+				for (Field field : fields) {
+					try {
+						if (EntityPlayer.class.isAssignableFrom(field.getType())) {
+							Object obj = field.get(eventIn);
+							if (obj instanceof EntityPlayer) {
+								iPlayer = (IPlayer<?>) API.getIEntity((EntityPlayer) obj);
+								break;
 							}
-							catch (Exception ignored) { }
 						}
 					}
+					catch (Exception ignored) { }
 				}
-				if (iEntity instanceof IPlayer<?>) { iPlayer = (IPlayer<?>) iEntity; }
-				if (iPlayer == null) {
-					for (Field field : fields) {
+			}
+			if (iPlayer == null) {
+				for (Method method : methods) {
+					if (method.getParameterCount() == 0 && EntityPlayer.class.isAssignableFrom(method.getReturnType())) {
 						try {
-							if (EntityPlayer.class.isAssignableFrom(field.getType())) {
-								Object obj = field.get(eventIn);
-								if (obj instanceof EntityPlayer) {
-									iPlayer = (IPlayer<?>) API.getIEntity((EntityPlayer) obj);
-									break;
-								}
+							Object obj = method.invoke(eventIn);
+							if (obj instanceof EntityPlayer) {
+								iPlayer = (IPlayer<?>) API.getIEntity((EntityPlayer) obj);
+								break;
 							}
 						}
 						catch (Exception ignored) { }
 					}
 				}
-				if (iPlayer == null) {
-					for (Method method : methods) {
-						if (method.getParameterCount() == 0 && EntityPlayer.class.isAssignableFrom(method.getReturnType())) {
-							try {
-								Object obj = method.invoke(eventIn);
-								if (obj instanceof EntityPlayer) {
-									iPlayer = (IPlayer<?>) API.getIEntity((EntityPlayer) obj);
-									break;
-								}
+			}
+			if (iWorld == null) {
+				for (Field field : fields) {
+					try {
+						if (World.class.isAssignableFrom(field.getType())) {
+							Object obj = field.get(eventIn);
+							if (obj instanceof World) {
+								iWorld = API.getIWorld((World) obj);
+								break;
 							}
-							catch (Exception ignored) { }
 						}
 					}
+					catch (Exception ignored) { }
 				}
-				if (iWorld == null) {
-					for (Field field : fields) {
+			}
+			if (iWorld == null) {
+				for (Method method : methods) {
+					if (method.getParameterCount() == 0 && World.class.isAssignableFrom(method.getReturnType())) {
 						try {
-							if (World.class.isAssignableFrom(field.getType())) {
-								Object obj = field.get(eventIn);
-								if (obj instanceof World) {
-									iWorld = API.getIWorld((World) obj);
-									break;
-								}
+							Object obj = method.invoke(eventIn);
+							if (obj instanceof World) {
+								iWorld = API.getIWorld((World) obj);
+								break;
 							}
 						}
 						catch (Exception ignored) { }
 					}
 				}
-				if (iWorld == null) {
-					for (Method method : methods) {
-						if (method.getParameterCount() == 0 && World.class.isAssignableFrom(method.getReturnType())) {
-							try {
-								Object obj = method.invoke(eventIn);
-								if (obj instanceof World) {
-									iWorld = API.getIWorld((World) obj);
-									break;
-								}
+			}
+			if (iWorld == null) {
+				if (iEntity != null) { iWorld = iEntity.getWorld(); }
+				else if (iPlayer != null) { iWorld = iPlayer.getWorld(); }
+			}
+			if (iWorld != null) {
+				for (Field field : fields) {
+					try {
+						if (BlockPos.class.isAssignableFrom(field.getType())) {
+							Object obj = field.get(eventIn);
+							if (obj instanceof BlockPos) {
+								iPos = API.getIPos((BlockPos) obj);
+								break;
 							}
-							catch (Exception ignored) { }
 						}
 					}
+					catch (Exception ignored) { }
 				}
-				if (iWorld == null) {
-					if (iEntity != null) { iWorld = iEntity.getWorld(); }
-					else if (iPlayer != null) { iWorld = iPlayer.getWorld(); }
-				}
-				if (iWorld != null) {
-					for (Field field : fields) {
-						try {
-							if (BlockPos.class.isAssignableFrom(field.getType())) {
-								Object obj = field.get(eventIn);
+				if (iPos == null) {
+					for (Method method : methods) {
+						if (method.getParameterCount() == 0 && BlockPos.class.isAssignableFrom(method.getReturnType())) {
+							try {
+								Object obj = method.invoke(eventIn);
 								if (obj instanceof BlockPos) {
 									iPos = API.getIPos((BlockPos) obj);
 									break;
 								}
 							}
+							catch (Exception ignored) { }
 						}
-						catch (Exception ignored) { }
 					}
-					if (iPos == null) {
-						for (Method method : methods) {
-							if (method.getParameterCount() == 0 && BlockPos.class.isAssignableFrom(method.getReturnType())) {
-								try {
-									Object obj = method.invoke(eventIn);
-									if (obj instanceof BlockPos) {
-										iPos = API.getIPos((BlockPos) obj);
-										break;
-									}
-								}
-								catch (Exception ignored) { }
+				}
+				if (iPos == null) {
+					if (iEntity != null) { iPos = iEntity.getPos(); }
+					else if (iPlayer != null) { iPos = iPlayer.getPos(); }
+				}
+				World world = iWorld.getMCWorld();
+				for (Field field : fields) {
+					try {
+						if (IBlockState.class.isAssignableFrom(field.getType())) {
+							Object obj = field.get(eventIn);
+							if (obj instanceof IBlockState) {
+								iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), (IBlockState) obj);
+								break;
 							}
 						}
 					}
-					if (iPos == null) {
-						if (iEntity != null) { iPos = iEntity.getPos(); }
-						else if (iPlayer != null) { iPos = iPlayer.getPos(); }
-					}
-					World world = iWorld.getMCWorld();
+					catch (Exception ignored) { }
+				}
+				if (iBlock == null) {
 					for (Field field : fields) {
 						try {
-							if (IBlockState.class.isAssignableFrom(field.getType())) {
+							if (Block.class.isAssignableFrom(field.getType())) {
 								Object obj = field.get(eventIn);
-								if (obj instanceof IBlockState) {
-									iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), (IBlockState) obj);
+								if (obj instanceof Block) {
+									iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), ((Block) obj).getDefaultState());
 									break;
 								}
 							}
 						}
 						catch (Exception ignored) { }
 					}
-					if (iBlock == null) {
-						for (Field field : fields) {
+
+				}
+				if (iBlock == null) {
+					for (Method method : methods) {
+						if (method.getParameterCount() == 0 && IBlockState.class.isAssignableFrom(method.getReturnType())) {
 							try {
-								if (Block.class.isAssignableFrom(field.getType())) {
-									Object obj = field.get(eventIn);
-									if (obj instanceof Block) {
-										iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), ((Block) obj).getDefaultState());
-										break;
-									}
+								Object obj = method.invoke(eventIn);
+								if (obj instanceof IBlockState) {
+									iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), (IBlockState) obj);
+									break;
 								}
 							}
 							catch (Exception ignored) { }
 						}
-
 					}
-					if (iBlock == null) {
-						for (Method method : methods) {
-							if (method.getParameterCount() == 0 && IBlockState.class.isAssignableFrom(method.getReturnType())) {
-								try {
-									Object obj = method.invoke(eventIn);
-									if (obj instanceof IBlockState) {
-										iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), (IBlockState) obj);
-										break;
-									}
+				}
+				if (iBlock == null) {
+					for (Method method : methods) {
+						if (method.getParameterCount() == 0 && Block.class.isAssignableFrom(method.getReturnType())) {
+							try {
+								Object obj = method.invoke(eventIn);
+								if (obj instanceof Block) {
+									iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), ((Block) obj).getDefaultState());
+									break;
 								}
-								catch (Exception ignored) { }
 							}
-						}
-					}
-					if (iBlock == null) {
-						for (Method method : methods) {
-							if (method.getParameterCount() == 0 && Block.class.isAssignableFrom(method.getReturnType())) {
-								try {
-									Object obj = method.invoke(eventIn);
-									if (obj instanceof Block) {
-										iBlock = BlockWrapper.createNew(world, iPos == null ? BlockPos.ORIGIN : iPos.getMCBlockPos(), ((Block) obj).getDefaultState());
-										break;
-									}
-								}
-								catch (Exception ignored) { }
-							}
+							catch (Exception ignored) { }
 						}
 					}
 				}

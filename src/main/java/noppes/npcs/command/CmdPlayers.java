@@ -46,7 +46,7 @@ public class CmdPlayers extends CommandNoppesBase {
 		return data;
 	}
 
-	@SubCommand(desc = "Apply to all players", usage = "<action> <action_name>", permission = 4)
+	@SubCommand(desc = "Apply to all players", usage = "<action> <action_name>", isOpOnly = true)
 	public void all(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length < 2) { throw new CommandException("Usage " + "<action> <action_name>"); }
         if (args[0].equals("clear")) {
