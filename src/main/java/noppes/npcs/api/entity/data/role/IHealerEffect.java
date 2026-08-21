@@ -1,8 +1,7 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface IHealerEffect {
 
     int getEffect();

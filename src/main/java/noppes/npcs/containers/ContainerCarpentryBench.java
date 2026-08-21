@@ -7,7 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.crafting.IRecipeContainer;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
 
 import javax.annotation.Nonnull;
 
@@ -15,6 +15,14 @@ import javax.annotation.Nonnull;
 public class ContainerCarpentryBench
 		extends Container
 		implements IRecipeContainer {
+
+	public static final int RESULT_SLOT = 0;
+	public static final int CRAFT_SLOT_START = 1;
+	public static final int CRAFT_SLOT_END = CRAFT_SLOT_START + 4 * 4; // 17
+	public static final int INV_SLOT_START = CRAFT_SLOT_END; // 17
+	public static final int INV_SLOT_END = INV_SLOT_START + 27; // 44
+	public static final int USE_ROW_SLOT_START = INV_SLOT_END; // 44
+	public static final int USE_ROW_SLOT_END = USE_ROW_SLOT_START + 9; // 53
 
 	public InventoryCrafting craftMatrix = new InventoryCrafting(this, 4, 4);
 	public InventoryCraftResult craftResult = new InventoryCraftResult();
@@ -24,51 +32,91 @@ public class ContainerCarpentryBench
 	public boolean isShowBook = false;
 
 	public ContainerCarpentryBench(InventoryPlayer playerInventory, World worldIn, BlockPos posIn) {
-		this.world = worldIn;
-		this.pos = posIn;
-		this.player = playerInventory.player;
+		world = worldIn;
+		pos = posIn;
+		player = playerInventory.player;
 		// craftResult slot ID any = 0? next slots in craftMatrix:
-		this.addSlotToContainer(new SlotCrafting(playerInventory.player, this.craftMatrix, this.craftResult, 0, 140, 41));
-		for (int var6 = 0; var6 < 4; ++var6) {
-			for (int var7 = 0; var7 < 4; ++var7) {
-				this.addSlotToContainer(new Slot(this.craftMatrix, var7 + var6 * 4, 30 + var7 * 18, 14 + var6 * 18));
+		addSlotToContainer(new SlotCrafting(playerInventory.player, craftMatrix, craftResult, 0, 140, 41));
+		for (int y = 0; y < 4; ++y) {
+			for (int x = 0; x < 4; ++x) {
+				addSlotToContainer(new Slot(craftMatrix, x + y * 4, 30 + x * 18, 14 + y * 18));
 			}
 		}
 		// next slots in playerInventory:
-		for (int var6 = 0; var6 < 3; ++var6) {
-			for (int var7 = 0; var7 < 9; ++var7) {
-				this.addSlotToContainer(new Slot(playerInventory, var7 + var6 * 9 + 9, 8 + var7 * 18, 98 + var6 * 18));
+		for (int y = 0; y < 3; ++y) {
+			for (int x = 0; x < 9; ++x) {
+				addSlotToContainer(new Slot(playerInventory, x + y * 9 + 9, 8 + x * 18, 98 + y * 18));
 			}
 		}
-		for (int var6 = 0; var6 < 9; ++var6) {
-			this.addSlotToContainer(new Slot(playerInventory, var6, 8 + var6 * 18, 156));
+		for (int x = 0; x < 9; ++x) {
+			addSlotToContainer(new Slot(playerInventory, x, 8 + x * 18, 156));
 		}
-		this.onCraftMatrixChanged(this.craftMatrix);
+		onCraftMatrixChanged(craftMatrix);
 	}
 
 	@Override
 	public boolean canInteractWith(@Nonnull EntityPlayer playerIn) {
-		if (this.world.getBlockState(this.pos).getBlock() != CustomRegisters.carpentyBench) { return false; }
-		else { return playerIn.getDistanceSq((double) this.pos.getX() + 0.5D, (double) this.pos.getY() + 0.5D, (double) this.pos.getZ() + 0.5D) <= 64.0D; }
+		return world.getBlockState(pos).getBlock() == CustomBlocks.carpenty &&
+				playerIn.getDistanceSq((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) <= 64.0D;
 	}
 
 	@Override
 	public boolean canMergeSlot(@Nonnull ItemStack stack, @Nonnull Slot slotIn) {
-		return slotIn.inventory != this.craftResult && super.canMergeSlot(stack, slotIn);
+		return slotIn.inventory != craftResult && super.canMergeSlot(stack, slotIn);
 	}
 
 	@Override
 	public void onContainerClosed(@Nonnull EntityPlayer playerIn) {
 		super.onContainerClosed(playerIn);
-		if (!this.world.isRemote) {
-			clearContainer(playerIn, this.world, this.craftMatrix);
-		}
+		if (!world.isRemote) { clearContainer(playerIn, world, craftMatrix); }
 	}
 
 	@Override
 	public void onCraftMatrixChanged(@Nonnull IInventory inventoryIn) {
-		this.slotChangedCraftingGrid(this.world, this.player, this.craftMatrix, this.craftResult);
+		slotChangedCraftingGrid(world, player, craftMatrix, craftResult);
 	}
+
+	@Override
+	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer playerIn, int slotIn) {
+		ItemStack itemstack = ItemStack.EMPTY;
+		Slot slot = inventorySlots.get(slotIn);
+		if (slot != null && slot.getHasStack()) {
+			ItemStack itemstack1 = slot.getStack();
+			itemstack = itemstack1.copy();
+			if (slotIn == RESULT_SLOT) {
+				itemstack1.getItem().onCreated(itemstack1, world, playerIn);
+				if (!mergeItemStack(itemstack1, INV_SLOT_START, USE_ROW_SLOT_END, true)) {
+					return ItemStack.EMPTY;
+				}
+				slot.onSlotChange(itemstack1, itemstack);
+			}
+			else if (slotIn >= INV_SLOT_START && slotIn < INV_SLOT_END) {
+				if (!mergeItemStack(itemstack1, INV_SLOT_END, USE_ROW_SLOT_END, false)) {
+					return ItemStack.EMPTY;
+				}
+			}
+			else if (slotIn >= USE_ROW_SLOT_START && slotIn < USE_ROW_SLOT_END) {
+				if (!mergeItemStack(itemstack1, INV_SLOT_START, INV_SLOT_END, false)) {
+					return ItemStack.EMPTY;
+				}
+			}
+			else if (!mergeItemStack(itemstack1, INV_SLOT_START, USE_ROW_SLOT_END, false)) {
+				return ItemStack.EMPTY;
+			}
+			if (itemstack1.isEmpty()) { slot.putStack(ItemStack.EMPTY); }
+			else { slot.onSlotChanged(); }
+			if (itemstack1.getCount() == itemstack.getCount()) { return ItemStack.EMPTY; }
+			ItemStack itemstack2 = slot.onTake(playerIn, itemstack1);
+			if (slotIn == 0) { playerIn.dropItem(itemstack2, false); }
+		}
+		return itemstack;
+	}
+
+	@Override
+	public InventoryCraftResult getCraftResult() { return craftResult; }
+
+	@Override
+	public InventoryCrafting getCraftMatrix() { return craftMatrix;	}
 
 	public void checkPos(boolean showBook) {
 		if (isShowBook != showBook) {
@@ -79,54 +127,5 @@ public class ContainerCarpentryBench
 			isShowBook = showBook;
 		}
 	}
-
-	@Override
-	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer playerIn, int index) {
-		ItemStack itemstack = ItemStack.EMPTY;
-		Slot slot = this.inventorySlots.get(index);
-		if (slot != null && slot.getHasStack()) {
-			ItemStack itemstack1 = slot.getStack();
-			itemstack = itemstack1.copy();
-			if (index == 0) {
-				itemstack1.getItem().onCreated(itemstack1, this.world, playerIn);
-				if (!this.mergeItemStack(itemstack1, 17, 53, true)) {
-					return ItemStack.EMPTY;
-				}
-				slot.onSlotChange(itemstack1, itemstack);
-			} else if (index >= 17 && index < 44) {
-				if (!this.mergeItemStack(itemstack1, 44, 53, false)) {
-					return ItemStack.EMPTY;
-				}
-			} else if (index >= 44 && index < 53) {
-				if (!this.mergeItemStack(itemstack1, 17, 44, false)) {
-					return ItemStack.EMPTY;
-				}
-			} else if (!this.mergeItemStack(itemstack1, 17, 53, false)) {
-				return ItemStack.EMPTY;
-			}
-
-			if (itemstack1.isEmpty()) {
-				slot.putStack(ItemStack.EMPTY);
-			} else {
-				slot.onSlotChanged();
-			}
-
-			if (itemstack1.getCount() == itemstack.getCount()) {
-				return ItemStack.EMPTY;
-			}
-
-			ItemStack itemstack2 = slot.onTake(playerIn, itemstack1);
-			if (index == 0) {
-				playerIn.dropItem(itemstack2, false);
-			}
-		}
-		return itemstack;
-	}
-
-	@Override
-	public InventoryCraftResult getCraftResult() { return craftResult; }
-
-	@Override
-	public InventoryCrafting getCraftMatrix() { return craftMatrix;	}
 
 }

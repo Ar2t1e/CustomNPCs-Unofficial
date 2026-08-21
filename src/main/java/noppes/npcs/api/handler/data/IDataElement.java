@@ -1,17 +1,22 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
+import javax.annotation.Nonnull;
+
 public interface IDataElement {
 
-	String getData();
+	int getId();
 
-	String getName();
+	String getInfo();
 
-	Object getObject();
+	@Nonnull String getName();
 
-	Class<?> getParent();
+	String getObfuscatedName();
+
+	@Nonnull Object getObject();
+
+	@Nonnull Class<?> getParentClass();
 
 	int getType();
 

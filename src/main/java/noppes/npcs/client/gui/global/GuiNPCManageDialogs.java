@@ -1,67 +1,232 @@
 package noppes.npcs.client.gui.global;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.LogWriter;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.api.constants.OptionType;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.SubGuiEditText;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.util.GuiNPCInterface2;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.controllers.data.DialogCategory;
 import noppes.npcs.controllers.data.DialogOption;
-import noppes.npcs.controllers.data.DialogOption.OptionDialogID;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.*;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
-import javax.annotation.Nonnull;
+public class GuiNpcManageDialogs extends GuiNPCInterface2 implements ICustomScrollListener {
 
-public class GuiNPCManageDialogs extends GuiNPCInterface2
-		implements ICustomScrollListener, GuiYesNoCallback {
-
-	protected final Map<String, DialogCategory> categoryData = new TreeMap<>();
-	protected final Map<String, Dialog> dialogData = new LinkedHashMap<>();
-	protected GuiCustomScroll scrollCategories;
-	protected GuiCustomScroll scrollDialogs;
+	protected Map<Component, DialogCategory> categoryData = new LinkedHashMap<>();
+	protected Map<Component, Dialog> dialogData = new LinkedHashMap<>();
+	protected GuiCustomScrollNop scrollCategories;
+	protected GuiCustomScrollNop scrollDialogs;
 
 	// New from Unofficial (BetaZavr)
-	protected static boolean isName = true;
-	protected String selectedCategory = ""; // OLD DialogCategory
-	protected String selectedDialog = ""; // OLD Dialog
+	protected static boolean sortByName = true;
+	protected Component selectedCategory = Component.empty(); // OLD DialogCategory
+	protected Component selectedDialog = Component.empty(); // OLD Dialog
 	protected Dialog copyDialog = null;
 
-	public GuiNPCManageDialogs(EntityNPCInterface npc) {
+	public GuiNpcManageDialogs(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuGlobal;
-
-		Client.sendData(EnumPacketServer.DialogCategoryGet);
+		backGui = EnumGuiType.MainMenuGlobal;
+		Packets.sendServer(new SPacketDialogCategoryGet());
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
+	public void initGui() {
+		super.initGui();
+		categoryData.clear();
+		dialogData.clear();
+		DialogController dData = DialogController.instance;
+		// category's
+		for (DialogCategory category : dData.categories.values()) {
+			Component key = Component.translatable(category.title);
+			categoryData.put(key, category);
+			if (selectedCategory.getFormattedText().isEmpty()) { selectedCategory = key; }
+		}
+		// dialogs
+		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+		if (!selectedCategory.getFormattedText().isEmpty()) {
+			if (categoryData.containsKey(selectedCategory)) {
+				Map<Component, Dialog> map = new LinkedHashMap<>();
+				for (Dialog dialog : categoryData.get(selectedCategory).dialogs.values()) {
+					boolean b = !dialog.text.isEmpty();
+					Component key = Component.empty()
+							.append(Component.literal("ID:" + dialog.id + " \"").withStyle(TextFormatting.GRAY))
+							.append(Component.translatable(dialog.title).withStyle(TextFormatting.RESET))
+							.append(Component.literal("\"").withStyle(TextFormatting.GRAY))
+							.append(Component.literal(" (").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED))
+							.append(Component.translatable("quest.has." + b).withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED))
+							.append(Component.literal(")").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED));
+					map.put(key, dialog);
+				}
+				for (Map.Entry<Component, Dialog> entry : getEntryList(map)) {
+					dialogData.put(entry.getKey(), entry.getValue());
+					if (selectedDialog.getFormattedText().isEmpty()) { selectedDialog = entry.getKey(); }
+				}
+				// Hover Text:
+				if (!dialogData.isEmpty()) {
+					int pos = 0;
+					Map<String, Integer> nextDialogIDs = new TreeMap<>();
+					for (Dialog dialog : dialogData.values()) {
+						List<Component> hovers = new ArrayList<>();
+						List<Component> activationDialogs = new ArrayList<>();
+						List<Component> nextDialogs = new ArrayList<>();
+						hovers.add(Component.translatable(dialog.title).append(Component.literal(":")));
+						for (DialogOption option : dialog.options.values()) {
+							if (option.optionType != OptionType.DIALOG_OPTION || option.dialogs.isEmpty()) { continue; }
+							int i = 0;
+							for (DialogOption.OptionDialogID od : option.dialogs) {
+								nextDialogIDs.put(option.slot + "." + i, od.dialogId);
+								i++;
+							}
+						}
+						try {
+							Set<Integer> dSet = dData.dialogs.keySet();
+							for (int dialogId : dSet) {
+								if (!dData.hasDialog(dialogId)) { continue; }
+								Dialog d = dData.get(dialogId);
+								for (DialogOption option : d.options.values()) {
+									if (option.optionType != OptionType.DIALOG_OPTION || option.dialogs.isEmpty()) { continue; }
+									int i = 0;
+									for (DialogOption.OptionDialogID od : option.dialogs) {
+										if (od.dialogId != dialog.id) { continue; }
+										activationDialogs.add(Component.empty()
+												.append(Component.literal("ID:" + d.id).withStyle(TextFormatting.GRAY))
+												.append(Component.literal(" " + Component.translatable("gui.answer").getFormattedText()  + ": ").withStyle(TextFormatting.DARK_GRAY))
+												.append(Component.literal(option.slot + "." + i).withStyle(TextFormatting.GRAY))
+												.append(Component.literal(" " + d.category.getName() + "/").withStyle(TextFormatting.DARK_GRAY))
+												.append(Component.literal(d.getName()).withStyle(TextFormatting.RESET)));
+										i++;
+									}
+								}
+								if (nextDialogIDs.containsValue(d.id)) {
+									for (String k : nextDialogIDs.keySet()) {
+										if (nextDialogIDs.get(k) != d.id) {
+											continue;
+										}
+										nextDialogs.add(Component.empty()
+												.append(Component.literal(Component.translatable("gui.answer").getFormattedText() + ": ").withStyle(TextFormatting.DARK_GRAY))
+												.append(Component.literal(k + " ID:" + d.id).withStyle(TextFormatting.GRAY))
+												.append(Component.literal(" " + d.category.getName() + "/").withStyle(TextFormatting.DARK_GRAY))
+												.append(Component.literal(d.getName()).withStyle(TextFormatting.RESET)));
+									}
+								}
+							}
+						} catch (Exception e) { LogWriter.error(e); }
+						if (!activationDialogs.isEmpty()) {
+							hovers.add(Component.translatable("dialog.hover.act.1"));
+							hovers.addAll(activationDialogs);
+						}
+						else { hovers.add(Component.translatable("dialog.hover.act.0")); }
+						if (!nextDialogs.isEmpty()) {
+							hovers.add(Component.translatable("dialog.hover.next.1"));
+							hovers.addAll(nextDialogs);
+						}
+						else { hovers.add(Component.translatable("dialog.hover.next.0")); }
+						hts.put(pos, hovers);
+						pos++;
+					}
+				}
+			}
+			else {
+				selectedCategory = Component.empty();
+				selectedDialog = Component.empty();
+			}
+		}
+		boolean hasCategory = !selectedCategory.getFormattedText().isEmpty();
+		boolean hasDialog = !selectedDialog.getFormattedText().isEmpty();
+		// scroll info
+		addLabel(0, guiLeft + 8, guiTop + 4, "gui.categories");
+		addLabel(1, guiLeft + 180, guiTop + 4, "dialog.dialogs");
+		// dialog buttons
+		int x = guiLeft + 350, y = guiTop + 8;
+		addLabel(3, x + 2, y, "dialog.dialogs");
+		addButton(13, x, y += 10, "selectServer.edit")
+				.setSize(64, 15)
+				.setIsEnabled(hasDialog)
+				.setHoverTexts("manager.hover.dialog.edit", selectedDialog);
+		addButton(12, x, y += 17, "gui.remove")
+				.setSize(64, 15)
+				.setIsEnabled(hasDialog)
+				.setHoverTexts("manager.hover.dialog.del", selectedDialog);
+		addButton(11, x, y += 17, "gui.add")
+				.setSize(64, 15)
+				.setIsEnabled(hasCategory)
+				.setHoverTexts("manager.hover.dialog.add", selectedCategory);
+		addButton(10, x, y += 21, "gui.copy")
+				.setSize(64, 15)
+				.setIsEnabled(hasCategory)
+				.setHoverTexts("manager.hover.dialog.copy", selectedDialog);
+		addButton(9, x, y += 17, "gui.paste")
+				.setSize(64, 15)
+				.setIsEnabled(copyDialog != null)
+				.setHoverTexts("manager.hover.dialog.paste." + (copyDialog != null), (copyDialog != null ? copyDialog.getKey() : ""));
+		GuiButtonNop checkBox = addCheckBox(14, x, y + 17, "gui.name", "ID", sortByName)
+				.setSize(64, 15);
+		checkBox.setHoverTexts(Component.translatable("hover.sort",
+				Component.translatable("dialog.dialogs").getFormattedText(),
+				checkBox.getMessage().getFormattedText()));
+		// category buttons
+		y = guiTop + 130;
+		addLabel(2, x + 2, y, "gui.categories");
+		// edit
+		addButton(3, x, y += 10, "selectServer.edit")
+				.setSize(64, 15)
+				.setIsEnabled(hasCategory)
+				.setHoverTexts("manager.hover.category.edit");
+		// del
+		addButton(2, x, y += 17, "gui.remove")
+				.setSize(64, 15)
+				.setIsEnabled(hasCategory)
+				.setHoverTexts("manager.hover.category.del");
+		// add
+		addButton(1, x, y + 17, "gui.add")
+				.setSize(64, 15)
+				.setHoverTexts("manager.hover.category.add");
+		if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, imageHeight - 3); }
+		scrollCategories.setNormalList(new ArrayList<>(categoryData.keySet()));
+		if (hasCategory) { scrollCategories.setSelected(selectedCategory); }
+		add(scrollCategories.setPos(guiLeft + 4, guiTop + 15));
+		if (scrollDialogs == null) { scrollDialogs = addScroll(1).setSize(170, imageHeight - 3); }
+		scrollDialogs.setUnsortedList(new ArrayList<>(dialogData.keySet()));
+		if (hasDialog) { scrollDialogs.setSelected(selectedDialog); }
+		scrollDialogs.setHoverTexts(hts);
+		add(scrollDialogs.setPos(guiLeft + 176, guiTop + 15));
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 1: {
-				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(new TextComponentTranslation("gui.new").getFormattedText())));
+				setSubGui(new SubGuiEditText(1, Component.translatable("gui.new").getString()));
 				break;
 			} // create cat
 			case 2: {
 				if (!categoryData.containsKey(selectedCategory)) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						categoryData.get(selectedCategory).title,
-						new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 2);
-				displayGuiScreen(guiyesno);
+				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+					if (bo) {
+						int catId = categoryData.get(selectedCategory).id;
+						selectedCategory = Component.empty();
+						selectedDialog = Component.empty();
+						Packets.sendServer(new SPacketDialogCategoryRemove(catId));
+					}
+					NoppesUtil.openGUI(player, this);
+				},
+						Component.translatable(categoryData.get(selectedCategory).title).getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
 			} // del cat
 			case 3: {
@@ -87,8 +252,15 @@ public class GuiNPCManageDialogs extends GuiNPCInterface2
 					if (has) { t.append("_"); }
 				}
 				dialog.title = t.toString();
-				selectedDialog = dialog.title;
-				Client.sendData(EnumPacketServer.DialogSave, categoryData.get(selectedCategory).id, dialog.save(new NBTTagCompound()));
+				boolean b = !dialog.text.isEmpty();
+				selectedDialog = Component.empty()
+						.append(Component.literal("ID:" + dialog.id + " \"").withStyle(TextFormatting.GRAY))
+						.append(Component.translatable(dialog.title).withStyle(TextFormatting.RESET))
+						.append(Component.literal("\"").withStyle(TextFormatting.GRAY))
+						.append(Component.literal(" (").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED))
+						.append(Component.translatable("quest.has." + b).withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED))
+						.append(Component.literal(")").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED));
+				Packets.sendServer(new SPacketDialogSave(categoryData.get(selectedCategory).id, dialog.save(new NBTTagCompound())));
 				initGui();
 				break;
 			} // paste
@@ -99,13 +271,21 @@ public class GuiNPCManageDialogs extends GuiNPCInterface2
 				break;
 			} // copy
 			case 11: {
-				setSubGui(new SubGuiEditText(11, Util.instance.deleteColor(new TextComponentTranslation("gui.new").getFormattedText())));
+				setSubGui(new SubGuiEditText(11, Component.translatable("gui.new").getString()));
 				break;
 			} // create dialog
 			case 12: {
 				if (!dialogData.containsKey(selectedDialog)) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this, dialogData.get(selectedDialog).getKey(), new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 12);
-				displayGuiScreen(guiyesno);
+				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+					if (bo) {
+						Packets.sendServer(new SPacketDialogRemove(dialogData.get(selectedDialog).id));
+						selectedDialog = Component.empty();
+					}
+					NoppesUtil.openGUI(player, this);
+				},
+						dialogData.get(selectedDialog).getKey().getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
 			} // del dialog
 			case 13: {
@@ -114,264 +294,128 @@ public class GuiNPCManageDialogs extends GuiNPCInterface2
 				break;
 			} // edit dialog
 			case 14: {
-				GuiNPCManageDialogs.isName = ((GuiNpcCheckBox) button).isSelected();
-				button.setHoverText("hover.sort", new TextComponentTranslation("dialog.dialogs").getFormattedText(), ((GuiNpcCheckBox) button).getText());
+				sortByName = ((GuiCheckBoxNop) button).selected();
+				initGui();
 				break;
 			} // sort dialog list
 		}
 	}
 
 	@Override
-	public void confirmClicked(boolean result, int id) {
-		NoppesUtil.openGUI(player, this);
-		if (!result) { return; }
-		if (id == 2) {
-			Client.sendData(EnumPacketServer.DialogCategoryRemove, categoryData.get(selectedCategory).id);
-			selectedCategory = "";
-			selectedDialog = "";
-		}
-		if (id == 12) {
-			Client.sendData(EnumPacketServer.DialogRemove, dialogData.get(selectedDialog).id);
-			selectedDialog = "";
-		}
-	}
-
-	@Override
-	public void initGui() {
-		super.initGui();
-		categoryData.clear();
-		dialogData.clear();
-		DialogController dData = DialogController.instance;
-		// category's
-		for (DialogCategory category : dData.categories.values()) {
-			categoryData.put(category.title, category);
-			if (selectedCategory.isEmpty()) { selectedCategory = category.title; }
-		}
-		// dialogs
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		if (!selectedCategory.isEmpty()) {
-			if (categoryData.containsKey(selectedCategory)) {
-				Map<String, Dialog> map = new TreeMap<>();
-				for (Dialog dialog : categoryData.get(selectedCategory).dialogs.values()) {
-					boolean b = !dialog.text.isEmpty();
-					String key = ((char) 167) + "7ID:" + dialog.id + "-\"" + ((char) 167) + "r" + new TextComponentTranslation(dialog.title).getFormattedText() + ((char) 167) + "7\"" + ((char) 167) + (b ? "2 (" : "c (") + (new TextComponentTranslation("quest.has." + b).getFormattedText()) + ((char) 167) + (b ? "2)" : "c)");
-					map.put(key, dialog);
-				}
-				for (Entry<String, Dialog> entry : getEntryList(map)) {
-					dialogData.put(entry.getKey(), entry.getValue());
-					if (selectedDialog.isEmpty()) { selectedDialog = entry.getKey(); }
-				}
-				// Hover Text:
-				if (!dialogData.isEmpty()) {
-					int pos = 0;
-					Map<String, Integer> nextDialogIDs = new TreeMap<>();
-					for (Dialog dialog : dialogData.values()) {
-						List<String> h = new ArrayList<>();
-						List<String> activationDialogs = new ArrayList<>();
-						List<String> nextDialogs = new ArrayList<>();
-						h.add(new TextComponentTranslation(dialog.title).getFormattedText() + ":");
-						for (DialogOption option : dialog.options.values()) {
-							if (option.optionType != OptionType.DIALOG_OPTION || option.dialogs.isEmpty()) { continue; }
-							int i = 0;
-							for (OptionDialogID od : option.dialogs) {
-								nextDialogIDs.put(option.slot + "." + i, od.dialogId);
-								i++;
+	public void subGuiClosed(GuiScreen subgui) {
+		if (!(subgui instanceof SubGuiEditText) || !((SubGuiEditText)subgui).cancelled) {
+			if (subgui instanceof SubGuiEditText) {
+				SubGuiEditText dialogEdit = (SubGuiEditText) subgui;
+				if (dialogEdit.id == 1) {
+					DialogCategory category = new DialogCategory();
+					StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
+					boolean has = true;
+					while (has) {
+						has = false;
+						for (DialogCategory cat : DialogController.instance.categories.values()) {
+							if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
+								has = true;
+								break;
 							}
 						}
-						try {
-							Set<Integer> dSet = dData.dialogs.keySet();
-							for (int dialogId : dSet) {
-								if (!dData.hasDialog(dialogId)) { continue; }
-								Dialog d = dData.get(dialogId);
-								for (DialogOption option : d.options.values()) {
-									if (option.optionType != OptionType.DIALOG_OPTION || option.dialogs.isEmpty()) { continue; }
-									int i = 0;
-									for (OptionDialogID od : option.dialogs) {
-										if (od.dialogId != dialog.id) { continue; }
-										activationDialogs.add(((char) 167) + "7ID:" + d.id + ((char) 167) + "8 " + (new TextComponentTranslation("gui.answer").getFormattedText()) + ((char) 167) + "8: " + ((char) 167) + "7" + option.slot + "." + i + ((char) 167) + "8; " + d.category.getName() + "/" + ((char) 167) + "r" + d.getName());
-										i++;
-									}
-								}
-								if (nextDialogIDs.containsValue(d.id)) {
-									for (String k : nextDialogIDs.keySet()) {
-										if (nextDialogIDs.get(k) != d.id) { continue; }
-										nextDialogs.add(((char) 167) + "8" + (new TextComponentTranslation("gui.answer").getFormattedText()) + ((char) 167) + "8: " + ((char) 167) + "7" + k + ((char) 167) + "7 ID:" + d.id + ((char) 167) + "8; " + d.category.getName() + "/" + ((char) 167) + "r" + d.getName());
-									}
-								}
-							}
-						} catch (Exception e) { LogWriter.error(e); }
-						if (!activationDialogs.isEmpty()) {
-							h.add(new TextComponentTranslation("dialog.hover.act.1").getFormattedText());
-							h.addAll(activationDialogs);
-						}
-						else { h.add(new TextComponentTranslation("dialog.hover.act.0").getFormattedText()); }
-						if (!nextDialogs.isEmpty()) {
-							h.add(new TextComponentTranslation("dialog.hover.next.1").getFormattedText());
-							h.addAll(nextDialogs);
-						}
-						else { h.add(new TextComponentTranslation("dialog.hover.next.0").getFormattedText()); }
-						hts.put(pos, h);
-						pos++;
+						if (has) { t.append("_"); }
 					}
+					category.title = t.toString();
+					Packets.sendServer(new SPacketDialogCategorySave(category.save(new NBTTagCompound())));
 				}
-			} else {
-				selectedCategory = "";
-				selectedDialog = "";
+				if (dialogEdit.id == 3) {
+					if (dialogEdit.text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
+					DialogCategory category = categoryData.get(selectedCategory).copy();
+					if (category.title.equals(((SubGuiEditText) subgui).text[0])) { return; }
+					category.title = ((SubGuiEditText) subgui).text[0];
+					StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
+					boolean has = true;
+					while (has) {
+						has = false;
+						for (DialogCategory cat : DialogController.instance.categories.values()) {
+							if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
+								has = true;
+								break;
+							}
+						}
+						if (has) { t.append("_"); }
+					}
+					category.title = t.toString();
+					selectedCategory = Component.translatable(category.title);
+					Packets.sendServer(new SPacketDialogCategorySave(category.save(new NBTTagCompound())));
+					initGui();
+				}
+				if (dialogEdit.id == 11) {
+					if (((SubGuiEditText) subgui).text[0].isEmpty()) { return; }
+					Dialog dialog = new Dialog(categoryData.get(selectedCategory));
+					StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
+					boolean has = true;
+					while (has) {
+						has = false;
+						for (Dialog dia : dialog.category.dialogs.values()) {
+							if (dia.id != dialog.id && dia.title.equalsIgnoreCase(t.toString())) {
+								has = true;
+								break;
+							}
+						}
+						if (has) { t.append("_"); }
+					}
+					dialog.title = t.toString();
+					boolean b = !dialog.text.isEmpty();
+					selectedDialog = Component.empty()
+							.append(Component.literal("ID:" + dialog.id + " \"").withStyle(TextFormatting.GRAY))
+							.append(Component.translatable(dialog.title).withStyle(TextFormatting.RESET))
+							.append(Component.literal("\"").withStyle(TextFormatting.GRAY))
+							.append(Component.literal(" (").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED))
+							.append(Component.translatable("quest.has." + b).withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED))
+							.append(Component.literal(")").withStyle(b ? TextFormatting.DARK_GREEN : TextFormatting.RED));
+					Packets.sendServer(new SPacketDialogSave(categoryData.get(selectedCategory).id, dialog.save(new NBTTagCompound())));
+					initGui();
+				}
 			}
+			if (subgui instanceof SubGuiDialogEdit) { initGui(); }
 		}
-		// scroll info
-		addLabel(new GuiNpcLabel(0, "gui.categories", guiLeft + 8, guiTop + 4));
-		addLabel(new GuiNpcLabel(1, "dialog.dialogs", guiLeft + 180, guiTop + 4));
-		// dialog buttons
-		int x = guiLeft + 350, y = guiTop + 8;
-		addLabel(new GuiNpcLabel(3, "dialog.dialogs", x + 2, y));
-		addButton(new GuiNpcButton(13, x, y += 10, 64, 15, "selectServer.edit", !selectedDialog.isEmpty())
-				.setHoverText("manager.hover.dialog.edit", selectedDialog));
-		addButton(new GuiNpcButton(12, x, y += 17, 64, 15, "gui.remove", !selectedDialog.isEmpty())
-				.setHoverText("manager.hover.dialog.del", selectedDialog));
-		addButton(new GuiNpcButton(11, x, y += 17, 64, 15, "gui.add", !selectedCategory.isEmpty())
-				.setHoverText("manager.hover.dialog.add", selectedCategory));
-		addButton(new GuiNpcButton(10, x, y += 21, 64, 15, "gui.copy", !selectedCategory.isEmpty())
-				.setHoverText("manager.hover.dialog.copy", selectedDialog));
-		addButton(new GuiNpcButton(9, x, y += 17, 64, 15, "gui.paste", copyDialog != null)
-				.setHoverText("manager.hover.dialog.paste." + (copyDialog != null), (copyDialog != null ? copyDialog.getKey() : "")));
-		addButton(new GuiNpcCheckBox(14, x, y + 17, 64, 14, "gui.name", "ID", GuiNPCManageDialogs.isName)
-				.setHoverText("hover.sort", new TextComponentTranslation("dialog.dialogs").getFormattedText(),
-				GuiNPCManageDialogs.isName ? new TextComponentTranslation("gui.name").getFormattedText() : "ID"));
-		// category buttons
-		y = guiTop + 130;
-		addLabel(new GuiNpcLabel(2, "gui.categories", x + 2, y));
-		// edit
-		addButton(new GuiNpcButton(3, x, y += 10, 64, 15, "selectServer.edit", !selectedCategory.isEmpty())
-				.setHoverText("manager.hover.category.edit"));
-		// del
-		addButton(new GuiNpcButton(2, x, y += 17, 64, 15, "gui.remove", !selectedCategory.isEmpty())
-				.setHoverText("manager.hover.category.del"));
-		// add
-		addButton(new GuiNpcButton(1, x, y + 17, 64, 15, "gui.add")
-				.setHoverText("manager.hover.category.add"));
-		if (scrollCategories == null) { scrollCategories = new GuiCustomScroll(this, 0).setSize(170, ySize - 3); }
-		scrollCategories.setList(new ArrayList<>(categoryData.keySet()));
-		scrollCategories.guiLeft = guiLeft + 4;
-		scrollCategories.guiTop = guiTop + 15;
-		if (!selectedCategory.isEmpty()) { scrollCategories.setSelected(selectedCategory); }
-		addScroll(scrollCategories);
-		if (scrollDialogs == null) { scrollDialogs = new GuiCustomScroll(this, 1).setSize(170, ySize - 3); }
-		scrollDialogs.guiLeft = guiLeft + 176;
-		scrollDialogs.guiTop = guiTop + 15;
-		scrollDialogs.setUnsortedList(new ArrayList<>(dialogData.keySet()));
-		if (!selectedDialog.isEmpty()) { scrollDialogs.setSelected(selectedDialog); }
-		scrollDialogs.setHoverTexts(hts);
-		addScroll(scrollDialogs);
 	}
 
 	@Override
-	public void save() { GuiNpcTextField.unfocus(); }
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
+	public void scrollClicked(GuiCustomScrollNop scroll) {
 		if (!scroll.hasSelected()) { return; }
-		if (scroll.getID() == 0) {
-			if (selectedCategory.equals(scroll.getSelected())) { return; }
-			selectedCategory = scroll.getSelected();
-			selectedDialog = "";
-			scroll.setSelect(-1);
+		if (scroll.id == 0) {
+			if (selectedCategory.getString().equals(scroll.getSelected())) { return; }
+			selectedCategory = scroll.getNormalSelected();
+			selectedDialog = Component.empty();
+			scrollDialogs.clearSelection();
 		}
-		else if (scroll.getID() == 1) {
-			if (selectedDialog.equals(scroll.getSelected())) { return; }
-			selectedDialog = scroll.getSelected();
+		else if (scroll.id == 1) {
+			if (selectedDialog.getString().equals(scroll.getSelected())) { return; }
+			selectedDialog = scroll.getNormalSelected();
 		}
 		initGui();
 	}
 
 	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) {
-		if (!selectedDialog.isEmpty() && scroll.getID() == 1) { setSubGui(new SubGuiDialogEdit(npc, dialogData.get(selectedDialog), this)); }
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+		if (!selectedDialog.getString().isEmpty() && scroll.id == 1) { setSubGui(new SubGuiDialogEdit(npc, dialogData.get(selectedDialog), this)); }
 	}
 
 	@Override
-	public void subGuiClosed(GuiScreen subgui) {
-		if (subgui instanceof SubGuiEditText && !((SubGuiEditText) subgui).cancelled) {
-			if (((SubGuiEditText) subgui).getId() == 1) {
-				DialogCategory category = new DialogCategory();
-				StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
-				boolean has = true;
-				while (has) {
-					has = false;
-					for (DialogCategory cat : DialogController.instance.categories.values()) {
-						if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
-							has = true;
-							break;
-						}
-					}
-					if (has) { t.append("_"); }
-				}
-				category.title = t.toString();
-				Client.sendData(EnumPacketServer.DialogCategorySave, category.save(new NBTTagCompound()));
-			}
-			if (((SubGuiEditText) subgui).getId() == 3) {
-				if (((SubGuiEditText) subgui).text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
-				DialogCategory category = categoryData.get(selectedCategory).copy();
-				if (category.title.equals(((SubGuiEditText) subgui).text[0])) { return; }
-				category.title = ((SubGuiEditText) subgui).text[0];
-				StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
-				boolean has = true;
-				while (has) {
-					has = false;
-					for (DialogCategory cat : DialogController.instance.categories.values()) {
-						if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
-							has = true;
-							break;
-						}
-					}
-					if (has) { t.append("_"); }
-				}
-				category.title = t.toString();
-				selectedCategory = category.title;
-				Client.sendData(EnumPacketServer.DialogCategorySave, category.save(new NBTTagCompound()));
-				initGui();
-			}
-			if (((SubGuiEditText) subgui).getId() == 11) {
-				if (((SubGuiEditText) subgui).text[0].isEmpty()) { return; }
-				Dialog dialog = new Dialog(categoryData.get(selectedCategory));
-
-				StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
-				boolean has = true;
-				while (has) {
-					has = false;
-					for (Dialog dia : dialog.category.dialogs.values()) {
-						if (dia.id != dialog.id && dia.title.equalsIgnoreCase(t.toString())) {
-							has = true;
-							break;
-						}
-					}
-					if (has) { t.append("_"); }
-				}
-				dialog.title = t.toString();
-				selectedDialog = dialog.title;
-				Client.sendData(EnumPacketServer.DialogSave, categoryData.get(selectedCategory).id, dialog.save(new NBTTagCompound()));
-				initGui();
-			}
-		}
-		if (subgui instanceof SubGuiDialogEdit) {
-			initGui();
-		}
-	}
+	public void save() { GuiTextFieldNop.unfocus(); }
 
 	// New from Unofficial (BetaZavr)
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
-		if (hasSubGui()) { return; }
-		drawHorizontalLine(guiLeft + 348, guiLeft + 414, guiTop + 128, 0x80000000);
+		if (!hasSubGui()) {
+			drawHorizontalLine(guiLeft + 348, guiLeft + 414, guiTop + 128, 0x80000000);
+		}
 	}
 
-	private static List<Entry<String, Dialog>> getEntryList(Map<String, Dialog> map) {
-		List<Entry<String, Dialog>> list = new ArrayList<>(map.entrySet());
+	private static List<Map.Entry<Component, Dialog>> getEntryList(Map<Component, Dialog> map) {
+		List<Map.Entry<Component, Dialog>> list = new ArrayList<>(map.entrySet());
 		list.sort((d_0, d_1) -> {
-			if (GuiNPCManageDialogs.isName) {
-				String n_0 = Util.instance.deleteColor(new TextComponentTranslation(d_0.getValue().title).getFormattedText() + "_" + d_0.getValue().id).toLowerCase();
-				String n_1 = Util.instance.deleteColor(new TextComponentTranslation(d_1.getValue().title).getFormattedText() + "_" + d_1.getValue().id).toLowerCase();
+			if (sortByName) {
+				String n_0 = Util.instance.deleteColor(Component.translatable(d_0.getValue().title).getString() + "_" + d_0.getValue().id).toLowerCase();
+				String n_1 = Util.instance.deleteColor(Component.translatable(d_1.getValue().title).getString() + "_" + d_1.getValue().id).toLowerCase();
 				return n_0.compareTo(n_1);
 			} else {
 				return Integer.compare(d_0.getValue().id, d_1.getValue().id);
@@ -379,4 +423,5 @@ public class GuiNPCManageDialogs extends GuiNPCInterface2
 		});
 		return list;
 	}
+
 }

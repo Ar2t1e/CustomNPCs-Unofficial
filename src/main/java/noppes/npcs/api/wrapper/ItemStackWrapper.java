@@ -37,11 +37,10 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.ItemType;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.entity.IEntityLiving;
@@ -53,17 +52,17 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.items.ItemScripted;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 @SuppressWarnings("rawtypes")
 public class ItemStackWrapper
 implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilitySerializable {
 
+	@CapabilityInject(IItemStackWrapperHandler.class)
+	public static Capability<IItemStackWrapperHandler> ITEMSTACK_CAPABILITY;
+	public static ItemStackWrapper AIR = new ItemStackWrapper(ItemStack.EMPTY);
 	protected static final EntityEquipmentSlot[] VALID_EQUIPMENT_SLOTS = new EntityEquipmentSlot[] { EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET };
 	protected static final ResourceLocation key = new ResourceLocation(CustomNpcs.MODID, "itemscripteddata");
-
-	@CapabilityInject(IItemStackWrapperHandler.class)
-	public static Capability<IItemStackWrapperHandler> ITEM_SCRIPTED_DATA_CAPABILITY = null;
-	public static ItemStackWrapper AIR = new ItemStackWrapper(ItemStack.EMPTY);
 
 	protected final Data tempdata;
 	protected final Data storeddata;
@@ -159,7 +158,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 
 	@Override
 	public double getAttackDamage() {
-		HashMultimap map = (HashMultimap) this.item.getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
+		HashMultimap map = (HashMultimap) item.getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
 		Iterator iterator = map.entries().iterator();
 		double damage = 0.0;
 		while (iterator.hasNext()) {
@@ -172,7 +171,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 				catch (Exception e) { LogWriter.error(e); }
 			}
 		}
-		damage += EnchantmentHelper.getModifierForCreature(this.item, EnumCreatureAttribute.UNDEFINED);
+		damage += EnchantmentHelper.getModifierForCreature(item, EnumCreatureAttribute.UNDEFINED);
 		return damage;
 	}
 
@@ -227,7 +226,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 	public INbt getItemNbt() {
 		NBTTagCompound compound = new NBTTagCompound();
 		this.item.writeToNBT(compound);
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
+		return new NBTWrapper(compound);
 	}
 
 	@Override
@@ -279,7 +278,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 		if (compound == null) {
 			this.item.setTagCompound(compound = new NBTTagCompound());
 		}
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(compound);
+		return new NBTWrapper(compound);
 	}
 
 	@Override
@@ -324,14 +323,12 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 		return false;
 	}
 
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) {
-		return capability == ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY;
+	public boolean hasCapability(@Nullable Capability<?> capability, EnumFacing facing) {
+		return capability != null && capability == ITEMSTACK_CAPABILITY;
 	}
 
 	@Override
-	public boolean hasCustomName() {
-		return this.item.hasDisplayName();
-	}
+	public boolean hasCustomName() { return this.item.hasDisplayName(); }
 
 	@Override
 	public boolean hasEnchant(int id) {
@@ -376,7 +373,7 @@ implements IItemStackWrapperHandler, IItemStack, ICapabilityProvider, ICapabilit
 	@Override
 	public boolean hasNbt() {
 		NBTTagCompound compound = this.item.getTagCompound();
-		return compound != null && !compound.getKeySet().isEmpty();
+		return compound != null && !compound.hasNoTags();
 	}
 
 	@Override

@@ -22,41 +22,41 @@ public class ModelSpiderLegs extends ModelRenderer {
 	private final ModelRenderer spiderLeg8;
 	private final ModelRenderer spiderNeck;
 
-	public ModelSpiderLegs(ModelBiped base) {
-		super(base);
-		this.base = base;
+	public ModelSpiderLegs(ModelBiped baseIn) {
+		super(baseIn);
+		base = baseIn;
 		float var1 = 0.0f;
 		byte var2 = 15;
-		(this.spiderNeck = new ModelRenderer(base, 0, 0)).addBox(-3.0f, -3.0f, -3.0f, 6, 6, 6, var1);
-		this.spiderNeck.setRotationPoint(0.0f, var2, 2.0f);
-		this.addChild(this.spiderNeck);
-		(this.spiderBody = new ModelRenderer(base, 0, 12)).addBox(-5.0f, -4.0f, -6.0f, 10, 8, 12, var1);
-		this.spiderBody.setRotationPoint(0.0f, var2, 11.0f);
-		this.addChild(this.spiderBody);
-		(this.spiderLeg1 = new ModelRenderer(base, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg1.setRotationPoint(-4.0f, var2, 4.0f);
-		this.addChild(this.spiderLeg1);
-		(this.spiderLeg2 = new ModelRenderer(base, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg2.setRotationPoint(4.0f, var2, 4.0f);
-		this.addChild(this.spiderLeg2);
-		(this.spiderLeg3 = new ModelRenderer(base, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg3.setRotationPoint(-4.0f, var2, 3.0f);
-		this.addChild(this.spiderLeg3);
-		(this.spiderLeg4 = new ModelRenderer(base, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg4.setRotationPoint(4.0f, var2, 3.0f);
-		this.addChild(this.spiderLeg4);
-		(this.spiderLeg5 = new ModelRenderer(base, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg5.setRotationPoint(-4.0f, var2, 2.0f);
-		this.addChild(this.spiderLeg5);
-		(this.spiderLeg6 = new ModelRenderer(base, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg6.setRotationPoint(4.0f, var2, 2.0f);
-		this.addChild(this.spiderLeg6);
-		(this.spiderLeg7 = new ModelRenderer(base, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg7.setRotationPoint(-4.0f, var2, 1.0f);
-		this.addChild(this.spiderLeg7);
-		(this.spiderLeg8 = new ModelRenderer(base, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
-		this.spiderLeg8.setRotationPoint(4.0f, var2, 1.0f);
-		this.addChild(this.spiderLeg8);
+		(spiderNeck = new ModelRenderer(baseIn, 0, 0)).addBox(-3.0f, -3.0f, -3.0f, 6, 6, 6, var1);
+		spiderNeck.setRotationPoint(0.0f, var2, 2.0f);
+		addChild(spiderNeck);
+		(spiderBody = new ModelRenderer(baseIn, 0, 12)).addBox(-5.0f, -4.0f, -6.0f, 10, 8, 12, var1);
+		spiderBody.setRotationPoint(0.0f, var2, 11.0f);
+		addChild(spiderBody);
+		(spiderLeg1 = new ModelRenderer(baseIn, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg1.setRotationPoint(-4.0f, var2, 4.0f);
+		addChild(spiderLeg1);
+		(spiderLeg2 = new ModelRenderer(baseIn, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg2.setRotationPoint(4.0f, var2, 4.0f);
+		addChild(spiderLeg2);
+		(spiderLeg3 = new ModelRenderer(baseIn, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg3.setRotationPoint(-4.0f, var2, 3.0f);
+		addChild(spiderLeg3);
+		(spiderLeg4 = new ModelRenderer(baseIn, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg4.setRotationPoint(4.0f, var2, 3.0f);
+		addChild(spiderLeg4);
+		(spiderLeg5 = new ModelRenderer(baseIn, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg5.setRotationPoint(-4.0f, var2, 2.0f);
+		addChild(spiderLeg5);
+		(spiderLeg6 = new ModelRenderer(baseIn, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg6.setRotationPoint(4.0f, var2, 2.0f);
+		addChild(spiderLeg6);
+		(spiderLeg7 = new ModelRenderer(baseIn, 18, 0)).addBox(-15.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg7.setRotationPoint(-4.0f, var2, 1.0f);
+		addChild(spiderLeg7);
+		(spiderLeg8 = new ModelRenderer(baseIn, 18, 0)).addBox(-1.0f, -1.0f, -1.0f, 16, 2, 2, var1);
+		spiderLeg8.setRotationPoint(4.0f, var2, 1.0f);
+		addChild(spiderLeg8);
 	}
 
 	public void setRotation(ModelRenderer model, float x, float y, float z) {
@@ -65,32 +65,32 @@ public class ModelSpiderLegs extends ModelRenderer {
 		model.rotateAngleZ = z;
 	}
 
-	public void setRotationAngles(ModelData data, float par1, float par2, float par3, float par4, float par5, float par6, Entity entity) {
-		this.rotateAngleX = 0.0f;
-		this.rotationPointY = 0.0f;
-		this.rotationPointZ = 0.0f;
-		this.spiderBody.rotationPointY = 15.0f;
-		this.spiderBody.rotationPointZ = 11.0f;
-		this.spiderNeck.rotateAngleX = 0.0f;
+	public void setRotationAngles(ModelData data, float par1, float par2, float ignoredPar3, float ignoredPar4, float ignoredPar5, float ignoredPar6, Entity entity) {
+		rotateAngleX = 0.0f;
+		rotationPointY = 0.0f;
+		rotationPointZ = 0.0f;
+		spiderBody.rotationPointY = 15.0f;
+		spiderBody.rotationPointZ = 11.0f;
+		spiderNeck.rotateAngleX = 0.0f;
 		float var8 = 0.7853982f;
-		this.spiderLeg1.rotateAngleZ = -var8;
-		this.spiderLeg2.rotateAngleZ = var8;
-		this.spiderLeg3.rotateAngleZ = -var8 * 0.74f;
-		this.spiderLeg4.rotateAngleZ = var8 * 0.74f;
-		this.spiderLeg5.rotateAngleZ = -var8 * 0.74f;
-		this.spiderLeg6.rotateAngleZ = var8 * 0.74f;
-		this.spiderLeg7.rotateAngleZ = -var8;
-		this.spiderLeg8.rotateAngleZ = var8;
+		spiderLeg1.rotateAngleZ = -var8;
+		spiderLeg2.rotateAngleZ = var8;
+		spiderLeg3.rotateAngleZ = -var8 * 0.74f;
+		spiderLeg4.rotateAngleZ = var8 * 0.74f;
+		spiderLeg5.rotateAngleZ = -var8 * 0.74f;
+		spiderLeg6.rotateAngleZ = var8 * 0.74f;
+		spiderLeg7.rotateAngleZ = -var8;
+		spiderLeg8.rotateAngleZ = var8;
 		float var9 = -0.0f;
 		float var10 = 0.3926991f;
-		this.spiderLeg1.rotateAngleY = var10 * 2.0f + var9;
-		this.spiderLeg2.rotateAngleY = -var10 * 2.0f - var9;
-		this.spiderLeg3.rotateAngleY = var10 + var9;
-		this.spiderLeg4.rotateAngleY = -var10 - var9;
-		this.spiderLeg5.rotateAngleY = -var10 + var9;
-		this.spiderLeg6.rotateAngleY = var10 - var9;
-		this.spiderLeg7.rotateAngleY = -var10 * 2.0f + var9;
-		this.spiderLeg8.rotateAngleY = var10 * 2.0f - var9;
+		spiderLeg1.rotateAngleY = var10 * 2.0f + var9;
+		spiderLeg2.rotateAngleY = -var10 * 2.0f - var9;
+		spiderLeg3.rotateAngleY = var10 + var9;
+		spiderLeg4.rotateAngleY = -var10 - var9;
+		spiderLeg5.rotateAngleY = -var10 + var9;
+		spiderLeg6.rotateAngleY = var10 - var9;
+		spiderLeg7.rotateAngleY = -var10 * 2.0f + var9;
+		spiderLeg8.rotateAngleY = var10 * 2.0f - var9;
 		float var11 = -(MathHelper.cos(par1 * 0.6662f * 2.0f + 0.0f) * 0.4f) * par2;
 		float var12 = -(MathHelper.cos(par1 * 0.6662f * 2.0f + 3.1415927f) * 0.4f) * par2;
 		float var13 = -(MathHelper.cos(par1 * 0.6662f * 2.0f + 1.5707964f) * 0.4f) * par2;
@@ -99,33 +99,34 @@ public class ModelSpiderLegs extends ModelRenderer {
 		float var16 = Math.abs(MathHelper.sin(par1 * 0.6662f + 3.1415927f) * 0.4f) * par2;
 		float var17 = Math.abs(MathHelper.sin(par1 * 0.6662f + 1.5707964f) * 0.4f) * par2;
 		float var18 = Math.abs(MathHelper.sin(par1 * 0.6662f + 4.712389f) * 0.4f) * par2;
-		this.spiderLeg1.rotateAngleY += var11;
-		this.spiderLeg2.rotateAngleY -= var11;
-		this.spiderLeg3.rotateAngleY += var12;
-		this.spiderLeg4.rotateAngleY -= var12;
-		this.spiderLeg5.rotateAngleY += var13;
-		this.spiderLeg6.rotateAngleY -= var13;
-		this.spiderLeg7.rotateAngleY += var14;
-		this.spiderLeg8.rotateAngleY -= var14;
-		this.spiderLeg1.rotateAngleZ += var15;
-		this.spiderLeg2.rotateAngleZ -= var15;
-		this.spiderLeg3.rotateAngleZ += var16;
-		this.spiderLeg4.rotateAngleZ -= var16;
-		this.spiderLeg5.rotateAngleZ += var17;
-		this.spiderLeg6.rotateAngleZ -= var17;
-		this.spiderLeg7.rotateAngleZ += var18;
-		this.spiderLeg8.rotateAngleZ -= var18;
-		if (this.base.isSneak) {
-			this.rotationPointZ = 5.0f;
-			this.rotationPointY = -1.0f;
-			this.spiderBody.rotationPointY = 16.0f;
-			this.spiderBody.rotationPointZ = 10.0f;
-			this.spiderNeck.rotateAngleX = -0.3926991f;
+		spiderLeg1.rotateAngleY += var11;
+		spiderLeg2.rotateAngleY -= var11;
+		spiderLeg3.rotateAngleY += var12;
+		spiderLeg4.rotateAngleY -= var12;
+		spiderLeg5.rotateAngleY += var13;
+		spiderLeg6.rotateAngleY -= var13;
+		spiderLeg7.rotateAngleY += var14;
+		spiderLeg8.rotateAngleY -= var14;
+		spiderLeg1.rotateAngleZ += var15;
+		spiderLeg2.rotateAngleZ -= var15;
+		spiderLeg3.rotateAngleZ += var16;
+		spiderLeg4.rotateAngleZ -= var16;
+		spiderLeg5.rotateAngleZ += var17;
+		spiderLeg6.rotateAngleZ -= var17;
+		spiderLeg7.rotateAngleZ += var18;
+		spiderLeg8.rotateAngleZ -= var18;
+		if (base.isSneak) {
+			rotationPointZ = 5.0f;
+			rotationPointY = -1.0f;
+			spiderBody.rotationPointY = 16.0f;
+			spiderBody.rotationPointZ = 10.0f;
+			spiderNeck.rotateAngleX = -0.3926991f;
 		}
 		if (((EntityNPCInterface) entity).isPlayerSleeping() || ((EntityNPCInterface) entity).currentAnimation == 7) {
-			this.rotationPointY = 12.0f * data.getPartConfig(EnumParts.LEG_LEFT).scale[1];
-			this.rotationPointZ = 15.0f * data.getPartConfig(EnumParts.LEG_LEFT).scale[1];
-			this.rotateAngleX = -1.5707964f;
+			rotationPointY = 12.0f * data.getPartConfig(EnumParts.LEG_LEFT).scaleY;
+			rotationPointZ = 15.0f * data.getPartConfig(EnumParts.LEG_LEFT).scaleY;
+			rotateAngleX = -1.5707964f;
 		}
 	}
+
 }

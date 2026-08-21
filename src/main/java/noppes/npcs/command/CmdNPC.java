@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import noppes.npcs.LogWriter;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.shared.common.util.LogWriter;
 import org.apache.commons.lang3.ArrayUtils;
 
 import net.minecraft.command.CommandBase;
@@ -26,9 +27,22 @@ import noppes.npcs.roles.RoleFollower;
 import javax.annotation.Nonnull;
 
 public class CmdNPC extends CommandNoppesBase {
+
+	@Nonnull
+	public String getName() { return "npc"; }
+
+	@Override
+	public String getDescription() { return "NPC operation"; }
+
+	@Override
+	public String getUsage() { return "<name> <command>"; }
+
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
+
 	public EntityNPCInterface selectedNpc;
 
-	@SubCommand(desc = "Creates an NPC", usage = "[name]", permission = 2)
+	@SubCommand(desc = "Creates an NPC", usage = "[name]", isOpOnly = true)
 	public void create(MinecraftServer server, ICommandSender sender, String[] args) {
 		World pw = sender.getEntityWorld();
 		EntityCustomNpc npc = new EntityCustomNpc(pw);
@@ -42,7 +56,7 @@ public class CmdNPC extends CommandNoppesBase {
 		npc.setHealth(npc.getMaxHealth());
 	}
 
-	@SubCommand(desc = "Delete an NPC", permission = 2)
+	@SubCommand(desc = "Delete an NPC", isOpOnly = true)
 	public void delete(MinecraftServer server, ICommandSender sender, String[] args) {
 		this.selectedNpc.delete();
 	}
@@ -74,11 +88,6 @@ public class CmdNPC extends CommandNoppesBase {
 		this.selectedNpc = null;
 	}
 
-	@Override
-	public String getDescription() {
-		return "NPC operation";
-	}
-
 	public <T extends Entity> List<T> getEntities(Class<? extends T> cls, World world, BlockPos pos, int range) {
 		List<T> list = new ArrayList<>();
 		try {
@@ -86,16 +95,6 @@ public class CmdNPC extends CommandNoppesBase {
 		}
 		catch (Exception ignored) { }
 		return list;
-	}
-
-	@Nonnull
-	public String getName() {
-		return "npc";
-	}
-
-	@Override
-	public int getRequiredPermissionLevel() {
-		return 4;
 	}
 
 	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender par1, @Nonnull String[] args, BlockPos pos) {
@@ -108,12 +107,7 @@ public class CmdNPC extends CommandNoppesBase {
 		return new ArrayList<>();
 	}
 
-	@Override
-	public String getUsage() {
-		return "<name> <command>";
-	}
-
-	@SubCommand(desc = "Set Home (respawn place)", usage = "[x] [y] [z]", permission = 2)
+	@SubCommand(desc = "Set Home (respawn place)", usage = "[x] [y] [z]", isOpOnly = true)
 	public void home(MinecraftServer server, ICommandSender sender, String[] args) {
 		BlockPos pos = sender.getPosition();
 		if (args.length == 3) {
@@ -124,7 +118,7 @@ public class CmdNPC extends CommandNoppesBase {
 		this.selectedNpc.ais.setStartPos(pos);
 	}
 
-	@SubCommand(desc = "Set NPC name", usage = "[name]", permission = 2)
+	@SubCommand(desc = "Set NPC name", usage = "[name]", isOpOnly = true)
 	public void name(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (args.length < 1) {
 			return;
@@ -139,15 +133,15 @@ public class CmdNPC extends CommandNoppesBase {
 		}
 	}
 
-	@SubCommand(desc = "Sets the owner of an follower/companion", usage = "[player]", permission = 2)
+	@SubCommand(desc = "Sets the owner of an follower/companion", usage = "[player]", isOpOnly = true)
 	public void owner(MinecraftServer server, ICommandSender sender, String[] args) {
 		EntityPlayer player = null;
 		if (args.length < 1) {
-			if (this.selectedNpc.advanced.roleInterface instanceof RoleFollower) {
-				player = ((RoleFollower) this.selectedNpc.advanced.roleInterface).owner;
+			if (this.selectedNpc.role instanceof RoleFollower) {
+				player = ((RoleFollower) this.selectedNpc.role).owner;
 			}
-			if (this.selectedNpc.advanced.roleInterface instanceof RoleCompanion) {
-				player = ((RoleCompanion) this.selectedNpc.advanced.roleInterface).owner;
+			if (this.selectedNpc.role instanceof RoleCompanion) {
+				player = ((RoleCompanion) this.selectedNpc.role).owner;
 			}
 			if (player == null) {
 				this.sendMessage(sender, "No owner");
@@ -159,17 +153,17 @@ public class CmdNPC extends CommandNoppesBase {
 				player = CommandBase.getPlayer(server, sender, args[0]);
 			} catch (Exception e) { LogWriter.error(e); }
 			if (player != null) {
-				if (this.selectedNpc.advanced.roleInterface instanceof RoleFollower) {
-					((RoleFollower) this.selectedNpc.advanced.roleInterface).setOwner(player);
+				if (this.selectedNpc.role instanceof RoleFollower) {
+					((RoleFollower) this.selectedNpc.role).setOwner(player);
 				}
-				if (this.selectedNpc.advanced.roleInterface instanceof RoleCompanion) {
-					((RoleCompanion) this.selectedNpc.advanced.roleInterface).setOwner(player);
+				if (this.selectedNpc.role instanceof RoleCompanion) {
+					((RoleCompanion) this.selectedNpc.role).setOwner(player);
 				}
 			}
 		}
 	}
 
-	@SubCommand(desc = "Resets the npc", usage = "[name]", permission = 2)
+	@SubCommand(desc = "Resets the npc", usage = "[name]", isOpOnly = true)
 	public void reset(MinecraftServer server, ICommandSender sender, String[] args) {
 		this.selectedNpc.reset();
 	}
@@ -179,7 +173,7 @@ public class CmdNPC extends CommandNoppesBase {
 		return false;
 	}
 
-	@SubCommand(desc = "Set NPC visibility", usage = "[true/false/semi]", permission = 2)
+	@SubCommand(desc = "Set NPC visibility", usage = "[true/false/semi]", isOpOnly = true)
 	public void visible(MinecraftServer server, ICommandSender sender, String[] args) {
 		if (args.length < 1) {
 			return;

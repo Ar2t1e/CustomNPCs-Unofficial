@@ -17,7 +17,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.WeightedRandom;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.controllers.data.SpawnData;
 
 public class SpawnController {
@@ -25,7 +25,6 @@ public class SpawnController {
 	public static SpawnController instance;
 	public final HashMap<String, List<SpawnData>> biomes = new HashMap<>();
 	public final ArrayList<SpawnData> data = new ArrayList<>();
-	private int lastUsedID = 0;
 	public Random random = new Random();
 
 	public SpawnController() {
@@ -46,11 +45,10 @@ public class SpawnController {
 		NBTTagList list = new NBTTagList();
 		for (SpawnData spawn : this.data) {
 			NBTTagCompound nbtSummon = new NBTTagCompound();
-			spawn.writeNBT(nbtSummon);
+			spawn.save(nbtSummon);
 			list.appendTag(nbtSummon);
 		}
 		NBTTagCompound nbttagcompound = new NBTTagCompound();
-		nbttagcompound.setInteger("lastID", this.lastUsedID);
 		nbttagcompound.setTag("NPCSpawnData", list);
 		return nbttagcompound;
 	}
@@ -71,9 +69,7 @@ public class SpawnController {
 
 	public SpawnData getSpawnData(int id) {
 		for (SpawnData spawn : this.data) {
-			if (spawn.id == id) {
-				return spawn;
-			}
+			if (spawn.id == id) { return spawn; }
 		}
 		return null;
 	}
@@ -81,7 +77,11 @@ public class SpawnController {
 	public List<SpawnData> getSpawnList(String biome) { return this.biomes.get(biome); }
 
 	public int getUnusedId() {
-		return ++this.lastUsedID;
+		int id = 0;
+		for (SpawnData spawn : data) {
+			if (spawn.id == id) { id++; }
+		}
+		return id;
 	}
 
 	private void loadData() {
@@ -109,13 +109,12 @@ public class SpawnController {
 
 	public void loadData(DataInputStream stream) throws IOException {
 		NBTTagCompound compound = CompressedStreamTools.read(stream);
-		this.lastUsedID = compound.getInteger("lastID");
 		NBTTagList nbtList = compound.getTagList("NPCSpawnData", 10);
 		data.clear();
         for (int i = 0; i < nbtList.tagCount(); ++i) {
             NBTTagCompound nbtSummon = nbtList.getCompoundTagAt(i);
             SpawnData spawn = new SpawnData();
-            spawn.readNBT(nbtSummon);
+            spawn.load(nbtSummon);
 			if (spawn.name == null || spawn.name.isEmpty()) { continue; }
             data.add(spawn);
         }
@@ -169,15 +168,14 @@ public class SpawnController {
 	}
 
 	public void saveSpawnData(SpawnData spawn) {
-		if (spawn.name == null || spawn.name.isEmpty()) { return; }
-		if (spawn.id < 0) { spawn.id = getUnusedId(); }
-		SpawnData spawnData = getSpawnData(spawn.id);
-		if (spawnData == null) {
-			data.add(spawn);
+		if (spawn.name != null && !spawn.name.isEmpty()) {
+			if (spawn.id < 0) { spawn.id = getUnusedId(); }
+			SpawnData spawnData = getSpawnData(spawn.id);
+			if (spawnData == null) { data.add(spawn); }
+			else { spawnData.load(spawn.save(new NBTTagCompound())); }
+			fillBiomeData();
+			saveData();
 		}
-		else { spawnData.readNBT(spawn.writeNBT(new NBTTagCompound())); }
-		fillBiomeData();
-		saveData();
 	}
 
 }

@@ -2,67 +2,79 @@ package noppes.npcs.client.gui.player;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.containers.ContainerNPCFollowerHire;
-import noppes.npcs.controllers.data.MarkData;
-import noppes.npcs.entity.EntityCustomNpc;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketFollowerExtend;
+import noppes.npcs.packets.server.SPacketFollowerState;
+import noppes.npcs.packets.server.SPacketNpcRoleGet;
 import noppes.npcs.roles.RoleFollower;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.util.Util;
 
-import javax.annotation.Nonnull;
-
-public class GuiNpcFollower extends GuiContainerNPCInterface implements IGuiData {
+public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollowerHire>
+		implements IGuiData {
 
 	protected final RoleFollower role;
+
+	// New from Unofficial (BetaZavr)
 	protected EntityNPCInterface displayNPC;
 
 	public GuiNpcFollower(EntityNPCInterface npc, ContainerNPCFollowerHire container) {
-		super(npc, container);
+		super(npc, container, Component.empty());
 		setBackground("follower.png");
-		closeOnEsc = true;
 		ySize = 224;
 
-		role = (RoleFollower) npc.advanced.roleInterface;
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.RoleGet);
-		NBTTagCompound npcNbt = new NBTTagCompound();
-		npc.writeEntityToNBT(npcNbt);
-		npc.writeToNBTOptional(npcNbt);
-		Entity e = EntityList.createEntityFromNBT(npcNbt, mc.world);
-		if (e instanceof EntityNPCInterface) {
-			displayNPC = (EntityNPCInterface) e;
-			displayNPC.display.setShowName(1);
-			MarkData.get(displayNPC).marks.clear();
-			displayNPC.rotationYaw = npc.rotationYaw;
-			displayNPC.rotationPitch = npc.rotationPitch;
-			displayNPC.ais.orientation = npc.ais.orientation;
-			displayNPC.ais.setStandingType(1);
-			if (npc instanceof EntityCustomNpc && displayNPC instanceof EntityCustomNpc
-					&& ((EntityCustomNpc) npc).modelData != null
-					&& ((EntityCustomNpc) displayNPC).modelData != null) {
-				((EntityCustomNpc) displayNPC).modelData.entity = ((EntityCustomNpc) npc).modelData.entity;
-			}
-		}
+		role = (RoleFollower) npc.role;
+		Packets.sendServer(new SPacketNpcRoleGet());
+		// New from Unofficial (BetaZavr)
+		displayNPC = Util.instance.copyToGUI(npc, player.world, false);
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.getID() < 4) { NoppesUtilPlayer.sendData(EnumPlayerPacket.FollowerExtend, button.getID()); }
-		else {
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.FollowerState, button.getID() - 5);
-			if (button.getID() == 6) { onClosed(); }
+	public void initGui() {
+		super.initGui();
+		int x = guiLeft + 12;
+		int y = guiTop - 11;
+		if (!role.infiniteDays) {
+			for (int i = 0; i < 3; ++i) {
+				if (role.rentalItems.getStackInSlot(i).isEmpty()) { continue; }
+				addButton(i, x, y += 16, "follower.extend")
+						.setSize(60, 13)
+						.setHoverTexts("follower.hover.extend");
+			}
+		}
+		if (role.rates.containsKey(3) && role.rentalMoney > 0) {
+			addButton(3, x, guiTop + 53, "follower.extend")
+					.setSize(60, 13)
+					.setHoverTexts("follower.hover.extend");
+		}
+		x += 52;
+		y = guiTop + 105;
+		addButton(5, x, y, false, role.isFollowing ? 0 : 1, "follower.waiting", "follower.following")
+				.setSize(50, 14)
+				.setHoverTexts("follower.hover.move");
+		addButton(6, x + 54, y, "follower.fire")
+				.setSize(50, 14)
+				.setHoverTexts("follower.hover.fire");
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 5: Packets.sendServer(new SPacketFollowerState(true)); break;
+			case 6: Packets.sendServer(new SPacketFollowerState(false)); onClose(); break;
+			default: Packets.sendServer(new SPacketFollowerExtend(button.id)); break;
 		}
 	}
 
@@ -71,9 +83,9 @@ public class GuiNpcFollower extends GuiContainerNPCInterface implements IGuiData
 		super.drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
 		int index = 0;
 		if (!role.infiniteDays) {
-			for (int slot = 0; slot < role.rentalItems.items.size(); ++slot) {
-				ItemStack itemstack = role.rentalItems.items.get(slot);
-				if (!NoppesUtilServer.IsItemStackNull(itemstack)) {
+			for (int slot = 0; slot < role.rentalItems.getSizeInventory(); ++slot) {
+				ItemStack itemstack = role.rentalItems.getStackInSlot(slot);
+				if (!NoppesUtilServer.isItemStackNull(itemstack)) {
 					int days = 1;
 					if (role.rates.containsKey(slot)) { days = role.rates.get(slot); }
 					int yOffset = index * 16;
@@ -85,13 +97,12 @@ public class GuiNpcFollower extends GuiContainerNPCInterface implements IGuiData
 					itemRender.renderItemOverlays(fontRenderer, itemstack, x + 11, y);
 					RenderHelper.disableStandardItemLighting();
 					GlStateManager.disableRescaleNormal();
-					String daysS = days + " "
-							+ ((days == 1) ? new TextComponentTranslation("follower.day").getFormattedText()
-									: new TextComponentTranslation("follower.days").getFormattedText());
-					fontRenderer.drawString(" = " + daysS, x + 27, y + 4,
+					Component daysS = Component.empty()
+							.append(" = " + days + " ")
+							.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
+					fontRenderer.drawString(daysS.getFormattedText(), x + 27, y + 4,
 							CustomNpcResourceListener.DefaultTextColor);
-					if (isPointInRegion(x - guiLeft + 11, y - guiTop, 16, 16, mouseX,
-							mouseY)) {
+					if (isMouseHover(mouseX, mouseY, x - guiLeft + 11, y - guiTop, 16, 16)) {
 						renderToolTip(itemstack, mouseX, mouseY);
 					}
 					++index;
@@ -113,7 +124,7 @@ public class GuiNpcFollower extends GuiContainerNPCInterface implements IGuiData
 			GlStateManager.popMatrix();
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(guiLeft + 173, guiTop + 141, 0.0f);
-			mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
+			mc.getTextureManager().bindTexture(GuiBasic.RESOURCE_SLOT);
 			for (int slotId = 0; slotId < size; slotId++) {
 				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 				drawTexturedModalRect((slotId % s) * 18, (slotId / s) * 18, 0, 0, 18, 18);
@@ -122,70 +133,45 @@ public class GuiNpcFollower extends GuiContainerNPCInterface implements IGuiData
 		}
 		if (role.rates.containsKey(3) && role.rentalMoney > 0) {
 			int days = role.rates.get(3);
-			String daysS = days + " " + ((days == 1) ? new TextComponentTranslation("follower.day").getFormattedText() : new TextComponentTranslation("follower.days").getFormattedText());
-			String money = Util.instance.getTextReducedNumber(role.rentalMoney, true, true, false) + " " + CustomNpcs.displayCurrencies;
-			fontRenderer.drawString(money + " = " + daysS, guiLeft + 80, guiTop + 56, CustomNpcResourceListener.DefaultTextColor);
+			Component daysS = Component.empty()
+					.append(Util.instance.getTextReducedNumber(role.rentalMoney, true, true, false))
+					.append(" " + CustomNpcs.displayCurrencies + " = " + days + " ")
+					.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));
+			fontRenderer.drawString(daysS.getFormattedText(), guiLeft + 80, guiTop + 56, CustomNpcResourceListener.DefaultTextColor);
 		}
 		if (displayNPC != null) { drawNpc(displayNPC, 33, 131, 1.0f, 0, 0, 1); }
 		else { drawNpc(33, 131); }
 	}
 
 	@Override
-	protected void drawGuiContainerForegroundLayer(int par1, int par2) {
+	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
 		long time = (System.currentTimeMillis() - role.hiredTime) / 50L;
-		fontRenderer.drawString(new TextComponentTranslation("follower.health").getFormattedText() + ": " + npc.getHealth() + "/" + npc.getMaxHealth(), 62, 70, CustomNpcResourceListener.DefaultTextColor);
+		fontRenderer.drawString(Component.translatable("follower.health")
+				.append(": " + npc.getHealth() + "/" + npc.getMaxHealth()).getFormattedText(), 62, 70, CustomNpcResourceListener.DefaultTextColor);
 		if (!role.infiniteDays) {
-			fontRenderer.drawString(new TextComponentTranslation("follower.daysleft").getFormattedText() + " " + Util.instance.ticksToElapsedTime((role.getDays() * 28800L) - time, false, true, false), 62, 82, CustomNpcResourceListener.DefaultTextColor);
+			fontRenderer.drawString(Component.translatable("follower.daysleft")
+					.append(" " + Util.instance.ticksToElapsedTime((role.getDays() * 28800L) - time, false, true, false)).getFormattedText(), 62, 82, CustomNpcResourceListener.DefaultTextColor);
 		}
-		fontRenderer.drawString(new TextComponentTranslation("follower.lastday").getFormattedText() + ": " + Util.instance.ticksToElapsedTime(time, false, true, false), 62, 94, CustomNpcResourceListener.DefaultTextColor);
+		fontRenderer.drawString(Component.translatable("follower.lastday")
+				.append(": " + Util.instance.ticksToElapsedTime(time, false, true, false)).getFormattedText(), 62, 94, CustomNpcResourceListener.DefaultTextColor);
 	}
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		for (int i = 0; i < 3; ++i) {
-			if (getButton(i) == null) {
-				continue;
+			if (getButton(i) != null) {
+				getButton(i).setIsEnabled(player.isCreative() || Util.instance.canRemoveItems(player.inventory.mainInventory, role.rentalItems.getStackInSlot(i), false, false));
 			}
-			getButton(i).setIsEnable(mc.player.capabilities.isCreativeMode || Util.instance.canRemoveItems(mc.player.inventory.mainInventory, role.rentalItems.getStackInSlot(i), false, false));
 		}
 		if (getButton(3) != null) {
-			getButton(3).setIsEnable(mc.player.capabilities.isCreativeMode || ClientProxy.playerData.game.getMoney() >= role.rentalMoney);
+			getButton(3).setIsEnabled(player.isCreative() || PlayerData.get(player).game.getMoney() >= role.rentalMoney);
 		}
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 
-	@Override
-	public void initGui() {
-		super.initGui();
-		int x = guiLeft + 12;
-		int y = guiTop - 11;
-		GuiNpcButton button;
-		if (!role.infiniteDays) {
-			for (int i = 0; i < 3; ++i) {
-				if (role.rentalItems.getStackInSlot(i).isEmpty()) { continue; }
-				button = new GuiNpcButton(i, x, y += 16, 60, 13, new TextComponentTranslation("follower.extend").getFormattedText());
-				button.setHoverText("follower.hover.extend");
-				addButton(button);
-			}
-		}
-		if (role.rates.containsKey(3) && role.rentalMoney > 0) {
-			button = new GuiNpcButton(3, x, guiTop + 53, 60, 13, new TextComponentTranslation("follower.extend").getFormattedText());
-			button.setHoverText("follower.hover.extend");
-			addButton(button);
-		}
-		x += 52;
-		y = guiTop + 105;
-		button = new GuiNpcButton(5, x, y, 50, 14, new String[] { new TextComponentTranslation("follower.waiting").getFormattedText(), new TextComponentTranslation("follower.following").getFormattedText() }, (role.isFollowing ? 0 : 1));
-		button.setHoverText("follower.hover.move");
-		addButton(button);
-		button = new GuiNpcButton(6, x + 54, y, 50, 14, new TextComponentTranslation("follower.fire").getFormattedText());
-		button.setHoverText("follower.hover.fire");
-		addButton(button);
-	}
-
     @Override
 	public void setGuiData(NBTTagCompound compound) {
-		npc.advanced.roleInterface.load(compound);
+		npc.role.load(compound);
 		initGui();
 	}
 

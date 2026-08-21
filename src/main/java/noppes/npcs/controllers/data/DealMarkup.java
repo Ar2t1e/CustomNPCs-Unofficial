@@ -39,7 +39,7 @@ public class DealMarkup {
 		for (ItemStack stack : baseItems.keySet()) {
 			int count = 0;
 			for (ItemStack s : inventory) {
-				if (NoppesUtilServer.IsItemStackNull(s)) { continue; }
+				if (NoppesUtilServer.isItemStackNull(s)) { continue; }
 				if (NoppesUtilPlayer.compareItems(stack, s, ignoreDamage, ignoreNBT)) { count += s.getCount(); }
 			}
 			baseHasPlayerItems.put(stack, count >= baseItems.get(stack));
@@ -63,7 +63,7 @@ public class DealMarkup {
 	}
 
 	public void reset(boolean isBuy, float coff, float countIn) {
-		coff = ValueUtil.correctFloat(coff, 0.005f, !isBuy ? 1.0f : 5.0f);
+		coff = ValueUtil.correctFloat(coff, 0.0f, 6.0f);
 		if (!baseItems.isEmpty()) {
 			for (ItemStack stack : baseItems.keySet()) {
 				int count = (int) ((float) baseItems.get(stack) * coff);
@@ -84,9 +84,6 @@ public class DealMarkup {
 			buyDonat = (long) ((float) baseDonat * countIn * coff);
 		}
 		else { sellMoney = (long) ((float) baseMoney * countIn * coff); }
-		if (buyMoney <= 0 && baseMoney > 0) { buyMoney = baseMoney; }
-		if (sellMoney <= 0 && baseMoney > 0) { sellMoney = baseMoney; }
-		if (buyDonat <= 0 && baseDonat > 0) { buyDonat = baseDonat; }
 	}
 
 	public void set(Deal dealIn) {
@@ -107,7 +104,7 @@ public class DealMarkup {
 			if (iContainer != null) {
 				for (int slot = 0; slot < iContainer.getSizeInventory(); slot++) {
 					ItemStack stack = iContainer.getStackInSlot(slot);
-					if (NoppesUtilServer.IsItemStackNull(stack)) { continue; }
+					if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
 					boolean has = false;
 					for (ItemStack s : map.keySet()) {
 						if (NoppesUtilPlayer.compareItems(stack, s, ignoreDamage, ignoreNBT)) {
@@ -140,7 +137,7 @@ public class DealMarkup {
 		sellMoney = baseMoney;
 		buyDonat = baseDonat;
 		reset(true, (100.0f + md.buy * 100.0f) / 100.0f, countIn);
-		reset(false, (100.0f + md.sell * 100.0f) / 100.0f, countIn);
+		reset(false, (100.0f - md.sell * 100.0f) / 100.0f, countIn);
 	}
 
 }

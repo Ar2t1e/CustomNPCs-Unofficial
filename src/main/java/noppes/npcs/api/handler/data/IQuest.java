@@ -1,9 +1,12 @@
 package noppes.npcs.api.handler.data;
 
-import noppes.npcs.api.IContainer;
-import noppes.npcs.api.ParamName;
+import net.minecraft.util.text.ITextComponent;
+import noppes.npcs.api.entity.data.ICustomDrop;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.IPlayer;
+
+import java.util.List;
 
 @SuppressWarnings("all")
 public interface IQuest {
@@ -28,9 +31,9 @@ public interface IQuest {
 
 	boolean getIsRepeatable();
 
-	int getLevel();
+	int getWorld();
 
-	String getLogText();
+	List<String> getLogText();
 
 	String getName();
 
@@ -38,11 +41,11 @@ public interface IQuest {
 
 	IQuestObjective[] getObjectives(@ParamName("player") IPlayer<?> player);
 
-	IContainer getRewards();
+	List<ICustomDrop> getRewards();
 
 	int getRewardType();
 
-	String getTitle();
+	ITextComponent getTitle();
 
 	boolean isCancelable();
 

@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Since custom recipes can contain more than 1 count ingredient,
  * it is necessary to check the recipes whenever the inventory changes.
  */
-@Mixin(value = Container.class, priority = 499)
+@Mixin(value = Container.class, priority = 498)
 public class ContainerMixin {
 
     @Shadow

@@ -186,7 +186,7 @@ public class AnimationFrameConfig implements IAnimationFrame {
 			if (nbt.hasKey("Part", 3) && this.parts.containsKey(nbt.getInteger("Part"))) { pc = this.parts.get(nbt.getInteger("Part")); }
 			else { pc = new PartConfig(i, AnimationFrameConfig.getPartType(i)); }
 			pc.load(nbt);
-			if (pc.type == EnumParts.WRIST_RIGHT || pc.type == EnumParts.WRIST_LEFT || pc.type == EnumParts.FOOT_RIGHT || pc.type == EnumParts.FOOT_LEFT) { continue; }
+			if (pc.type == EnumParts.WRIST_RIGHT || pc.type == EnumParts.WRIST_LEFT || pc.type == EnumParts.FEET_RIGHT || pc.type == EnumParts.FEET_LEFT) { continue; }
 			this.parts.put(pc.id, pc);
 		}
 		for (int p = 0; p < 8; p++) {
@@ -417,6 +417,36 @@ public class AnimationFrameConfig implements IAnimationFrame {
 			}
 			pc.set(rotationAngles.get(i));
 			parts.put(i, pc);
+		}
+	}
+
+	/**
+	 * Deep-copies another frame's parts and metadata into this frame.
+	 * Used to snap preFrame to a keyframe boundary without interpolation drift.
+	 */
+	public void copyFrom(@Nonnull AnimationFrameConfig other) {
+		smooth = other.smooth;
+		showMainHand = other.showMainHand;
+		showOffHand = other.showOffHand;
+		showHelmet = other.showHelmet;
+		showBody = other.showBody;
+		showLegs = other.showLegs;
+		showFeets = other.showFeets;
+		holdRightType = other.holdRightType;
+		holdLeftType = other.holdLeftType;
+		holdRightStack = other.holdRightStack;
+		holdLeftStack = other.holdLeftStack;
+
+		parts.clear();
+		for (Map.Entry<Integer, PartConfig> entry : other.parts.entrySet()) {
+			PartConfig src = entry.getValue();
+			PartConfig pc = new PartConfig(entry.getKey(), AnimationFrameConfig.getPartType(entry.getKey()));
+			pc.show = src.show;
+			pc.disable = src.disable;
+			System.arraycopy(src.rotation, 0, pc.rotation, 0, pc.rotation.length);
+			System.arraycopy(src.offset, 0, pc.offset, 0, pc.offset.length);
+			System.arraycopy(src.scale, 0, pc.scale, 0, pc.scale.length);
+			parts.put(entry.getKey(), pc);
 		}
 	}
 

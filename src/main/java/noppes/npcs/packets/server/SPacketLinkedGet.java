@@ -1,0 +1,49 @@
+package noppes.npcs.packets.server;
+
+import java.util.List;
+import java.util.Vector;
+
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.CustomItems;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.controllers.LinkedNpcController;
+import noppes.npcs.shared.common.PacketServerBasic;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiScrollSelected;
+
+public class SPacketLinkedGet extends PacketServerBasic {
+
+   protected static int channelId;
+
+   @Override
+   public boolean requiresNpc() { return false; }
+
+   @Override
+   public boolean toolAllowed(ItemStack item) { return item.getItem() == CustomItems.wand; }
+
+   @Override
+   public List<CustomNpcsPermissions.Permission> getPermission() { return null; }
+
+   @Override
+   public void encode(FriendlyByteBuf buf) { }
+
+   @Override
+   public void decode(FriendlyByteBuf buf) { }
+
+   @Override
+   public int getChannelId() { return channelId; }
+
+   @Override
+   protected void handle() {
+      CustomNpcs.debugData.start("Packets");
+      Vector<String> list = new Vector<>();
+      for (LinkedNpcController.LinkedData data : LinkedNpcController.Instance.list) { list.add(data.name); }
+      NoppesUtilServer.sendScrollData(player, list);
+      if (npc != null) { Packets.send(player, new PacketGuiScrollSelected(npc.linkedName)); }
+      CustomNpcs.debugData.end("Packets");
+   }
+
+}

@@ -11,11 +11,11 @@ import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.ai.attributes.RangedAttribute;
-import noppes.npcs.LogWriter;
+import noppes.npcs.mixin.entity.ai.attributes.IModifiableAttributeInstanceMixin;
+import noppes.npcs.mixin.entity.ai.attributes.IRangedAttributeMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.entity.data.IAttributeModifier;
 import noppes.npcs.api.entity.data.INpcAttribute;
-import noppes.npcs.reflection.entity.ai.attributes.ModifiableAttributeInstanceReflection;
-import noppes.npcs.reflection.entity.ai.attributes.RangedAttributeReflection;
 import noppes.npcs.util.ValueUtil;
 
 public class AttributeWrapper implements INpcAttribute {
@@ -27,7 +27,7 @@ public class AttributeWrapper implements INpcAttribute {
 		minValue = ValueUtil.min(minValue, maxValue);
 		maxValue = ValueUtil.max(minValue, maxValue);
 		RangedAttribute rangedAttribute = new RangedAttribute(null, attributeName, ValueUtil.correctDouble(baseValue, minValue, maxValue), minValue, maxValue);
-		rangedAttribute.setDescription(displayName);
+		if (displayName != null && !displayName.isEmpty()) { rangedAttribute.setDescription(displayName); }
 		try {
 			this.attribute = new ModifiableAttributeInstance(entity.getAttributeMap(), rangedAttribute);
 		} catch (Exception e) {
@@ -75,24 +75,22 @@ public class AttributeWrapper implements INpcAttribute {
 
 	@Override
 	public String getDisplayName() {
-		Object attribute = this.attribute;
-		if (this.attribute instanceof ModifiableAttributeInstance) {
-			attribute = ModifiableAttributeInstanceReflection.getGenericAttribute((ModifiableAttributeInstance) attribute);
+		Object attr = attribute;
+		if (attribute instanceof ModifiableAttributeInstance) {
+			attr = ((IModifiableAttributeInstanceMixin) attribute).getGenericAttribute();
 		}
-		if (attribute instanceof RangedAttribute) {
-			return ((RangedAttribute) attribute).getDescription();
-		}
+		if (attr instanceof RangedAttribute) { return ((RangedAttribute) attr).getDescription(); }
 		return null;
 	}
 
 	@Override
 	public double getMaxValue() {
-		Object attribute = this.attribute;
-		if (this.attribute instanceof ModifiableAttributeInstance) {
-			attribute = ModifiableAttributeInstanceReflection.getGenericAttribute((ModifiableAttributeInstance) attribute);
+		Object attr = attribute;
+		if (attribute instanceof ModifiableAttributeInstance) {
+			attr = ((IModifiableAttributeInstanceMixin) attribute).getGenericAttribute();
 		}
-		if (attribute instanceof RangedAttribute) {
-			return RangedAttributeReflection.getMaxValue((RangedAttribute) attribute);
+		if (attr instanceof RangedAttribute) {
+			return ((IRangedAttributeMixin) attr).getMaximumValue();
 		}
 		return 0.0d;
 	}
@@ -104,20 +102,20 @@ public class AttributeWrapper implements INpcAttribute {
 
 	@Override
 	public IAttribute getMCBaseAttribute() {
-		if (this.attribute instanceof ModifiableAttributeInstance) {
-			return ModifiableAttributeInstanceReflection.getGenericAttribute((ModifiableAttributeInstance) attribute);
+		if (attribute instanceof ModifiableAttributeInstance) {
+			return ((IModifiableAttributeInstanceMixin) attribute).getGenericAttribute();
 		}
 		return null;
 	}
 
 	@Override
 	public double getMinValue() {
-		Object attribute = this.attribute;
-		if (this.attribute instanceof ModifiableAttributeInstance) {
-			attribute = ModifiableAttributeInstanceReflection.getGenericAttribute((ModifiableAttributeInstance) attribute);
+		Object attr = attribute;
+		if (attribute instanceof ModifiableAttributeInstance) {
+			attr = ((IModifiableAttributeInstanceMixin) attribute).getGenericAttribute();
 		}
-		if (attribute instanceof RangedAttribute) {
-			return RangedAttributeReflection.getMinValue((RangedAttribute) attribute);
+		if (attr instanceof RangedAttribute) {
+			return ((IRangedAttributeMixin) attr).getMinimumValue();
 		}
 		return 0.0d;
 	}
@@ -270,42 +268,42 @@ public class AttributeWrapper implements INpcAttribute {
 
 	@Override
 	public void setDisplayName(String displayName) {
-		Object attribute = this.attribute;
-		if (this.attribute instanceof ModifiableAttributeInstance) {
-			attribute = ModifiableAttributeInstanceReflection.getGenericAttribute((ModifiableAttributeInstance) attribute);
+		Object attr = attribute;
+		if (attribute instanceof ModifiableAttributeInstance) {
+			attr = ((IModifiableAttributeInstanceMixin) attribute).getGenericAttribute();
 		}
-		if (attribute instanceof RangedAttribute) {
-			((RangedAttribute) attribute).setDescription(displayName);
+		if (attr instanceof RangedAttribute) {
+			((RangedAttribute) attr).setDescription(displayName);
 		}
 	}
 
 	@Override
 	public void setMaxValue(double maxValue) {
-		Object attribute = this.attribute;
-		if (this.attribute instanceof ModifiableAttributeInstance) {
-			attribute = ModifiableAttributeInstanceReflection.getGenericAttribute((ModifiableAttributeInstance) attribute);
+		Object attr = attribute;
+		if (attribute instanceof ModifiableAttributeInstance) {
+			attr = ((IModifiableAttributeInstanceMixin) attribute).getGenericAttribute();
 		}
-		if (attribute instanceof RangedAttribute) {
-			double minValue = RangedAttributeReflection.getMinValue((RangedAttribute) attribute);
+		if (attr instanceof RangedAttribute) {
+			double minValue = ((IRangedAttributeMixin) attr).getMinimumValue();
 			minValue = ValueUtil.min(minValue, maxValue);
 			maxValue = ValueUtil.max(minValue, maxValue);
-			RangedAttributeReflection.setMinValue((RangedAttribute) attribute, minValue);
-			RangedAttributeReflection.setMaxValue((RangedAttribute) attribute, maxValue);
+			((IRangedAttributeMixin) attr).setMinimumValue(minValue);
+			((IRangedAttributeMixin) attr).setMaximumValue(maxValue);
 		}
 	}
 
 	@Override
 	public void setMinValue(double minValue) {
-		Object attribute = this.attribute;
-		if (this.attribute instanceof ModifiableAttributeInstance) {
-			attribute = ModifiableAttributeInstanceReflection.getGenericAttribute((ModifiableAttributeInstance) attribute);
+		Object attr = attribute;
+		if (attribute instanceof ModifiableAttributeInstance) {
+			attr = ((IModifiableAttributeInstanceMixin) attribute).getGenericAttribute();
 		}
-		if (attribute instanceof RangedAttribute) {
-			double maxValue = RangedAttributeReflection.getMaxValue((RangedAttribute) attribute);
+		if (attr instanceof RangedAttribute) {
+			double maxValue = ((IRangedAttributeMixin) attr).getMaximumValue();
 			minValue = ValueUtil.min(minValue, maxValue);
 			maxValue = ValueUtil.max(minValue, maxValue);
-			RangedAttributeReflection.setMinValue((RangedAttribute) attribute, minValue);
-			RangedAttributeReflection.setMaxValue((RangedAttribute) attribute, maxValue);
+			((IRangedAttributeMixin) attr).setMinimumValue(minValue);
+			((IRangedAttributeMixin) attr).setMaximumValue(maxValue);
 		}
 	}
 

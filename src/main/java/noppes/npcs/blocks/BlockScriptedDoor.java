@@ -6,6 +6,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumBlockRenderType;
@@ -15,20 +16,19 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomItems;
 import noppes.npcs.EventHooks;
-import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.Server;
 import noppes.npcs.blocks.tiles.TileScriptedDoor;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketPlaySound;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermission {
+public class BlockScriptedDoor extends BlockNpcDoorInterface {
 
 	@Override
 	public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
@@ -47,23 +47,22 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 		return new TileScriptedDoor();
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) {
 		return ((TileScriptedDoor) Objects.requireNonNull(world.getTileEntity(pos))).blockHardness;
 	}
 
+	@Override
 	public float getExplosionResistance(@Nonnull World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
 		return ((TileScriptedDoor) Objects.requireNonNull(world.getTileEntity(pos))).blockResistance;
 	}
 
-	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
-		return EnumBlockRenderType.INVISIBLE;
-	}
+	@Override
+	@SuppressWarnings("deprecation")
+	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) { return EnumBlockRenderType.INVISIBLE; }
 
 	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.ScriptDoorDataSave;
-	}
-
 	public void neighborChanged(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull Block neighborBlock, @Nonnull BlockPos pos2) {
 		if (state.getValue(BlockScriptedDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER) {
 			BlockPos blockpos1 = pos.down();
@@ -71,7 +70,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 			if (iblockstate1.getBlock() != this) {
 				worldIn.setBlockToAir(pos);
 			} else if (neighborBlock != this) {
-				this.neighborChanged(iblockstate1, worldIn, blockpos1, neighborBlock, blockpos1);
+				neighborChanged(iblockstate1, worldIn, blockpos1, neighborBlock, blockpos1);
 			}
 		} else {
 			BlockPos blockpos2 = pos.up();
@@ -88,7 +87,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 						&& flag != iblockstate2.getValue(BlockScriptedDoor.POWERED)) {
 					worldIn.setBlockState(blockpos2, iblockstate2.withProperty(BlockScriptedDoor.POWERED, flag), 2);
 					if (flag != state.getValue(BlockScriptedDoor.OPEN)) {
-						this.toggleDoor(worldIn, pos, flag);
+						toggleDoor(worldIn, pos, flag);
 					}
 				}
 				int power = 0;
@@ -105,6 +104,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 		}
 	}
 
+	@Override
 	public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (world.isRemote) {
 			return true;
@@ -116,19 +116,19 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 			return false;
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (currentItem.getItem() == CustomRegisters.wand || currentItem.getItem() == CustomRegisters.scripter || currentItem.getItem() == CustomRegisters.scriptedDoorTool) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.ScriptDoor, null, blockpos1.getX(), blockpos1.getY(),
-					blockpos1.getZ());
+		if (currentItem.getItem() == CustomItems.wand || currentItem.getItem() == CustomItems.scripter || currentItem.getItem() == CustomBlocks.scripted_door_item) {
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.ScriptDoor, null, blockpos1);
 			return true;
 		}
 		TileScriptedDoor tile = (TileScriptedDoor) world.getTileEntity(blockpos1);
 		if (tile != null && EventHooks.onScriptBlockInteract(tile, player, side.getIndex(), hitX, hitY, hitZ)) {
 			return false;
 		}
-		this.toggleDoor(world, blockpos1, iblockstate1.getValue(BlockDoor.OPEN).equals(false));
+		toggleDoor(world, blockpos1, iblockstate1.getValue(BlockDoor.OPEN).equals(false));
 		return true;
 	}
 
+	@Override
 	public void onBlockClicked(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull EntityPlayer playerIn) {
 		if (world.isRemote) {
 			return;
@@ -143,6 +143,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 		if (tile != null) { EventHooks.onScriptBlockClicked(tile, playerIn); }
 	}
 
+	@Override
 	public void onBlockHarvested(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player) {
 		BlockPos blockpos1 = (state.getValue(BlockScriptedDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER) ? pos
 				: pos.down();
@@ -154,6 +155,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 		}
 	}
 
+	@Override
 	public void onEntityCollidedWithBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Entity entityIn) {
 		if (world.isRemote) {
 			return;
@@ -162,6 +164,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 		if (tile != null) { EventHooks.onScriptBlockCollide(tile, entityIn); }
 	}
 
+	@Override
 	public boolean removedByPlayer(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EntityPlayer player, boolean willHarvest) {
 		if (!world.isRemote) {
 			TileScriptedDoor tile = (TileScriptedDoor) world.getTileEntity(pos);
@@ -172,6 +175,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 		return super.removedByPlayer(state, world, pos, player, willHarvest);
 	}
 
+	@Override
 	public void toggleDoor(@Nonnull World world, @Nonnull BlockPos pos, boolean open) {
 		TileScriptedDoor tile = (TileScriptedDoor) world.getTileEntity(pos);
 		if (tile != null && EventHooks.onScriptBlockDoorToggle(tile)) {
@@ -187,9 +191,10 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface implements IPermiss
 				if (tile != null) {
 					String sound = open ? tile.openSound : tile.closeSound;
 					if (sound != null && !sound.isEmpty()) {
-						Server.sendRangedData(world, pos, 32, EnumPacketClient.FORCE_PLAY_SOUND, SoundCategory.NEUTRAL.ordinal(), sound, (float) pos.getX(), (float) pos.getY(), (float) pos.getZ(), 1.0f, 1.0f);
+						Packets.sendNearby(world, pos, 32,
+								new PacketPlaySound(sound, SoundCategory.NEUTRAL, pos.getX(), pos.getY(), pos.getZ(), 1.0f, 1.0f));
 					} else {
-						world.playEvent(null, open ? this.blockMaterial == Material.IRON ? 1005 : 1006 : this.blockMaterial == Material.IRON ? 1011 : 1012, pos, 0);
+						world.playEvent(null, open ? blockMaterial == Material.IRON ? 1005 : 1006 : blockMaterial == Material.IRON ? 1011 : 1012, pos, 0);
 					}
 				}
 			}

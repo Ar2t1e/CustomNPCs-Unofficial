@@ -71,7 +71,7 @@ public class InventoryNPC implements IInventory {
 	public boolean isEmpty() {
 		for (int slot = 0; slot < this.getSizeInventory(); ++slot) {
 			ItemStack item = this.getStackInSlot(slot);
-			if (!NoppesUtilServer.IsItemStackNull(item) && !item.isEmpty()) {
+			if (!NoppesUtilServer.isItemStackNull(item) && !item.isEmpty()) {
 				return false;
 			}
 		}

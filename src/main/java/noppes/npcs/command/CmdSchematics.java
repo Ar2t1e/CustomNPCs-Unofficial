@@ -11,7 +11,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import noppes.npcs.LogWriter;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.schematics.SchematicWrapper;
@@ -20,11 +21,18 @@ import javax.annotation.Nonnull;
 
 public class CmdSchematics extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	public static final List<String> names = new ArrayList<>();
 
-	@SubCommand(desc = "Build the schematic", usage = "<name> [rotation] [[world:]x,y,z]]", permission = 2)
+	@Override
+	public String getDescription() { return "Schematic operation"; }
+
+	@Nonnull
+	public String getName() { return "schema"; }
+
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
+
+	@SubCommand(desc = "Build the schematic", usage = "<name> [rotation] [[world:]x,y,z]]", isOpOnly = true)
 	public void build(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String name = args[0];
 		SchematicWrapper schem = SchematicController.Instance.load(name);
@@ -69,16 +77,6 @@ public class CmdSchematics extends CommandNoppesBase {
 		SchematicController.Instance.build(schem, sender);
 	}
 
-	@Override
-	public String getDescription() {
-		return "Schematic operation";
-	}
-
-	@Nonnull
-	public String getName() {
-		return "schema";
-	}
-
 	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender par1, @Nonnull String[] args, BlockPos pos) {
 		if (args[0].equalsIgnoreCase("build") && args.length == 2) {
 			List<String> list = SchematicController.Instance.list();
@@ -96,16 +94,16 @@ public class CmdSchematics extends CommandNoppesBase {
 		return null;
 	}
 
-	@SubCommand(desc = "Gives info about the current build", permission = 2)
+	@SubCommand(desc = "Gives info about the current build", isOpOnly = true)
 	public void info(MinecraftServer server, ICommandSender sender, String[] args) {
 		SchematicController.Instance.info(sender);
 	}
 
-	@SubCommand(desc = "Lists available schematics", permission = 2)
+	@SubCommand(desc = "Lists available schematics", isOpOnly = true)
 	public void list(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		List<String> list = SchematicController.Instance.list();
 		if (list.isEmpty()) {
-			throw new CommandException("No available schematics " + list);
+			throw new CommandException("schemas.no.available");
 		}
 		StringBuilder s = new StringBuilder();
 		for (String file : list) {
@@ -114,8 +112,9 @@ public class CmdSchematics extends CommandNoppesBase {
 		this.sendMessage(sender, s.toString());
 	}
 
-	@SubCommand(desc = "Stops the current build", permission = 2)
+	@SubCommand(desc = "Stops the current build", isOpOnly = true)
 	public void stop(MinecraftServer server, ICommandSender sender, String[] args) {
 		SchematicController.Instance.stop(sender);
 	}
+
 }

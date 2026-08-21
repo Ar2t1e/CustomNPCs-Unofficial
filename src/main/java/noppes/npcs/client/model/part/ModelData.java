@@ -9,38 +9,43 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
-import noppes.npcs.LogWriter;
+import noppes.npcs.entity.EntityCustomNpc;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityNPCInterface;
 
 public class ModelData extends ModelDataShared {
 
+	public EntityCustomNpc npc;
+
+	public ModelData(EntityCustomNpc npcIn) { npc = npcIn; }
+
 	public ModelData copy() {
-		ModelData data = new ModelData();
+		ModelData data = new ModelData(npc);
 		data.load(save());
 		return data;
 	}
 
 	public EntityLivingBase getEntity(EntityNPCInterface npc) {
-		if (this.entityClass == null) { return null; }
-		if (this.entity == null) {
+		if (entityClass == null) { return null; }
+		if (entity == null) {
 			try {
-				this.entity = this.entityClass.getConstructor(World.class).newInstance(npc.world);
-				if (PixelmonHelper.isPixelmon(this.entity) && npc.world.isRemote && !this.extra.hasKey("Name")) {
-					this.extra.setString("Name", "Abra");
+				entity = entityClass.getConstructor(World.class).newInstance(npc.world);
+				if (PixelmonHelper.isPixelmon(entity) && npc.world.isRemote && !extra.hasKey("Name")) {
+					extra.setString("Name", "Abra");
 				}
 				try {
-					this.entity.readEntityFromNBT(this.extra);
+					entity.readEntityFromNBT(extra);
 				}
 				catch (Exception e) { LogWriter.error(e); }
-				this.entity.setEntityInvulnerable(true);
-				this.entity.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(npc.getMaxHealth());
+				entity.setEntityInvulnerable(true);
+				entity.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(npc.getMaxHealth());
 				for (EntityEquipmentSlot slot : EntityEquipmentSlot.values()) {
-					this.entity.setItemStackToSlot(slot, npc.getItemStackFromSlot(slot));
+					entity.setItemStackToSlot(slot, npc.getItemStackFromSlot(slot));
 				}
 			} catch (Exception ex) { LogWriter.error(ex); }
 		}
-		return this.entity;
+		return entity;
 	}
 
 	public void setExtra(EntityLivingBase entity, String key, String value) {
@@ -53,12 +58,13 @@ public class ModelData extends ModelDataShared {
 				method.invoke(entity, ((Enum<?>[]) breed.getClass().getEnumConstants())[Integer.parseInt(value)]);
 				NBTTagCompound comp = new NBTTagCompound();
 				entity.writeEntityToNBT(comp);
-				this.extra.setString("EntityData21", comp.getString("EntityData21"));
+				extra.setString("EntityData21", comp.getString("EntityData21"));
 			} catch (Exception e) { LogWriter.error(e); }
 		}
 		if (key.equalsIgnoreCase("name") && PixelmonHelper.isPixelmon(entity)) {
-			this.extra.setString("Name", value);
+			extra.setString("Name", value);
 		}
-		this.clearEntity();
+		clearEntity();
 	}
+
 }

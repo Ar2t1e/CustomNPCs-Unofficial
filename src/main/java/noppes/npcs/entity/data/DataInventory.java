@@ -30,6 +30,7 @@ import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.ICustomDrop;
 import noppes.npcs.api.entity.data.INPCInventory;
 import noppes.npcs.api.event.NpcEvent;
+import noppes.npcs.api.handler.data.IDropSetData;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
 import noppes.npcs.controllers.DropController;
@@ -39,7 +40,7 @@ import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
 
-public class DataInventory implements IInventory, INPCInventory {
+public class DataInventory implements IInventory, INPCInventory, IDropSetData {
 
 	/**
 	 * 0: head
@@ -75,7 +76,7 @@ public class DataInventory implements IInventory, INPCInventory {
 			throw new CustomNPCsException("Bad maximum size: " + drops.size() + " (" + CustomNpcs.MaxItemInDropsNPC + " slots maximum)");
 		}
 		chance = ValueUtil.correctDouble(chance, 0.0001d, 100.0d);
-		DropSet ds = new DropSet(this, null);
+		DropSet ds = new DropSet(this);
 		ds.item = item == null ? ItemStack.EMPTY : item;
 		ds.chance = chance;
 		ds.pos = drops.size();
@@ -257,7 +258,7 @@ public class DataInventory implements IInventory, INPCInventory {
 	public boolean isEmpty() {
 		for (int slot = 0; slot < getSizeInventory(); ++slot) {
 			ItemStack item = getStackInSlot(slot);
-			if (!NoppesUtilServer.IsItemStackNull(item) && !item.isEmpty()) {
+			if (!NoppesUtilServer.isItemStackNull(item) && !item.isEmpty()) {
 				return false;
 			}
 		}
@@ -278,7 +279,7 @@ public class DataInventory implements IInventory, INPCInventory {
 	public void openInventory(@Nonnull EntityPlayer player) {
 	}
 
-	public void readEntityFromNBT(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		minExp = compound.getInteger("MinExp");
 		maxExp = compound.getInteger("MaxExp");
 		armor = NBTTags.getIItemStackMap(compound.getTagList("Armor", 10));
@@ -296,7 +297,7 @@ public class DataInventory implements IInventory, INPCInventory {
 				if (dc_old.get(slot) <= 0) {
 					continue;
 				}
-				DropSet ds = new DropSet(this, null);
+				DropSet ds = new DropSet(this);
 				ds.item = d_old.get(slot).getMCItemStack();
 				ds.chance = (double) dc_old.get(slot);
 				ds.amount = new int[] { ds.item.getCount(), ds.item.getCount() };
@@ -306,7 +307,7 @@ public class DataInventory implements IInventory, INPCInventory {
 			}
 		} else { // create data
 			for (int i = 0; i < compound.getTagList("NpcInv", 10).tagCount(); i++) {
-				DropSet ds = new DropSet(this, null);
+				DropSet ds = new DropSet(this);
 				ds.load(compound.getTagList("NpcInv", 10).getCompoundTagAt(i));
 				ds.pos = i;
 				drops.put(ds.pos, ds);
@@ -395,7 +396,7 @@ public class DataInventory implements IInventory, INPCInventory {
 
 	@Override
 	public void setArmor(int slot, IItemStack item) {
-		armor.put(slot, item);
+		if (item == null) { armor.remove(slot); } else { armor.put(slot, item); }
 		npc.updateClient = true;
 	}
 
@@ -435,17 +436,17 @@ public class DataInventory implements IInventory, INPCInventory {
 	}
 
 	public void setLeftHand(IItemStack item) {
-		weapons.put(2, item);
+		if (item == null) { weapons.remove(2); } else { weapons.put(2, item); }
 		npc.updateClient = true;
 	}
 
 	public void setProjectile(IItemStack item) {
-		weapons.put(1, item);
+		if (item == null) { weapons.remove(1); } else { weapons.put(1, item); }
 		npc.updateAI = true;
 	}
 
 	public void setRightHand(IItemStack item) {
-		weapons.put(0, item);
+		if (item == null) { weapons.remove(0); } else { weapons.put(0, item); }
 		npc.updateClient = true;
 	}
 
@@ -453,7 +454,7 @@ public class DataInventory implements IInventory, INPCInventory {
 		lootMode = mode;
 	}
 
-	public NBTTagCompound writeEntityToNBT(NBTTagCompound compound) {
+	public NBTTagCompound save(NBTTagCompound compound) {
 		compound.setInteger("MinExp", minExp);
 		compound.setInteger("MaxExp", maxExp);
 		compound.setTag("Armor", NBTTags.nbtIItemStackMap(armor));
@@ -675,6 +676,30 @@ public class DataInventory implements IInventory, INPCInventory {
 				}
 			}
 		}
+	}
+
+	@Override
+	public int getNpcLevel() { return npc.stats.getLevel(); }
+
+	@Override
+	public boolean removeDrop(DropSet dropSet) {
+		Map<Integer, DropSet> newDrop = new TreeMap<>();
+		boolean del = false;
+		int j = 0;
+		for (int slot : drops.keySet()) {
+			if (drops.get(slot) == dropSet) {
+				del = true;
+				continue;
+			}
+			newDrop.put(j, drops.get(slot));
+			newDrop.get(j).pos = j;
+			j++;
+		}
+		if (del) {
+			drops.clear();
+			drops.putAll(newDrop);
+		}
+		return del;
 	}
 
 }

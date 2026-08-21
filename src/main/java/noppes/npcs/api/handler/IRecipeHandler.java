@@ -1,34 +1,28 @@
 package noppes.npcs.api.handler;
 
 import net.minecraft.item.ItemStack;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.INpcRecipe;
 
-@SuppressWarnings("all")
+import java.util.List;
+
+@SuppressWarnings("unused")
 public interface IRecipeHandler {
 
-	INpcRecipe addRecipe(@ParamName("group") String group, @ParamName("name") String name,
-						 @ParamName("isGlobal") boolean isGlobal, @ParamName("isShaped") boolean isShaped, @ParamName("isKnown") boolean isKnown,
-						 @ParamName("result") ItemStack result, @ParamName("stacks") ItemStack[][] stacks);
+	List<INpcRecipe> getAnvilRecipes(String group);
 
-	INpcRecipe addRecipe(@ParamName("group") String group, @ParamName("name") String name,
-						 @ParamName("isGlobal") boolean isGlobal, @ParamName("isShaped") boolean isShaped, @ParamName("isKnown") boolean isKnown,
-						 @ParamName("result") ItemStack result, @ParamName("objects") Object... objects);
+	List<INpcRecipe> getGlobalRecipes(String group);
 
-	boolean delete(@ParamName("id") int id);
+	List<INpcRecipe> getAllAnvilRecipes();
 
-	boolean delete(@ParamName("isGlobal") boolean isGlobal, @ParamName("group") String group, @ParamName("name") String name);
+	List<INpcRecipe> getAllGlobalRecipes();
 
-	INpcRecipe[] getCarpentryData();
+	INpcRecipe addRecipe(@ParamName("name") String name, @ParamName("group") String group, @ParamName("global") boolean global, @ParamName("result") ItemStack result,
+						 @ParamName("objects") Object... objects);
 
-	INpcRecipe[] getCarpentryRecipes(@ParamName("group") String group);
+	INpcRecipe addRecipe(@ParamName("name") String name, @ParamName("group") String group, @ParamName("global") boolean global, @ParamName("result") ItemStack result,
+						 @ParamName("width") int width, @ParamName("height") int height, @ParamName("objects") ItemStack... objects);
 
-	INpcRecipe[] getGlobalData();
-
-	INpcRecipe[] getGlobalRecipes(@ParamName("group") String group);
-
-	INpcRecipe getRecipe(@ParamName("id") int id);
-
-	INpcRecipe getRecipe(@ParamName("isGlobal") boolean isGlobal, @ParamName("group") String group, @ParamName("name") String name);
+	boolean delete(@ParamName("id") String id);
 
 }

@@ -1,6 +1,8 @@
 package noppes.npcs.util;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,14 +19,14 @@ import net.minecraft.nbt.NBTTagLong;
 import net.minecraft.nbt.NBTTagLongArray;
 import net.minecraft.nbt.NBTTagShort;
 import net.minecraft.nbt.NBTTagString;
-import noppes.npcs.reflection.nbt.NBTTagListReflection;
+import noppes.npcs.mixin.nbt.INBTTagListMixin;
 
 public class NBTJsonUtil {
 
 	public static class JsonException extends Exception {
 		private static final long serialVersionUID = 1L;
 		public JsonException(String message, JsonFile json) {
-			super(message + ": " + json.getCurrentPos());
+			super(message + "; Error in " + json.getCurrentPos());
 		}
 	}
 
@@ -142,7 +144,7 @@ public class NBTJsonUtil {
 		String newJson = json.trim();
 		JsonFile file = new JsonFile(newJson);
 		if (!newJson.startsWith("{") || !newJson.endsWith("}")) {
-			throw new JsonException("Not properly incapsulated between { }", file);
+			throw new JsonException("Not properly incapsulated between \"{ }\"", file);
 		}
 		NBTTagCompound compound = new NBTTagCompound();
 		FillCompound(compound, file);
@@ -196,11 +198,18 @@ public class NBTJsonUtil {
 	}
 
 	private static List<NBTBase> getListData(NBTTagList list) {
-		return NBTTagListReflection.getTagList(list);
+		return ((INBTTagListMixin) list).getTagList();
 	}
 
 	public static NBTTagCompound LoadFile(File file) throws IOException, JsonException {
 		return Convert(Util.instance.loadFile(file));
+	}
+
+	public static void SaveFile(File file, NBTTagCompound compound) throws IOException {
+		String json = Convert(compound);
+		try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8)) {
+			writer.write(json);
+		}
 	}
 
 	public static void main(String[] args) {

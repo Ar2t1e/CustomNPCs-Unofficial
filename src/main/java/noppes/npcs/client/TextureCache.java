@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.texture.SimpleTexture;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class TextureCache extends SimpleTexture {
 

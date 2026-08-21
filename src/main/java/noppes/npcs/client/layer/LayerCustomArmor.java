@@ -1,7 +1,6 @@
 package noppes.npcs.client.layer;
 
 import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
-import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
@@ -10,47 +9,54 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.client.ForgeHooksClient;
 import noppes.npcs.client.model.ModelBipedAW;
 import noppes.npcs.client.model.ModelBipedAlt;
 import noppes.npcs.entity.EntityNPCInterface;
 
 import javax.annotation.Nonnull;
 
-public class LayerCustomArmor<T extends ModelBase> extends LayerArmorBase<ModelBiped> {
+public class LayerCustomArmor<T extends ModelBiped> extends LayerArmorBase<T> {
 
 	private final RenderLivingBase<?> renderer;
 	private final boolean skipRenderGlint;
-	private final boolean smallArmsIn;
+	private final boolean smallArms;
 	private final boolean isClassicPlayer;
 	protected ModelBipedAW modelAW;
 
-	public LayerCustomArmor(RenderLivingBase<?> rendererIn, boolean skipRenderGlint, boolean smallArmsIn, boolean isClassicPlayer) {
+	@SuppressWarnings("unchecked")
+	public LayerCustomArmor(RenderLivingBase<?> rendererIn, boolean skipRenderGlintIn, boolean smallArmsIn, boolean isClassicPlayerIn) {
 		super(rendererIn);
-		this.renderer = rendererIn;
-        this.skipRenderGlint = skipRenderGlint;
-        this.smallArmsIn = smallArmsIn;
-		this.isClassicPlayer = isClassicPlayer;
-		this.modelLeggings = new ModelBipedAlt(0.5F, true, this.smallArmsIn, this.isClassicPlayer);
-		this.modelArmor = new ModelBipedAlt(1.0F, true, this.smallArmsIn, this.isClassicPlayer);
-        this.modelAW = new ModelBipedAW(1.0F, true, this.smallArmsIn, this.isClassicPlayer);
-	}
-
-	public void doRenderLayer(@Nonnull EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
-		renderArmorLayer(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.CHEST);
-		renderArmorLayer(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.LEGS);
-		renderArmorLayer(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.FEET);
-		renderArmorLayer(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.HEAD);
+		renderer = rendererIn;
+        skipRenderGlint = skipRenderGlintIn;
+        smallArms = smallArmsIn;
+		isClassicPlayer = isClassicPlayerIn;
+		modelLeggings = (T) new ModelBipedAlt(0.5F, true, smallArmsIn, isClassicPlayer);
+		modelArmor = (T) new ModelBipedAlt(1.0F, true, smallArmsIn, isClassicPlayer);
+        modelAW = new ModelBipedAW(1.0F, true, smallArmsIn, isClassicPlayer);
 	}
 
 	@Override
-	protected @Nonnull ModelBiped getArmorModelHook(@Nonnull EntityLivingBase entity, @Nonnull ItemStack itemStack, @Nonnull EntityEquipmentSlot slot, @Nonnull ModelBiped model) {
-		return net.minecraftforge.client.ForgeHooksClient.getArmorModel(entity, itemStack, slot, model);
+	public void doRenderLayer(@Nonnull EntityLivingBase entityIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
+		GlStateManager.enableRescaleNormal();
+		renderArmorLayer(entityIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.CHEST);
+		renderArmorLayer(entityIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.LEGS);
+		renderArmorLayer(entityIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.FEET);
+		renderArmorLayer(entityIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale, EntityEquipmentSlot.HEAD);
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	protected @Nonnull T getArmorModelHook(@Nonnull EntityLivingBase entity, @Nonnull ItemStack itemStack, @Nonnull EntityEquipmentSlot slot, @Nonnull ModelBiped model) {
+		return (T) ForgeHooksClient.getArmorModel(entity, itemStack, slot, model);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	protected void initArmor() {
-		this.modelLeggings = new ModelBipedAlt(0.5F, true, this.smallArmsIn, this.isClassicPlayer);
-		this.modelArmor = new ModelBipedAlt(1.0F, true, this.smallArmsIn, this.isClassicPlayer);
-		this.modelAW = new ModelBipedAW(1.0F, true, this.smallArmsIn, this.isClassicPlayer);
+		modelLeggings = (T) new ModelBipedAlt(0.5F, true, smallArms, isClassicPlayer);
+		modelArmor = (T) new ModelBipedAlt(1.0F, true, smallArms, isClassicPlayer);
+		modelAW = new ModelBipedAW(1.0F, true, smallArms, isClassicPlayer);
 	}
 
 	@SuppressWarnings("all")
@@ -69,12 +75,12 @@ public class LayerCustomArmor<T extends ModelBase> extends LayerArmorBase<ModelB
 		ItemArmor itemarmor = (ItemArmor) itemstack.getItem();
 		if (itemarmor.getEquipmentSlot() != slotIn) { return; }
 
-		T t = (T) this.getModelFromSlot(slotIn);
+		T t = (T) getModelFromSlot(slotIn);
 		t = (T) getArmorModelHook(entityLivingBaseIn, itemstack, slotIn, (ModelBiped) t);
-		t.setModelAttributes(this.renderer.getMainModel());
+		t.setModelAttributes(renderer.getMainModel());
 		t.setLivingAnimations(entityLivingBaseIn, limbSwing, limbSwingAmount, partialTicks);
-		this.setModelSlotVisible((ModelBiped) t, slotIn);
-		renderer.bindTexture(this.getArmorResource(entityLivingBaseIn, itemstack, slotIn, null));
+		setModelSlotVisible((ModelBiped) t, slotIn);
+		renderer.bindTexture(getArmorResource(entityLivingBaseIn, itemstack, slotIn, null));
 		if (t instanceof ModelBipedAlt) { ((ModelBipedAlt) t).setSlot(slotIn); }
 		if (itemarmor.hasOverlay(itemstack)) { // Allow this for anything, not only cloth
 			int i = itemarmor.getColor(itemstack);
@@ -84,7 +90,7 @@ public class LayerCustomArmor<T extends ModelBase> extends LayerArmorBase<ModelB
 			GlStateManager.color(f, f1, f2, 1.0f);
 			if (t instanceof ModelBipedAlt) { ((ModelBipedAlt) t).setArmorColor(f, f1, f2); }
 			t.render(entityLivingBaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
-			renderer.bindTexture(this.getArmorResource(entityLivingBaseIn, itemstack, slotIn, "overlay"));
+			renderer.bindTexture(getArmorResource(entityLivingBaseIn, itemstack, slotIn, "overlay"));
 		}
 		// Non-colored
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -92,14 +98,13 @@ public class LayerCustomArmor<T extends ModelBase> extends LayerArmorBase<ModelB
 		t.render(entityLivingBaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
 
 		// Default
-		if (!this.skipRenderGlint && itemstack.hasEffect()) {
+		if (!skipRenderGlint && itemstack.hasEffect()) {
 			renderEnchantedGlint(renderer, entityLivingBaseIn, t, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale);
 		}
 	}
 
-	@SuppressWarnings("incomplete-switch")
 	protected void setModelSlotVisible(@Nonnull ModelBiped modelBiped, @Nonnull EntityEquipmentSlot slotIn) {
-		this.setModelVisible(modelBiped);
+		setModelVisible(modelBiped);
 		switch (slotIn) {
 		case HEAD:
 			modelBiped.bipedHead.showModel = true;
@@ -122,7 +127,13 @@ public class LayerCustomArmor<T extends ModelBase> extends LayerArmorBase<ModelB
 	}
 
 	protected void setModelVisible(ModelBiped model) {
-		model.setVisible(false);
+		model.bipedHead.showModel = false;
+		model.bipedHeadwear.showModel = false;
+		model.bipedBody.showModel = false;
+		model.bipedRightArm.showModel = false;
+		model.bipedLeftArm.showModel = false;
+		model.bipedRightLeg.showModel = false;
+		model.bipedLeftLeg.showModel = false;
 	}
 
 }

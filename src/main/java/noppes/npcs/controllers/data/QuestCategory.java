@@ -4,6 +4,7 @@ import java.util.TreeMap;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.api.handler.data.IQuest;
 import noppes.npcs.api.handler.data.IQuestCategory;
@@ -58,5 +59,7 @@ public class QuestCategory implements IQuestCategory {
 		newCat.load(save(new NBTTagCompound()));
 		return newCat;
 	}
+
+	public Component getTitle() { return Component.translatable(title); }
 
 }

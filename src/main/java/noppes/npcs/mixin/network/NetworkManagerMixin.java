@@ -16,38 +16,32 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.List;
 
-@Mixin(value = NetworkManager.class, priority = 499)
+@Mixin(value = NetworkManager.class, priority = 498)
 public class NetworkManagerMixin {
 
     // Packets not allowed to be processed:
     @Unique
     private static final List<String> npcs$notAllowed = Arrays.asList("SPacketTabComplete", "CPacketSpectate", "CPacketKeepAlive");
 
-    @Final
-    @Shadow
-    private EnumPacketDirection direction;
+    @Final @Shadow private EnumPacketDirection direction;
 
-    @Shadow
-    private Channel channel;
+    @Shadow private Channel channel;
 
-    @Shadow
-    private INetHandler packetListener;
+    @Shadow private INetHandler packetListener;
 
     /**
      * @author BetaZavr
      * @reason Processing packets with scripts
      */
     @Inject(method = "channelRead0*", at = @At("HEAD"), cancellable = true)
-    @SuppressWarnings("all")
-    private void npcs$channelRead0(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
+    private void npcs$channelRead0(ChannelHandlerContext context, Packet<INetHandler> packet, CallbackInfo ci) {
         if (channel.isOpen() && !npcs$notAllowed.contains(packet.getClass().getSimpleName())) {
             PackageReceived event = new PackageReceived(packet);
             EventHooks.onPackageReceived(event, direction == EnumPacketDirection.SERVERBOUND);
             if (event.isCanceled()) { ci.cancel(); }
-            if (event.message != null && event.message.getClass() == packet.getClass()) {
+            else if (event.message != null && event.message.getClass() == packet.getClass()) {
                 ci.cancel();
-                try { ((Packet<INetHandler>) event.message).processPacket(packetListener); }
-                catch (Exception ignored) { }
+                try { event.message.processPacket(packetListener); } catch (Exception ignored) { }
             }
         }
     }

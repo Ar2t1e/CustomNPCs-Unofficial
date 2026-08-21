@@ -9,8 +9,7 @@ import noppes.npcs.api.handler.capability.IPlayerDataHandler;
 public class PlayerDataStorage implements Capability.IStorage<IPlayerDataHandler> {
 
 	@Override
-	public void readNBT(Capability<IPlayerDataHandler> capability, IPlayerDataHandler instance, EnumFacing side,
-			NBTBase nbt) {
+	public void readNBT(Capability<IPlayerDataHandler> capability, IPlayerDataHandler instance, EnumFacing side, NBTBase nbt) {
 		instance.setNBT((NBTTagCompound) nbt);
 	}
 

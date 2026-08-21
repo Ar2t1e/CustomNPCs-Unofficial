@@ -3,20 +3,25 @@ package noppes.npcs.api.entity;
 import net.minecraft.entity.Entity;
 import noppes.npcs.api.*;
 import noppes.npcs.api.entity.data.IData;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.util.IRayTraceResults;
 
-@SuppressWarnings("all")
 public interface IEntity<T extends Entity> {
 
+	@SuppressWarnings("unused")
 	void addRider(@ParamName("entity") IEntity<?> entity);
 
 	void addTag(@ParamName("tag") String tag);
 
+	@SuppressWarnings("unused")
 	void clearRiders();
 
 	void damage(@ParamName("amount") float amount);
 
-	void damage(@ParamName("amount") float amount, @ParamName("source") IEntityDamageSource source);
+	void damage(@ParamName("amount") float amount, @ParamName("source") IEntity<?> source);
+
+	void damage(@ParamName("amount") float amount, @ParamName("damageSource") IEntityDamageSource damageSource);
 
 	void despawn();
 
@@ -24,16 +29,21 @@ public interface IEntity<T extends Entity> {
 
 	void extinguish();
 
+	@SuppressWarnings("unused")
 	String generateNewUUID();
 
 	long getAge();
 
+	@SuppressWarnings("unused")
 	IEntity<?>[] getAllRiders();
 
+	@SuppressWarnings("unused")
 	int getBlockX();
 
+	@SuppressWarnings("unused")
 	int getBlockY();
 
+	@SuppressWarnings("unused")
 	int getBlockZ();
 
 	String getEntityName();
@@ -90,10 +100,13 @@ public interface IEntity<T extends Entity> {
 
 	boolean hasCustomName();
 
+	@SuppressWarnings("unused")
 	boolean hasTag(@ParamName("tag") String tag);
 
+	@SuppressWarnings("unused")
 	boolean inFire();
 
+	@SuppressWarnings("unused")
 	boolean inLava();
 
 	boolean inWater();
@@ -110,11 +123,15 @@ public interface IEntity<T extends Entity> {
 
 	void knockback(@ParamName("power") int power, @ParamName("direction") float direction);
 
+	@SuppressWarnings("unused")
 	void playAnimation(@ParamName("type") int type);
 
 	IRayTrace rayTraceBlock(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
 							@ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);
 
+	IRayTraceResults rayTrace(@ParamName("distance") double distance);
+
+	@SuppressWarnings("unused")
 	IEntity<?>[] rayTraceEntities(@ParamName("distance") double distance, @ParamName("stopOnLiquid") boolean stopOnLiquid,
 								  @ParamName("ignoreBlockWithoutBoundingBox") boolean ignoreBlockWithoutBoundingBox);
 
@@ -122,6 +139,7 @@ public interface IEntity<T extends Entity> {
 
 	void setBurning(@ParamName("seconds") int seconds);
 
+	@SuppressWarnings("unused")
 	void setEntityNbt(@ParamName("nbt") INbt nbt);
 
 	void setMotionX(@ParamName("motion") double motion);
@@ -150,6 +168,7 @@ public interface IEntity<T extends Entity> {
 
 	void spawn();
 
+	@SuppressWarnings("unused")
 	void storeAsClone(@ParamName("tab") int tab, @ParamName("name") String name);
 
 	boolean typeOf(@ParamName("type") int type);

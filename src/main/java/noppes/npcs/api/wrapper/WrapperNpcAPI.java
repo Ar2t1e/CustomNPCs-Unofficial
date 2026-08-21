@@ -1,10 +1,7 @@
 package noppes.npcs.api.wrapper;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.collect.Lists;
 
@@ -45,15 +42,16 @@ import noppes.npcs.api.entity.data.INpcAttribute;
 import noppes.npcs.api.entity.data.IPlayerMail;
 import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.handler.*;
+import noppes.npcs.api.handler.capability.IItemStackWrapperHandler;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.data.AttributeWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiWrapper;
-import noppes.npcs.client.util.ResourceData;
+import noppes.npcs.shared.client.gui.util.ResourceData;
 import noppes.npcs.containers.ContainerNpcInterface;
 import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerMail;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.LRUHashMap;
@@ -65,12 +63,12 @@ public class WrapperNpcAPI extends NpcAPI {
 	public static volatile LRUHashMap<Integer, WorldWrapper> worldCache = new LRUHashMap<>(300);
 	private static NpcAPI instance = null;
 	private static final Comparator<World> sorter = (w_0, w_1) -> {
-        String dimName0 = w_0.provider.getDimensionType().getName();
-        String dimName1 = w_1.provider.getDimensionType().getName();
-        if ("overworld".equals(dimName0)) { return -1; }
-        if ("overworld".equals(dimName1)) { return 1; }
-        return Integer.compare(w_0.provider.getDimension(), w_1.provider.getDimension());
-    };
+		String dimName0 = w_0.provider.getDimensionType().getName();
+		String dimName1 = w_1.provider.getDimensionType().getName();
+		if ("overworld".equals(dimName0)) { return -1; }
+		if ("overworld".equals(dimName1)) { return 1; }
+		return Integer.compare(w_0.provider.getDimension(), w_1.provider.getDimension());
+	};
 
 	public static EventBus EVENT_BUS = new EventBus();
 	private final List<World> worlds = Lists.newArrayList();
@@ -98,8 +96,8 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame) {
-		return new CustomGuiWrapper(id, width, height, pauseGame, null);
+	public ICustomGui createCustomGui(int id, int width, int height, boolean pauseGame, IPlayer<?> player) {
+		return new CustomGuiWrapper(player, id, width, height, pauseGame);
 	}
 
 	@Override
@@ -140,7 +138,7 @@ public class WrapperNpcAPI extends NpcAPI {
 				if (player == null) {
 					continue;
 				}
-				list.add((IPlayer<?>) this.getIEntity(player));
+				list.add((IPlayer<?>) getIEntity(player));
 			}
 		}
 		return list.toArray(new IPlayer<?>[0]);
@@ -162,9 +160,7 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public IDimensionHandler getCustomDimension() {
-		return DimensionHandler.getInstance();
-	}
+	public IDimensionHandler getCustomDimension() { return DimensionController.getInstance(); }
 
 	@Override
 	public IDialogHandler getDialogs() {
@@ -173,7 +169,7 @@ public class WrapperNpcAPI extends NpcAPI {
 
 	@Override
 	public IFactionHandler getFactions() {
-		this.checkWorld();
+		checkWorld();
 		return FactionController.instance;
 	}
 
@@ -183,9 +179,7 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public INpcAttribute getIAttribute(IAttributeInstance attributeMC) {
-		return new AttributeWrapper(attributeMC);
-	}
+	public INpcAttribute getIAttribute(IAttributeInstance attributeMC) { return new AttributeWrapper(attributeMC); }
 
 	@Override
 	public IBlock getIBlock(World worldMC, BlockPos posMC) {
@@ -225,14 +219,13 @@ public class WrapperNpcAPI extends NpcAPI {
 
 	@Override
 	public IItemStack getIItemStack(ItemStack stackMC) {
-		if (stackMC == null || stackMC.isEmpty()) { return ItemStackWrapper.AIR; }
-		return (IItemStack) stackMC.getCapability(ItemStackWrapper.ITEM_SCRIPTED_DATA_CAPABILITY, null);
+		if (NoppesUtilServer.isItemStackNull(stackMC)) { return ItemStackWrapper.AIR; }
+		IItemStackWrapperHandler iStack = stackMC.getCapability(ItemStackWrapper.ITEMSTACK_CAPABILITY, null);
+		return iStack != null ? (IItemStack) iStack : ItemStackWrapper.AIR;
 	}
 
 	@Override
-	public IKeyBinding getIKeyBinding() {
-		return KeyController.getInstance();
-	}
+	public IKeyBinding getIKeyBinding() { return KeyController.getInstance(); }
 
 	@Override
 	public INbt getINbt(NBTTagCompound nbtMC) {
@@ -252,14 +245,10 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public IPos getIPos(BlockPos posMC) {
-		return new BlockPosWrapper(posMC);
-	}
+	public IPos getIPos(BlockPos posMC) { return new BlockPosWrapper(null, posMC); }
 
 	@Override
-	public IPos getIPos(double x, double y, double z) {
-		return new BlockPosWrapper(x, y, z);
-	}
+	public IPos getIPos(double x, double y, double z) { return new BlockPosWrapper(null, x, y, z); }
 
 	@Override
 	public IWorld getIWorld(String dimension) {
@@ -337,7 +326,7 @@ public class WrapperNpcAPI extends NpcAPI {
 
 	@Override
 	public IQuestHandler getQuests() {
-		this.checkWorld();
+		checkWorld();
 		return QuestController.instance;
 	}
 
@@ -353,20 +342,17 @@ public class WrapperNpcAPI extends NpcAPI {
 			UUID uuidMC;
 			try { uuidMC = UUID.fromString(uuid); }
 			catch (Exception e) { throw new CustomNPCsException("Invalid UUID string: \"" + uuid + "\""); }
-            EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uuidMC);
-            if (player != null && player.getName().equals(name)) {
-                PlayerData data = CustomNpcs.proxy.getPlayerData(player);
-                if (data != null) {
-                    return getINbt(data.getNBT());
-                }
-            }
-        }
-		return getINbt(PlayerData.loadPlayerData(uuid, name));
+			EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uuidMC);
+			if (player != null && player.getName().equals(name)) {
+				return new NBTWrapper(PlayerData.get(player).getNBT());
+			}
+		}
+		return new NBTWrapper(PlayerData.loadPlayerData(uuid, name));
 	}
 
 	@Override
 	public IRecipeHandler getRecipes() {
-		this.checkWorld();
+		checkWorld();
 		return null;
 	}
 
@@ -390,7 +376,7 @@ public class WrapperNpcAPI extends NpcAPI {
 		if (defaultType < 0 || defaultType > 2) {
 			throw new CustomNPCsException("Default type cant be smaller than 0 or larger than 2");
 		}
-		if (this.hasPermissionNode(permission)) {
+		if (hasPermissionNode(permission)) {
 			throw new CustomNPCsException("Permission already exists");
 		}
 		DefaultPermissionLevel level = DefaultPermissionLevel.values()[defaultType];
@@ -414,7 +400,7 @@ public class WrapperNpcAPI extends NpcAPI {
 			throw new CustomNPCsException("Cant cast empty string to nbt");
 		}
 		try {
-			return this.getINbt(NBTJsonUtil.Convert(str));
+			return new NBTWrapper(NBTJsonUtil.Convert(str));
 		} catch (NBTJsonUtil.JsonException e) {
 			throw new CustomNPCsException(e, "Failed converting " + str);
 		}
@@ -427,14 +413,21 @@ public class WrapperNpcAPI extends NpcAPI {
 	}
 
 	@Override
-	public ResourceData getResourceData(ResourceLocation texture, int u, int v, int width, int height) {
-		return new ResourceData(texture, u, v, width, height);
-	}
+	public ResourceData getResourceData(ResourceLocation texture, int u, int v, int width, int height) { return new ResourceData(texture, u, v, width, height); }
 
 	@Override
 	public IData getTempdata() { return WorldWrapper.getTempData(); }
 
 	@Override
 	public IData getStoreddata() { return WorldWrapper.getStoredData(); }
+
+	@Override
+	public List<?> createList() { return new ArrayList<>(); }
+
+	@Override
+	public Map<?, ?> createMap() { return new LinkedHashMap<>(); }
+
+	@Override
+	public Map<?, ?> createTreeMap() { return new TreeMap<>(); }
 
 }

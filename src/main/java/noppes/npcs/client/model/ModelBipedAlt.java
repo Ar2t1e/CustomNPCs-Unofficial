@@ -3,6 +3,7 @@ package noppes.npcs.client.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import noppes.npcs.mixin.client.model.IModelPlayerMixin;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.renderer.GlStateManager;
@@ -18,7 +19,7 @@ import noppes.npcs.constants.EnumParts;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.items.CustomArmor;
+import noppes.npcs.items.custom.CustomArmor;
 
 import javax.annotation.Nonnull;
 
@@ -95,12 +96,17 @@ public class ModelBipedAlt extends ModelNpcAlt {
 		((ModelRendererAlt) bipedLeftLeg).setBox(-2.2F, 0.0F, -2.1F, 4.0f, 5.5f, 3.5f, 3.0f, 4, modelSize);
 		bipedLeftLeg.setRotationPoint(2.0F, 12.0F, 0.0F);
 		((ModelRendererAlt) bipedLeftLeg).isArmor = true;
+
+		bipedCape = new ModelRendererAlt(this, EnumParts.BODY, 0, 0, true);
+		bipedCape.setTextureSize(64, 64);
+		bipedCape.setBox(0.0F, 0.0F, 0.0F, 0, 0, 0, 0, 0, modelSize);
+		bipedCape.setRotationPoint(0.0F, 0.0F, 0.0F);
+		((IModelPlayerMixin) this).setBipedCape(bipedCape);
 	}
 
 	@Override
 	public void render(@Nonnull Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
 		if (entityIn.equals(ModelNpcAlt.editAnimDataSelect.displayNpc) && !ModelNpcAlt.editAnimDataSelect.showArmor) { return; }
-		if (entityIn.isSneaking()) { GlStateManager.translate(0.0f, 0.2f, 0.0f); }
 		setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
 		Map<EnumParts, Boolean> ba = new HashMap<>();
 		Map<EnumParts, Boolean> baArmor = new HashMap<>();
@@ -113,10 +119,8 @@ public class ModelBipedAlt extends ModelNpcAlt {
 		}
 		if (entityIn instanceof EntityPlayer) {
 			PlayerData data = PlayerData.get((EntityPlayer) entityIn);
-			if (data != null) {
-				ba = data.animation.showParts;
-				baArmor = data.animation.showArmorParts;
-			}
+			ba = data.animation.showParts;
+			baArmor = data.animation.showArmorParts;
 		}
 		else if (entityIn instanceof EntityNPCInterface) {
 			EntityNPCInterface npc = (EntityNPCInterface) entityIn;
@@ -132,6 +136,7 @@ public class ModelBipedAlt extends ModelNpcAlt {
 		ItemStack stack;
 		int entitySkinTextureID = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 		GlStateManager.pushMatrix();
+		if (!isChild && entityIn.isSneaking()) { GlStateManager.translate(0.0f, 0.2f, 0.0f); }
 		GlStateManager.enableBlend();
 
 		bipedHead.showModel = ba.get(EnumParts.HEAD) && (!isArmorModel || (baArmor.get(EnumParts.HEAD) && slot == EntityEquipmentSlot.HEAD));
@@ -150,12 +155,6 @@ public class ModelBipedAlt extends ModelNpcAlt {
 				GlStateManager.translate(0.0F, 24.0F * scale, 0.0F);
 			}
 			else {
-				if (entityIn.isSneaking()) {
-					boolean chest = ((EntityLivingBase) entityIn).getItemStackFromSlot(EntityEquipmentSlot.CHEST).getItem() instanceof ItemArmor;
-					boolean legs = ((EntityLivingBase) entityIn).getItemStackFromSlot(EntityEquipmentSlot.LEGS).getItem() instanceof ItemArmor;
-					boolean feet = ((EntityLivingBase) entityIn).getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() instanceof ItemArmor;
-					GlStateManager.translate(0.0F, -0.2F - (legs ? 0.2F : 0.0F) - (feet ? 0.2F : 0.0F) - (chest ? 0.2F : 0.0F), 0.0F);
-				}
 				if (renderHead((EntityLivingBase) entityIn, scale)) {
 					GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
 					renderHeadWear(scale);
@@ -183,7 +182,6 @@ public class ModelBipedAlt extends ModelNpcAlt {
                 }
             }
             GlStateManager.pushMatrix();
-            if (entityIn.isSneaking()) { GlStateManager.translate(0.0F, -0.2F, 0.0F); }
             if (bipedRightArm.showModel) {
                 ((ModelRendererAlt) bipedRightArm).checkBacklightColor(r, g, b);
                 if (((ModelRendererAlt) bipedRightArm).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
@@ -246,10 +244,6 @@ public class ModelBipedAlt extends ModelNpcAlt {
 			}
 			if (legsRender) {
 				GlStateManager.pushMatrix();
-				if (entityIn.isSneaking()) {
-					GlStateManager.translate(0.0F, -0.4F, 0.0F);
-					if (isArmorModel && slot == EntityEquipmentSlot.FEET) { GlStateManager.translate(0.0F, -0.2F, 0.0F); }
-				}
 				if (bipedRightLeg.showModel) {
 					((ModelRendererAlt) bipedRightLeg).checkBacklightColor(r, g, b);
 					if (((ModelRendererAlt) bipedRightLeg).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
@@ -272,7 +266,6 @@ public class ModelBipedAlt extends ModelNpcAlt {
 				if (stack.getItem() instanceof CustomArmor && ((CustomArmor) stack.getItem()).objModel != null) { ((ModelRendererAlt) bipedBody).setOBJModel(stack, null); }
 			}
 			GlStateManager.pushMatrix();
-			if (entityIn.isSneaking()) { GlStateManager.translate(0.0F, -0.2F, 0.0F); }
 			((ModelRendererAlt) bipedBody).checkBacklightColor(r, g, b);
 			if (((ModelRendererAlt) bipedBody).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
 			bipedBody.render(scale);

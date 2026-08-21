@@ -25,8 +25,9 @@ import net.minecraft.util.EnumHandSide;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.LogWriter;
-import noppes.npcs.api.mixin.client.renderer.entity.IRenderLivingBaseMixin;
+import noppes.npcs.entity.EntityCustomNpc;
+import noppes.npcs.mixin.client.renderer.entity.IRenderLivingBaseMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.model.ModelBipedAlt;
 import noppes.npcs.client.model.ModelNpcAlt;
 import noppes.npcs.client.model.ModelRendererAlt;
@@ -34,8 +35,10 @@ import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import noppes.npcs.client.util.aw.CustomSkinModelRenderHelper;
 import noppes.npcs.constants.EnumParts;
 
+import java.util.List;
+
 @SideOnly(Side.CLIENT)
-public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterface<T> {
+public class LayerCustomHeldItem<T extends EntityCustomNpc> extends LayerInterface<T> {
 
 	public LayerCustomHeldItem(RenderLiving<?> livingEntityRendererIn) {
 		super(livingEntityRendererIn);
@@ -129,17 +132,17 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 		GlStateManager.popMatrix();
 	}
 
-	@SuppressWarnings("all")
+	@SuppressWarnings({"rawtypes", "ConstantConditions"})
 	private void renderHeldItem(EntityLivingBase entity, ItemStack stack, ItemCameraTransforms.TransformType transform, EnumHandSide handSide, float scale, double distance, boolean isAWShow, boolean isAnimated) {
 		if (stack == null || stack.isEmpty()) { return; }
 		GlStateManager.pushMatrix();
 		if (isAWShow && ArmourersWorkshopApi.getSkinNBTUtils().hasSkinDescriptor(stack)) {
 			renderHeldAWItem(ArmourersWorkshopApi.getSkinNBTUtils().getSkinDescriptor(stack), entity.isSneaking(), handSide, distance, scale);
+			GlStateManager.popMatrix();
 			return;
 		}
 		model.postRenderArm(scale, handSide);
 		boolean isLeft = handSide == EnumHandSide.LEFT;
-		if (entity.isSneaking()) { GlStateManager.translate(0.0F, 0.2F, 0.0F); }
 		GlStateManager.rotate(-90.0F, 1.0F, 0.0F, 0.0F);
 		GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
 		GlStateManager.translate((isLeft ? -1.0F : 1.0F) / 16.0F, 0.125f, -0.625f);
@@ -147,7 +150,14 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 		if (isAnimated && stack.getItem() instanceof ItemArmor && render != null) {
 			ItemArmor itemarmor = (ItemArmor) stack.getItem();
 			EntityEquipmentSlot slot = itemarmor.getEquipmentSlot();
-			LayerRenderer<?> layer = ((IRenderLivingBaseMixin) render).npcs$getLayer(LayerArmorBase.class);
+			LayerRenderer<?> layer = null;
+			List layers = ((IRenderLivingBaseMixin) render).getLayerRenderers();
+			for (Object lr : layers) {
+				if (LayerArmorBase.class.isAssignableFrom(lr.getClass())) {
+					layer = (LayerRenderer<?>) lr;
+					break;
+				}
+			}
 			ModelBiped modelArmor = null;
 			ResourceLocation location = null;
 			ResourceLocation locationColor = null;
@@ -271,12 +281,11 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 		GlStateManager.popMatrix();
 	}
 
-	private void renderHeldAWItem(ISkinDescriptor skinDescriptor, boolean isSneaking, EnumHandSide handSide, double distance, float scale) {
+	private void renderHeldAWItem(ISkinDescriptor skinDescriptor, boolean ignoredIsSneaking, EnumHandSide handSide, double distance, float scale) {
 		ArmourersWorkshopUtil awu  = ArmourersWorkshopUtil.getInstance();
 		CustomSkinModelRenderHelper modelRenderer = CustomSkinModelRenderHelper.getInstance();
 		IWardrobeCap wardrobe = ArmourersWorkshopApi.getEntityWardrobeCapability(npc);
 		GlStateManager.pushMatrix();
-		if (isSneaking) { GlStateManager.translate(0.0F, 0.2F, 0.0F); }
 		model.postRenderArm(scale, handSide);
 		boolean isLeft = handSide == EnumHandSide.LEFT;
 		try {
@@ -311,7 +320,6 @@ public class LayerCustomHeldItem<T extends EntityLivingBase> extends LayerInterf
 			GlStateManager.popMatrix();
 			return;
 		}
-		GlStateManager.disableRescaleNormal();
 		GlStateManager.popMatrix();
 	}
 

@@ -8,27 +8,28 @@ import java.util.Map;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import noppes.npcs.Server;
 import noppes.npcs.api.entity.data.IMiniMapData;
 import noppes.npcs.api.entity.data.IPlayerMiniMap;
-import noppes.npcs.constants.EnumPacketClient;
+import noppes.npcs.api.handler.data.IPlayerData;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSyncUpdate;
 import noppes.npcs.util.Util;
 
-public class PlayerMiniMapData
-implements IPlayerMiniMap {
+public class PlayerMiniMapData implements IPlayerData, IPlayerMiniMap {
+
+	protected static final String dataName = "MiniMapData";
 
 	public final List<MiniMapData> points = new ArrayList<>();
 	public String modName = "non";
-	private boolean update;
 	public Map<String, Object> addData = new HashMap<>();
+
+	protected boolean update;
 
 	@Override
 	public IMiniMapData addPoint(int dimensionId) {
-		if (modName.equals("non")) {
-			return new MiniMapData();
-		}
+		if (modName.equals("non")) { return new MiniMapData(); }
 		MiniMapData mmd = new MiniMapData();
-		mmd.dimIDs = new int[] { dimensionId };
+		mmd.dimIDs.add(dimensionId);
 		mmd.id = points.size();
 		if (modName.equals("voxelmap")) { mmd.icon = ""; }
 		points.add(mmd);
@@ -41,15 +42,6 @@ implements IPlayerMiniMap {
 
 	@Override
 	public String getModName() { return modName; }
-
-	private NBTTagCompound getNBT() {
-		NBTTagCompound nbt = new NBTTagCompound();
-		nbt.setString("ModName", modName);
-		NBTTagList pList = new NBTTagList();
-		for (MiniMapData mmd : points) { pList.appendTag(mmd.save()); }
-		nbt.setTag("Data", pList);
-		return nbt;
-	}
 
 	@Override
 	public IMiniMapData getPoint(int id) {
@@ -107,12 +99,13 @@ implements IPlayerMiniMap {
 		return addData.get(key);
 	}
 
-	public void loadNBTData(NBTTagCompound compound) {
-		if (!compound.hasKey("MiniMapData")) { return; }
-		NBTTagCompound nbt = compound.getCompoundTag("MiniMapData");
-		modName = nbt.getString("ModName");
+	@Override
+	public void load(NBTTagCompound compound) {
+		if (compound == null || !compound.hasKey(dataName, 10)) { return; }
+		NBTTagCompound minimapNbt = compound.getCompoundTag(dataName);
+		modName = minimapNbt.getString("ModName");
 		points.clear();
-		NBTTagList list = nbt.getTagList("Data", 10);
+		NBTTagList list = minimapNbt.getTagList("Data", 10);
 		if (list.tagCount() != 0) {
 			for (int i = 0; i < list.tagCount(); i++) {
 				NBTTagCompound nbtList = list.getCompoundTagAt(i);
@@ -187,13 +180,19 @@ implements IPlayerMiniMap {
 		return remove;
 	}
 
-	public NBTTagCompound saveNBTData(NBTTagCompound compound) {
-		compound.setTag("MiniMapData", this.getNBT());
+	@Override
+	public NBTTagCompound save(NBTTagCompound compound) {
+		NBTTagCompound minimapNbt = new NBTTagCompound();
+		minimapNbt.setString("ModName", modName);
+		NBTTagList pList = new NBTTagList();
+		for (MiniMapData mmd : points) { pList.appendTag(mmd.save()); }
+		minimapNbt.setTag("Data", pList);
+		compound.setTag(dataName, minimapNbt);
 		return compound;
 	}
 
 	public void update(EntityPlayerMP player) {
-		boolean needSend = this.update;
+		boolean needSend = update;
 		if (!needSend) {
 			for (MiniMapData mmd : points) {
 				if (mmd.isUpdate()) {
@@ -203,14 +202,14 @@ implements IPlayerMiniMap {
 			}
 		}
 		if (needSend) {
-			this.update = false;
-			Server.sendData(player, EnumPacketClient.MINIMAP_DATA, this.saveNBTData(new NBTTagCompound()));
+			update = false;
+			Packets.send(player, new PacketSyncUpdate(0, 6, save(new NBTTagCompound())));
 		}
 	}
 
 	public MiniMapData get(MiniMapData mmd) {
 		for (MiniMapData mmp : points) {
-			boolean equalDimIDs = mmp.dimIDs.length == mmd.dimIDs.length;
+			boolean equalDimIDs = mmp.dimIDs.size() == mmd.dimIDs.size();
 			if (equalDimIDs) {
 				int eq = 0;
 				for (int idp : mmp.dimIDs) {
@@ -218,7 +217,7 @@ implements IPlayerMiniMap {
 						if (idp == idd) { eq ++; break; }
 					}
 				}
-				equalDimIDs = mmp.dimIDs.length == eq;
+				equalDimIDs = mmp.dimIDs.size() == eq;
 			}
 			if (equalDimIDs && mmp.name.equals(mmd.name) && mmp.type.equals(mmd.type) && mmp.pos.getMCBlockPos().equals(mmd.pos.getMCBlockPos())) {
 				return mmp;
@@ -227,4 +226,6 @@ implements IPlayerMiniMap {
 		return null;
 	}
 
+    public void clear() {
+    }
 }

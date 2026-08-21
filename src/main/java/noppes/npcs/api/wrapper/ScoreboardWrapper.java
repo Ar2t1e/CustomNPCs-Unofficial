@@ -20,7 +20,7 @@ import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.IScoreboard;
 import noppes.npcs.api.IScoreboardObjective;
 import noppes.npcs.api.IScoreboardTeam;
-import noppes.npcs.reflection.scoreboard.ScoreboardReflection;
+import noppes.npcs.mixin.scoreboard.IScoreboardMixin;
 
 public class ScoreboardWrapper implements IScoreboard {
 
@@ -56,9 +56,7 @@ public class ScoreboardWrapper implements IScoreboard {
 	@Override
 	public void deletePlayerScore(String player, String objective, String datatag) {
 		ScoreObjective obj = this.getObjectiveWithException(objective);
-		if (!this.test(datatag)) {
-			return;
-		}
+		if (!test(datatag)) { return; }
 		if (this.board.getObjectivesForEntity(player).remove(obj) != null) {
 			this.board.removePlayerFromTeams(player);
 		}
@@ -144,8 +142,7 @@ public class ScoreboardWrapper implements IScoreboard {
 
 	@Override
 	public boolean hasTeam(String name) {
-
-		Map<String, ScorePlayerTeam> teams = ScoreboardReflection.getTeams(board);
+		Map<String, ScorePlayerTeam> teams = ((IScoreboardMixin) board).getTeams();
 		return teams == null || teams.containsKey(name);
 	}
 
@@ -164,7 +161,7 @@ public class ScoreboardWrapper implements IScoreboard {
 
 	@Override
 	public void removeTeam(String name) {
-		Map<String, ScorePlayerTeam> teams = ScoreboardReflection.getTeams(board);
+		Map<String, ScorePlayerTeam> teams = ((IScoreboardMixin) board).getTeams();
 		if (teams != null && teams.containsKey(name)) {
 			this.board.removeTeam(teams.get(name));
 		}
@@ -181,11 +178,9 @@ public class ScoreboardWrapper implements IScoreboard {
 	}
 
 	private boolean test(String datatag) {
-		if (datatag.isEmpty()) {
-			return true;
-		}
+		if (datatag.isEmpty()) { return true; }
 		try {
-			Entity entity = CommandBase.getEntity(this.server, this.server, datatag);
+			Entity entity = CommandBase.getEntity(server, server, datatag);
 			NBTTagCompound nbttagcompound = JsonToNBT.getTagFromJson(datatag);
 			NBTTagCompound compound = new NBTTagCompound();
 			entity.writeToNBT(compound);

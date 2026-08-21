@@ -45,7 +45,7 @@ public class GuiCustomContainer extends GuiContainer {
 		isMany = container.customChest.getSizeInventory() > 45;
 		lock = !container.customChest.getLockCode().isEmpty() ? container.customChest.getLockCode().getLock() : "";
 		row = 0;
-		maxRows = (int) Math.ceil((double) container.customChest.inventory.size() / 9.0d) - 5;
+		maxRows = (int) Math.ceil((double) container.customChest.items.size() / 9.0d) - 5;
 		guiColor = container.customChest.guiColor;
 		guiColorArr = container.customChest.guiColorArr;
 		step = maxRows > 0 ? (int) (73.0f / (float) maxRows) : 0;

@@ -9,7 +9,7 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.world.storage.ISaveFormat;
 import net.minecraft.world.storage.WorldSummary;
 import net.minecraftforge.fml.client.FMLClientHandler;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.mixin.client.world.storage.IWorldSummaryMixin;
 import noppes.npcs.controllers.ScriptController;
 import org.spongepowered.asm.mixin.Final;
@@ -23,20 +23,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mixin(value = GuiListWorldSelectionEntry.class, priority = 499)
+@Mixin(value = GuiListWorldSelectionEntry.class, priority = 498)
 public class GuiListWorldSelectionEntryMixin {
 
-    @Final
-    @Shadow
-    private Minecraft client;
+    @Final @Shadow private Minecraft client;
 
-    @Final
-    @Shadow
-    private GuiWorldSelection worldSelScreen;
+    @Final @Shadow private GuiWorldSelection worldSelScreen;
 
-    @Final
-    @Shadow
-    private WorldSummary worldSummary;
+    @Final @Shadow private WorldSummary worldSummary;
 
     /*
      * Before starting a single-player game, you must check
@@ -45,17 +39,20 @@ public class GuiListWorldSelectionEntryMixin {
     @Inject(method = "loadWorld", at = @At("HEAD"), cancellable = true)
     private void npcs$loadWorld(CallbackInfo ci) {
         try {
-            String agreementName = ((IWorldSummaryMixin) worldSummary).npcs$getAgreementName();
-            if (ScriptController.Instance.notAgreement(agreementName)) {
+            ScriptController.setLevelKey(((IWorldSummaryMixin) worldSummary).npcs$getAgreementName());
+            if (ScriptController.Instance.notAgreement(ScriptController.getLevelKey())) {
                 ci.cancel();
                 client.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 if (client.getSaveLoader().canLoadWorld(this.worldSummary.getFileName())) {
                     client.displayGuiScreen(new GuiYesNo((result, id) -> {
                         if (result) {
-                            ScriptController.Instance.setAgreement(agreementName, true);
+                            ScriptController.Instance.setAgreement(ScriptController.getLevelKey(), true);
                             FMLClientHandler.instance().tryLoadExistingWorld(worldSelScreen, worldSummary);
                         }
-                        else { client.displayGuiScreen(worldSelScreen); }
+                        else {
+                            client.displayGuiScreen(worldSelScreen);
+                            ScriptController.setLevelKey("");
+                        }
                     },
                             I18n.format("system.check.scripts.agree"),
                             I18n.format("system.check.scripts.title"),

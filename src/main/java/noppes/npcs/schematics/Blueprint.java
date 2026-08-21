@@ -1,6 +1,7 @@
 package noppes.npcs.schematics;
 
 import java.util.List;
+import java.util.Objects;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -9,6 +10,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import noppes.npcs.api.IPos;
+import noppes.npcs.api.NpcAPI;
 
 public class Blueprint implements ISchematic {
 
@@ -23,47 +26,50 @@ public class Blueprint implements ISchematic {
 	private final short[][][] structure;
 	private final NBTTagCompound[] tileEntities;
 
-	public Blueprint(short sizeX, short sizeY, short sizeZ, short paletteSize, IBlockState[] palette,
-			short[][][] structure, NBTTagCompound[] tileEntities, List<String> requiredMods) {
-		this.sizeX = sizeX;
-		this.sizeY = sizeY;
-		this.sizeZ = sizeZ;
-		this.paletteSize = paletteSize;
-		this.palette = palette;
-		this.structure = structure;
-		this.tileEntities = tileEntities;
-		this.requiredMods = requiredMods;
+	// New from Unofficial (BetaZavr)
+	private final BlockPos offset = BlockPos.ORIGIN;
+
+	public Blueprint(short sizeXIn, short sizeYIn, short sizeZIn, short paletteSizeIn, IBlockState[] paletteIn,
+			short[][][] structureIn, NBTTagCompound[] tileEntitiesIn, List<String> requiredModsIn) {
+		sizeX = sizeXIn;
+		sizeY = sizeYIn;
+		sizeZ = sizeZIn;
+		paletteSize = paletteSizeIn;
+		palette = paletteIn;
+		structure = structureIn;
+		tileEntities = tileEntitiesIn;
+		requiredMods = requiredModsIn;
 	}
 
 	public void build(World world, BlockPos pos) {
-		IBlockState[] palette = this.getPalette();
-		short[][][] structure = this.getStructure();
-		for (short y = 0; y < this.getSizeY(); ++y) {
-			for (short z = 0; z < this.getSizeZ(); ++z) {
-				for (short x = 0; x < this.getSizeX(); ++x) {
+		IBlockState[] palette = getPalette();
+		short[][][] structure = getStructure();
+		for (short y = 0; y < getSizeY(); ++y) {
+			for (short z = 0; z < getSizeZ(); ++z) {
+				for (short x = 0; x < getSizeX(); ++x) {
 					IBlockState state = palette[structure[y][z][x] & 0xFFFF];
 					if (state.getBlock() != Blocks.STRUCTURE_VOID) {
 						if (state.isFullCube()) {
-							world.setBlockState(pos.add(x, y, z), state, 2);
+							world.setBlockState(pos.add(x, y, z).add(offset), state, 2);
 						}
 					}
 				}
 			}
 		}
-		for (short y = 0; y < this.getSizeY(); ++y) {
-			for (short z = 0; z < this.getSizeZ(); ++z) {
-				for (short x = 0; x < this.getSizeX(); ++x) {
+		for (short y = 0; y < getSizeY(); ++y) {
+			for (short z = 0; z < getSizeZ(); ++z) {
+				for (short x = 0; x < getSizeX(); ++x) {
 					IBlockState state = palette[structure[y][z][x]];
 					if (state.getBlock() != Blocks.STRUCTURE_VOID) {
 						if (!state.isFullCube()) {
-							world.setBlockState(pos.add(x, y, z), state, 2);
+							world.setBlockState(pos.add(x, y, z).add(offset), state, 2);
 						}
 					}
 				}
 			}
 		}
-		if (this.getTileEntities() != null) {
-			for (NBTTagCompound tag : this.getTileEntities()) {
+		if (getTileEntities() != null) {
+			for (NBTTagCompound tag : getTileEntities()) {
 				TileEntity te = world.getTileEntity(pos.add(tag.getShort("x"), tag.getShort("y"), tag.getShort("z")));
 				tag.setInteger("x", pos.getX() + tag.getShort("x"));
 				tag.setInteger("y", pos.getY() + tag.getShort("y"));
@@ -74,111 +80,67 @@ public class Blueprint implements ISchematic {
 		}
 	}
 
-	public String[] getArchitects() {
-		return this.architects;
-	}
+	public String[] getArchitects() { return architects; }
 
 	@Override
 	public IBlockState getBlockState(int i) {
-		int x = i % this.getWidth();
-		int z = (i - x) / this.getWidth() % this.getLength();
-		int y = ((i - x) / this.getWidth() - z) / this.getLength();
-		return this.getBlockState(x, y, z);
+		int x = i % getWidth();
+		int z = (i - x) / getWidth() % getLength();
+		int y = ((i - x) / getWidth() - z) / getLength();
+		return getBlockState(x, y, z);
 	}
 
 	@Override
-	public IBlockState getBlockState(int x, int y, int z) {
-		return this.palette[this.structure[y][z][x]];
-	}
+	public IBlockState getBlockState(int x, int y, int z) { return palette[structure[y][z][x]]; }
 
 	@Override
-	public NBTTagList getEntitys() {
-		return new NBTTagList();
-	}
+	public NBTTagList getEntitys() { return new NBTTagList(); }
 
 	@Override
-	public short getHeight() {
-		return this.getSizeZ();
-	}
+	public short getHeight() { return getSizeZ(); }
 
 	@Override
-	public short getLength() {
-		return this.getSizeY();
-	}
+	public short getLength() { return getSizeY(); }
 
 	@Override
-	public String getName() {
-		return this.name;
-	}
+	public String getName() { return name; }
 
 	@Override
-	public NBTTagCompound getNBT() {
-		return BlueprintUtil.writeBlueprintToNBT(this);
-	}
+	public NBTTagCompound getNBT() { return BlueprintUtil.writeBlueprintToNBT(this); }
 
 	@Override
-	public BlockPos getOffset() {
-		return BlockPos.ORIGIN;
-	}
+	public IPos getOffset() { return Objects.requireNonNull(NpcAPI.Instance()).getIPos(offset.getX(), offset.getY(), offset.getZ()); }
 
-	public IBlockState[] getPalette() {
-		return this.palette;
-	}
+	public IBlockState[] getPalette() { return palette; }
 
-	public short getPaletteSize() {
-		return this.paletteSize;
-	}
+	public short getPaletteSize() { return paletteSize; }
 
-	public List<String> getRequiredMods() {
-		return this.requiredMods;
-	}
+	public List<String> getRequiredMods() { return requiredMods; }
 
-	public short getSizeX() {
-		return this.sizeX;
-	}
+	public short getSizeX() { return sizeX; }
 
-	public short getSizeY() {
-		return this.sizeY;
-	}
+	public short getSizeY() { return sizeY; }
 
-	public short getSizeZ() {
-		return this.sizeZ;
-	}
+	public short getSizeZ() { return sizeZ; }
 
-	public short[][][] getStructure() {
-		return this.structure;
-	}
+	public short[][][] getStructure() { return structure; }
 
-	public NBTTagCompound[] getTileEntities() {
-		return this.tileEntities;
-	}
+	public NBTTagCompound[] getTileEntities() { return tileEntities; }
 
 	@Override
-	public NBTTagCompound getTileEntity(int i) {
-		return this.tileEntities[i];
-	}
+	public NBTTagCompound getTileEntity(int i) { return tileEntities[i]; }
 
 	@Override
-	public int getTileEntitySize() {
-		return this.tileEntities.length;
-	}
+	public int getTileEntitySize() { return tileEntities.length; }
 
 	@Override
-	public short getWidth() {
-		return this.getSizeX();
-	}
+	public short getWidth() { return getSizeX(); }
 
 	@Override
-	public boolean hasEntitys() {
-		return false;
-	}
+	public boolean hasEntitys() { return false; }
 
-	public void setArchitects(String[] architects) {
-		this.architects = architects;
-	}
+	public void setArchitects(String[] architectsIn) { architects = architectsIn; }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+	public void setName(String nameIn) { name = nameIn; }
 
 }

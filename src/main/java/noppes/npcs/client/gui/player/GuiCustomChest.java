@@ -5,8 +5,9 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.client.CustomNpcResourceListener;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.containers.ContainerCustomChest;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketPlayerCloseContainer;
 
 public class GuiCustomChest extends GuiContainer {
 
@@ -45,7 +46,7 @@ public class GuiCustomChest extends GuiContainer {
 	@Override
 	public void onGuiClosed() {
 		super.onGuiClosed();
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.CloseGui);
+		Packets.sendServer(new SPacketPlayerCloseContainer());
 	}
 
 }

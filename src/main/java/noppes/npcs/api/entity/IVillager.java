@@ -1,17 +1,17 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.monster.EntityMob;
+import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.village.MerchantRecipeList;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
-public interface IVillager<T extends EntityMob> extends IEntityLiving<T> {
+public interface IVillager<T extends EntityVillager> extends IEntityLiving<T> {
 
 	MerchantRecipeList getRecipes(@ParamName("player") IPlayer<?> player);
 
 	IInventory getVillagerInventory();
 
+	@SuppressWarnings("unused")
 	String getCareer();
 
 	int getProfession();

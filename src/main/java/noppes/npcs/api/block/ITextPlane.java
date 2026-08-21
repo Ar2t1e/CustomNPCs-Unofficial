@@ -1,6 +1,7 @@
 package noppes.npcs.api.block;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.INbt;
+import noppes.npcs.api.interfaces.ParamName;
 
 @SuppressWarnings("all")
 public interface ITextPlane {
@@ -36,5 +37,9 @@ public interface ITextPlane {
 	void setScale(@ParamName("scale") float scale);
 
 	void setText(@ParamName("text") String text);
+
+	INbt getNbt();
+
+	void setNbt(@ParamName("nbt") INbt nbt);
 
 }

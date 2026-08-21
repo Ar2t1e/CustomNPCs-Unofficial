@@ -9,15 +9,14 @@ import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumHandSide;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomItems;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.model.ModelNpcAlt;
 import noppes.npcs.client.model.part.LayerModel;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.entity.EntityCustomNpc;
 
@@ -41,7 +40,7 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
         Minecraft mc = Minecraft.getMinecraft();
         boolean isInvisible = false;
         if (npc.display.getVisible() == 1) { isInvisible = npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player); }
-        else if (npc.display.getVisible() == 2) { isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand; }
+        else if (npc.display.getVisible() == 2) { isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand; }
         float red, green, blue;
         if (!npc.animation.isAnimated(AnimationKind.DIES) && npc.hurtTime > 0 || npc.deathTime > 0) {
             red = 1.0f;
@@ -55,6 +54,7 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
             blue = (color & 0xFF) / 255.0f;
         }
         GlStateManager.pushMatrix();
+        if (npc.isSneaking()) { GlStateManager.translate(0.0f, 0.2f, 0.0f); }
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
         if (isInvisible) {
@@ -72,8 +72,8 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
         renderPartNext(2, null, playerdata.getRenderLayers(EnumParts.BELT), mc, red, green, blue);
         renderPartNext(0, EnumHandSide.RIGHT, playerdata.getRenderLayers(EnumParts.WRIST_RIGHT), mc, red, green, blue);
         renderPartNext(0, EnumHandSide.LEFT, playerdata.getRenderLayers(EnumParts.WRIST_LEFT), mc, red, green, blue);
-        renderPartNext(1, EnumHandSide.RIGHT, playerdata.getRenderLayers(EnumParts.FOOT_RIGHT), mc, red, green, blue);
-        renderPartNext(1, EnumHandSide.LEFT, playerdata.getRenderLayers(EnumParts.FOOT_LEFT), mc, red, green, blue);
+        renderPartNext(1, EnumHandSide.RIGHT, playerdata.getRenderLayers(EnumParts.FEET_RIGHT), mc, red, green, blue);
+        renderPartNext(1, EnumHandSide.LEFT, playerdata.getRenderLayers(EnumParts.FEET_LEFT), mc, red, green, blue);
 
         if (isInvisible) {
             GlStateManager.disableBlend();
@@ -96,14 +96,13 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
     }
 
     public void preRender(float red, float green, float blue) {
-        if (npc.isSneaking()) { GlStateManager.translate(0.0f, 0.2f, 0.0f); }
         if (dispatcher == null) { dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher(); }
 
         if (!npc.animation.isAnimated(AnimationKind.DIES) && npc.hurtTime > 0 || npc.deathTime > 0) { return; }
 
         boolean isInvisible = false;
         if (npc.display.getVisible() == 1) { isInvisible = npc.display.getAvailability().isAvailable(Minecraft.getMinecraft().player); }
-        else if (npc.display.getVisible() == 2) { isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomRegisters.wand; }
+        else if (npc.display.getVisible() == 2) { isInvisible = Minecraft.getMinecraft().player.getHeldItemMainhand().getItem() != CustomItems.wand; }
         if (isInvisible) {
             GlStateManager.color(red, green, blue, 0.15f);
             GlStateManager.enableBlend();
@@ -133,9 +132,7 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
             // render
             preRender(red, green, blue);
             GlStateManager.enableRescaleNormal();
-            if (lm.getOBJ() != null) {
-                GlStateManager.callList(ModelBuffer.getDisplayList(lm.getOBJ(), null, null));
-            }
+            if (lm.getOBJ() != null) { ModelBuffer.render(lm.getOBJ(), null, null, 0, true); }
             else {
                 boolean isRender = true;
                 Block block = Block.getBlockFromItem(lm.getStack().getItem());
@@ -151,7 +148,6 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
                     mc.getRenderItem().renderItem(lm.getStack(), ItemCameraTransforms.TransformType.FIXED);
                 }
             }
-            GlStateManager.disableRescaleNormal();
             GlStateManager.popMatrix();
         }
         GlStateManager.popMatrix();
@@ -191,9 +187,7 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
             // render
             preRender(red, green, blue);
             GlStateManager.enableRescaleNormal();
-            if (lm.getOBJ() != null) {
-                GlStateManager.callList(ModelBuffer.getDisplayList(lm.getOBJ(), null, null));
-            }
+            if (lm.getOBJ() != null) { ModelBuffer.render(lm.getOBJ(), null, null, 0, true); }
             else {
                 Block block = Block.getBlockFromItem(lm.getStack().getItem());
                 if (block != Blocks.AIR) {
@@ -204,7 +198,6 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
                     mc.getRenderItem().renderItem(lm.getStack(), ItemCameraTransforms.TransformType.FIXED);
                 }
             }
-            GlStateManager.disableRescaleNormal();
             GlStateManager.popMatrix();
         }
         GlStateManager.popMatrix();

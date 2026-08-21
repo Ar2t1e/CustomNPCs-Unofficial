@@ -13,8 +13,8 @@ import net.minecraft.util.DamageSource;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.ability.AbstractAbility;
-import noppes.npcs.api.mixin.entity.IEntityLivingBaseMixin;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.mixin.entity.IEntityLivingBaseMixin;
 import noppes.npcs.util.Util;
 
 public class CombatHandler {
@@ -54,7 +54,7 @@ public class CombatHandler {
 	public void damage(DamageSource source, double damageAmount) {
 		CustomNpcs.debugData.start(npc);
 		combatResetTimer = 0;
-		Entity e = NoppesUtilServer.GetDamageSource(source);
+		Entity e = NoppesUtilServer.getDamageSource(source);
 		if (!(e instanceof EntityLivingBase)) {
 			CustomNpcs.debugData.end(npc);
 			return;
@@ -169,15 +169,16 @@ public class CombatHandler {
 		CustomNpcs.debugData.end(npc);
 	}
 
-	public boolean canDamage(DamageSource damagesource, float amount) {
-		Entity entity = NoppesUtilServer.GetDamageSource(damagesource);
+	public boolean canDamage(DamageSource damagesource, float damage) {
+		Entity entity = NoppesUtilServer.getDamageSource(damagesource);
+		int maxHurtTime = npc.ais.getMaxHurtResistantTime();
 		if (!(entity instanceof EntityLivingBase)) {
-			if (npc.ais.getMaxHurtResistantTime() != 0 && npc.hurtResistantTime > npc.ais.getMaxHurtResistantTime() / 2.0F) {
-                return amount > ((IEntityLivingBaseMixin) npc).npcs$getLastDamage();
+			if (maxHurtTime != 0 && npc.hurtResistantTime > (float) maxHurtTime / 2.0F) {
+                return damage > ((IEntityLivingBaseMixin) npc).getLastDamage();
 			}
 			return true;
 		}
-		if (!lastDamages.containsKey(entity) || npc.ais.getMaxHurtResistantTime() == 0 || (lastDamages.get(entity) + npc.ais.getMaxHurtResistantTime() / 2) < npc.world.getTotalWorldTime()) {
+		if (!lastDamages.containsKey(entity) || maxHurtTime == 0 || (lastDamages.get(entity) + (float) maxHurtTime / 2.0f) < npc.world.getTotalWorldTime()) {
 			lastDamages.put((EntityLivingBase) entity, npc.world.getTotalWorldTime());
 			return true;
 		}

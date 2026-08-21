@@ -1,93 +1,130 @@
 package noppes.npcs.controllers;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.util.*;
-
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
-
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.util.Util;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSkin;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.controllers.data.SkinData;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.nio.file.Files;
+import java.util.*;
 
 public class PlayerSkinController {
 
-	// NetHandlerPlayClient <- NetHandlerPlayClient <- PlayerList.playerLoggedIn <-
-	// SPacketPlayerListItem
-	private static PlayerSkinController instance;
+	protected static PlayerSkinController instance = new PlayerSkinController();
+	protected static final String filename = "player_skins";
 	public static PlayerSkinController getInstance() {
-		if (newInstance()) {
-			PlayerSkinController.instance = new PlayerSkinController();
+		if (instance == null) { instance = new PlayerSkinController(); }
+		return instance;
+	}
+	private static Type getType(int type) {
+		if (type < 0) { type *= -1; }
+		return Type.values()[type % Type.values().length];
+	}
+	public static void unload() {
+		if (instance != null) {
+			instance.playerNames.clear();
+			instance.data.clear();
+			instance = null;
 		}
-		return PlayerSkinController.instance;
 	}
-	private static boolean newInstance() {
-		if (PlayerSkinController.instance == null) {
-			return true;
+	private final Map<UUID, String> playerNames = new HashMap<>();
+	private final Map<UUID, Map<Type, SkinData>> data = new HashMap<>();
+
+	public PlayerSkinController() { loadPlayerSkins(); }
+
+	@SuppressWarnings("ConstantConditions")
+	public void update(SkinData skinDataIn) {
+		if (skinDataIn == null || CustomNpcs.Server == null) { return; }
+		for (UUID uuid : data.keySet()) {
+			for (SkinData skinData : data.get(uuid).values()) {
+				if (skinDataIn.equals(skinData)) {
+					EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(uuid);
+					if (player != null) { sendToAll(uuid); } // online
+					break;
+				}
+			}
 		}
-		File file = CustomNpcs.Dir;
-		return file != null && !PlayerSkinController.instance.filePath.equals(file.getName());
-	}
-	public final Map<UUID, String> playerNames = new HashMap<>();
-
-	public final Map<UUID, Map<Type, ResourceLocation>> playerTextures = new HashMap<>();
-
-	private String filePath;
-
-	public PlayerSkinController() {
-		PlayerSkinController.instance = this;
-		this.filePath = CustomNpcs.getWorldSaveDirectory().getAbsolutePath();
-		this.loadPlayerSkins();
 	}
 
-	public String get(EntityPlayerMP player, int type) {
-		if (type < 0) {
-			type *= -1;
-		}
-		Map<Type, ResourceLocation> data = getData(player.getUniqueID());
-		ResourceLocation loc = null;
-		if (data != null) { loc = data.get(Type.values()[type % Type.values().length]); }
-		return loc == null ? null : loc.toString();
+	private void loadPlayerSkins() {
+		CustomNpcs.debugData.start("Mod");
+		try {
+			File saveDir = CustomNpcs.getWorldSaveDirectory();
+			NBTTagCompound compound = CompressedStreamTools.readCompressed(Files.newInputStream(new File(saveDir, filename + ".dat").toPath()));
+			loadPlayerSkins(compound);
+		} catch (Exception e) { save(); }
+		CustomNpcs.debugData.end("Mod");
 	}
 
-	public @Nullable Map<Type, ResourceLocation> getData(UUID uuid) {
-		if (uuid == null || !playerTextures.containsKey(uuid)) {
+	public void loadPlayerSkins(NBTTagCompound compound) {
+		playerNames.clear();
+		data.clear();
+		NBTTagList list = compound.getTagList("Data", 10);
+		for (int i = 0; i < list.tagCount(); ++i) { loadPlayerSkin(list.getCompoundTagAt(i)); }
+	}
+
+	public UUID loadPlayerSkin(NBTTagCompound nbtSkin) {
+		if (nbtSkin == null) { return null; }
+		UUID uuid = nbtSkin.getUniqueId("UUID");
+		NBTTagList list = nbtSkin.getTagList("Textures", 10);
+		if (list.tagCount() == 0) {
+			playerNames.remove(uuid);
+			data.remove(uuid);
 			return null;
 		}
-		return playerTextures.get(uuid);
+		playerNames.put(uuid, nbtSkin.getString("Player"));
+		Map<Type, SkinData> skins = new EnumMap<>(Type.class);
+		for (int i = 0; i < nbtSkin.getTagList("Textures", 10).tagCount(); i++) {
+			SkinData sd = new SkinData();
+			sd.load(nbtSkin.getTagList("Textures", 10).getCompoundTagAt(i));
+			if (sd.isValid()) { skins.put(sd.type(), sd); }
+		}
+		data.put(uuid, skins);
+		return uuid;
+	}
+
+	public void logged(EntityPlayerMP player) {
+		UUID uuid = player.getUniqueID();
+		String name = player.getName();
+		if (data.containsKey(uuid)) {
+			playerNames.put(uuid, name);
+			sendToAll(uuid);
+		}
+		else if (playerNames.containsValue(name)) {
+			for (UUID id : playerNames.keySet()) {
+				if (playerNames.get(id).equals(name)) {
+					Map<Type, SkinData> map = new EnumMap<>(Type.class);
+					for (Type type : data.get(id).keySet()) { map.put(type, data.get(id).get(type).copy()); }
+					data.put(uuid, map);
+					sendToAll(uuid);
+					break;
+				}
+			}
+		}
+		else { Packets.send(player, new PacketSkin(0, new NBTTagCompound())); }
+		if (player.getServer() != null) {
+			for (EntityPlayerMP pl : player.getServer().getPlayerList().getPlayers()) {
+				if (pl.equals(player) || !data.containsKey(pl.getUniqueID())) { continue; }
+				Packets.send(player, new PacketSkin(1, getNBT(pl.getUniqueID())));
+			}
+		}
 	}
 
 	public NBTTagCompound getNBT() {
 		NBTTagCompound compound = new NBTTagCompound();
-
 		NBTTagList listUUIDs = new NBTTagList();
-		for (UUID uuid : playerTextures.keySet()) {
+		for (UUID uuid : data.keySet()) {
 			if (uuid == null) { continue; }
-			NBTTagCompound nbtPlayer = new NBTTagCompound();
-			nbtPlayer.setUniqueId("UUID", uuid);
-			NBTTagList listTxrs = new NBTTagList();
-			for (Type epst : playerTextures.get(uuid).keySet()) {
-				ResourceLocation loc = playerTextures.get(uuid).get(epst);
-				if (loc == null) {
-					continue;
-				}
-				NBTTagCompound nbtSkin = new NBTTagCompound();
-				nbtSkin.setString("Type", epst.name());
-				nbtSkin.setString("Location", loc.toString());
-				listTxrs.appendTag(nbtSkin);
-			}
-			nbtPlayer.setTag("Textures", listTxrs);
-			nbtPlayer.setString("Player", playerNames.get(uuid) == null ? "null" : playerNames.get(uuid));
-			listUUIDs.appendTag(nbtPlayer);
+			listUUIDs.appendTag(getNBT(uuid));
 		}
 		compound.setTag("Data", listUUIDs);
 		return compound;
@@ -96,167 +133,162 @@ public class PlayerSkinController {
 	public NBTTagCompound getNBT(UUID uuid) {
 		NBTTagCompound nbtPlayer = new NBTTagCompound();
 		nbtPlayer.setUniqueId("UUID", uuid);
-		NBTTagList listTxrs = new NBTTagList();
-		for (Type epst : playerTextures.get(uuid).keySet()) {
-			ResourceLocation loc = playerTextures.get(uuid).get(epst);
-			if (loc == null) {
-				continue;
-			}
-			NBTTagCompound nbtSkin = new NBTTagCompound();
-			nbtSkin.setString("Type", epst.name());
-			nbtSkin.setString("Location", loc.toString());
-			listTxrs.appendTag(nbtSkin);
+		NBTTagList textures = new NBTTagList();
+		for (Type type : data.get(uuid).keySet()) {
+			SkinData sd = data.get(uuid).get(type);
+			if (sd == null) { continue; }
+			textures.appendTag(sd.save());
 		}
-		nbtPlayer.setTag("Textures", listTxrs);
-		nbtPlayer.setString("Player", playerNames.get(uuid) == null ? "null" : playerNames.get(uuid));
+		nbtPlayer.setTag("Textures", textures);
+		nbtPlayer.setString("Player", playerNames.get(uuid));
 		return nbtPlayer;
 	}
 
-	public UUID loadPlayerSkin(NBTTagCompound nbtSkin) {
-		if (nbtSkin == null) {
-			return null;
-		}
-		UUID uuid = nbtSkin.getUniqueId("UUID");
-		playerNames.put(uuid, nbtSkin.getString("Player"));
-		if (!playerTextures.containsKey(uuid)) {
-			playerTextures.put(uuid, new EnumMap<>(Type.class));
-		}
-		Map<Type, ResourceLocation> skins = playerTextures.get(uuid);
-		for (int i = 0; i < nbtSkin.getTagList("Textures", 10).tagCount(); i++) {
-			NBTTagCompound nbt = nbtSkin.getTagList("Textures", 10).getCompoundTagAt(i);
-			Type type;
-			switch (nbt.getString("Type").toLowerCase()) {
-			case "cape":
-				type = Type.CAPE;
-				break;
-			case "elytra":
-				type = Type.ELYTRA;
-				break;
-			default:
-				type = Type.SKIN;
-				break;
-			}
-			skins.put(type, new ResourceLocation(Util.instance.deleteColor(nbt.getString("Location"))));
-		}
-		playerTextures.put(uuid, skins);
-		return uuid;
-	}
-
-	private void loadPlayerSkins() {
-		CustomNpcs.debugData.start(null);
-		File saveDir = CustomNpcs.Dir;
-		if (saveDir == null) {
-			CustomNpcs.debugData.end(null);
-			return;
-		}
-		this.filePath = saveDir.getName();
-		try {
-			File file = new File(saveDir, "player_skins.dat");
-			if (file.exists()) {
-				this.loadPlayerSkins(file);
-			}
-		} catch (Exception e) { LogWriter.error(e); }
-		CustomNpcs.debugData.end(null);
-	}
-
-	private void loadPlayerSkins(File file) {
-		try {
-			loadPlayerSkins(CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())));
-		} catch (Exception e) { LogWriter.error(e); }
-	}
-
-	public void loadPlayerSkins(NBTTagCompound compound) {
-		playerNames.clear();
-		playerTextures.clear();
-		if (compound.hasKey("Data", 9)) {
-			for (int i = 0; i < compound.getTagList("Data", 10).tagCount(); ++i) {
-				this.loadPlayerSkin(compound.getTagList("Data", 10).getCompoundTagAt(i));
-			}
+	public void sendToAll() {
+		if (CustomNpcs.Server != null) {
+			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) { sendToAll(player.getUniqueID()); }
 		}
 	}
 
-	public void logged(EntityPlayerMP player) {
-		UUID uuid = player.getUniqueID();
-		if (playerTextures.containsKey(uuid)) {
-			playerNames.put(uuid, player.getName());
-			sendToAll(player);
-		} else {
-			Server.sendData(player, EnumPacketClient.PLAYER_SKIN_GET);
-		}
-		for (EntityPlayerMP pl : Objects.requireNonNull(player.getServer()).getPlayerList().getPlayers()) {
-			if (pl.equals(player) || !playerTextures.containsKey(pl.getUniqueID())) {
-				continue;
-			}
-			Server.sendData(player, EnumPacketClient.PLAYER_SKIN_ADD, getNBT(pl.getUniqueID()));
+	public void sendToAll(UUID uuid) {
+		if (data.containsKey(uuid)) {
+			NBTTagCompound nbtPlayer = getNBT(uuid);
+			Packets.sendAll(new PacketSkin(1, nbtPlayer));
 		}
 	}
+
+	public @Nonnull SkinData getData(UUID uuid, Type type) {
+		if (!data.containsKey(uuid) || type == null) { return new SkinData(); }
+		return data.get(uuid).get(type);
+	}
+
+	public @Nonnull SkinData getData(UUID uuid, int type) { return getData(uuid, getType(type)); }
 
 	public void save() {
-		CustomNpcs.debugData.start(null);
 		try {
-			CompressedStreamTools.writeCompressed(this.getNBT(), Files.newOutputStream(new File(CustomNpcs.Dir, "player_skins.dat").toPath()));
-		} catch (Exception e) { LogWriter.error(e); }
-		CustomNpcs.debugData.end(null);
+			File saveDir = CustomNpcs.getWorldSaveDirectory();
+			File file = new File(saveDir, filename + ".dat_new");
+			File file1 = new File(saveDir, filename + ".dat_old");
+			File file2 = new File(saveDir, filename + ".dat");
+			CompressedStreamTools.writeCompressed(getNBT(), Files.newOutputStream(file.toPath()));
+			if (file1.exists() && !file1.delete()) { LogWriter.debug("Error delete \"" + file1.getName() + "\" file"); }
+			if (!file2.renameTo(file1) || (file2.exists() && !file2.delete())) { LogWriter.debug("Error delete or rename \"" + file2.getName() + "\" file"); }
+			if (!file.renameTo(file2) || (file.exists() && !file.delete())) { LogWriter.debug("Error delete or rename \"" + file.getName() + "\" file"); }
+		}
+		catch (Exception e) { LogWriter.except(e); }
 	}
 
-	public void sendToAll(EntityPlayerMP player) {
-		UUID uuid = player.getUniqueID();
-		if (!playerTextures.containsKey(uuid)) {
-			return;
-		}
-		playerNames.put(uuid, player.getName());
-		NBTTagCompound nbtPlayer = getNBT(uuid);
-		for (EntityPlayerMP pl : Objects.requireNonNull(player.getServer()).getPlayerList().getPlayers()) {
-			Server.sendData(pl, EnumPacketClient.PLAYER_SKIN_ADD, nbtPlayer);
-		}
+	public void set(String uuid, String location, int slot) {
+		UUID id;
+		try { id = UUID.fromString(uuid); } catch (Exception ignored) { return; }
+		SkinData sd = getData(id, slot);
+		sd.reset(location);
+		if (data.containsKey(id)) { data.put(id, new EnumMap<>(Type.class)); }
+		data.get(id).put(sd.type(), sd);
+		save();
+		update(sd);
 	}
 
-	public void set(EntityPlayerMP player, boolean isSmallArms, int body, int bodyColor, int hair, int hairColor,
-			int face, int eyesColor, int leg, int jacket, int shoes, int... peculiarities) {
-		UUID uuid = player.getUniqueID();
-		if (!playerTextures.containsKey(uuid)) {
-			playerTextures.put(uuid, new EnumMap<>(Type.class));
+	public void set(String uuid, int type, int gender, int body, int bodyColor, int hair, int hairColor, int face, int eyesColor, int leg, int jacket, int shoes, int... peculiarities) {
+		UUID id;
+		try { id = UUID.fromString(uuid); } catch (Exception ignored) { return; }
+		SkinData sd = getData(id, type);
+		sd.setGender(gender);
+		sd.setBodyType(body);
+		sd.setBodyColor(bodyColor);
+		sd.setHairType(hair);
+		sd.setHairColor(hairColor);
+		sd.setFaceType(face);
+		sd.setEyesColor(eyesColor);
+		sd.setPantsType(leg);
+		sd.setJacketType(jacket);
+		sd.setShoesType(shoes);
+		List<Integer> list = new ArrayList<>();
+		if (peculiarities != null) {
+			for (int i : peculiarities) { list.add(i); }
 		}
-		Map<Type, ResourceLocation> data = getData(player.getUniqueID());
-		StringBuilder path = new StringBuilder("textures/entity/custom/" + (isSmallArms ? "female" : "male") + "_" + body + "_" + bodyColor + "_"
-                + hair + "_" + hairColor + "_" + face + "_" + eyesColor + "_" + leg + "_" + jacket + "_" + shoes);
-		for (int id : peculiarities) {
-			path.append("_").append(id);
-		}
-		path.append(".png");
-		if (data != null) {
-			data.put(Type.SKIN, new ResourceLocation(CustomNpcs.MODID, Util.instance.deleteColor(path.toString())));
-			playerTextures.put(uuid, data);
-			sendToAll(player);
-		}
+		sd.setPeculiarities(list);
+		if (data.containsKey(id)) { data.put(id, new EnumMap<>(Type.class)); }
+		data.get(id).put(sd.type(), sd);
+		save();
+		update(sd);
 	}
 
-	public void set(EntityPlayerMP player, String location, int type) {
-		UUID uuid = player.getUniqueID();
-		if (type < 0) {
-			type *= -1;
-		}
-		Type t = Type.values()[type % Type.values().length];
-		if (!playerTextures.containsKey(uuid)) {
-			playerTextures.put(uuid, new EnumMap<>(Type.class));
-			playerTextures.get(uuid).put(Type.SKIN, new ResourceLocation("minecraft",
-					(uuid.hashCode() & 1) == 1 ? "textures/entity/alex.png" : "textures/entity/steve.png")); // DefaultPlayerSkin
-		}
-		Map<Type, ResourceLocation> data = getData(player.getUniqueID());
-		if (data != null) {
-			if (location == null || location.isEmpty()) {
-				data.remove(t);
-			} else {
-				data.put(t, new ResourceLocation(Util.instance.deleteColor(location)));
+	public String get(EntityPlayer player, int type) {
+		SkinData sd = getData(player.getUniqueID(), type);
+		return sd.isUrl() ? sd.getUrl() : sd.getLocation().toString();
+	}
+
+	public Map<Type, SkinData> get(UUID uuid) { return data.get(uuid); }
+
+	/**
+	 * @param playerNameOrUUID name or uuid of player
+	 * @param type 0:SKIN, 1:CAPE, 2:ELYTRA;
+	 * @return location string
+	 */
+	public SkinData get(String playerNameOrUUID, int type) {
+		if (playerNameOrUUID == null || playerNameOrUUID.isEmpty()) { return null; }
+		SkinData sd = null;
+		if (playerNames.containsValue(playerNameOrUUID)) {
+			for (UUID uuid : playerNames.keySet()) {
+				if (playerNames.get(uuid).equals(playerNameOrUUID)) {
+					if (data.containsKey(uuid)) { sd = data.get(uuid).get(getType(type)); }
+					break;
+				}
 			}
-			playerTextures.put(uuid, data);
-			sendToAll(player);
 		}
+		else {
+			try {
+				UUID uuid = UUID.fromString(playerNameOrUUID);
+				if (data.containsKey(uuid)) { sd = data.get(uuid).get(getType(type)); }
+			}
+			catch (Exception ignored) {}
+		}
+		return sd;
 	}
 
-	@SuppressWarnings("all")
-	public boolean hasData(UUID uuid) {
-		return playerTextures.containsKey(uuid);
+	public boolean hasData(UUID uuid) { return data.containsKey(uuid); }
+
+	@SuppressWarnings("ConstantConditions")
+	public void clear(String uuid, int type) {
+		Type t = getType(type);
+		for (UUID id : data.keySet()) {
+			if (uuid == null || id.toString().equals(uuid)) {
+				SkinData sd = data.get(id).get(t);
+				if (!sd.remove()) { data.get(id).remove(t); }
+				if (uuid != null) {
+					if (CustomNpcs.Server != null) {
+						EntityPlayerMP player = CustomNpcs.Server.getPlayerList().getPlayerByUUID(id);
+						if (player != null) { // online
+							save();
+							sendToAll(player.getUniqueID());
+							return;
+						}
+					}
+					break;
+				}
+			}
+		}
+		save();
+	}
+
+	public SkinData create(UUID uuid, String player, int slot, int type, String location) {
+		Type t = getType(slot);
+		SkinData skinData = SkinData.create(t, null);
+		if (type == 0) { skinData.setUrl(location); }
+		else if (type == 1) { skinData.setLocation(location); }
+		else { skinData.reset(location); }
+		if (!data.containsKey(uuid)) { data.put(uuid, new EnumMap<>(Type.class)); }
+		data.get(uuid).put(t, skinData);
+		playerNames.put(uuid, player);
+		save();
+		sendToAll(uuid);
+		return skinData;
+	}
+
+	public String getName(UUID uuid) {
+		String name = playerNames.get(uuid);
+		return name == null ? "" : name;
 	}
 
 }

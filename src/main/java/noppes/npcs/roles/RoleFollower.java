@@ -4,14 +4,15 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
 
-import net.minecraft.command.CommandException;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import noppes.npcs.*;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.JobType;
@@ -21,164 +22,182 @@ import noppes.npcs.api.entity.data.role.IRoleFollower;
 import noppes.npcs.api.event.RoleEvent;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.containers.ContainerNPCFollowerHire;
+import noppes.npcs.containers.NpcMiscInventory;
 import noppes.npcs.controllers.PlayerDataController;
+import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.PlayerGameData.FollowerSet;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.server.SPacketGuiOpen;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
+
+import javax.annotation.Nonnull;
 
 public class RoleFollower extends RoleInterface implements IRoleFollower {
 
-	public boolean disableGui, infiniteDays, isFollowing, refuseSoulStone;
+	public boolean disableGui = false;
+	public boolean infiniteDays = false;
+	public boolean isFollowing = true;
+	public boolean refuseSoulStone = false;
 	public int daysHired;
-	public String dialogFarewell, dialogHire, dialogFired, ownerUUID;
-	public long hiredTime, waitTime;
+	public String ownerUUID;
+	public long hiredTime;
+	public long waitTime = 0;
+	public int rentalMoney = 0;
+	public NpcMiscInventory rentalItems = new NpcMiscInventory(3);
+	public NpcMiscInventory inventory = new NpcMiscInventory(0);
+	public EntityPlayer owner = null;
+	public HashMap<Integer, Integer> rates = new HashMap<>();
+	public String dialogFarewell = getTexts("follower.farewellText", " {player}");
+	public String dialogFired = getTexts("follower.firedText", " {player}");
+	public String dialogHire = getTexts("follower.hireText", " {days} ", Component.translatable("follower.days"));
 
-	public int rentalMoney;
-	public NpcMiscInventory rentalItems;
-	public NpcMiscInventory inventory;
-	public EntityPlayer owner;
-	public HashMap<Integer, Integer> rates;
+	private String getTexts(@Nonnull String main, Object ... added) {
+		Component component = Component.translatable(main);
+		for (Object part : added) {
+			if (part instanceof String) { component.append((String) part); }
+			else if (part instanceof Component) { component.append((Component) part); }
+		}
+		return Util.instance.deleteColor(component.getFormattedText());
+	}
 
 	public RoleFollower(EntityNPCInterface npc) {
 		super(npc);
-		this.isFollowing = true;
-		this.dialogHire = new TextComponentTranslation("follower.hireText").getFormattedText() + " {days} "
-				+ new TextComponentTranslation("follower.days").getFormattedText();
-		this.dialogFarewell = new TextComponentTranslation("follower.farewellText").getFormattedText() + " {player}";
-		this.dialogFired = new TextComponentTranslation("follower.firedText").getFormattedText() + " {player}";
-		this.disableGui = false;
-		this.infiniteDays = false;
-		this.refuseSoulStone = false;
-		this.owner = null;
-		this.rentalMoney = 0;
-		this.rentalItems = new NpcMiscInventory(3);
-		this.inventory = new NpcMiscInventory(0);
-		this.rates = new HashMap<>();
-		this.type = RoleType.FOLLOWER;
-		this.waitTime = 0;
+		type = RoleType.FOLLOWER;
+	}
+
+	@Override
+	public void load(NBTTagCompound compound) {
+		super.load(compound);
+		type = RoleType.FOLLOWER;
+		ownerUUID = compound.getString("MercenaryOwner");
+		daysHired = compound.getInteger("MercenaryDaysHired");
+		hiredTime = compound.getLong("MercenaryHiredTime");
+		rates = NBTTags.getIntegerIntegerMap(compound.getTagList("MercenaryDayRates", 10));
+		if (compound.hasKey("MercenaryInventory", 10)) {
+			int size = compound.getCompoundTag("MercenaryInventory").getInteger("NpcMiscInvSize");
+			inventory = new NpcMiscInventory(size);
+			inventory.load(compound.getCompoundTag("MercenaryInventory"));
+		}
+		isFollowing = compound.getBoolean("MercenaryIsFollowing");
+		disableGui = compound.getBoolean("MercenaryDisableGui");
+		infiniteDays = compound.getBoolean("MercenaryInfiniteDays");
+		refuseSoulStone = compound.getBoolean("MercenaryRefuseSoulstone");
+		dialogHire = compound.getString("MercenaryDialogHired");
+		dialogFarewell = compound.getString("MercenaryDialogFarewell");
+		// New from Unofficial (BetaZavr)
+		rentalItems.load(compound.getCompoundTag("MercenaryInv"));
+		rentalMoney = compound.getInteger("MercenaryMoney");
+		if (compound.hasKey("MercenaryDialogFired", 8)) {
+			dialogFired = compound.getString("MercenaryDialogFired");
+		}
+	}
+
+	@Override
+	public NBTTagCompound save(NBTTagCompound compound) {
+		super.save(compound);
+		compound.setInteger("MercenaryDaysHired", daysHired);
+		compound.setLong("MercenaryHiredTime", hiredTime);
+		compound.setString("MercenaryDialogHired", dialogHire);
+		compound.setString("MercenaryDialogFarewell", dialogFarewell);
+		if (hasOwner()) { compound.setString("MercenaryOwner", ownerUUID); }
+		compound.setTag("MercenaryDayRates", NBTTags.nbtIntegerIntegerMap(rates));
+		compound.setTag("MercenaryInventory", inventory.save());
+		compound.setBoolean("MercenaryIsFollowing", isFollowing);
+		compound.setBoolean("MercenaryDisableGui", disableGui);
+		compound.setBoolean("MercenaryInfiniteDays", infiniteDays);
+		compound.setBoolean("MercenaryRefuseSoulstone", refuseSoulStone);
+		// New from Unofficial (BetaZavr)
+		compound.setTag("MercenaryInv", rentalItems.save());
+		compound.setInteger("MercenaryMoney", rentalMoney);
+		compound.setString("MercenaryDialogFired", dialogFired);
+		return compound;
 	}
 
 	@Override
 	public void addDays(int days) {
-		if (this.hiredTime == 0L) {
-			this.daysHired = days;
-			this.hiredTime = System.currentTimeMillis();
-		} else {
-			this.daysHired += days;
+		if (hiredTime == 0L) {
+			daysHired = days;
+			hiredTime = getCurrentTime();
 		}
+		else { daysHired += days; }
 	}
 
 	@Override
 	public boolean aiShouldExecute() {
-		if (this.npc.getHealth() <= 0.0f) {
+		// New from Unofficial (BetaZavr)
+		if (npc.getHealth() <= 0.0f) { return false; }
+		if ((ownerUUID == null || ownerUUID.isEmpty()) && npc.world.provider.getDimension() != npc.homeDimensionId) {
+			npc = (EntityNPCInterface) Util.instance.teleportEntity(npc.world.getMinecraftServer(), npc,
+						npc.homeDimensionId, npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
 			return false;
 		}
-		if ((this.ownerUUID == null || this.ownerUUID.isEmpty())
-				&& this.npc.world.provider.getDimension() != this.npc.homeDimensionId) {
-			try {
-				Util.instance.teleportEntity(this.npc.world.getMinecraftServer(), this.npc,
-						this.npc.homeDimensionId, this.npc.getStartXPos(), this.npc.getStartYPos(),
-						this.npc.getStartZPos());
-			} catch (CommandException e) { LogWriter.error(e); }
-			return false;
-		}
-		PlayerData plData = this.getOwnerData();
+		PlayerData plData = getOwnerData();
 		if (plData == null) {
-			if (this.ownerUUID != null && !this.ownerUUID.isEmpty()) {
-				this.killed();
-			}
+			if (ownerUUID != null && !ownerUUID.isEmpty()) { killed(); }
 			return false;
 		}
-		FollowerSet fs = plData.game.getFollower(this.npc);
-        if (fs == null) {
-            fs = plData.game.addFollower(this.npc);
-        }
-        fs.dimId = this.npc.world.provider.getDimension();
-        fs.npc = this.npc;
-        this.owner = this.getOwner();
-		if (!this.infiniteDays && (System.currentTimeMillis() - this.hiredTime) > this.getDays() * 1440000L) {
-			RoleEvent.FollowerFinishedEvent event = new RoleEvent.FollowerFinishedEvent(this.owner,
-					this.npc.wrappedNPC);
-			EventHooks.onNPCRole(this.npc, event);
-			if (this.owner != null) {
-				if (this.owner.openContainer instanceof ContainerNPCFollowerHire) {
-					this.owner.closeScreen();
-				}
-				this.owner.sendMessage(new TextComponentTranslation(
-						NoppesStringUtils.formatText(this.dialogFarewell, this.owner, this.npc)));
-			}
-            plData.game.removeFollower(this.npc);
-            this.killed();
+		FollowerSet fs = plData.game.getFollower(npc);
+        if (fs == null) { fs = plData.game.addFollower(npc); }
+        fs.dimId = npc.world.provider.getDimension();
+        fs.npc = npc;
+        owner = getOwner();
+		if (!infiniteDays && (getCurrentTime() - hiredTime) > (long) getDays() * 24000L) {
+			RoleEvent.FollowerFinishedEvent event = new RoleEvent.FollowerFinishedEvent(owner, npc.wrappedNPC);
+			EventHooks.onNPCRole(npc, event);
+			if (owner != null && owner.openContainer instanceof ContainerNPCFollowerHire) { owner.closeScreen(); }
+			npc.say(owner, new Line(NoppesStringUtils.formatText(dialogFarewell, owner, npc)));
+            plData.game.removeFollower(npc);
+            killed();
 		}
-		if (this.npc.getAttackTarget() != null) {
-			return false;
-		}
+		if (npc.getAttackTarget() != null) { return false; }
 		if (!isFollowing) {
-			if (!this.npc.getNavigator().noPath()) {
-				this.npc.getNavigator().clearPath();
-			}
+			if (!npc.getNavigator().noPath()) { npc.getNavigator().clearPath(); }
 			return false;
 		}
-		if (this.owner == null) {
+		if (owner == null) { return false; }
+		double dist = npc.getDistance(owner);
+		if (owner.world.provider.getDimension() != npc.world.provider.getDimension()) {
+			npc = (EntityNPCInterface) Util.instance.teleportEntity(npc.world.getMinecraftServer(), npc, owner.world.provider.getDimension(), owner.posX, owner.posY, owner.posZ);
+			fs.dimId = npc.world.provider.getDimension();
+			fs.id = npc.getUniqueID();
+			fs.npc = npc;
+			npc.getNavigator().tryMoveToEntityLiving(owner, npc.ais.canSprint ? 1.3 : 1.0d);
+		}
+		else if (dist <= 2.5d) {
+			if (!npc.getNavigator().noPath()) { npc.getNavigator().clearPath(); }
 			return false;
 		}
-		double dist = this.npc.getDistance(this.owner);
-		if (this.owner.world.provider.getDimension() != this.npc.world.provider.getDimension()) {
-			try {
-				Entity entity = Util.instance.teleportEntity(this.npc.world.getMinecraftServer(), this.npc,
-						this.owner.world.provider.getDimension(), this.owner.posX, this.owner.posY, this.owner.posZ);
-				if (entity instanceof EntityNPCInterface) {
-					fs.dimId = entity.world.provider.getDimension();
-					fs.id = entity.getUniqueID();
-					((EntityNPCInterface) entity).getNavigator().tryMoveToEntityLiving(this.owner, this.npc.ais.canSprint ? 1.3 : 1.0d);
-				}
-			} catch (CommandException e) { LogWriter.error(e); }
-		} else if (dist <= 2.5d) {
-			if (!this.npc.getNavigator().noPath()) {
-				this.npc.getNavigator().clearPath();
-			}
-			return false;
-		} else if (dist > getRange()) {
-			this.npc.setPosition(this.owner.posX, this.owner.posY, this.owner.posZ);
-		} else {
-			boolean bo = this.npc.getNavigator().tryMoveToEntityLiving(this.owner, this.npc.ais.canSprint ? 1.3 : 1.0d);
-			if (!bo && !this.npc.isMoving()) {
-				if (this.waitTime == 0) {
-					this.waitTime = 10;
+		else if (dist > getRange()) { npc.setPosition(owner.posX, owner.posY, owner.posZ); }
+		else {
+			boolean bo = npc.getNavigator().tryMoveToEntityLiving(owner, npc.ais.canSprint ? 1.3 : 1.0d);
+			if (!bo && !npc.isMoving()) {
+				if (waitTime == 0) {
+					waitTime = 10;
 					return false;
 				}
-				this.waitTime--;
-				if (this.waitTime <= 0) {
-					this.npc.setPosition(this.owner.posX, this.owner.posY, this.owner.posZ);
-				}
-			} else {
-				this.waitTime = 0;
+				waitTime--;
+				if (waitTime <= 0) { npc.setPosition(owner.posX, owner.posY, owner.posZ); }
 			}
+			else { waitTime = 0; }
 		}
 		return false;
 	}
 
 	@Override
-	public boolean defendOwner() {
-		return !this.isFollowing() || this.npc.advanced.jobInterface.getEnumType() != JobType.GUARD;
-	}
+	public boolean defendOwner() { return isFollowing() && npc != null && npc.job.getEnumType() == JobType.GUARD; }
 
     @Override
 	public int getDays() {
-		if (this.infiniteDays) {
-			return 100;
-		}
-		if (this.daysHired <= 0) {
-			return 0;
-		}
-		int daysPassed = (int) Math.floor((double) (System.currentTimeMillis() - this.hiredTime) / 480000.0d);
-		return this.daysHired - daysPassed;
-	}
+		if (infiniteDays) { return 100; }
+        return Math.max(daysHired, 0);
+    }
 
 	@Override
 	public IPlayer<?> getFollowing() {
-		EntityPlayer owner = this.getOwner();
+		EntityPlayer owner = getOwner();
 		if (owner != null) {
 			return (IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(owner);
 		}
@@ -186,194 +205,139 @@ public class RoleFollower extends RoleInterface implements IRoleFollower {
 	}
 
 	@Override
-	public boolean getGuiDisabled() {
-		return this.disableGui;
-	}
+	public boolean getGuiDisabled() { return disableGui; }
 
 	@Override
-	public boolean getInfinite() {
-		return this.infiniteDays;
-	}
+	public boolean getInfinite() { return infiniteDays; }
 
+	@SuppressWarnings("ConstantConditions")
 	public EntityPlayer getOwner() {
-		if (this.ownerUUID == null || this.ownerUUID.isEmpty()) {
-			return null;
+		if (npc != null && npc.world != null && !npc.world.isRemote && (ownerUUID != null && !ownerUUID.isEmpty())) {
+			try {
+				UUID uuid = UUID.fromString(ownerUUID);
+				MinecraftServer server = npc.world.getMinecraftServer();
+				if (server == null && CustomNpcs.Server != null) { server = CustomNpcs.Server; }
+				if (server != null) { return server.getPlayerList().getPlayerByUUID(uuid); }
+			} catch (Exception e) { LogWriter.error(e); }
+			return npc.world.getPlayerEntityByName(ownerUUID);
 		}
-		try {
-			UUID uuid = UUID.fromString(this.ownerUUID);
-            MinecraftServer server = null;
-            if (this.npc.world != null) {
-                server = this.npc.world.getMinecraftServer();
-            }
-            if (server == null && CustomNpcs.Server != null) {
-                server = CustomNpcs.Server;
-            }
-            if (server != null) {
-                return server.getPlayerList().getPlayerByUUID(uuid);
-            }
-        } catch (Exception e) { LogWriter.error(e); }
-        assert this.npc.world != null;
-        return this.npc.world.getPlayerEntityByName(this.ownerUUID);
-	}
-
-	private PlayerData getOwnerData() {
-		if (this.ownerUUID == null || this.ownerUUID.isEmpty() || CustomNpcs.Server == null || this.npc.world == null
-				|| this.npc.world.getMinecraftServer() == null) {
-			return null;
-		}
-		return PlayerDataController.instance.getDataFromUsername(
-				CustomNpcs.Server == null ? this.npc.world.getMinecraftServer() : CustomNpcs.Server, this.ownerUUID);
-	}
-
-	public int getRange() {
-		if (this.npc.stats.aggroRange > CustomNpcs.NpcNavRange) {
-			return CustomNpcs.NpcNavRange;
-		}
-		return this.npc.stats.aggroRange;
+		return null;
 	}
 
 	@Override
-	public boolean getRefuseSoulstone() {
-		return this.refuseSoulStone;
-	}
+	public boolean getRefuseSoulstone() { return refuseSoulStone; }
 
 	public boolean hasOwner() {
-		return (this.infiniteDays || this.daysHired > 0) && this.ownerUUID != null && !this.ownerUUID.isEmpty();
+		return (infiniteDays || daysHired > 0) && ownerUUID != null && !ownerUUID.isEmpty();
 	}
 
 	@Override
-	public void interact(EntityPlayer player) {
-		if (ownerUUID == null || ownerUUID.isEmpty()) {
-			npc.say(player, npc.advanced.getInteractLine());
-			if (!rentalItems.isEmpty() || rentalMoney > 0) {
-				NoppesUtilServer.sendOpenGui(player, EnumGuiType.PlayerFollowerHire, npc, 0, 0, 0);
+	public void interact(EntityPlayer playerIn) {
+		if (playerIn instanceof EntityPlayerMP) {
+			EntityPlayerMP player = (EntityPlayerMP) playerIn;
+			if (ownerUUID != null && !ownerUUID.isEmpty()) {
+				if (player == owner && !disableGui) {
+					SPacketGuiOpen.sendOpenGui(player, EnumGuiType.PlayerFollower, npc, new BlockPos(1, 0, 0));
+				}
 			}
-		} else if (player == owner && !disableGui) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.PlayerFollower, npc, 1, 0, 0);
+			else {
+				if (npc != null) { npc.say(player, npc.advanced.getInteractLine()); }
+				SPacketGuiOpen.sendOpenGui(player, EnumGuiType.PlayerFollowerHire, npc, new BlockPos(0, 0, 0));
+			}
 		}
 	}
 
 	@Override
 	public boolean isFollowing() {
-		return this.ownerUUID != null && !this.ownerUUID.isEmpty() && this.isFollowing && this.getDays() > 0;
+		return ownerUUID != null && !ownerUUID.isEmpty() && isFollowing &&
+				(getCurrentTime() - hiredTime) < (long) getDays() * 24000L;
 	}
 
 	@Override
 	public void killed() {
-		if (!this.inventory.isEmpty()) {
-			if (this.owner == null) {
-				for (ItemStack stack : this.inventory.items) {
-					if (NoppesUtilServer.IsItemStackNull(stack) || stack.isEmpty()) {
-						continue;
-					}
-					this.npc.entityDropItem(stack, 0.0f);
-				}
-			} else if (this.owner.world.provider.getDimension() == this.npc.world.provider.getDimension()) {
-				for (ItemStack stack : this.inventory.items) {
-					if (NoppesUtilServer.IsItemStackNull(stack) || stack.isEmpty()) {
-						continue;
-					}
-					EntityItem entityitem = new EntityItem(this.owner.world, this.owner.posX, this.owner.posY,
-							this.owner.posZ, stack);
-					entityitem.setPickupDelay(0);
-					this.owner.world.spawnEntity(entityitem);
+		if (!inventory.isEmpty()) {
+			if (owner == null) {
+				for (int i = 0; i < inventory.getSizeInventory(); i++) {
+					ItemStack stack = inventory.getStackInSlot(i);
+					if (!NoppesUtilServer.isItemStackNull(stack)) { npc.entityDropItem(stack, 0.0f); }
 				}
 			}
-			this.inventory.clear();
+			else if (owner.world.provider.getDimension() == npc.world.provider.getDimension()) {
+				for (int i = 0; i < inventory.getSizeInventory(); i++) {
+					ItemStack entityItem = inventory.getStackInSlot(i);
+					if (!NoppesUtilServer.isItemStackNull(entityItem)) {
+						EntityItem entityitem = new EntityItem(owner.world, owner.posX, owner.posY, owner.posZ, entityItem);
+						entityitem.setPickupDelay(0);
+						owner.world.spawnEntity(entityitem);
+					}
+				}
+			}
+			inventory.clear();
 		}
-		this.ownerUUID = null;
-		this.daysHired = 0;
-		this.hiredTime = 0L;
-		this.isFollowing = true;
-		PlayerData plData = this.getOwnerData();
+		ownerUUID = null;
+		daysHired = 0;
+		hiredTime = 0L;
+		isFollowing = true;
+		PlayerData plData = getOwnerData();
 		if (plData != null) {
-			plData.game.removeFollower(this.npc);
+			plData.game.removeFollower(npc);
 			plData.save(true);
 		}
 	}
 
 	@Override
-	public void load(NBTTagCompound compound) {
-		super.load(compound);
-		type = RoleType.FOLLOWER;
-		this.ownerUUID = compound.getString("MercenaryOwner");
-		this.daysHired = compound.getInteger("MercenaryDaysHired");
-		this.hiredTime = compound.getLong("MercenaryHiredTime");
-		this.dialogHire = compound.getString("MercenaryDialogHired");
-		this.dialogFarewell = compound.getString("MercenaryDialogFarewell");
-		if (compound.hasKey("MercenaryDialogFired", 8)) {
-			this.dialogFired = compound.getString("MercenaryDialogFired");
-		}
-		this.rates = NBTTags.getIntegerIntegerMap(compound.getTagList("MercenaryDayRates", 10));
-		this.rentalItems.load(compound.getCompoundTag("MercenaryInv"));
-		if (compound.hasKey("MercenaryInventory", 10)) {
-			int size = compound.getCompoundTag("MercenaryInventory").getInteger("NpcMiscInvSize");
-			this.inventory = new NpcMiscInventory(size);
-			this.inventory.load(compound.getCompoundTag("MercenaryInventory"));
-		}
-		this.rentalMoney = compound.getInteger("MercenaryMoney");
-		this.isFollowing = compound.getBoolean("MercenaryIsFollowing");
-		this.disableGui = compound.getBoolean("MercenaryDisableGui");
-		this.infiniteDays = compound.getBoolean("MercenaryInfiniteDays");
-		this.refuseSoulStone = compound.getBoolean("MercenaryRefuseSoulstone");
-	}
-
-	@Override
-	public void reset() {
-		this.killed();
-	}
+	public void reset() { killed(); }
 
 	@Override
 	public void setFollowing(IPlayer<?> player) {
-		if (player == null) {
-			this.ownerUUID = null;
-		} else {
-			this.setOwner(player.getMCEntity());
-		}
+		if (player == null) { ownerUUID = null; }
+		else { setOwner(player.getMCEntity()); }
 	}
 
 	@Override
-	public void setGuiDisabled(boolean disabled) {
-		this.disableGui = disabled;
-	}
+	public void setGuiDisabled(boolean disabled) { disableGui = disabled; }
 
 	@Override
-	public void setInfinite(boolean infinite) {
-		this.infiniteDays = infinite;
-	}
+	public void setInfinite(boolean infinite) { infiniteDays = infinite; }
 
 	public void setOwner(EntityPlayer player) {
 		UUID id = player.getUniqueID();
-		if (this.ownerUUID == null || !this.ownerUUID.equals(id.toString())) {
-			this.killed();
-		}
-		this.ownerUUID = id.toString();
+		if (ownerUUID == null || !ownerUUID.equals(id.toString())) { killed(); }
+		ownerUUID = id.toString();
 	}
 
 	@Override
-	public void setRefuseSoulstone(boolean refuse) {
-		this.refuseSoulStone = refuse;
+	public void setRefuseSoulstone(boolean refuse) { refuseSoulStone = refuse; }
+
+	// New from Unofficial (BetaZavr)
+	public long getCurrentTime() {
+		World level = null;
+		if (npc != null) { level = npc.world; }
+		else if (CustomNpcs.Server != null) { level = CustomNpcs.Server.getWorld(0); }
+		return level != null ? level.getTotalWorldTime() : 0;
 	}
 
-	@Override
-	public NBTTagCompound save(NBTTagCompound compound) {
-		super.save(compound);
-		compound.setInteger("MercenaryDaysHired", this.daysHired);
-		compound.setLong("MercenaryHiredTime", this.hiredTime);
-		compound.setString("MercenaryDialogHired", this.dialogHire);
-		compound.setString("MercenaryDialogFarewell", this.dialogFarewell);
-		compound.setString("MercenaryDialogFired", this.dialogFired);
-		if (this.hasOwner()) {
-			compound.setString("MercenaryOwner", this.ownerUUID);
+	private PlayerData getOwnerData() {
+		if (ownerUUID == null || ownerUUID.isEmpty() || CustomNpcs.Server == null || npc.world == null || npc.world.getMinecraftServer() == null) {
+			return null;
 		}
-		compound.setTag("MercenaryDayRates", NBTTags.nbtIntegerIntegerMap(this.rates));
-		compound.setTag("MercenaryInv", this.rentalItems.save());
-		compound.setTag("MercenaryInventory", this.inventory.save());
-		compound.setInteger("MercenaryMoney", this.rentalMoney);
-		compound.setBoolean("MercenaryIsFollowing", this.isFollowing);
-		compound.setBoolean("MercenaryDisableGui", this.disableGui);
-		compound.setBoolean("MercenaryInfiniteDays", this.infiniteDays);
-		compound.setBoolean("MercenaryRefuseSoulstone", this.refuseSoulStone);
-		return compound;
+		return PlayerDataController.instance.getDataFromUsername(
+				CustomNpcs.Server == null ? npc.world.getMinecraftServer() : CustomNpcs.Server, ownerUUID);
 	}
+
+	public int getRange() {
+		if (npc.stats.aggroRange > CustomNpcs.NpcNavRange) {
+			return CustomNpcs.NpcNavRange;
+		}
+		return npc.stats.aggroRange;
+	}
+
+	@SuppressWarnings("unused")
+	public int getDaysLeft() {
+		if (infiniteDays) { return 100; }
+		if (daysHired <= 0) { return 0; }
+		int daysPassed = (int) Math.floor((double) (getCurrentTime() - hiredTime) / 24000.0d);
+		return Math.max(daysHired - daysPassed, 0);
+	}
+
 }

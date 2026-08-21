@@ -1,71 +1,86 @@
 package noppes.npcs.client.gui.roles;
 
-import java.util.HashMap;
-import java.util.Vector;
+import java.util.*;
 
 import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketBanksGet;
+import noppes.npcs.packets.server.SPacketNpcRoleSave;
 import noppes.npcs.roles.RoleBank;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
 
 public class GuiNpcBankSetup extends GuiNPCInterface2 implements IScrollData, ICustomScrollListener {
 
-	protected final HashMap<String, Integer> data = new HashMap<>();
+	protected GuiCustomScrollNop scroll;
+	protected final Map<Component, Integer> data = new HashMap<>();
 	protected final RoleBank role;
-	protected GuiCustomScroll scroll;
 
 	public GuiNpcBankSetup(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
 
-		role = (RoleBank) npc.advanced.roleInterface;
+		role = (RoleBank) npc.role;
+		backGui = EnumGuiType.MainMenuAdvanced;
+		Packets.sendServer(new SPacketBanksGet());
 	}
 
     @Override
 	public void initGui() {
 		super.initGui();
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0); }
-		scroll.setSize(200, 152);
-		scroll.guiLeft = guiLeft + 85;
-		scroll.guiTop = guiTop + 20;
-		addScroll(scroll);
+		if (scroll == null) { scroll = addScroll(0).setSize(200, 152); }
+		add(scroll.setPos(guiLeft + 85, guiTop + 20));
+		List<Component> list = scroll.getNormalList();
+		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+		if (list != null && !list.isEmpty()) {
+			int i = 0;
+			for (Component key : list) {
+				hts.put(i, Collections.singletonList(Component.literal("ID: " + data.get(key))));
+				i++;
+			}
+		}
+		scroll.setHoverTexts(hts);
 	}
 
 	@Override
-	public void initPacket() { Client.sendData(EnumPacketServer.BanksGet); }
+	public void save() { Packets.sendServer(new SPacketNpcRoleSave(role.save(new NBTTagCompound()))); }
 
 	@Override
-	public void save() { Client.sendData(EnumPacketServer.RoleSave, role.save(new NBTTagCompound())); }
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 0) {
-			role.bankId = data.get(scroll.getSelected());
-			save();
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		if (scroll.id == 0 && data.containsKey(scroll.getNormalSelected())) {
+			int id = data.get(scroll.getNormalSelected());
+			if (id != role.bankId) {
+				role.bankId = id;
+				save();
+			}
 		}
 	}
 
 	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) {
-		onClosed();
-		CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuAdvanced);
-	}
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { onClose(); }
 
 	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		String name = null;
-		Bank bank = role.getBank();
-		if (bank != null) { name = bank.name; }
+	public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
+		int bankId = role.getBankId();
+		Component name = scroll.getNormalSelected();
 		data.clear();
-		data.putAll(dataMap);
-		scroll.setList(dataList);
-		if (name != null) { setSelected(name); }
+		Map<Component, Integer> map = new HashMap<>();
+		for (Map.Entry<String, Integer> entry : dataMap.entrySet()) {
+			Component key = Component.empty()
+					.append(Component.literal("ID:" + entry.getValue() + " ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(entry.getKey()).withStyle(TextFormatting.RESET));
+			map.put(key, entry.getValue());
+			if (entry.getValue() == bankId) { name = key; }
+		}
+		data.putAll(map);
+		scroll.setNormalList(new ArrayList<>(data.keySet()));
+		if (!name.getFormattedText().isEmpty()) { scroll.setSelected(name); }
+		initGui();
 	}
 
 	@Override

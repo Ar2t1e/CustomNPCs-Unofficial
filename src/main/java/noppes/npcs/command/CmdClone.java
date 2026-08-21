@@ -16,7 +16,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.controllers.ServerCloneController;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -29,8 +29,7 @@ public class CmdClone extends CommandNoppesBase {
 		return 2;
 	}
 
-	@SuppressWarnings("all")
-	@SubCommand(desc = "Add NPC(s) to clone storage", usage = "<npc> <tab> [clonedname]", permission = 2)
+	@SubCommand(desc = "Add NPC(s) to clone storage", usage = "<npc> <tab> [clonedname]", isOpOnly = true)
 	public void add(MinecraftServer server, ICommandSender sender, String[] args) {
 		int tab = 0;
 		try {
@@ -53,29 +52,27 @@ public class CmdClone extends CommandNoppesBase {
 		}
 	}
 
-	@SuppressWarnings("all")
-	@SubCommand(desc = "Remove NPC from clone storage", usage = "<name> <tab>", permission = 2)
+	@SubCommand(desc = "Remove NPC from clone storage", usage = "<name> <tab>", isOpOnly = true)
 	public void del(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		String nameModel = args[0];
+		String nameToDel = args[0];
 		int tab = 0;
 		try {
 			tab = Integer.parseInt(args[1]);
 		} catch (NumberFormatException e) { LogWriter.error(e); }
+		boolean deleted = false;
 		for (String name : ServerCloneController.Instance.getClones(tab)) {
-			if (nameModel.equalsIgnoreCase(name)) {
-				ServerCloneController.Instance.removeClone(name, tab);
+			if (nameToDel.equalsIgnoreCase(name)) {
+				deleted = ServerCloneController.Instance.removeClone(name, tab);
 				break;
 			}
 		}
-		if (!ServerCloneController.Instance.removeClone(nameModel, tab)) {
-			throw new CommandException("Npc '%s' wasn't found", nameModel);
+		if (!deleted) {
+			throw new CommandException("message.mod.error", tab +"; " + nameToDel);
 		}
 	}
 
 	@Override
-	public String getDescription() {
-		return "Clone operation (server side)";
-	}
+	public String getDescription() { return "Clone operation (server side)"; }
 
 	public <T extends Entity> List<T> getEntities(Class<? extends T> cls, World world, BlockPos pos, int range) {
 		List<T> list = new ArrayList<>();
@@ -103,7 +100,7 @@ public class CmdClone extends CommandNoppesBase {
 	}
 
 	@SuppressWarnings("all")
-	@SubCommand(desc = "Spawn multiple cloned NPC in a grid", usage = "<name> <tab> <length> <width> [[world:]x,y,z]] [newname]", permission = 2)
+	@SubCommand(desc = "Spawn multiple cloned NPC in a grid", usage = "<name> <tab> <length> <width> [[world:]x,y,z]] [newname]", isOpOnly = true)
 	public boolean grid(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String name = args[0].replaceAll("%", " ");
 		int tab = 0;
@@ -199,7 +196,7 @@ public class CmdClone extends CommandNoppesBase {
 	}
 
 	@SuppressWarnings("all")
-	@SubCommand(desc = "Spawn cloned NPC", usage = "<name> <tab> [[world:]x,y,z]] [newname]", permission = 2)
+	@SubCommand(desc = "Spawn cloned NPC", usage = "<name> <tab> [[world:]x,y,z]] [newname]", isOpOnly = true)
 	public void spawn(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		String name = args[0].replaceAll("%", " ");
 		int tab = 0;

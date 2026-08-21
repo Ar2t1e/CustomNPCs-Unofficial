@@ -5,16 +5,19 @@ import java.util.*;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.DimensionManager;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import noppes.npcs.ForgeEventHandler;
+import noppes.npcs.controllers.scripts.ScriptContainer;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketEventNames;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.IWorld;
@@ -22,145 +25,150 @@ import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.IEntity;
 import noppes.npcs.api.event.WorldEvent;
 import noppes.npcs.blocks.tiles.TileScripted;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.constants.EnumScriptType;
-import noppes.npcs.controllers.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
-import noppes.npcs.dimensions.DimensionHandler;
-import noppes.npcs.util.Util;
+import noppes.npcs.controllers.DimensionController;
 
 import javax.annotation.Nonnull;
 
 public class CmdScript extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 4;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
-	@SubCommand(desc = "List of available event names from all APIs in mod", permission = 4)
+	@Override
+	public String getDescription() { return "Commands for scripts"; }
+
+	@Nonnull
+	public String getName() { return "script"; }
+
+	@SubCommand(desc = "List of available event names from all APIs in mod", isOpOnly = true)
 	public Boolean apilist(MinecraftServer server, ICommandSender sender, String[] args) {
-		StringBuilder list = new StringBuilder();
+		Component message = Component.empty();
 		List<String> g = new ArrayList<>();
 		for (EnumScriptType est : EnumScriptType.values()) { g.add(est.function); }
 		Collections.sort(g);
+		boolean start = true;
 		for (String name : g) {
-			if (list.length() > 0) {
-				list.append(", ");
-			} else {
-				list.append(((char) 167) + "6Mod APIs event names:\n" + ((char) 167) + "r");
+			if (start) {
+				message.append(Component.literal("Mod APIs event names:\n").withStyle(TextFormatting.GOLD));
+				start = false;
 			}
-			list.append(name);
+			else { message.append(Component.literal(", ").withStyle(TextFormatting.GOLD)); }
+			message.append(Component.literal(name).withStyle(TextFormatting.RESET));
 		}
-		list.append(";\n" + ((char) 167) + "6Total Size: " + ((char) 167) + "e").append(g.size());
-		sender.sendMessage(new TextComponentString(list.toString()));
-		if (sender instanceof EntityPlayerMP) { Server.sendData((EntityPlayerMP) sender, EnumPacketClient.EVENT_NAMES, list.toString()); }
+		message.append(Component.literal(";\n").withStyle(TextFormatting.GOLD))
+				.append(Component.literal("Total Size: ").withStyle(TextFormatting.GOLD))
+				.append(Component.literal("" + g.size()).withStyle(TextFormatting.YELLOW));
+		sender.sendMessage(message.getParent());
+		if (sender instanceof EntityPlayerMP) {
+			Map<String, String> names = new HashMap<>();
+			for (EnumScriptType est : EnumScriptType.values()) { names.put(est.function, ""); }
+			Packets.send((EntityPlayerMP) sender, new PacketEventNames(names, (byte) 2));
+		}
 		return true;
 	}
 
-	@SubCommand(desc = "List of available Forge event names", permission = 4)
+	@SubCommand(desc = "List of available Forge event names", isOpOnly = true)
 	public Boolean clientlist(MinecraftServer server, ICommandSender sender, String[] args) {
-		StringBuilder list = new StringBuilder();
-		List<String> g = new ArrayList<>(ScriptController.forgeClientEventNames.values());
+		Component message = Component.empty();
+		List<String> g = new ArrayList<>(ForgeEventHandler.clientEventNames.values());
 		Collections.sort(g);
+		boolean start = true;
 		for (String name : g) {
-			if (list.length() > 0) {
-				list.append(", ");
-			} else {
-				list.append(((char) 167) + "6Client forge event names:\n" + ((char) 167) + "r");
+			if (start) {
+				message.append(Component.literal("Client forge event names:\n").withStyle(TextFormatting.GOLD));
+				start = false;
 			}
-			list.append(name);
+			else { message.append(Component.literal(", ").withStyle(TextFormatting.GOLD)); }
+			message.append(Component.literal(name).withStyle(TextFormatting.RESET));
 		}
-		list.append(";\n" + ((char) 167) + "6Total Size: " + ((char) 167) + "e").append(g.size());
-		sender.sendMessage(new TextComponentString(list.toString()));
-		if (sender instanceof EntityPlayerMP) { Server.sendData((EntityPlayerMP) sender, EnumPacketClient.EVENT_NAMES, list.toString()); }
+		message.append(Component.literal(";\n").withStyle(TextFormatting.GOLD))
+				.append(Component.literal("Total Size: ").withStyle(TextFormatting.GOLD))
+				.append(Component.literal("" + g.size()).withStyle(TextFormatting.YELLOW));
+		sender.sendMessage(message.getParent());
+		if (sender instanceof EntityPlayerMP) {
+			Map<String, String> names = new HashMap<>();
+			for (Map.Entry<Class<?>, String> entry : ForgeEventHandler.clientEventNames.entrySet()) {
+				names.put(entry.getKey().getName(), entry.getValue());
+			}
+			Packets.send((EntityPlayerMP) sender, new PacketEventNames(names, (byte) 0));
+		}
 		return true;
 	}
 
-	@SubCommand(desc = "List of available Forge event names", permission = 4)
+	@SubCommand(desc = "List of available Forge event names", isOpOnly = true)
 	public Boolean forgelist(MinecraftServer server, ICommandSender sender, String[] args) {
-		StringBuilder list = new StringBuilder();
-		List<String> g = new ArrayList<>(ScriptController.forgeEventNames.values());
+		Component message = Component.empty();
+		List<String> g = new ArrayList<>(ForgeEventHandler.eventNames.values());
 		Collections.sort(g);
+		boolean start = true;
 		for (String name : g) {
-			if (list.length() > 0) {
-				list.append(", ");
-			} else {
-				list.append(((char) 167) + "6Server Forge event names:\n" + ((char) 167) + "r");
+			if (start) {
+				message.append(Component.literal("Server forge event names:\n").withStyle(TextFormatting.GOLD));
+				start = false;
 			}
-			list.append(name);
+			else { message.append(Component.literal(", ").withStyle(TextFormatting.GOLD)); }
+			message.append(Component.literal(name).withStyle(TextFormatting.RESET));
 		}
-		list.append(";\n" + ((char) 167) + "6Total Size: " + ((char) 167) + "e").append(g.size());
-		sender.sendMessage(new TextComponentString(list.toString()));
-		if (sender instanceof EntityPlayerMP) { Server.sendData((EntityPlayerMP) sender, EnumPacketClient.EVENT_NAMES, list.toString()); }
+		message.append(Component.literal(";\n").withStyle(TextFormatting.GOLD))
+				.append(Component.literal("Total Size: ").withStyle(TextFormatting.GOLD))
+				.append(Component.literal("" + g.size()).withStyle(TextFormatting.YELLOW));
+		sender.sendMessage(message.getParent());
+		if (sender instanceof EntityPlayerMP) {
+			Map<String, String> names = new HashMap<>();
+			for (Map.Entry<Class<?>, String> entry : ForgeEventHandler.eventNames.entrySet()) {
+				names.put(entry.getKey().getName(), entry.getValue());
+			}
+			Packets.send((EntityPlayerMP) sender, new PacketEventNames(names, (byte) 1));
+		}
 		return true;
 	}
 
-	@SubCommand(desc = "Displays all script owners that have logs.", permission = 4)
+	@SubCommand(desc = "Displays all script owners that have logs.", isOpOnly = true)
 	public Boolean logs(MinecraftServer server, ICommandSender sender, String[] args) {
-		Map<String, ITextComponent> map = new LinkedHashMap<>();
-	 	for (ScriptContainer container : ScriptController.Instance.getErrored()) {
-			ITextComponent message = container.noticeString();
-			map.put(Util.instance.deleteColor(message.getFormattedText()), message);
-		}
-		if (map.isEmpty()) {
-			sender.sendMessage(new TextComponentTranslation("command.script.logs.empty"));
+		List<Component> list = new ArrayList<>();
+	 	for (ScriptContainer container : ScriptController.Instance.getErrored()) { list.add(container.noticeString()); }
+		if (list.isEmpty()) {
+			sender.sendMessage(Component.translatable("command.script.logs.empty").getParent());
 		} else {
-			sender.sendMessage(new TextComponentTranslation("command.script.logs.info"));
-			for (ITextComponent message : map.values()) {
-				sender.sendMessage(message);
-			}
+			sender.sendMessage(Component.translatable("command.script.logs.info").getParent());
+			for (Component message : list) { sender.sendMessage(message.getParent()); }
 		}
-		sender.sendMessage(new TextComponentTranslation("command.script.logs.end"));
+		sender.sendMessage(Component.translatable("command.script.logs.end").getParent());
 		return true;
 	}
 
-	@SubCommand(desc = "Reload scripts and saved data from disks script folder.", permission = 4)
+	@SubCommand(desc = "Reload scripts and saved data from disks script folder.", isOpOnly = true)
 	public Boolean reload(MinecraftServer server, ICommandSender sender, String[] args) {
 		ScriptController.Instance.loadCategories();
-		if (ScriptController.Instance.loadPlayerScripts()) {
-			sender.sendMessage(new TextComponentString("Reload player scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading player scripts"));
-		}
-		if (ScriptController.Instance.loadNPCsScripts()) {
-			sender.sendMessage(new TextComponentString("Reload NPCs scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading NPCs scripts"));
-		}
-		if (ScriptController.Instance.loadForgeScripts()) {
-			sender.sendMessage(new TextComponentString("Reload forge scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading forge scripts"));
-		}
-		if (ScriptController.Instance.loadClientScripts()) {
-			sender.sendMessage(new TextComponentString("Reload client scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading client scripts"));
-		}
-		if (ScriptController.Instance.loadPotionScripts()) {
-			sender.sendMessage(new TextComponentString("Reload potion scripts successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading potion scripts"));
-		}
-		if (ScriptController.Instance.loadConstantData()) {
-			sender.sendMessage(new TextComponentString("Reload constant data successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading constant data"));
-		}
-		if (ScriptController.Instance.loadStoredData()) {
-			sender.sendMessage(new TextComponentString("Reload stored data successfully"));
-		} else {
-			sender.sendMessage(new TextComponentString("Failed reloading stored data"));
-		}
-		if (server != null) {
-			for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-				ScriptController.Instance.sendClientTo(player);
-			}
-		}
+		// Players
+		if (ScriptController.Instance.loadPlayerScripts()) { sender.sendMessage(Component.literal("Reload player scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading player scripts").getParent()); }
+		// NPCs
+		if (ScriptController.Instance.loadNPCsScripts()) { sender.sendMessage(Component.literal("Reload NPCs scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading NPCs scripts").getParent()); }
+		// Forge
+		if (ScriptController.Instance.loadForgeScripts()) { sender.sendMessage(Component.literal("Reload forge scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading forge scripts").getParent()); }
+		// Clients
+		if (ScriptController.Instance.loadClientScripts()) { sender.sendMessage(Component.literal("Reload client scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading client scripts").getParent()); }
+		// Potions
+		if (ScriptController.Instance.loadPotionScripts()) { sender.sendMessage(Component.literal("Reload potion scripts successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading potion scripts").getParent()); }
+		// Constants data
+		if (ScriptController.Instance.loadConstantData()) { sender.sendMessage(Component.literal("Reload constant data successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading constant data").getParent()); }
+		// Stored data
+		if (ScriptController.Instance.loadStoredData()) { sender.sendMessage(Component.literal("Reload stored data successfully").getParent()); }
+		else { sender.sendMessage(Component.literal("Failed reloading stored data").getParent()); }
+		// Client data
+		for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { ScriptController.Instance.sendClientTo(player); }
 		return true;
 	}
 
-	@SubCommand(desc = "Runs scriptCommand in the players scripts", usage = "[args]", permission = 4)
+	@SubCommand(desc = "Runs scriptCommand in the players scripts", usage = "[args]", isOpOnly = true)
 	public Boolean run(MinecraftServer server, ICommandSender sender, String[] args) {
 		IWorld world = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(sender.getEntityWorld());
 		BlockPos bpos = sender.getPosition();
@@ -170,7 +178,7 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "Attempts to execute on the specified object", usage = "<dimensionID> <x> <y> <z> <entity> <triggerID> [Strings]", permission = 4)
+	@SubCommand(desc = "Attempts to execute on the specified object", usage = "<dimensionID> <x> <y> <z> <entity> <triggerID> [Strings]", isOpOnly = true)
 	public Boolean trigger(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		IWorld world;
 		IPos pos = null;
@@ -178,7 +186,7 @@ public class CmdScript extends CommandNoppesBase {
 		int id;
 		try {
 			int dimID = Integer.parseInt(args[0]);
-			if (!DimensionManager.isDimensionRegistered(dimID) || DimensionHandler.getInstance().isDelete(dimID)) {
+			if (!DimensionManager.isDimensionRegistered(dimID) || DimensionController.getInstance().isDelete(dimID)) {
 				throw new CommandException("DimensionID: " + dimID + " - not found");
 			}
 			world = Objects.requireNonNull(NpcAPI.Instance()).getIWorld(dimID);
@@ -217,67 +225,57 @@ public class CmdScript extends CommandNoppesBase {
 		return true;
 	}
 
-	@SubCommand(desc = "Display a list of all load script elements positions in chat", permission = 4)
+	@SubCommand(desc = "Display a list of all load script elements positions in chat", isOpOnly = true)
 	public Boolean list(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		ITextComponent positions;
+		Component positions;
 		String key = args.length > 0 ? args[0] : "all";
 		switch (key) {
 			case "blocks":
 				positions = ScriptController.Instance.getElements(0);
 				if (positions != null) {
-					sender.sendMessage(new TextComponentTranslation("script.command.blocks"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.blocks").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			case "doors":
 				positions = ScriptController.Instance.getElements(1);
 				if (positions != null) {
-					sender.sendMessage(new TextComponentTranslation("script.command.doors"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.doors").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			case "npcs":
 				positions = ScriptController.Instance.getElements(2);
 				if (positions != null) {
-					sender.sendMessage(new TextComponentTranslation("script.command.npcs"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.npcs").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			case "all":
-				sender.sendMessage(new TextComponentTranslation("script.command.all"));
+				sender.sendMessage(Component.translatable("script.command.all").getParent());
 				positions = ScriptController.Instance.getElements(0);
 				if (positions != null) {
-					sender.sendMessage(new TextComponentTranslation("script.command.blocks"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.blocks").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				positions = ScriptController.Instance.getElements(1);
 				if (positions != null) {
-					sender.sendMessage(new TextComponentTranslation("script.command.doors"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.doors").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				positions = ScriptController.Instance.getElements(2);
 				if (positions != null) {
-					sender.sendMessage(new TextComponentTranslation("script.command.npcs"));
-					sender.sendMessage(positions);
+					sender.sendMessage(Component.translatable("script.command.npcs").getParent());
+					sender.sendMessage(positions.getParent());
 				}
 				break;
 			default:
 				throw new CommandException("Unknown type \""+key+"\"");
 		}
 		if (positions == null) {
-			sender.sendMessage(new TextComponentTranslation("script.command.not.found"));
+			sender.sendMessage(Component.translatable("script.command.not.found").getParent());
 		}
 		return true;
-	}
-
-	@Override
-	public String getDescription() {
-		return "Commands for scripts";
-	}
-
-	@Nonnull
-	public String getName() {
-		return "script";
 	}
 
 	@Override
@@ -286,9 +284,9 @@ public class CmdScript extends CommandNoppesBase {
 		if (args.length == 2) {
             switch (args[0]) {
                 case "clientlist":
-                    return new ArrayList<>(ScriptController.forgeClientEventNames.values());
+                    return new ArrayList<>(ForgeEventHandler.clientEventNames.values());
                 case "forgelist":
-                    return new ArrayList<>(ScriptController.forgeEventNames.values());
+                    return new ArrayList<>(ForgeEventHandler.eventNames.values());
                 case "apilist":
                     for (EnumScriptType est : EnumScriptType.values()) { list.add(est.function); }
                     break;

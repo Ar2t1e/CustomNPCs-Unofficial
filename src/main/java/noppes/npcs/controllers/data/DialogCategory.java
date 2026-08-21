@@ -1,5 +1,7 @@
 package noppes.npcs.controllers.data;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
 
 import net.minecraft.nbt.NBTTagCompound;
@@ -13,33 +15,18 @@ public class DialogCategory implements IDialogCategory {
 	public int id = -1;
 	public String title = "";
 
-	@Override
-	public IDialog create() {
-		return new Dialog(this);
-	}
-
-	@Override
-	public IDialog[] dialogs() {
-		return dialogs.values().toArray(new IDialog[0]);
-	}
-
-	@Override
-	public String getName() {
-		return title;
-	}
-
 	public void load(NBTTagCompound compound) {
 		id = compound.getInteger("Slot");
 		title = compound.getString("Title");
 		NBTTagList dialogsList = compound.getTagList("Dialogs", 10);
-        for (int i = 0; i < dialogsList.tagCount(); ++i) {
-            Dialog dialog = new Dialog(this);
-            NBTTagCompound comp = dialogsList.getCompoundTagAt(i);
-            dialog.load(comp);
-            dialog.id = comp.getInteger("DialogId");
-            dialogs.put(dialog.id, dialog);
-        }
-    }
+		for (int i = 0; i < dialogsList.tagCount(); ++i) {
+			Dialog dialog = new Dialog(this);
+			NBTTagCompound comp = dialogsList.getCompoundTagAt(i);
+			dialog.load(comp);
+			dialog.id = comp.getInteger("DialogId");
+			dialogs.put(dialog.id, dialog);
+		}
+	}
 
 	public NBTTagCompound save(NBTTagCompound compound) {
 		compound.setInteger("Slot", id);
@@ -49,6 +36,15 @@ public class DialogCategory implements IDialogCategory {
 		compound.setTag("Dialogs", list);
 		return compound;
 	}
+
+	@Override
+	public List<IDialog> dialogs() { return new ArrayList<>(dialogs.values()); }
+
+	@Override
+	public IDialog create() { return new Dialog(this); }
+
+	@Override
+	public String getName() { return title; }
 
 	// New from Unofficial (BetaZavr)
 	public DialogCategory copy() {

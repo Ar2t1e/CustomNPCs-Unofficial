@@ -19,8 +19,10 @@ public class ContainerNPCTrader extends ContainerNpcInterface {
 	public ContainerNPCTrader(EntityPlayer player, EntityNPCInterface npc, int marcetId) {
 		super(player);
 		inv = player.inventory;
-		if (npc.advanced.roleInterface instanceof RoleTrader) { marcet = (Marcet) ((RoleTrader) npc.advanced.roleInterface).getMarket(); }
+		if (npc != null && npc.role instanceof RoleTrader) { marcet = (Marcet) ((RoleTrader) npc.role).getMarket(); }
 		else if (marcetId > -1) { marcet = MarcetController.getInstance().getMarcet(marcetId); }
+		else { marcet = null; }
+		if (marcet != null && player instanceof EntityPlayerMP) { marcet.addListener(player, true); }
 		for (int i2 = 0; i2 < 3; ++i2) {
 			for (int l1 = 0; l1 < 9; ++l1) {
 				addSlotToContainer(new Slot(inv, l1 + i2 * 9 + 9, 32 + l1 * 18, 140 + i2 * 18));
@@ -37,7 +39,7 @@ public class ContainerNPCTrader extends ContainerNpcInterface {
 	@Override
 	public void onContainerClosed(@Nonnull EntityPlayer playerIn) {
 		super.onContainerClosed(playerIn);
-		if (playerIn instanceof EntityPlayerMP) { marcet.removeListener(playerIn, true); }
+		if (marcet != null && playerIn instanceof EntityPlayerMP) { marcet.removeListener(playerIn, true); }
 	}
 
 	private void reAddSlot(Slot slot) {

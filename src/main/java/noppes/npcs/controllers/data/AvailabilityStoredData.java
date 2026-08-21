@@ -30,9 +30,9 @@ public class AvailabilityStoredData {
 
 	public NBTTagCompound writeToNBT() {
 		NBTTagCompound nbt = new NBTTagCompound();
-		nbt.setString("Key", this.key);
-		nbt.setString("Value", this.value);
-		nbt.setInteger("Type", this.type.ordinal());
+		nbt.setString("Key", key);
+		nbt.setString("Value", value);
+		nbt.setInteger("Type", type.ordinal());
 		return nbt;
 	}
 	

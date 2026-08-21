@@ -1,15 +1,16 @@
 package noppes.npcs.containers;
 
-import java.util.List;
+import java.util.Objects;
 
-import net.minecraft.command.CommandException;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NpcMiscInventory;
+import net.minecraft.nbt.NBTTagCompound;
+import noppes.npcs.controllers.BankController;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketBankSetPlayer;
 import noppes.npcs.controllers.PlayerDataController;
 import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.controllers.data.BankData;
@@ -17,123 +18,85 @@ import noppes.npcs.controllers.data.PlayerData;
 
 import javax.annotation.Nonnull;
 
-public class ContainerNPCBank extends ContainerNpcInterface {
+public class ContainerNPCBank extends Container {
 
 	public static String editPlayerBankData;
-	public BankData data;
 
-	public int ceil, height;
-	public NpcMiscInventory items;
-	public Bank bank;
-	/*
-	 * -1 - not stack in inventory (max ceils) - done else - ceil ID (not open or
-	 * update)
-	 */
-	public int dataCeil; // ServerTickHandler.onPlayerTick();
+	public final @Nonnull NpcMiscInventory items;
+	public final @Nonnull BankData data;
+	public final int scrollY;
+	public final int ceilPos;
+	public final int ceilsUpdate;
+	public final int ceil;
 
-	public ContainerNPCBank(EntityPlayer player, Bank bank, int ceil, int slots) {
-		super(player);
-
-		this.bank = bank;
-		this.ceil = ceil;
-		dataCeil = -2;
-		items = new NpcMiscInventory(slots);
-		data = null;
+	public ContainerNPCBank(EntityPlayer player, @Nonnull NBTTagCompound nbtBD) {
+		ceil = nbtBD.getInteger("GuiCeil");
+		scrollY = nbtBD.getInteger("GuiScrollY");
+		ceilPos = nbtBD.getInteger("GuiCeilPos");
+		ceilsUpdate = nbtBD.getInteger("GuiCeilsUpdate");
+		Bank bank = BankController.getInstance().getBank(nbtBD.getInteger("id"));
+		if (bank == null) { bank = new Bank(); }
 		// Server
-		if (!player.world.isRemote) {
-			PlayerData pd = null;
-			if (ContainerNPCBank.editPlayerBankData != null) {
-				try {
-					List<PlayerData> list = PlayerDataController.instance.getPlayersData(player, ContainerNPCBank.editPlayerBankData);
-					if (!list.isEmpty()) {
-						pd = list.get(0);
-					}
-				} catch (CommandException e) { LogWriter.error(e); }
-			}
+		BankData bd = new BankData(bank, "");
+		if (player instanceof EntityPlayerMP) {
+			EntityPlayerMP sPlayer = (EntityPlayerMP) player;
+			PlayerData pd = PlayerDataController.instance.getDataFromUsername(sPlayer.getServer(), ContainerNPCBank.editPlayerBankData);
 			if (pd == null) {
 				ContainerNPCBank.editPlayerBankData = null;
-				pd = CustomNpcs.proxy.getPlayerData(player);
+				Packets.send(sPlayer, new PacketBankSetPlayer(""));
+				pd = PlayerDataController.instance.getDataFromUsername(sPlayer.getServer(), sPlayer.getName());
 			}
 			if (pd != null) {
-				data = pd.bankData.get(bank.id);
-				items = data.cells.get(ceil);
+				bd = pd.bankData.get(bank.id);
+				bd.addListener(sPlayer);
 			}
 		}
-		int h = ((int) Math.ceil((double) this.items.getSizeInventory() / 9.0d) - 4) * 18;
-		int w = 0;
-		if (this.items.getSizeInventory() > 45) {
-			h = 18;
+		else { bd = PlayerData.get(player).bankData.get(bank.id); }
+		bd.load(nbtBD);
+		data = bd;
+		items = Objects.requireNonNull(data.get(ceil));
+		for (int i = 0; i < items.getSizeInventory(); i++) {
+			addSlotToContainer(new Slot(items, i, -5000, -5000));
 		}
-		h -= 6;
-		// Inventory
-		if (this.items.getSizeInventory() > 45) { // Creative
-			w = 8;
-			this.height = 5 * 18;
-			for (int i = 0; i < this.items.getSizeInventory(); i++) {
-				this.addSlotToContainer(new Slot(this.items, i, -5000, -5000));
-			}
-		} else { // 9x(2 / 5)
-			this.height = (int) Math.ceil((double) this.items.getSizeInventory() / 9.0d) * 18;
-			int u = 0, e = this.items.getSizeInventory();
-			if (this.items.getSizeInventory() % 9 != 0) {
-				e -= this.items.getSizeInventory() % 9;
-			}
-			for (int i = 0; i < this.items.getSizeInventory(); i++) {
-				if (i >= e) {
-					u = (int) (((9.0d - ((double) this.items.getSizeInventory() % 9.0d)) / 2.0d) * 18.0d);
-				}
-				this.addSlotToContainer(
-						new Slot(this.items, i, 8 + u + (i % 9) * 18, 18 + (int) Math.floor((double) i / 9.0d) * 18));
-			}
-		}
-		this.height += 19;
-		// Player Inventory
+		// player Inventory
+		int h = items.getSizeInventory() > 0 ? 95 : 0;
 		for (int r = 0; r < 3; ++r) {
 			for (int p = 0; p < 9; ++p) {
-				this.addSlotToContainer(new Slot(player.inventory, p + r * 9 + 9, 8 + w + p * 18, 122 + r * 18 + h));
+				addSlotToContainer(new Slot(player.inventory, p + r * 9 + 9, 9 + p * 18, 40 + r * 18 + h));
 			}
 		}
 		for (int p = 0; p < 9; ++p) {
-			this.addSlotToContainer(new Slot(player.inventory, p, 8 + w + p * 18, 180 + h));
+			addSlotToContainer(new Slot(player.inventory, p, 9 + p * 18, 98 + h));
 		}
 	}
 
-	public void onContainerClosed(@Nonnull EntityPlayer player) {
-		super.onContainerClosed(player);
-		if (!player.world.isRemote && this.data != null) { // save
-			if (this.bank.isPublic) {
-				if (this.listeners.size() == 1) {
-					this.data.save();
-				}
-			} else {
-				this.data.save();
-			}
-		}
-	}
+	@Override
+	public boolean canInteractWith(@Nonnull EntityPlayer playerIn) { return true; }
 
-	public void onCraftMatrixChanged(@Nonnull IInventory inv) {
-	}
-
+	@Override
 	public @Nonnull ItemStack transferStackInSlot(@Nonnull EntityPlayer playerIn, int index) {
 		ItemStack itemstack = ItemStack.EMPTY;
-		Slot slot = this.inventorySlots.get(index);
+		Slot slot = inventorySlots.get(index);
 		if (slot != null && slot.getHasStack()) {
 			ItemStack itemstack1 = slot.getStack();
 			itemstack = itemstack1.copy();
-			if (index < this.items.getSizeInventory()) {
-				if (!this.mergeItemStack(itemstack1, this.items.getSizeInventory(), this.inventorySlots.size(), true)) {
-					return ItemStack.EMPTY;
-				}
-			} else if (!this.mergeItemStack(itemstack1, 0, this.items.getSizeInventory(), false)) {
-				return ItemStack.EMPTY;
+			if (index < items.getSizeInventory()) {
+				if (!mergeItemStack(itemstack1, items.getSizeInventory(), inventorySlots.size(), true)) { return ItemStack.EMPTY; }
 			}
-			if (itemstack1.isEmpty()) {
-				slot.putStack(ItemStack.EMPTY);
-			} else {
-				slot.onSlotChanged();
-			}
+			else if (!mergeItemStack(itemstack1, 0, items.getSizeInventory(), false)) { return ItemStack.EMPTY; }
+			if (itemstack1.isEmpty()) { slot.putStack(ItemStack.EMPTY); }
+			else { slot.onSlotChanged(); }
 		}
 		return itemstack;
+	}
+
+	@Override
+	public void onContainerClosed(@Nonnull EntityPlayer playerIn) {
+		super.onContainerClosed(playerIn);
+		if (playerIn instanceof EntityPlayerMP) {
+			data.removeListener((EntityPlayerMP) playerIn);
+			if (!data.bank.isPublic) { data.save(); }
+		}
 	}
 
 }

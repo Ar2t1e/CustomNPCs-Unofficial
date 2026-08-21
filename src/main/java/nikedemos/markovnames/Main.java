@@ -12,7 +12,7 @@ import nikedemos.markovnames.generators.MarkovRoman;
 import nikedemos.markovnames.generators.MarkovSaami;
 import nikedemos.markovnames.generators.MarkovSlavic;
 import nikedemos.markovnames.generators.MarkovWelsh;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class Main {
 

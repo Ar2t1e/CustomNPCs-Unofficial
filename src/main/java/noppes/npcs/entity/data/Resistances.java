@@ -11,7 +11,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.DamageSource;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class Resistances {
 
@@ -27,9 +27,11 @@ public class Resistances {
 			if (f.getType() != DamageSource.class) { continue; }
 			try {
 				if (!f.isAccessible()) { f.setAccessible(true); }
-				String name = ((DamageSource) f.get(DamageSource.class)).damageType;
-				if (name.equals("generic") || name.equals("outOfWorld")) { continue; }
-				allDamageNames.add(name);
+				DamageSource source = (DamageSource) f.get(DamageSource.class);
+				if (source != null && source.damageType != null) {
+					if (source.damageType.equals("generic") || source.damageType.equals("outOfWorld")) { continue; }
+					allDamageNames.add(source.damageType);
+				}
 			}
 			catch (Exception e) { LogWriter.error(e); }
 		}

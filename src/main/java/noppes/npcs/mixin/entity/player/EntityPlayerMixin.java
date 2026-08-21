@@ -7,22 +7,19 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.mixin.entity.player.IEntityPlayerMixin;
 import noppes.npcs.client.model.animation.AnimationConfig;
-import noppes.npcs.constants.EnumAnimationStages;
+import noppes.npcs.constants.EnumAnimationStage;
 import noppes.npcs.entity.data.DataAnimation;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = EntityPlayer.class, priority = 499)
+@Mixin(value = EntityPlayer.class, priority = 498)
 public class EntityPlayerMixin implements IEntityPlayerMixin {
 
-    @Mutable
-    @Shadow
-    protected BlockPos spawnPos;
+    @Mutable @Shadow protected BlockPos spawnPos;
 
-    @Unique
-    public DataAnimation npcs$animation;
+    @Unique public DataAnimation npcs$animation;
 
     @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("HEAD"))
     public void npcs$attackTargetEntityWithCurrentItem(Entity targetEntity, CallbackInfo ci) {
@@ -31,8 +28,8 @@ public class EntityPlayerMixin implements IEntityPlayerMixin {
         }
     }
 
-    @Inject(method = "applyEntityAttributes", at = @At("TAIL"))
-    protected void npcs$applyEntityAttributes(CallbackInfo ci) {
+    @Inject(method = "entityInit", at = @At("TAIL"))
+    protected void npcs$entityInit(CallbackInfo ci) {
         if (npcs$animation == null) { npcs$animation = new DataAnimation((EntityPlayer) (Object) this); }
     }
 
@@ -51,7 +48,7 @@ public class EntityPlayerMixin implements IEntityPlayerMixin {
         if (CustomNpcs.ShowCustomAnimation) {
             EntityPlayer player = (EntityPlayer) (Object) this;
             // Jump
-            if (npcs$animation.getJump() && player.onGround && npcs$animation.getAnimationStage() != EnumAnimationStages.Started) {
+            if (npcs$animation.getJump() && player.onGround && npcs$animation.getAnimationStage() != EnumAnimationStage.Started) {
                 npcs$animation.setJump(false);
                 if (npcs$animation.isAnimated(AnimationKind.JUMP)) {
                     npcs$animation.stopAnimation();

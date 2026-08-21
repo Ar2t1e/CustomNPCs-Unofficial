@@ -1,24 +1,24 @@
 package noppes.npcs.api.block;
 
-import noppes.npcs.api.ILayerModel;
+import noppes.npcs.api.ILayerBlockModel;
 import noppes.npcs.api.ITimers;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
-public interface IBlockScripted extends IBlock {
+import java.util.List;
 
-	ILayerModel createLayerModel();
+public interface IBlockScripted extends IBlock {
 
 	String executeCommand(@ParamName("command") String command);
 
+	@SuppressWarnings("unused")
 	float getHardness();
 
+	@SuppressWarnings("unused")
 	boolean getIsLadder();
 
-	boolean getIsPassable();
-
-	ILayerModel[] getLayerModels();
+	@SuppressWarnings("unused")
+	boolean getIsPassible();
 
 	int getLight();
 
@@ -28,11 +28,12 @@ public interface IBlockScripted extends IBlock {
 
 	float getResistance();
 
-	int getRotationX();
+	float getRotationX();
 
-	int getRotationY();
+	@SuppressWarnings("unused")
+	float getRotationY();
 
-	int getRotationZ();
+	float getRotationZ();
 
 	float getScaleX();
 
@@ -40,33 +41,35 @@ public interface IBlockScripted extends IBlock {
 
 	float getScaleZ();
 
+	@SuppressWarnings("unused")
 	ITextPlane getTextPlane();
 
+	@SuppressWarnings("unused")
 	ITextPlane getTextPlane2();
 
+	@SuppressWarnings("unused")
 	ITextPlane getTextPlane3();
 
+	@SuppressWarnings("unused")
 	ITextPlane getTextPlane4();
 
+	@SuppressWarnings("unused")
 	ITextPlane getTextPlane5();
 
+	@SuppressWarnings("unused")
 	ITextPlane getTextPlane6();
 
 	ITimers getTimers();
 
-	boolean removeLayerModel(@ParamName("layer") ILayerModel layer);
-
-	boolean removeLayerModel(@ParamName("id") int id);
-
 	void setHardness(@ParamName("hardness") float hardness);
 
-	void setIsLadder(@ParamName("enabled") boolean enabled);
+	@SuppressWarnings("unused")
+	void setIsLadder(@ParamName("bo") boolean bo);
 
-	void setIsPassible(@ParamName("passable") boolean passable);
+	@SuppressWarnings("unused")
+	void setIsPassible(@ParamName("bo") boolean bo);
 
 	void setLight(@ParamName("value") int value);
-
-	void setModel(@ParamName("block") IBlock block);
 
 	void setModel(@ParamName("item") IItemStack item);
 
@@ -74,7 +77,8 @@ public interface IBlockScripted extends IBlock {
 
 	void setModel(@ParamName("blockName") String blockName, @ParamName("meta") int meta);
 
-	void setRedstonePower(@ParamName("power") int power);
+	@SuppressWarnings("unused")
+	void setRedstonePower(@ParamName("strength") int strength);
 
 	void setResistance(@ParamName("resistance") float resistance);
 
@@ -84,6 +88,35 @@ public interface IBlockScripted extends IBlock {
 
 	void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
 
+
+	// New from Unofficial (BetaZavr)
+	@SuppressWarnings("unused")
+	ITextPlane getTextPlane(@ParamName("id") int id);
+
+	void setModel(@ParamName("block") IBlock block);
+
+	void setObjModel(@ParamName("path") String path);
+
+	@SuppressWarnings("unused")
+	void setObjModel(@ParamName("path") String path,
+					 @ParamName("objVisibleMeshes") String[] objVisibleMeshes,
+					 @ParamName("objMaterialsReplase") String[][] objMaterialsReplase);
+
+	ILayerBlockModel getModel(@ParamName("id") int id);
+
+	@SuppressWarnings("unused")
+	ILayerBlockModel createLayerModel();
+
+	@SuppressWarnings("unused")
+	List<ILayerBlockModel> getLayerModels();
+
+	@SuppressWarnings("unused")
+	boolean removeLayerModel(@ParamName("layer") ILayerBlockModel layer);
+
+	@SuppressWarnings("unused")
+	boolean removeLayerModel(@ParamName("id") int id);
+
+	@SuppressWarnings("unused")
 	void updateModel();
 
 }

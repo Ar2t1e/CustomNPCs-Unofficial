@@ -8,7 +8,7 @@ import java.util.Objects;
 
 import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -96,15 +96,15 @@ public class LinkedNpcController {
 			if (npc.posX == 0.0 && npc.posY == 0.0 && npc.posZ == 0.0) { return; }
 			npc.linkedLast = data.time;
 			List<int[]> points = npc.ais.getMovingPath();
-			NBTTagCompound compound = NBTTags.NBTMerge(readNpcData(npc), data.data);
-			npc.display.readToNBT(compound);
-			npc.stats.readToNBT(compound);
+			NBTTagCompound compound = NBTTags.nbtMerge(readNpcData(npc), data.data);
+			npc.display.load(compound);
+			npc.stats.load(compound);
 			npc.advanced.load(compound);
-			npc.inventory.readEntityFromNBT(compound);
+			npc.inventory.load(compound);
 			if (compound.hasKey("ModelData")) {
 				((EntityCustomNpc) npc).modelData.load(compound.getCompoundTag("ModelData"));
 			}
-			npc.ais.readToNBT(compound);
+			npc.ais.load(compound);
 			npc.transform.load(compound);
 			npc.animation.load(compound);
 			npc.ais.setMovingPath(points);
@@ -138,10 +138,10 @@ public class LinkedNpcController {
 
 	private NBTTagCompound readNpcData(EntityNPCInterface npc) {
 		NBTTagCompound compound = new NBTTagCompound();
-		npc.display.writeToNBT(compound);
-		npc.inventory.writeEntityToNBT(compound);
-		npc.stats.writeToNBT(compound);
-		npc.ais.writeToNBT(compound);
+		npc.display.save(compound);
+		npc.inventory.save(compound);
+		npc.stats.save(compound);
+		npc.ais.save(compound);
 		npc.advanced.save(compound);
 		npc.transform.save(compound);
 		npc.animation.save(compound);

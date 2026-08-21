@@ -7,6 +7,7 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.BlockPos;
 import noppes.npcs.controllers.SyncController;
 import noppes.npcs.util.BuilderData;
 
@@ -17,12 +18,12 @@ public class ContainerBuilderSettings extends Container {
 	public BuilderData builderData;
 	EntityPlayer player;
 
-	public ContainerBuilderSettings(EntityPlayer player, int id, int type) {
+	public ContainerBuilderSettings(EntityPlayer player, BlockPos pos) {
 		this.player = player;
-		BuilderData base = SyncController.dataBuilder.get(id);
+		BuilderData base = SyncController.dataBuilder.get(pos.getX());
 		
 		if (base != null) { this.builderData = base; }
-		else { this.builderData = new BuilderData(id, type); }
+		else { this.builderData = new BuilderData(pos.getX(), pos.getY()); }
 		
 		if (this.builderData.getType() < 3) {
 			for (int i = 0; i < 9; ++i) {

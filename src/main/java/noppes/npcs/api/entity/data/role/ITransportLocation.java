@@ -1,6 +1,6 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface ITransportLocation {
 
@@ -18,6 +18,7 @@ public interface ITransportLocation {
 
 	int getZ();
 
+	// New from Unofficial (BetaZavr)
 	void setPos(@ParamName("dimensionId") int dimensionId,
 				@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 

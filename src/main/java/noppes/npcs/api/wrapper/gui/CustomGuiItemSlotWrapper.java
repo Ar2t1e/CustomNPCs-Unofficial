@@ -1,12 +1,14 @@
 package noppes.npcs.api.wrapper.gui;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.GuiComponentType;
+import noppes.npcs.api.functions.gui.GuiItemSlotUpdate;
+import noppes.npcs.api.gui.ICustomGui;
 import noppes.npcs.api.gui.IItemSlot;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
@@ -17,73 +19,87 @@ import java.util.Objects;
 public class CustomGuiItemSlotWrapper extends CustomGuiComponentWrapper implements IItemSlot {
 
 	protected IItemStack stack = ItemStackWrapper.AIR;
-	protected EntityPlayer player = null;
-	protected Slot slot = null;
-	protected boolean showBack = true;
-	protected int slotIndex = 0;
+	protected int guiType = 1;
+	protected EntityPlayer player;
+	protected GuiItemSlotUpdate onSlotUpdate = null;
 
-	public CustomGuiItemSlotWrapper() { this(0, 0, null); }
+	public CustomGuiItemSlotWrapper() { }
 
 	public CustomGuiItemSlotWrapper(int x, int y, IItemStack stack) {
 		setPos(x, y);
+		setSize(14, 14);
 		setStack(stack);
 	}
 
+	public CustomGuiItemSlotWrapper(int x, int y, EntityPlayer playerIn) {
+		player = playerIn;
+		setPos(x, y);
+		setSize(14, 14);
+	}
+
 	@Override
-	public CustomGuiComponentWrapper fromNBT(NBTTagCompound nbt) {
-		super.fromNBT(nbt);
-		setStack(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(new ItemStack(nbt.getCompoundTag("Stack"))));
-		showBack = nbt.getBoolean("ShowBack");
+	public boolean hasStack() { return !stack.isEmpty(); }
+
+	@Override
+	public IItemStack getStack() {
+		if (player != null) { stack = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(player.inventory.getStackInSlot(getId())); }
+		return stack;
+	}
+
+	@Override
+	public IItemSlot setStack(IItemStack stackIn) {
+		stack = stackIn == null ? ItemStackWrapper.AIR : stackIn;
+		if (player != null) { player.inventory.setInventorySlotContents(getId(), stack.getMCItemStack()); }
 		return this;
 	}
 
 	@Override
-	public Slot getMCSlot() { return slot; }
+	public int getGuiType() { return guiType; }
 
 	@Override
-	public IItemStack getStack() { return stack; }
+	public CustomGuiItemSlotWrapper setGuiType(int type) {
+		guiType = type;
+		return this;
+	}
+
+	@Override
+	public Slot getMCSlot() {
+		if (player != null && player.openContainer instanceof ContainerCustomGui) { return ((ContainerCustomGui) player.openContainer).getSlot(id); }
+		return null;
+	}
 
 	@Override
 	public int getType() { return GuiComponentType.ITEM_SLOT.get(); }
 
 	@Override
-	public boolean hasStack() { return stack != null && !stack.isEmpty(); }
+	public NBTTagCompound toNBT(NBTTagCompound nbt) {
+		super.toNBT(nbt);
+		nbt.setTag("stack", stack.getMCItemStack().serializeNBT());
+		nbt.setInteger("guiType", guiType);
+		nbt.setBoolean("playerSlot", isPlayerSlot());
+		return nbt;
+	}
 
 	@Override
-	public boolean isShowBack() { return showBack; }
-
-	@Override
-	public void setShowBack(boolean bo) { showBack = bo; }
-
-	@Override
-	public IItemSlot setStack(IItemStack itemStack) {
-		if (itemStack == null) { stack = ItemStackWrapper.AIR; }
-		else { stack = itemStack; }
-		if (player != null && player.openContainer instanceof ContainerCustomGui) {
-			player.openContainer.getSlot(slotIndex).inventory.setInventorySlotContents(slotIndex, stack.getMCItemStack());
-			player.openContainer.getSlot(slotIndex).inventory.markDirty();
-		}
+	public CustomGuiComponentWrapper fromNBT(NBTTagCompound nbt) {
+		super.fromNBT(nbt);
+		setStack(Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(new ItemStack(nbt.getCompoundTag("stack"))));
+		setGuiType(nbt.getInteger("guiType"));
+		if (nbt.getBoolean("playerSlot")) { player = CustomNpcs.proxy.getPlayer(); }
 		return this;
 	}
 
 	@Override
-	public NBTTagCompound toNBT(NBTTagCompound nbt) {
-		super.toNBT(nbt);
-		nbt.setTag("Stack", stack.getMCItemStack().serializeNBT());
-		nbt.setBoolean("ShowBack", showBack);
-		return nbt;
+	public boolean isPlayerSlot() { return player != null; }
+
+	@Override
+	public CustomGuiItemSlotWrapper setOnUpdate(GuiItemSlotUpdate onPress) {
+		onSlotUpdate = onPress;
+		return this;
 	}
 
-	public void setPlayer(EntityPlayerMP playerIn) { player = playerIn; }
-
-	public void setIndex(int index) {
-		if (index < 0) { index *= -1; }
-		slotIndex = index;
-	}
-
-	public void setPlayerAndSlot(Slot slotIn, EntityPlayer playerIn) {
-		slot = slotIn;
-		player = playerIn;
+	public final void onUpdate(ICustomGui gui) {
+		if (onSlotUpdate != null) { onSlotUpdate.onUpdate(gui, this); }
 	}
 
 }

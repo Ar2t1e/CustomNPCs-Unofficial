@@ -24,14 +24,14 @@ public enum EnumParts
 	WRIST_RIGHT("wristright", 2), 
 	LEFT_STACK("left_stack", 6), 
 	RIGHT_STACK("right_stack", 7), 
-	LEG_LEFT("legleft", 4), 
-	LEG_RIGHT("legright", 5), 
-	FOOT_LEFT("footleft", 4), 
-	FOOT_RIGHT("footright", 5), 
+	LEG_LEFT("legleft", 4),
+	LEG_RIGHT("legright", 5),
+	FOOT_LEFT("footleft", 4),
+	FOOT_RIGHT("footright", 5),
+	FEET_LEFT("footleft", 4),
+	FEET_RIGHT("footright", 5),
 	EYES("eyes", -1),
-	BELT("belt", -1), 
-	FEET_LEFT("bootleft", 4), 
-	FEET_RIGHT("bootright", 5),
+	BELT("belt", -1),
 	CUSTOM("custom", -1),
 	CUSTOM_LAYERS("layers", -1);
 	
@@ -67,7 +67,7 @@ public enum EnumParts
 				ep == EnumParts.ARM_LEFT || ep == EnumParts.ARM_RIGHT ||
 				ep == EnumParts.LEG_LEFT || ep == EnumParts.LEG_RIGHT ||
 				ep == EnumParts.WRIST_LEFT || ep == EnumParts.WRIST_RIGHT ||
-				ep == EnumParts.FOOT_LEFT || ep == EnumParts.FOOT_RIGHT)
+				ep == EnumParts.FEET_LEFT || ep == EnumParts.FEET_RIGHT)
 		{ return ep; }
 		return EnumParts.HEAD;
 	}

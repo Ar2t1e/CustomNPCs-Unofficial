@@ -16,70 +16,71 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import noppes.npcs.CustomItems;
 import noppes.npcs.CustomNpcsPermissions;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.CustomTabs;
 import noppes.npcs.blocks.tiles.TileWaypoint;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import noppes.npcs.util.IPermission;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
 
-public class BlockWaypoint
-extends BlockInterface
-implements IPermission {
+public class BlockWaypoint extends BlockInterface {
 
 	public BlockWaypoint() {
 		super(Material.IRON);
-		this.setName("npcwaypoint");
-		this.setSoundType(SoundType.METAL);
-		this.setHardness(5.0f);
-		this.setResistance(10.0f);
-		this.setCreativeTab(CustomRegisters.tab);
+		setName("npcwaypoint");
+		setSoundType(SoundType.METAL);
+		setHardness(5.0f);
+		setResistance(10.0f);
+		setCreativeTab(CustomTabs.TOOLS);
 	}
 
+	@Override
 	public TileEntity createNewTileEntity(@Nonnull World var1, int var2) {
 		return new TileWaypoint();
 	}
 
+	@Override
 	@SideOnly(Side.CLIENT)
 	public @Nonnull BlockRenderLayer getBlockLayer() {
 		return BlockRenderLayer.CUTOUT;
 	}
 
+	@Override
 	public @Nonnull EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
 		return EnumBlockRenderType.MODEL;
 	}
 
 	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.SaveTileEntity;
-	}
-
+	@SuppressWarnings("deprecation")
 	public boolean isFullCube(@Nonnull IBlockState state) {
 		return false;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
 	public boolean isOpaqueCube(@Nonnull IBlockState state) {
 		return false;
 	}
 
+	@Override
 	public boolean onBlockActivated(@Nonnull World par1World, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (par1World.isRemote) {
 			return false;
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
-		if (currentItem.getItem() == CustomRegisters.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.Waypoint, null, pos.getX(), pos.getY(), pos.getZ());
+		if (currentItem.getItem() == CustomItems.wand && CustomNpcsPermissions.hasPermission((EntityPlayerMP) player, CustomNpcsPermissions.EDIT_BLOCKS)) {
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.Waypoint, null, pos);
 			return true;
 		}
 		return false;
 	}
 
+	@Override
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
-		if (entity instanceof EntityPlayer && !world.isRemote) {
-			NoppesUtilServer.sendOpenGui((EntityPlayer) entity, EnumGuiType.Waypoint, null, pos.getX(), pos.getY(), pos.getZ());
+		if (entity instanceof EntityPlayerMP && !world.isRemote) {
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entity, EnumGuiType.Waypoint, null, pos);
 		}
 	}
 

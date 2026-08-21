@@ -3,15 +3,11 @@ package noppes.npcs.mixin.entity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.MathHelper;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.api.mixin.entity.IEntityLivingBaseMixin;
+import noppes.npcs.api.mixin.entity.IEntityLivingBaseIMixin;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.Util;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,43 +15,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Random;
+@Mixin(value = EntityLivingBase.class, priority = 498)
+public class EntityLivingBaseMixin implements IEntityLivingBaseIMixin {
 
-@Mixin(value = EntityLivingBase.class, priority = 499)
-public class EntityLivingBaseMixin implements IEntityLivingBaseMixin {
-
-    @Final
-    @Shadow
-    protected static DataParameter<Byte> HAND_STATES;
-
-    @Mutable
-    @Shadow
-    private DamageSource lastDamageSource;
-
-    @Mutable
-    @Shadow
-    private long lastDamageStamp;
-
-    @Shadow
-    protected float lastDamage;
-
-    @Mutable
-    @Shadow
-    protected int recentlyHit;
-
-    @Mutable
-    @Shadow
-    protected double interpTargetYaw;
-
-    @Mutable
-    @Shadow
-    protected double interpTargetPitch;
-
-    @Unique
-    protected Random nps$rand = new Random();
-
-    @Unique
-    private DamageSource npcs$currentDamageSource;
+    @Unique private DamageSource npcs$currentDamageSource;
 
     // remember the source of damage
     @Inject(method = "attackEntityFrom", at = @At("HEAD"))
@@ -75,7 +38,7 @@ public class EntityLivingBaseMixin implements IEntityLivingBaseMixin {
         if (event.isCanceled()) { return; }
         strength = event.getStrength();
         xRatio = event.getRatioX(); zRatio = event.getRatioZ();
-        if (nps$rand.nextDouble() >= parent.getEntityAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).getAttributeValue()) {
+        if (parent.getRNG().nextDouble() >= parent.getEntityAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).getAttributeValue()) {
             parent.isAirBorne = true;
             double f = MathHelper.sqrt(xRatio * xRatio + zRatio * zRatio);
             parent.motionX /= 2.0d;
@@ -116,28 +79,6 @@ public class EntityLivingBaseMixin implements IEntityLivingBaseMixin {
     }
 
     @Override
-    public void npcs$setLastDamageSource(DamageSource newDamageSource) {
-        lastDamageSource = newDamageSource;
-    }
-
-    @Override
-    public void npcs$setLastDamageStamp(long newLastDamageStamp) { lastDamageStamp = newLastDamageStamp; }
-
-    @Override
-    public float npcs$getLastDamage() {
-        return lastDamage;
-    }
-
-    @Override
-    public void npcs$setRecentlyHit(int newRecentlyHit) {
-        if (newRecentlyHit < 0) { newRecentlyHit *= -1; }
-        recentlyHit = newRecentlyHit;
-    }
-
-    @Override
     public void npcs$setCurrentDamageSource(DamageSource source) { npcs$currentDamageSource = source; }
-
-    @Override
-    public DataParameter<Byte> npcs$getHandStates() { return HAND_STATES; }
 
 }

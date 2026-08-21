@@ -1,8 +1,7 @@
 package noppes.npcs.api.entity;
 
-import net.minecraft.entity.EntityCreature;
 import noppes.npcs.api.ITimers;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.data.INPCAdvanced;
 import noppes.npcs.api.entity.data.INPCAi;
 import noppes.npcs.api.entity.data.INPCAnimation;
@@ -14,9 +13,10 @@ import noppes.npcs.api.entity.data.INPCStats;
 import noppes.npcs.api.handler.data.IDialog;
 import noppes.npcs.api.handler.data.IFaction;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.entity.EntityNPCInterface;
 
-@SuppressWarnings("all")
-public interface ICustomNpc<T extends EntityCreature> extends IEntityLiving<T> {
+@SuppressWarnings("unused")
+public interface ICustomNpc<T extends EntityNPCInterface> extends IEntityLiving<T> {
 
 	String executeCommand(@ParamName("command") String command);
 
@@ -26,7 +26,7 @@ public interface ICustomNpc<T extends EntityCreature> extends IEntityLiving<T> {
 
 	INPCAnimation getAnimations();
 
-	IDialog getDialog(@ParamName("id") int id);
+	IDialog getDialog(@ParamName("slot") int slot);
 
 	INPCDisplay getDisplay();
 
@@ -58,7 +58,7 @@ public interface ICustomNpc<T extends EntityCreature> extends IEntityLiving<T> {
 
 	void sayTo(@ParamName("player") IPlayer<?> player, @ParamName("message") String message);
 
-	void setDialog(@ParamName("id") int id, @ParamName("dialog") IDialog dialog);
+	void setDialog(@ParamName("slot") int slot, @ParamName("dialog") IDialog dialog);
 
 	void setFaction(@ParamName("id") int id);
 
@@ -67,19 +67,11 @@ public interface ICustomNpc<T extends EntityCreature> extends IEntityLiving<T> {
 	IProjectile<?> shootItem(@ParamName("x") double x, @ParamName("y") double y, @ParamName("z") double z,
 							 @ParamName("item") IItemStack item, @ParamName("accuracy") int accuracy);
 
-	IProjectile<?> shootItem(@ParamName("entity") IEntityLivingBase<?> entity,
+	IProjectile<?> shootItem(@ParamName("target") IEntityLivingBase<?> target,
 							 @ParamName("item") IItemStack item, @ParamName("accuracy") int accuracy);
 
 	void trigger(@ParamName("id") int id, @ParamName("arguments") Object... arguments);
 
 	void updateClient();
-
-	int getOffsetX();
-
-	int getOffsetY();
-
-	int getOffsetZ();
-
-	void setOffset(@ParamName("x") int x, @ParamName("y") int y, @ParamName("z") int z);
 
 }

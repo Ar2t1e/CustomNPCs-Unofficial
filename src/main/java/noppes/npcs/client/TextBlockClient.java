@@ -8,9 +8,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
-import noppes.npcs.NoppesStringUtils;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.entity.data.TextBlock;
 import noppes.npcs.util.Util;
 
@@ -46,7 +46,7 @@ public class TextBlockClient extends TextBlock {
 	}
 
 	private void addLine(String text) { // Change
-		TextComponentString line = new TextComponentString(text);
+		Component line = Component.literal(text);
 		line.setStyle(style);
 		lines.add(line);
 	}

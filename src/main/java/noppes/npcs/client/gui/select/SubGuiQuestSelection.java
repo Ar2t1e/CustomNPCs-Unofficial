@@ -1,86 +1,88 @@
 package noppes.npcs.client.gui.select;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
-import noppes.npcs.client.gui.util.*;
+import com.google.common.collect.Lists;
 import noppes.npcs.controllers.QuestController;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.controllers.data.QuestCategory;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.GuiSelectionListener;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
-import javax.annotation.Nonnull;
-
-public class SubGuiQuestSelection extends SubGuiInterface implements ICustomScrollListener {
+public class SubGuiQuestSelection extends GuiBasic implements ICustomScrollListener {
 
 	protected final HashMap<String, QuestCategory> categoryData = new HashMap<>();
 	protected final HashMap<String, Quest> questData = new HashMap<>();
-	protected GuiSelectionListener listener;
-	protected GuiCustomScroll scrollCategories;
-	protected GuiCustomScroll scrollQuests;
+	protected GuiCustomScrollNop scrollCategories;
+	protected GuiCustomScrollNop scrollQuests;
 	protected QuestCategory selectedCategory;
+	protected GuiSelectionListener listener;
 	public Quest selectedQuest;
 
-	public SubGuiQuestSelection(int questID) {
-		super(0);
+	public SubGuiQuestSelection(int questId) {
+		super();
 		setBackground("menubg.png");
 		drawDefaultBackground = false;
-		title = "";
-		xSize = 366;
-		ySize = 226;
+		imageWidth = 366;
+		imageHeight = 226;
 
-		selectedQuest = QuestController.instance.quests.get(questID);
+		selectedQuest = QuestController.instance.quests.get(questId);
 		if (selectedQuest != null) { selectedCategory = selectedQuest.category; }
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.getID() == 2) {
-			if (selectedQuest != null) { scrollDoubleClicked(null, null); }
-			else { onClosed(); }
-		}
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		if (parent instanceof GuiSelectionListener) { listener = (GuiSelectionListener) parent; }
-		addLabel(new GuiNpcLabel(0, "gui.categories", guiLeft + 8, guiTop + 4));
-		addLabel(new GuiNpcLabel(1, "quest.quests", guiLeft + 175, guiTop + 4));
-		addButton(new GuiNpcButton(2, guiLeft + xSize - 26, guiTop + 4, 20, 20, "X"));
+		if (wrapper.parent instanceof GuiSelectionListener) { listener = (GuiSelectionListener) wrapper.parent; }
+		addLabel(0, guiLeft + 8, guiTop + 4, "gui.categories");
+		addLabel(1, guiLeft + 175, guiTop + 4, "quest.quests");
+		addButton(2, guiLeft + imageWidth - 22, guiTop + 4, "X")
+				.setSize(12, 12);
 		categoryData.clear();
 		for (QuestCategory category : QuestController.instance.categories.values()) { categoryData.put(category.title, category); }
 		questData.clear();
-		if (selectedCategory != null) { for (Quest quest : selectedCategory.quests.values()) { questData.put(quest.getTitle(), quest); } }
-		if (scrollCategories == null) { scrollCategories = new GuiCustomScroll(this, 0).setSize(170, 200); }
-		scrollCategories.setList(new ArrayList<>(categoryData.keySet()));
+		if (selectedCategory != null) {
+			for (Quest quest : selectedCategory.quests.values()) { questData.put(quest.title, quest); }
+		}
+		if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, 200); }
+		scrollCategories.setList(Lists.newArrayList(categoryData.keySet()));
 		if (selectedCategory != null) { scrollCategories.setSelected(selectedCategory.title); }
-		scrollCategories.guiLeft = guiLeft + 4;
-		scrollCategories.guiTop = guiTop + 14;
-		addScroll(scrollCategories);
-		if (scrollQuests == null) { scrollQuests = new GuiCustomScroll(this, 1).setSize(170, 200); }
-		scrollQuests.setList(new ArrayList<>(questData.keySet()));
-		if (selectedQuest != null) { scrollQuests.setSelected(selectedQuest.getTitle()); }
-		scrollQuests.guiLeft = guiLeft + 175;
-		scrollQuests.guiTop = guiTop + 14;
-		addScroll(scrollQuests);
+		add(scrollCategories.setPos(guiLeft + 4, guiTop + 14));
+
+		if (scrollQuests == null) { scrollQuests = addScroll(1).setSize(170, 200); }
+		scrollQuests.setList(Lists.newArrayList(questData.keySet()));
+		if (selectedQuest != null) { scrollQuests.setSelected(selectedQuest.title); }
+		add(scrollQuests.setPos(guiLeft + 175, guiTop + 14));
 	}
 
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 0) {
+	public void buttonEvent(GuiButtonNop button) {
+		if (button.id == 2) {
+			if (selectedQuest != null) { scrollDoubleClicked(null); }
+			else { onClose(); }
+		}
+	}
+
+	@Override
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		if (scroll.id == 0) {
 			selectedCategory = categoryData.get(scrollCategories.getSelected());
 			selectedQuest = null;
-			scrollQuests.setSelect(-1);
+			scrollQuests.clearSelection();
 		}
-		if (scroll.getID() == 1) { selectedQuest = questData.get(scrollQuests.getSelected()); }
+		if (scroll.id == 1) { selectedQuest = questData.get(scrollQuests.getSelected()); }
 		initGui();
 	}
 
 	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) {
-		if (selectedQuest == null) { return; }
-		if (listener != null) { listener.selected(selectedQuest.id, selectedQuest.getTitle()); }
-		onClosed();
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+		if (selectedQuest != null) {
+			if (listener != null) { listener.selected(selectedQuest.id, selectedQuest.title); }
+			onClose();
+		}
 	}
+
 }

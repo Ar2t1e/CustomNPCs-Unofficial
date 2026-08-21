@@ -39,7 +39,7 @@ implements IEmotionPart {
 
 	public EntityNPCInterface npc;
 	
-	public EmotionFrame(int id) { this.id = id; }
+	public EmotionFrame(int idIn) { id = idIn; }
 
 	@Override
 	public boolean isBlink() { return blink; }
@@ -48,23 +48,23 @@ implements IEmotionPart {
 	public boolean isEndBlink() { return endBlink; }
 
 	@Override
-	public void setBlink(boolean bo) { this.blink = bo; }
+	public void setBlink(boolean bo) { blink = bo; }
 	@Override
-	public void setEndBlink(boolean bo) { this.endBlink = bo; }
+	public void setEndBlink(boolean bo) { endBlink = bo; }
 	
 	public void readFromNBT(NBTTagCompound compound) {
-		if (compound.getKeySet().isEmpty()) { return; }
-		this.id = compound.getInteger("Part");
-		this.setSpeed(compound.getInteger("Speed"));
-		this.setEndDelay(compound.getInteger("EndDelay"));
-		this.smooth = compound.getBoolean("IsSmooth");
-		this.disable = compound.getBoolean("IsDisable");
-		this.blink = compound.getBoolean("IsBlink");
-		this.endBlink = compound.getBoolean("IsEndBlink");
-		this.rndMouth = compound.getBoolean("IsRandomMouth");
-		this.showMouth = compound.getBoolean("ShowMouth");
+		if (compound.hasNoTags()) { return; }
+		id = compound.getInteger("Part");
+		setSpeed(compound.getInteger("Speed"));
+		setEndDelay(compound.getInteger("EndDelay"));
+		smooth = compound.getBoolean("IsSmooth");
+		disable = compound.getBoolean("IsDisable");
+		blink = compound.getBoolean("IsBlink");
+		endBlink = compound.getBoolean("IsEndBlink");
+		rndMouth = compound.getBoolean("IsRandomMouth");
+		showMouth = compound.getBoolean("ShowMouth");
 		
-		this.rotMouth = compound.getFloat("RotationMouth");
+		rotMouth = compound.getFloat("RotationMouth");
 		NBTTagList listRotEye = compound.getTagList("RotationEye", 5);
 		NBTTagList listOffEye = compound.getTagList("OffsetEye", 5);
 		NBTTagList listScEye = compound.getTagList("ScaleEye", 5);
@@ -80,21 +80,21 @@ implements IEmotionPart {
 		int max = listRotEye.tagCount();
 		if (max < listOffEye.tagCount()) { max = listOffEye.tagCount(); }
 		if (max < listScEye.tagCount()) { max = listScEye.tagCount(); }
-		if (max < this.rotEye.length) { max = this.rotEye.length; }
-		if (max < this.offsetEye.length) { max = this.offsetEye.length; }
-		if (max < this.scaleEye.length) { max = this.scaleEye.length; }
+		if (max < rotEye.length) { max = rotEye.length; }
+		if (max < offsetEye.length) { max = offsetEye.length; }
+		if (max < scaleEye.length) { max = scaleEye.length; }
 		for (int i = 0; i < max; i++) {
-			if (i < this.rotEye.length && i < listRotEye.tagCount()) { this.rotEye[i] = listRotEye.getFloatAt(i); }
-			if (i < this.offsetEye.length && i < listOffEye.tagCount()) { this.offsetEye[i] = listOffEye.getFloatAt(i); }
-			if (i < this.scaleEye.length && i < listScEye.tagCount()) { this.scaleEye[i] = listScEye.getFloatAt(i); }
-			if (i < this.rotBrow.length && i < listRotBrow.tagCount()) { this.rotBrow[i] = listRotBrow.getFloatAt(i); }
-			if (i < this.offsetBrow.length && i < listOffBrow.tagCount()) { this.offsetBrow[i] = listOffBrow.getFloatAt(i); }
-			if (i < this.scaleBrow.length && i < listScBrow.tagCount()) { this.scaleBrow[i] = listScBrow.getFloatAt(i); }
-			if (i < this.rotPupil.length && i < listRotPupil.tagCount()) { this.rotPupil[i] = listRotPupil.getFloatAt(i); }
-			if (i < this.offsetPupil.length && i < listOffPupil.tagCount()) { this.offsetPupil[i] = listOffPupil.getFloatAt(i); }
-			if (i < this.scalePupil.length && i < listScPupil.tagCount()) { this.scalePupil[i] = listScPupil.getFloatAt(i); }
-			if (i < this.offsetMouth.length && i < listOffMouth.tagCount()) { this.offsetMouth[i] = listOffMouth.getFloatAt(i); }
-			if (i < this.scaleMouth.length && i < listScMouth.tagCount()) { this.scaleMouth[i] = listScMouth.getFloatAt(i); }
+			if (i < rotEye.length && i < listRotEye.tagCount()) { rotEye[i] = listRotEye.getFloatAt(i); }
+			if (i < offsetEye.length && i < listOffEye.tagCount()) { offsetEye[i] = listOffEye.getFloatAt(i); }
+			if (i < scaleEye.length && i < listScEye.tagCount()) { scaleEye[i] = listScEye.getFloatAt(i); }
+			if (i < rotBrow.length && i < listRotBrow.tagCount()) { rotBrow[i] = listRotBrow.getFloatAt(i); }
+			if (i < offsetBrow.length && i < listOffBrow.tagCount()) { offsetBrow[i] = listOffBrow.getFloatAt(i); }
+			if (i < scaleBrow.length && i < listScBrow.tagCount()) { scaleBrow[i] = listScBrow.getFloatAt(i); }
+			if (i < rotPupil.length && i < listRotPupil.tagCount()) { rotPupil[i] = listRotPupil.getFloatAt(i); }
+			if (i < offsetPupil.length && i < listOffPupil.tagCount()) { offsetPupil[i] = listOffPupil.getFloatAt(i); }
+			if (i < scalePupil.length && i < listScPupil.tagCount()) { scalePupil[i] = listScPupil.getFloatAt(i); }
+			if (i < offsetMouth.length && i < listOffMouth.tagCount()) { offsetMouth[i] = listOffMouth.getFloatAt(i); }
+			if (i < scaleMouth.length && i < listScMouth.tagCount()) { scaleMouth[i] = listScMouth.getFloatAt(i); }
 		}
 		
 	}
@@ -113,21 +113,21 @@ implements IEmotionPart {
 		NBTTagList listRotMouth = new NBTTagList();
 		NBTTagList listOffMouth = new NBTTagList();
 		NBTTagList listScMouth = new NBTTagList();
-		int max = this.rotEye.length;
-		if (max < this.offsetEye.length) { max = this.offsetEye.length; }
-		if (max < this.scaleEye.length) { max = this.scaleEye.length; }
+		int max = rotEye.length;
+		if (max < offsetEye.length) { max = offsetEye.length; }
+		if (max < scaleEye.length) { max = scaleEye.length; }
 		for (int i = 0; i < max; i++) {
-			if (i < this.rotEye.length) { listRotEye.appendTag(new NBTTagFloat(this.rotEye[i])); }
-			if (i < this.offsetEye.length) { listOffEye.appendTag(new NBTTagFloat(this.offsetEye[i])); }
-			if (i < this.scaleEye.length) { listScEye.appendTag(new NBTTagFloat(this.scaleEye[i])); }
-			if (i < this.rotBrow.length) { listRotBrow.appendTag(new NBTTagFloat(this.rotBrow[i])); }
-			if (i < this.offsetBrow.length) { listOffBrow.appendTag(new NBTTagFloat(this.offsetBrow[i])); }
-			if (i < this.scaleBrow.length) { listScBrow.appendTag(new NBTTagFloat(this.scaleBrow[i])); }
-			if (i < this.rotPupil.length) { listRotPupil.appendTag(new NBTTagFloat(this.rotPupil[i])); }
-			if (i < this.offsetPupil.length) { listOffPupil.appendTag(new NBTTagFloat(this.offsetPupil[i])); }
-			if (i < this.scalePupil.length) { listScPupil.appendTag(new NBTTagFloat(this.scalePupil[i])); }
-			if (i < this.offsetMouth.length) { listOffMouth.appendTag(new NBTTagFloat(this.offsetMouth[i])); }
-			if (i < this.scaleMouth.length) { listScMouth.appendTag(new NBTTagFloat(this.scaleMouth[i])); }
+			if (i < rotEye.length) { listRotEye.appendTag(new NBTTagFloat(rotEye[i])); }
+			if (i < offsetEye.length) { listOffEye.appendTag(new NBTTagFloat(offsetEye[i])); }
+			if (i < scaleEye.length) { listScEye.appendTag(new NBTTagFloat(scaleEye[i])); }
+			if (i < rotBrow.length) { listRotBrow.appendTag(new NBTTagFloat(rotBrow[i])); }
+			if (i < offsetBrow.length) { listOffBrow.appendTag(new NBTTagFloat(offsetBrow[i])); }
+			if (i < scaleBrow.length) { listScBrow.appendTag(new NBTTagFloat(scaleBrow[i])); }
+			if (i < rotPupil.length) { listRotPupil.appendTag(new NBTTagFloat(rotPupil[i])); }
+			if (i < offsetPupil.length) { listOffPupil.appendTag(new NBTTagFloat(offsetPupil[i])); }
+			if (i < scalePupil.length) { listScPupil.appendTag(new NBTTagFloat(scalePupil[i])); }
+			if (i < offsetMouth.length) { listOffMouth.appendTag(new NBTTagFloat(offsetMouth[i])); }
+			if (i < scaleMouth.length) { listScMouth.appendTag(new NBTTagFloat(scaleMouth[i])); }
 		}
 		compound.setTag("RotationEye", listRotEye);
 		compound.setTag("OffsetEye", listOffEye);
@@ -147,16 +147,16 @@ implements IEmotionPart {
 
 	private NBTTagCompound getCompound() {
 		NBTTagCompound compound = new NBTTagCompound();
-		compound.setInteger("Part", this.id);
-		compound.setInteger("Speed", this.speed);
-		compound.setInteger("EndDelay", this.delay);
-		compound.setBoolean("IsSmooth", this.smooth);
-		compound.setBoolean("IsDisable", this.disable);
-		compound.setBoolean("IsBlink", this.blink);
-		compound.setBoolean("IsEndBlink", this.endBlink);
-		compound.setBoolean("IsRandomMouth", this.rndMouth);
-		compound.setBoolean("ShowMouth", this.showMouth);
-		compound.setFloat("RotationMouth", this.rotMouth);
+		compound.setInteger("Part", id);
+		compound.setInteger("Speed", speed);
+		compound.setInteger("EndDelay", delay);
+		compound.setBoolean("IsSmooth", smooth);
+		compound.setBoolean("IsDisable", disable);
+		compound.setBoolean("IsBlink", blink);
+		compound.setBoolean("IsEndBlink", endBlink);
+		compound.setBoolean("IsRandomMouth", rndMouth);
+		compound.setBoolean("ShowMouth", showMouth);
+		compound.setFloat("RotationMouth", rotMouth);
 		return compound;
 	}
 
@@ -164,61 +164,61 @@ implements IEmotionPart {
 	public int getSpeed() { return speed; }
 
 	@Override
-	public int getEndDelay() { return this.delay; }
+	public int getEndDelay() { return delay; }
 
 	@Override
-	public boolean isSmooth() { return this.smooth; }
+	public boolean isSmooth() { return smooth; }
 
 	@Override
 	public void setEndDelay(int ticks) {
 		if (ticks < 0) { ticks *= -1; }
 		if (ticks > 1200) { ticks = 1200; }
-		this.delay = ticks;
+		delay = ticks;
 	}
 
 	@Override
-	public void setSmooth(boolean isSmooth) { this.smooth = isSmooth; }
+	public void setSmooth(boolean isSmooth) { smooth = isSmooth; }
 
 	@Override
 	public void setSpeed(int ticks) {
 		if (ticks < 0) { ticks *= -1; }
 		if (ticks > 1200) { ticks = 1200; }
-		this.speed = ticks;
+		speed = ticks;
 	}
 
 	@Override
 	public boolean isDisabled() { return disable; }
 
 	@Override
-	public void setDisable(boolean bo) { this.disable = bo; }
+	public void setDisable(boolean bo) { disable = bo; }
 
 	public EmotionFrame copy() {
 		EmotionFrame newEf = new EmotionFrame(0);
-		newEf.readFromNBT(this.writeToNBT());
+		newEf.readFromNBT(writeToNBT());
 		return newEf;
 	}
 
 	public void clear() {
-		this.speed = 20;
-		this.delay = 0;
-		this.smooth = true;
-		this.disable = false;
-		this.blink = false;
-		this.endBlink = false;
-		this.offsetEye = new float[] { 0.0f, 0.0f, 0.0f, 0.0f };
-		this.rotEye = new float[] { 0.0f, 0.0f };
-		this.scaleEye = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
-		this.offsetPupil = new float[] { 0.0f, 0.0f, 0.0f, 0.0f };
-		this.rotPupil = new float[] { 0.0f, 0.0f };
-		this.scalePupil = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
-		this.offsetBrow = new float[] { 0.0f, 0.0f, 0.0f, 0.0f };
-		this.rotBrow = new float[] { 0.0f, 0.0f };
-		this.scaleBrow = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
-		this.offsetMouth = new float[] { 0.0f, 0.0f};
-		this.rotMouth = 0.0f;
-		this.scaleMouth = new float[] { 1.0f, 1.0f };
-		this.rndMouth = false;
-		this.showMouth = false;
+		speed = 20;
+		delay = 0;
+		smooth = true;
+		disable = false;
+		blink = false;
+		endBlink = false;
+		offsetEye = new float[] { 0.0f, 0.0f, 0.0f, 0.0f };
+		rotEye = new float[] { 0.0f, 0.0f };
+		scaleEye = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
+		offsetPupil = new float[] { 0.0f, 0.0f, 0.0f, 0.0f };
+		rotPupil = new float[] { 0.0f, 0.0f };
+		scalePupil = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
+		offsetBrow = new float[] { 0.0f, 0.0f, 0.0f, 0.0f };
+		rotBrow = new float[] { 0.0f, 0.0f };
+		scaleBrow = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
+		offsetMouth = new float[] { 0.0f, 0.0f};
+		rotMouth = 0.0f;
+		scaleMouth = new float[] { 1.0f, 1.0f };
+		rndMouth = false;
+		showMouth = false;
 	}
 
 	public void resetFrom(Map<Integer, Float[]> rotationAngles, EmotionFrame currentFrame) {

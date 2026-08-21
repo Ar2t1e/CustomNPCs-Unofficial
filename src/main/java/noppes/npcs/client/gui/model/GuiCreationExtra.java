@@ -11,16 +11,19 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagCompound;
-import noppes.npcs.LogWriter;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityFakeLiving;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
 import javax.annotation.Nonnull;
 
-public class GuiCreationExtra extends GuiCreationScreenInterface implements ICustomScrollListener {
+public class GuiCreationExtra extends GuiCreationScreenInterface<ContainerLayer> implements ICustomScrollListener {
 
 	public abstract static class GuiType {
 
@@ -28,11 +31,11 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 
 		public GuiType(String nameIn) { name = nameIn; }
 
-		public void buttonEvent(GuiNpcButton button) { }
+		public void buttonEvent(GuiButtonNop button) { }
 
 		public void initGui() { }
 
-		void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { }
+		void scrollClicked(GuiCustomScrollNop scroll) { }
 
 	}
 
@@ -46,9 +49,9 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 		}
 
 		@Override
-		public void buttonEvent(GuiNpcButton button) {
+		public void buttonEvent(GuiButtonNop button) {
 			if (button.id != 11) { return; }
-			bo = ((GuiNpcButtonYesNo) button).getBoolean();
+			bo = ((GuiButtonYesNo) button).getBoolean();
 			if (name.equals("Child")) {
 				playerdata.extra.setInteger("Age", bo ? -24000 : 0);
 				playerdata.clearEntity();
@@ -61,7 +64,8 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 
 		@Override
 		public void initGui() {
-			addButton(new GuiNpcButtonYesNo(11, guiLeft + 120, guiTop + 50, 60, 20, bo));
+			addYesNo(11, guiLeft + 120, guiTop + 50, bo)
+					.setSize(60, 20);
 		}
 
 	}
@@ -76,7 +80,7 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 		}
 
 		@Override
-		public void buttonEvent(GuiNpcButton button) {
+		public void buttonEvent(GuiButtonNop button) {
 			if (button.id != 11) { return; }
 			playerdata.extra.setByte(name, (byte) button.getValue());
 			playerdata.clearEntity();
@@ -85,8 +89,9 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 
 		@Override
 		public void initGui() {
-			addButton(new GuiButtonBiDirectional(11, guiLeft + 120, guiTop + 45, 50, 20,
-					new String[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" }, b));
+			addButton(11, guiLeft + 120, guiTop + 45, true, b,
+					"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
+					.setSize(50, 20);
 		}
 
 	}
@@ -96,7 +101,7 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 		public GuiTypeDoggyStyle(String name) { super(name); }
 
 		@Override
-		public void buttonEvent(@Nonnull GuiNpcButton button) {
+		public void buttonEvent(@Nonnull GuiButtonNop button) {
 			if (button.id != 11) { return; }
 			EntityLivingBase entity = playerdata.getEntity(npc);
 			playerdata.setExtra(entity, "breed", button.getValue() + "");
@@ -111,11 +116,11 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 				breed = (Enum<?>) method.invoke(entity, (Object) new Class[0]);
 			} catch (Exception e) { LogWriter.error(e); }
             if (breed != null) {
-				addButton(new GuiButtonBiDirectional(11, guiLeft + 120,
-								guiTop + 45, 50, 20,
-								new String[]{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-										"14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26"},
-								breed.ordinal()));
+				addButton(11, guiLeft + 120,
+								guiTop + 45, true, breed.ordinal(),
+						"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+										"14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26")
+						.setSize(50, 20);
 			}
 		}
 	}
@@ -126,17 +131,16 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 
 		@Override
 		public void initGui() {
-			GuiCustomScroll scroll = new GuiCustomScroll(GuiCreationExtra.this, 1);
-			scroll.setSize(120, 200);
-			scroll.guiLeft = guiLeft + 120;
-			scroll.guiTop = guiTop + 20;
-			addScroll(scroll);
+
+			scroll = addScroll(1)
+					.setPos(guiLeft + 120, guiTop + 20)
+					.setSize(120, 200);
 			scroll.setList(PixelmonHelper.getPixelmonList());
 			scroll.setSelected(PixelmonHelper.getName(entity));
 		}
 
 		@Override
-		public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
+		public void scrollClicked(GuiCustomScrollNop scroll) {
 			String name = scroll.getSelected();
 			playerdata.setExtra(entity, "name", name);
 			updateTexture();
@@ -150,7 +154,7 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 
 	private final String[] ignoredTags;
 
-	private GuiCustomScroll scroll;
+	private GuiCustomScrollNop scroll;
 
 	private GuiType selected;
 
@@ -163,9 +167,9 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton == 1 && selected != null) { selected.buttonEvent(button); }
-		super.buttonEvent(button, mouseButton);
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
+		if (selected != null) { selected.buttonEvent(button); }
+		super.buttonEvent(button);
 	}
 
 	public Map<String, GuiType> getData(EntityLivingBase entity) {
@@ -209,16 +213,15 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 		}
 		if (scroll == null) {
 			data = getData(entity);
-			scroll = new GuiCustomScroll(this, 0);
+			scroll = addScroll(0);
 			List<String> list = new ArrayList<>(data.keySet());
 			scroll.setList(list);
 			if (list.isEmpty()) { return; }
 			scroll.setSelected(list.get(0));
 		}
-		scroll.guiLeft = guiLeft;
-		scroll.guiTop = guiTop + 46;
-		if (scroll.hasSelected()) { scroll.setHoverText("display.hover.part." + scroll.getList().get(scroll.getSelect()).toLowerCase()); }
-		addScroll(scroll.setSize(100, ySize - 74));
+		if (scroll.hasSelected()) { scroll.setHoverTexts("display.hover.part." + scroll.getList().get(scroll.getSelectedIndex()).toLowerCase()); }
+		add(scroll.setPos(guiLeft, guiTop + 46)
+				.setSize(100, ySize - 74));
 		selected = data.get(scroll.getSelected());
 		if (selected != null) { selected.initGui(); }
 		for (Slot slot : inventorySlots.inventorySlots) {
@@ -235,19 +238,19 @@ public class GuiCreationExtra extends GuiCreationScreenInterface implements ICus
 	}
 
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 0) { initGui(); }
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		if (scroll.id == 0) { initGui(); }
 		else {
-			if (selected != null) { selected.scrollClicked(mouseX, mouseY, mouseButton, scroll); }
+			if (selected != null) { selected.scrollClicked(scroll); }
 			if (getButton(11) != null) {
-				if (scroll.hasSelected()) { getButton(11).setHoverText("display.hover.part." + scroll.getSelected().toLowerCase()); }
-				else { getButton(11).setHoverText((Object) null); }
+				if (scroll.hasSelected()) { getButton(11).setHoverTexts("display.hover.part." + scroll.getSelected().toLowerCase()); }
+				else { getButton(11).setHoverTexts((Object) null); }
 			}
 		}
 	}
 
 	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 	@SuppressWarnings("unchecked")
 	private void updateTexture() {

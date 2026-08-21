@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.security.SecureRandom;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
@@ -13,18 +12,16 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import noppes.npcs.shared.common.util.LogWriter;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.controllers.IScriptHandler;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.IScriptHandler;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.controllers.ScriptController;
 import noppes.npcs.controllers.data.ClientScriptData;
 
 public class ScriptEncryption {
-
-    private final static int SALT_LENGTH = 8; // Salt length (in bytes)
 
     public static boolean encryptScript(File outputFile, String fileName, String scriptCode, boolean onlyTab, ScriptContainer sContainer, IScriptHandler handler) {
         if (handler instanceof ClientScriptData) {
@@ -104,11 +101,7 @@ public class ScriptEncryption {
     }
 
     private static SecretKey generateSecretKey() {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[SALT_LENGTH];
-        random.nextBytes(salt);
-        byte[] hashedPass = DigestUtils.md5(CustomNpcs.ScriptPassword.getBytes());
-        return new SecretKeySpec(hashedPass, "AES");
+        return new SecretKeySpec(DigestUtils.md5(CustomNpcs.ScriptPassword.getBytes()), "AES");
     }
 
 }

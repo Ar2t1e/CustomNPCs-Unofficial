@@ -1,6 +1,7 @@
 package noppes.npcs;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
@@ -8,11 +9,14 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.constants.EnumPlayerPacket;
-import noppes.npcs.constants.EnumSync;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketGuiClose;
+import noppes.npcs.packets.client.PacketSync;
+import noppes.npcs.shared.common.CommonUtil;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.NBTJsonUtil;
 import noppes.npcs.util.Util;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +27,11 @@ import net.minecraftforge.server.permission.PermissionAPI;
 import javax.annotation.Nullable;
 
 public class CustomNpcsPermissions {
+
+	public static CustomNpcsPermissions getInstance() {
+		if (instance == null) { instance = new CustomNpcsPermissions(); }
+		return instance;
+	}
 
 	public static class Permission {
 
@@ -36,57 +45,63 @@ public class CustomNpcsPermissions {
 			defaultValue = defaultValueIn;
 		}
 
+		public String getNodeName() { return name; }
+
 	}
 
-	public static CustomNpcsPermissions Instance;
-	public static final Permission EDIT_BLOCKS = new Permission(CustomNpcs.MODID + ".edit.blocks");
-	public static final Permission EDIT_VILLAGER = new Permission(CustomNpcs.MODID + ".edit.villager");
+	protected static CustomNpcsPermissions instance;
+	public static final Map<Permission, List<String>> permissions;
+
+	public static final Permission NPC_DELETE = new Permission(CustomNpcs.MODID + ".npc.delete");
+	public static final Permission NPC_CREATE = new Permission(CustomNpcs.MODID + ".npc.create");
+	public static final Permission NPC_GUI = new Permission(CustomNpcs.MODID + ".npc.gui");
+	public static final Permission NPC_FREEZE = new Permission(CustomNpcs.MODID + ".npc.freeze");
+	public static final Permission NPC_RESET = new Permission(CustomNpcs.MODID + ".npc.reset");
+	public static final Permission NPC_ADVANCED = new Permission(CustomNpcs.MODID + ".npc.advanced");
+	public static final Permission NPC_DISPLAY = new Permission(CustomNpcs.MODID + ".npc.display");
+	public static final Permission NPC_INVENTORY = new Permission(CustomNpcs.MODID + ".npc.inventory");
+	public static final Permission NPC_STATS = new Permission(CustomNpcs.MODID + ".npc.stats");
+	public static final Permission NPC_CLONE = new Permission(CustomNpcs.MODID + ".npc.clone");
+	public static final Permission GLOBAL_LINKED = new Permission(CustomNpcs.MODID + ".global.linked");
+	public static final Permission GLOBAL_PLAYERDATA = new Permission(CustomNpcs.MODID + ".global.playerdata");
 	public static final Permission GLOBAL_BANK = new Permission(CustomNpcs.MODID + ".global.bank");
 	public static final Permission GLOBAL_DIALOG = new Permission(CustomNpcs.MODID + ".global.dialog");
-	public static final Permission GLOBAL_FACTION = new Permission(CustomNpcs.MODID + ".global.faction");
-	public static final Permission GLOBAL_LINKED = new Permission(CustomNpcs.MODID + ".global.linked");
-	public static final Permission GLOBAL_NATURALSPAWN = new Permission(CustomNpcs.MODID + ".global.naturalspawn");
-	public static final Permission GLOBAL_PLAYERDATA = new Permission(CustomNpcs.MODID + ".global.playerdata");
 	public static final Permission GLOBAL_QUEST = new Permission(CustomNpcs.MODID + ".global.quest");
-	public static final Permission GLOBAL_RECIPE = new Permission(CustomNpcs.MODID + ".global.recipe");
+	public static final Permission GLOBAL_FACTION = new Permission(CustomNpcs.MODID + ".global.faction");
 	public static final Permission GLOBAL_TRANSPORT = new Permission(CustomNpcs.MODID + ".global.transport");
-	public static final Permission NPC_ADVANCED = new Permission(CustomNpcs.MODID + ".npc.advanced");
-	public static final Permission NPC_CLONE = new Permission(CustomNpcs.MODID + ".npc.clone");
-	public static final Permission NPC_CREATE = new Permission(CustomNpcs.MODID + ".npc.create");
-	public static final Permission NPC_DELETE = new Permission(CustomNpcs.MODID + ".npc.delete");
-	public static final Permission NPC_DISPLAY = new Permission(CustomNpcs.MODID + ".npc.display");
-	public static final Permission NPC_FREEZE = new Permission(CustomNpcs.MODID + ".npc.freeze");
-	public static final Permission NPC_GUI = new Permission(CustomNpcs.MODID + ".npc.gui");
-	public static final Permission NPC_INVENTORY = new Permission(CustomNpcs.MODID + ".npc.inventory");
-	public static final Permission NPC_RESET = new Permission(CustomNpcs.MODID + ".npc.reset");
-	public static final Permission NPC_STATS = new Permission(CustomNpcs.MODID + ".npc.stats");
-	public static final Permission SCENES = new Permission(CustomNpcs.MODID + ".scenes");
-	public static final Permission SOULSTONE_ALL = new Permission(CustomNpcs.MODID + ".soulstone.all");
-	public static final Permission SPAWNER_CREATE = new Permission(CustomNpcs.MODID + ".spawner.create");
+	public static final Permission GLOBAL_RECIPE = new Permission(CustomNpcs.MODID + ".global.recipe");
+	public static final Permission GLOBAL_NATURALSPAWN = new Permission(CustomNpcs.MODID + ".global.naturalspawn");
 	public static final Permission SPAWNER_MOB = new Permission(CustomNpcs.MODID + ".spawner.mob");
+	public static final Permission SPAWNER_CREATE = new Permission(CustomNpcs.MODID + ".spawner.create");
 	public static final Permission TOOL_MOUNTER = new Permission(CustomNpcs.MODID + ".tool.mounter");
-	public static final Permission TOOL_NBTBOOK = new Permission(CustomNpcs.MODID + ".tool.nbtbook");
 	public static final Permission TOOL_PATHER = new Permission(CustomNpcs.MODID + ".tool.pather");
 	public static final Permission TOOL_SCRIPTER = new Permission(CustomNpcs.MODID + ".tool.scripter");
-	public static final Permission TOOL_TELEPORTER = new Permission(CustomNpcs.MODID + ".tool.teleporter");
+	public static final Permission TOOL_NBTBOOK = new Permission(CustomNpcs.MODID + ".tool.nbtbook");
+	public static final Permission EDIT_VILLAGER = new Permission(CustomNpcs.MODID + ".edit.villager");
+	public static final Permission EDIT_BLOCKS = new Permission(CustomNpcs.MODID + ".edit.blocks");
+	public static final Permission SOULSTONE_ALL = new Permission(CustomNpcs.MODID + ".soulstone.all");
+	public static final Permission SCENES = new Permission(CustomNpcs.MODID + ".scenes");
 
-	// in 1.20.1
+	// New from Unofficial (GoodBird)
+	public static final Permission ADMIN = new Permission(CustomNpcs.MODID + ".admin", false);
 	public static final Permission NPC_AI = new Permission(CustomNpcs.MODID + ".npc.ai");
 
 	// New from Unofficial (BetaZavr)
-	public static final Map<Permission, List<String>> permissions;
+	public static final Permission TOOL_BUILDERS = new Permission(CustomNpcs.MODID + ".tool.builders");
+	public static final Permission TOOL_TELEPORTER = new Permission(CustomNpcs.MODID + ".tool.teleporter");
 	public static final Permission EDIT_PERMISSION = new Permission(CustomNpcs.MODID + ".edit.permission", false);
 	public static final Permission EDIT_CLIENT_SCRIPT = new Permission(CustomNpcs.MODID + ".edit.client.script", false);
 	public static final Permission GLOBAL_MARKETS = new Permission(CustomNpcs.MODID + ".global.markets");
 	public static final Permission GLOBAL_AUCTIONS = new Permission(CustomNpcs.MODID + ".global.auctions");
 	public static final Permission GLOBAL_MAIL = new Permission(CustomNpcs.MODID + ".global.mail");
+	public static final Permission GLOBAL_ELEMENTS = new Permission(CustomNpcs.MODID + ".global.elements", false);
+	public static final Permission GLOBAL_DUNGEONS = new Permission(CustomNpcs.MODID + ".global.dungeons", false);
 	public static final Permission MONEY_MANAGER = new Permission(CustomNpcs.MODID + ".money.manager");
 	public static final Permission DONAT_MANAGER = new Permission(CustomNpcs.MODID + ".donat.manager", false);
 
-	@SuppressWarnings("all")
 	public static boolean hasPermission(EntityPlayerMP player, Permission permission) {
 		if (permission == null) { return true; }
-		if (CustomNpcs.OpsOnly && (player == null || !NoppesUtilServer.isOp(player))) { return false; }
+		if (CustomNpcs.OpsOnly && !CommonUtil.isOp(player)) { return false; }
 		return CustomNpcs.DisablePermissions ?
 				PermissionAPI.hasPermission(player, permission.name) :
 				inData(permission.name, player);
@@ -100,8 +115,11 @@ public class CustomNpcsPermissions {
 		return false;
 	}
 
-	public CustomNpcsPermissions() {
-		CustomNpcsPermissions.Instance = this;
+	private CustomNpcsPermissions() {
+		load();
+	}
+
+	private void load() {
 		if (!CustomNpcs.DisablePermissions) {
 			CustomNpcs.debugData.start("Mod");
 			LogManager.getLogger(CustomNpcsPermissions.class).info(CustomNpcs.MODNAME + " Permissions available:");
@@ -150,16 +168,13 @@ public class CustomNpcsPermissions {
 
 	// New from Unofficial (BetaZavr)
 	static {
-		List<Permission> list = Arrays.asList(
-				NPC_DELETE, NPC_CREATE, NPC_GUI, NPC_FREEZE, NPC_RESET, NPC_ADVANCED,
-				NPC_DISPLAY, NPC_INVENTORY, NPC_STATS, NPC_CLONE, GLOBAL_LINKED, GLOBAL_PLAYERDATA, GLOBAL_BANK, GLOBAL_DIALOG, GLOBAL_QUEST,
-				GLOBAL_FACTION, GLOBAL_TRANSPORT, GLOBAL_RECIPE, SPAWNER_MOB, SPAWNER_CREATE, TOOL_MOUNTER, TOOL_PATHER,
-				TOOL_SCRIPTER, EDIT_VILLAGER, TOOL_NBTBOOK, EDIT_BLOCKS, SOULSTONE_ALL, SCENES,
-				// in 1.20.1
-				NPC_AI,
-				// New from Unofficial (BetaZavr)
-				EDIT_PERMISSION, EDIT_CLIENT_SCRIPT, GLOBAL_MARKETS, GLOBAL_AUCTIONS, GLOBAL_MAIL, MONEY_MANAGER, DONAT_MANAGER
-		);
+		List<Permission> list = new ArrayList<>();
+		try {
+			for (Field field : CustomNpcsPermissions.class.getDeclaredFields()) {
+				if (field.getType() == Permission.class) { list.add((Permission) field.get(CustomNpcsPermissions.class)); }
+			}
+		}
+		catch (Exception ignored) { }
 		list.sort((o1, o2) -> o1.name.compareToIgnoreCase(o2.name));
 		Map<Permission, List<String>> map = new LinkedHashMap<>();
 		for (Permission node : list) {
@@ -198,13 +213,12 @@ public class CustomNpcsPermissions {
 	}
 
 	@SideOnly(Side.CLIENT)
-	public static void putToData(Map<String, List<String>> data, Map<String, String> nodes) {
+	public static void putToData(Map<Component, List<Component>> data) {
 		data.clear();
-		nodes.clear();
 		for (Permission node : new ArrayList<>(permissions.keySet())) {
-			String key = new TextComponentTranslation(node.name).getFormattedText();
-			data.put(key, permissions.get(node));
-			nodes.put(key, node.name);
+			List<Component> players = new ArrayList<>();
+			for (String name : permissions.get(node)) { players.add(Component.literal(name)); }
+			data.put(Component.translatable("permission." + node.getNodeName()), players);
 		}
 	}
 
@@ -225,7 +239,7 @@ public class CustomNpcsPermissions {
 
 	public static void add(String nodeName, String playerName, EntityPlayerMP player) {
 		if (!hasPermission(player, EDIT_PERMISSION)) {
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.CloseGui);
+			Packets.send(player, new PacketGuiClose());
 			return;
 		}
 		if (playerName == null) { playerName = "Command Block"; }
@@ -244,7 +258,7 @@ public class CustomNpcsPermissions {
 
 	public static void remove(String nodeName, String playerName, EntityPlayerMP player) {
 		if (!hasPermission(player, EDIT_PERMISSION)) {
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.CloseGui);
+			Packets.send(player, new PacketGuiClose());
 			return;
 		}
 		if (playerName == null) { playerName = "Command Block"; }
@@ -263,10 +277,8 @@ public class CustomNpcsPermissions {
 
 	public static void sendTo(EntityPlayerMP player) {
 		if (player == null) { return; }
-		if (!hasPermission(player, EDIT_PERMISSION)) { NoppesUtilPlayer.sendData(EnumPlayerPacket.CloseGui); }
-		else {
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.SendSyncData, EnumSync.PermissionsData, getNBT());
-		}
+		if (!hasPermission(player, EDIT_PERMISSION)) { Packets.send(player, new PacketGuiClose()); }
+		else { Packets.send(player, new PacketSync(14, getNBT(), true)); }
 	}
 
 }

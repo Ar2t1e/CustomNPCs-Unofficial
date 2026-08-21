@@ -1,15 +1,26 @@
 package noppes.npcs.client;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.entity.passive.EntityChicken;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
-import noppes.npcs.api.mixin.entity.IEntityLivingBaseMixin;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.common.registry.EntityEntry;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 
+import java.util.HashMap;
+
 public class EntityUtil {
+
+	private static HashMap<EntityEntry, Class<? extends Entity>> entityClasses = new HashMap<>();
+
 	public static void Copy(EntityLivingBase copied, EntityLivingBase entity) {
 		entity.world = copied.world;
 		entity.deathTime = copied.deathTime;
@@ -91,7 +102,37 @@ public class EntityUtil {
 		}
 	}
 
-	public static void setRecentlyHit(EntityLivingBase entity) {
-		((IEntityLivingBaseMixin) entity).npcs$setRecentlyHit(100);
+	public static HashMap<EntityEntry, Class<? extends Entity>> getAllEntitiesClasses(World world) {
+		if (!entityClasses.isEmpty()) { return entityClasses; }
+		HashMap<EntityEntry, Class<? extends Entity>> data = new HashMap<>();
+		for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
+			try {
+				Entity e = ent.newInstance(world);
+				if (e != null) {
+					if (EntityLiving.class.isAssignableFrom(e.getClass())) { data.put(ent, e.getClass()); }
+					e.setDead();
+				}
+			} catch (Exception ignored) {}
+		}
+		entityClasses = data;
+		return data;
 	}
+
+	public static HashMap<String, ResourceLocation> getAllEntities(World world, boolean withNpcs) {
+		HashMap<String, ResourceLocation> data = new HashMap<>();
+		for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
+			try {
+				Entity e = ent.newInstance(world);
+				if (e != null) {
+					if (EntityLiving.class.isAssignableFrom(e.getClass()) && (withNpcs || !EntityNPCInterface.class.isAssignableFrom(e.getClass()))) {
+						data.put(ent.getName(), ForgeRegistries.ENTITIES.getKey(ent));
+					}
+					e.setDead();
+				}
+			}
+			catch (Throwable var6) { LogWriter.except(var6); }
+		}
+		return data;
+	}
+
 }

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import noppes.npcs.api.mixin.client.config.IGuiEditArrayMixin;
+import noppes.npcs.mixin.client.config.IGuiEditArrayMixin;
 import org.lwjgl.input.Keyboard;
 
 import net.minecraft.client.Minecraft;
@@ -92,7 +92,7 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 			super(owningScreen, owningEntryList, configElement);
 			value = valueIn;
 			btnValue = new GuiButtonExt(0, 0, 0, owningEntryList.controlWidth, 18, I18n.format(String.valueOf(value)));
-            btnValue.enabled = ((IGuiEditArrayMixin) owningScreen).npcs$getEnabled();
+            btnValue.enabled = ((IGuiEditArrayMixin) owningScreen).getEnabled();
 			isValidated = false;
 		}
 
@@ -144,7 +144,7 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 			super(owningScreen, owningEntryList, configElement);
 			value = string;
 			btnValue = new GuiButtonExt(0, 0, 0, owningEntryList.controlWidth, 18, I18n.format(String.valueOf(value)));
-            btnValue.enabled = ((IGuiEditArrayMixin) owningScreen).npcs$getEnabled();
+            btnValue.enabled = ((IGuiEditArrayMixin) owningScreen).getEnabled();
 			isValidated = false;
 		}
 
@@ -181,7 +181,6 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 				CustomGuiEditArray.subGui.width = owningEntryList.width;
 				CustomGuiEditArray.subGui.height = owningEntryList.height;
 				CustomGuiEditArray.subGui.initGui();
-				CustomGuiEditArray.subGui.parent = owningScreen;
 				CustomGuiEditArray.subGui.object = this;
 				return true;
 			}
@@ -210,7 +209,7 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 
 		@Override
 		public void keyTyped(char eventChar, int eventKey) {
-			boolean enabled = ((IGuiEditArrayMixin) owningScreen).npcs$getEnabled();
+			boolean enabled = ((IGuiEditArrayMixin) owningScreen).getEnabled();
 			if (enabled || eventKey == Keyboard.KEY_LEFT || eventKey == Keyboard.KEY_RIGHT || eventKey == Keyboard.KEY_HOME || eventKey == Keyboard.KEY_END) {
 				String validChars = "0123456789";
 				String before = textFieldValue.getText();
@@ -250,7 +249,7 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 
 		@Override
 		public void keyTyped(char eventChar, int eventKey) {
-			boolean enabled = ((IGuiEditArrayMixin) owningScreen).npcs$getEnabled();
+			boolean enabled = ((IGuiEditArrayMixin) owningScreen).getEnabled();
 			if (enabled || eventKey == Keyboard.KEY_LEFT || eventKey == Keyboard.KEY_RIGHT || eventKey == Keyboard.KEY_HOME || eventKey == Keyboard.KEY_END) {
 				String validChars = "0123456789";
 				String before = textFieldValue.getText();
@@ -300,7 +299,7 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 
 		@Override
 		public void keyTyped(char eventChar, int eventKey) {
-			boolean enabled = ((IGuiEditArrayMixin) owningScreen).npcs$getEnabled();
+			boolean enabled = ((IGuiEditArrayMixin) owningScreen).getEnabled();
 			if (enabled || eventKey == Keyboard.KEY_LEFT || eventKey == Keyboard.KEY_RIGHT || eventKey == Keyboard.KEY_HOME || eventKey == Keyboard.KEY_END) {
 				textFieldValue.textboxKeyTyped((enabled ? eventChar : Keyboard.CHAR_NONE), eventKey);
 				if (configElement.getValidationPattern() != null) { isValidValue = configElement.getValidationPattern().matcher(textFieldValue.getText().trim()).matches(); }
@@ -428,8 +427,8 @@ public class CustomGuiEditArrayEntries extends GuiEditArrayEntries {
 
 	protected void saveListChanges() {
 		int listLength = configElement.isListLengthFixed() ? listEntries.size() : listEntries.size() - 1;
-		int slotIndex = ((IGuiEditArrayMixin) owningGui).npcs$getSlotIndex();
-		GuiScreen parentScreen = ((IGuiEditArrayMixin) owningGui).npcs$getParentScreen();
+		int slotIndex = ((IGuiEditArrayMixin) owningGui).getSlotIndex();
+		GuiScreen parentScreen = ((IGuiEditArrayMixin) owningGui).getParentScreen();
 		if (slotIndex != -1 && parentScreen instanceof GuiConfig && ((GuiConfig) parentScreen).entryList.getListEntry(slotIndex) instanceof ArrayEntry) {
 			ArrayEntry entry = (ArrayEntry) ((GuiConfig) parentScreen).entryList.getListEntry(slotIndex);
 			Object[] ao = new Object[listLength];

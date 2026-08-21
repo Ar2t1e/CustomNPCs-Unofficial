@@ -2,26 +2,33 @@ package noppes.npcs.client.gui.animation;
 
 import java.util.*;
 
+import net.minecraft.network.chat.Component;
+import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.util.*;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketAnimationGet;
+import noppes.npcs.packets.server.SPacketAnimationSave;
+import noppes.npcs.packets.server.SPacketEmotionSave;
+import noppes.npcs.shared.client.gui.components.*;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ISliderListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.ModelPartData;
-import noppes.npcs.client.Client;
+import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.client.gui.SubGuiEditText;
 import noppes.npcs.client.model.animation.EmotionConfig;
 import noppes.npcs.client.model.animation.EmotionFrame;
 import noppes.npcs.client.model.part.ModelEyeData;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.controllers.AnimationController;
 import noppes.npcs.entity.EntityCustomNpc;
@@ -33,7 +40,7 @@ import noppes.npcs.util.CustomNPCsScheduler;
 import javax.annotation.Nonnull;
 
 public class GuiNpcEmotion extends GuiNPCInterface2
-		implements ICustomScrollListener, IGuiData, ITextfieldListener, ISliderListener, GuiYesNoCallback {
+		implements ICustomScrollListener, IGuiData, ITextfieldListener, ISliderListener {
 
 	public static final ResourceLocation etns = new ResourceLocation(CustomNpcs.MODID, "textures/gui/emotion/buttons.png");
 
@@ -41,50 +48,47 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 	public int elementType = 0; // 0 - eye, 1 - pupil, 2 - brow, 3 - mouth
 	public boolean isRight = true;
 
-	protected final String[] types = new String[] { "gui.small", "gui.normal", "gui.select" };
-	protected final Map<String, EmotionConfig> dataEmtns = new TreeMap<>();
+	protected final Map<Component, EmotionConfig> dataEmtns = new LinkedHashMap<>();
 	protected final DataAnimation animation;
 	protected boolean onlyPart = false;
 	protected int toolType = 0; // 0 - rotation, 1 - offset, 2 - scale
-	protected String selEmtn;
+	protected Component selEmtn = Component.empty();
 	protected EmotionFrame frame;
 	protected ScaledResolution sw;
 	protected ModelEyeData modelEye;
-	protected GuiCustomScroll scroll;
+	protected GuiCustomScrollNop scroll;
 	protected AnimationController aData;
 
 	public GuiNpcEmotion(EntityCustomNpc npc) {
 		super(npc, 4);
 		setBackground("bgfilled.png");
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
+		backGui = EnumGuiType.MainMenuAdvanced;
 
 		animation = new DataAnimation(npc);
 		animation.setBaseEmotionId(npc.animation.getBaseEmotionId());
 
-		selEmtn = "";
-		npcEmtn = Util.instance.copyToGUI(npc, mc.world, false);
-		Client.sendData(EnumPacketServer.AnimationGet);
+		npcEmtn = Util.instance.copyToGUI(npc, player.world, false);
+		Packets.sendServer(new SPacketAnimationGet(npc.getEntityId()));
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
 		EmotionConfig emtn = getEmtn();
-		switch (button.getID()) {
+		switch (button.id) {
 			case 0: {
-				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(new TextComponentTranslation("gui.new").getFormattedText())));
+				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(Component.translatable("gui.new").getFormattedText())));
 				break;
 			} // create new
 			case 1: {
-				if (emtn == null || !dataEmtns.containsKey(scroll.getSelected())) { return; }
-				if (aData.removeEmotion(emtn.id)) { selEmtn = ""; }
-				initGui();
+				if (emtn != null && dataEmtns.containsKey(scroll.getNormalSelected())) {
+					if (aData.removeEmotion(emtn.id)) { selEmtn = Component.empty(); }
+					initGui();
+				}
 				break;
 			} // del
 			case 2: {
 				GuiNpcAnimation.backColor = (GuiNpcAnimation.backColor == 0xFF000000 ? 0xFFFFFFFF : 0xFF000000);
-				button.setLayerColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080);
+				button.setColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080);
 				break;
 			} // back color
 			case 3: {
@@ -100,31 +104,51 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 				break;
 			} // add frame
 			case 5: {
-				if (frame == null) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						new TextComponentTranslation("animation.clear.frame", "" + (frame.id + 1)).getFormattedText(),
-						new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 0);
-				displayGuiScreen(guiyesno);
+				if (frame != null) {
+					ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+						if (agree && emtn != null && frame != null && emtn.frames.size() <= 1) {
+							int f = frame.id - 1;
+							if (f < 0) { f = 0; }
+							emtn.removeFrame(frame);
+							frame = emtn.frames.get(f);
+							initGui();
+						}
+						NoppesUtil.openGUI(player, this);
+					},
+							Component.translatable("animation.clear.frame", "" + (frame.id + 1)).getParent(),
+							Component.translatable("message.delete").getParent());
+					setScreen(guiYesNo);
+				}
 				break;
 			} // del frame
 			case 6: {
-				if (frame == null) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						new TextComponentTranslation("animation.clear.frame", "" + (frame.id + 1)).getFormattedText(),
-						new TextComponentTranslation("gui.clearMessage").getFormattedText(),
-						GuiScreen.isShiftKeyDown() ? 4 : 1);
-				displayGuiScreen(guiyesno);
+				if (frame != null) {
+					boolean isShift = GuiScreen.isShiftKeyDown();
+					ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+						if (agree) {
+							if (isShift) {
+								if (emtn != null) {
+									for (EmotionFrame f : emtn.frames.values()) { f.clear(); }
+								}
+							} else if (frame != null) { frame.clear(); }
+							initGui();
+						}
+						NoppesUtil.openGUI(player, this);
+					},
+							Component.translatable("animation.clear.frame", "" + (frame.id + 1)).getParent(),
+							Component.translatable("message.delete").getParent());
+					setScreen(guiYesNo);
+				}
 				break;
 			} // clear frame
 			case 11: {
-				if (emtn == null || frame == null) { return; }
-				frame.setSmooth(((GuiNpcCheckBox) button).isSelected());
-				if (GuiScreen.isShiftKeyDown()) { // Shift pressed
-					for (EmotionFrame f : emtn.frames.values()) {
-						f.setSmooth(frame.isSmooth());
+				if (emtn != null && frame != null) {
+					frame.setSmooth(((GuiCheckBoxNop) button).selected());
+					if (GuiScreen.isShiftKeyDown()) {
+						for (EmotionFrame f : emtn.frames.values()) { f.setSmooth(frame.isSmooth()); }
 					}
+					resetEmtns();
 				}
-				resetEmtns();
 				break;
 			} // smooth
 			case 22: {
@@ -249,62 +273,41 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 				break;
 			} // del base emotion
 			case 35: {
-				if (frame == null) { return; }
-				frame.setBlink(((GuiNpcCheckBox) button).isSelected());
-				initGui();
+				if (frame != null) {
+					frame.setBlink(((GuiCheckBoxNop) button).selected());
+					initGui();
+				}
 				break;
 			} // start blink
 			case 36: {
-				if (frame == null) { return; }
-				frame.setEndBlink(((GuiNpcCheckBox) button).isSelected());
-				initGui();
+				if (frame != null) {
+					frame.setEndBlink(((GuiCheckBoxNop) button).selected());
+					initGui();
+				}
 				break;
 			} // end blink
 			case 37: {
-				if (emtn == null) { return; }
-				emtn.setCanBlink(((GuiNpcCheckBox) button).isSelected());
-				initGui();
+				if (emtn != null) {
+					emtn.setCanBlink(((GuiCheckBoxNop) button).selected());
+					initGui();
+				}
 				break;
 			} // can blink
 			case 38: {
-				if (frame == null) { return; }
-				frame.setDisable(((GuiNpcCheckBox) button).isSelected());
-				if (GuiScreen.isShiftKeyDown() && emtn != null) { // Shift pressed
-					for (EmotionFrame f : emtn.frames.values()) {
-						f.setDisable(frame.isDisabled());
+				if (frame != null) {
+					frame.setDisable(((GuiCheckBoxNop) button).selected());
+					if (GuiScreen.isShiftKeyDown() && emtn != null) { // Shift pressed
+						for (EmotionFrame f : emtn.frames.values()) {
+							f.setDisable(frame.isDisabled());
+						}
 					}
+					initGui();
 				}
-				initGui();
 				break;
 			} // disable pupil
 		}
 	}
 
-	@Override
-	public void confirmClicked(boolean result, int id) {
-		displayGuiScreen(this);
-		if (!result) { return; }
-		EmotionConfig emtn = getEmtn();
-		switch (id) {
-			case 0: { // remove frame
-				if (emtn == null || frame == null || emtn.frames.size() <= 1) { return; }
-				int f = frame.id - 1;
-				if (f < 0) { f = 0; }
-				emtn.removeFrame(frame);
-				frame = emtn.frames.get(f);
-				initGui();
-				break;
-			}
-			case 1: { // clear frame
-				if (frame == null) { return; }
-				frame.clear();
-				initGui();
-				break;
-			}
-		}
-	}
-
-	@SuppressWarnings("all")
 	@Override
 	public void initGui() {
 		super.initGui();
@@ -312,31 +315,29 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 		int lId = 0;
 		int x = guiLeft + 8;
 		int y = guiTop + 14;
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(120, 177); }
-		scroll.guiLeft = x;
-		scroll.guiTop = y;
-		addLabel(new GuiNpcLabel(lId++, "emotion.list", x + 1, y - 10));
+		if (scroll == null) { scroll = addScroll(0).setSize(120, 177); }
+		addLabel(lId++, x + 1, y - 10, "emotion.list");
 		dataEmtns.clear();
 		aData = AnimationController.getInstance();
 		for (EmotionConfig ec : aData.getEmotions()) { dataEmtns.put(ec.getSettingName(), ec); }
 		scroll.setUnsortedList(new ArrayList<>(dataEmtns.keySet()));
-		if (!selEmtn.isEmpty()) {
-			if (scroll.getList().contains(selEmtn)) { scroll.setSelected(selEmtn); }
-			else { selEmtn = ""; }
-		}
-		if (selEmtn.isEmpty() && !dataEmtns.isEmpty()) {
-			for (String key : dataEmtns.keySet()) {
+		scroll.setSelected(selEmtn);
+		if (!dataEmtns.containsKey(selEmtn)) { selEmtn = Component.empty(); }
+		if (selEmtn.getFormattedText().isEmpty() && !dataEmtns.isEmpty()) {
+			for (Component key : dataEmtns.keySet()) {
 				selEmtn = key;
 				scroll.setSelected(selEmtn);
 				frame = dataEmtns.get(key).frames.get(0);
 				break;
 			}
 		}
-		addScroll(scroll);
-		addButton(new GuiNpcButton(0, x, y + scroll.height + 1, 59, 20, "markov.generate")
-				.setIsEnable(dataEmtns.isEmpty()));
-		addButton(new GuiNpcButton(1, x + 62, y + scroll.height + 1, 59, 20, "gui.remove")
-				.setIsEnable(!selEmtn.isEmpty()));
+		add(scroll.setPos(x, y));
+		addButton(0, x, y + scroll.height + 21, "markov.generate")
+				.setSize(59, 20)
+				.setIsEnabled(dataEmtns.isEmpty());
+		addButton(1, x + 62, y + scroll.height + 21, "gui.remove")
+				.setSize(59, 20)
+				.setIsEnabled(scroll.hasSelected());
 		EmotionConfig emtn = getEmtn();
 		if (emtn == null) { return; }
 		if (frame == null) {
@@ -347,132 +348,139 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 		int wY = guiTop + 71;
 
 		// Back color
-		addButton(new GuiNpcButton(2, wX, wY - 13, 8, 8, "")
-				.setLayerColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080)
+		addButton(2, wX, wY - 13, "")
+				.setSize(8, 8)
+				.setColor(GuiNpcAnimation.backColor == 0xFF000000 ? 0xFF00FFFF : 0xFF008080)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
-				.setUV(0, 96, 0, 0));
-
-		int xx = sw.getScaledWidth() / 2 - wX;
-		int yy = sw.getScaledHeight() / 2 - wY;
-
-		/*button = new GuiNpcButton(21, workU + workS / 2 - 11, workV + workS - 12, 18, 10, "");
-		button.texture = ANIMATION_BUTTONS;
-		button.hasDefBack = false;
-		button.isAnim = true;
-		button.txrX = onlyCurrentPart ? 144 : 188;
-		button.txrW = 44;
-		button.txrH = 24;
-		button.setHoverText(new TextComponentTranslation("animation.hover.work." + onlyCurrentPart, ((char) 167) + "6" + (frame != null ? frame.id + 1 : -1)).getFormattedText());
-		addButton(button);*/
-
-
+				.setUV(0, 96, 0, 0);
 		// Tool type
 		// tool pos
-		addButton(new GuiNpcButton(23, wX + 10, wY - 16, 14, 14, "")
-				.setLayerColor(toolType == 1 ? 0xFFFF8080 : 0xFFFFFFFF)
+		addButton(23, wX + 10, wY - 16, "")
+				.setSize(14, 14)
+				.setColor(toolType == 1 ? 0xFFFF8080 : 0xFFFFFFFF)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(0, 0, 24, 24)
-				.setHoverText("animation.hover.tool.0"));
+				.setHoverTexts("animation.hover.tool.0");
 		// tool rot
-		addButton(new GuiNpcButton(24, wX + 26, wY - 16, 14, 14, "")
-				.setLayerColor(toolType == 0 ? 0xFF80FF80 : 0xFFFFFFFF)
+		addButton(24, wX + 26, wY - 16, "")
+				.setSize(14, 14)
+				.setColor(toolType == 0 ? 0xFF80FF80 : 0xFFFFFFFF)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(24, 0, 24, 24)
-				.setHoverText("animation.hover.tool.1"));
+				.setHoverTexts("animation.hover.tool.1");
 		// tool scale
-		addButton(new GuiNpcButton(25, wX + 42, wY - 16, 14, 14, "")
-				.setLayerColor(toolType == 2 ? 0xFF8080FF : 0xFFFFFFFF)
+		addButton(25, wX + 42, wY - 16, "")
+				.setSize(14, 14)
+				.setColor(toolType == 2 ? 0xFF8080FF : 0xFFFFFFFF)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(48, 0, 24, 24)
-				.setHoverText("animation.hover.tool.2"));
+				.setHoverTexts("animation.hover.tool.2");
 		// element eye
-		addButton(new GuiNpcButton(26, wX + 78, wY - 16, 14, 14, "")
-				.setLayerColor(elementType == 0 ? 0xFFFF8080 : 0xFFFFFFFF)
+		addButton(26, wX + 78, wY - 16, "")
+				.setSize(14, 14)
+				.setColor(elementType == 0 ? 0xFFFF8080 : 0xFFFFFFFF)
 				.setTexture(etns)
-				.setHasDefaultBack(false)
-				.setUV(0, 0, 24, 24));
+				.setDefBack(false)
+				.setUV(0, 0, 24, 24);
 		// element pupil
-		addButton(new GuiNpcButton(27, wX + 94, wY - 16, 14, 14, "")
-				.setLayerColor(elementType == 1 ? 0xFF80FF80 : 0xFFFFFFFF)
+		addButton(27, wX + 94, wY - 16, "")
+				.setSize(14, 14)
+				.setColor(elementType == 1 ? 0xFF80FF80 : 0xFFFFFFFF)
 				.setTexture(etns)
-				.setHasDefaultBack(false)
-				.setUV(24, 0, 24, 24));
+				.setDefBack(false)
+				.setUV(24, 0, 24, 24);
 		// element brow
-		addButton(new GuiNpcButton(28, wX + 110, wY - 16, 14, 14, "")
-				.setLayerColor(elementType == 2 ? 0xFF8080FF : 0xFFFFFFFF)
+		addButton(28, wX + 110, wY - 16, "")
+				.setSize(14, 14)
+				.setColor(elementType == 2 ? 0xFF8080FF : 0xFFFFFFFF)
 				.setTexture(etns)
-				.setHasDefaultBack(false)
-				.setUV(48, 0, 24, 24));
+				.setDefBack(false)
+				.setUV(48, 0, 24, 24);
 		// element mouth
-		addButton(new GuiNpcButton(22, wX + 126, wY - 16, 14, 14, "")
-				.setLayerColor(elementType == 3 ? 0xFFFFFF80 : 0xFFFFFFFF)
+		addButton(22, wX + 126, wY - 16, "")
+				.setSize(14, 14)
+				.setColor(elementType == 3 ? 0xFFFFFF80 : 0xFFFFFFFF)
 				.setTexture(etns)
-				.setHasDefaultBack(false)
-				.setUV(72, 0, 24, 24));
-		addButton(new GuiButtonBiDirectional(32, wX + 58, wY - 48, 82, 14, types, (modelEye == null) ? 0 : modelEye.type));
-		addButton(new GuiNpcButton(33, wX, y - 10, 70, 14, "gui.set")
-				.setIsEnable(animation.getBaseEmotionId() != emtn.id));
-		addButton(new GuiNpcButton(34, wX + 72, y - 10, 70, 14, "gui.remove")
-				.setIsEnable(animation.getBaseEmotionId() >= 0));
-		addButton(new GuiNpcButton(29, wX + 58, wY - 32, 82, 14, new String[] { "gui.right", "gui.left" }, isRight ? 0 : 1)
+				.setDefBack(false)
+				.setUV(72, 0, 24, 24);
+		addButton(32, wX + 58, wY - 48, true, (modelEye == null) ? 0 : modelEye.type, "gui.small", "gui.normal", "gui.select")
+				.setSize(82, 14);
+		addButton(33, wX, y - 10, "gui.set")
+				.setSize(70, 14)
+				.setIsEnabled(animation.getBaseEmotionId() != emtn.id);
+		addButton(34, wX + 72, y - 10, "gui.remove")
+				.setSize(70, 14)
+				.setIsEnabled(animation.getBaseEmotionId() >= 0);
+		addButton(29, wX + 58, wY - 32, false, isRight ? 0 : 1, "gui.right", "gui.left")
+				.setSize(82, 14)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
-				.setUV(0, 96, 0, 0));
+				.setUV(0, 96, 0, 0);
 		// Name
 		x += scroll.width + 2;
 		y = guiTop + 14;
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.name").getFormattedText() + ":", x + 1, y - 10));
-		addTextField(new GuiNpcTextField(0, this, x + 1, y, 135, 12, emtn.name));
+		addLabel(lId++, x + 1, y - 10, Component.translatable("gui.name").append(":"));
+		addTextField(0, x + 1, y, 135, 12, emtn.name);
 		// Frame
-		addLabel(new GuiNpcLabel(lId++, "animation.frames", x, (y += 26) - 10));
+		addLabel(lId++, x, (y += 26) - 10, "animation.frames");
 		List<String> lFrames = new ArrayList<>();
 		for (int i = 0; i < emtn.frames.size(); i++) { lFrames.add((i + 1) + "/" + emtn.frames.size()); }
-		addButton(new GuiButtonBiDirectional(3, x, y, 60, 14, lFrames.toArray(new String[0]), emtn.id)
-				.setIsEnable(emtn.frames.size() > 1));
+		addButton(3, x, y, true, emtn.id, lFrames.toArray(new Object[0]))
+				.setSize(60, 14)
+				.setIsEnabled(emtn.frames.size() > 1);
 		// add frame
-		addButton(new GuiNpcButton(4, x + 62, y + 2, 10, 10, "")
+		addButton(4, x + 62, y + 2, "")
+				.setSize(10, 10)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
-				.setUV(96, 0, 24, 24));
+				.setUV(96, 0, 24, 24);
 		// del frame
-		addButton(new GuiNpcButton(5, x + 74, y + 2, 10, 10, "")
+		addButton(5, x + 74, y + 2, "")
+				.setSize(10, 10)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
 				.setUV(72, 0, 24, 24)
-				.setIsEnable(emtn.frames.size() > 1));
+				.setIsEnabled(emtn.frames.size() > 1);
 		// clear frame
-		addButton(new GuiNpcButton(6, x + 126, y + 2, 10, 10, "")
+		addButton(6, x + 126, y + 2, "")
+				.setSize(10, 10)
 				.setTexture(ANIMATION_BUTTONS)
-				.setHasDefaultBack(false)
+				.setDefBack(false)
 				.setIsAnim(true)
-				.setUV(120, 0, 24, 24));
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.time").getFormattedText() + ":", x, (y += 17) + 2));
-		addTextField(new GuiNpcTextField(1, this, x + 45, y, 43, 12, "" + frame.getSpeed())
-				.setMinMaxDefault(0, 3600, frame.getSpeed()));
-		addTextField(new GuiNpcTextField(2, this, x + 92, y, 43, 12, "" + frame.getEndDelay())
-				.setMinMaxDefault(0, 3600, frame.getEndDelay()));
-		addLabel(new GuiNpcLabel(lId++, new TextComponentTranslation("gui.repeat").getFormattedText() + ":", x, (y += 13) + 5));
+				.setUV(120, 0, 24, 24);
+		addLabel(lId++, x, (y += 17) + 2, Component.translatable("gui.time").append(":"));
+		addTextField(1, x + 45, y, 43, 12, "" + frame.getSpeed())
+				.setMinMaxDefault(0, 3600, frame.getSpeed());
+		addTextField(2, x + 92, y, 43, 12, "" + frame.getEndDelay())
+				.setMinMaxDefault(0, 3600, frame.getEndDelay());
+		addLabel(lId++, x, (y += 13) + 5, Component.translatable("gui.repeat").append(":"));
 		if (emtn.repeatLast < 0) { emtn.repeatLast *= -1; }
 		if (emtn.repeatLast < 0 || emtn.repeatLast > emtn.frames.size()) { emtn.repeatLast = emtn.frames.size(); }
-		addTextField(new GuiNpcTextField(3, this, x + 45, y + 3, 43, 12, "" + emtn.repeatLast)
-				.setMinMaxDefault(0, emtn.frames.size(), emtn.repeatLast));
-		addButton(new GuiNpcCheckBox(11, x + 92, y + 1, 45, 14, "gui.smooth", "gui.linearly", frame.isSmooth()));
-		addButton(new GuiNpcCheckBox(38, x, y += 16, 140, 14, "emotion.part.disable", null, frame.isDisabled()));
+		addTextField(3, x + 45, y + 3, 43, 12, "" + emtn.repeatLast)
+				.setMinMaxDefault(0, emtn.frames.size(), emtn.repeatLast);
+		addCheckBox(11, x + 92, y + 1, "gui.smooth", "gui.linearly", frame.isSmooth())
+				.setSize(45, 14);
+		addCheckBox(38, x, y += 16, "emotion.part.disable", null, frame.isDisabled())
+				.setSize(140, 14);
 		resetEmtns();
-		addButton(new GuiNpcCheckBox(35, x, y += 15, 140, 14, "emotion.blink", "emotion.no.blink", frame.isBlink()));
+		addCheckBox(35, x, y += 15, "emotion.blink", "emotion.no.blink", frame.isBlink())
+				.setSize(140, 14);
 		y += 15;
-		if (frame.isBlink()) { addButton(new GuiNpcCheckBox(36, x, y, 140, 14, "emotion.end.blink", null, frame.isEndBlink())); }
+		if (frame.isBlink()) {
+			addCheckBox(36, x, y, "emotion.end.blink", null, frame.isEndBlink())
+				.setSize(140, 14);
+		}
 		// Tool sliders
 		int f = 18;
 		float[] values;
@@ -513,7 +521,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 		y += 19;
 		for (int i = 0; i < 2; i++) {
 			if (toolType == 0 && i == 1) { break; }
-			addLabel(new GuiNpcLabel(lId++, i == 0 ? "X:" : "Y:", x, y + i * f + 4));
+			addLabel(lId++, x, y + i * f + 4, i == 0 ? "X:" : "Y:");
 			float sliderData;
 			double m, n;
 			if (toolType == 1) { // offset
@@ -529,32 +537,35 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 				n = 180.0d;
 				sliderData = values[i] * 0.0027778f + 0.5f;
 			}
-			addSlider(new GuiNpcSlider(this, i, x + 8, y + i * f, 128, 8, sliderData));
-			addTextField(new GuiNpcTextField(i + 5, this, x + 9, y + 9 + i * f, 56, 8, "" + values[i])
-					.setMinMaxDoubleDefault(m, n, sliderData));
-			addButton(new GuiNpcButton(30 + i, x + 67, y + 9 + i * f, 8, 8, "X")
+			addSlider(i, x + 8, y + i * f, sliderData)
+					.setSize(128, 8);
+			addTextField(i + 5, x + 9, y + 9 + i * f, 56, 8, "" + values[i])
+					.setMinMaxDefault(m, n, sliderData);
+			addButton(30 + i, x + 67, y + 9 + i * f, "X")
+					.setSize(8, 8)
 					.setTexture(ANIMATION_BUTTONS)
-					.setHasDefaultBack(false)
+					.setDefBack(false)
 					.setIsAnim(true)
-					.setDropShadow(false)
-					.setTextColor(0xFFDC0000)
-					.setUV(0, 96, 0, 0));
+					.setShowShadow(false)
+					.setColor(0xFFDC0000)
+					.setUV(0, 96, 0, 0);
 		}
-		addButton(new GuiNpcCheckBox(37, x, y += 38, 140, 14, "emotion.can.blink", "emotion.can.no.blink", emtn.canBlink()));
+		addCheckBox(37, x, y += 38, "emotion.can.blink", "emotion.can.no.blink", emtn.canBlink())
+				.setSize(140, 14);
 		resetEmtns();
-		addLabel(new GuiNpcLabel(lId, new TextComponentTranslation("ai.movement").getFormattedText() + ":", x, (y += 20) + 1));
-		addTextField(new GuiNpcTextField(7, this, x += 45,  y, 40, 12, "" + emtn.scaleMoveX)
-				.setMinMaxDoubleDefault(0.05d, 1.25d, emtn.scaleMoveX)
-				.setHoverText("emotion.hover.scale.move", "X"));
-		addTextField(new GuiNpcTextField(8, this, x + 45,  y, 40, 12, "" + emtn.scaleMoveY)
-				.setMinMaxDoubleDefault(0.05d, 1.25d, emtn.scaleMoveY)
-				.setHoverText("emotion.hover.scale.move", "Y"));
+		addLabel(lId, x, (y += 20) + 1, Component.translatable("ai.movement").append(":"));
+		addTextField(7, x += 45,  y, 40, 12, "" + emtn.scaleMoveX)
+				.setMinMaxDefault(0.05d, 1.25d, emtn.scaleMoveX)
+				.setHoverTexts(Component.translatable("emotion.hover.scale.move", "X"));
+		addTextField(8, x + 45,  y, 40, 12, "" + emtn.scaleMoveY)
+				.setMinMaxDefault(0.05d, 1.25d, emtn.scaleMoveY)
+				.setHoverTexts(Component.translatable("emotion.hover.scale.move", "Y"));
 	}
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		if (subgui != null) {
-			subgui.drawScreen(mouseX, mouseY, partialTicks);
+		if (hasSubGui()) {
+			getSubGui().drawScreen(mouseX, mouseY, partialTicks);
 			return;
 		}
 		super.drawScreen(mouseX, mouseY, partialTicks);
@@ -567,7 +578,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 			int x = guiLeft + scroll.width + 10;
 			drawGradientRect(wX - 1, wY - 1, wX + 141, wY + 141, 0xFF808080, 0xFF808080);
 
-			drawVerticalLine(wX - 5, guiTop + 4, guiTop + ySize + 12, 0xFF808080);
+			drawVerticalLine(wX - 5, guiTop + 4, guiTop + imageHeight + 12, 0xFF808080);
 
 			drawHorizontalLine(x - 2, x + 138, guiTop + 28, 0xFF808080);
 			drawHorizontalLine(x - 2, x + 138, guiTop + 133, 0xFF808080);
@@ -588,34 +599,35 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 	}
 
 	@Override
-	public void onGuiClosed() {
-		GuiNpcTextField.unfocus();
+	public void onClose() {
+		GuiTextFieldNop.unfocus();
 		save();
 		NBTTagCompound nbt = new NBTTagCompound();
 		nbt.setBoolean("save", true);
-		Client.sendData(EnumPacketServer.EmotionChange, nbt);
-		CustomNPCsScheduler.runTack(() -> Client.sendData(EnumPacketServer.AnimationSave, animation.save(new NBTTagCompound())), 500);
-		CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuAdvanced);
+		CustomNPCsScheduler.runTack(() -> Packets.sendServer(new SPacketAnimationSave(animation.save(new NBTTagCompound()))), 500);
+		CustomNpcs.proxy.openGui(npc, EnumGuiType.MainMenuAdvanced, null);
 	}
 
 	@Override
 	public void save() {
 		EmotionConfig emtn = getEmtn();
-		if (emtn != null) { Client.sendData(EnumPacketServer.EmotionChange, emtn.save()); }
+		if (emtn != null) {
+			Packets.sendServer(new SPacketEmotionSave(emtn.save()));
+		}
 	}
 
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (scroll.getID() == 0) {
-			if (selEmtn.equals(scroll.getSelected())) { return; }
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		if (scroll.id == 0) {
+			if (selEmtn.getFormattedText().equals(scroll.getSelected())) { return; }
 			save();
-			selEmtn = scroll.getSelected();
+			selEmtn = scroll.getNormalSelected();
 		}
 		initGui();
 	}
 
 	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { initGui(); }
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { initGui(); }
 
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
@@ -625,19 +637,20 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 
 	@Override
 	public void subGuiClosed(GuiScreen subgui) {
-		if (((SubGuiInterface) subgui).getId() == 1) { // add new
-			if (!(subgui instanceof SubGuiEditText) || ((SubGuiEditText) subgui).cancelled) { return; }
+		if (subgui instanceof SubGuiEditText && !((SubGuiEditText) subgui).cancelled) {
 			EmotionConfig newEmtn = aData.createNewEmtn();
 			newEmtn.name = ((SubGuiEditText) subgui).text[0];
 			selEmtn = newEmtn.getSettingName();
-			Client.sendData(EnumPacketServer.EmotionChange, newEmtn.save());
+			Packets.sendServer(new SPacketEmotionSave(newEmtn.save()));
 			initGui();
-		}
+		} // add new
 	}
 
 	private EmotionConfig getEmtn() {
-		if (!dataEmtns.containsKey(selEmtn)) { selEmtn = ""; }
-		if (selEmtn.isEmpty() || !dataEmtns.containsKey(selEmtn)) { return null; }
+		if (!dataEmtns.containsKey(selEmtn)) {
+			selEmtn = Component.empty();
+			return null;
+		}
 		return dataEmtns.get(selEmtn);
 	}
 
@@ -655,9 +668,9 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 	}
 
 	@Override
-	public void mouseDragged(GuiNpcSlider slider) {
+	public void mouseDragged(GuiSliderNop slider) {
 		float value;
-		int pos = slider.getID() + (isRight ? 0 : 2);
+		int pos = slider.id + (isRight ? 0 : 2);
 		switch(elementType) {
 			case 1: { // pupil
 				switch(toolType) { // 0 - rotation, 1 - offset, 2 - scale
@@ -696,11 +709,11 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 			case 3: { // mouth
 				switch(toolType) {
 					case 1: {
-						frame.offsetMouth[slider.getID()] = (value = slider.sliderValue * 2.5f - (isRight ? 1.0f : 1.5f));
+						frame.offsetMouth[slider.id] = (value = slider.sliderValue * 2.5f - (isRight ? 1.0f : 1.5f));
 						break;
 					}
 					case 2: {
-						frame.scaleMouth[slider.getID()] = (value = slider.sliderValue * 2.0f);
+						frame.scaleMouth[slider.id] = (value = slider.sliderValue * 2.0f);
 						break;
 					}
 					default: {
@@ -729,23 +742,23 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 				break;
 			}
 		}
-		if (getTextField(5 + slider.getID()) != null) { getTextField(5 + slider.getID()).setText("" + (Math.round(value * 1000.0f) / 1000.0f)); }
+		if (getTextField(5 + slider.id) != null) { getTextField(5 + slider.id).setValue("" + (Math.round(value * 1000.0f) / 1000.0f)); }
 		resetEmtns();
 	}
 
 	@Override
-	public void mousePressed(GuiNpcSlider slider) { }
+	public void mousePressed(GuiSliderNop slider) { }
 
 	@Override
-	public void mouseReleased(GuiNpcSlider slider) { }
+	public void mouseReleased(GuiSliderNop slider) { }
 
 	@Override
-	public void unFocused(GuiNpcTextField textField) {
+	public void unFocused(GuiTextFieldNop textField) {
 		EmotionConfig emtn = getEmtn();
 		if (hasSubGui() || emtn == null) { return; }
-		switch (textField.getID()) {
+		switch (textField.id) {
 			case 0: {
-				emtn.name = textField.getText();
+				emtn.name = textField.getValue();
 				selEmtn = emtn.getSettingName();
 				initGui();
 				break;
@@ -850,7 +863,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 						break;
 					} // Mouth
 				}
-				textField.setText("" + (Math.round(data * 1000.0f) / 1000.0f));
+				textField.setValue("" + (Math.round(data * 1000.0f) / 1000.0f));
 				if (getSlider(0) != null) { getSlider(0).setSliderValue(value); }
 				resetEmtns();
 				break;
@@ -900,7 +913,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 						break;
 					} // Mouth
 				}
-				textField.setText("" + (Math.round(data * 1000.0f) / 1000.0f));
+				textField.setValue("" + (Math.round(data * 1000.0f) / 1000.0f));
 				if (getSlider(1) != null) { getSlider(1).setSliderValue(value); }
 				resetEmtns();
 				break;

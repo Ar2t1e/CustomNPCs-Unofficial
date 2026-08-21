@@ -1,64 +1,72 @@
 package noppes.npcs.client.gui.advanced;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
-import noppes.npcs.client.Client;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketLinkedGet;
+import noppes.npcs.packets.server.SPacketLinkedSet;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IScrollData;
 
 public class GuiNPCAdvancedLinkedNpc extends GuiNPCInterface2 implements IScrollData, ICustomScrollListener {
 
-	protected List<String> data = new ArrayList<>();
-	protected GuiCustomScroll scroll;
+	protected final List<String> data = new ArrayList<>();
+	protected GuiCustomScrollNop scroll;
 
 	public GuiNPCAdvancedLinkedNpc(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton == 1 && button.getID() == 1) { Client.sendData(EnumPacketServer.LinkedSet, ""); }
+		backGui = EnumGuiType.MainMenuAdvanced;
+		Packets.sendServer(new SPacketLinkedGet());
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		addButton(new GuiNpcButton(1, guiLeft + 358, guiTop + 38, 58, 20, "gui.clear"));
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(143, 208); }
-		scroll.guiLeft = guiLeft + 137;
-		scroll.guiTop = guiTop + 4;
-		scroll.setSelected(npc.linkedName);
-		scroll.setList(data);
-		addScroll(scroll);
+		int x = guiLeft + 137;
+		if (scroll == null) { scroll = addScroll(0).setSize(143, 208); }
+		add(scroll.setList(data)
+				.setPos(x, guiTop + 5)
+				.setSelected(npc.linkedName));
+		// clear
+		addButton(1, x + scroll.width + 3, guiTop + 38, "gui.clear")
+				.setSize(60, 20);
+		// help
+		addLabel(0, x + scroll.width + 12, guiTop + 62, "type.help")
+				.setBackColor(0x80808080)
+				.setBorderColor(0x80808080)
+				.setHoverTexts("linked.hover.info");
 	}
 
 	@Override
-	public void initPacket() {
-		Client.sendData(EnumPacketServer.LinkedGetAll);
+	public void buttonEvent(GuiButtonNop guiButton) {
+		if (guiButton.id == 1) {
+			Packets.sendServer(new SPacketLinkedSet(""));
+			scroll.setSelected("");
+		}
 	}
 
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { Client.sendData(EnumPacketServer.LinkedSet, scroll.getSelected()); }
-
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) { }
-
-	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
-		data = new ArrayList<>(dataList);
+	public void setData(Vector<String> dataList, Map<String, Integer> dataMap) {
+		data.clear();
+		data.addAll(dataList);
 		initGui();
 	}
 
 	@Override
 	public void setSelected(String selected) { scroll.setSelected(selected); }
+
+	@Override
+	public void save() { }
+
+	@Override
+	public void scrollClicked(GuiCustomScrollNop scroll) { Packets.sendServer(new SPacketLinkedSet(scroll.getSelected())); }
+
+	@Override
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
 
 }

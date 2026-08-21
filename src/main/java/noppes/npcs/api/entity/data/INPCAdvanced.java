@@ -1,6 +1,6 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 @SuppressWarnings("all")
 public interface INPCAdvanced {
@@ -16,4 +16,7 @@ public interface INPCAdvanced {
 
 	void setSound(@ParamName("type") int type, @ParamName("sound") String sound);
 
+    int getAnimationType();
+
+	void setAnimationType(int type);
 }

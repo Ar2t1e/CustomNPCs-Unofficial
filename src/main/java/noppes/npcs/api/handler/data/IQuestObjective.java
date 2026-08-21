@@ -1,10 +1,11 @@
 package noppes.npcs.api.handler.data;
 
+import net.minecraft.util.text.ITextComponent;
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 
-@SuppressWarnings("all")
+@SuppressWarnings("unused")
 public interface IQuestObjective { // QuestObjective
 
 	int getAreaRange();
@@ -14,6 +15,8 @@ public interface IQuestObjective { // QuestObjective
 	IPos getCompassPos();
 
 	int getCompassRange();
+
+	int getCompassColor();
 
 	IItemStack getItem();
 
@@ -28,6 +31,8 @@ public interface IQuestObjective { // QuestObjective
 	String getTargetName();
 
 	String getText();
+
+	ITextComponent getMCText();
 
 	int getType();
 
@@ -59,7 +64,9 @@ public interface IQuestObjective { // QuestObjective
 
 	void setCompassRange(@ParamName("range") int range);
 
-	void setItem(@ParamName("item") IItemStack item);
+    void setCompassColor(@ParamName("color") int color);
+
+    void setItem(@ParamName("item") IItemStack item);
 
 	void setItemIgnoreDamage(@ParamName("bo") boolean bo);
 

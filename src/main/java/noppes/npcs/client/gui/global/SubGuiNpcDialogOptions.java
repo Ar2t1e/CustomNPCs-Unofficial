@@ -1,201 +1,230 @@
 package noppes.npcs.client.gui.global;
 
-import java.util.*;
-
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.util.*;
+import noppes.npcs.client.gui.ConfirmScreen;
+import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.controllers.data.DialogOption;
-import noppes.npcs.controllers.data.DialogOption.OptionDialogID;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
-import javax.annotation.Nonnull;
+import java.util.*;
 
-public class SubGuiNpcDialogOptions extends SubGuiInterface implements ICustomScrollListener, GuiYesNoCallback {
+public class SubGuiNpcDialogOptions
+		extends GuiNPCInterface
+		implements ICustomScrollListener {
 
-	protected final Map<String, Integer> data = new TreeMap<>(); // {scrollTitle, dialogID}
-	protected final Dialog dialog;
-	protected GuiCustomScroll scroll;
+	private final Dialog dialog;
+	private final Map<Component, Integer> data = new LinkedHashMap<>(); // {scrollTitle, dialogID}
+	private GuiCustomScrollNop scroll;
 
 	// New from Unofficial (BetaZavr)
 	public final GuiScreen parent;
 
-	public SubGuiNpcDialogOptions(EntityNPCInterface npcIn, Dialog d, GuiScreen gui) {
-		super(0, npcIn);
+	public SubGuiNpcDialogOptions(EntityNPCInterface npcIn, Dialog dialogIn, GuiScreen gui) {
+		super(npcIn);
 		setBackground("menubg.png");
+		imageWidth = 256;
+		imageHeight = 216;
 		closeOnEsc = true;
-		xSize = 256;
-		ySize = 216;
 
-		dialog = d;
+		dialog = dialogIn;
 		parent = gui;
 	}
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
+	public void initGui() {
+		super.initGui();
+		addLabel(66, guiLeft, guiTop + 4, "dialog.options");
+		getLabel(66).setCenter(imageWidth);
+		data.clear();
+		List<Component> list = new ArrayList<>();
+		fix();
+		DialogController dData = DialogController.instance;
+		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+		for (int id : dialog.options.keySet()) {
+			DialogOption option = dialog.options.get(id);
+			Component key = Component.empty();
+			key.append("ID:" + id + " ").withStyle(TextFormatting.GRAY);
+			if (option == null) { continue; }
+			switch (option.optionType) {
+				case COMMAND_BLOCK: {
+					key.append(Component.literal("C").withStyle(TextFormatting.YELLOW));
+					List<Component> hovers = new ArrayList<>();
+					hovers.add(Component.empty()
+							.append(Component.translatable("gui.type"))
+							.append(Component.literal(": " + option.optionType.get() + " - "))
+							.append(Component.literal(option.optionType.name()).withStyle(TextFormatting.YELLOW)));
+					hovers.add(Component.empty()
+							.append(Component.translatable("quest.has." + !option.command.isEmpty()))
+							.append(Component.literal(": " + option.optionType.get() + " - "))
+							.append(Component.literal(!option.command.isEmpty() ? " - \"" + option.command + "\"" : "")));
+					hts.put(id, hovers);
+					break;
+				}
+				case DIALOG_OPTION: {
+					key.append(Component.literal("D").withStyle(TextFormatting.DARK_AQUA));
+					List<Component> hovers = new ArrayList<>();
+					hovers.add(Component.empty()
+							.append(Component.translatable("gui.type"))
+							.append(Component.literal(": " + option.optionType.get() + " - "))
+							.append(Component.literal(option.optionType.name()).withStyle(TextFormatting.DARK_AQUA)));
+					if (option.hasDialogs()) {
+						hovers.add(Component.translatable("availability.selectdialog").append(Component.literal(":")));
+						for (DialogOption.OptionDialogID od : option.dialogs) {
+							Component hd = Component.literal("ID: " + od.dialogId + " -");
+							if (dData.hasDialog(od.dialogId)) {
+								hd.append(Component.literal(" \""));
+								hd.append(Component.translatable(dData.get(od.dialogId).title));
+								hd.append(Component.literal("\" "));
+								hd.append(Component.translatable("quest.task.item.0"));
+							}
+							else {
+								hd.append(Component.translatable("quest.task.item.1"));
+							}
+							hovers.add(hd);
+						}
+					}
+					else { hovers.add(Component.translatable("quest.has.false")); }
+					hts.put(id, hovers);
+					break;
+				}
+				case QUIT_OPTION: {
+					key.append(Component.literal("E").withStyle(TextFormatting.LIGHT_PURPLE));
+					hts.put(id, Collections.singletonList(Component.empty()
+							.append(Component.translatable("gui.type"))
+							.append(Component.literal(": " + option.optionType.get() + " - "))
+							.append(Component.literal(option.optionType.name()).withStyle(TextFormatting.LIGHT_PURPLE))));
+					break;
+				}
+				case ROLE_OPTION: {
+					key.append(Component.literal("R").withStyle(TextFormatting.GREEN));
+					List<Component> hovers = new ArrayList<>();
+					hovers.add(Component.empty()
+							.append(Component.translatable("gui.type"))
+							.append(Component.literal(": " + option.optionType.get() + " - "))
+							.append(Component.literal(option.optionType.name()).withStyle(TextFormatting.GREEN)));
+
+					hovers.add(Component.empty()
+							.append(Component.translatable("role.name"))
+							.append(Component.literal(" -"))
+							.append(Component.translatable("quest.task.item."
+									+ (npc != null && npc.role.getEnumType() != RoleType.NONE ? "0" : "1")))
+					);
+					hts.put(id, hovers);
+					break;
+				}
+				case DISABLED: {
+					key.append(Component.literal("N").withStyle(TextFormatting.DARK_RED));
+					hts.put(id, Collections.singletonList(Component.empty()
+							.append(Component.translatable("gui.type"))
+							.append(Component.literal(": " + option.optionType.get() + " - "))
+							.append(Component.literal(option.optionType.name()).withStyle(TextFormatting.DARK_RED))));
+					break;
+				}
+			}
+			key.append(Component.literal(" - \"").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(option.title).withStyle(TextFormatting.RESET))
+					.append(Component.literal("\"").withStyle(TextFormatting.GRAY))
+					.withColor(option.optionColor);
+			data.put(key, id);
+			list.add(key);
+		}
+		if (scroll == null) { scroll = addScroll(0).setSize(248, 154); }
+		add(scroll.setPos(guiLeft + 4, guiTop + 14)
+				.setUnsortedList(list)
+				.setHoverTexts(hts));
+		addButton(0, guiLeft + 4, guiTop + 170, "gui.add")
+				.setSize(48, 20);
+		addButton(1, guiLeft + 54, guiTop + 170, "gui.remove")
+				.setSize(48, 20)
+				.setIsEnabled(scroll.hasSelected());
+		addButton(2, guiLeft + 104, guiTop + 170, "selectServer.edit")
+				.setSize(48, 20)
+				.setIsEnabled(scroll.hasSelected());
+		addButton(3, guiLeft + 154, guiTop + 170, "type.up")
+				.setSize(48, 20)
+				.setIsEnabled(scroll.hasSelected() && scroll.getSelectedIndex() != 0);
+		addButton(4, guiLeft + 204, guiTop + 170, "type.down")
+				.setSize(48, 20);
+		addButton(66, guiLeft + 82, guiTop + 192, "gui.done")
+				.setSize(98, 20);
+	}
+
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 0: {
 				DialogOption option = new DialogOption();
 				option.slot = dialog.options.size();
 				dialog.options.put(option.slot, option);
 				option.optionColor = SubGuiNpcDialogOption.LastColor;
-				scroll.setSelect(option.slot);
+				scroll.setSelected(option.slot);
 				setSubGui(new SubGuiNpcDialogOption(option, parent));
 				break;
 			} // add new
 			case 1: {
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				DialogOption option = dialog.options.get(data.get(scroll.getSelected()));
-				GuiYesNo guiyesno = new GuiYesNo(this, "ID:" + option.slot + " - " + option.title,
-						new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 0);
-				displayGuiScreen(guiyesno);
+				if (!data.containsKey(scroll.getNormalSelected())) { return; }
+				DialogOption option = dialog.options.get(data.get(scroll.getNormalSelected()));
+				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+					if (bo) {
+						dialog.options.remove(data.get(scroll.getNormalSelected()));
+						initGui();
+					}
+					if (parent instanceof SubGuiDialogEdit && ((SubGuiDialogEdit) parent).parent != null) { NoppesUtil.openGUI(player, ((SubGuiDialogEdit) parent).parent); }
+					else { NoppesUtil.openGUI(player, this); }
+				},
+						Component.literal("ID:" + option.slot + " - " + option.title).getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
 			} // remove
 			case 2: {
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				DialogOption option = dialog.options.get(data.get(scroll.getSelected()));
+				if (!data.containsKey(scroll.getNormalSelected())) { return; }
+				DialogOption option = dialog.options.get(data.get(scroll.getNormalSelected()));
 				if (option != null) { setSubGui(new SubGuiNpcDialogOption(option, parent)); }
 				break;
 			} // edit
 			case 3: {
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				dialog.upPos(data.get(scroll.getSelected()));
-				scroll.setSelect(scroll.getSelect() - 1);
+				if (!data.containsKey(scroll.getNormalSelected())) { return; }
+				dialog.upPos(data.get(scroll.getNormalSelected()));
+				scroll.setSelected(scroll.getSelectedIndex() - 1);
 				initGui();
 				break;
 			} // up dialog
-			case 4: {
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				dialog.downPos(data.get(scroll.getSelected()));
-				scroll.setSelect(scroll.getSelect() + 1);
+			case 4: { // down dialog
+				if (!data.containsKey(scroll.getNormalSelected())) { return; }
+				dialog.downPos(data.get(scroll.getNormalSelected()));
+				scroll.setSelected(scroll.getSelectedIndex() + 1);
 				initGui();
 				break;
-			} // down dialog
-			case 66: onClosed(); break;
-		}
-	}
-
-	@Override
-	public void confirmClicked(boolean result, int id) {
-		if (parent instanceof SubGuiDialogEdit && ((SubGuiDialogEdit) parent).parent != null) { NoppesUtil.openGUI(player, ((SubGuiDialogEdit) parent).parent); }
-		else { NoppesUtil.openGUI(player, this); }
-		if (!result) { return; }
-		dialog.options.remove(data.get(scroll.getSelected()));
-		initGui();
-	}
-
-	@Override
-	public void initGui() {
-		super.initGui();
-		addLabel(new GuiNpcLabel(66, "dialog.options", guiLeft, guiTop + 4).setCenter(xSize));
-		data.clear();
-		List<String> list = new ArrayList<>();
-		List<Integer> colors = new ArrayList<>();
-		fix();
-		DialogController dData = DialogController.instance;
-		LinkedHashMap<Integer, List<String>> hts = new LinkedHashMap<>();
-		for (int id : dialog.options.keySet()) {
-			DialogOption option = dialog.options.get(id);
-			String key = ((char) 167) + "7ID:" + id + " ";
-			if (option == null) { continue; }
-			switch (option.optionType) {
-				case COMMAND_BLOCK: {
-					key += ((char) 167) + "eC";
-					List<String> hovers = new ArrayList<>();
-					hovers.add(new TextComponentTranslation("gui.type").getFormattedText() + ": " + option.optionType.get() + " - " + ((char) 167) + "e" + option.optionType.name());
-					hovers.add(new TextComponentTranslation("quest.has." + !option.command.isEmpty()).getFormattedText() + (!option.command.isEmpty() ? " - \"" + option.command + "\"" : ""));
-					hts.put(id, hovers);
-					break;
-				}
-				case DIALOG_OPTION: {
-					key += ((char) 167) + "3D";
-					List<String> hovers = new ArrayList<>();
-					hovers.add(new TextComponentTranslation("gui.type").getFormattedText() + ": " + option.optionType.get()
-							+ " - " + ((char) 167) + "3" + option.optionType.name());
-					if (option.hasDialogs()) {
-						hovers.add(new TextComponentTranslation("availability.selectdialog").getFormattedText() + ":");
-						for (OptionDialogID od : option.dialogs) {
-							String hd = "ID: " + od.dialogId + " -";
-							if (dData.hasDialog(od.dialogId)) {
-								hd += " \"" + new TextComponentTranslation(dData.get(od.dialogId).title).getFormattedText() +
-										"\" " + new TextComponentTranslation("quest.task.item.0").getFormattedText();
-							}
-							else {
-								hd += new TextComponentTranslation("quest.task.item.1").getFormattedText();
-							}
-							hovers.add(hd);
-						}
-					} else {
-						hovers.add(new TextComponentTranslation("quest.has.false").getFormattedText());
-					}
-					hts.put(id, hovers);
-					break;
-				}
-				case QUIT_OPTION: {
-					key += ((char) 167) + "dE";
-					hts.put(id, Collections.singletonList(new TextComponentTranslation("gui.type").getFormattedText() + ": " + option.optionType.get() + " - " + ((char) 167) + "d" + option.optionType.name()));
-					break;
-				}
-				case ROLE_OPTION: {
-					key += ((char) 167) + "aR";
-					List<String> hovers = new ArrayList<>();
-					hovers.add(new TextComponentTranslation("gui.type").getFormattedText() + ": " + option.optionType.get()
-							+ " - " + ((char) 167) + "a" + option.optionType.name());
-					hovers.add(new TextComponentTranslation("role.name").getFormattedText() + " -"
-							+ new TextComponentTranslation("quest.task.item."
-							+ (npc != null && npc.advanced.roleInterface.getEnumType() != RoleType.DEFAULT
-							? "0"
-							: "1")).getFormattedText());
-					hts.put(id, hovers);
-					break;
-				}
-				case DISABLED: {
-					key += ((char) 167) + "4N";
-					hts.put(id, Collections.singletonList(new TextComponentTranslation("gui.type").getFormattedText() + ": " + option.optionType.get() + " - " + ((char) 167) + "4" + option.optionType.name()));
-					break;
-				}
 			}
-			key += ((char) 167) + "7 - \"" + ((char) 167) + "r" + option.title + ((char) 167) + "7\"";
-			colors.add(option.optionColor);
-			data.put(key, id);
-			list.add(key);
+			case 66: {
+				onClose();
+				break;
+			} // back
 		}
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(248, 154); }
-		scroll.guiLeft = guiLeft + 4;
-		scroll.guiTop = guiTop + 14;
-		scroll.setUnsortedList(list)
-				.setColors(colors)
-				.setHoverTexts(hts);
-		addScroll(scroll);
-		addButton(new GuiNpcButton(0, guiLeft + 4, guiTop + 170, 48, 20, "gui.add"));
-		addButton(new GuiNpcButton(1, guiLeft + 54, guiTop + 170, 48, 20, "gui.remove")
-				.setIsEnable(scroll.hasSelected()));
-		addButton(new GuiNpcButton(2, guiLeft + 104, guiTop + 170, 48, 20, "selectServer.edit")
-				.setIsEnable(scroll.hasSelected()));
-		addButton(new GuiNpcButton(3, guiLeft + 154, guiTop + 170, 48, 20, "type.up", scroll.getSelect() != -1 && scroll.getSelect() != 0));
-		addButton(new GuiNpcButton(4, guiLeft + 204, guiTop + 170, 48, 20, "type.down", scroll.getSelect() != -1 && scroll.getSelect() > -1 && scroll.getSelect() < data.size() - 1));
-		addButton(new GuiNpcButton(66, guiLeft + 82, guiTop + 192, 98, 20, "gui.done")
-				.setHoverText("hover.back"));
 	}
 
 	// New from Unofficial (BetaZavr)
 	@Override
-	public void scrollClicked(int mouseX, int mouseY, int time, GuiCustomScroll scroll) {
-		if (!data.containsKey(scroll.getSelected())) { scroll.setSelect(-1); return; }
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		if (!data.containsKey(scroll.getNormalSelected())) {
+			scroll.setSelected(-1);
+			return;
+		}
 		initGui();
 	}
 
 	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) {
-		if (!data.containsKey(scroll.getSelected())) { return; }
-		DialogOption option = dialog.options.get(data.get(scroll.getSelected()));
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+		if (!data.containsKey(scroll.getNormalSelected())) { return; }
+		DialogOption option = dialog.options.get(data.get(scroll.getNormalSelected()));
 		if (option == null) { return; }
 		setSubGui(new SubGuiNpcDialogOption(option, parent));
 	}

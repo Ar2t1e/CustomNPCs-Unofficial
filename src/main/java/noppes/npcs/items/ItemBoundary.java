@@ -12,6 +12,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -20,24 +21,22 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.CustomRegisters;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.CustomTabs;
+import noppes.npcs.packets.server.SPacketGuiOpen;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.BorderController;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.controllers.data.Zone3D;
-import noppes.npcs.util.IPermission;
 
-public class ItemBoundary extends Item implements IPermission {
+public class ItemBoundary extends Item {
 
 	public ItemBoundary() {
 		this.setRegistryName(CustomNpcs.MODID, "npcboundary");
 		this.setUnlocalizedName("npcboundary");
 		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
+		this.setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -60,14 +59,8 @@ public class ItemBoundary extends Item implements IPermission {
 		list.add(new TextComponentTranslation("info.item.boundary.4", "" + reg.getId(), reg.name).getFormattedText());
 	}
 
-	@Override
-	public boolean isAllowed(EnumPacketServer e) {
-		return e == EnumPacketServer.TeleportTo || e == EnumPacketServer.RegionData;
-	}
-
 	public void leftClick(ItemStack stack, EntityPlayerMP player) {
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return; }
 		int id = -1;
 		Vec3d vec3d = player.getPositionEyes(1.0f);
 		Vec3d vec3d2 = player.getLook(1.0f);
@@ -96,11 +89,11 @@ public class ItemBoundary extends Item implements IPermission {
 			id = stack.getTagCompound().getInteger("RegionID");
 		}
 		// Shift + LMB = New Region
-		if (data.hud.hasOrKeysPressed(42, 54)) {
+		if (data.overlay.hasOrKeysPressed(42, 54)) {
 			Zone3D reg = bData.createNew(player.world.provider.getDimension(), pos);
 			bData.save();
 			bData.update(reg.getId());
-			NoppesUtilServer.sendOpenGui(player, EnumGuiType.BoundarySetting, null, reg.getId(), 0, 0);
+			SPacketGuiOpen.sendOpenGui(player, EnumGuiType.BoundarySetting, null, new BlockPos(reg.getId(), 0, 0));
 			NBTTagCompound compound = stack.getTagCompound();
 			if (compound == null) { stack.setTagCompound(compound = new NBTTagCompound()); }
 			compound.setInteger("RegionID", reg.getId());
@@ -123,7 +116,6 @@ public class ItemBoundary extends Item implements IPermission {
 
 	public void rightClick(ItemStack stack, EntityPlayerMP player) {
 		PlayerData data = PlayerData.get(player);
-		if (data == null) { return; }
 		int id = -1;
 		BorderController bData = BorderController.getInstance();
 		Vec3d vec3d = player.getPositionEyes(1.0f);
@@ -152,37 +144,43 @@ public class ItemBoundary extends Item implements IPermission {
 		}
 		Zone3D reg = bData.getRegion(id);
 		// Shift + RMB = Show Region settings
-		if (reg == null || data.hud.hasOrKeysPressed(42, 54)) { // Shift pressed
-			if (reg != null && pos == null) { pos = player.getPosition(); }
-			if (!bData.regions.isEmpty()) { NoppesUtilServer.sendOpenGui(player, EnumGuiType.BoundarySetting, null, id, reg == null ? -1 : reg.getIdNearestPoint(pos), 0); }
+		if (reg == null || result == null || result.typeOfHit == RayTraceResult.Type.MISS || data.overlay.isPressedShift()) {
+			if (reg == null && pos != null && !BorderController.getInstance().regions.isEmpty()) {
+				List<Zone3D> list = BorderController.getInstance().getNearestRegions(player.world.provider.getDimension(), pos.getX(), pos.getY(), pos.getZ(), 1);
+				if (!list.isEmpty()) {reg = list.get(0); }
+			}
+			if (reg == null && result != null && result.typeOfHit == RayTraceResult.Type.MISS) { reg = BorderController.getInstance().createNew(player.world.provider.getDimension(), pos); }
+			if (reg != null) {
+				NBTTagCompound compound = player.getHeldItemMainhand().getTagCompound();
+				if (compound == null) { player.getHeldItemMainhand().setTagCompound(compound = new NBTTagCompound()); }
+				compound.setInteger("RegionID", reg.getId());
+				SPacketGuiOpen.sendOpenGui(player, EnumGuiType.BoundarySetting, null, new BlockPos(id, reg.getIdNearestPoint(player.getPosition()), 0));
+			}
 			return;
 		}
 		// RMB = add point
-		if (pos != null) {
-			boolean add = false;
-			if (reg.contains(pos.getX(), pos.getZ())) { // Offset Y min/max
-				int min = Math.abs(reg.y[0] - pos.getY());
-				int max = Math.abs(reg.y[1] - pos.getY());
-				if (min <= max) {
-					reg.y[0] = pos.getY();
-				} else {
-					reg.y[1] = pos.getY();
-					add = true;
-				}
-				player.sendMessage(new TextComponentTranslation("message.boundary.offset.y." + add, "" + pos.getX(),
-						"" + pos.getY(), "" + pos.getZ(), reg.toString()));
+		boolean add = false;
+		if (reg.contains(pos.getX(), pos.getZ())) { // Offset Y min/max
+			int min = Math.abs(reg.y[0] - pos.getY());
+			int max = Math.abs(reg.y[1] - pos.getY());
+			if (min <= max) {
+				reg.y[0] = pos.getY();
+			} else {
+				reg.y[1] = pos.getY();
 				add = true;
-			} else { // add new point
-				add = reg.insertPoint(pos.getX(), pos.getY(), pos.getZ(),
-						Objects.requireNonNull(NpcAPI.Instance()).getIPos(player.posX, player.posY, player.posZ));
-				player.sendMessage(new TextComponentTranslation("message.boundary.add.vertex." + add, "" + pos.getX(),
-						"" + pos.getY(), "" + pos.getZ(), reg.toString()));
 			}
-			if (add) {
-				reg.fix();
-				bData.save();
-				bData.update(reg.getId());
-			}
+			player.sendMessage(Component.translatable("message.boundary.offset.y." + add, "" + pos.getX(), "" + pos.getY(), "" + pos.getZ(), reg.toString()).getParent());
+			add = true;
+		} else { // add new point
+			add = reg.insertPoint(pos.getX(), pos.getY(), pos.getZ(),
+					Objects.requireNonNull(NpcAPI.Instance()).getIPos(player.posX, player.posY, player.posZ));
+			player.sendMessage(Component.translatable("message.boundary.add.vertex." + add, "" + pos.getX(),
+					"" + pos.getY(), "" + pos.getZ(), reg.toString()).getParent());
+		}
+		if (add) {
+			reg.fix();
+			BorderController.getInstance().save();
+			BorderController.getInstance().update(reg.getId());
 		}
 	}
 

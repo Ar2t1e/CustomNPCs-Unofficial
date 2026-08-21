@@ -1,15 +1,19 @@
 package noppes.npcs.client.gui.advanced;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.Client;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.constants.EnumMenuType;
 import noppes.npcs.controllers.data.DataTransform;
 import noppes.npcs.entity.EntityNPCInterface;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketMenuGet;
+import noppes.npcs.packets.server.SPacketMenuSave;
+import noppes.npcs.packets.server.SPacketNpcTransform;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 
 public class GuiNPCNightSetup extends GuiNPCInterface2 implements IGuiData {
 
@@ -17,89 +21,104 @@ public class GuiNPCNightSetup extends GuiNPCInterface2 implements IGuiData {
 
 	public GuiNPCNightSetup(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuAdvanced;
-
 		data = npc.transform;
-		Client.sendData(EnumPacketServer.TransformGet);
-	}
+		backGui = EnumGuiType.MainMenuAdvanced;
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 0: data.hasDisplay = button.getValue() == 1; break;
-			case 1: data.hasStats = button.getValue() == 1; break;
-			case 2: data.hasAi = button.getValue() == 1; break;
-			case 3: data.hasInv = button.getValue() == 1; break;
-			case 4: data.hasAdvanced = button.getValue() == 1; break;
-			case 5: data.hasRole = button.getValue() == 1; break;
-			case 6: data.hasJob = button.getValue() == 1; break;
-			case 7: data.hasAnimations = button.getValue() == 1; break;
-			case 10: data.editingModus = button.getValue() == 1; save(); initGui(); break;
-			case 11: Client.sendData(EnumPacketServer.TransformLoad, false); break;
-			case 12: Client.sendData(EnumPacketServer.TransformLoad, true); break;
-		}
+		Packets.sendServer(new SPacketMenuGet(EnumMenuType.TRANSFORM));
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		int xL = guiLeft + 6;
-		int xB = guiLeft + 74;
-		int y = guiTop + 5;
-		addLabel(new GuiNpcLabel(10, "advanced.editingmode", xL, y + 5));
-		addButton(new GuiNpcButton(10, xB, y, 80, 20, new String[] { "gui.no", "gui.yes" }, (data.editingModus ? 1 : 0))
-				.setHoverText("transform.hover.edit"));
-
-		addLabel(new GuiNpcLabel(0, "menu.display", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(0, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasDisplay ? 1 : 0))
-				.setHoverText("transform.hover.tab", new TextComponentTranslation("menu.display").getFormattedText()));
-		addLabel(new GuiNpcLabel(1, "menu.stats", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(1, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasStats ? 1 : 0))
-				.setHoverText("transform.hover.tab", new TextComponentTranslation("menu.stats").getFormattedText()));
-
+		int w = 80;
+		int x0 = guiLeft + 5;
+		int x1 = x0 + w + 2;
+		int x2 = x0 + 170;
+		int x3 = x2 + w + 2;
+		int y = guiTop + 20;
+		addLabel(0, x0, y + 5, "menu.display")
+				.setSize(w, 10);
+		addYesNo(0, x1, y, data.hasDisplay)
+				.setHoverTexts(Component.translatable("transform.hover.tab",
+						Component.translatable("menu.display").getFormattedText()));
+		addLabel(10, x2, y + 5, "advanced.editingmode")
+				.setSize(w, 10);
+		addYesNo(10, x3, y, data.editingModus)
+				.setHoverTexts("transform.hover.edit");
+		addLabel(1, x0, (y += 22) + 5, "menu.stats")
+				.setSize(w, 10);
+		addYesNo(1, x1, y, data.hasStats)
+				.setHoverTexts(Component.translatable("transform.hover.tab",
+						Component.translatable("menu.stats").getFormattedText()));
 		if (data.editingModus) {
-			addButton(new GuiNpcButton(11, guiLeft + 170, y, 120, 20, "advanced.loadday")
-					.setHoverText(new TextComponentTranslation("transform.hover.loadday")
-					.appendSibling(new TextComponentTranslation("transform.hover.state")).getFormattedText()));
+			addButton(11, x2, y, "advanced.loadday")
+					.setHoverTexts(Component.translatable("transform.hover.loadday")
+							.append(Component.translatable("transform.hover.state")))
+					.setSize(120, 20);
 		}
-
-		addLabel(new GuiNpcLabel(2, "menu.ai", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(2, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasAi ? 1 : 0))
-				.setHoverText("transform.hover.tab", new TextComponentTranslation("menu.ai").getFormattedText()));
-
+		addLabel(2, x0, (y += 22) + 5, "menu.ai")
+				.setSize(w, 10);
+		addYesNo(2, x1, y, data.hasAi)
+				.setHoverTexts(Component.translatable("transform.hover.tab",
+						Component.translatable("menu.ai").getFormattedText()));
 		if (data.editingModus) {
-			addButton(new GuiNpcButton(12, guiLeft + 170, y, 120, 20, "advanced.loadnight")
-					.setHoverText(new TextComponentTranslation("transform.hover.loadnight")
-					.appendSibling(new TextComponentTranslation("transform.hover.state")).getFormattedText()));
+			addButton(12, x2, y, "advanced.loadnight")
+					.setHoverTexts(Component.translatable("transform.hover.loadnight")
+							.append(Component.translatable("transform.hover.state")))
+					.setSize(120, 20);
 		}
+		addLabel(3, x0, (y += 22) + 5, "menu.inventory")
+				.setSize(w, 10);
+		addYesNo(3, x1, y, data.hasInv)
+				.setHoverTexts(Component.translatable("transform.hover.tab",
+						Component.translatable("menu.inventory").getFormattedText()));
 
-		addLabel(new GuiNpcLabel(3, "menu.inventory", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(3, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasInv ? 1 : 0))
-				.setHoverText("transform.hover.tab", new TextComponentTranslation("menu.inventory").getFormattedText()));
-		addLabel(new GuiNpcLabel(7, "movement.animation", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(7, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasJob ? 1 : 0))
-				.setHoverText("transform.hover.animation", new TextComponentTranslation("menu.advanced").getFormattedText()));
-		addLabel(new GuiNpcLabel(4, "menu.advanced", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(4, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasAdvanced ? 1 : 0))
-				.setHoverText("transform.hover.tab", new TextComponentTranslation("menu.advanced").getFormattedText()));
-		xL += 15;
-		xB += 15;
-		addLabel(new GuiNpcLabel(5, "role.name", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(5, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasRole ? 1 : 0))
-				.setHoverText("transform.hover.role", new TextComponentTranslation("menu.advanced").getFormattedText()));
-		addLabel(new GuiNpcLabel(6, "job.name", xL, (y += 22) + 5));
-		addButton(new GuiNpcButton(6, xB, y, 50, 20, new String[] { "gui.no", "gui.yes" }, (data.hasJob ? 1 : 0))
-				.setHoverText("transform.hover.job", new TextComponentTranslation("menu.advanced").getFormattedText()));
+		// New from Unofficial (BetaZavr)
+		addLabel(7, x0, (y += 22) + 5, "movement.animation")
+				.setSize(w, 10);
+		addYesNo(7, x1, y, data.hasAnimations)
+				.setHoverTexts("transform.hover.animation");
+
+		addLabel(4, x0, (y += 22) + 5, "menu.advanced")
+				.setSize(w, 10);
+		addYesNo(4, x1, y, data.hasAdvanced)
+				.setHoverTexts(Component.translatable("transform.hover.tab",
+						Component.translatable("menu.advanced").getFormattedText()));
+		addLabel(5, x0, (y += 22) + 5, "role.name")
+				.setSize(w, 10);
+		addYesNo(5, x1, y, data.hasRole)
+				.setHoverTexts(Component.translatable("transform.hover.role",
+						Component.translatable("menu.advanced").getFormattedText()));
+		addLabel(6, x0, (y += 22) + 5, "job.name")
+				.setSize(w, 10);
+		addYesNo(6, x1, y, data.hasJob)
+				.setHoverTexts(Component.translatable("transform.hover.job",
+						Component.translatable("menu.advanced").getFormattedText()));
 	}
 
 	@Override
-	public void save() { Client.sendData(EnumPacketServer.TransformSave, data.writeOptions(new NBTTagCompound())); }
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 0: data.hasDisplay = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 1: data.hasStats = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 2: data.hasAi = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 3: data.hasInv = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 4: data.hasAdvanced = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 5: data.hasRole = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 6: data.hasJob = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 7: data.hasAnimations = ((GuiButtonYesNo) button).getBoolean(); break;
+			case 10: data.editingModus = ((GuiButtonYesNo) button).getBoolean(); save(); initGui(); break;
+			case 11: Packets.sendServer(new SPacketNpcTransform(false)); break;
+			case 12: Packets.sendServer(new SPacketNpcTransform(true)); break;
+		}
+	}
+
+	@Override
+	public void save() { Packets.sendServer(new SPacketMenuSave(EnumMenuType.TRANSFORM, data.saveOptions(new NBTTagCompound()))); }
 
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
-		data.readOptions(compound);
+		data.loadOptions(compound);
 		initGui();
 	}
 

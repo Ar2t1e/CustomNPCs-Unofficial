@@ -14,17 +14,19 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NpcMiscInventory;
-import noppes.npcs.Server;
+import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.*;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.handler.IMarcetHandler;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.controllers.data.Deal;
 import noppes.npcs.controllers.data.DealMarkup;
 import noppes.npcs.controllers.data.Marcet;
 import noppes.npcs.controllers.data.MarcetSection;
+import noppes.npcs.controllers.data.MarkupData;
 import noppes.npcs.entity.data.DropSet;
 
 public class MarcetController implements IMarcetHandler {
@@ -36,6 +38,8 @@ public class MarcetController implements IMarcetHandler {
 		}
 		return MarcetController.instance;
 	}
+	public static boolean isNotLocalServerData() { return FMLCommonHandler.instance().getMinecraftServerInstance() == null; }
+
 	private static boolean newInstance() {
 		if (MarcetController.instance == null) {
 			return true;
@@ -49,8 +53,11 @@ public class MarcetController implements IMarcetHandler {
 
 	public MarcetController() {
 		MarcetController.instance = this;
-		filePath = CustomNpcs.getWorldSaveDirectory().getAbsolutePath();
-		load();
+		File file = CustomNpcs.getWorldSaveDirectory();
+		if (file != null) {
+			filePath = file.getAbsolutePath();
+			load();
+		}
 	}
 
 	@Override
@@ -70,10 +77,12 @@ public class MarcetController implements IMarcetHandler {
 	public DealMarkup getBuyData(Marcet marcet, Deal deal, int marcetLevel, int countIn) {
 		DealMarkup dm = new DealMarkup();
 		if (deal != null) { dm.set(deal); }
-		if (marcet != null) {
-			dm.set(marcet.markup.containsKey(marcetLevel) ? marcet.markup.get(marcetLevel)
-					: marcetLevel >= marcet.markup.size() ? marcet.markup.get(marcet.markup.size() - 1)
-					: marcet.markup.get(0), countIn);
+		if (marcet != null && !marcet.markup.isEmpty()) {
+			MarkupData md;
+			if (marcet.markup.containsKey(marcetLevel)) { md = marcet.markup.get(marcetLevel); }
+			else if (marcetLevel >= marcet.markup.size()) { md = marcet.markup.get(marcet.markup.size() - 1); }
+			else { md = marcet.markup.get(0); }
+			if (md != null) { dm.set(md, countIn); }
 		}
 		return dm;
 	}
@@ -131,7 +140,7 @@ public class MarcetController implements IMarcetHandler {
 			if (deal == null) {
 				continue;
 			}
-			NBTTagCompound nbtDeal = deal.write();
+			NBTTagCompound nbtDeal = deal.save();
 			dList.appendTag(nbtDeal);
 		}
 		compound.setTag("Deals", dList);
@@ -300,10 +309,10 @@ public class MarcetController implements IMarcetHandler {
 		d3.setDonat(25);
 		d3.setRarityColor(new Color(0xFFFF00).getRGB());
 		Map<Integer, DropSet> caseItems = new TreeMap<>();
-		DropSet ds0 = new DropSet(null, d3);
+		DropSet ds0 = new DropSet(d3);
 		ds0.setChance(100.0d);
 		ds0.setAmount(16, 16);
-		DropSet ds1 = new DropSet(null, d3);
+		DropSet ds1 = new DropSet(d3);
 		ds1.setChance(90.0d);
 		ds1.setAmount(6, 8);
 		NpcAPI api = NpcAPI.Instance();
@@ -422,22 +431,19 @@ public class MarcetController implements IMarcetHandler {
 
 	public void sendTo(EntityPlayerMP player, int marcetID) {
 		LogWriter.debug("CustomNpcs: Send marked data to \"" + player.getName() + "\"; marcetID: " + marcetID);
+		if (markets.isEmpty() || !markets.containsKey(0)) { loadDefaultMarcets(); }
 		if (markets.containsKey(marcetID)) {
 			markets.get(marcetID).sendTo(player);
-			Server.sendDataDelayed(player, EnumPacketClient.MARCET_DATA, 250, 2);
 		} // market
 		else if (marcetID < 0) {
-			if (markets.isEmpty() || !markets.containsKey(0)) { loadDefaultMarcets(); }
 			Map<Integer, Marcet> mapM = new HashMap<>(markets);
 			Map<Integer, Deal> mapD = new HashMap<>(deals);
-			Server.sendData(player, EnumPacketClient.MARCET_DATA, 0);
-			for (int id : mapD.keySet()) { Server.sendData(player, EnumPacketClient.MARCET_DATA, 3, mapD.get(id).write()); }
-			for (int id : mapM.keySet()) { Server.sendData(player, EnumPacketClient.MARCET_DATA, 1, mapM.get(id).save()); }
-			Server.sendDataDelayed(player, EnumPacketClient.MARCET_DATA, 250, 2);
+			Packets.send(player, new PacketClearMarcets());
+			for (int id : mapD.keySet()) { Packets.send(player, new PacketDealData(mapD.get(id).save())); }
+			for (int id : mapM.keySet()) { Packets.send(player, new PacketMarcetData(mapM.get(id).save())); }
+			Packets.sendDelayed(player, new PacketUpdateMarcetGui(), 250);
 		} // all
-		else {
-			Server.sendData(player, EnumPacketClient.MARCET_DATA, 4, marcetID);
-		} // not
+		else { Packets.send(player, new PacketMarcetRemove(marcetID)); } // not
 	}
 
 	public void update() {
@@ -456,6 +462,14 @@ public class MarcetController implements IMarcetHandler {
 			for (Marcet m : new ArrayList<>(markets.values())) { m.updateTime(); }
 		}
 		catch (Throwable ignored) { }
+	}
+
+	public void sendToAll() {
+		if (CustomNpcs.Server != null) {
+			for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
+				sendTo(player, -1);
+			}
+		}
 	}
 
 }

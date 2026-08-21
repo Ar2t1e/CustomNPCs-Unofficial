@@ -12,15 +12,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
 
-@Mixin(value = LanguageMap.class, priority = 499)
+@Mixin(value = LanguageMap.class, priority = 498)
 public class LanguageMapMixin implements ILanguageMapMixin {
 
-    @Final
-    @Shadow
-    private Map<String, String> languageList;
+    @Final @Shadow private Map<String, String> languageList;
 
-    @Override
-    public Map<String, String> npcs$getLanguageList() { return languageList; }
+    @Override public Map<String, String> npcs$getLanguageList() { return languageList; }
 
     /**
      * @author BetaZavr

@@ -9,7 +9,8 @@ public class AvailabilityFactionData {
 	public EnumAvailabilityFaction factionStance;
 
 	public AvailabilityFactionData(EnumAvailabilityFactionType available, EnumAvailabilityFaction stance) {
-		this.factionAvailable = available;
-		this.factionStance = stance;
+		factionAvailable = available;
+		factionStance = stance;
 	}
+
 }

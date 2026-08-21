@@ -3,7 +3,7 @@ package noppes.npcs.client.layer;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.entity.EntityLivingBase;
-import noppes.npcs.ModelPartData;
+import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.client.model.Model2DRenderer;
 import noppes.npcs.client.model.part.head.ModelDuckBeak;
 import noppes.npcs.client.model.part.horns.ModelAntennasBack;

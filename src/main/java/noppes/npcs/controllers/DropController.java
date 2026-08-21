@@ -14,11 +14,13 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
-import noppes.npcs.client.Client;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketDropTemplateClear;
+import noppes.npcs.packets.client.PacketDropTemplateSave;
+import noppes.npcs.packets.client.PacketGuiUpdate;
+import noppes.npcs.packets.server.SPacketDropTemplateClear;
+import noppes.npcs.packets.server.SPacketDropTemplateSave;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.controllers.data.DropsTemplate;
 import noppes.npcs.entity.data.AttributeSet;
 import noppes.npcs.entity.data.DropSet;
@@ -26,27 +28,12 @@ import noppes.npcs.entity.data.EnchantSet;
 
 public class DropController {
 
-	private static DropController instance;
-	public static DropController getInstance() {
-		if (newInstance()) {
-			DropController.instance = new DropController();
-		}
-		return DropController.instance;
-	}
-	private static boolean newInstance() {
-		if (DropController.instance == null) {
-			return true;
-		}
-		return CustomNpcs.Dir != null && !DropController.instance.filePath.equals(CustomNpcs.Dir.getAbsolutePath());
-	}
-
-	private String filePath;
-
+	protected static DropController instance = new DropController();
 	public final Map<String, DropsTemplate> templates = new TreeMap<>();
 
-	public DropController() {
-		this.filePath = CustomNpcs.Dir.getAbsolutePath();
-		DropController.instance = this;
+	public static DropController getInstance() {
+		if (instance == null) { instance = new DropController(); }
+		return instance;
 	}
 
 	public List<DropSet> getDrops(String saveDropsName) {
@@ -73,28 +60,28 @@ public class DropController {
 	private void loadDefaultDrops() {
 		DropsTemplate temp = new DropsTemplate();
 		temp.groups.put(0, new TreeMap<>());
-		DropSet ds0 = new DropSet(null, null);
+		DropSet ds0 = new DropSet(null);
 		ds0.amount[0] = 5;
 		ds0.amount[1] = 8;
 		ds0.chance = 72.5d;
 		ds0.item = new ItemStack(Items.COAL);
 		ds0.pos = 0;
 		temp.groups.get(0).put(0, ds0);
-		DropSet ds1 = new DropSet(null, null);
+		DropSet ds1 = new DropSet(null);
 		ds1.amount[0] = 2;
 		ds1.amount[1] = 5;
 		ds1.chance = 8.0d;
 		ds1.item = new ItemStack(Items.IRON_INGOT);
 		ds1.pos = 1;
 		temp.groups.get(0).put(1, ds1);
-		DropSet ds2 = new DropSet(null, null);
+		DropSet ds2 = new DropSet(null);
 		ds2.amount[0] = 1;
 		ds2.amount[1] = 3;
 		ds2.chance = 4.3333d;
 		ds2.item = new ItemStack(Items.GOLD_INGOT);
 		ds2.pos = 2;
 		temp.groups.get(0).put(2, ds2);
-		DropSet ds3 = new DropSet(null, null);
+		DropSet ds3 = new DropSet(null);
 		ds3.amount[0] = 1;
 		ds3.amount[1] = 2;
 		ds3.chance = 0.575d;
@@ -103,7 +90,7 @@ public class DropController {
 		temp.groups.get(0).put(3, ds3);
 
 		temp.groups.put(1, new TreeMap<>());
-		DropSet df0 = new DropSet(null, null);
+		DropSet df0 = new DropSet(null);
 		df0.amount[0] = 1;
 		df0.amount[1] = 1;
 		df0.chance = 2.5d;
@@ -125,7 +112,6 @@ public class DropController {
 	public void loadFile() {
 		CustomNpcs.debugData.start(null);
 		LogWriter.info("Loading Drops");
-		this.filePath = CustomNpcs.Dir.getAbsolutePath();
 		try {
 			File file = new File(CustomNpcs.Dir, "drops.dat");
 			if (file.exists()) {
@@ -184,14 +170,14 @@ public class DropController {
 	public void sendTo(EntityPlayerMP player) {
 		if (templates.isEmpty()) { loadDefaultDrops(); }
 		Map<String, DropsTemplate> tempMap = new TreeMap<>(templates);
-		Server.sendData(player, EnumPacketClient.DROP_GROUP_DATA, new NBTTagCompound());
+		Packets.send(player, new PacketDropTemplateClear());
 		for (String template : tempMap.keySet()) {
 			NBTTagCompound nbtTemplate = new NBTTagCompound();
 			nbtTemplate.setString("Name", template);
 			nbtTemplate.setTag("Groups", tempMap.get(template).getNBT());
-			Server.sendData(player, EnumPacketClient.DROP_GROUP_DATA, nbtTemplate);
+			Packets.send(player, new PacketDropTemplateSave(nbtTemplate));
 		}
-		Server.sendData(player, EnumPacketClient.GUI_UPDATE);
+		Packets.send(player, new PacketGuiUpdate());
 	}
 	
 	public void sendToServer(String dropTemplate) {
@@ -199,16 +185,16 @@ public class DropController {
 			NBTTagCompound nbtTemplate = new NBTTagCompound();
 			nbtTemplate.setString("Name", dropTemplate);
 			nbtTemplate.setTag("Groups", this.templates.get(dropTemplate).getNBT());
-			Client.sendDirectData(EnumPacketServer.DropTemplateSave, 1, nbtTemplate);
+			Packets.sendServer(new SPacketDropTemplateSave(nbtTemplate));
 			return;
 		}
-		Client.sendDirectData(EnumPacketServer.DropTemplateSave, 0);
+		Packets.sendServer(new SPacketDropTemplateClear());
         Map<String, DropsTemplate> tempMap = new TreeMap<>(templates);
 		for (String template : tempMap.keySet()) {
 			NBTTagCompound nbtTemplate = new NBTTagCompound();
 			nbtTemplate.setString("Name", template);
 			nbtTemplate.setTag("Groups", tempMap.get(template).getNBT());
-			Client.sendDirectData(EnumPacketServer.DropTemplateSave, 1, nbtTemplate);
+			Packets.sendServer(new SPacketDropTemplateSave(nbtTemplate));
 		}
 	}
 

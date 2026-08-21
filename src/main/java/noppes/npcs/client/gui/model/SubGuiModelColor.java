@@ -12,12 +12,16 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
-import noppes.npcs.LogWriter;
+import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.gui.select.SubGuiTextureSelection;
 import noppes.npcs.client.gui.util.*;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 import org.lwjgl.input.Keyboard;
 
-public class SubGuiModelColor extends SubGuiInterface implements ITextfieldListener {
+public class SubGuiModelColor extends GuiNPCInterface implements ITextfieldListener {
 
 	public interface ColorCallback {
 		void color(int colorIn);
@@ -35,13 +39,14 @@ public class SubGuiModelColor extends SubGuiInterface implements ITextfieldListe
 	public int colorY;
 	public int hover = 0;
 
-	private GuiNpcTextField textfield;
+	private final GuiScreen parent;
+	private GuiTextFieldNop textfield;
 
 	public SubGuiModelColor(GuiScreen parentIn, int colorIn, ColorCallback callbackIn) {
-		super(0);
+		super();
 		background = SubGuiModelColor.colorGui;
 		closeOnEsc = false;
-		ySize = 230;
+		imageHeight = 230;
 
 		callback = callbackIn;
 		parent = parentIn;
@@ -49,13 +54,13 @@ public class SubGuiModelColor extends SubGuiInterface implements ITextfieldListe
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.id == 66) { onClosed(); }
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
+		if (button.id == 66) { onClose(); }
 	}
 
 	@Override
-	public void postDrawScreen(int mouseX, int mouseY, float partialTicks) {
+	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+		super.drawScreen( mouseX, mouseY, partialTicks);
 		hovered = false;
 		if (npcSkin != null) {
 			// back
@@ -156,51 +161,58 @@ public class SubGuiModelColor extends SubGuiInterface implements ITextfieldListe
 		super.initGui();
 		colorX = guiLeft + 4;
 		colorY = guiTop + 50;
-		addTextField(textfield = new GuiNpcTextField(0, this, guiLeft + 35, guiTop + 25, 60, 20, getColor())
-				.setHoverText("hover.set.color"));
-		addButton(new GuiNpcButton(66, guiLeft + 107, guiTop + 8, 20, 20, "X")
-				.setHoverText("hover.back"));
+		textfield = addTextField(0, guiLeft + 35, guiTop + 25, 60, 20, getColor())
+				.setHoverTexts("hover.set.color");
+		addButton(66, guiLeft + 107, guiTop + 8, "X")
+				.setSize(20, 20)
+				.setHoverTexts("hover.back");
 	}
 
 	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui == null) {
+	public boolean keyPressed(char typedChar, int keyCode) {
+		if (!hasSubGui()) {
 			if (!mc.getLanguageManager().getCurrentLanguage().getLanguageCode().equalsIgnoreCase("en_us")) {
 				boolean kase = ("" + typedChar).toLowerCase().equals("" + typedChar);
 				typedChar = Keyboard.getKeyName(keyCode).charAt(0);
 				if (kase) { typedChar = ("" + typedChar).toLowerCase().charAt(0); }
 			}
-			String prev = textfield.getText();
-			boolean bo = super.keyCnpcsPressed(typedChar, keyCode);
-			String newText = textfield.getText();
+			String prev = textfield.getValue();
+			boolean bo = super.keyPressed(typedChar, keyCode);
+			String newText = textfield.getValue();
 			if (newText.equals(prev)) { return false; }
 			try {
-				if (textfield.getText().isEmpty()) { color = 0; }
-				else { color = Integer.parseInt(textfield.getText(), 16); }
+				if (textfield.getValue().isEmpty()) { color = 0; }
+				else { color = Integer.parseInt(textfield.getValue(), 16); }
 				callback.color(color);
 			}
-			catch (NumberFormatException e) { textfield.setText(prev); }
+			catch (NumberFormatException e) { textfield.setValue(prev); }
 			return bo;
 		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
+		return super.keyPressed(typedChar, keyCode);
 	}
 
 	@Override
-	public boolean mouseCnpcsPressed(int mouseX, int mouseY, int mouseButton) {
-		if (subgui == null && hovered && hover != 0) {
+	public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+		if (!hasSubGui() && hovered && hover != 0) {
 			color = hover;
 			callback.color(hover);
-			textfield.setText(getColor());
+			textfield.setValue(getColor());
 			return true;
 		}
-		return super.mouseCnpcsPressed(mouseX, mouseY, mouseButton);
+		return super.mouseClicked(mouseX, mouseY, mouseButton);
 	}
 
     @Override
-	public void unFocused(GuiNpcTextField textfield) {
-		try { color = Integer.parseInt(textfield.getText(), 16); }
+	public void unFocused(GuiTextFieldNop textfield) {
+		try { color = Integer.parseInt(textfield.getValue(), 16); }
 		catch (NumberFormatException e) { color = 0; }
 		callback.color(color);
+	}
+
+	@Override
+	public void onClose() {
+		super.onClose();
+		NoppesUtil.openGUI(player, parent);
 	}
 
 }

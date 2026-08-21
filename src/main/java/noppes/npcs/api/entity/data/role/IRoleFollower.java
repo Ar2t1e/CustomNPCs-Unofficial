@@ -1,10 +1,9 @@
 package noppes.npcs.api.entity.data.role;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.INPCRole;
 
-@SuppressWarnings("all")
 public interface IRoleFollower extends INPCRole {
 
 	void addDays(@ParamName("days") int days);

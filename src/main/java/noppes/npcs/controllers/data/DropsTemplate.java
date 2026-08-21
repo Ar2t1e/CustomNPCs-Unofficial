@@ -5,7 +5,7 @@ import java.util.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.entity.data.DropSet;
 
 public class DropsTemplate {
@@ -14,13 +14,11 @@ public class DropsTemplate {
 	private boolean allDropsFromGroup = false; // or random
 	private final Random rnd = new Random();
 
-	public DropsTemplate() {
-		groups.put(0, new TreeMap<>());
-	}
+	public DropsTemplate() { groups.put(0, new TreeMap<>()); }
 
 	public DropsTemplate(NBTTagCompound nbtTemplate) {
 		this();
-		this.load(nbtTemplate);
+		load(nbtTemplate);
 	}
 
 	public DropSet addDropItem(int id, ItemStack item, double chance) {
@@ -28,7 +26,7 @@ public class DropsTemplate {
 			id = groups.size();
 			groups.put(id, new TreeMap<>());
 		}
-		DropSet ds = new DropSet(null, null);
+		DropSet ds = new DropSet(null);
 		ds.item = item;
 		ds.setChance(chance);
 		ds.pos = groups.get(id).size();
@@ -50,24 +48,18 @@ public class DropsTemplate {
 	public NBTTagCompound getNBT() {
 		NBTTagCompound nbtTemplate = new NBTTagCompound();
 		nbtTemplate.setBoolean("DropType", allDropsFromGroup);
-		for (int id : this.groups.keySet()) {
+		for (int id : groups.keySet()) {
 			NBTTagList list = new NBTTagList();
-			for (DropSet ds : this.groups.get(id).values()) {
-				list.appendTag(ds.save());
-			}
+			for (DropSet ds : groups.get(id).values()) { list.appendTag(ds.save()); }
 			nbtTemplate.setTag("Group_" + id, list);
 		}
 		return nbtTemplate;
 	}
 
 	public void load(NBTTagCompound nbtTemplate) {
-		if (nbtTemplate.hasKey("DropType", 3)) {
-			allDropsFromGroup = nbtTemplate.getInteger("DropType") == 3;
-		} else if (nbtTemplate.hasKey("DropType", 1)) {
-			allDropsFromGroup = nbtTemplate.getBoolean("DropType");
-		}
-
-		this.groups.clear();
+		if (nbtTemplate.hasKey("DropType", 3)) { allDropsFromGroup = nbtTemplate.getInteger("DropType") == 3; }
+		else if (nbtTemplate.hasKey("DropType", 1)) { allDropsFromGroup = nbtTemplate.getBoolean("DropType"); }
+		groups.clear();
 		Set<String> keys = nbtTemplate.getKeySet();
 		for (String groupId : keys) {
 			if (groupId.indexOf("Group_") != 0) { continue; }
@@ -76,7 +68,7 @@ public class DropsTemplate {
 			catch (Exception e) { LogWriter.error(e); }
 			if (id < 0) { continue; }
 			for (int j = 0; j < nbtTemplate.getTagList(groupId, 10).tagCount(); j++) {
-				DropSet ds = new DropSet(null, null);
+				DropSet ds = new DropSet(null);
 				ds.load(nbtTemplate.getTagList(groupId, 10).getCompoundTagAt(j));
 				ds.pos = j;
 				if (!groups.containsKey(id)) { groups.put(id, new TreeMap<>()); }
@@ -86,9 +78,7 @@ public class DropsTemplate {
 	}
 
 	public void removeDrop(int groupId, int slot) {
-		if (!this.groups.containsKey(groupId) || !this.groups.get(groupId).containsKey(slot)) {
-			return;
-		}
+		if (!groups.containsKey(groupId) || !groups.get(groupId).containsKey(slot)) { return; }
 		if (groups.get(groupId).remove(slot) != null) {
 			int j = 0;
 			for (int s : groups.get(groupId).keySet()) {
@@ -98,28 +88,22 @@ public class DropsTemplate {
 	}
 
 	public void removeGroup(int groupId) {
-		if (!this.groups.containsKey(groupId)) {
-			return;
-		}
-		this.groups.remove(groupId);
+		if (!groups.containsKey(groupId)) { return; }
+		groups.remove(groupId);
 		Map<Integer, Map<Integer, DropSet>> newGroups = new TreeMap<>();
 		int j = 0;
-		for (int gId : this.groups.keySet()) {
-			if (gId == groupId) {
-				continue;
-			}
-			newGroups.put(j, this.groups.get(gId));
+		for (int gId : groups.keySet()) {
+			if (gId == groupId) { continue; }
+			newGroups.put(j, groups.get(gId));
 			j++;
 		}
-		this.groups.clear();
-		this.groups.putAll(newGroups);
+		groups.clear();
+		groups.putAll(newGroups);
 	}
 	
 	public static DropsTemplate from(DropsTemplate dropTemplate) {
 		DropsTemplate dt = new DropsTemplate();
-		if (dropTemplate != null) {
-			dt.load(dropTemplate.getNBT());
-		}
+		if (dropTemplate != null) { dt.load(dropTemplate.getNBT()); }
 		return dt;
 	}
 

@@ -3,6 +3,7 @@ package noppes.npcs.roles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
@@ -18,270 +19,234 @@ import noppes.npcs.entity.EntityNPCInterface;
 
 public class JobConversation extends JobInterface implements IJobConversation {
 
-	public static class ConversationLine extends Line {
-		public int delay;
-		public String npc;
-
-		public ConversationLine() {
-			this.npc = "";
-			this.delay = 40;
-		}
-
-		public boolean isEmpty() {
-			return this.npc.isEmpty() || this.text.isEmpty();
-		}
-
-		public void readEntityFromNBT(NBTTagCompound compound) {
-			this.text = compound.getString("Line");
-			this.npc = compound.getString("Npc");
-			this.sound = compound.getString("Sound");
-			this.delay = compound.getInteger("Delay");
-		}
-
-		public void writeEntityToNBT(NBTTagCompound compound) {
-			compound.setString("Line", this.text);
-			compound.setString("Npc", this.npc);
-			compound.setString("Sound", this.sound);
-			compound.setInteger("Delay", this.delay);
-		}
-	}
 
 	public Availability availability = new Availability();
-	public int generalDelay = 400;
-	private boolean hasStarted = false;
-	public HashMap<Integer, ConversationLine> lines = new HashMap<>();
-	public int mode = 0;
 	private final ArrayList<String> names = new ArrayList<>();
-	private ConversationLine nextLine;
 	private final HashMap<String, EntityNPCInterface> npcs = new HashMap<>();
+	public TreeMap<Integer, ConversationLine> lines = new TreeMap<>();
 	public int quest = -1;
-	public String questTitle = "";
-	public int range = 20;
-	private int startedTicks = 20;
+	public int generalDelay = 400;
 	public int ticks = 100;
+	public int range = 20;
+	private JobConversation.ConversationLine nextLine;
+	private boolean hasStarted = false;
+	private int startedTicks = 20;
+	public boolean mode = false;
 
 	public JobConversation(EntityNPCInterface npc) {
 		super(npc);
-		this.type = JobType.CONVERSATION;
-	}
-
-	@Override
-	public boolean isWorking() {
-		return hasStarted;
-	}
-
-	@Override
-	public boolean aiContinueExecute() {
-		for (EntityNPCInterface npc : this.npcs.values()) {
-			if (npc.isKilled() || npc.isAttacking()) {
-				return false;
-			}
-		}
-		return this.nextLine != null;
-	}
-
-	@Override
-	public boolean aiShouldExecute() {
-		if (this.lines.isEmpty() || this.npc.isKilled() || this.npc.isAttacking() || !this.shouldRun()) {
-			return false;
-		}
-		if (!hasStarted && mode == 1) {
-			if (startedTicks-- > 0) {
-				return false;
-			}
-			startedTicks = 10;
-			List<EntityPlayer> list = new ArrayList<>();
-			try {
-				list = npc.world.getEntitiesWithinAABB(EntityPlayer.class, npc.getEntityBoundingBox().grow(range, range, range));
-			}
-			catch (Exception ignored) { }
-			if (list.isEmpty()) {
-				return false;
-			}
-		}
-		for (ConversationLine line : this.lines.values()) {
-			if (line != null) {
-				if (line.isEmpty()) {
-					continue;
-				}
-				this.nextLine = line;
-				break;
-			}
-		}
-		return this.nextLine != null;
-	}
-
-	@Override
-	public void aiStartExecuting() {
-		this.startedTicks = 20;
-		this.hasStarted = true;
-	}
-
-	@Override
-	public void aiUpdateTask() {
-		--this.ticks;
-		if (this.ticks > 0 || this.nextLine == null) {
-			return;
-		}
-		this.say(this.nextLine);
-		boolean seenNext = false;
-		ConversationLine compare = this.nextLine;
-		this.nextLine = null;
-		for (ConversationLine line : this.lines.values()) {
-			if (line.isEmpty()) {
-				continue;
-			}
-			if (seenNext) {
-				this.nextLine = line;
-				break;
-			}
-			if (line != compare) {
-				continue;
-			}
-			seenNext = true;
-		}
-		if (this.nextLine != null) {
-			this.ticks = this.nextLine.delay;
-		} else if (this.hasQuest()) {
-			List<EntityPlayer> inRange = new ArrayList<>();
-			try {
-				inRange = this.npc.world.getEntitiesWithinAABB(EntityPlayer.class,
-						this.npc.getEntityBoundingBox().grow(this.range, this.range, this.range));
-			}
-			catch (Exception ignored) { }
-			for (EntityPlayer player : inRange) {
-				if (this.availability.isAvailable(player)) {
-					PlayerQuestController.addActiveQuest(this.getQuest(), player, false);
-				}
-			}
-		}
-	}
-
-	public ConversationLine getLine(int slot) {
-		if (this.lines.containsKey(slot)) {
-			return this.lines.get(slot);
-		}
-		ConversationLine line = new ConversationLine();
-		this.lines.put(slot, line);
-		return line;
-	}
-
-	public Quest getQuest() {
-		if (!this.npc.isServerWorld()) {
-			return null;
-		}
-		return QuestController.instance.quests.get(this.quest);
-	}
-
-	public boolean hasQuest() {
-		return this.getQuest() != null;
-	}
-
-	@Override
-	public void killed() {
-		this.reset();
+		type = JobType.CONVERSATION;
 	}
 
 	@Override
 	public void load(NBTTagCompound compound) {
 		super.load(compound);
-		this.type = JobType.CONVERSATION;
-		this.names.clear();
-		this.availability.load(compound.getCompoundTag("ConversationAvailability"));
-		this.quest = compound.getInteger("ConversationQuest");
-		this.generalDelay = compound.getInteger("ConversationDelay");
-		this.questTitle = compound.getString("ConversationQuestTitle");
-		this.range = compound.getInteger("ConversationRange");
-		this.mode = compound.getInteger("ConversationMode");
-		NBTTagList nbttaglist = compound.getTagList("ConversationLines", 10);
-		HashMap<Integer, ConversationLine> map = new HashMap<>();
-		for (int i = 0; i < nbttaglist.tagCount(); ++i) {
-			NBTTagCompound nbttagcompound = nbttaglist.getCompoundTagAt(i);
+		type = JobType.CONVERSATION;
+		availability.load(compound.getCompoundTag("ConversationAvailability"));
+		quest = compound.getInteger("ConversationQuest");
+		generalDelay = compound.getInteger("ConversationDelay");
+		range = compound.getInteger("ConversationRange");
+		if (compound.hasKey("ConversationMode", 3)) {
+			mode = compound.getInteger("ConversationMode") != 0;
+		} // OLD
+		else { mode = compound.getBoolean("ConversationMode"); }
+
+		NBTTagList tagList = compound.getTagList("ConversationLines", 10);
+		names.clear();
+		lines.clear();
+		for (int i = 0; i < tagList.tagCount(); ++i) {
+			NBTTagCompound nbt = tagList.getCompoundTagAt(i);
 			ConversationLine line = new ConversationLine();
-			line.readEntityFromNBT(nbttagcompound);
-			if (!line.npc.isEmpty() && !this.names.contains(line.npc.toLowerCase())) {
-				this.names.add(line.npc.toLowerCase());
-			}
-			map.put(nbttagcompound.getInteger("Slot"), line);
+			line.readEntityFromNBT(nbt);
+			if (!line.npc.isEmpty() && !names.contains(line.npc.toLowerCase())) { names.add(line.npc.toLowerCase()); }
+			lines.put(nbt.getInteger("Slot"), line);
 		}
-		this.lines = map;
-		this.ticks = this.generalDelay;
-	}
-
-	@Override
-	public void reset() {
-		this.hasStarted = false;
-		this.resetTask();
-		this.ticks = 60;
-	}
-
-	@Override
-	public void resetTask() {
-		this.nextLine = null;
-		this.ticks = this.generalDelay;
-		this.hasStarted = false;
-	}
-
-	private void say(ConversationLine line) {
-		List<EntityPlayer> inRange = new ArrayList<>();
-		try {
-			inRange = this.npc.world.getEntitiesWithinAABB(EntityPlayer.class,
-					this.npc.getEntityBoundingBox().grow(this.range, this.range, this.range));
-		}
-		catch (Exception ignored) { }
-		EntityNPCInterface npc = this.npcs.get(line.npc.toLowerCase());
-		if (npc == null) {
-			return;
-		}
-		for (EntityPlayer player : inRange) {
-			if (this.availability.isAvailable(player)) {
-				npc.say(player, line);
-			}
-		}
-	}
-
-	private boolean shouldRun() {
-		--this.ticks;
-		if (this.ticks > 0) {
-			return false;
-		}
-		this.npcs.clear();
-		List<EntityNPCInterface> list = new ArrayList<>();
-		try {
-			list = this.npc.world.getEntitiesWithinAABB(EntityNPCInterface.class,
-					this.npc.getEntityBoundingBox().grow(10.0, 10.0, 10.0));
-		}
-		catch (Exception ignored) { }
-		for (EntityNPCInterface npc : list) {
-			if (!npc.isKilled() && !npc.isAttacking() && this.names.contains(npc.getName().toLowerCase())) {
-				this.npcs.put(npc.getName().toLowerCase(), npc);
-			}
-		}
-		boolean bo = this.names.size() == this.npcs.size();
-		if (!bo) {
-			this.ticks = 20;
-		}
-		return bo;
+		ticks = generalDelay;
 	}
 
 	@Override
 	public NBTTagCompound save(NBTTagCompound compound) {
 		super.save(compound);
-		compound.setTag("ConversationAvailability", this.availability.save(new NBTTagCompound()));
-		compound.setInteger("ConversationQuest", this.quest);
-		compound.setInteger("ConversationDelay", this.generalDelay);
-		compound.setInteger("ConversationRange", this.range);
-		compound.setInteger("ConversationMode", this.mode);
+		compound.setTag("ConversationAvailability", availability.save(new NBTTagCompound()));
+		compound.setInteger("ConversationQuest", quest);
+		compound.setInteger("ConversationDelay", generalDelay);
+		compound.setInteger("ConversationRange", range);
+		compound.setBoolean("ConversationMode", mode);
 		NBTTagList nbttaglist = new NBTTagList();
-		for (int slot : this.lines.keySet()) {
-			ConversationLine line = this.lines.get(slot);
+		for (int slot : lines.keySet()) {
+			ConversationLine line = lines.get(slot);
 			NBTTagCompound nbttagcompound = new NBTTagCompound();
 			nbttagcompound.setInteger("Slot", slot);
 			line.writeEntityToNBT(nbttagcompound);
 			nbttaglist.appendTag(nbttagcompound);
 		}
 		compound.setTag("ConversationLines", nbttaglist);
-		if (this.hasQuest()) { compound.setString("ConversationQuestTitle", this.getQuest().getTitle()); }
+		if (hasQuest()) { compound.setString("ConversationQuestTitle", getQuest().title); }
 		return compound;
 	}
+
+	@Override
+	public void aiUpdateTask() {
+		--ticks;
+		if (ticks <= 0 && nextLine != null) {
+			say(nextLine);
+			boolean seenNext = false;
+			JobConversation.ConversationLine compare = nextLine;
+			nextLine = null;
+			for (ConversationLine line : lines.values()) {
+				if (!line.isEmpty()) {
+					if (seenNext) {
+						nextLine = line;
+						break;
+					}
+					if (line == compare) { seenNext = true; }
+				}
+			}
+			if (nextLine != null) { ticks = nextLine.delay; }
+			else if (hasQuest() && npc != null) {
+				List<EntityPlayer> inRange = new ArrayList<>();
+				try {
+					inRange = npc.world.getEntitiesWithinAABB(EntityPlayer.class,
+							npc.getEntityBoundingBox().grow(range, range, range));
+				}
+				catch (Exception ignored) { }
+				for (EntityPlayer player : inRange) {
+					if (availability.isAvailable(player)) { PlayerQuestController.addActiveQuest(getQuest(), player, false); }
+				}
+			}
+		}
+	}
+
+	@Override
+	public boolean aiShouldExecute() {
+		if (!lines.isEmpty() && npc != null && !npc.isKilled() && !npc.isAttacking() && shouldRun()) {
+			if (!hasStarted && mode) {
+				if (startedTicks-- > 0) { return false; }
+				startedTicks = 10;
+				try {
+					if (npc.world.getEntitiesWithinAABB(EntityPlayer.class, npc.getEntityBoundingBox().grow(range, range, range)).isEmpty()) { return false; }
+				}
+				catch (Exception ignored) { }
+			}
+			for (ConversationLine line : lines.values()) {
+				if (line != null && !line.isEmpty()) {
+					nextLine = line;
+					break;
+				}
+			}
+			return nextLine != null;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean aiContinueExecute() {
+		for (EntityNPCInterface npc : new ArrayList<>(npcs.values())) {
+			if (npc.isKilled() || npc.isAttacking()) { return false; }
+		}
+		return nextLine != null;
+	}
+
+	@Override
+	public void stop() {
+		nextLine = null;
+		ticks = generalDelay;
+		hasStarted = false;
+	}
+
+	@Override
+	public void aiStartExecuting() {
+		startedTicks = 20;
+		hasStarted = true;
+	}
+
+	@Override
+	public void killed() { reset(); }
+
+	@Override
+	public void reset() {
+		hasStarted = false;
+		stop();
+		ticks = 60;
+	}
+
+	private boolean shouldRun() {
+		--ticks;
+		if (ticks <= 0 && npc != null) {
+			npcs.clear();
+			List<EntityNPCInterface> list = new ArrayList<>();
+			try {
+				list = npc.world.getEntitiesWithinAABB(EntityNPCInterface.class,
+						npc.getEntityBoundingBox().grow(10.0, 10.0, 10.0));
+			}
+			catch (Exception ignored) { }
+			for (EntityNPCInterface npc : list) {
+				String name = npc.getName().toLowerCase();
+				if (!npc.isKilled() && !npc.isAttacking() && names.contains(name)) { npcs.put(name, npc); }
+			}
+			boolean bo = names.size() == npcs.size();
+			if (!bo) { ticks = 20; }
+			return bo;
+		}
+		return false;
+	}
+
+	public boolean hasQuest() { return getQuest() != null; }
+
+	public Quest getQuest() { return npc == null || !npc.isServerWorld() ? null : QuestController.instance.quests.get(quest); }
+
+	private void say(ConversationLine line) {
+		if (npc != null) {
+			List<EntityPlayer> inRange = new ArrayList<>();
+			try {
+				inRange = npc.world.getEntitiesWithinAABB(EntityPlayer.class,
+						npc.getEntityBoundingBox().grow(range, range, range));
+			}
+			catch (Exception ignored) { }
+			EntityNPCInterface npcIn = npcs.get(line.npc.toLowerCase());
+			if (npcIn != null) {
+				for (EntityPlayer player : inRange) {
+					if (availability.isAvailable(player)) { npcIn.say(player, line); }
+				}
+			}
+		}
+	}
+
+	public ConversationLine getLine(int slot) {
+		if (lines.containsKey(slot)) { return lines.get(slot); }
+		JobConversation.ConversationLine line = new ConversationLine();
+		lines.put(slot, line);
+		return line;
+	}
+
+	public static class ConversationLine extends Line {
+		public int delay;
+		public String npc;
+
+		public ConversationLine() {
+			npc = "";
+			delay = 40;
+		}
+
+		public boolean isEmpty() { return npc.isEmpty() || text.isEmpty(); }
+
+		public void readEntityFromNBT(NBTTagCompound compound) {
+			text = compound.getString("Line");
+			npc = compound.getString("Npc");
+			sound = compound.getString("Sound");
+			delay = compound.getInteger("Delay");
+		}
+
+		public void writeEntityToNBT(NBTTagCompound compound) {
+			compound.setString("Line", text);
+			compound.setString("Npc", npc);
+			compound.setString("Sound", sound);
+			compound.setInteger("Delay", delay);
+		}
+	}
+
+	// New from Unofficial (BetaZavr)
+	@Override
+	public boolean isWorking() { return hasStarted; }
+
 }

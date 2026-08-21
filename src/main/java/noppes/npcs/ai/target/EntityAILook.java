@@ -14,53 +14,60 @@ import noppes.npcs.util.Util;
 
 public class EntityAILook extends EntityAIBase {
 
-	private boolean forced;
-	private Entity forcedEntity;
-	private int idle;
-	private double lookX;
-	private double lookY;
-	private double lookZ;
 	private final EntityNPCInterface npc;
+	private int idle = 0;
+	private double lookX;
+	private double lookZ;
+	private boolean forced = false;
+	private Entity forcedEntity = null;
+
+	// New from Unofficial (BetaZavr)
+	private double lookY;
 	boolean rotateBody;
 	public boolean fastRotation = false;
 
 	public EntityAILook(EntityNPCInterface npcIn) {
-		idle = 0;
-		forced = false;
-		forcedEntity = null;
 		npc = npcIn;
 		setMutexBits(AiMutex.LOOK);
 	}
 
+	@Override
 	public void resetTask() {
 		rotateBody = false;
 		forced = false;
 		forcedEntity = null;
 	}
 
-	public void rotate(Entity entity) {
-		forced = true;
-		forcedEntity = entity;
-	}
-
-	public void rotate(int degrees) {
-		forced = true;
-		npc.renderYawOffset = degrees;
-		npc.rotationYaw = degrees;
-		npc.rotationYawHead = degrees;
-	}
-
+	@Override
 	public boolean shouldExecute() {
-		return !npc.isAttacking() && npc.getNavigator().noPath() && !npc.isPlayerSleeping()
-				&& npc.isEntityAlive() && (!CustomNpcs.ShowCustomAnimation || !npc.animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.INIT, AnimationKind.INTERACT, AnimationKind.DIES));
+		if (forced) { return true; }
+		if (!npc.isAttacking() && npc.getNavigator().noPath() && !npc.isPlayerSleeping() && npc.isEntityAlive() && (!CustomNpcs.ShowCustomAnimation ||
+				!npc.animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.INIT, AnimationKind.INTERACT, AnimationKind.DIES))) {
+			if (!npc.isInteracting() && npc.ais.getStandingType() <= 0 && idle <= 0) { return npc.getRNG().nextFloat() < 0.004F; }
+			return true;
+		}
+		return false;
 	}
 
+	@Override
 	public void startExecuting() {
-		rotateBody = (npc.ais.getStandingType() == 0 || npc.ais.getStandingType() == 3);
+		rotateBody = npc.ais.getStandingType() == 0 || npc.ais.getStandingType() == 3;
+		if (rotateBody) {
+			double d0 = Math.PI * 2.0d * npc.getRNG().nextDouble();
+			if (npc.ais.getStandingType() == 3) {
+				double d1 = Math.PI / 180.0d;
+				double d2 = Math.PI / 5.0d;
+				double d3 = Math.PI * 3.0d / 5.0d;
+				d0 = d1 * npc.ais.orientation + d2 + d3 * npc.getRNG().nextDouble();
+			}
+			lookX = Math.cos(d0);
+			lookZ = Math.sin(d0);
+			idle = 20 + npc.getRNG().nextInt(20);
+		}
 	}
 
+	@Override
 	public void updateTask() {
-		CustomNpcs.debugData.start(npc);
 		Entity lookat = null;
 		// has Target Entity
 		if (forced && forcedEntity != null) { lookat = forcedEntity; }
@@ -73,17 +80,13 @@ public class EntityAILook extends EntityAIBase {
 				if (distance < closestDistance) {
 					closestDistance = entity.getDistance(npc);
 					lookat = entity;
-				} else {
-					if (distance <= 12.0) {
-						continue;
-					}
-					ita.remove();
 				}
+				else if (distance > 12.0D) { ita.remove(); }
 			}
 		}
 		else if (npc.ais.getStandingType() == 2 || npc.ais.getStandingType() == 4) {
 			lookat = npc.world.getClosestPlayerToEntity(npc, 16.0);
-		}
+		} // Stalking or EyeRotation
 		// looking at someone
 		if (lookat != null) {
 			npc.updateLook = npc.lookAt == null || !npc.lookAt.equals(lookat);
@@ -92,7 +95,6 @@ public class EntityAILook extends EntityAIBase {
 			if (lookat instanceof EntityLivingBase) { posY = lookat.posY + (double) lookat.getEyeHeight(); }
 			else { posY = (lookat.getEntityBoundingBox().minY + lookat.getEntityBoundingBox().maxY) / 2.0D; }
 			setLookPosition(lookat.posX, posY, lookat.posZ, npc.getVerticalFaceSpeed());
-			CustomNpcs.debugData.end(npc);
 			return;
 		}
 		// looks in a random direction
@@ -102,7 +104,10 @@ public class EntityAILook extends EntityAIBase {
 			if (idle == 0 && npc.getRNG().nextFloat() < 0.004f) {
 				double d0 = Math.PI * npc.getRNG().nextDouble() * 2.0;
 				if (npc.ais.getStandingType() == 3) { // only head
-					d0 = 0.017453292519943295 * npc.ais.orientation + Math.PI / 5.0 + 1.8849555921538759 * npc.getRNG().nextDouble();
+					double d1 = Math.PI / 180.0d;
+					double d2 = Math.PI / 5.0d;
+					double d3 = Math.PI * 3.0d / 5.0d;
+					d0 = d1 * npc.ais.orientation + d2 + d3 * npc.getRNG().nextDouble();
 				}
 				lookX = Math.cos(d0);
 				lookY = (npc.getRNG().nextFloat() - 0.5f) * 0.85f;
@@ -129,9 +134,21 @@ public class EntityAILook extends EntityAIBase {
 			npc.rotationYaw = npc.ais.orientation;
 			npc.rotationYawHead = npc.ais.orientation;
 		}
-		CustomNpcs.debugData.end(npc);
 	}
 
+	public void rotate(Entity entity) {
+		forced = true;
+		forcedEntity = entity;
+	}
+
+	public void rotate(float degrees) {
+		forced = true;
+		npc.renderYawOffset = degrees;
+		npc.rotationYaw = degrees;
+		npc.rotationYawHead = degrees;
+	}
+
+	// New from Unofficial (BetaZavr)
 	private void setLookPosition(double x, double y, double z, int verticalFaceSpeed) {
 		if (!CustomNpcs.ShowCustomAnimation || !npc.animation.isAnimated(AnimationKind.ATTACKING, AnimationKind.INIT, AnimationKind.INTERACT, AnimationKind.DIES)) {
 			npc.getLookHelper().setLookPosition(x, y, z, 10.0f, verticalFaceSpeed);

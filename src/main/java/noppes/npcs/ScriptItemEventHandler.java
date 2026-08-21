@@ -11,24 +11,12 @@ import noppes.npcs.items.ItemScripted;
 public class ScriptItemEventHandler {
 
 	@SubscribeEvent
-	public void npcItemPickup(EntityItemPickupEvent event) {
-		if (event.getEntityPlayer().world.isRemote) { return; }
-		CustomNpcs.debugData.start(null);
-		EntityItem entity = event.getItem();
-		ItemStack stack = entity.getItem();
-		if (!stack.isEmpty() && (stack.getItem() == CustomRegisters.scripted_item)) {
-			EventHooks.onScriptItemPickedUp(ItemScripted.GetWrapper(stack), event.getEntityPlayer(), entity);
-		}
-		CustomNpcs.debugData.end(null);
-	}
-
-	@SubscribeEvent
-	public void npcEntityJoinWorld(EntityJoinWorldEvent event) {
+	public void cnpcEntityJoinWorld(EntityJoinWorldEvent event) {
 		if (event.getWorld().isRemote || !(event.getEntity() instanceof EntityItem)) { return; }
 		CustomNpcs.debugData.start(null);
 		EntityItem entity = (EntityItem) event.getEntity();
 		ItemStack stack = entity.getItem();
-		if (!stack.isEmpty() && (stack.getItem() == CustomRegisters.scripted_item) && EventHooks.onScriptItemSpawn(ItemScripted.GetWrapper(stack), entity)) {
+		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripter_item) && EventHooks.onScriptItemSpawn(ItemScripted.GetWrapper(stack), entity)) {
 			event.setCanceled(true);
 		}
 		CustomNpcs.debugData.end(null);
@@ -40,9 +28,22 @@ public class ScriptItemEventHandler {
 		CustomNpcs.debugData.start(null);
 		EntityItem entity = event.getEntityItem();
 		ItemStack stack = entity.getItem();
-		if (!stack.isEmpty() && (stack.getItem() == CustomRegisters.scripted_item) && EventHooks.onScriptItemTossed(ItemScripted.GetWrapper(stack), event.getPlayer(), entity)) {
+		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripter_item) && EventHooks.onScriptItemTossed(ItemScripted.GetWrapper(stack), event.getPlayer(), entity)) {
 			event.setCanceled(true);
 		}
 		CustomNpcs.debugData.end(null);
 	}
+
+	@SubscribeEvent
+	public void npcItemPickup(EntityItemPickupEvent event) {
+		if (event.getEntityPlayer().world.isRemote) { return; }
+		CustomNpcs.debugData.start(null);
+		EntityItem entity = event.getItem();
+		ItemStack stack = entity.getItem();
+		if (!stack.isEmpty() && (stack.getItem() == CustomItems.scripter_item)) {
+			EventHooks.onScriptItemPickedUp(ItemScripted.GetWrapper(stack), event.getEntityPlayer(), entity);
+		}
+		CustomNpcs.debugData.end(null);
+	}
+
 }

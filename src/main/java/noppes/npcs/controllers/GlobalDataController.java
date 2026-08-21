@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class GlobalDataController {
 	public static GlobalDataController instance;

@@ -14,7 +14,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.UserListOpsEntry;
 import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.LogWriter;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.command.CmdPlayers;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.api.interfaces.IgnoreForAPI;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,6 +26,7 @@ public abstract class CommandNoppesBase extends CommandBase {
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ ElementType.METHOD })
+	@IgnoreForAPI
 	public @interface SubCommand {
 		String desc();
 
@@ -31,6 +35,9 @@ public abstract class CommandNoppesBase extends CommandBase {
 		int permission() default 0;
 
 		String usage() default "";
+
+		boolean isOpOnly() default false;
+
 	}
 
 	public Map<String, Method> subcommands;
@@ -48,6 +55,12 @@ public abstract class CommandNoppesBase extends CommandBase {
 	}
 
 	public void canRun(MinecraftServer server, ICommandSender sender, String usage, String[] args) throws CommandException {
+		if (this instanceof CmdPlayers && args.length < 2) {
+			if (args.length > 0 && !args[0].equals("all")
+					&& !args[0].equals("openmarcet"))
+			{ CommandBase.getPlayer(server, sender, args[0]); }
+			return;
+		}
 		String[] np = usage.split(" ");
 		List<String> required = new ArrayList<>();
 		for (int i = 0; i < np.length; ++i) {
@@ -66,11 +79,19 @@ public abstract class CommandNoppesBase extends CommandBase {
 	public void executeSub(MinecraftServer server, ICommandSender sender, String command, String[] args) throws CommandException {
 		Method m = subcommands.get(command.toLowerCase());
 		if (m == null) {
-			throw new CommandException("Unknown subcommand " + command);
+			if (this instanceof CmdPlayers) {
+				if (getPermissionLevel(server, sender) < (CustomNpcs.NoppesCommandOpOnly ? 4 : 2)) {
+					throw new CommandException("You are not allowed to use \""+getName().toLowerCase() + "." + command.toLowerCase()+"\" command");
+				}
+				CmdPlayers.executeSkin(server, sender, args);
+				return;
+			}
+			else { throw new CommandException("Unknown subcommand " + command); }
 		}
 		SubCommand sc = m.getAnnotation(SubCommand.class);
-		if (sc.permission() > getPermissionLevel(server, sender)) {
-			throw new CommandException("You are not allowed to use \""+Objects.requireNonNull(getName()).toLowerCase() + "." + command.toLowerCase()+"\" command");
+		int permission = sc.isOpOnly() ? CustomNpcs.NoppesCommandOpOnly ? 4 : 2 : sc.permission();
+		if (permission > getPermissionLevel(server, sender)) {
+			throw new CommandException("You are not allowed to use \""+getName().toLowerCase() + "." + command.toLowerCase()+"\" command");
 		}
 		canRun(server, sender, sc.usage(), args);
 		try {
@@ -85,13 +106,9 @@ public abstract class CommandNoppesBase extends CommandBase {
 
 	public abstract @Nonnull String getName();
 
-	public int getRequiredPermissionLevel() {
-		return 0;
-	}
+	public int getRequiredPermissionLevel() { return 0; }
 
-	public String getUsage() {
-		return "";
-	}
+	public String getUsage() { return ""; }
 
 	public @Nonnull String getUsage(@Nullable ICommandSender sender) {
 		return getDescription();

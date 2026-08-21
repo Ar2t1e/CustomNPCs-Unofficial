@@ -91,6 +91,16 @@ To write your own scripts quickly and easily, use this mod:
 * polygon shape;
 * there are events of entry and exit to the region;
 * a special item has been created to make editing regions easier;
+21. Chat bubbles:
+* now available for players;
+* colors can be customized via the mod configuration;
+22. Adding/registering custom game elements via files:
+* custom blocks: simple blocks, semi-blocks, liquids, doors, containers, portals;
+* custom items: simple weapons, melee weapons, bows, tools, shields, armor (including OBJ models), food, fishing rods;
+* custom liquids;
+* custom potions (script-controlled);
+* custom particles (script-controlled);
+* custom dimensions;
 
 ### Command block commands added or changed:
 1. scripts **CmdScript**:

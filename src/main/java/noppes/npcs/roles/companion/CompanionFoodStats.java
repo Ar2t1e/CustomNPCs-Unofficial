@@ -12,100 +12,80 @@ import noppes.npcs.entity.EntityNPCInterface;
 public class CompanionFoodStats {
 
 	private float foodExhaustionLevel;
-	private int foodLevel;
-	private float foodSaturationLevel;
+	private int foodLevel = 20;
+	private float foodSaturationLevel = 5.0f;
 	private int foodTimer;
-	private int prevFoodLevel;
-
-	public CompanionFoodStats() {
-		this.foodLevel = 20;
-		this.foodSaturationLevel = 5.0f;
-		this.prevFoodLevel = 20;
-	}
+	private int prevFoodLevel = 20;
 
 	public void addExhaustion(float exhaustion) {
-		this.foodExhaustionLevel = Math.min(this.foodExhaustionLevel + exhaustion, 40.0f);
+		foodExhaustionLevel = Math.min(foodExhaustionLevel + exhaustion, 40.0f);
 	}
 
 	private void addStats(int foodLevelIn, float foodSaturationModifier) {
-		this.foodLevel = Math.min(foodLevelIn + this.foodLevel, 20);
-		this.foodSaturationLevel = Math.min(this.foodSaturationLevel + foodLevelIn * foodSaturationModifier * 2.0f,
-				this.foodLevel);
+		foodLevel = Math.min(foodLevelIn + foodLevel, 20);
+		foodSaturationLevel = Math.min(foodSaturationLevel + foodLevelIn * foodSaturationModifier * 2.0f, foodLevel);
 	}
 
-	public int getFoodLevel() {
-		return this.foodLevel;
-	}
+	public int getFoodLevel() { return foodLevel; }
 
 	@SideOnly(Side.CLIENT)
-	public int getPrevFoodLevel() {
-		return this.prevFoodLevel;
-	}
+	public int getPrevFoodLevel() {return prevFoodLevel; }
 
-	public boolean needFood() {
-		return this.foodLevel < 20;
-	}
+	public boolean needFood() { return foodLevel < 20; }
 
-	public void onFoodEaten(ItemFood food, ItemStack itemstack) {
-		this.addStats(food.getHealAmount(itemstack), food.getSaturationModifier(itemstack));
-	}
+	public void onFoodEaten(ItemFood food, ItemStack itemstack) { addStats(food.getHealAmount(itemstack), food.getSaturationModifier(itemstack)); }
 
 	public void onUpdate(EntityNPCInterface npc) {
 		EnumDifficulty enumdifficulty = npc.world.getDifficulty();
-		this.prevFoodLevel = this.foodLevel;
-		if (this.foodExhaustionLevel > 4.0f) {
-			this.foodExhaustionLevel -= 4.0f;
-			if (this.foodSaturationLevel > 0.0f) {
-				this.foodSaturationLevel = Math.max(this.foodSaturationLevel - 1.0f, 0.0f);
-			} else if (enumdifficulty != EnumDifficulty.PEACEFUL) {
-				this.foodLevel = Math.max(this.foodLevel - 1, 0);
-			}
+		prevFoodLevel = foodLevel;
+		if (foodExhaustionLevel > 4.0f) {
+			foodExhaustionLevel -= 4.0f;
+			if (foodSaturationLevel > 0.0f) { foodSaturationLevel = Math.max(foodSaturationLevel - 1.0f, 0.0f); }
+			else if (enumdifficulty != EnumDifficulty.PEACEFUL) { foodLevel = Math.max(foodLevel - 1, 0); }
 		}
-		if (npc.world.getGameRules().getBoolean("naturalRegeneration") && this.foodLevel >= 18 && npc.getHealth() > 0.0f
+		if (npc.world.getGameRules().getBoolean("naturalRegeneration") && foodLevel >= 18 && npc.getHealth() > 0.0f
 				&& npc.getHealth() < npc.getMaxHealth()) {
-			++this.foodTimer;
-			if (this.foodTimer >= 80) {
+			++foodTimer;
+			if (foodTimer >= 80) {
 				npc.heal(1.0f);
-				this.addExhaustion(3.0f);
-				this.foodTimer = 0;
+				addExhaustion(3.0f);
+				foodTimer = 0;
 			}
-		} else if (this.foodLevel <= 0) {
-			++this.foodTimer;
-			if (this.foodTimer >= 80) {
+		} else if (foodLevel <= 0) {
+			++foodTimer;
+			if (foodTimer >= 80) {
 				if (npc.getHealth() > 10.0f || enumdifficulty == EnumDifficulty.HARD
 						|| (npc.getHealth() > 1.0f && enumdifficulty == EnumDifficulty.NORMAL)) {
 					npc.attackEntityFrom(DamageSource.STARVE, 1.0f);
 				}
-				this.foodTimer = 0;
+				foodTimer = 0;
 			}
-		} else {
-			this.foodTimer = 0;
 		}
+		else { foodTimer = 0; }
 	}
 
-	public void readNBT(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		if (compound.hasKey("foodLevel", 99)) {
-			this.foodLevel = compound.getInteger("foodLevel");
-			this.foodTimer = compound.getInteger("foodTickTimer");
-			this.foodSaturationLevel = compound.getFloat("foodSaturationLevel");
-			this.foodExhaustionLevel = compound.getFloat("foodExhaustionLevel");
+			foodLevel = compound.getInteger("foodLevel");
+			foodTimer = compound.getInteger("foodTickTimer");
+			foodSaturationLevel = compound.getFloat("foodSaturationLevel");
+			foodExhaustionLevel = compound.getFloat("foodExhaustionLevel");
 		}
 	}
 
 	@SideOnly(Side.CLIENT)
-	public void setFoodLevel(int foodLevelIn) {
-		this.foodLevel = foodLevelIn;
-	}
+	public void setFoodLevel(int foodLevelIn) { foodLevel = foodLevelIn; }
 
 	@SideOnly(Side.CLIENT)
 	public void setFoodSaturationLevel(float foodSaturationLevelIn) {
-		this.foodSaturationLevel = foodSaturationLevelIn;
+		foodSaturationLevel = foodSaturationLevelIn;
 	}
 
-	public void writeNBT(NBTTagCompound compound) {
-		compound.setInteger("foodLevel", this.foodLevel);
-		compound.setInteger("foodTickTimer", this.foodTimer);
-		compound.setFloat("foodSaturationLevel", this.foodSaturationLevel);
-		compound.setFloat("foodExhaustionLevel", this.foodExhaustionLevel);
+	public void save(NBTTagCompound compound) {
+		compound.setInteger("foodLevel", foodLevel);
+		compound.setInteger("foodTickTimer", foodTimer);
+		compound.setFloat("foodSaturationLevel", foodSaturationLevel);
+		compound.setFloat("foodExhaustionLevel", foodExhaustionLevel);
 	}
+
 }

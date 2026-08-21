@@ -36,13 +36,18 @@ public class CommandNoppes extends CommandBase {
 		registerCommand(new CmdClone());
 		registerCommand(new CmdConfig());
 		registerCommand(new CmdMark());
-		registerCommand(new CmdDimensions());
+		// New from Unofficial (BetaZavr)
 		registerCommand(new CmdPlayers());
+		registerCommand(new CmdDimensions());
 		registerCommand(new CmdPermissions());
+		registerCommand(new CmdHeapAnalyzer());
 	}
 
 	@Override
 	public @Nonnull String getName() { return "noppes"; }
+
+	@Override
+	public @Nonnull String getUsage(@Nonnull ICommandSender sender) { return "Use as /" + getName() + " subcommand"; }
 
 	@Override
 	public int getRequiredPermissionLevel() { return 0; }
@@ -63,7 +68,8 @@ public class CommandNoppes extends CommandBase {
 			}
 			command.canRun(server, sender, command.getUsage(), args);
 			command.execute(server, sender, args);
-		} else {
+		}
+		else {
 			if (args.length == 0) {
 				help.execute(server, sender, new String[] { command.getName() });
 				return;
@@ -148,11 +154,6 @@ public class CommandNoppes extends CommandBase {
 		return command.getTabCompletions(server, sender, Arrays.copyOfRange(args, 1, args.length), pos);
 	}
 
-	@Override
-	public @Nonnull String getUsage(@Nonnull ICommandSender sender) {
-		return "Use as /noppes subcommand";
-	}
-
 	public void registerCommand(CommandNoppesBase command) {
 		String name = command.getName().toLowerCase();
 		if (map.containsKey(name)) { throw new CustomNPCsException("Already a subcommand with the name: " + name); }
@@ -166,8 +167,8 @@ public class CommandNoppes extends CommandBase {
 		return sender.canUseCommand(thisPer, getName());
 	}
 
-	@SuppressWarnings("all")
-	protected int getPermissionLevel(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) {
+	@SuppressWarnings("ConstantConditions")
+	public static int getPermissionLevel(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) {
 		int per = 4;
 		if (sender instanceof EntityPlayerMP) {
 			per = 0;

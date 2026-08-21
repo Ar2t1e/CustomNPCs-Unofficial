@@ -1,55 +1,65 @@
 package noppes.npcs.api.handler.data;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.WrapperRecipe;
 
-@SuppressWarnings("all")
+import java.util.List;
+import java.util.Map;
+
+@SuppressWarnings("unused")
 public interface INpcRecipe {
 
-	void copy(@ParamName("recipe") INpcRecipe recipe);
+	String getName();
 
-	void delete();
+	boolean isGlobal();
 
-	boolean equal(@ParamName("recipe") INpcRecipe recipe);
-
-	IAvailability getAvailability();
-
-	int getHeightRecipe();
-
-	int getId();
-
-	boolean getIgnoreDamage();
+	void setIsGlobal(@ParamName("isGlobal") boolean isGlobal);
 
 	boolean getIgnoreNBT();
 
-	String getName();
+	void setIgnoreNBT(@ParamName("ignoreNBT") boolean ignoreNBT);
+
+	boolean getIgnoreDamage();
+
+	void setIgnoreDamage(@ParamName("ignoreDamage") boolean ignoreDamage);
+
+	int getWidth();
+
+	int getHeight();
+
+	IItemStack getResult();
+
+	IItemStack[][] getRecipe();
+
+	void save();
+
+	void delete();
+
+	boolean isShaped();
+
+	void setIsShaped(@ParamName("isShaped") boolean isShaped);
+
+	// New from Unofficial (BetaZavr)
+	boolean isValid();
+
+	boolean isKnown();
+
+	void setIsKnown(@ParamName("isKnown") boolean isKnown);
+
+	boolean showInRecipeBook();
+
+	void setShowInRecipeBook(@ParamName("showInRecipeBook") boolean showInRecipeBook);
+
+	IAvailability getAvailability();
+
+	ResourceLocation getMCId();
 
 	INbt getNbt();
 
 	String getNpcGroup();
-
-	IItemStack getProduct();
-
-	IItemStack[][] getRecipe();
-
-	int getWidthRecipe();
-
-	boolean isGlobal();
-
-	boolean isKnown();
-
-	boolean isShaped();
-
-	boolean isValid();
-
-	void setIgnoreDamage(@ParamName("ignoreDamage") boolean ignoreDamage);
-
-	void setIgnoreNBT(@ParamName("ignoreNBT") boolean ignoreNBT);
-
-	void setKnown(@ParamName("known") boolean known);
 
 	void setNbt(@ParamName("nbt") INbt nbt);
 
@@ -57,10 +67,10 @@ public interface INpcRecipe {
 
 	WrapperRecipe getWrapperRecipe();
 
-    boolean isMain();
+    void setResult(@ParamName("item") IItemStack item);
 
-	boolean isChanged();
+	void setItems(@ParamName("items") IItemStack[][] items);
 
-    void setRecipeOutput(@ParamName("item") ItemStack item);
+	void setItems(@ParamName("mapItems") Map<Integer, List<IItemStack>> mapItems);
 
 }

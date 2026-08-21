@@ -2,10 +2,8 @@ package noppes.npcs.client.model;
 
 import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
 import moe.plushie.armourers_workshop.api.common.capability.IEntitySkinCapability;
-import moe.plushie.armourers_workshop.api.common.capability.IWardrobeCap;
 import moe.plushie.armourers_workshop.api.common.skin.data.ISkin;
 import moe.plushie.armourers_workshop.api.common.skin.data.ISkinDescriptor;
-import moe.plushie.armourers_workshop.api.common.skin.data.ISkinDye;
 import moe.plushie.armourers_workshop.api.common.skin.type.ISkinType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -14,7 +12,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import noppes.npcs.LogWriter;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import noppes.npcs.client.util.aw.CustomSkinModelRenderHelper;
 import noppes.npcs.constants.EnumParts;
@@ -44,10 +42,10 @@ public class ModelBipedAW extends ModelBipedAlt {
         catch (Exception e) { LogWriter.error(e); }
         if (distance > d) { return; }
 
-        if (entityIn.isSneaking()) { GlStateManager.translate(0.0f, 0.2f, 0.0f); }
+        GlStateManager.pushMatrix();
+        if (!isChild && entityIn.isSneaking()) { GlStateManager.translate(0.0f, 0.2f, 0.0f); }
         setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
 
-        IWardrobeCap wardrobe = ArmourersWorkshopApi.getEntityWardrobeCapability(entityIn);
         CustomSkinModelRenderHelper modelRenderer = CustomSkinModelRenderHelper.getInstance();
 
         EntityNPCInterface npc = (EntityNPCInterface) entityIn;
@@ -113,8 +111,8 @@ public class ModelBipedAW extends ModelBipedAlt {
                 try {
                     ISkin skin = (ISkin) awu.getSkin.invoke(awu.clientSkinCache, skinDescriptor);
                     if (skin != null) {
-                        ISkinDye dye = (ISkinDye) awu.skinDyeConstructor.newInstance(wardrobe.getDye());
-                        Object renderData = awu.skinRenderDataConstructor.newInstance(scale, dye, awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
+                        Object renderData = awu.skinRenderDataConstructor.newInstance(scale, awu.skinDyeConstructor.newInstance(skinDescriptor.getSkinDye()),
+                                awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
                         modelRenderer.renderEquipmentPart(skin, renderData, npc, this, scale, baArmor);
                     }
                 }
@@ -131,8 +129,8 @@ public class ModelBipedAW extends ModelBipedAlt {
                     try {
                         ISkin skin = (ISkin) awu.getSkin.invoke(awu.clientSkinCache, skinDescriptor);
                         if (skin != null) {
-                            ISkinDye dye = (ISkinDye) awu.skinDyeConstructor.newInstance(wardrobe.getDye());
-                            Object renderData = awu.skinRenderDataConstructor.newInstance(scale, dye, awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
+                            Object renderData = awu.skinRenderDataConstructor.newInstance(scale, awu.skinDyeConstructor.newInstance(skinDescriptor.getSkinDye()),
+                                    awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
                             modelRenderer.renderEquipmentPart(skin, renderData, npc, this, scale, baArmor);
                         }
                     } catch (Exception ignore) {
@@ -144,8 +142,8 @@ public class ModelBipedAW extends ModelBipedAlt {
                     try {
                         ISkin skin = (ISkin) awu.getSkin.invoke(awu.clientSkinCache, skinDescriptor);
                         if (skin != null) {
-                            ISkinDye dye = (ISkinDye) awu.skinDyeConstructor.newInstance(wardrobe.getDye());
-                            Object renderData = awu.skinRenderDataConstructor.newInstance(scale, dye, awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
+                            Object renderData = awu.skinRenderDataConstructor.newInstance(scale, awu.skinDyeConstructor.newInstance(skinDescriptor.getSkinDye()),
+                                    awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
                             modelRenderer.renderEquipmentPart(skin, renderData, npc, this, scale, baArmor);
                         }
                     } catch (Exception ignore) {
@@ -158,8 +156,8 @@ public class ModelBipedAW extends ModelBipedAlt {
                 try {
                     ISkin skin = (ISkin) awu.getSkin.invoke(awu.clientSkinCache, skinDescriptor);
                     if (skin != null) {
-                        ISkinDye dye = (ISkinDye) awu.skinDyeConstructor.newInstance(wardrobe.getDye());
-                        Object renderData = awu.skinRenderDataConstructor.newInstance(scale, dye, awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
+                        Object renderData = awu.skinRenderDataConstructor.newInstance(scale, awu.skinDyeConstructor.newInstance(skinDescriptor.getSkinDye()),
+                                awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
                         modelRenderer.renderEquipmentPart(skin, renderData, npc, this, scale, baArmor);
                     }
                 }
@@ -174,14 +172,16 @@ public class ModelBipedAW extends ModelBipedAlt {
                 try {
                     ISkin skin = (ISkin) awu.getSkin.invoke(awu.clientSkinCache, skinDescriptor);
                     if (skin != null) {
-                        ISkinDye dye = (ISkinDye) awu.skinDyeConstructor.newInstance(wardrobe.getDye());
-                        Object renderData = awu.skinRenderDataConstructor.newInstance(scale, dye, awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
+                        Object renderData = awu.skinRenderDataConstructor.newInstance(scale, awu.skinDyeConstructor.newInstance(skinDescriptor.getSkinDye())
+                                , awu.extraColours, distance, true, true, false, DefaultPlayerSkin.getDefaultSkinLegacy());
                         modelRenderer.renderEquipmentPart(skin, renderData, npc, this, scale, baArmor);
                     }
                 }
                 catch (Exception ignore) { }
             }
         }
+        GlStateManager.popMatrix();
     }
+
 
 }

@@ -15,11 +15,11 @@ public class EntityAITransform extends EntityAIBase {
 
 	public boolean shouldExecute() {
 		boolean isDay = npc.world.getWorldTime() % 24000L < 12000L;
-		return !npc.isKilled() && !npc.isAttacking() && npc.transform.editingModus && isDay == npc.transform.isDay;
+		return !npc.isKilled() && !npc.isAttacking() && npc.transform.editingModus && isDay == npc.transform.isActive;
 	}
 
 	public void startExecuting() {
-		npc.transform.transform(!npc.transform.isDay);
+		npc.transform.transform(!npc.transform.isActive);
 	}
 
 }

@@ -14,14 +14,15 @@ import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.Server;
 import noppes.npcs.api.constants.MarkType;
 import noppes.npcs.api.entity.data.IMark;
 import noppes.npcs.api.handler.capability.IMarkDataHandler;
 import noppes.npcs.api.handler.data.IAvailability;
-import noppes.npcs.constants.EnumPacketClient;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketMarkData;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 
@@ -76,49 +77,44 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 	}
 
 	@CapabilityInject(IMarkDataHandler.class)
-	public static Capability<IMarkDataHandler> CNPCS_MARKDATA_CAPABILITY = null;
+	public static Capability<IMarkDataHandler> MARKDATA_CAPABILITY;
+
 	private static final ResourceLocation CNPCS_CAPKEY = new ResourceLocation(CustomNpcs.MODID, "markdata");
+	private static final String NBT_KEY = "cnpcmarkdata";
+	private static final MarkData backup = new MarkData();
+
+	public static void register(AttachCapabilitiesEvent<Entity> event) {
+		event.addCapability(MarkData.CNPCS_CAPKEY, new MarkData());
+	}
 
 	public static MarkData get(EntityLivingBase entity) {
-		if (!(entity.getCapability(MarkData.CNPCS_MARKDATA_CAPABILITY, null) instanceof MarkData)) { return new MarkData(); }
-		MarkData data = (MarkData) entity.getCapability(MarkData.CNPCS_MARKDATA_CAPABILITY, null);
+		MarkData data = (MarkData) entity.getCapability(MARKDATA_CAPABILITY, null);
+		if (data == null) { data = backup; }
 		if (data != null && data.entity == null) {
 			data.entity = entity;
-			data.setNBT(entity.getEntityData().getCompoundTag("cnpcmarkdata"));
+			data.setNBT(entity.getEntityData().getCompoundTag(NBT_KEY));
 		}
 		return data;
 	}
 
-	public static void register(AttachCapabilitiesEvent<Entity> event) { event.addCapability(MarkData.CNPCS_CAPKEY, new MarkData()); }
-
 	public EntityLivingBase entity;
+	public List<Mark> marks = new ArrayList<>();
 
-	public List<Mark> marks;
-
-	public MarkData() {
-		marks = new ArrayList<>();
-	}
-
-	public MarkData.Mark addMark(int type) {
-		Mark m = new Mark();
-		m.setType(type);
-		marks.add(m);
-		syncClients();
-		return m;
-	}
-
-	public void addMark(int type, int color) {
-		Mark m = new Mark();
-		m.setType(type);
-		m.color = color;
-		marks.add(m);
-		syncClients();
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> T getCapability(@Nonnull Capability<T> capability, EnumFacing facing) {
-		if (hasCapability(capability, facing)) { return (T) this; }
-		return null;
+	@Override
+	public void setNBT(NBTTagCompound compound) {
+		List<Mark> marksIn = new ArrayList<>();
+		NBTTagList list = compound.getTagList("marks", 10);
+		for (int i = 0; i < list.tagCount(); ++i) {
+			NBTTagCompound c = list.getCompoundTagAt(i);
+			Mark m = new Mark();
+			m.setType(c.getInteger("type"));
+			m.color = c.getInteger("color");
+			m.availability.load(c.getCompoundTag("availability"));
+			m.rotate = c.getBoolean("rotate");
+			m.is3d = c.getBoolean("is3d");
+			marksIn.add(m);
+		}
+		marks = marksIn;
 	}
 
 	@Override
@@ -138,32 +134,39 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 		return compound;
 	}
 
-	public MarkData.Mark getNewMark() { return new Mark(); }
-
-	public boolean hasCapability(@Nonnull Capability<?> capability, EnumFacing facing) { return capability == MarkData.CNPCS_MARKDATA_CAPABILITY; }
-
-	public void save() { entity.getEntityData().setTag("cnpcmarkdata", getNBT()); }
-
-	@Override
-	public void setNBT(NBTTagCompound compound) {
-		List<Mark> marksIn = new ArrayList<>();
-		NBTTagList list = compound.getTagList("marks", 10);
-		for (int i = 0; i < list.tagCount(); ++i) {
-			NBTTagCompound c = list.getCompoundTagAt(i);
-			Mark m = new Mark();
-			m.setType(c.getInteger("type"));
-			m.color = c.getInteger("color");
-			m.availability.load(c.getCompoundTag("availability"));
-			m.rotate = c.getBoolean("rotate");
-			m.is3d = c.getBoolean("is3d");
-			marksIn.add(m);
-		}
-		marks = marksIn;
+	public boolean hasCapability(@Nullable Capability<?> capability, EnumFacing facing) {
+		return capability != null && capability == MARKDATA_CAPABILITY;
 	}
+
+	public void save() { entity.getEntityData().setTag(NBT_KEY, getNBT()); }
+
+	public MarkData.Mark addMark(int type) {
+		Mark m = new Mark();
+		m.setType(type);
+		marks.add(m);
+		if (!entity.world.isRemote) { syncClients(); }
+		return m;
+	}
+
+	public void addMark(int type, int color) {
+		Mark m = new Mark();
+		m.setType(type);
+		m.color = color;
+		marks.add(m);
+		if (!entity.world.isRemote) { syncClients(); }
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getCapability(@Nonnull Capability<T> capability, EnumFacing facing) {
+		if (hasCapability(capability, facing)) { return (T) this; }
+		return null;
+	}
+
+	public MarkData.Mark getNewMark() { return new Mark(); }
 
 	public void syncClients() {
 		if (entity == null || entity.world == null || entity.world.isRemote) { return; }
-		Server.sendToAll(entity.getServer(), EnumPacketClient.MARK_DATA, entity.getEntityId(), getNBT());
+		Packets.sendAll(new PacketMarkData(entity.getEntityId(), getNBT()));
 	}
 
 }

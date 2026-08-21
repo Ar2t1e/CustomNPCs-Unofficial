@@ -12,36 +12,32 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CommandNoppesBase;
-import noppes.npcs.dimensions.DimensionHandler;
+import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.packets.server.SPacketDimensionTeleport;
 
 import javax.annotation.Nonnull;
 
 public class CmdDimensions extends CommandNoppesBase {
 
-	public int getRequiredPermissionLevel() {
-		return 2;
-	}
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
 
 	@Override
-	public String getDescription() {
-		return "World operations";
-	}
+	public String getDescription() { return "World operations"; }
 
 	@Nonnull
 	@Override
-	public String getName() {
-		return "world";
-	}
+	public String getName() { return "world"; }
 
 	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
 		List<String> list = new ArrayList<>();
 		if (args.length == 3) {
 			Set<Integer> s = new TreeSet<>();
 			for (int id : DimensionManager.getIDs()) {
-				if (DimensionHandler.getInstance().isDelete(id)) {
+				if (DimensionController.getInstance().isDelete(id)) {
 					continue;
 				}
 				s.add(id);
@@ -57,7 +53,7 @@ public class CmdDimensions extends CommandNoppesBase {
 		return list;
 	}
 
-	@SubCommand(desc = "Set spawn block in dimension", permission = 2)
+	@SubCommand(desc = "Set spawn block in dimension", isOpOnly = true)
 	public void setspawn(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (sender == null) {
 			return;
@@ -99,35 +95,28 @@ public class CmdDimensions extends CommandNoppesBase {
 	@SubCommand(desc = "Transfer player to dimension", usage = "<player> <dimensionID>", permission = 2)
 	public void tp(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		EntityPlayerMP player = CommandBase.getPlayer(server, sender, args[0]);
-		int id;
+		int dimId;
 		try {
-			id = Integer.parseInt(args[1]);
-			if (!DimensionManager.isDimensionRegistered(id) || DimensionHandler.getInstance().isDelete(id)) {
-				throw new CommandException("DimensionID: " + id + " - not found");
+			dimId = Integer.parseInt(args[1]);
+			if (!DimensionManager.isDimensionRegistered(dimId) || DimensionController.getInstance().isDelete(dimId)) {
+				throw new CommandException("DimensionID: " + dimId + " - not found");
 			}
 		} catch (NumberFormatException ex) {
 			throw new CommandException("DimensionID \"" + args[1]+"\" - must be an integer");
 		}
 
-		WorldServer world = Objects.requireNonNull(sender.getServer()).getWorld(id);
-		BlockPos coords = world.getSpawnCoordinate();
+		WorldServer world = Objects.requireNonNull(sender.getServer()).getWorld(dimId);
+		BlockPos pos = world.getSpawnPoint();
 		double x, y, z;
-		if (coords == null) {
-			coords = world.getSpawnPoint();
-		}
-        if (!world.isAirBlock(coords)) {
-            coords = world.getTopSolidOrLiquidBlock(coords);
-        } else if (!world.isAirBlock(coords.up())) {
-            while (world.isAirBlock(coords) && coords.getY() > 0) {
-                coords = coords.down();
-            }
-            if (coords.getY() == 0) {
-                coords = world.getTopSolidOrLiquidBlock(coords);
-            }
+        if (!world.isAirBlock(pos)) { pos = world.getTopSolidOrLiquidBlock(pos); }
+		else if (!world.isAirBlock(pos.up())) {
+            while (world.isAirBlock(pos) && pos.getY() > 0) { pos = pos.down(); }
+            if (pos.getY() == 0) { pos = world.getTopSolidOrLiquidBlock(pos); }
         }
-        x = coords.getX();
-        y = coords.getY();
-        z = coords.getZ();
+		pos = pos.up();
+        x = pos.getX();
+        y = pos.getY();
+        z = pos.getZ();
         if (args.length == 5) {
 			try {
 				double dx = parseCoordinate(sender.getPosition().getX(), args[2], true).getResult();
@@ -138,7 +127,7 @@ public class CmdDimensions extends CommandNoppesBase {
 				z = dz;
 			} catch (NumberFormatException e) { LogWriter.error(e); }
 		}
-		NoppesUtilPlayer.teleportPlayer(player, x, y, z, id, player.rotationYaw, player.rotationPitch);
+		SPacketDimensionTeleport.teleportPlayer(player, dimId, x, y, z, player.rotationYaw, player.rotationPitch);
 	}
 
 }

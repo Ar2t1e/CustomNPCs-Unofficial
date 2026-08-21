@@ -4,51 +4,129 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.NoppesStringUtils;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumAvailabilityScoreboard;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.AvailabilityScoreboardData;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
-
-public class SubGuiNpcAvailabilityScoreboard extends SubGuiInterface implements ICustomScrollListener, ITextfieldListener {
+// Change from Unofficial (BetaZavr)
+public class SubGuiNpcAvailabilityScoreboard
+		extends GuiNPCInterface
+		implements ICustomScrollListener, ITextfieldListener {
 
 	protected final Availability availability;
-	protected final Map<String, String> dataNames = new HashMap<>();
-	protected final Map<String, AvailabilityScoreboardData> dataSets = new HashMap<>();
-	protected final String chr = "" + ((char) 167);
-	protected GuiCustomScroll scroll;
-	protected String select = "";
+	protected final Map<Component, String> dataNames = new HashMap<>();
+	protected final Map<Component, AvailabilityScoreboardData> dataSets = new HashMap<>();
+	protected GuiCustomScrollNop scroll;
+	protected Component select = Component.empty();
 
 	public SubGuiNpcAvailabilityScoreboard(Availability availabilityIn) {
-		super(0);
+		super();
 		setBackground("menubg.png");
-		closeOnEsc = true;
-		xSize = 316;
-		ySize = 217;
+		imageWidth = 316;
+		imageHeight = 217;
 
 		availability = availabilityIn;
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
+	public void initGui() {
+		super.initGui();
+		boolean isSelect = !select.getFormattedText().isEmpty();
+		// title
+		addLabel(1, guiLeft + 6, guiTop + 4, "availability.available.6")
+				.setSize(imageWidth - 12, 12)
+				.setCenter(imageWidth - 12);
+		// exit
+		addButton(66, guiLeft + 6, guiTop + 192, "gui.done")
+				.setSize(70, 20)
+				.setHoverTexts("hover.back");
+		// data
+		if (scroll == null) { scroll = addScroll(6).setSize(imageWidth - 12, imageHeight - 66); }
+		dataNames.clear();
+		dataSets.clear();
+		for (String objectiveName : availability.scoreboards.keySet()) {
+			AvailabilityScoreboardData asd = availability.scoreboards.get(objectiveName);
+			Component key = Component.literal(objectiveName + " - ")
+					.append(Component.literal(" (").withStyle(TextFormatting.GRAY))
+					.append(Component.translatable("availability." + asd.scoreboardType.name().toLowerCase()).withStyle(TextFormatting.DARK_AQUA))
+					.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
+					.append(Component.translatable("" + asd.scoreboardValue).withStyle(TextFormatting.BLUE))
+					.append(Component.literal(")").withStyle(TextFormatting.GRAY));
+			dataNames.put(key, objectiveName);
+			dataSets.put(key, asd);
+		}
+		if (isSelect) {
+			boolean found = false;
+			for (Component line : dataSets.keySet()) {
+				if (line.getString().equals(select.getString())) {
+					found= true;
+					break;
+				}
+			}
+			if (!found) {
+				select = Component.empty();
+				isSelect = false;
+			}
+		}
+		scroll.setNormalList(new ArrayList<>(dataNames.keySet()));
+		if (isSelect) { scroll.setSelected(select); }
+		add(scroll.setPos(guiLeft + 6, guiTop + 14));
+		// type
+		int p = 0;
+		if (isSelect) { p = dataSets.get(select).scoreboardType.ordinal(); }
+		addButton(0, guiLeft + 6, guiTop + imageHeight - 46, false, p,
+				"availability.smaller", "availability.equals", "availability.bigger")
+				.setSize(50, 20)
+				.setIsEnabled(isSelect)
+				.setHoverTexts("availability.hover.enum.type");
+		// name
+		addTextField(0, guiLeft + 59, guiTop + imageHeight - 46, 189, 20, isSelect ? dataNames.get(select) : "")
+				.setHoverTexts("availability.hover.scoreboard.name");
+		// value
+		addTextField(1, guiLeft + 252, guiTop + imageHeight - 46, 36, 20, isSelect ? dataSets.get(select).scoreboardValue : "")
+				.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, 0)
+				.setHoverTexts("availability.hover.scoreboard.value");
+		addButton(2, guiLeft + 290, guiTop + imageHeight - 46, "X")
+				.setSize(20, 20)
+				.setIsEnabled(isSelect)
+				.setHoverTexts("availability.hover.remove");
+		// extra
+		addButton(3, guiLeft + imageWidth - 76, guiTop + 192, "availability.more")
+				.setSize(70, 20)
+				.setIsEnabled(isSelect)
+				.setHoverTexts("availability.hover.more");
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
 			case 0 : {
-				if (select.isEmpty()) { return; }
-				String obj = dataNames.get(select);
-				AvailabilityScoreboardData asd = availability.scoreboards.get(obj);
+				if (!dataNames.containsKey(select)) { return; }
+				String objectiveName = dataNames.get(select);
+				AvailabilityScoreboardData asd = availability.scoreboards.get(objectiveName);
 				asd.scoreboardType = EnumAvailabilityScoreboard.values()[button.getValue()];
-				availability.scoreboards.put(obj, asd);
-				select = obj + " - " + chr + "7 (" + chr + "3" + new TextComponentTranslation(("availability." + asd.scoreboardType).toLowerCase()).getFormattedText() + chr + "7: " + chr + "9" + asd.scoreboardValue + chr + "7)";
+				availability.scoreboards.put(objectiveName, asd);
+				select = Component.literal(objectiveName + " - ")
+						.append(Component.literal(" (").withStyle(TextFormatting.GRAY))
+						.append(Component.translatable("availability." + asd.scoreboardType.name().toLowerCase()).withStyle(TextFormatting.DARK_AQUA))
+						.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
+						.append(Component.translatable("" + asd.scoreboardValue).withStyle(TextFormatting.BLUE))
+						.append(Component.literal(")").withStyle(TextFormatting.GRAY));
 				initGui();
 				break;
 			}
 			case 2 : {
 				availability.scoreboards.remove(dataNames.get(select));
-				select = "";
+				select = Component.empty();
 				initGui();
 				break;
 			}
@@ -57,110 +135,64 @@ public class SubGuiNpcAvailabilityScoreboard extends SubGuiInterface implements 
 				initGui();
 				break;
 			}
-			case 66 : onClosed(); break;
+			case 66 : onClose(); break;
 		}
 	}
 
 	@Override
-	public void initGui() {
-		super.initGui();
-		// title
-		addLabel(new GuiNpcLabel(1, "availability.available", guiLeft, guiTop + 4)
-				.setCenter(xSize));
-		// exit
-		addButton(new GuiNpcButton(66, guiLeft + 6, guiTop + 192, 70, 20, "gui.done")
-				.setHoverText("hover.back"));
-		// data
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 6).setSize(xSize - 12, ySize - 66); }
-		dataNames.clear();
-		dataSets.clear();
-		for (String obj : availability.scoreboards.keySet()) {
-			AvailabilityScoreboardData asd = availability.scoreboards.get(obj);
-			String key = obj + " - " + chr + "7 (" + chr + "3"
-					+ new TextComponentTranslation(("availability." + asd.scoreboardType).toLowerCase())
-							.getFormattedText()
-					+ chr + "7: " + chr + "9" + asd.scoreboardValue + chr + "7)";
-			dataNames.put(key, obj);
-			dataSets.put(key, asd);
-		}
-		if (!select.isEmpty() && !dataNames.containsKey(select)) { select = ""; }
-		scroll.setList(new ArrayList<>(dataNames.keySet()));
-		scroll.guiLeft = guiLeft + 6;
-		scroll.guiTop = guiTop + 14;
-		if (!select.isEmpty()) { scroll.setSelected(select); }
-		addScroll(scroll);
-		// type
-		int p = 0;
-		if (!select.isEmpty()) { p = dataSets.get(select).scoreboardType.ordinal(); }
-		addButton(new GuiNpcButton(0, guiLeft + 6, guiTop + ySize - 46, 50, 20, new String[] { "availability.smaller", "availability.equals", "availability.bigger" }, p)
-				.setIsEnable(!select.isEmpty())
-				.setHoverText("availability.hover.enum.type"));
-		// name
-		addTextField(new GuiNpcTextField(0, this, guiLeft + 59, guiTop + ySize - 46, 189, 20, !select.isEmpty() ? dataNames.get(select) : "")
-				.setHoverText("availability.hover.scoreboard.name"));
-		// value
-		addTextField(new GuiNpcTextField(1, this, guiLeft + 252, guiTop + ySize - 46, 36, 20, !select.isEmpty() ? "" + dataSets.get(select).scoreboardValue : "")
-				.setMinMaxDefault(Integer.MIN_VALUE, Integer.MAX_VALUE, 0)
-				.setHoverText("availability.hover.scoreboard.value"));
-		addButton(new GuiNpcButton(2, guiLeft + 290, guiTop + ySize - 46, 20, 20, "X")
-				.setIsEnable(!select.isEmpty())
-				.setHoverText("availability.hover.remove"));
-		// extra
-		addButton(new GuiNpcButton(3, guiLeft + xSize - 76, guiTop + 192, 70, 20, "availability.more")
-				.setIsEnable(!select.isEmpty())
-				.setHoverText("availability.hover.more"));
-	}
-
-	@Override
-	public void save() {
-		if (select.isEmpty()) { return; }
-		EnumAvailabilityScoreboard eas = EnumAvailabilityScoreboard.values()[getButton(0).getValue()];
-		int value = NoppesStringUtils.parseInt(getTextField(1).getText(), 0);
-		String obj = dataNames.get(select);
-		availability.scoreboards.put(obj, new AvailabilityScoreboardData(eas, value));
-		select = "";
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		select = scroll.getSelected();
-		initGui();
-	}
-
-	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { }
-
-	@Override
-	public void unFocused(GuiNpcTextField textfield) {
+	public void unFocused(GuiTextFieldNop textfield) {
 		if (textfield.isEmpty()) { return; }
-		String obj = "";
+		String objectiveName = "";
 		AvailabilityScoreboardData asd = null;
-		int value = NoppesStringUtils.parseInt(getTextField(1).getText(), 0);
-		if (!select.isEmpty()) {
-			obj = dataNames.get(select);
-			asd = availability.scoreboards.get(obj);
+		int value = NoppesStringUtils.parseInt(getTextField(1).getValue(), 0);
+		if (dataNames.containsKey(select)) {
+			objectiveName = dataNames.get(select);
+			asd = availability.scoreboards.get(objectiveName);
 		}
-		if (textfield.getID() == 0) {
-			if (obj == null || obj.isEmpty() || asd == null) {
-				obj = textfield.getText();
+		if (textfield.id == 0) {
+			if (objectiveName == null || objectiveName.isEmpty() || asd == null) {
+				objectiveName = textfield.getValue();
 				asd = new AvailabilityScoreboardData(EnumAvailabilityScoreboard.SMALLER, value);
 			} else {
-				if (obj.equals(textfield.getText())) { return; }
-				obj = textfield.getText();
+				if (objectiveName.equals(textfield.getValue())) { return; }
+				objectiveName = textfield.getValue();
 				availability.scoreboards.remove(dataNames.get(select));
 			}
 		}
-		else if (textfield.getID() == 1) {
+		else if (textfield.id == 1) {
 			if (asd == null || asd.scoreboardValue == value) { return; }
 			asd.scoreboardValue = value;
 		}
 		if (asd != null) {
-			availability.scoreboards.put(obj, asd);
-			select = obj + " - " + chr + "7 (" + chr + "3"
-					+ new TextComponentTranslation(("availability." + asd.scoreboardType).toLowerCase()).getFormattedText()
-					+ chr + "7: " + chr + "9" + asd.scoreboardValue + chr + "7)";
+			availability.scoreboards.put(objectiveName, asd);
+			select = Component.literal(objectiveName + " - ")
+					.append(Component.literal(" (").withStyle(TextFormatting.GRAY))
+					.append(Component.translatable("availability." + asd.scoreboardType.name().toLowerCase()).withStyle(TextFormatting.DARK_AQUA))
+					.append(Component.literal(": ").withStyle(TextFormatting.GRAY))
+					.append(Component.translatable("" + asd.scoreboardValue).withStyle(TextFormatting.BLUE))
+					.append(Component.literal(")").withStyle(TextFormatting.GRAY));
 		}
 		initGui();
+	}
+
+	// New from Unofficial (BetaZavr)
+	@Override
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		select = scroll.getNormalSelected();
+		initGui();
+	}
+
+	@Override
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
+
+	@Override
+	public void save() {
+		if (!dataNames.containsKey(select)) { return; }
+		EnumAvailabilityScoreboard eas = EnumAvailabilityScoreboard.values()[getButton(0).getValue()];
+		int value = NoppesStringUtils.parseInt(getTextField(1).getValue(), 0);
+		String objectiveName = dataNames.get(select);
+		availability.scoreboards.put(objectiveName, new AvailabilityScoreboardData(eas, value));
+		select = Component.empty();
 	}
 
 }

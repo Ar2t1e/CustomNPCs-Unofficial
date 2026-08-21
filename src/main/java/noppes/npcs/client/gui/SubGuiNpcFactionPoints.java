@@ -1,64 +1,62 @@
 package noppes.npcs.client.gui;
 
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.gui.util.*;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.controllers.data.Faction;
+import noppes.npcs.shared.client.gui.GuiBasic;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
-import javax.annotation.Nonnull;
-
-public class SubGuiNpcFactionPoints extends SubGuiInterface implements ITextfieldListener {
+public class SubGuiNpcFactionPoints extends GuiBasic implements ITextfieldListener {
 
 	protected final Faction faction;
 
 	public SubGuiNpcFactionPoints(Faction factionIn) {
-		super(0);
+		super();
 		setBackground("menubg.png");
-		xSize = 256;
-		ySize = 216;
-		closeOnEsc = true;
+		imageWidth = 256;
+		imageHeight = 216;
 
 		faction = factionIn;
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		if (button.id == 66) { onClosed(); }
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
 		// default Points
-		addLabel(new GuiNpcLabel(2, "faction.default", guiLeft + 4, guiTop + 33));
-		addTextField(new GuiNpcTextField(2, this, guiLeft + 8 + fontRenderer.getStringWidth(getLabel(2).getMessage()), guiTop + 28, 70, 20, faction.defaultPoints + "")
-				.setMinMaxDefault(-999999, 999999, 0)
-				.setHoverText("faction.hover.point.def"));
+		addLabel(2, guiLeft + 4, guiTop + 33, "faction.default");
+		addTextField(2, guiLeft + 8 + font.getStringWidth(getLabel(2).getMessage().getFormattedText()), guiTop + 28, 70, 20, faction.defaultPoints)
+				.setMinMaxDefault(0, Integer.MAX_VALUE, faction.defaultPoints)
+				.setHoverTexts("faction.hover.point.def")
+				.setMaxStringLength(6);
 		// unfriendly -> neutral
-		String title = new TextComponentTranslation("faction.unfriendly").getFormattedText() + "<->" + new TextComponentTranslation("faction.neutral").getFormattedText();
-		addLabel(new GuiNpcLabel(3, title, guiLeft + 4, guiTop + 80));
-		addTextField(new GuiNpcTextField(3, this, guiLeft + 8 + fontRenderer.getStringWidth(title), guiTop + 75, 70, 20, faction.neutralPoints + "")
-				.setMinMaxDefault(-999999, 999999, 0)
-				.setHoverText("faction.hover.point.unfr"));
-		// neutral -> friendly
-		title = new TextComponentTranslation("faction.neutral").getFormattedText() + "<->" + new TextComponentTranslation("faction.friendly").getFormattedText();
-		addLabel(new GuiNpcLabel(4, title, guiLeft + 4, guiTop + 105));
-		addTextField(new GuiNpcTextField(4, this, guiLeft + 8 + fontRenderer.getStringWidth(title), guiTop + 100, 70, 20, faction.friendlyPoints + "")
-				.setMinMaxDefault(-999999, 999999, 0)
-				.setHoverText("faction.hover.point.unfr"));
-		if (getTextField(3).x > getTextField(4).x) { getTextField(4).x = getTextField(3).x; }
-		else { getTextField(3).x = getTextField(4).x; }
-		// exit
-		addButton(new GuiNpcButton(66, guiLeft + 20, guiTop + 192, 90, 20, "gui.done")
-				.setHoverText("hover.back"));
+		Component title = Component.translatable("faction.unfriendly").append("<->").append(Component.translatable("faction.neutral"));
+		addLabel(3, guiLeft + 4, guiTop + 80, title);
+		GuiTextFieldNop textField3 = addTextField(3, guiLeft + 8 + font.getStringWidth(title.getFormattedText()), guiTop + 75, 70, 20, faction.neutralPoints)
+				.setMinMaxDefault(0, Integer.MAX_VALUE, faction.neutralPoints)
+				.setHoverTexts("faction.hover.point.unfr");
+		title = Component.translatable("faction.neutral").append("<->").append(Component.translatable("faction.friendly"));
+		addLabel(4, guiLeft + 4, guiTop + 105, title);
+		GuiTextFieldNop textField4 = addTextField(4, guiLeft + 8 + font.getStringWidth(title.getFormattedText()), guiTop + 100, 70, 20, faction.friendlyPoints)
+				.setMinMaxDefault(0, Integer.MAX_VALUE, faction.friendlyPoints);
+		if (textField3.getX() > textField4.getX()) { textField4.setX(textField3.getX()); }
+		else { textField3.setX(textField4.getX()); }
+		addButton(66, guiLeft + 20, guiTop + 192, "gui.done")
+				.setSize(90, 20)
+				.setHoverTexts("hover.back");
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textfield) {
-		switch (textfield.getID()) {
-			case 2: faction.defaultPoints = textfield.getInteger(); break;
-			case 3: faction.neutralPoints = textfield.getInteger(); break;
-			case 4: faction.friendlyPoints = textfield.getInteger(); break;
+	public void buttonEvent(GuiButtonNop button) {
+		if (button.id == 66) { onClose(); }
+	}
+
+	@Override
+	public void unFocused(GuiTextFieldNop textField) {
+		switch (textField.id) {
+			case 2: faction.defaultPoints = textField.getInteger(); break;
+			case 3: faction.neutralPoints = textField.getInteger(); break;
+			case 4: faction.friendlyPoints = textField.getInteger(); break;
 		}
 	}
 

@@ -26,7 +26,7 @@ public class TileCopy extends TileEntity {
 	}
 
 	public SPacketUpdateTileEntity getUpdatePacket() {
-		return new SPacketUpdateTileEntity(this.pos, 0, this.getUpdateTag());
+		return new SPacketUpdateTileEntity(pos, 0, this.getUpdateTag());
 	}
 
 	@Nonnull
@@ -42,13 +42,13 @@ public class TileCopy extends TileEntity {
 	}
 
 	public void handleUpdateTag(@Nonnull NBTTagCompound compound) {
-		this.length = compound.getShort("Length");
-		this.width = compound.getShort("Width");
-		this.height = compound.getShort("Height");
+		length = compound.getShort("Length");
+		width = compound.getShort("Width");
+		height = compound.getShort("Height");
 	}
 
 	public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity pkt) {
-		this.handleUpdateTag(pkt.getNbtCompound());
+		handleUpdateTag(pkt.getNbtCompound());
 	}
 
 	public void readFromNBT(@Nonnull NBTTagCompound compound) {

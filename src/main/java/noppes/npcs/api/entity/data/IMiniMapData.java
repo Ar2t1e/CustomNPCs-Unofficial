@@ -1,14 +1,15 @@
 package noppes.npcs.api.entity.data;
 
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
+import java.util.List;
+
 public interface IMiniMapData {
 
 	int getColor();
 
-	int[] getDimensions();
+	List<Integer> getDimensions();
 
 	String getIcon();
 
@@ -18,7 +19,7 @@ public interface IMiniMapData {
 
 	IPos getPos();
 
-	String[] getSpecificKeys();
+	List<String> getSpecificKeys();
 
 	String getSpecificValue(@ParamName("key") String key);
 
@@ -28,7 +29,7 @@ public interface IMiniMapData {
 
 	void setColor(@ParamName("color") int color);
 
-	void setDimensions(@ParamName("dims") int[] dims);
+	void setDimensions(@ParamName("dimensions") int ... dimensions);
 
 	void setIcon(@ParamName("icon") String icon);
 

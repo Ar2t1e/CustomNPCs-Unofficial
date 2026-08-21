@@ -5,19 +5,20 @@ import java.util.*;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
+import noppes.npcs.api.wrapper.NBTWrapper;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.api.entity.ICustomNpc;
 import noppes.npcs.api.entity.data.IAnimation;
 import noppes.npcs.api.entity.data.IAnimationFrame;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.entity.EntityCustomNpc;
+import noppes.npcs.util.ValueUtil;
 
 public class AnimationConfig implements IAnimation {
 
@@ -42,43 +43,41 @@ public class AnimationConfig implements IAnimation {
     public int editTick = 0;
 	public int editFrame = 0;
 
-    public AnimationConfig() {
-		this.frames.put(0, new AnimationFrameConfig(0));
-	}
+    public AnimationConfig() { frames.put(0, new AnimationFrameConfig(0)); }
 
 	@Override
 	public IAnimationFrame addFrame() {
-		int f = this.frames.size();
-		this.frames.put(f, new AnimationFrameConfig(f));
-		if (f == 0) { this.frames.get(f).isNowDamage = true; }
-		return this.frames.get(f);
+		int f = frames.size();
+		frames.put(f, new AnimationFrameConfig(f));
+		if (f == 0) { frames.get(f).isNowDamage = true; }
+		return frames.get(f);
 	}
 
 	@Override
 	public IAnimationFrame addFrame(int frameId, IAnimationFrame frame) {
-		if (frame == null) { return this.addFrame(); }
-		if (frameId < 0) {
-			frameId = this.frames.size();
-			this.frames.put(frameId, ((AnimationFrameConfig) frame).copy());
-			this.frames.get(frameId).id = frameId;
+		if (frame == null) { return addFrame(); }
+		if (frameId < 0 || frameId >= frames.size()) {
+			frameId = frames.size();
+			frames.put(frameId, ((AnimationFrameConfig) frame).copy());
+			frames.get(frameId).id = frameId;
         } else {
 			Map<Integer, AnimationFrameConfig> newFrames = new TreeMap<>();
 			int j = 0;
-			for (int i : this.frames.keySet()) {
+			for (int i : frames.keySet()) {
 				if (i == frameId) {
 					newFrames.put(j, ((AnimationFrameConfig) frame).copy());
 					newFrames.get(j).id = j;
 					j++;
 				}
-				newFrames.put(j, this.frames.get(i));
+				newFrames.put(j, frames.get(i));
 				newFrames.get(j).id = j;
 				j++;
 			}
-			this.frames.clear();
-			this.frames.putAll(newFrames);
+			frames.clear();
+			frames.putAll(newFrames);
         }
-        this.frames.get(frameId).isNowDamage = this.frames.size() == 1;
-		return this.frames.get(frameId);
+        frames.get(frameId).isNowDamage = frames.size() == 1;
+		return frames.get(frameId);
 	}
 
 	public AnimationConfig copy() {
@@ -90,54 +89,43 @@ public class AnimationConfig implements IAnimation {
 
 	@Override
 	public IAnimationFrame getFrame(int frameId) {
-		if (!this.frames.containsKey(frameId)) {
+		if (!frames.containsKey(frameId)) {
 			throw new CustomNPCsException("Unknown frame " + frameId);
 		}
-		return this.frames.get(frameId);
+		return frames.get(frameId);
 	}
 
 	@Override
 	public IAnimationFrame[] getFrames() {
-		IAnimationFrame[] frames = new IAnimationFrame[this.frames.size()];
-		for (int id : this.frames.keySet()) {
-			frames[id] = this.frames.get(id);
-		}
-		return frames;
+		IAnimationFrame[] framesIn = new IAnimationFrame[frames.size()];
+		for (int id : frames.keySet()) { framesIn[id] = frames.get(id); }
+		return framesIn;
 	}
 
 	@Override
-	public int getId() {
-		return this.id;
+	public int getId() { return id; }
+
+	@Override
+	public float getChance() { return chance; }
+
+	@Override
+	public String getName() { return name; }
+
+	@Override
+	public INbt getNbt() { return new NBTWrapper(save()); }
+
+	@Override
+	public int getRepeatLast() { return repeatLast; }
+
+	public Component getSettingName() {
+		return Component.empty()
+				.append(Component.literal("ID:"))
+				.append(Component.literal(id + " ").withStyle(TextFormatting.GRAY))
+				.append(Component.literal(name).withStyle(TextFormatting.RESET));
 	}
 
 	@Override
-	public float getChance() {
-		return this.chance;
-	}
-
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	@Override
-	public INbt getNbt() {
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(this.save());
-	}
-
-	@Override
-	public int getRepeatLast() {
-		return this.repeatLast;
-	}
-
-	public String getSettingName() {
-		return "ID:" +  ((char) 167) + "7" + this.id + ((char) 167) + "r " + this.name;
-	}
-
-	@Override
-	public boolean hasFrame(int frameId) {
-		return frames.containsKey(frameId);
-	}
+	public boolean hasFrame(int frameId) { return frames.containsKey(frameId); }
 
 	public void load(NBTTagCompound compound) {
 		frames.clear();
@@ -192,9 +180,7 @@ public class AnimationConfig implements IAnimation {
 
 	@Override
 	public void removeFrame(IAnimationFrame frame) {
-		if (frame == null || frames.size() <= 1) {
-			return;
-		}
+		if (frame == null || frames.size() <= 1) { return; }
 		for (int f : frames.keySet()) {
 			if (frames.get(f).equals(frame)) {
 				removeFrame(f);
@@ -221,47 +207,31 @@ public class AnimationConfig implements IAnimation {
 			i++;
 		}
 		if (isDel) {
-			this.frames.clear();
+			frames.clear();
 			if (newData.isEmpty()) { newData.put(0, new AnimationFrameConfig(0)); }
-			this.frames.putAll(newData);
+			frames.putAll(newData);
 		}
 	}
 
 	@Override
-	public void setName(String name) {
-		if (name == null || name.isEmpty()) {
-			name = "Default Animation";
-		}
-		this.name = name;
-	}
+	public void setName(String nameIn) { name = nameIn == null || nameIn.isEmpty() ? "Default Animation" : nameIn; }
 
 	@Override
 	public void setNbt(INbt nbt) {
-		this.load(nbt.getMCNBT());
+		load(nbt.getMCNBT());
 	}
 
 	@Override
-	public void setRepeatLast(int frames) {
-		if (frames < 0) { frames = 0; }
-		if (frames > this.frames.size()) { frames = this.frames.size(); }
-		this.repeatLast = frames;
-	}
+	public void setRepeatLast(int framesIn) { repeatLast = ValueUtil.correctInt(framesIn, 0, frames.size()); }
+
 	@Override
-	public void setChance(float chance) {
-		if (chance < 0.0f) { chance *= -1.0f; }
-		if (chance > 1.0f) { chance = 1.0f; }
-		this.chance = chance;
-	}
+	public void setChance(float chanceIn) { chance = ValueUtil.onlyPositiveFloat(chanceIn, 1.0f); }
 
 	public void startToNpc(EntityCustomNpc npcEntity) {
-		if (npcEntity == null || npcEntity.modelData == null || npcEntity.modelData.entityClass != null) {
-			return;
+		if (npcEntity != null && npcEntity.modelData != null && npcEntity.modelData.entityClass == null) {
+			npcEntity.animation.tryRunAnimation(this, type);
+			if (npcEntity.world != null && !npcEntity.world.isRemote) { npcEntity.setCurrentAnimation(3); }
 		}
-		npcEntity.animation.tryRunAnimation(this, type);
-		if (npcEntity.world == null || npcEntity.world.isRemote) {
-			return;
-		}
-		Server.sendToAll(CustomNpcs.Server, EnumPacketClient.UPDATE_NPC_ANIMATION, npcEntity.world.provider.getDimension(), 3, npcEntity.getEntityId(), save());
 	}
 
 	@Override
@@ -269,7 +239,7 @@ public class AnimationConfig implements IAnimation {
 		if (npc == null || !(npc.getMCEntity() instanceof EntityCustomNpc)) {
 			throw new CustomNPCsException("NPC must not be null");
 		}
-		this.startToNpc((EntityCustomNpc) npc.getMCEntity());
+		startToNpc((EntityCustomNpc) npc.getMCEntity());
 	}
 
 	public NBTTagCompound save() {
@@ -313,7 +283,7 @@ public class AnimationConfig implements IAnimation {
 			endingFrameTicks.put(0, totalTicks);
 			return;
 		}
-		for (Integer id : this.frames.keySet()) {
+		for (Integer id : frames.keySet()) {
 			AnimationFrameConfig frame = frames.get(id);
 			if (frame.speed < 1) { frame.speed = 1; }
 			totalTicks += frame.speed;
@@ -327,7 +297,7 @@ public class AnimationConfig implements IAnimation {
 	}
 
 	public boolean hasEmotion() {
-		for (AnimationFrameConfig frame : this.frames.values()) {
+		for (AnimationFrameConfig frame : frames.values()) {
 			if (frame.emotionId >= 0) { return true; }
 		}
 		return false;
@@ -343,14 +313,11 @@ public class AnimationConfig implements IAnimation {
 	}
 
 	public int getAnimationFrameByTime(long ticks) {
-		if (type == AnimationKind.EDITING_PART) {
-			return editFrame;
-		}
+		if (type == AnimationKind.EDITING_PART) { return editFrame; }
 		if (ticks >= 0) {
 			if (endingFrameTicks.isEmpty() && !frames.isEmpty()) { resetTicks(); }
 			for (int id : endingFrameTicks.keySet()) {
-				if (ticks <= endingFrameTicks.get(id)) {
-					return id; }
+				if (ticks <= endingFrameTicks.get(id)) { return id; }
 			}
 			return frames.size();
 		}

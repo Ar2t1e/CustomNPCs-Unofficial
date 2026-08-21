@@ -20,14 +20,13 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import noppes.npcs.api.item.INPCToolItem;
-import noppes.npcs.blocks.CustomBlockSlab.CustomBlockSlabDouble;
-import noppes.npcs.blocks.CustomBlockSlab.CustomBlockSlabSingle;
-import noppes.npcs.blocks.CustomDoor;
+import noppes.npcs.blocks.custom.CustomBlockSlab.CustomBlockSlabDouble;
+import noppes.npcs.blocks.custom.CustomBlockSlab.CustomBlockSlabSingle;
+import noppes.npcs.blocks.custom.CustomDoor;
 
 import javax.annotation.Nonnull;
 
-public class ItemNpcBlock extends ItemBlock implements INPCToolItem {
+public class ItemNpcBlock extends ItemBlock {
 
 	public static void placeDoor(World worldIn, BlockPos pos, EnumFacing facing, Block door, boolean isRightHinge) {
 		BlockPos blockpos = pos.offset(facing.rotateY());
@@ -65,33 +64,33 @@ public class ItemNpcBlock extends ItemBlock implements INPCToolItem {
 	public ItemNpcBlock(Block block) {
 		super(block);
 		String name = block.getUnlocalizedName().substring(5);
-		this.setRegistryName(name);
-		this.setUnlocalizedName(name);
+		setRegistryName(name);
+		setUnlocalizedName(name);
 		if (block instanceof CustomBlockSlabSingle) {
-			this.singleSlab = (CustomBlockSlabSingle) block;
-			this.doubleSlab = ((CustomBlockSlabSingle) block).doubleBlock;
+			singleSlab = (CustomBlockSlabSingle) block;
+			doubleSlab = ((CustomBlockSlabSingle) block).doubleBlock;
 		}
 		if (block instanceof CustomBlockSlabDouble) {
-			this.singleSlab = ((CustomBlockSlabDouble) block).singleBlock;
-			this.doubleSlab = (CustomBlockSlabDouble) block;
+			singleSlab = ((CustomBlockSlabDouble) block).singleBlock;
+			doubleSlab = (CustomBlockSlabDouble) block;
 		}
 		if (block instanceof CustomDoor) {
-			this.setFull3D();
-			this.maxStackSize = 3;
+			setFull3D();
+			maxStackSize = 3;
 		}
 	}
 
 	@SideOnly(Side.CLIENT)
 	public boolean canPlaceBlockOnSide(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull EnumFacing side, @Nonnull EntityPlayer player, @Nonnull ItemStack stack) {
-		if (this.singleSlab == null || this.doubleSlab == null) {
+		if (singleSlab == null || doubleSlab == null) {
 			return super.canPlaceBlockOnSide(worldIn, pos, side, player, stack);
 		}
 		// ItemSlab
 		BlockPos blockpos = pos;
-		IProperty<?> iproperty = this.singleSlab.getVariantProperty();
-		Comparable<?> comparable = this.singleSlab.getTypeForItem(stack);
+		IProperty<?> iproperty = singleSlab.getVariantProperty();
+		Comparable<?> comparable = singleSlab.getTypeForItem(stack);
 		IBlockState iblockstate = worldIn.getBlockState(pos);
-		if (iblockstate.getBlock() == this.singleSlab) {
+		if (iblockstate.getBlock() == singleSlab) {
 			boolean flag = iblockstate.getValue(BlockSlab.HALF) == BlockSlab.EnumBlockHalf.TOP;
 			if ((side == EnumFacing.UP && !flag || side == EnumFacing.DOWN && flag)
 					&& comparable == iblockstate.getValue(iproperty)) {
@@ -100,21 +99,21 @@ public class ItemNpcBlock extends ItemBlock implements INPCToolItem {
 		}
 		pos = pos.offset(side);
 		IBlockState iblockstate1 = worldIn.getBlockState(pos);
-		return iblockstate1.getBlock() == this.singleSlab && comparable == iblockstate1.getValue(iproperty) || super.canPlaceBlockOnSide(worldIn, blockpos, side, player, stack);
+		return iblockstate1.getBlock() == singleSlab && comparable == iblockstate1.getValue(iproperty) || super.canPlaceBlockOnSide(worldIn, blockpos, side, player, stack);
 	}
 
 	@SuppressWarnings("unchecked")
 	protected <T extends Comparable<T>> IBlockState makeState(IProperty<T> iproperty, Comparable<?> comparable) {
-		return this.doubleSlab.getDefaultState().withProperty(iproperty, (T) comparable);
+		return doubleSlab.getDefaultState().withProperty(iproperty, (T) comparable);
 	}
 
 	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer player, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
-		if (this.singleSlab == null && this.doubleSlab == null && !(this.block instanceof CustomDoor)) {
+		if (singleSlab == null && doubleSlab == null && !(block instanceof CustomDoor)) {
 			return super.onItemUse(player, worldIn, pos, hand, facing, hitX, hitY, hitZ);
 		}
 		ItemStack itemstack = player.getHeldItem(hand);
 		// ItemDoor
-		if (this.block instanceof CustomDoor) {
+		if (block instanceof CustomDoor) {
 			if (facing != EnumFacing.UP) {
 				return EnumActionResult.FAIL;
 			}
@@ -123,12 +122,12 @@ public class ItemNpcBlock extends ItemBlock implements INPCToolItem {
 			if (!block.isReplaceable(worldIn, pos)) {
 				pos = pos.offset(facing);
 			}
-			if (player.canPlayerEdit(pos, facing, itemstack) && this.block.canPlaceBlockAt(worldIn, pos)) {
+			if (player.canPlayerEdit(pos, facing, itemstack) && block.canPlaceBlockAt(worldIn, pos)) {
 				EnumFacing enumfacing = EnumFacing.fromAngle(player.rotationYaw);
 				int i = enumfacing.getFrontOffsetX();
 				int j = enumfacing.getFrontOffsetZ();
 				boolean flag = i < 0 && hitZ < 0.5F || i > 0 && hitZ > 0.5F || j < 0 && hitX > 0.5F || j > 0 && hitX < 0.5F;
-				ItemNpcBlock.placeDoor(worldIn, pos, enumfacing, this.block, flag);
+				ItemNpcBlock.placeDoor(worldIn, pos, enumfacing, block, flag);
 				SoundType soundtype = worldIn.getBlockState(pos).getBlock().getSoundType(worldIn.getBlockState(pos), worldIn, pos, player);
 				worldIn.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
 				itemstack.shrink(1);
@@ -138,21 +137,21 @@ public class ItemNpcBlock extends ItemBlock implements INPCToolItem {
 		}
 		// ItemSlab
 		if (!itemstack.isEmpty() && player.canPlayerEdit(pos.offset(facing), facing, itemstack)) {
-			Comparable<?> comparable = this.singleSlab.getTypeForItem(itemstack);
+			Comparable<?> comparable = singleSlab.getTypeForItem(itemstack);
 			IBlockState iblockstate = worldIn.getBlockState(pos);
-			if (iblockstate.getBlock() == this.singleSlab) {
-				IProperty<?> iproperty = this.singleSlab.getVariantProperty();
+			if (iblockstate.getBlock() == singleSlab) {
+				IProperty<?> iproperty = singleSlab.getVariantProperty();
 				Comparable<?> comparable1 = iblockstate.getValue(iproperty);
 				BlockSlab.EnumBlockHalf blockslab$enumblockhalf = iblockstate
 						.getValue(BlockSlab.HALF);
 				if ((facing == EnumFacing.UP && blockslab$enumblockhalf == BlockSlab.EnumBlockHalf.BOTTOM
 						|| facing == EnumFacing.DOWN && blockslab$enumblockhalf == BlockSlab.EnumBlockHalf.TOP)
 						&& comparable1 == comparable) {
-					IBlockState iblockstate1 = this.makeState(iproperty, comparable1);
+					IBlockState iblockstate1 = makeState(iproperty, comparable1);
 					AxisAlignedBB axisalignedbb = iblockstate1.getCollisionBoundingBox(worldIn, pos);
 					if (axisalignedbb != null && axisalignedbb != Block.NULL_AABB) {
                         if (worldIn.checkNoEntityCollision(axisalignedbb.offset(pos)) && worldIn.setBlockState(pos, iblockstate1, 11)) {
-                            SoundType soundtype = this.doubleSlab.getSoundType(iblockstate1, worldIn, pos, player);
+                            SoundType soundtype = doubleSlab.getSoundType(iblockstate1, worldIn, pos, player);
                             worldIn.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
                             itemstack.shrink(1);
                             if (player instanceof EntityPlayerMP) {
@@ -163,26 +162,25 @@ public class ItemNpcBlock extends ItemBlock implements INPCToolItem {
 					return EnumActionResult.SUCCESS;
 				}
 			}
-			return this.tryPlace(player, itemstack, worldIn, pos.offset(facing), comparable) ? EnumActionResult.SUCCESS
+			return tryPlace(player, itemstack, worldIn, pos.offset(facing), comparable) ? EnumActionResult.SUCCESS
 					: super.onItemUse(player, worldIn, pos, hand, facing, hitX, hitY, hitZ);
 		}
 		return EnumActionResult.FAIL;
 	}
 
-	public String toString() {
-		return "ItemNpcBlock: " + this.getRegistryName();
-	}
+	@Override
+	public String toString() { return "ItemNpcBlock: " + getRegistryName(); }
 
 	private boolean tryPlace(EntityPlayer player, ItemStack stack, World worldIn, BlockPos pos, Object itemSlabType) {
 		IBlockState iblockstate = worldIn.getBlockState(pos);
-		if (iblockstate.getBlock() == this.singleSlab) {
-			Comparable<?> comparable = iblockstate.getValue(this.singleSlab.getVariantProperty());
+		if (iblockstate.getBlock() == singleSlab) {
+			Comparable<?> comparable = iblockstate.getValue(singleSlab.getVariantProperty());
 			if (comparable == itemSlabType) {
-				IBlockState iblockstate1 = this.makeState(this.singleSlab.getVariantProperty(), comparable);
+				IBlockState iblockstate1 = makeState(singleSlab.getVariantProperty(), comparable);
 				AxisAlignedBB axisalignedbb = iblockstate1.getCollisionBoundingBox(worldIn, pos);
 				if (axisalignedbb != null && axisalignedbb != Block.NULL_AABB && worldIn.checkNoEntityCollision(axisalignedbb.offset(pos))
 						&& worldIn.setBlockState(pos, iblockstate1, 11)) {
-					SoundType soundtype = this.doubleSlab.getSoundType(iblockstate1, worldIn, pos, player);
+					SoundType soundtype = doubleSlab.getSoundType(iblockstate1, worldIn, pos, player);
 					worldIn.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS,
 							(soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
 					stack.shrink(1);

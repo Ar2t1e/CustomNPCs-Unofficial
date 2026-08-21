@@ -25,7 +25,6 @@ import net.minecraftforge.fml.client.config.GuiUtils;
 import net.minecraftforge.fml.client.config.IConfigElement;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.gui.select.SubGuiColorSelector;
-import noppes.npcs.client.gui.util.SubGuiInterface;
 import noppes.npcs.util.Util;
 
 public class CustomNpcsConfigGui extends GuiConfig {
@@ -135,7 +134,6 @@ public class CustomNpcsConfigGui extends GuiConfig {
 				CustomNpcsConfigGui.subGui.width = owningEntryList.width;
 				CustomNpcsConfigGui.subGui.height = owningEntryList.height;
 				CustomNpcsConfigGui.subGui.initGui();
-				CustomNpcsConfigGui.subGui.parent = owningScreen;
 				CustomNpcsConfigGui.subGui.object = this;
 				CustomNpcsConfigGui.subGui.background = null;
 			}
@@ -157,7 +155,7 @@ public class CustomNpcsConfigGui extends GuiConfig {
 
 	public static class CustomGuiEditArray extends GuiEditArray {
 
-		public static SubGuiInterface subGui;
+		public static SubGuiColorSelector subGui;
 
 		public CustomGuiEditArray(GuiScreen parentScreen, IConfigElement configElement, int slotIndex, Object[] currentValues, boolean enabled) {
 			super(parentScreen, configElement, slotIndex, currentValues, enabled);
@@ -192,7 +190,7 @@ public class CustomNpcsConfigGui extends GuiConfig {
 		@Override
 		public void keyTyped(char eventChar, int eventKey) {
 			if (subGui != null) {
-				subGui.keyCnpcsPressed(eventChar, eventKey);
+				subGui.keyPressed(eventChar, eventKey);
 				return;
 			}
 			super.keyTyped(eventChar, eventKey);
@@ -201,7 +199,7 @@ public class CustomNpcsConfigGui extends GuiConfig {
 		@Override
 		public void mouseClicked(int x, int y, int mouseEvent) throws IOException {
 			if (subGui != null) {
-				subGui.mouseCnpcsPressed(x, y, mouseEvent);
+				subGui.mouseClicked(x, y, mouseEvent);
 				return;
 			}
 			super.mouseClicked(x, y, mouseEvent);
@@ -210,14 +208,14 @@ public class CustomNpcsConfigGui extends GuiConfig {
 		@Override
 		public void mouseReleased(int x, int y, int mouseEvent) {
 			if (subGui != null) {
-				subGui.mouseCnpcsReleased(x, y, mouseEvent);
+				subGui.mouseReleased(x, y, mouseEvent);
 				return;
 			}
 			super.mouseReleased(x, y, mouseEvent);
 		}
 
-		public void subGuiClosed(SubGuiInterface subgui) {
-			String color = ((SubGuiColorSelector) subgui).getColor().toUpperCase();
+		public void subGuiClosed(SubGuiColorSelector subgui) {
+			String color = subgui.getColor().toUpperCase();
 			if (subgui.getObject() instanceof CustomGuiEditArrayEntries.ColorEntry) {
 				ConfigElement element = (ConfigElement) ((CustomGuiEditArrayEntries.ColorEntry) subgui.getObject()).configElement;
 				((CustomGuiEditArrayEntries.ColorEntry) subgui.getObject()).getButton().displayString = color;
@@ -228,7 +226,7 @@ public class CustomNpcsConfigGui extends GuiConfig {
 		}
 	}
 
-	public static SubGuiInterface subGui = null;
+	public static SubGuiColorSelector subGui = null;
 
 	public CustomNpcsConfigGui(GuiScreen parentScreen, List<IConfigElement> elementsList, String modName) {
 		super(parentScreen, elementsList, modName, false, false, modName);
@@ -321,7 +319,7 @@ public class CustomNpcsConfigGui extends GuiConfig {
 	@Override
 	public void keyTyped(char eventChar, int eventKey) {
 		if (subGui != null) {
-			subGui.keyCnpcsPressed(eventChar, eventKey);
+			subGui.keyPressed(eventChar, eventKey);
 			return;
 		}
 		super.keyTyped(eventChar, eventKey);
@@ -331,7 +329,7 @@ public class CustomNpcsConfigGui extends GuiConfig {
 	@Override
 	public void mouseClicked(int x, int y, int mouseEvent) throws IOException {
 		if (subGui != null) {
-			subGui.mouseCnpcsPressed(x, y, mouseEvent);
+			subGui.mouseClicked(x, y, mouseEvent);
 			return;
 		}
 		super.mouseClicked(x, y, mouseEvent);
@@ -340,7 +338,7 @@ public class CustomNpcsConfigGui extends GuiConfig {
 	@Override
 	public void mouseReleased(int x, int y, int mouseEvent) {
 		if (subGui != null) {
-			subGui.mouseCnpcsReleased(x, y, mouseEvent);
+			subGui.mouseReleased(x, y, mouseEvent);
 			return;
 		}
 		super.mouseReleased(x, y, mouseEvent);
@@ -354,8 +352,8 @@ public class CustomNpcsConfigGui extends GuiConfig {
 		super.onGuiClosed();
 	}
 
-	public void subGuiClosed(SubGuiInterface subgui) {
-		String color = ((SubGuiColorSelector) subgui).getColor().toUpperCase();
+	public void subGuiClosed(SubGuiColorSelector subgui) {
+		String color = subgui.getColor().toUpperCase();
 		if (subgui.getObject() instanceof ColorEntry) {
 			ConfigElement element = (ConfigElement) ((ColorEntry) subgui.getObject()).getConfigElement();
 			((ColorEntry) subgui.getObject()).getButton().displayString = color;

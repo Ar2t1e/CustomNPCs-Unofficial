@@ -6,42 +6,29 @@ import net.minecraft.village.MerchantRecipeList;
 import noppes.npcs.api.constants.EntityType;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.IVillager;
-import noppes.npcs.reflection.entity.passive.EntityVillagerReflection;
+import noppes.npcs.mixin.entity.passive.IEntityVillagerMixin;
 
-@SuppressWarnings("rawtypes")
-public class VillagerWrapper<T extends EntityVillager> extends EntityLivingWrapper<T> implements IVillager {
+public class VillagerWrapper<T extends EntityVillager> extends EntityLivingWrapper<T> implements IVillager<T> {
 
-	public VillagerWrapper(T entity) {
-		super(entity);
-	}
+	public VillagerWrapper(T entity) { super(entity); }
 
-	public String getCareer() {
-		return this.entity.getProfessionForge().getCareer(EntityVillagerReflection.getCareerID(entity)).getName();
-	}
+	@Override
+	public String getCareer() { return entity.getProfessionForge().getCareer(((IEntityVillagerMixin) entity).getCareerId()).getName(); }
 
+	@Override
 	@SuppressWarnings("deprecation")
-	public int getProfession() {
-		return this.entity.getProfession();
-	}
+	public int getProfession() { return entity.getProfession(); }
 
 	@Override
-	public MerchantRecipeList getRecipes(IPlayer player) {
-		return this.entity.getRecipes(player.getMCEntity());
-	}
+	public MerchantRecipeList getRecipes(IPlayer<?> player) { return entity.getRecipes(player.getMCEntity()); }
 
 	@Override
-	public int getType() {
-		return EntityType.VILLAGER.get();
-	}
+	public int getType() { return EntityType.VILLAGER.get(); }
 
 	@Override
-	public IInventory getVillagerInventory() {
-		return this.entity.getVillagerInventory();
-	}
+	public IInventory getVillagerInventory() { return entity.getVillagerInventory(); }
 
 	@Override
-	public boolean typeOf(int type) {
-		return type == EntityType.VILLAGER.get() || super.typeOf(type);
-	}
+	public boolean typeOf(int type) { return type == EntityType.VILLAGER.get() || super.typeOf(type); }
 
 }

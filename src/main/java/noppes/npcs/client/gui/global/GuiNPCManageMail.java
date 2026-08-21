@@ -1,89 +1,96 @@
 package noppes.npcs.client.gui.global;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketMailsGet;
+import noppes.npcs.packets.server.SPacketMailsSave;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
+import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
 
 import javax.annotation.Nonnull;
 
-public class GuiNPCManageMail extends GuiNPCInterface2 implements IGuiData, ITextfieldListener {
+public class GuiNpcManageMail extends GuiNPCInterface2
+		implements IGuiData, ITextfieldListener {
 
-	public GuiNPCManageMail(EntityNPCInterface npc) {
+	public GuiNpcManageMail(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuGlobal;
 
-		Client.sendData(EnumPacketServer.PlayerMailsGet);
-	}
-
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton == 1 && button.getID() == 0) {
-			CustomNpcs.MailSendToYourself = ((GuiNpcCheckBox) button).isSelected();
-		}
+		backGui = EnumGuiType.MainMenuGlobal;
+		Packets.sendServer(new SPacketMailsGet());
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		int lID = 0, x0 = guiLeft + 10, x1 = x0 + 80, y = guiTop + 20;
-		addLabel(new GuiNpcLabel(lID++, "mail.time.days", x0, y + 5));
-		addLabel(new GuiNpcLabel(lID++, "follower.days", x1 + 65, y + 5));
-		addTextField(new GuiNpcTextField(0, this, x1, y, 60, 20, "" + CustomNpcs.MailTimeWhenLettersWillBeDeleted)
+		int lId = 0;
+		int x0 = guiLeft + 10;
+		int x1 = x0 + 80;
+		int y = guiTop + 20;
+		addLabel(lId++, x0, y + 5, "mail.time.days");
+		addLabel(lId++, x1 + 65, y + 5, "follower.days");
+		addTextField(0, x1, y, 60, 20, "" + CustomNpcs.MailTimeWhenLettersWillBeDeleted)
 				.setMinMaxDefault(0, 60, CustomNpcs.MailTimeWhenLettersWillBeDeleted)
-				.setHoverText("mail.hover.deleted.time"));
-		addLabel(new GuiNpcLabel(lID++, "mail.time.rec", x0, (y += 24) + 5));
+				.setHoverTexts("mail.hover.deleted.time");
+		addLabel(lId++, x0, (y += 24) + 5, "mail.time.rec");
 		int[] vd = CustomNpcs.MailTimeWhenLettersWillBeReceived;
 		if (vd[0] > vd[1]) {
 			int m = vd[0];
 			vd[0] = vd[1];
 			vd[1] = m;
 		}
-		addLabel(new GuiNpcLabel(lID++, "gui.min", x0, (y += 16) + 5));
-		addLabel(new GuiNpcLabel(lID++, "gui.sec", x1 + 65, y + 5));
-		addTextField(new GuiNpcTextField(1, this, x1, y, 60, 20, "" + vd[0])
+		addLabel(lId++, x0, (y += 16) + 5, "gui.min");
+		addLabel(lId++, x1 + 65, y + 5, "gui.sec");
+		addTextField(1, x1, y, 60, 20, "" + vd[0])
 				.setMinMaxDefault(1, 3600, vd[0])
-				.setHoverText("mail.hover.min.send.time"));
-		addLabel(new GuiNpcLabel(lID++, "gui.max", x0, (y += 24) + 5));
-		addLabel(new GuiNpcLabel(lID++, "gui.sec", x1 + 65, y + 5));
-		addTextField(new GuiNpcTextField(2, this, x1, y, 60, 20, "" + vd[1])
+				.setHoverTexts("mail.hover.min.send.time");
+		addLabel(lId++, x0, (y += 24) + 5, "gui.max");
+		addLabel(lId++, x1 + 65, y + 5, "gui.sec");
+		addTextField(2, x1, y, 60, 20, "" + vd[1])
 				.setMinMaxDefault(1, 3600, vd[1])
-				.setHoverText("mail.hover.max.send.time"));
-		addLabel(new GuiNpcLabel(lID++, "mail.time.costs", x0, (y += 24) + 5));
-		addLabel(new GuiNpcLabel(lID++, "mail.time.cost.0", x0, (y += 16) + 5));
-		addLabel(new GuiNpcLabel(lID++, CustomNpcs.displayCurrencies, x1 + 65, y + 5));
-		ITextComponent hoverCost = new TextComponentTranslation("mail.hover.cost");
-		addTextField(new GuiNpcTextField(3, this, x1, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[0])
+				.setHoverTexts("mail.hover.max.send.time");
+		addLabel(lId++, x0, (y += 24) + 5, "mail.time.costs");
+		addLabel(lId++, x0, (y += 16) + 5, "mail.time.cost.0");
+		addLabel(lId++, x1 + 65, y + 5, CustomNpcs.displayCurrencies);
+		Component hoverCost = Component.translatable("mail.hover.cost");
+		addTextField(3, x1, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[0])
 				.setMinMaxDefault(0, Integer.MAX_VALUE, CustomNpcs.MailCostSendingLetter[0])
-				.setHoverText(new TextComponentTranslation("mail.hover.cost.0").appendSibling(hoverCost).getFormattedText()));
+				.setHoverTexts(Component.translatable("mail.hover.cost.0").append(hoverCost));
 		int x2 = x1 + 120, x3 = x2 + 80;
-		addLabel(new GuiNpcLabel(lID++, "mail.time.cost.1", x2, y + 5));
-		addLabel(new GuiNpcLabel(lID++, CustomNpcs.displayCurrencies, x3 + 65, y + 5));
-		addTextField(new GuiNpcTextField(4, this, x3, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[1])
+		addLabel(lId++, x2, y + 5, "mail.time.cost.1");
+		addLabel(lId++, x3 + 65, y + 5, CustomNpcs.displayCurrencies);
+		addTextField(4, x3, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[1])
 				.setMinMaxDefault(0, Integer.MAX_VALUE, CustomNpcs.MailCostSendingLetter[1])
-				.setHoverText(new TextComponentTranslation("mail.hover.cost.1").appendSibling(hoverCost).getFormattedText()));
-		addLabel(new GuiNpcLabel(lID++, "mail.time.cost.2", x0, (y += 24) + 5));
-		addLabel(new GuiNpcLabel(lID++, CustomNpcs.displayCurrencies, x1 + 65, y + 5));
-		addTextField(new GuiNpcTextField(5, this, x1, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[2])
+				.setHoverTexts(Component.translatable("mail.hover.cost.1").append(hoverCost));
+		addLabel(lId++, x0, (y += 24) + 5, "mail.time.cost.2");
+		addLabel(lId++, x1 + 65, y + 5, CustomNpcs.displayCurrencies);
+		addTextField(5, x1, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[2])
 				.setMinMaxDefault(0, Integer.MAX_VALUE, CustomNpcs.MailCostSendingLetter[2])
-				.setHoverText(new TextComponentTranslation("mail.hover.cost.2").appendSibling(hoverCost).getFormattedText()));
-		addLabel(new GuiNpcLabel(lID++, "mail.time.cost.3", x0, (y += 24) + 5));
-		addLabel(new GuiNpcLabel(lID++, "%", x1 + 65, y + 5));
-		addTextField(new GuiNpcTextField(6, this, x1, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[3])
+				.setHoverTexts(Component.translatable("mail.hover.cost.2").append(hoverCost));
+		addLabel(lId++, x0, (y += 24) + 5, "mail.time.cost.3");
+		addLabel(lId++, x1 + 65, y + 5, "%");
+		addTextField(6, x1, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[3])
 				.setMinMaxDefault(0, 100, CustomNpcs.MailCostSendingLetter[3])
-				.setHoverText(new TextComponentTranslation("mail.hover.cost.3").appendSibling(hoverCost).getFormattedText()));
-		addLabel(new GuiNpcLabel(lID++, "mail.time.cost.4", x2, y + 5));
-		addLabel(new GuiNpcLabel(lID, "%", x3 + 65, y + 5));
-		addTextField(new GuiNpcTextField(7, this, x3, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[4])
+				.setHoverTexts(Component.translatable("mail.hover.cost.3").append(hoverCost));
+		addLabel(lId++, x2, y + 5, "mail.time.cost.4");
+		addLabel(lId, x3 + 65, y + 5, "%");
+		addTextField(7, x3, y, 60, 20, "" + CustomNpcs.MailCostSendingLetter[4])
 				.setMinMaxDefault(0, 100, CustomNpcs.MailCostSendingLetter[4])
-				.setHoverText(new TextComponentTranslation("mail.hover.cost.4").appendSibling(hoverCost).getFormattedText()));
-		addButton(new GuiNpcCheckBox(0, x0, y + 24, 200, 14, "mail.send.yourself", null, CustomNpcs.MailSendToYourself));
+				.setHoverTexts(Component.translatable("mail.hover.cost.4").append(hoverCost));
+		addCheckBox(0, x0, y + 24, "mail.send.yourself", null, CustomNpcs.MailSendToYourself)
+				.setSize(200, 14);
+	}
+
+	@Override
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
+		if (button.id == 0) { CustomNpcs.MailSendToYourself = ((GuiCheckBoxNop) button).selected(); }
 	}
 
 	@Override
@@ -91,8 +98,9 @@ public class GuiNPCManageMail extends GuiNPCInterface2 implements IGuiData, ITex
 		NBTTagCompound compound = new NBTTagCompound();
 		compound.setInteger("LettersBeDeleted", CustomNpcs.MailTimeWhenLettersWillBeDeleted);
 		compound.setIntArray("LettersBeReceived", CustomNpcs.MailTimeWhenLettersWillBeReceived);
+		compound.setIntArray("CostSendingLetter", CustomNpcs.MailCostSendingLetter);
 		compound.setBoolean("SendToYourself", CustomNpcs.MailSendToYourself);
-		Client.sendData(EnumPacketServer.PlayerMailsSave, compound);
+		Packets.sendServer(new SPacketMailsSave(compound));
 	}
 
 	@Override
@@ -105,9 +113,9 @@ public class GuiNPCManageMail extends GuiNPCInterface2 implements IGuiData, ITex
 	}
 
 	@Override
-	public void unFocused(GuiNpcTextField textField) {
+	public void unFocused(GuiTextFieldNop textField) {
 		if (!textField.isInteger()) { initGui(); return; }
-		switch (textField.getID()) {
+		switch (textField.id) {
 			case 0: {
 				int v = textField.getInteger();
 				if (v == 0) { v = 1; }
@@ -116,7 +124,7 @@ public class GuiNPCManageMail extends GuiNPCInterface2 implements IGuiData, ITex
 			}
 			case 1: {
 				if (getTextField(2) == null) {return; }
-				GuiNpcTextField textField2 = getTextField(2);
+				GuiTextFieldNop textField2 = getTextField(2);
 				int[] vd = new int[] { textField.getInteger(), textField2.getInteger() };
 				if (vd[0] > vd[1]) {
 					int m = vd[0];
@@ -125,13 +133,13 @@ public class GuiNPCManageMail extends GuiNPCInterface2 implements IGuiData, ITex
 				}
 				CustomNpcs.MailTimeWhenLettersWillBeReceived[0] = vd[0];
 				CustomNpcs.MailTimeWhenLettersWillBeReceived[1] = vd[1];
-				textField.setText("" + vd[0]);
-				textField2.setText("" + vd[1]);
+				textField.setValue("" + vd[0]);
+				textField2.setValue("" + vd[1]);
 				break;
 			}
 			case 2: {
 				if (getTextField(1) == null) { return; }
-				GuiNpcTextField textField1 = getTextField(1);
+				GuiTextFieldNop textField1 = getTextField(1);
 				int[] vd = new int[] { textField1.getInteger(), textField.getInteger() };
 				if (vd[0] > vd[1]) {
 					int m = vd[0];
@@ -140,8 +148,12 @@ public class GuiNPCManageMail extends GuiNPCInterface2 implements IGuiData, ITex
 				}
 				CustomNpcs.MailTimeWhenLettersWillBeReceived[0] = vd[0];
 				CustomNpcs.MailTimeWhenLettersWillBeReceived[1] = vd[1];
-				textField1.setText("" + vd[0]);
-				textField.setText("" + vd[1]);
+				textField1.setValue("" + vd[0]);
+				textField.setValue("" + vd[1]);
+				break;
+			}
+			case 3: case 4: case 5: case 6: case 7: {
+				CustomNpcs.MailCostSendingLetter[textField.id - 3] = textField.getInteger();
 				break;
 			}
 		}

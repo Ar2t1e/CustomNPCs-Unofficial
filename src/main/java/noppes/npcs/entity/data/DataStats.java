@@ -16,7 +16,6 @@ import noppes.npcs.util.ValueUtil;
 public class DataStats implements INPCStats {
 
 	public boolean burnInSun = false;
-	public boolean calmdown = true;
 	public boolean canDrown = true;
 	public boolean hideKilledBody = false;
 	public boolean ignoreCobweb = false;
@@ -37,6 +36,7 @@ public class DataStats implements INPCStats {
 	public Resistances resistances = new Resistances();
 
 	// New from Unofficial (BetaZavr)
+	public boolean calmdown = true;
 	private int level = 1;
 	private String rarityTitle = ((char) 167) + "flv." + ((char) 167) + "21";
 	private EnumCreatureRarity rarity = EnumCreatureRarity.NORMAL;
@@ -90,10 +90,7 @@ public class DataStats implements INPCStats {
 	@Override
 	public int getRespawnType() { return spawnCycle; }
 
-	@Override
-	public boolean isCalmdown() { return calmdown; }
-
-	public void readToNBT(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		if (compound.hasKey("MaxHealth", 3)) { setMaxHealth(compound.getInteger("MaxHealth")); } // Old
 		else { setMaxHealth(compound.getDouble("MaxHealth")); }
 		hideKilledBody = compound.getBoolean("HideBodyWhenKilled");
@@ -110,28 +107,24 @@ public class DataStats implements INPCStats {
 		noFallDamage = compound.getBoolean("NoFallDamage");
 		npc.setImmuneToFire(immuneToFire);
 		ignoreCobweb = compound.getBoolean("IgnoreCobweb");
-		melee.readFromNBT(compound);
+		melee.load(compound);
 		ranged.readFromNBT(compound);
-		calmdown = compound.getBoolean("CalmdownRange");
 		if (aggroRange < 1) { aggroRange = 1; }
 		IAttributeInstance follow_range = npc.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE);
         follow_range.setBaseValue(aggroRange);
 
-		if (compound.hasKey("ChanceBlockDamage", 5)) { setChanceBlockDamage(compound.getFloat("ChanceBlockDamage")); }
-
 		// New from Unofficial (BetaZavr)
+		if (compound.hasKey("ChanceBlockDamage", 5)) { setChanceBlockDamage(compound.getFloat("ChanceBlockDamage")); }
 		if (compound.hasKey("Resistances", 9)) { resistances.load(compound.getTagList("Resistances", 10)); }
 		else { resistances.oldLoad(compound.getCompoundTag("Resistances")); }
 		level = compound.getInteger("NPCLevel");
 		rarity = EnumCreatureRarity.values()[compound.getInteger("NPCRarity")];
 		rarityTitle = compound.getString("RarityTitle");
+		if (compound.hasKey("CalmdownRange", 1)) { calmdown = compound.getBoolean("CalmdownRange"); }
     }
 
 	@Override
 	public void setAggroRange(int range) { aggroRange = range; }
-
-	@Override
-	public void setCalmdown(boolean range) { calmdown = range; }
 
 	@Override
 	public void setCombatRegen(int regen) { combatRegen = regen; }
@@ -186,7 +179,7 @@ public class DataStats implements INPCStats {
 		chanceBlockDamage = chance;
 	}
 
-	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
+	public NBTTagCompound save(NBTTagCompound compound) {
 		compound.setDouble("MaxHealth", maxHealth);
 		compound.setInteger("AggroRange", aggroRange);
 		compound.setBoolean("HideBodyWhenKilled", hideKilledBody);
@@ -201,16 +194,16 @@ public class DataStats implements INPCStats {
 		compound.setBoolean("BurnInSun", burnInSun);
 		compound.setBoolean("NoFallDamage", noFallDamage);
 		compound.setBoolean("IgnoreCobweb", ignoreCobweb);
-		melee.writeToNBT(compound);
+		melee.save(compound);
 		ranged.writeToNBT(compound);
-		compound.setBoolean("CalmdownRange", calmdown);
-		compound.setFloat("ChanceBlockDamage", chanceBlockDamage);
 
 		// New from Unofficial (BetaZavr)
+		compound.setFloat("ChanceBlockDamage", chanceBlockDamage);
 		compound.setTag("Resistances", resistances.save());
 		compound.setInteger("NPCLevel", level);
 		compound.setInteger("NPCRarity", rarity.ordinal());
 		compound.setString("RarityTitle", rarityTitle);
+		compound.setBoolean("CalmdownRange", calmdown);
 		return compound;
 	}
 
@@ -235,7 +228,7 @@ public class DataStats implements INPCStats {
 
 	@Override
 	public void setRarity(int rarityIn) {
-		rarity = EnumCreatureRarity.values()[ValueUtil.correctInt(rarityIn, 0, EnumCreatureRarity.values().length)];
+		rarity = EnumCreatureRarity.values()[ValueUtil.correctInt(rarityIn, 0, EnumCreatureRarity.values().length - 1)];
 		npc.updateClient = true;
 	}
 
@@ -265,5 +258,11 @@ public class DataStats implements INPCStats {
 		if (hp > (double) corr[1]) { hp = corr[1]; }
 		return hp;
 	}
+
+	@Override
+	public boolean isCalmdown() { return calmdown; }
+
+	@Override
+	public void setCalmdown(boolean range) { calmdown = range; }
 
 }

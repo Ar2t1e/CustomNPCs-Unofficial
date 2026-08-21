@@ -2,58 +2,53 @@ package noppes.npcs.client.util;
 
 public class CrashesData {
 
-	public boolean isActive = false, isFading = true, vector = false;
-	public int time = 0, maxTime = 0, amplitude = 0, type = 0;
+	public boolean isActive = false;
+	public boolean isFading = true;
+	public boolean vector = false;
+	public int time = 0;
+	public int maxTime = 0;
+	public int amplitude = 0;
+	public int type = 0;
 	public long endTime = 0;
 
 	public float get(long time) {
-		if (this.endTime == 0) {
+		if (endTime == 0) {
 			time *= -1;
-			this.endTime = time + this.time;
+			endTime = time + time;
 		}
-		if (time <= 0 || this.maxTime == 0 || this.amplitude == 0) {
-			this.endTime = 0;
-			this.isActive = false;
+		if (time <= 0 || maxTime == 0 || amplitude == 0) {
+			endTime = 0;
+			isActive = false;
 			return 0.0f;
 		}
 		float value;
-		if (this.isFading) {
-			value = (float) time * (float) this.amplitude / (float) this.maxTime;
+		if (isFading) {
+			value = (float) time * (float) amplitude / (float) maxTime;
 		} else {
-			value = (float) this.amplitude;
+			value = (float) amplitude;
 		}
-		value *= this.vector ? 1.0f : -1.0f;
-		this.vector = !this.vector;
+		value *= vector ? 1.0f : -1.0f;
+		vector = !vector;
 		if (value == 0.0f) {
-			this.endTime = 0;
-			this.isActive = false;
+			endTime = 0;
+			isActive = false;
 		}
 		return value;
 	}
 
-	public void set(int time, int amplitude, int type, boolean isFading) {
-		if (time < 0) {
-			time *= -1;
-		}
-		if (time > 1200) {
-			time = 1200;
-		}
-		this.time = time;
-		this.maxTime = time;
-		if (amplitude < 0) {
-			amplitude *= -1;
-		}
-		if (amplitude > 25) {
-			amplitude = 25;
-		}
-		this.amplitude = amplitude;
-		if (type < 0) {
-			type *= -1;
-		}
-		this.type = type % 6;
-		this.isFading = isFading;
-		this.isActive = true;
-		this.endTime = 0;
+	public void set(int timeIn, int amplitudeIn, int typeIn, boolean isFadingIn) {
+		if (timeIn < 0) { timeIn *= -1; }
+		if (timeIn > 1200) { timeIn = 1200; }
+		time = timeIn;
+		maxTime = time;
+		if (amplitude < 0) { amplitude *= -1; }
+		if (amplitude > 25) { amplitude = 25; }
+		amplitude = amplitudeIn;
+		if (type < 0) { type *= -1; }
+		type = typeIn % 6;
+		isFading = isFadingIn;
+		isActive = true;
+		endTime = 0;
 	}
 
 }

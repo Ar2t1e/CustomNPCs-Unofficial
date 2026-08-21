@@ -31,7 +31,7 @@ public class NpcMixinCore implements IFMLLoadingPlugin {
     @Override
     public void injectData(Map<String, Object> data) {
         MixinBootstrap.init();
-        Mixins.addConfiguration(CustomNpcs.MODID + ".mixins.json");
+        Mixins.addConfiguration("mixins." + CustomNpcs.MODID + ".json");
     }
 
     @Override

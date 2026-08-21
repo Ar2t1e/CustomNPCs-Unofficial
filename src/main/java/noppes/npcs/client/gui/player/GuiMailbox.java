@@ -3,28 +3,34 @@ package noppes.npcs.client.gui.player;
 import java.util.*;
 import java.util.List;
 
-import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesUtilPlayer;
-import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.ClientTickHandler;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.controllers.MusicController;
+import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.client.util.ResourceData;
-import noppes.npcs.constants.EnumPlayerPacket;
+import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketPlayerMailDelete;
+import noppes.npcs.packets.server.SPacketPlayerMailGet;
+import noppes.npcs.packets.server.SPacketPlayerMailOpen;
+import noppes.npcs.packets.server.SPacketPlayerMailRead;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiLabel;
+import noppes.npcs.shared.client.gui.util.ResourceData;
 import noppes.npcs.controllers.data.PlayerMail;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.util.Util;
-import org.lwjgl.input.Keyboard;
-
-import javax.annotation.Nonnull;
 
 public class GuiMailbox extends GuiNPCInterface
 		implements IGuiData, ICustomScrollListener, GuiYesNoCallback {
@@ -34,9 +40,10 @@ public class GuiMailbox extends GuiNPCInterface
 	protected static final ResourceLocation mList = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/box_list.png");
 	public static final ResourceLocation icons = new ResourceLocation(CustomNpcs.MODID, "textures/gui/mail/icons.png");
 
-	protected final Map<String, PlayerMail> scrollData = new HashMap<>();
-	protected GuiCustomScroll scroll;
+	protected final Map<Component, PlayerMail> scrollData = new HashMap<>();
+	protected GuiCustomScrollNop scroll;
 	protected PlayerMail selected;
+
 	// Animations
 	protected int closeType;
 	protected int step;
@@ -46,23 +53,22 @@ public class GuiMailbox extends GuiNPCInterface
 
 	public GuiMailbox() {
 		super();
-		xSize = 192;
-		ySize = 236;
+		imageWidth = 192;
+		imageHeight = 236;
 
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.MailGet);
 		ClientTickHandler.checkMails = true;
 		// Animations
 		tick = 30;
 		millyTick = 30;
 		step = 0;
 		closeType = 0;
+		Packets.sendServer(new SPacketPlayerMailGet());
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
+	public void buttonEvent(GuiButtonNop button) {
 		GuiMailmanWrite.parent = this;
-		switch (button.getID()) {
+		switch (button.id) {
 			case 0: {
 				if (selected == null) { return; }
 				GuiMailmanWrite.mail = selected;
@@ -71,58 +77,73 @@ public class GuiMailbox extends GuiNPCInterface
 				millyTick = 15;
 				closeType = 2;
 				break;
-			}
+			} // select
 			case 1: {
 				step = 4;
 				tick = 15;
 				millyTick = 15;
 				closeType = 1;
 				break;
-			}
+			} // close 1
 			case 2: {
 				if (selected == null) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this, scroll.getSelected(), new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 0);
-				displayGuiScreen(guiyesno);
+				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+					if (agree && selected != null) {
+						Packets.sendServer(new SPacketPlayerMailDelete(0, selected.timeWhenReceived, selected.sender));
+						selected = null;
+						MusicController.Instance.playSound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.delete",
+								player.posX, player.posY, player.posZ, 1.0f,
+								0.9f + 0.2f * rnd.nextFloat());
+					}
+					NoppesUtil.openGUI(player, this);
+				},
+						scroll.getNormalSelected().getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
-			}
+			} // delete specific
 			case 3: {
-				if (ClientProxy.playerData.mailData.playerMails.isEmpty()) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this, new TextComponentTranslation("mailbox.name").getFormattedText() + ":", new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 1);
-				displayGuiScreen(guiyesno);
+				if (PlayerData.get(player).mailData.playerMails.isEmpty()) { return; }
+				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+					if (agree && selected != null) {
+						Packets.sendServer(new SPacketPlayerMailDelete(1, selected.timeWhenReceived, selected.sender));
+						selected = null;
+						MusicController.Instance.playSound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.delete",
+								player.posX, player.posY, player.posZ, 1.0f,
+								0.9f + 0.2f * rnd.nextFloat());
+					}
+					NoppesUtil.openGUI(player, this);
+				},
+						Component.translatable("mailbox.name").append(":").getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
-			}
+			} // delete all only read letters
 			case 4: {
-				if (ClientProxy.playerData.mailData.playerMails.isEmpty()) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this, new TextComponentTranslation("mailbox.name").getFormattedText() + ":", new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 2);
-				displayGuiScreen(guiyesno);
+				if (PlayerData.get(player).mailData.playerMails.isEmpty()) { return; }
+				ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+					if (agree && selected != null) {
+						Packets.sendServer(new SPacketPlayerMailDelete(2, selected.timeWhenReceived, selected.sender));
+						selected = null;
+						MusicController.Instance.playSound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.delete",
+								player.posX, player.posY, player.posZ, 1.0f,
+								0.9f + 0.2f * rnd.nextFloat());
+					}
+					NoppesUtil.openGUI(player, this);
+				},
+						Component.translatable("mailbox.name").append(":").getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
-			}
+			} // delete all letters
 			case 5: {
 				step = 4;
 				tick = 15;
 				millyTick = 15;
 				closeType = 0;
 				break;
-			}
+			} // close 0
 		}
-	}
-
-	public void confirmClicked(boolean flag, int id) {
-		NoppesUtil.openGUI(player, this);
-		if (!flag) { return; }
-		if (id == 0 && selected != null) {
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.MailDelete, selected.timeWhenReceived, selected.sender);
-			selected = null;
-		} else if (id == 1) {
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.MailDelete, 0L);
-			selected = null;
-		} else if (id == 2) {
-			NoppesUtilPlayer.sendData(EnumPlayerPacket.MailDelete, -1L);
-			selected = null;
-		}
-		MusicController.Instance.forcePlaySound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.delete",
-				(float) player.posX, (float) player.posY, (float) player.posZ, 1.0f,
-				0.9f + 0.2f * rnd.nextFloat());
 	}
 
 	private void drawMailBox(float u, float v) {
@@ -139,54 +160,51 @@ public class GuiMailbox extends GuiNPCInterface
 			drawTexturedModalRect(-5, 44, 181, 0, 7, 158); // door
 		}
 		GlStateManager.popMatrix();
-		if (scroll != null) {
-			scroll.guiLeft = (int) u + 9;
-			scroll.guiTop = (int) v + 45;
-		}
+		if (scroll != null) { scroll.setPos((int) u + 9, (int) v + 45); }
 		if (getLabel(0) != null && getLabel(0).enabled) {
-			GuiNpcLabel l = getLabel(0);
-			l.x = (int) u + 95 - (l.width / 2);
-			l.y = (int) v + 11;
+			GuiLabel l = getLabel(0);
+			l.setX((int) u + 95 - (l.getWidth() / 2));
+			l.setY((int) v + 11);
 		}
 		for (int i = 0; i < 6; i++) {
 			if (getButton(i) == null) { return; }
-			GuiNpcButton b = getButton(i);
-			b.setIsEnable(step == 3);
+			GuiButtonNop b = getButton(i);
+			b.setIsEnabled(step == 3);
 			switch (i) {
 				case 0: {
-					b.x = (int) u + 8;
-					b.y = (int) v + 202;
-					b.setIsEnable(step == 3 && selected != null);
+					b.setX((int) u + 8);
+					b.setY((int) v + 202);
+					b.setIsEnabled(step == 3 && selected != null);
 					break;
 				} // read
 				case 1: {
-					b.x = (int) u + 67;
-					b.y = (int) v + 202;
-					b.setIsEnable(step == 3);
+					b.setX((int) u + 67);
+					b.setY((int) v + 202);
+					b.setIsEnabled(step == 3);
 					break;
 				} // write
 				case 2: {
-					b.x = (int) u + 126;
-					b.y = (int) v + 202;
-					b.setIsEnable(step == 3 && selected != null);
+					b.setX((int) u + 126);
+					b.setY((int) v + 202);
+					b.setIsEnabled(step == 3 && selected != null);
 					break;
 				} // remove
 				case 3: {
-					b.x = (int) u + 8;
-					b.y = (int) v + 218;
-					b.setIsEnable(step == 3 && scroll != null && !scroll.getList().isEmpty());
+					b.setX((int) u + 8);
+					b.setY((int) v + 218);
+					b.setIsEnabled(step == 3 && scroll != null && !scroll.getList().isEmpty());
 					break;
 				} // remove all
 				case 4: {
-					b.x = (int) u + 67;
-					b.y = (int) v + 218;
-					b.setIsEnable(step == 3 && scroll != null && !scroll.getList().isEmpty());
+					b.setX((int) u + 67);
+					b.setY((int) v + 218);
+					b.setIsEnabled(step == 3 && scroll != null && !scroll.getList().isEmpty());
 					break;
 				} // clear
 				case 5: {
-					b.x = (int) u + 126;
-					b.y = (int) v + 218;
-					b.setIsEnable(step == 3);
+					b.setX((int) u + 126);
+					b.setY((int) v + 218);
+					b.setIsEnabled(step == 3);
 					break;
 				} // exit
 			}
@@ -207,8 +225,8 @@ public class GuiMailbox extends GuiNPCInterface
 			switch (step) {
 				case 0: {
 					if (tick == millyTick) {
-						MusicController.Instance.forcePlaySound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.movement",
-								(float) player.posX, (float) player.posY, (float) player.posZ, 1.0f,
+						MusicController.Instance.playSound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.movement",
+								player.posX, player.posY, player.posZ, 1.0f,
 								0.75f + 0.25f * rnd.nextFloat());
 					}
 					drawMailBox(guiLeft, guiTop + (1.0f - cos) * 236.0f);
@@ -221,8 +239,8 @@ public class GuiMailbox extends GuiNPCInterface
 						step = 1;
 						tick = 20;
 						millyTick = 20;
-						MusicController.Instance.forcePlaySound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.open.door",
-								(float) player.posX, (float) player.posY, (float) player.posZ, 1.0f,
+						MusicController.Instance.playSound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.open.door",
+								player.posX, player.posY, player.posZ, 1.0f,
 								0.75f + 0.25f * rnd.nextFloat());
 						GlStateManager.disableBlend();
 					}
@@ -269,9 +287,9 @@ public class GuiMailbox extends GuiNPCInterface
 				} // turning the door
 				case 4: {
 					if (tick == millyTick) {
-						MusicController.Instance.forcePlaySound(SoundCategory.PLAYERS,
-								CustomNpcs.MODID + ":mail.close.door", (float) player.posX, (float) player.posY,
-								(float) player.posZ, 1.0f, 0.75f + 0.25f * rnd.nextFloat());
+						MusicController.Instance.playSound(SoundCategory.PLAYERS,
+								CustomNpcs.MODID + ":mail.close.door",
+								player.posX, player.posY, player.posZ, 1.0f, 0.75f + 0.25f * rnd.nextFloat());
 					}
 					drawMailBox(guiLeft, guiTop);
 					float s = cos;
@@ -308,8 +326,8 @@ public class GuiMailbox extends GuiNPCInterface
 						step = 6;
 						tick = 30;
 						millyTick = 30;
-						MusicController.Instance.forcePlaySound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.movement",
-								(float) player.posX, (float) player.posY, (float) player.posZ, 1.0f,
+						MusicController.Instance.playSound(SoundCategory.PLAYERS, CustomNpcs.MODID + ":mail.movement",
+								player.posX, player.posY, player.posZ, 1.0f,
 								0.75f + 0.25f * rnd.nextFloat());
 						GlStateManager.disableBlend();
 					}
@@ -327,24 +345,24 @@ public class GuiMailbox extends GuiNPCInterface
 						tick = 30;
 						millyTick = 30;
 						if (closeType == 1) {
-							NoppesUtilPlayer.sendData(EnumPlayerPacket.MailboxOpenMail, 0L, "", 1, 1);
+							Packets.sendServer(new SPacketPlayerMailOpen(true, true,0L, ""));
 						} else if (closeType == 2 && selected != null) {
 							if (!selected.beenRead) {
 								selected.beenRead = true;
-								PlayerMail mail = ClientProxy.playerData.mailData.get(selected);
+								PlayerMail mail = PlayerData.get(player).mailData.get(selected);
 								if (mail != null) {
 									mail.beenRead = true;
 									ClientTickHandler.checkMails = true;
 								}
-								NoppesUtilPlayer.sendData(EnumPlayerPacket.MailRead, selected.timeWhenReceived, selected.sender);
+								Packets.sendServer(new SPacketPlayerMailRead(selected.timeWhenReceived, selected.sender));
 							}
-							NoppesUtilPlayer.sendData(EnumPlayerPacket.MailboxOpenMail, selected.timeWhenReceived, selected.sender, 0, 0, 0);
+							Packets.sendServer(new SPacketPlayerMailOpen(false, false, selected.timeWhenReceived, selected.sender));
 							selected = null;
-							scroll.setSelect(-1);
+							scroll.setSelected(-1);
 						}
 						GlStateManager.disableBlend();
 						GlStateManager.popMatrix();
-						onClosed();
+						onClose();
 						return;
 					}
 					break;
@@ -356,34 +374,36 @@ public class GuiMailbox extends GuiNPCInterface
 		GlStateManager.popMatrix();
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		if (step != 3 || hasSubGui() || !CustomNpcs.ShowDescriptions) { return; }
-		List<String> hover = new ArrayList<>();
-		if (scroll != null && scroll.getSelect() > -1) {
-			PlayerMail mail = scrollData.get(scroll.getList().get(scroll.getSelect()));
-			hover.add(((char) 167) + "7" + new TextComponentTranslation("mailbox.sender").getFormattedText()
-					+ ((char) 167) + "7 \"" + ((char) 167) + "r" + mail.sender + ((char) 167) + "7\"");
+		List<Component> hover = new ArrayList<>();
+		if (scroll != null && scroll.hasSelected()) {
+			PlayerMail mail = scrollData.get(scroll.getNormalSelected());
+			hover.add(Component.empty()
+					.append(Component.translatable("mailbox.sender").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(" \"").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(mail.sender).withStyle(TextFormatting.RESET))
+					.append(Component.literal("\"").withStyle(TextFormatting.GRAY))
+			);
 			long timeWhenReceived = System.currentTimeMillis() - mail.timeWhenReceived - mail.timeWillCome;
 			if (CustomNpcs.MailTimeWhenLettersWillBeDeleted > 0) {
 				long timeToRemove = CustomNpcs.MailTimeWhenLettersWillBeDeleted * 86400000L - timeWhenReceived;
 				if (timeToRemove < 0L) {
-                    NoppesUtilPlayer.sendData(EnumPlayerPacket.MailDelete, mail.timeWhenReceived, mail.sender);
+					Packets.sendServer(new SPacketPlayerMailDelete(0, mail.timeWhenReceived, mail.sender));
                     return;
 				}
-				hover.add(((char) 167) + "7"
-						+ new TextComponentTranslation("mailbox.when.removed",
-						Util.instance.ticksToElapsedTime(timeToRemove / 50, false, true, false))
-										.getFormattedText());
+				hover.add(Component.translatable("mailbox.when.removed",
+								Util.instance.ticksToElapsedTime(timeToRemove / 50, false, true, false))
+						.withStyle(TextFormatting.GRAY));
 			}
 			if (mail.beenRead) {
-				hover.add(((char) 167) + "a" + new TextComponentTranslation("mailbox.when.read").getFormattedText());
+				hover.add(Component.translatable("mailbox.when.read").withStyle(TextFormatting.GREEN));
 			} else {
-				hover.add(((char) 167) + "7"
-						+ new TextComponentTranslation("mailbox.when.received",
-						Util.instance.ticksToElapsedTime(timeWhenReceived / 50, false, true, false))
-										.getFormattedText());
+				hover.add(Component.translatable("mailbox.when.received",
+								Util.instance.ticksToElapsedTime(timeWhenReceived / 50, false, true, false))
+						.withStyle(TextFormatting.GRAY));
 			}
 		}
 		if (!hover.isEmpty()) {
-			putHoverText(hover);
+			setHoverText(hover);
 			drawHoverText(null);
 		}
 	}
@@ -392,39 +412,43 @@ public class GuiMailbox extends GuiNPCInterface
 	public void initGui() {
 		super.initGui();
 		ClientTickHandler.checkMails = true;
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(165, 154); }
-		scroll.guiLeft = guiLeft + 9;
-		scroll.guiTop = guiTop + 45;
+		if (scroll == null) { scroll = addScroll(0).setSize(165, 154); }
 		String select = scroll.getSelected();
 		scrollData.clear();
 		List<PlayerMail> listR = new ArrayList<>();
 		List<PlayerMail> listN = new ArrayList<>();
 		long time = System.currentTimeMillis();
-		for (PlayerMail mail : ClientProxy.playerData.mailData.playerMails) {
+		for (PlayerMail mail : PlayerData.get(player).mailData.playerMails) {
 			if (time - mail.timeWhenReceived < mail.timeWillCome) { continue; }
 			if (mail.beenRead) { listR.add(mail); }
 			else { listN.add(mail); }
 		}
 		listR.sort((o1, o2) -> {
-            if (o1.timeWhenReceived == o2.timeWhenReceived) { return 0; }
+			if (o1.timeWhenReceived == o2.timeWhenReceived) { return 0; }
 			else { return (o1.timeWhenReceived > o2.timeWhenReceived) ? -1 : 1; }
-        });
-		List<String> list = new ArrayList<>();
-		List<Integer> colors = new ArrayList<>();
+		});
+		List<Component> list = new ArrayList<>();
 		List<ResourceData> prefixes = new ArrayList<>();
 		int i = 1;
 		for (PlayerMail mail : listN) {
-			String key = ((char) 167) + "8" + i + ": " + ((char) 167) + "r\"" + new TextComponentTranslation(mail.title).getFormattedText() + "\"";
+			Component key = Component.empty()
+					.append(Component.literal(i + ": ").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal("\"").withStyle(TextFormatting.RESET))
+					.append(Component.translatable(mail.title))
+					.append(Component.literal("\""));
 			list.add(key);
 			scrollData.put(key, mail);
 			ResourceData rd = new ResourceData(icons, mail.getRansom() > 0 ? 96 : mail.returned ? 128 : 0, 0, 32, 32);
 			rd.tH = -3.0f;
 			prefixes.add(rd);
-			colors.add(CustomNpcs.LableColor.getRGB());
 			i++;
 		}
 		for (PlayerMail mail : listR) {
-			String key = ((char) 167) + "8" + i + ": " + ((char) 167) + "r\"" + new TextComponentTranslation(mail.title).getFormattedText() + "\"";
+			Component key = Component.empty()
+					.append(Component.literal(i + ": ").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal("\"").withStyle(TextFormatting.RESET))
+					.append(Component.translatable(mail.title))
+					.append(Component.literal("\""));
 			list.add(key);
 			scrollData.put(key, mail);
 			boolean isEmpty = true;
@@ -437,71 +461,76 @@ public class GuiMailbox extends GuiNPCInterface
 			ResourceData rd = new ResourceData(icons, mail.getRansom() > 0 ? 96 : isEmpty ? 64 : 32, 0, 32, 32);
 			rd.tH = -3.0f;
 			prefixes.add(rd);
-			colors.add(CustomNpcs.LableColor.getRGB());
 			i++;
 		}
 		scroll.clear();
-		scroll.setUnsortedList(list).setPrefixes(prefixes).setColors(colors);
+		scroll.setUnsortedList(list).setPrefixes(prefixes);
 		scroll.colorBackS = 0x00000000;
 		scroll.colorBackE = 0x00000000;
-		if (select != null && !select.isEmpty()) { scroll.setSelected(select); }
-		addScroll(scroll);
-		String title = new TextComponentTranslation("mailbox.name").getFormattedText();
-		int x = (xSize - fontRenderer.getStringWidth(title)) / 2;
-		addLabel(new GuiNpcLabel(0, title, guiLeft + x, guiTop + 11));
-		getLabel(0).setColor(CustomNpcs.MainColor.getRGB());
+		if (!select.isEmpty()) { scroll.setSelected(select); }
+		add(scroll.setPos(guiLeft + 9, guiTop + 45));
+		Component title = Component.translatable("mailbox.name");
+		int x = (imageWidth - font.getStringWidth(title.getFormattedText())) / 2;
+		addLabel(0, guiLeft + x, guiTop + 11, title)
+				.setColor(CustomNpcs.MainColor.getRGB());
 		x = guiLeft + 8;
 		int y = guiTop + 202;
-		addButton(new GuiNpcButton(0, x, y, 58, 14, "mailbox.read")
+		addButton(0, x, y, "mailbox.read")
+				.setSize(58, 14)
 				.setTexture(icons)
 				.setUV(0, 96, 0, 0)
-				.setHoverText("mailbox.hover.read")
-				.setIsEnable(selected != null));
-		addButton(new GuiNpcButton(1, x + 59, y, 58, 14, "mailbox.write")
+				.setIsEnabled(selected != null)
+				.setHoverTexts("mailbox.hover.read");
+		addButton(1, x + 59, y, "mailbox.write")
+				.setSize(58, 14)
 				.setTexture(icons)
 				.setUV(0, 96, 0, 0)
-				.setHoverText("mailbox.hover.write"));
-		addButton(new GuiNpcButton(2, x + 118, y, 58, 14, "gui.remove")
+				.setHoverTexts("mailbox.hover.write");
+		addButton(2, x + 118, y, "gui.remove")
+				.setSize(58, 14)
 				.setTexture(icons)
 				.setUV(0, 96, 0, 0)
-				.setHoverText("mailbox.hover.del")
-				.setIsEnable(selected != null));
-		addButton(new GuiNpcButton(3, x, y += 16, 58, 14, "gui.remove.all")
+				.setIsEnabled(selected != null)
+				.setHoverTexts("mailbox.hover.del");
+		addButton(3, x, y += 16, "gui.remove.all")
+				.setSize(58, 14)
 				.setTexture(icons)
 				.setUV(0, 96, 0, 0)
-				.setHoverText("mailbox.hover.delall")
-				.setIsEnable(!list.isEmpty()));
-		addButton(new GuiNpcButton(4, x + 59, y, 58, 14, "gui.clear")
+				.setIsEnabled(!list.isEmpty())
+				.setHoverTexts("mailbox.hover.delall");
+		addButton(4, x + 59, y, "gui.clear")
+				.setSize(58, 14)
 				.setTexture(icons)
 				.setUV(0, 96, 0, 0)
-				.setHoverText("mailbox.hover.clear")
-				.setIsEnable(!list.isEmpty()));
-		addButton(new GuiNpcButton(5, x + 118, y, 58, 14, "display.hover.X")
+				.setIsEnabled(!list.isEmpty())
+				.setHoverTexts("mailbox.hover.clear");
+		addButton(5, x + 118, y, "display.hover.X")
+				.setSize(58, 14)
 				.setTexture(icons)
 				.setUV(0, 96, 0, 0)
-				.setHoverText("hover.exit"));
+				.setHoverTexts("hover.exit");
 	}
 
 	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui == null && step == 3 && (keyCode == Keyboard.KEY_ESCAPE || isInventoryKey(keyCode))) {
+	public boolean keyPressed(char typedChar, int keyCode) {
+		if (!hasSubGui() && step == 3 && (isEscKey(keyCode) || isInventoryKey(keyCode))) {
 			step = 4;
 			tick = 15;
 			millyTick = 15;
 			closeType = 0;
 			return true;
 		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
+		return super.keyPressed(typedChar, keyCode);
 	}
 
     @Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		selected = scrollData.get(scroll.getSelected());
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		selected = scrollData.get(scroll.getNormalSelected());
 		initGui();
 	}
 
 	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) {
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
 		if (selected == null) { return; }
 		GuiMailmanWrite.parent = this;
 		GuiMailmanWrite.mail = selected;
@@ -513,7 +542,7 @@ public class GuiMailbox extends GuiNPCInterface
 
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
-		ClientProxy.playerData.mailData.loadNBTData(compound);
+		PlayerData.get(player).mailData.load(compound);
 		selected = null;
 		initGui();
 	}

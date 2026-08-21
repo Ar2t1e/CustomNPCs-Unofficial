@@ -1,9 +1,8 @@
 package noppes.npcs.api.entity.data;
 
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
-@SuppressWarnings("all")
 public interface INPCAnimation {
 
 	boolean hasAnimations(@ParamName("animationType") int animationType);

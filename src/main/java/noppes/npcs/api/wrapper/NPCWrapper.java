@@ -32,14 +32,13 @@ import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.controllers.data.Faction;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketNpcRotationUpdate;
 import noppes.npcs.util.ValueUtil;
 
-@SuppressWarnings("rawtypes")
-public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrapper<T> implements ICustomNpc {
+public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrapper<T> implements ICustomNpc<T> {
 
-	public NPCWrapper(T npc) {
-		super(npc);
-	}
+	public NPCWrapper(T npc) { super(npc); }
 
 	@Override
 	public String executeCommand(String command) {
@@ -120,7 +119,7 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 
 	@Override
 	public INPCJob getJob() {
-		return this.entity.advanced.jobInterface;
+		return this.entity.job;
 	}
 
 	@Override
@@ -128,30 +127,18 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 		return this.entity.display.getName();
 	}
 
-	public int getOffsetX() {
-		return (int) this.entity.ais.bodyOffsetX;
-	}
-
-	public int getOffsetY() {
-		return (int) this.entity.ais.bodyOffsetY;
-	}
-
-	public int getOffsetZ() {
-		return (int) this.entity.ais.bodyOffsetZ;
-	}
-
 	@Override
-	public IEntityLivingBase getOwner() {
+	public IEntityLivingBase<?> getOwner() {
 		EntityLivingBase owner = this.entity.getOwner();
 		if (owner != null) {
-			return (IEntityLivingBase) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(owner);
+			return (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(owner);
 		}
 		return null;
 	}
 
 	@Override
 	public INPCRole getRole() {
-		return this.entity.advanced.roleInterface;
+		return this.entity.role;
 	}
 
 	@Override
@@ -170,14 +157,12 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 	}
 
 	@Override
-	public void giveItem(IPlayer player, IItemStack item) {
+	public void giveItem(IPlayer<?> player, IItemStack item) {
 		this.entity.givePlayerItem(player.getMCEntity(), item.getMCItemStack());
 	}
 
 	@Override
-	public void reset() {
-		this.entity.reset();
-	}
+	public void reset() { this.entity.reset(); }
 
 	@Override
 	public void say(String message) {
@@ -185,7 +170,7 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 	}
 
 	@Override
-	public void sayTo(IPlayer player, String message) {
+	public void sayTo(IPlayer<?> player, String message) {
 		this.entity.say(player.getMCEntity(), new Line(message));
 	}
 
@@ -246,33 +231,27 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 		this.entity.display.setName(name);
 	}
 
-	public void setOffset(int x, int y, int z) {
-		this.entity.ais.bodyOffsetX = ValueUtil.correctFloat(x, 0.0f, 9.0f);
-		this.entity.ais.bodyOffsetY = ValueUtil.correctFloat(y, 0.0f, 9.0f);
-		this.entity.ais.bodyOffsetZ = ValueUtil.correctFloat(z, 0.0f, 9.0f);
-		this.entity.updateClient = true;
-	}
-
 	@Override
 	public void setRotation(float rotation) {
 		super.setRotation(rotation);
-		if (this.entity.ais.orientation != (int) this.entity.rotationYaw) {
-			this.entity.ais.orientation = (int) this.entity.rotationYaw;
-			this.entity.updateClient = true;
+		int r = (int) rotation;
+		if (entity.ais.orientation != r) {
+			entity.ais.orientation = r;
+			Packets.sendNearby(entity, new PacketNpcRotationUpdate(entity.getEntityId(), entity.ais.orientation));
 		}
 	}
 
 	@Override
-	public IProjectile shootItem(double x, double y, double z, IItemStack item, int accuracy) {
+	public IProjectile<?> shootItem(double x, double y, double z, IItemStack item, int accuracy) {
 		if (item == null) {
 			throw new CustomNPCsException("No item was given");
 		}
 		accuracy = ValueUtil.correctInt(accuracy, 1, 100);
-		return (IProjectile) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.shoot(x, y, z, accuracy, item.getMCItemStack(), false));
+		return (IProjectile<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.shoot(x, y, z, accuracy, item.getMCItemStack(), false));
 	}
 
 	@Override
-	public IProjectile shootItem(IEntityLivingBase target, IItemStack item, int accuracy) {
+	public IProjectile<?> shootItem(IEntityLivingBase<?> target, IItemStack item, int accuracy) {
 		if (item == null) {
 			throw new CustomNPCsException("No item was given");
 		}
@@ -280,7 +259,7 @@ public class NPCWrapper<T extends EntityNPCInterface> extends EntityLivingWrappe
 			throw new CustomNPCsException("No target was given");
 		}
 		accuracy = ValueUtil.correctInt(accuracy, 1, 100);
-		return (IProjectile) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.shoot(target.getMCEntity(), accuracy, item.getMCItemStack(), false));
+		return (IProjectile<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(this.entity.shoot(target.getMCEntity(), accuracy, item.getMCItemStack(), false));
 	}
 
 	@Override

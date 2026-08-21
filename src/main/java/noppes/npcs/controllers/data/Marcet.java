@@ -10,7 +10,7 @@ import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.relauncher.Side;
@@ -18,13 +18,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
-import noppes.npcs.Server;
 import noppes.npcs.api.handler.data.IDeal;
 import noppes.npcs.api.handler.data.IMarcet;
 import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.constants.EnumPacketClient;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketMarcetClose;
+import noppes.npcs.packets.client.PacketMarcetData;
 import noppes.npcs.roles.RoleTrader;
 import noppes.npcs.util.CustomNPCsScheduler;
 
@@ -58,11 +59,11 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 
 	public void addInventoryItems(Map<ItemStack, Integer> items) {
 		for (ItemStack stack : items.keySet()) {
-			if (NoppesUtilServer.IsItemStackNull(stack)) { continue; }
+			if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
 			boolean added = false;
 			List<ItemStack> del = new ArrayList<>();
 			for (ItemStack st : inventory.keySet()) {
-				if (NoppesUtilServer.IsItemStackNull(st)) {
+				if (NoppesUtilServer.isItemStackNull(st)) {
 					del.add(st);
 					continue;
 				}
@@ -87,10 +88,10 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 
 	@Override
 	public boolean apply(EntityNPCInterface npc) {
-		if (npc == null || !(npc.advanced.roleInterface instanceof RoleTrader)) { return false; }
-		return ((RoleTrader) npc.advanced.roleInterface).getMarket() == null ?
-				((RoleTrader) npc.advanced.roleInterface).getMarketID() == getId() :
-				((RoleTrader) npc.advanced.roleInterface).getMarket().getId() == getId();
+		if (npc == null || !(npc.role instanceof RoleTrader)) { return false; }
+		return ((RoleTrader) npc.role).getMarket() == null ?
+				((RoleTrader) npc.role).getMarketID() == getId() :
+				((RoleTrader) npc.role).getMarket().getId() == getId();
 	}
 
 	public void closeForAllPlayers() { // server only
@@ -153,9 +154,10 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 		return -1;
 	}
 
-	public String getSettingName() {
-		return TextFormatting.GRAY + "ID:" + id + " " + (isEmpty() ? TextFormatting.DARK_RED : TextFormatting.RESET) +
-				new TextComponentTranslation(name).getFormattedText();
+	public Component getSettingName() {
+		return Component.empty()
+				.append(Component.literal("ID:" + id + " ").withStyle(TextFormatting.GRAY))
+				.append(Component.translatable(name).withStyle(isEmpty() ? TextFormatting.DARK_RED : TextFormatting.RESET));
 	}
 
 	public boolean notHasListener(EntityPlayer player) { return !listeners.contains(player); }
@@ -236,10 +238,10 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 
 	public void removeInventoryItems(Map<ItemStack, Integer> items) {
 		for (ItemStack stack : items.keySet()) {
-			if (NoppesUtilServer.IsItemStackNull(stack)) { continue; }
+			if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
 			List<ItemStack> del = new ArrayList<>();
 			for (ItemStack st : inventory.keySet()) {
-				if (NoppesUtilServer.IsItemStackNull(st)) {
+				if (NoppesUtilServer.isItemStackNull(st)) {
 					del.add(st);
 					continue;
 				}
@@ -258,7 +260,7 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 	public void removeListener(EntityPlayer player, boolean isServer) {
 		for (EntityPlayer listener : listeners) {
 			if (listener == player || listener.equals(player)) {
-				if (isServer && listener instanceof EntityPlayerMP) { Server.sendData((EntityPlayerMP) listener, EnumPacketClient.MARCET_CLOSE, id); }
+				if (isServer && listener instanceof EntityPlayerMP) { Packets.send((EntityPlayerMP) listener, new PacketMarcetClose(id)); }
 				listeners.remove(listener);
 				detectAndSendChanges();
 				return;
@@ -266,10 +268,7 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 		}
 	}
 
-	public void sendTo(EntityPlayerMP player) {
-		Server.sendData(player, EnumPacketClient.MARCET_DATA, 1, save());
-		Server.sendData(player, EnumPacketClient.MARCET_DATA, 2);
-	}
+	public void sendTo(EntityPlayerMP player) { Packets.send(player, new PacketMarcetData(save())); }
 
 	@Override
 	public void setIsLimited(boolean limited) {
@@ -306,11 +305,11 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 				money += (long) ((double) (deal.getMoney()) * (coefficient + Math.random() * coefficient));
 				for (IItemStack iStack : deal.getCurrency().getItems()) {
 					ItemStack stack = iStack.getMCItemStack();
-					if (NoppesUtilServer.IsItemStackNull(stack)) { continue; }
+					if (NoppesUtilServer.isItemStackNull(stack)) { continue; }
 					int count = (int) (((double) stack.getCount()) * (coefficient + Math.random() * coefficient));
 					boolean added = false;
 					for (ItemStack st : inventory.keySet()) {
-						if (NoppesUtilServer.IsItemStackNull(st)) { continue; }
+						if (NoppesUtilServer.isItemStackNull(st)) { continue; }
 						if (NoppesUtilPlayer.compareItems(stack, st, false, false)) {
 							inventory.put(st, inventory.get(st) + count);
 							added = true;
@@ -376,7 +375,7 @@ public class Marcet implements IMarcet, Predicate<EntityNPCInterface> {
 		MarcetController mData = MarcetController.getInstance();
 		for (MarcetSection ms : sections.values()) {
 			for (Deal deal : ms.deals) {
-				if (mData.deals.containsKey(deal.getId())) { deal.load(mData.deals.get(deal.getId()).write()); }
+				if (mData.deals.containsKey(deal.getId())) { deal.load(mData.deals.get(deal.getId()).save()); }
 			}
 		}
 		updateNew();

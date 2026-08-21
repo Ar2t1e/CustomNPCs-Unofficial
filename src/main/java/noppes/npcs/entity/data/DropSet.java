@@ -15,31 +15,34 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.api.handler.data.IDropSetData;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.entity.data.IAttributeSet;
 import noppes.npcs.api.entity.data.ICustomDrop;
 import noppes.npcs.api.entity.data.IDropNbtSet;
 import noppes.npcs.api.entity.data.IEnchantSet;
+import noppes.npcs.api.handler.data.IAvailability;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.constants.EnumAvailabilityQuest;
 import noppes.npcs.controllers.data.Availability;
-import noppes.npcs.controllers.data.Deal;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class DropSet implements IInventory, ICustomDrop {
 
 	protected final Map<String, Integer> attributeSlotsName = new HashMap<>();
-	protected final DataInventory npcInv;
-	protected final Deal parentDeal;
+	protected final @Nullable IDropSetData parent;
 
 	public Availability availability = new Availability();
 	public List<AttributeSet> attributes = new ArrayList<>();
@@ -47,17 +50,16 @@ public class DropSet implements IInventory, ICustomDrop {
 	public List<DropNbtSet> tags = new ArrayList<>();
 	public ItemStack item = ItemStack.EMPTY;
 	public int pos = -1;
-	public int npcLevel;
+	public int npcWorld;
 	public int[] amount = new int[] { 1, 1 };
 	public float damage = 1.0f;
 	public double chance = 100.0d; // 0-100
 	public int lootMode = 0; // 0: normal; 1: drop to Player; 2: inventory
 	public boolean tiedToLevel = false;
 
-	public DropSet(DataInventory npcInvIn, Deal dealIn) {
-		npcInv = npcInvIn;
-		parentDeal = dealIn;
-		npcLevel = npcInvIn != null ? npcInvIn.npc.stats.getLevel() : dealIn != null ? 0 : 1;
+	public DropSet(@Nullable IDropSetData parentIn) {
+		parent = parentIn;
+		npcWorld = parent == null ? 0 : parent.getNpcLevel();
 		attributeSlotsName.put("mainhand", 0);
 		attributeSlotsName.put("offhand", 1);
 		attributeSlotsName.put("feet", 2);
@@ -145,7 +147,7 @@ public class DropSet implements IInventory, ICustomDrop {
 		if (amount[0] != amount[1]) {
 			if (tiedToLevel) {
 				a = (int) Math.round((double) amount[0]
-						+ (double) (amount[1] - amount[0]) * (double) npcLevel / (double) CustomNpcs.MaxLv);
+						+ (double) (amount[1] - amount[0]) * (double) npcWorld / (double) CustomNpcs.MaxLv);
 			} else {
 				a = (int) Math.round((double) amount[0] + (double) (amount[1] - amount[0]) * Math.random());
 			}
@@ -155,7 +157,7 @@ public class DropSet implements IInventory, ICustomDrop {
 		if (dItem.getMaxDamage() > 0 && (damage < 1.0f)) {
 			int d, max = dItem.getMaxDamage();
 			if (tiedToLevel) {
-				d = Math.round((1.0f - damage) * (float) max * (float) npcLevel / (float) CustomNpcs.MaxLv);
+				d = Math.round((1.0f - damage) * (float) max * (float) npcWorld / (float) CustomNpcs.MaxLv);
 			} else {
 				d = (int) Math.round((1.0f - damage) * (float) max * Math.random());
 			}
@@ -174,7 +176,7 @@ public class DropSet implements IInventory, ICustomDrop {
 					if (lvlM != lvlN) {
 						if (tiedToLevel) {
 							lvl = (int) Math.round((double) lvlM
-									+ (double) (lvlN - lvlM) * (double) npcLevel / (double) CustomNpcs.MaxLv);
+									+ (double) (lvlN - lvlM) * (double) npcWorld / (double) CustomNpcs.MaxLv);
 						} else {
 							lvl = (int) Math.round((double) lvlM + (double) (lvlN - lvlM) * Math.random());
 						}
@@ -197,7 +199,7 @@ public class DropSet implements IInventory, ICustomDrop {
 					if (vM != vN) {
 						if (tiedToLevel) {
 							v = Math.round(
-									(vM + (vN - vM) * (double) npcLevel / (double) CustomNpcs.MaxLv) * 10000.0d)
+									(vM + (vN - vM) * (double) npcWorld / (double) CustomNpcs.MaxLv) * 10000.0d)
 									/ 10000.0d;
 						} else {
 							v = Math.round((vM + (vN - vM) * Math.random()) * 10000.0d) / 10000.0d;
@@ -220,7 +222,7 @@ public class DropSet implements IInventory, ICustomDrop {
 			}
 		}
 		if (dItem.hasTagCompound()) {
-			if (dItem.getTagCompound() != null && dItem.getTagCompound().getKeySet().isEmpty()) {
+			if (dItem.getTagCompound() != null && dItem.getTagCompound().hasNoTags()) {
 				dItem.setTagCompound(null);
 			}
 		}
@@ -302,6 +304,9 @@ public class DropSet implements IInventory, ICustomDrop {
 	public IItemStack getItem() { return Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(item); }
 
 	@Override
+	public ItemStack getMCItemStack() { return item; }
+
+	@Override
 	public int getLootMode() { return lootMode; }
 
 	@Override
@@ -311,7 +316,7 @@ public class DropSet implements IInventory, ICustomDrop {
 	public int getMinAmount() { return amount[0]; }
 
 	@Override
-	public Availability getAvailability() { return availability; }
+	public IAvailability getAvailability() { return availability; }
 
 	// inventory
 	@Override
@@ -362,7 +367,7 @@ public class DropSet implements IInventory, ICustomDrop {
 
 	@Override
 	public boolean isEmpty() {
-        return NoppesUtilServer.IsItemStackNull(item) || item.isEmpty();
+        return NoppesUtilServer.isItemStackNull(item) || item.isEmpty();
     }
 
 	@Override
@@ -432,8 +437,7 @@ public class DropSet implements IInventory, ICustomDrop {
 
 	@Override
 	public void remove() {
-		if (npcInv != null) { npcInv.removeDrop(this); }
-		if (parentDeal != null) { parentDeal.removeCaseItem(this); }
+		if (parent != null) { parent.removeDrop(this); }
 	}
 
 	@Override
@@ -583,105 +587,181 @@ public class DropSet implements IInventory, ICustomDrop {
 	@Override
 	public void setTiedToLevel(boolean tied) { tiedToLevel = tied; }
 
-	public String getKey() {
-		String keyName;
-		char c = ((char) 167);
-		if (item == null) { return "null"; }
-		if (item.isEmpty()) { return "type.empty"; }
-		keyName = c + "7" + (pos + 1) + ": ";
-
+	public Component getKey() {
+		if (item == null) { return Component.literal("null"); }
+		if (item.isEmpty()) { return Component.translatable("type.empty"); }
+		Component keyName = Component.empty()
+				.append(Component.literal((pos + 1) + ": ").withStyle(TextFormatting.GRAY));
 		double ch = Math.round(chance * 10.0d) / 10.d;
 		String chance = String.valueOf(ch).replace(".", ",");
 		if (ch == (int) ch) { chance = String.valueOf((int) ch); }
 		chance += "%";
-		keyName += c + "e" + chance;
-
-		if (amount[0] == amount[1]) { keyName += c + "7[" + c + "6" + amount[0] + c + "7]"; }
-		else { keyName += c + "7[" + c + "6" + amount[0] + c + "7-" + c + "6" + amount[1] + c + "7]"; }
-		String effs = "";
-		if (!enchants.isEmpty()) { effs = c + "7 |" + c + "bE" + c + "7|"; }
+		keyName.append(Component.literal(chance).withStyle(TextFormatting.YELLOW));
+		if (amount[0] == amount[1]) {
+			keyName.append(Component.literal("[").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("" + amount[0]).withStyle(TextFormatting.GOLD))
+					.append(Component.literal("]").withStyle(TextFormatting.GRAY));
+		}
+		else {
+			keyName.append(Component.literal("[").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("" + amount[0]).withStyle(TextFormatting.GOLD))
+					.append(Component.literal("<>").withStyle(TextFormatting.GRAY)
+							.append(Component.literal("" + amount[1]).withStyle(TextFormatting.GOLD))
+							.append(Component.literal("]").withStyle(TextFormatting.GRAY)));
+		}
+		Component effs = Component.empty();
+		if (!enchants.isEmpty()) {
+			effs.append(Component.literal(" |").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("E").withStyle(TextFormatting.AQUA))
+					.append(Component.literal("|").withStyle(TextFormatting.GRAY));
+		}
 		if (!attributes.isEmpty()) {
-			if (effs.isEmpty()) { effs += c + "7 |"; }
-			effs += c + "aA" + c + "7|";
+			effs.append(Component.literal(" |").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("A").withStyle(TextFormatting.GREEN))
+					.append(Component.literal("|").withStyle(TextFormatting.GRAY));
 		}
 		if (!tags.isEmpty()) {
-			if (effs.isEmpty()) { effs += c + "7 |"; }
-			effs += c + "cT" + c + "7|";
+			effs.append(Component.literal(" |").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("T").withStyle(TextFormatting.RED))
+					.append(Component.literal("|").withStyle(TextFormatting.GRAY));
 		}
-		keyName += effs + " " + c + "r" + item.getDisplayName();
-		if (pos < 0) { keyName += c + "8 ID:" + toString().substring(toString().indexOf("@") + 1); }
+		keyName.append(effs)
+				.append(Component.literal(item.getDisplayName()).withStyle(TextFormatting.RESET));
+		if (pos < 0) {
+			keyName.append(Component.literal("ID:" + toString().substring(toString().indexOf("@") + 1))
+					.withStyle(TextFormatting.DARK_GRAY));
+		}
 		return keyName;
 	}
 
-	public List<String> getHover(EntityPlayer player) {
-		List<String> list = new ArrayList<>();
-		char c = ((char) 167);
+	public List<Component> getHover(EntityPlayer player) {
+		List<Component> list = new ArrayList<>();
 		// pos
-		if (pos < 0) { list.add(c + "7-" + c + "8 ID:" + toString().substring(toString().indexOf("@") + 1)); }
-		else { list.add(c + "7- ID: " + c + "r" + pos); }
+		if (pos < 0) {
+			list.add(Component.empty()
+					.append(Component.literal("- ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("ID" + toString().substring(toString().indexOf("@") + 1)).withStyle(TextFormatting.DARK_GRAY)));
+		}
+		else {
+			list.add(Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "Position") + ": ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("" + pos).withStyle(TextFormatting.RESET)));
+		}
 		// stack
-		String itemString = Util.instance.translateGoogle(player, "Item");
-		if (item == null) { list.add(c + "7- " + itemString + ": " + c + "4null"); }
-		else if (item.isEmpty()) { list.add(c + "7- " + itemString + ": " + c + "cEmpty"); }
-		else { list.add(c + "7- " + itemString + ": " + c + "r" + item.getItem().getRegistryName()); }
+		Component stackKey = Component.empty()
+				.append(Component.literal("- " + Util.instance.translateGoogle(player, "Item") + ": ").withStyle(TextFormatting.GRAY));
+		if (item == null) { stackKey.append(Component.literal("null").withStyle(TextFormatting.DARK_RED)); }
+		else if (item.isEmpty()) { stackKey.append(Component.literal("Empty").withStyle(TextFormatting.RED)); }
+		else { stackKey.append(Component.literal("" + item.getItem().getRegistryName()).withStyle(TextFormatting.RESET)); }
+		list.add(stackKey);
 		// amount
-		String amountString = Util.instance.translateGoogle(player, "Amount");
-		if (amount[0] == amount[1]) { list.add(c + "7- " + amountString + ": " + c + "6" + amount[0]); }
-		else { list.add(c + "7- " + amountString + ": " + c + "7[min:" + c + "6" + amount[0] + c + "7; max:" + c + "6" + amount[1] + c + "7]"); }
+		Component amountKey = Component.empty()
+				.append(Component.literal("- " + Util.instance.translateGoogle(player, "Amount") + ": ").withStyle(TextFormatting.GRAY));
+		if (amount[0] == amount[1]) { amountKey.append(Component.literal("" + amount[0]).withStyle(TextFormatting.GOLD)); }
+		else {
+			amountKey.append(Component.literal("[min:").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("" + amount[0]).withStyle(TextFormatting.GOLD))
+					.append(Component.literal("; max:").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("" + amount[1]).withStyle(TextFormatting.GOLD))
+					.append(Component.literal("]").withStyle(TextFormatting.GRAY));
+		}
+		list.add(amountKey);
 		// chance
-		String chanceString = Util.instance.translateGoogle(player, "Chance");
-		if (chance == (int) chance) { list.add(c + "7- " + chanceString + ": " + c + "e" + ((int) chance) + c + "7%"); }
-		else { list.add(c + "7- " + chanceString + ": " + c + "e" + ("" + chance).replace(".", ",") + c + "7%"); }
+		Component chanceKey = Component.empty()
+				.append(Component.literal("- " + Util.instance.translateGoogle(player, "Chance") + ": ").withStyle(TextFormatting.GRAY));
+		if (chance == (int) chance) {
+			chanceKey.append(Component.literal("" + (int) chance).withStyle(TextFormatting.YELLOW))
+					.append(Component.literal("%").withStyle(TextFormatting.GRAY));
+		}
+		else {
+			chanceKey.append(Component.literal(("" + chance).replace(".", ",")).withStyle(TextFormatting.YELLOW))
+					.append(Component.literal("%").withStyle(TextFormatting.GRAY));
+		}
+		list.add(chanceKey);
 		// loot mode
-		String lootString = Util.instance.translateGoogle(player, "Loot");
-		if (lootMode == 1) { list.add(c + "7- " + lootString + ": " + c + "r" + Util.instance.translateGoogle(player, "Will fall to the ground")); }
-		else if (lootMode == 2) { list.add(c + "7- " + lootString + ": " + c + "r" + Util.instance.translateGoogle(player, "Will be placed in the inventory available when the NPC dies.")); }
-		else { list.add(c + "7- " + lootString + ": " + c + "r" + Util.instance.translateGoogle(player, "Will fall to the player who killed this NPC")); }
-   		// damage
-		String damageString = Util.instance.translateGoogle(player, "Broken");
-		if (damage == 1.0f) { list.add(c + "7- " + damageString + ": (max. meta): " + c + "r" + Util.instance.translateGoogle(player, "Doesn't change")); }
-		else { list.add(c + "7- " + damageString + " (max. meta): " + c + "6" + ("" + Math.round(damage * 10000.0f) / 100.0f).replace(".", ",") + c + "7% from " + c + "6" + (item == null ? "0" : item.getMaxDamage())); }
-		// tiedToLevel
-		if (tiedToLevel) { list.add(c + "7- " + Util.instance.translateGoogle(player, "NPC level is taken into account. Average: ") + c + "6" + npcLevel); }
-		else { list.add(c + "7- " + Util.instance.translateGoogle(player, "NPC level does not affect parameters")); }
+		Component lootKey = Component.empty()
+				.append(Component.literal("- " + Util.instance.translateGoogle(player, "Loot") + ": ").withStyle(TextFormatting.GRAY));
+		if (lootMode == 1) { lootKey.append(Component.literal(Util.instance.translateGoogle(player, "Will fall to the ground"))
+				.withStyle(TextFormatting.RESET)); }
+		else if (lootMode == 2) { lootKey.append(Component.literal(Util.instance.translateGoogle(player, "Will be placed in the inventory available when the NPC dies."))
+				.withStyle(TextFormatting.RESET)); }
+		else { lootKey.append(Component.literal(Util.instance.translateGoogle(player, "Will fall to the player who killed this NPC"))
+				.withStyle(TextFormatting.RESET)); }
+		list.add(lootKey);
 		// availability
-		if (availability.hasOptions()) { list.add(c + "7- " + Util.instance.translateGoogle(player, "There are accessibility settings")); }
-		else { list.add(c + "7- " + Util.instance.translateGoogle(player, "Availability not specified")); }
+		if (availability.hasOptions()) {
+			list.add(Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "There are accessibility settings")).withStyle(TextFormatting.GRAY)));
+		}
+		else {
+			list.add(Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "Availability not specified")).withStyle(TextFormatting.GRAY)));
+		}
 		// enchants
 		if (!enchants.isEmpty()) {
-			StringBuilder ench = new StringBuilder();
+			Component enchKey = Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "Enchants") + ": [").withStyle(TextFormatting.GRAY));
+			boolean start = false;
 			for (EnchantSet es : enchants) {
-				if (ench.length() > 0) { ench.append(c).append("7, "); }
-				ench.append(es.ench == null ? "null" : c + "7id: " + c + "b" + Enchantment.getEnchantmentID(es.ench));
+				if (start) { enchKey.append(Component.literal(", ").withStyle(TextFormatting.GRAY)); }
+				if (es.ench == null) { enchKey.append(Component.literal("null").withStyle(TextFormatting.GRAY)); }
+				else {
+					enchKey.append(Component.literal("id: ").withStyle(TextFormatting.GRAY))
+							.append(Component.literal("" + Enchantment.getEnchantmentID(es.ench)).withStyle(TextFormatting.AQUA));
+				}
+				start = true;
 			}
-			list.add(c + "7- " + Util.instance.translateGoogle(player, "Enchants") + ": [" + ench + c + "7]");
+			list.add(enchKey.append(Component.literal("]").withStyle(TextFormatting.GRAY)));
 		}
-		else { list.add(c + "7- " + Util.instance.translateGoogle(player, "\"Enchants\" - not specified")); }
-		// enchants
+		else {
+			list.add(Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "\"Enchants\" - not specified")).withStyle(TextFormatting.GRAY)));
+		}
+		// attributes
 		if (!attributes.isEmpty()) {
-			StringBuilder attr = new StringBuilder();
+			Component attrKey = Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "Attributes") + ": [").withStyle(TextFormatting.GRAY));
+			boolean start = false;
 			for (AttributeSet as : attributes) {
-				if (attr.length() > 0) { attr.append(c).append("7, "); }
-				attr.append(as.attr == null ? "null" : c + "9" + as.attr.getName());
+				if (start) { attrKey.append(Component.literal(", ").withStyle(TextFormatting.GRAY)); }
+				if (as.attr == null) { attrKey.append(Component.literal("null").withStyle(TextFormatting.GRAY)); }
+				else {
+					attrKey.append(Component.literal("id: ").withStyle(TextFormatting.GRAY))
+							.append(Component.literal(as.attr.getName()).withStyle(TextFormatting.BLUE));
+				}
+				start = true;
 			}
-			list.add(c + "7- " + Util.instance.translateGoogle(player, "Attributes") + ": [" + attr + c + "7]");
+			list.add(attrKey.append(Component.literal("]").withStyle(TextFormatting.GRAY)));
 		}
-		else { list.add(c + "7- " + Util.instance.translateGoogle(player, "\"Attributes\" - not specified")); }
+		else {
+			list.add(Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "\"Attributes\" - not specified")).withStyle(TextFormatting.GRAY)));
+		}
 		// tags
 		if (!tags.isEmpty()) {
-			StringBuilder nbt = new StringBuilder();
+			Component nbtKey = Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "Attributes") + ": [").withStyle(TextFormatting.GRAY));
+			boolean start = false;
 			for (DropNbtSet ns : tags) {
-				if (nbt.length() > 0) { nbt.append(c).append("7, "); }
-				nbt.append(ns.path == null ? "null" : c + "a" + ns.path);
+				if (start) { nbtKey.append(Component.literal(", ").withStyle(TextFormatting.GRAY)); }
+				if (ns.path == null) { nbtKey.append(Component.literal("null").withStyle(TextFormatting.GRAY)); }
+				else {
+					nbtKey.append(Component.literal("id: ").withStyle(TextFormatting.GRAY))
+							.append(Component.literal(ns.path).withStyle(TextFormatting.BLUE));
+				}
+				start = true;
 			}
-			list.add(c + "7- " + Util.instance.translateGoogle(player, "Tags") + ": [" + nbt + c + "7]");
+			list.add(nbtKey.append(Component.literal("]").withStyle(TextFormatting.GRAY)));
 		}
-		else { list.add(c + "7- " + Util.instance.translateGoogle(player, "\"NBT tags\" - not specified")); }
+		else {
+			list.add(Component.empty()
+					.append(Component.literal("- " + Util.instance.translateGoogle(player, "\"NBT tags\" - not specified")).withStyle(TextFormatting.GRAY)));
+		}
 		return list;
 	}
 
 	public DropSet copy() {
-		DropSet drop = new DropSet(npcInv, parentDeal);
+		DropSet drop = new DropSet(parent);
 		drop.load(save());
 		return drop;
 	}

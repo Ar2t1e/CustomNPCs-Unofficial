@@ -9,8 +9,24 @@ import noppes.npcs.entity.EntityNPCInterface;
 
 public class RoleInterface implements INPCRole {
 
+	public static final RoleInterface NONE = new RoleInterface(null) {
+
+		@Override
+		public NBTTagCompound save(NBTTagCompound compound) { return compound; }
+
+		@Override
+		public void load(NBTTagCompound compound) { }
+
+		@Override
+		public int getType() { return RoleType.NONE.get(); }
+
+		@Override
+		public RoleType getEnumType() { return RoleType.NONE; }
+
+	};
+
 	public EntityNPCInterface npc;
-	public RoleType type = RoleType.DEFAULT;
+	public RoleType type = RoleType.NONE;
 
 	public RoleInterface(EntityNPCInterface npc) {
 		this.npc = npc;

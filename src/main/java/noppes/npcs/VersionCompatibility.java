@@ -7,8 +7,9 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
+import noppes.npcs.api.ICompatibilty;
 import noppes.npcs.constants.EnumScriptType;
-import noppes.npcs.controllers.ScriptContainer;
+import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.Lines;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -30,10 +31,10 @@ public class VersionCompatibility {
 		}
 		if (npc.npcVersion < 12) {
 			CompatabilityFix(compound, npc.advanced.save(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.ais.writeToNBT(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.stats.writeToNBT(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.display.writeToNBT(new NBTTagCompound()));
-			CompatabilityFix(compound, npc.inventory.writeEntityToNBT(new NBTTagCompound()));
+			CompatabilityFix(compound, npc.ais.save(new NBTTagCompound()));
+			CompatabilityFix(compound, npc.stats.save(new NBTTagCompound()));
+			CompatabilityFix(compound, npc.display.save(new NBTTagCompound()));
+			CompatabilityFix(compound, npc.inventory.save(new NBTTagCompound()));
 		}
 		if (npc.npcVersion < 5) {
 			String texture = compound.getString("Texture");
@@ -95,7 +96,7 @@ public class VersionCompatibility {
 		if (npc.npcVersion == 15) {
 			NBTTagList list = compound.getTagList("ScriptsContainers", 10);
 			if (list.tagCount() > 0) {
-				ScriptContainer script = new ScriptContainer(npc.script, false);
+				ScriptContainer script = new ScriptContainer(npc.script);
 				StringBuilder sb = new StringBuilder();
 				for (int i = 0; i < list.tagCount(); ++i) {
 					NBTTagCompound scriptOld = list.getCompoundTagAt(i);

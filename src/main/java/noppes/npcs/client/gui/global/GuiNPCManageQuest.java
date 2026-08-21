@@ -3,72 +3,185 @@ package noppes.npcs.client.gui.global;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.Map.Entry;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiYesNo;
-import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.client.Client;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.NoppesUtil;
+import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.SubGuiEditText;
+import noppes.npcs.client.gui.drop.SubGuiDropEdit;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.QuestController;
 import noppes.npcs.controllers.data.Dialog;
 import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.controllers.data.QuestCategory;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.util.Util;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketQuestCategoryRemove;
+import noppes.npcs.packets.server.SPacketQuestCategorySave;
+import noppes.npcs.packets.server.SPacketQuestRemove;
+import noppes.npcs.packets.server.SPacketQuestSave;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
-import javax.annotation.Nonnull;
+public class GuiNpcManageQuest
+		extends GuiNPCInterface2
+		implements ICustomScrollListener {
 
-public class GuiNPCManageQuest extends GuiNPCInterface2 implements ICustomScrollListener, GuiYesNoCallback {
+	public static GuiNPCInterface Instance;
+	protected HashMap<Component, QuestCategory> categoryData = new HashMap<>();
+	protected HashMap<Component, Quest> questData = new HashMap<>();
+	protected GuiCustomScrollNop scrollCategories;
+	protected GuiCustomScrollNop scrollQuests;
 
-	protected final TreeMap<String, QuestCategory> categoryData = new TreeMap<>();
-	protected final Map<String, Quest> questData = new LinkedHashMap<>();
-	protected GuiCustomScroll scrollCategories;
-	protected GuiCustomScroll scrollQuests;
-	public static GuiScreen Instance;
 	// New from Unofficial (BetaZavr)
-	protected static boolean isName = true;
-	protected String selectedCategory = "";
-	protected String selectedQuest = "";
-	protected Quest copyQuest = null;
+	private static boolean sortByName = true;
+	private Quest copyQuest = null;
+	private Component selectedCategory = Component.empty();
+	private Component selectedQuest = Component.empty();
 
-	public GuiNPCManageQuest(EntityNPCInterface npc) {
+	public GuiNpcManageQuest(EntityNPCInterface npc) {
 		super(npc);
-		closeOnEsc = true;
-		parentGui = EnumGuiType.MainMenuGlobal;
+		Instance = this;
 
-		GuiNPCManageQuest.Instance = this;
-		Client.sendData(EnumPacketServer.QuestCategoryGet);
+		backGui = EnumGuiType.MainMenuGlobal;
+		// all data getting in SyncController
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1: {
-				setSubGui(new SubGuiEditText(1, Util.instance.deleteColor(new TextComponentTranslation("gui.new").getFormattedText())));
-				break;
+	public void initGui() {
+		super.initGui();
+		categoryData.clear();
+		questData.clear();
+		QuestController qData = QuestController.instance;
+		LinkedHashMap<Integer, List<Component>> hts= new LinkedHashMap<>();
+		for (QuestCategory category : qData.categories.values()) {
+			Component key = category.getTitle();
+			categoryData.put(key, category);
+			if (selectedCategory.getFormattedText().isEmpty() || selectedCategory.getString().equals(key.getString())) { selectedCategory = key; }
+		}
+		boolean hasCategory = !selectedCategory.getFormattedText().isEmpty();
+		if (hasCategory) {
+			if (categoryData.containsKey(selectedCategory)) {
+				Map<Component, Quest> map = new LinkedHashMap<>();
+				for (Quest quest : new ArrayList<>(categoryData.get(selectedCategory).quests.values())) {
+					map.put(quest.getLineKey(), quest);
+				}
+				List<Map.Entry<Component, Quest>> list = getEntryList(map);
+				for (Map.Entry<Component, Quest> entry : list) {
+					questData.put(entry.getKey(), entry.getValue());
+					if (selectedQuest.getFormattedText().isEmpty()) {
+						selectedQuest = entry.getKey();
+					}
+				}
 			}
+			else {
+				selectedCategory = Component.empty();
+				selectedQuest = Component.empty();
+			}
+			// Hover Text:
+			if (!questData.isEmpty()) {
+				int pos = 0;
+				DialogController dData = DialogController.instance;
+				for (Quest quest : questData.values()) {
+					hts.put(pos++, getStrings(quest, qData, dData));
+				}
+			}
+		}
+		if (hasCategory && !categoryData.containsKey(selectedCategory)) { selectedCategory = Component.empty(); }
+		boolean hasQuest = !selectedQuest.getFormattedText().isEmpty();
+		if (hasQuest && !questData.containsKey(selectedQuest)) { selectedQuest = Component.empty(); }
+		// scroll info
+		addLabel(0, guiLeft + 8, guiTop + 4, "gui.categories");
+		addLabel(1, guiLeft + 180, guiTop + 4, "quest.quests");
+		// quest buttons
+		int x = guiLeft + 350, y = guiTop + 8;
+		addLabel(3, guiLeft + 356, guiTop + 8, "quest.quests");
+		addButton(13, x, y += 10, "selectServer.edit")
+				.setSize(64, 15)
+				.setIsEnabled(hasQuest)
+				.setHoverTexts("manager.hover.quest.edit", selectedQuest);
+		addButton(12, x, y += 17, "gui.remove")
+				.setSize(64, 15)
+				.setIsEnabled(hasQuest)
+				.setHoverTexts("manager.hover.quest.del", selectedQuest);
+		addButton(11, x, y += 17, "gui.add")
+				.setSize(64, 15)
+				.setIsEnabled(hasCategory)
+				.setHoverTexts("manager.hover.quest.add", selectedCategory);
+		addButton(10, x, y += 21, "gui.copy")
+				.setSize(64, 15)
+				.setIsEnabled(hasQuest)
+				.setHoverTexts("manager.hover.quest.copy", selectedQuest);
+		addButton(9, x, y += 17, "gui.paste")
+				.setSize(64, 15)
+				.setIsEnabled(copyQuest != null)
+				.setHoverTexts("manager.hover.quest.paste." + (copyQuest != null), copyQuest != null ? copyQuest.getLineKey() : "");
+		GuiButtonNop checkBox = addCheckBox(14, x, y + 17, "gui.name", "ID", sortByName)
+				.setSize(64, 15);
+		checkBox.setHoverTexts(Component.translatable("hover.sort",
+				Component.translatable("dialog.dialogs").getFormattedText(),
+				checkBox.getMessage().getFormattedText()));
+
+		// category buttons
+		y = guiTop + 140;
+		addLabel(2, x + 2, y, "gui.categories");
+		addButton(3, x, y += 10, "selectServer.edit")
+				.setSize(64, 15)
+				.setIsEnabled(hasCategory)
+				.setHoverTexts("manager.hover.category.edit");
+		addButton(2, x, y += 17, "gui.remove")
+				.setSize(64, 15)
+				.setIsEnabled(hasCategory)
+				.setHoverTexts("manager.hover.category.del");
+		addButton(1, x, y + 17, "gui.add")
+				.setSize(64, 15)
+				.setHoverTexts("manager.hover.category.add");
+
+		if (scrollCategories == null) { scrollCategories = addScroll(0).setSize(170, 198); }
+		if (hasCategory) { scrollCategories.setSelected(selectedCategory); }
+		scrollCategories.setNormalList(new ArrayList<>(categoryData.keySet()))
+				.setPos( guiLeft + 4, guiTop + 15);
+		add(scrollCategories);
+
+		if (scrollQuests == null) { scrollQuests = addScroll(1).setSize(170, 198); }
+		if (hasQuest) { scrollQuests.setSelected(selectedQuest); }
+		scrollQuests.setUnsortedList(new ArrayList<>(questData.keySet()))
+				.setHoverTexts(hts)
+				.setPos(guiLeft + 176, guiTop + 15);
+		add(scrollQuests);
+	}
+
+	@Override
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 1: {
+				setSubGui(new SubGuiEditText(1, Component.translatable("gui.new").getFormattedText()));
+				break;
+			} // new category
 			case 2: {
 				if (!categoryData.containsKey(selectedCategory)) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this,
-						categoryData.get(selectedCategory).title,
-						new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 2);
-				displayGuiScreen(guiyesno);
+				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+					if (bo) { Packets.sendServer(new SPacketQuestCategoryRemove(categoryData.get(selectedCategory).id)); }
+					NoppesUtil.openGUI(player, this);
+				},
+						selectedCategory.getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
-			}
+			} // remove category
 			case 3: {
 				if (!categoryData.containsKey(selectedCategory)) { return; }
 				setSubGui(new SubGuiEditText(3, categoryData.get(selectedCategory).title));
 				break;
-			}
+			} // rename category
 			case 9: {
 				if (copyQuest == null || !categoryData.containsKey(selectedCategory)) { return; }
 				Quest quest = copyQuest.copy();
@@ -87,8 +200,8 @@ public class GuiNPCManageQuest extends GuiNPCInterface2 implements ICustomScroll
 					if (has) { t.append("_"); }
 				}
 				quest.setName(t.toString());
-				selectedQuest = getKey(quest);
-				Client.sendData(EnumPacketServer.QuestSave, quest.category.id, quest.save(new NBTTagCompound()));
+				selectedQuest = quest.getLineKey();
+				Packets.sendServer(new SPacketQuestSave(quest.category.id, quest.save(new NBTTagCompound())));
 				initGui();
 				break;
 			} // paste
@@ -99,213 +212,56 @@ public class GuiNPCManageQuest extends GuiNPCInterface2 implements ICustomScroll
 				break;
 			} // copy
 			case 11: {
-				setSubGui(new SubGuiEditText(11, Util.instance.deleteColor(new TextComponentTranslation("gui.new").getFormattedText())));
+				setSubGui(new SubGuiEditText(11, Component.translatable("gui.new").getString()));
 				break;
-			}
+			} // new quest
 			case 12: {
 				if (!questData.containsKey(selectedQuest)) { return; }
-				GuiYesNo guiyesno = new GuiYesNo(this, questData.get(selectedQuest).getTitle(), new TextComponentTranslation("gui.deleteMessage").getFormattedText(), 12);
-				displayGuiScreen(guiyesno);
+				ConfirmScreen guiYesNo = new ConfirmScreen((bo) -> {
+					if (bo) { Packets.sendServer(new SPacketQuestRemove(questData.get(selectedQuest).id)); }
+					NoppesUtil.openGUI(player, this);
+				},
+						selectedQuest.getParent(),
+						Component.translatable("message.delete").getParent());
+				setScreen(guiYesNo);
 				break;
-			}
+			} // remove quest
 			case 13: {
 				if (!questData.containsKey(selectedQuest)) { return; }
+				SubGuiDropEdit.parent = this;
+				SubGuiDropEdit.parentContainer = null;
+				SubGuiDropEdit.parentData = null;
 				setSubGui(new SubGuiQuestEdit(questData.get(selectedQuest)));
 				break;
-			}
+			} // edit quest
 			case 14: {
-				GuiNPCManageQuest.isName = ((GuiNpcCheckBox) button).isSelected();
-				button.setHoverText("hover.sort", new TextComponentTranslation("dialog.dialogs").getFormattedText(), ((GuiNpcCheckBox) button).getText());
+				sortByName = ((GuiCheckBoxNop) button).selected();
+				initGui();
 				break;
-			}
-		}
-	}
-
-	@Override
-	public void confirmClicked(boolean result, int id) {
-		NoppesUtil.openGUI(player, this);
-		if (!result) { return; }
-		if (id == 2) {
-			Client.sendData(EnumPacketServer.QuestCategoryRemove, categoryData.get(selectedCategory).id);
-			selectedCategory = "";
-			selectedQuest = "";
-		}
-		if (id == 12) {
-			Client.sendData(EnumPacketServer.QuestRemove, questData.get(selectedQuest).id);
-			selectedQuest = "";
+			} // sort
 		}
 	}
 
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
-		if (hasSubGui()) { return; }
-		drawHorizontalLine(guiLeft + 348, guiLeft + 414, guiTop + 128, new Color(0x80000000).getRGB());
-	}
-
-	@Override
-	public void initGui() {
-		super.initGui();
-		categoryData.clear();
-		questData.clear();
-		QuestController qData = QuestController.instance;
-		LinkedHashMap<Integer, List<String>> hts= new LinkedHashMap<>();
-		for (QuestCategory category : qData.categories.values()) {
-			categoryData.put(category.title, category);
-			if (selectedCategory.isEmpty()) { selectedCategory = category.title; }
+		if (!hasSubGui()) {
+			drawHorizontalLine(guiLeft + 348, guiLeft + 414, guiTop + 128, new Color(0x80000000).getRGB());
 		}
-		if (!selectedCategory.isEmpty()) {
-			if (categoryData.containsKey(selectedCategory)) {
-				Map<String, Quest> map = new TreeMap<>();
-				for (Quest quest : categoryData.get(selectedCategory).quests.values()) { map.put(getKey(quest), quest); }
-				List<Entry<String, Quest>> list = getEntryList(map);
-				for (Entry<String, Quest> entry : list) {
-					questData.put(entry.getKey(), entry.getValue());
-					if (selectedQuest.isEmpty()) { selectedQuest = entry.getKey(); }
-				}
-			} else {
-				selectedCategory = "";
-				selectedQuest = "";
-			}
-			// Hover Text:
-			if (!questData.isEmpty()) {
-				int pos = 0;
-				DialogController dData = DialogController.instance;
-				for (Quest quest : questData.values()) { hts.put(pos++, getStrings(quest, qData, dData)); }
-			}
-		}
-		if (!selectedCategory.isEmpty() && !categoryData.containsKey(selectedCategory)) { selectedCategory = ""; }
-		if (!selectedQuest.isEmpty() && !questData.containsKey(selectedQuest)) { selectedQuest = ""; }
-		// scroll info
-		addLabel(new GuiNpcLabel(0, "gui.categories", guiLeft + 8, guiTop + 4));
-		addLabel(new GuiNpcLabel(1, "quest.quests", guiLeft + 180, guiTop + 4));
-		// quest buttons
-		int x = guiLeft + 350, y = guiTop + 8;
-		addLabel(new GuiNpcLabel(3, "quest.quests", guiLeft + 356, guiTop + 8));
-		addButton(new GuiNpcButton(13, x, y += 10, 64, 15, "selectServer.edit", !selectedQuest.isEmpty())
-				.setHoverText("manager.hover.quest.edit", selectedQuest));
-		addButton(new GuiNpcButton(12, x, y += 17, 64, 15, "gui.remove", !selectedQuest.isEmpty())
-				.setHoverText("manager.hover.quest.del", selectedQuest));
-		addButton(new GuiNpcButton(11, x, y += 17, 64, 15, "gui.add", !selectedCategory.isEmpty())
-				.setHoverText("manager.hover.quest.add", selectedCategory));
-		addButton(new GuiNpcButton(10, x, y += 21, 64, 15, "gui.copy", !selectedCategory.isEmpty())
-				.setIsEnable(!selectedQuest.isEmpty())
-				.setHoverText("manager.hover.quest.copy", selectedQuest));
-		addButton(new GuiNpcButton(9, x, y += 17, 64, 15, "gui.paste", copyQuest != null)
-				.setHoverText("manager.hover.quest.paste." + (copyQuest != null), copyQuest != null ? copyQuest.getKey() : ""));
-		addButton(new GuiNpcCheckBox(14, x, y + 17, 64, 14, "gui.name", "ID", GuiNPCManageQuest.isName)
-				.setHoverText("hover.sort", new TextComponentTranslation("dialog.dialogs").getFormattedText(), GuiNPCManageQuest.isName ? new TextComponentTranslation("gui.name").getFormattedText() : "ID"));
-		// category buttons
-		y = guiTop + 134;
-		addLabel(new GuiNpcLabel(2, "gui.categories", x + 2, y));
-		addButton(new GuiNpcButton(3, x, y += 10, 64, 15, "selectServer.edit", !selectedCategory.isEmpty())
-				.setHoverText("manager.hover.category.edit"));
-		addButton(new GuiNpcButton(2, x, y += 17, 64, 15, "gui.remove", !selectedCategory.isEmpty())
-				.setHoverText("manager.hover.category.del"));
-		addButton(new GuiNpcButton(1, x, y + 17, 64, 15, "gui.add")
-				.setHoverText("manager.hover.category.add"));
-		if (scrollCategories == null) { scrollCategories = new GuiCustomScroll(this, 0).setSize(170, ySize - 3); }
-		scrollCategories.setList(new ArrayList<>(categoryData.keySet()));
-		scrollCategories.guiLeft = guiLeft + 4;
-		scrollCategories.guiTop = guiTop + 15;
-		if (!selectedCategory.isEmpty()) { scrollCategories.setSelected(selectedCategory); }
-		addScroll(scrollCategories);
-		if (scrollQuests == null) { scrollQuests = new GuiCustomScroll(this, 1).setSize(170, ySize - 3); }
-		scrollQuests.setUnsortedList(new ArrayList<>(questData.keySet()));
-		scrollQuests.setHoverTexts(hts);
-		scrollQuests.guiLeft = guiLeft + 176;
-		scrollQuests.guiTop = guiTop + 15;
-		if (!selectedQuest.isEmpty()) { scrollQuests.setSelected(selectedQuest); }
-		addScroll(scrollQuests);
-	}
-
-	private static List<Entry<String, Quest>> getEntryList(Map<String, Quest> map) {
-		List<Entry<String, Quest>> list = new ArrayList<>(map.entrySet());
-		list.sort((d_0, d_1) -> {
-			if (GuiNPCManageQuest.isName) {
-			String n_0 = Util.instance.deleteColor(new TextComponentTranslation(d_0.getValue().title).getFormattedText() + "_" + d_0.getValue().id).toLowerCase();
-			String n_1 = Util.instance.deleteColor(new TextComponentTranslation(d_1.getValue().title).getFormattedText() + "_" + d_1.getValue().id).toLowerCase();
-			return n_0.compareTo(n_1);
-			} else {
-			return Integer.compare(d_0.getValue().id, d_1.getValue().id);
-			}
-		});
-		return list;
-	}
-
-	private String getKey(Quest quest) {
-		boolean b = quest.isSetUp();
-		return ((char) 167) + "7ID:" + quest.id + "-\"" + ((char) 167) + "r" + quest.getTitle() + ((char) 167) + "7\"" + ((char) 167)
-				+ (b ? "2 (" : "c (") + (new TextComponentTranslation("quest.has." + b).getFormattedText())
-				+ ((char) 167) + (b ? "2)" : "c)");
-	}
-
-	private List<String> getStrings(Quest quest, QuestController qData, DialogController dData) {
-		List<String> h = new ArrayList<>();
-		List<String> quests = new ArrayList<>();
-		List<String> dialogs = new ArrayList<>();
-		h.add(new TextComponentTranslation(quest.title).getFormattedText() + ":");
-		for (Quest q : qData.quests.values()) {
-			if (q.nextQuest != quest.id) { continue; }
-			quests.add(((char) 167) + "7ID:" + q.id + ((char) 167) + "8 " + q.category.getName() + "/" + ((char) 167) + "r" + q.getName());
-		}
-		for (Dialog d : dData.dialogs.values()) {
-			if (d.quest != quest.id) { continue; }
-			dialogs.add(((char) 167) + "7ID:" + d.id + ((char) 167) + "8 " + d.category.getName() + "/" + ((char) 167) + "r" + d.getName());
-		}
-		if (quests.isEmpty() && dialogs.isEmpty()) { h.add(new TextComponentTranslation("quest.hover.quest.0").getFormattedText()); }
-		if (!quests.isEmpty()) {
-			h.add(new TextComponentTranslation("quest.hover.in.quests").getFormattedText());
-			h.addAll(quests);
-		}
-		else { h.add(new TextComponentTranslation("quest.hover.quest.1").getFormattedText()); }
-		if (!dialogs.isEmpty()) {
-			h.add(new TextComponentTranslation("quest.hover.in.dialogs").getFormattedText());
-			h.addAll(dialogs);
-		}
-		else { h.add(new TextComponentTranslation("quest.hover.quest.2").getFormattedText()); }
-		return h;
-	}
-
-
-	@Override
-	public void save() {
-		GuiNpcTextField.unfocus();
-	}
-
-	@Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) {
-		if (!scroll.hasSelected()) { return; }
-		if (scroll.getID() == 0) {
-			if (selectedCategory.equals(scroll.getSelected())) { return; }
-			selectedCategory = scroll.getSelected();
-			selectedQuest = "";
-			scrollQuests.setSelect(-1);
-		}
-		if (scroll.getID() == 1) {
-			if (selectedQuest.equals(scroll.getSelected())) { return; }
-			selectedQuest = scroll.getSelected();
-		}
-		initGui();
-	}
-
-	@Override
-	public void scrollDoubleClicked(String selection, GuiCustomScroll scroll) {
-		if (!selectedQuest.isEmpty() && scroll.getID() == 1) { setSubGui(new SubGuiQuestEdit(questData.get(selectedQuest))); }
-		else if (!selectedCategory.isEmpty() && scroll.getID() == 0) { setSubGui(new SubGuiEditText(3, categoryData.get(selectedCategory).title)); }
 	}
 
 	@Override
 	public void subGuiClosed(GuiScreen subgui) {
 		if (subgui instanceof SubGuiEditText && !((SubGuiEditText) subgui).cancelled) {
-			if (((SubGuiEditText) subgui).getId() == 1) { // create category
+			SubGuiEditText editText = (SubGuiEditText) subgui;
+			if (editText.id == 1) {
 				QuestCategory category = new QuestCategory();
-				StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
+				StringBuilder t = new StringBuilder(editText.text[0]);
 				boolean has = true;
 				while (has) {
 					has = false;
-					for (QuestCategory cat : QuestController.instance.categories.values()) {
-						if (cat.id != category.id && cat.title.equalsIgnoreCase(t.toString())) {
+					for (QuestCategory cat : new ArrayList<>(QuestController.instance.categories.values())) {
+						if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
 							has = true;
 							break;
 						}
@@ -313,20 +269,18 @@ public class GuiNPCManageQuest extends GuiNPCInterface2 implements ICustomScroll
 					if (has) { t.append("_"); }
 				}
 				category.title = t.toString();
-				selectedCategory = category.title;
-				Client.sendData(EnumPacketServer.QuestCategorySave, category.save(new NBTTagCompound()));
-				initGui();
-			}
-			if (((SubGuiEditText) subgui).getId() == 3) { // rename category
-				if (((SubGuiEditText) subgui).text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
-				QuestCategory category = categoryData.get(selectedCategory).copy();
-				if (category.title.equals(((SubGuiEditText) subgui).text[0])) { return; }
-				StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
+				Packets.sendServer(new SPacketQuestCategorySave(category.save(new NBTTagCompound())));
+			} // create category
+			else if (editText.id == 3) {
+				if (editText.text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
+				QuestCategory category = categoryData.get(selectedCategory);
+				if (category.getName().equals(editText.text[0])) { return; }
+				StringBuilder t = new StringBuilder(editText.text[0]);
 				boolean has = true;
 				while (has) {
 					has = false;
 					for (QuestCategory cat : QuestController.instance.categories.values()) {
-						if (cat.id != category.id && cat.title.equalsIgnoreCase(t.toString())) {
+						if (category.id != cat.id && cat.title.equalsIgnoreCase(t.toString())) {
 							has = true;
 							break;
 						}
@@ -334,32 +288,118 @@ public class GuiNPCManageQuest extends GuiNPCInterface2 implements ICustomScroll
 					if (has) { t.append("_"); }
 				}
 				category.title = t.toString();
-				selectedCategory = category.title;
-				Client.sendData(EnumPacketServer.QuestCategorySave, category.save(new NBTTagCompound()));
-				initGui();
-			}
-			if (((SubGuiEditText) subgui).getId() == 11) { // create quest
-				if (((SubGuiEditText) subgui).text[0].isEmpty()) { return; }
-				Quest quest = new Quest(categoryData.get(selectedCategory));
-				StringBuilder t = new StringBuilder(((SubGuiEditText) subgui).text[0]);
+				NBTTagCompound compound = category.save(new NBTTagCompound());
+				selectedCategory = Component.translatable(category.title);
+				Packets.sendServer(new SPacketQuestCategorySave(compound));
+			} // rename category
+			else if (editText.id == 11) {
+				if (editText.text[0].isEmpty() || !categoryData.containsKey(selectedCategory)) { return; }
+				QuestCategory category = categoryData.get(selectedCategory);
+				Quest quest = new Quest(category);
+				StringBuilder t = new StringBuilder(editText.text[0]);
 				boolean has = true;
 				while (has) {
 					has = false;
-					for (Quest q : quest.category.quests.values()) {
-						if (quest.id != q.id && q.title.equalsIgnoreCase(t.toString())) {
+					for (Quest qet : new ArrayList<>(quest.category.quests.values())) {
+						if (qet.id != quest.id && qet.title.equalsIgnoreCase(t.toString())) {
 							has = true;
 							break;
 						}
 					}
 					if (has) { t.append("_"); }
 				}
-				quest.setName(t.toString());
-				selectedQuest = getKey(quest);
-				Client.sendData(EnumPacketServer.QuestSave, categoryData.get(selectedCategory).id, quest.save(new NBTTagCompound()));
-				initGui();
-			}
+				quest.title = t.toString();
+				Packets.sendServer(new SPacketQuestSave(category.id, quest.save(new NBTTagCompound())));
+			} // create quest
 		}
 		if (subgui instanceof SubGuiQuestEdit) { initGui(); }
+	}
+
+	@Override
+	public void scrollClicked(GuiCustomScrollNop scroll) {
+		if (!scroll.hasSelected()) { return; }
+		if (scroll.id == 0) {
+			if (selectedCategory.getFormattedText().equals(scroll.getSelected())) { return; }
+			selectedCategory = scrollCategories.getNormalSelected();
+			selectedQuest = Component.empty();
+			scrollQuests.clearSelection();
+		}
+		else if (scroll.id == 1) {
+			if (selectedQuest.getFormattedText().equals(scroll.getSelected())) { return; }
+			selectedQuest = scrollQuests.getNormalSelected();
+		}
+		initGui();
+	}
+
+	@Override
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
+		if (scroll.id == 0 && categoryData.containsKey(selectedCategory)) { setSubGui(new SubGuiEditText(3, categoryData.get(selectedCategory).title)); }
+		else if (scroll.id == 1 && questData.containsKey(selectedQuest)) {
+			SubGuiDropEdit.parent = this;
+			SubGuiDropEdit.parentContainer = null;
+			SubGuiDropEdit.parentData = null;
+			setSubGui(new SubGuiQuestEdit(questData.get(selectedQuest)));
+		}
+	}
+
+	@Override
+	public void save() { GuiTextFieldNop.unfocus(); }
+
+	// New from Unofficial (BetaZavr)
+	private static List<Map.Entry<Component, Quest>> getEntryList(Map<Component, Quest> map) {
+		List<Map.Entry<Component, Quest>> list = new ArrayList<>(map.entrySet());
+		list.sort((d_0, d_1) -> {
+			if (sortByName) {
+				String n_0 = (Component.translatable(d_0.getValue().title).getString() + "_" + d_0.getValue().id).toLowerCase();
+				String n_1 = (Component.translatable(d_1.getValue().title).getString() + "_" + d_1.getValue().id).toLowerCase();
+				return n_0.compareTo(n_1);
+			} else {
+				return Integer.compare(d_0.getValue().id, d_1.getValue().id);
+			}
+		});
+		return list;
+	}
+
+	private List<Component> getStrings(Quest quest, QuestController qData, DialogController dData) {
+		List<Component> h = new ArrayList<>();
+		List<Component> quests = new ArrayList<>();
+		List<Component> dialogs = new ArrayList<>();
+		h.add(Component.translatable(quest.title).append(":"));
+		for (Quest q : qData.quests.values()) {
+			if (q.nextQuestId != quest.id) { continue; }
+			quests.add(Component.empty()
+					.append(Component.literal("ID:" + q.id).withStyle(TextFormatting.GRAY))
+					.append(Component.literal(q.category.getName() + "/").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal(q.getName()).withStyle(TextFormatting.RESET)));
+		}
+		for (Dialog d : dData.dialogs.values()) {
+			if (d.quest != quest.id) {
+				continue;
+			}
+			dialogs.add(Component.empty()
+					.append(Component.literal("ID:" + d.id).withStyle(TextFormatting.GRAY))
+					.append(Component.literal(d.category.getName() + "/").withStyle(TextFormatting.DARK_GRAY))
+					.append(Component.literal(d.getName()).withStyle(TextFormatting.RESET)));
+		}
+
+		if (quests.isEmpty() && dialogs.isEmpty()) {
+			h.add(Component.translatable("quest.hover.quest.0"));
+		}
+
+		if (!quests.isEmpty()) {
+			h.add(Component.translatable("quest.hover.in.quests"));
+			h.addAll(quests);
+		} else {
+			h.add(Component.translatable("quest.hover.quest.1"));
+		}
+
+		if (!dialogs.isEmpty()) {
+			h.add(Component.translatable("quest.hover.in.dialogs"));
+			h.addAll(dialogs);
+		} else {
+			h.add(Component.translatable("quest.hover.quest.2"));
+		}
+		return h;
 	}
 
 }

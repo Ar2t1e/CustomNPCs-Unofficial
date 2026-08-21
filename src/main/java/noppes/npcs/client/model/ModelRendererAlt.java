@@ -4,6 +4,9 @@ import java.util.*;
 
 import noppes.npcs.api.util.IModelRenderer;
 import noppes.npcs.client.model.animation.AnimationFrameConfig;
+import noppes.npcs.client.model.animation.PartConfig;
+import noppes.npcs.client.model.part.ModelPartConfig;
+import noppes.npcs.client.renderer.obj.ParameterizedModel;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.Minecraft;
@@ -15,19 +18,17 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec2f;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.ModelPartConfig;
 import noppes.npcs.client.model.animation.AddedPartConfig;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.entity.data.DataAnimation;
-import noppes.npcs.items.CustomArmor;
+import noppes.npcs.items.custom.CustomArmor;
 
 public class ModelRendererAlt
 		extends ModelRenderer
@@ -58,7 +59,9 @@ public class ModelRendererAlt
 	public float u;
 	public float v;
 
-	private int displayList, displayOBJListUp, displayOBJListDown;
+	private int displayList = -1;
+	private ParameterizedModel displayOBJListUp = null;
+	private ParameterizedModel displayOBJListDown = null;
 	public float rotateAngleX1 = 0.0f;
 	public float rotateAngleY1 = 0.0f;
 
@@ -106,11 +109,13 @@ public class ModelRendererAlt
 		v = addedPartConfig.textureV;
 		isNormal = addedPartConfig.isNormal;
 		baseNormal = addedPartConfig.isNormal;
-		textureLocation = addedPartConfig.location;
 		objLocationUp = addedPartConfig.objUp;
 		objLocationDown = addedPartConfig.objDown;
-		if (objLocationUp != null) { displayOBJListUp = ModelBuffer.getDisplayList(objLocationUp, null, null); }
-		if (objLocationDown != null) { displayOBJListDown = ModelBuffer.getDisplayList(objLocationDown, null, null); }
+		textureLocation = addedPartConfig.location;
+		Map<String, ResourceLocation> map = new HashMap<>();
+		map.put("All", textureLocation);
+		if (objLocationUp != null) { displayOBJListUp = ModelBuffer.getParameterizedModel(objLocationUp, null, map, false, 0, true); }
+		if (objLocationDown != null) { displayOBJListDown = ModelBuffer.getParameterizedModel(objLocationDown, null, map, false, 0, true); }
 		baseRotationPoint = new float[] { rotationPointX, rotationPointY, rotationPointZ };
 		setBox(addedPartConfig.pos[0], addedPartConfig.pos[1], addedPartConfig.pos[2], addedPartConfig.size[0], addedPartConfig.size[1], addedPartConfig.size[2], addedPartConfig.size[3], addedPartConfig.size[4], 0.0f);
 		setRotationPoint(addedPartConfig.rot[0], addedPartConfig.rot[1], addedPartConfig.rot[2]);
@@ -151,7 +156,7 @@ public class ModelRendererAlt
 			if (smallArms) { ox += part == EnumParts.ARM_LEFT ? -0.020833f : 0.020833f; }
 			GlStateManager.translate(ox, offsetAnimY, offsetAnimZ);
 		}
-		GlStateManager.translate(rotationPointX * scale, (rotationPointY + offsetAnimY) * scale, (rotationPointZ + offsetAnimZ) * scale);
+		GlStateManager.translate(rotationPointX * scale, rotationPointY * scale, rotationPointZ * scale);
 
 		if (rotateAngleZ != 0.0F) { GlStateManager.rotate(rotateAngleZ * (180F / (float)Math.PI), 0.0F, 0.0F, 1.0F); }
 		if (rotateAngleY != 0.0F) { GlStateManager.rotate(rotateAngleY * (180F / (float)Math.PI), 0.0F, 1.0F, 0.0F); }
@@ -178,7 +183,7 @@ public class ModelRendererAlt
 		}
 		// render
 		if (textureLocation != null) { Minecraft.getMinecraft().getTextureManager().bindTexture(textureLocation); }
-		if (displayOBJListUp > 0 || displayOBJListDown > 0) { objDraw(); }
+		if (!notOBJModel()) { objDraw(); }
 		else {
 			clearData();
 			if (isNormal || !CustomNpcs.ShowJoints || (rotateAngleX1 == 0.0f && rotateAngleY1 == 0.0f)) {
@@ -274,12 +279,10 @@ public class ModelRendererAlt
 		}
 		GlStateManager.enableBlend();
 		GlStateManager.rotate(180.0f, 1.0f, 0.0f, 0.0f);
-		Minecraft mc = Minecraft.getMinecraft();
-		if (displayOBJListUp > 0) {
-			mc.getTextureManager().bindTexture(textureLocation != null ? textureLocation : TextureMap.LOCATION_BLOCKS_TEXTURE);
-			GlStateManager.callList(displayOBJListUp);
+		if (displayOBJListUp != null) {
+			ModelBuffer.render(displayOBJListUp);
 		}
-		if (displayOBJListDown > 0) {
+		if (displayOBJListDown != null) {
 			if (rotateAngleX1 != 0.0f) {
 				boolean isArm = part.name().toLowerCase().contains("arm");
 				float ofsY = dy2 - dy0;
@@ -301,10 +304,7 @@ public class ModelRendererAlt
 				GlStateManager.rotate(rotateAngleY1 * 180.0f / (float) Math.PI, 0.0f, 1.0f, 0.0f);
 				GlStateManager.translate(-ofs, 0.0f, 0.0f);
 			}
-			if (textureLocation == null) {
-				Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-			}
-			GlStateManager.callList(displayOBJListDown);
+			ModelBuffer.render(displayOBJListDown);
 		}
 		GlStateManager.disableBlend();
 	}
@@ -818,46 +818,45 @@ public class ModelRendererAlt
 	}
 
 	public void clearOBJ() {
-		if (displayOBJListUp > 0) { displayOBJListUp = -1; }
-		if (displayOBJListDown > 0) { displayOBJListDown = -1; }
+		if (displayOBJListUp != null) { displayOBJListUp = null; }
+		if (displayOBJListDown != null) { displayOBJListDown = null; }
 	}
 
 	public void setOBJModel(ItemStack stack, EnumParts part) {
 		if (stack == null || !(stack.getItem() instanceof CustomArmor)) {
-			displayOBJListUp = 0;
-			displayOBJListDown = 0;
+			displayOBJListUp = null;
+			displayOBJListDown = null;
 			return;
 		}
 		CustomArmor armor = (CustomArmor) stack.getItem();
-		Map<String, String> map = null;
-		if (stack.hasTagCompound() && stack.getTagCompound() != null && stack.getTagCompound().hasKey("OBJTexture")) {
-			ResourceLocation mainTexture = ModelBuffer.getMainOBJTexture(armor.objModel);
-			if (mainTexture != null) {
-				map = new HashMap<>();
-				map.put(mainTexture.toString(), stack.getTagCompound().getString("OBJTexture"));
-			}
+		Map<String, ResourceLocation> map = new HashMap<>();
+		ResourceLocation mainTexture = ModelBuffer.getMainOBJTexture(armor.objModel);
+		if (mainTexture != null && stack.hasTagCompound() && stack.getTagCompound() != null && stack.getTagCompound().hasKey("OBJTexture")) {
+			map.put(mainTexture.toString(), new ResourceLocation(stack.getTagCompound().getString("OBJTexture")));
+		} else if (textureLocation != null) {
+			map.put("All", textureLocation);
 		}
 		if ((this.part == EnumParts.LEG_RIGHT && part == EnumParts.FEET_RIGHT) ||
 				(this.part == EnumParts.LEG_LEFT && part == EnumParts.FEET_LEFT)) {
-			displayOBJListDown = ModelBuffer.getDisplayList(armor.objModel, armor.getMeshNames(part), map);
+			displayOBJListDown = ModelBuffer.getParameterizedModel(armor.objModel, armor.getMeshNames(part), map, false, 0, true);
 		}
 		else {
-			displayOBJListUp = ModelBuffer.getDisplayList(armor.objModel, armor.getMeshNames(part != null ? part : this.part), map);
+			displayOBJListUp = ModelBuffer.getParameterizedModel(armor.objModel, armor.getMeshNames(part != null ? part : this.part), map, false, 0, true);
 			switch(this.part) {
 				case ARM_RIGHT: {
-					displayOBJListDown = ModelBuffer.getDisplayList(armor.objModel, armor.getMeshNames(EnumParts.WRIST_RIGHT), map);
+					displayOBJListDown = ModelBuffer.getParameterizedModel(armor.objModel, armor.getMeshNames(EnumParts.WRIST_RIGHT), map, false, 0, true);
 					break;
 				}
 				case ARM_LEFT: {
-					displayOBJListDown = ModelBuffer.getDisplayList(armor.objModel, armor.getMeshNames(EnumParts.WRIST_LEFT), map);
+					displayOBJListDown = ModelBuffer.getParameterizedModel(armor.objModel, armor.getMeshNames(EnumParts.WRIST_LEFT), map, false, 0, true);
 					break;
 				}
 				case LEG_RIGHT: {
-					displayOBJListDown = ModelBuffer.getDisplayList(armor.objModel, armor.getMeshNames(EnumParts.FOOT_RIGHT), map);
+					displayOBJListDown = ModelBuffer.getParameterizedModel(armor.objModel, armor.getMeshNames(EnumParts.FEET_RIGHT), map, false, 0, true);
 					break;
 				}
 				case LEG_LEFT: {
-					displayOBJListDown = ModelBuffer.getDisplayList(armor.objModel, armor.getMeshNames(EnumParts.FOOT_LEFT), map);
+					displayOBJListDown = ModelBuffer.getParameterizedModel(armor.objModel, armor.getMeshNames(EnumParts.FEET_LEFT), map, false, 0, true);
 					break;
 				}
 				default: { break; }
@@ -865,9 +864,7 @@ public class ModelRendererAlt
 		}
 	}
 
-	public boolean notOBJModel() {
-		return displayOBJListUp <= 0 && displayOBJListDown <= 0;
-	}
+	public boolean notOBJModel() { return displayOBJListUp == null && displayOBJListDown == null; }
 
 	public void setBaseData(ModelPartConfig config) {
 		if (config == null) {
@@ -879,17 +876,20 @@ public class ModelRendererAlt
 			scaleZ = 1.0f;
 			return;
 		}
-		offsetAnimX = config.offset[0];
-		offsetAnimY = config.offset[1];
-		offsetAnimZ = config.offset[2];
-		scaleX = config.scale[0];
-		scaleY = config.scale[1];
-		scaleZ = config.scale[2];
+		offsetAnimX = config.transX;
+		offsetAnimY = config.transY;
+		offsetAnimZ = config.transZ;
+		scaleX = config.scaleX;
+		scaleY = config.scaleY;
+		scaleZ = config.scaleZ;
 	}
 
 	public void putAnimation(DataAnimation animation) {
 		AnimationFrameConfig preFrame = animation.getPreFrame();
-		if (preFrame == null || !preFrame.parts.containsKey(partId)) { return; }
+		if (preFrame == null) return;
+		if (!preFrame.parts.containsKey(partId)) {
+			preFrame.parts.put(partId, new PartConfig(partId, part));
+		}
 		preFrame.parts.get(partId).show = showModel;
 
 		preFrame.parts.get(partId).rotation[0] = rotateAngleX;

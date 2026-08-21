@@ -10,121 +10,113 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
+import noppes.npcs.api.handler.data.IPlayerData;
+import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
-import noppes.npcs.NpcMiscInventory;
 import noppes.npcs.containers.ContainerNPCBank;
 import noppes.npcs.controllers.BankController;
 
-public class PlayerBankData {
+import javax.annotation.Nonnull;
 
+public class PlayerBankData implements IPlayerData {
+
+	protected static final String dataName = "BankData";
+
+	private final PlayerData main;
 	public BankData lastBank;
-	private String uuid; // playerUUID
 	private int delay;
 
-	@SuppressWarnings("all")
-	public BankData get(int bankId) {
-		if (this.lastBank != null && this.lastBank.bank.id == bankId) {
-			return this.lastBank;
-		}
-		Bank bank = BankController.getInstance().getBank(bankId);
-		if (bank == null) {
-			return null;
-		}
-		if (bank.isPublic) {
-			return bank.getBankData();
-		}
+	public PlayerBankData(PlayerData playerData) { main = playerData; }
 
-		File dir = CustomNpcs.getWorldSaveDirectory("playerdata/" + this.uuid + "/banks");
-		File file = new File(dir, bank.id + ".dat");
-		this.lastBank = new BankData(bank, this.uuid);
-		if (!file.exists()) { // create new
-			try {
-				file.createNewFile();
-				CompressedStreamTools.writeCompressed(this.lastBank.getNBT(), Files.newOutputStream(file.toPath()));
-			} catch (Exception e) {
-				LogWriter.error(e);
-				this.lastBank = null;
-				return null;
-			}
+	public @Nonnull BankData get(int bankId) {
+		Bank bank = BankController.getInstance().getBank(bankId);
+		if (bank == null || main.uuid.isEmpty() || main.player == null || main.player.world.isRemote) {
+			return new BankData(bank, main.uuid);
 		}
-		// load
+		if (lastBank != null && lastBank.bank.id == bankId && lastBank.isPlayer(main.uuid)) { return lastBank; }
+		if (bank.isPublic) { return bank.getPublicData(); }
+		lastBank = new BankData(bank, main.uuid);
+		File file = CustomNpcs.getWorldSaveDirectory("playerdata/" + main.uuid + "/banks/" + bank.id + ".dat");
 		try {
-			this.lastBank.setNBT(CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())));
-		} catch (IOException e) {
-			LogWriter.error(e);
-			this.lastBank = null;
-			return null;
-		}
-		if (this.lastBank.cells.isEmpty()) {
-			this.lastBank.clear();
-		}
-		return this.lastBank;
+			if (file != null) {
+				if (file.exists() && file.isFile()) { lastBank.load(CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath()))); } // load
+				else if (!file.exists() || file.delete()) { CompressedStreamTools.writeCompressed(lastBank.getNBT(), Files.newOutputStream(file.toPath())); } // create
+			}
+		} catch (Exception e) { LogWriter.error(e); }
+		return lastBank;
 	}
 
-	@SuppressWarnings("all")
-	public void loadNBTData(NBTTagCompound compound, String uuid) {
-		this.uuid = uuid;
+	@Override
+	public void load(NBTTagCompound compound) {
+		if (compound == null || !compound.hasKey(dataName, 10)) { return; }
 		// load old data
-		if (compound.hasKey("BankData", 9)) {
-			File dir = CustomNpcs.getWorldSaveDirectory("playerdata/" + this.uuid + "/banks");
+		if (compound.hasKey(dataName, 9)) {
+			File dir = CustomNpcs.getWorldSaveDirectory("playerdata/" + main.uuid + "/banks");
 			NBTTagList list = compound.getTagList("BankData", 10);
-            for (int bankPos = 0; bankPos < list.tagCount(); bankPos++) {
+			for (int bankPos = 0; bankPos < list.tagCount(); bankPos++) {
 				NBTTagCompound nbt = list.getCompoundTagAt(bankPos);
 				Bank bank = BankController.getInstance().getBank(nbt.getInteger("DataBankId"));
-				if (bank == null) {
-					continue;
-				}
-				BankData bd = new BankData(bank, this.uuid);
+				if (bank == null) { continue; }
+				BankData bd = new BankData(bank, main.uuid);
 				int unlockedCeils = nbt.getInteger("unlockedCeils");
 				HashMap<Integer, Boolean> upgradedSlots = NBTTags.getBooleanList(nbt.getTagList("UpdatedSlots", 10));
 				for (int ceil = 0; ceil < nbt.getTagList("BankInv", 10).tagCount(); ceil++) {
 					NBTTagCompound nbtCeils = nbt.getTagList("BankInv", 10).getCompoundTagAt(ceil);
 					int c = nbtCeils.getInteger("Slot");
-					if (c > unlockedCeils) {
-						break;
+					if (c > unlockedCeils) { break; }
+					if (bd.openNew(ceil)) {
+						NpcMiscInventory inv = bd.get(ceil);
+						if (inv != null) {
+							inv.setNewSize(upgradedSlots.get(c) ? 54 : 27);
+							inv.load(nbtCeils.getCompoundTag("BankItems"));
+						}
 					}
-					NpcMiscInventory inv = new NpcMiscInventory(upgradedSlots.get(c) ? 54 : 27);
-					inv.load(nbtCeils.getCompoundTag("BankItems"));
-					bd.cells.put(c, inv);
 				}
 				// save has new data
 				File file = new File(dir, bank.id + ".dat");
-				if (!file.exists()) {
-					try {
-						file.createNewFile();
-					} catch (IOException e) { LogWriter.error(e); }
-				}
 				try {
-					CompressedStreamTools.writeCompressed(bd.getNBT(), Files.newOutputStream(file.toPath()));
-				} catch (IOException e) { LogWriter.error(e); }
+					if (file.exists() || file.createNewFile()) {
+						CompressedStreamTools.writeCompressed(bd.getNBT(), Files.newOutputStream(file.toPath()));
+					}
+				}
+				catch (IOException e) { LogWriter.error(e); }
 			}
-
 		}
 	}
 
-	@SuppressWarnings("all")
+	@Override
+	public NBTTagCompound save(NBTTagCompound compound) {
+		NBTTagCompound gameNBT = new NBTTagCompound();
+		compound.setTag(dataName, gameNBT);
+		return compound;
+	}
+
 	public void remove(int bankId) {
-		File dir = CustomNpcs.getWorldSaveDirectory("playerdata/" + this.uuid + "/banks");
+		File dir = CustomNpcs.getWorldSaveDirectory("playerdata/" + main.uuid + "/banks");
 		File file = new File(dir, bankId + ".dat");
-		if (file.exists()) {
-			file.delete();
+		if (file.exists() && file.delete()) {
+			LogWriter.debug("Delete player "+main.uuid+" bank ID: "+bankId);
 		}
 	}
 
-	public void update(EntityPlayerMP player) { // ServerTickHandler.onPlayerTick();
-		if (this.delay > 0) {
-			this.delay--;
-			if (this.delay == 0) {
-				this.lastBank = null;
+	public void update(EntityPlayerMP player) {
+		if (lastBank != null) {
+			if (player.openContainer instanceof ContainerNPCBank) { delay = 200; }
+			else if (delay > 0) {
+				delay--;
+				if (delay == 0) { lastBank = null; }
 			}
 		}
-		if (this.lastBank == null) {
-			return;
+	}
+
+	public boolean hasBank(int bankId) {
+		if (lastBank != null && lastBank.bank.id == bankId) { return true; }
+		if (!main.uuid.isEmpty()) {
+			File file = CustomNpcs.getWorldSaveDirectory("playerdata/" + main.uuid + "/banks/" + bankId + ".dat");
+			return file != null && file.exists() && file.isFile();
 		}
-		if (player.openContainer instanceof ContainerNPCBank) {
-			this.delay = 200;
-        }
+		return false;
 	}
 
 }

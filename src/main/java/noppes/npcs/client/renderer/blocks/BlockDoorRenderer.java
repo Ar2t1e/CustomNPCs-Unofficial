@@ -6,14 +6,14 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import noppes.npcs.CustomRegisters;
+import noppes.npcs.CustomBlocks;
+import noppes.npcs.CustomItems;
 import noppes.npcs.blocks.BlockNpcDoorInterface;
 import noppes.npcs.blocks.tiles.TileDoor;
 
@@ -23,14 +23,14 @@ public class BlockDoorRenderer<T extends TileEntity> extends TileEntitySpecialRe
 
 	private boolean overrideModel() {
 		ItemStack held = Minecraft.getMinecraft().player.getHeldItemMainhand();
-		return held.getItem() == CustomRegisters.wand || held.getItem() == CustomRegisters.scripter || held.getItem() == CustomRegisters.scriptedDoorTool;
+		return held.getItem() == CustomItems.wand || held.getItem() == CustomItems.scripter || held.getItem() == CustomBlocks.scripted_door_item;
 	}
 
 	@SuppressWarnings("deprecation")
 	public void render(@Nullable TileEntity te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
 		if (te == null) { return; }
 		TileDoor tile = (TileDoor) te;
-		IBlockState original = CustomRegisters.scriptedDoor.getStateFromMeta(tile.getBlockMetadata());
+		IBlockState original = CustomBlocks.scripted_door.getStateFromMeta(tile.getBlockMetadata());
 		BlockPos lowerPos = tile.getPos();
 		if (original.getValue(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.UPPER) {
 			lowerPos = tile.getPos().down();
@@ -41,13 +41,11 @@ public class BlockDoorRenderer<T extends TileEntity> extends TileEntitySpecialRe
 		if (lowerTile == null || upperTile == null) {
 			return;
 		}
-		IBlockState lowerState = CustomRegisters.scriptedDoor.getStateFromMeta(lowerTile.getBlockMetadata());
-		IBlockState upperState = CustomRegisters.scriptedDoor.getStateFromMeta(upperTile.getBlockMetadata());
+		IBlockState lowerState = CustomBlocks.scripted_door.getStateFromMeta(lowerTile.getBlockMetadata());
+		IBlockState upperState = CustomBlocks.scripted_door.getStateFromMeta(upperTile.getBlockMetadata());
 		int meta = BlockNpcDoorInterface.combineMetadata(this.getWorld(), tile.getPos());
 		Block b = lowerTile.blockModel;
-		if (this.overrideModel()) {
-			b = CustomRegisters.scriptedDoor;
-		}
+		if (this.overrideModel()) { b = CustomBlocks.scripted_door; }
 		IBlockState state = b.getStateFromMeta(meta);
 		state = state.withProperty(BlockDoor.HALF, original.getValue(BlockDoor.HALF));
 		state = state.withProperty(BlockDoor.FACING, lowerState.getValue(BlockDoor.FACING));
@@ -55,7 +53,7 @@ public class BlockDoorRenderer<T extends TileEntity> extends TileEntitySpecialRe
 		state = state.withProperty(BlockDoor.HINGE, upperState.getValue(BlockDoor.HINGE));
 		state = state.withProperty(BlockDoor.POWERED, upperState.getValue(BlockDoor.POWERED));
 		GlStateManager.pushMatrix();
-		RenderHelper.enableStandardItemLighting();
+		//RenderHelper.enableStandardItemLighting();
 		GlStateManager.enableAlpha();
 		GlStateManager.disableBlend();
 		GlStateManager.translate(x + 0.5, y, z + 0.5);

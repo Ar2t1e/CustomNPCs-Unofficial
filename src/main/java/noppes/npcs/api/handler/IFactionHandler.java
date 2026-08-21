@@ -1,7 +1,9 @@
 package noppes.npcs.api.handler;
 
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.IFaction;
+
+import java.util.List;
 
 public interface IFactionHandler {
 
@@ -11,6 +13,6 @@ public interface IFactionHandler {
 
 	IFaction get(@ParamName("id") int id);
 
-	IFaction[] list();
+	List<IFaction> list();
 
 }

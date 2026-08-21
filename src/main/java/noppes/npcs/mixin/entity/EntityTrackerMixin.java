@@ -4,41 +4,28 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityTracker;
 import net.minecraft.entity.EntityTrackerEntry;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.IntHashMap;
 import net.minecraft.world.WorldServer;
-import noppes.npcs.LogWriter;
-import noppes.npcs.api.mixin.entity.IEntityTrackerMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Mixin(value = EntityTracker.class, priority = 499)
-public class EntityTrackerMixin implements IEntityTrackerMixin {
+@Mixin(value = EntityTracker.class, priority = 498)
+public class EntityTrackerMixin {
 
-    @Final
-    @Shadow
-    private WorldServer world;
+    @Final @Shadow private WorldServer world;
+    @Final @Shadow private Set<EntityTrackerEntry> entries;
 
-    @Final
-    @Shadow
-    private Set<EntityTrackerEntry> entries;
-
-    @Final
-    @Shadow
-    private IntHashMap<EntityTrackerEntry> trackedEntityHashTable;
-
-    /**
-     * @author BetaZavr
-     * @reason if entries is changed
-     */
-    @Overwrite
-    public void tick() {
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    public void npcs$tick(CallbackInfo ci) {
         try {
             List<EntityPlayerMP> list = new ArrayList<>();
             Set<EntityTrackerEntry> checked = new HashSet<>(entries);
@@ -56,11 +43,9 @@ public class EntityTrackerMixin implements IEntityTrackerMixin {
                     }
                 }
             }
+            ci.cancel();
         }
         catch (Exception e) { LogWriter.error(e); }
     }
-
-    @Override
-    public IntHashMap<EntityTrackerEntry> npcs$getTrackedEntityHashTable() { return trackedEntityHashTable; }
 
 }

@@ -12,22 +12,22 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.schematics.Blueprint;
 import noppes.npcs.schematics.BlueprintUtil;
 import noppes.npcs.schematics.ISchematic;
 import noppes.npcs.schematics.Schematic;
 import noppes.npcs.schematics.SchematicWrapper;
+import noppes.npcs.shared.common.CommonUtil;
 import noppes.npcs.util.Util;
+
+import javax.annotation.Nullable;
 
 public class SchematicController {
 
@@ -41,83 +41,89 @@ public class SchematicController {
 				"stall3.schematic", "tier_house1.schematic", "tier_house2.schematic", "tier_house3.schematic",
 				"tower.schematic", "wall.schematic", "wall_corner.schematic");
 
-	public static void buildBlocks(EntityPlayerMP player, BlockPos pos, int rotation, Schematic schema) { // Schematic
-		if (player == null || pos == null || schema == null) {
-			return;
+	public static void buildBlocks(EntityPlayerMP player, BlockPos pos, SchematicWrapper wrapper) { // Schematic
+		if (player != null && pos != null && wrapper != null) {
+			long ticks = 3000L + wrapper.size * SchematicController.time + (long) Math.floor((double) wrapper.size / CustomNpcs.MaxBuilderBlocks) * 1000L;
+			player.sendMessage(Component.translatable("schematic.info.started", wrapper.schema.getName(),
+					"" + pos.getX(), "" + pos.getY(), "" + pos.getZ(), player.world.provider.getDimension(),
+					Util.instance.ticksToElapsedTime(ticks, true, true, false)).getParent());
+			SchematicController.Instance.build(wrapper, player);
 		}
-		long ticks = 3000L + schema.blockIdsArray.length * SchematicController.time + (long) Math.floor((double) schema.blockIdsArray.length / CustomNpcs.MaxBuilderBlocks) * 1000L;
-		player.sendMessage(new TextComponentTranslation("schematic.info.started", schema.name, "" + pos.getX(), "" + pos.getY(), "" + pos.getZ(), Util.instance.ticksToElapsedTime(ticks, true, true, false)));
-		SchematicWrapper sw = new SchematicWrapper(schema);
-		sw.init(pos.east().south(), player.world, rotation * 90);
-		SchematicController.Instance.build(sw, player);
 	}
 
-	@SuppressWarnings("all")
-	public static File getDir() {
-		File schematicDir = new File(CustomNpcs.getWorldSaveDirectory(), "schematics");
+	public static @Nullable File getDir() {
 		File saveDir = CustomNpcs.getWorldSaveDirectory();
-		while (saveDir.getParentFile() != null) {
-			saveDir = saveDir.getParentFile();
-			if ((new File(saveDir, "config")).exists()) {
-				schematicDir = new File(saveDir, "schematics");
-				break;
+		if (saveDir != null) {
+			File schematicDir = new File(saveDir, "schematics");
+			while (saveDir.getParentFile() != null) {
+				saveDir = saveDir.getParentFile();
+				if ((new File(saveDir, "config")).exists()) {
+					schematicDir = new File(saveDir, "schematics");
+					break;
+				}
 			}
+			if (schematicDir.exists() || schematicDir.mkdir()) { return schematicDir; }
 		}
-		if (!schematicDir.exists()) {
-			schematicDir.mkdir();
-		}
-		return schematicDir;
+		return null;
 	}
 
 	private final List<SchematicWrapper> buildingList = new ArrayList<>();
 
 	public Map<String, SchematicWrapper> map = new HashMap<>();
 
-	private final char chr = ((char) 167);
-
 	public SchematicController() {
 	}
 
 	public void build(SchematicWrapper schema, ICommandSender sender) {
 		if (schema == null) {
-			this.sendMessage(sender, "schematic.info.notbuild");
+			sendMessage(sender, Component.translatable("schematic.info.notbuild"));
 			return;
 		}
-		if (this.buildingList.contains(schema)) {
-			this.sendMessage(sender, "schematic.info.already", this.chr + "7" + schema.schema.getName(),
-					this.chr + "7" + schema.getPercentage(), this.chr + "7%");
+		if (buildingList.contains(schema)) {
+			sendMessage(sender, Component.translatable("schematic.info.already",
+					Component.literal(schema.schema.getName()).withStyle(TextFormatting.GRAY),
+					Component.literal(schema.getPercentage() + "%").withStyle(TextFormatting.GRAY)));
 			if (schema.sender != null) {
-				this.sendMessage(sender, "schematic.info.start.name", this.chr + "7" + schema.sender.getName());
+				sendMessage(sender, Component.translatable("schematic.info.start.name",
+						Component.literal(schema.sender.getDisplayName().getFormattedText()).withStyle(TextFormatting.GRAY)));
 			}
 			return;
 		}
 		schema.setBuilder(sender);
-		this.buildingList.add(schema);
+		buildingList.add(schema);
 	}
 
+	@SuppressWarnings("unused")
 	public SchematicWrapper getSchema(String name) {
-		if (!this.map.containsKey(name.toLowerCase())) {
-			this.load(name.toLowerCase());
-		}
-		return this.map.get(name.toLowerCase());
+		if (!map.containsKey(name.toLowerCase())) { load(name.toLowerCase()); }
+		return map.get(name.toLowerCase());
 	}
 
 	public void info(ICommandSender sender) {
-		if (this.buildingList.isEmpty()) {
-			this.sendMessage(sender, "schematic.info.empty");
-			return;
-		}
-		for (SchematicWrapper sm : this.buildingList) {
-			this.sendMessage(sender, "schematic.info.0", this.chr + "7" + sm.schema.getName(), this.chr + "7" + sm.getPercentage(), this.chr + "7%", (sm.sender == null ? "" : new TextComponentTranslation("schematic.info.1").getFormattedText()));
+		if (buildingList.isEmpty()) {
+			sendMessage(sender, Component.translatable("schematic.info.empty"));
+		} else {
+			for (SchematicWrapper sm : buildingList) {
+				sendMessage(sender, Component.translatable("schematic.info.0",
+						Component.literal(sm.schema.getName()).withStyle(TextFormatting.GRAY),
+						Component.literal(sm.getPercentage() + "%").withStyle(TextFormatting.GRAY),
+						Component.translatable(sm.sender == null ? "" : "schematic.info.1").withStyle(TextFormatting.GRAY)));
+			}
 		}
 	}
 
 	public List<String> list() {
         List<String> list = new ArrayList<>(included);
-		for (File file : Objects.requireNonNull(SchematicController.getDir().listFiles())) {
-			String name = file.getName();
-			if (name.toLowerCase().endsWith(".schematic") || name.toLowerCase().endsWith(".blueprint")) {
-				list.add(name);
+		File dir = SchematicController.getDir();
+		if (dir != null) {
+			File[] files = dir.listFiles();
+			if (files != null) {
+				for (File file : files) {
+					String name = file.getName();
+					if (name.toLowerCase().endsWith(".schematic") || name.toLowerCase().endsWith(".blueprint")) {
+						list.add(name);
+					}
+				}
 			}
 		}
 		Collections.sort(list);
@@ -133,10 +139,16 @@ public class SchematicController {
 		if (stream == null) {
 			File file = new File(SchematicController.getDir(), name);
 			if (!file.exists()) {
-				for (File f : Objects.requireNonNull(SchematicController.getDir().listFiles())) {
-					if (f.getName().equalsIgnoreCase(name)) {
-						file = f;
-						break;
+				File dir = SchematicController.getDir();
+				if (dir != null) {
+					File[] files = dir.listFiles();
+					if (files != null) {
+						for (File f : files) {
+							if (f.getName().equalsIgnoreCase(name)) {
+								file = f;
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -171,7 +183,7 @@ public class SchematicController {
 			LogWriter.except(e);
 		}
 		if (schemaWr != null) {
-			this.map.put(name.toLowerCase(), schemaWr);
+			map.put(name.toLowerCase(), schemaWr);
 		}
 		CustomNpcs.debugData.end(null);
 		return schemaWr;
@@ -194,9 +206,7 @@ public class SchematicController {
 			file = new File(SchematicController.getDir(), name + ".blueprint");
 			schema = BlueprintUtil.createBlueprint(world, pos, width, length, height);
 		}
-		ITextComponent message = new TextComponentString("Schematic " + name + " successfully created");
-		message.getStyle().setColor(TextFormatting.GRAY);
-		NoppesUtilServer.NotifyOPs(message, false);
+		CommonUtil.NotifyOPs(Component.literal("Schematic " + name + " successfully created").withStyle(TextFormatting.GRAY), false);
 		try {
 			if (schema != null) {
 				CompressedStreamTools.writeCompressed(schema.getNBT(), Files.newOutputStream(file.toPath()));
@@ -205,26 +215,23 @@ public class SchematicController {
 		CustomNpcs.debugData.end(null);
 	}
 
-	private void sendMessage(ICommandSender sender, String message, Object... objs) {
-		if (sender == null) {
-			return;
-		}
-		sender.sendMessage(new TextComponentTranslation(message, objs));
+
+	private void sendMessage(ICommandSender sender, Component message) {
+		if (sender != null) { sender.sendMessage(message.getParent()); }
 	}
 
 	public void stop(ICommandSender sender) {
 		if (buildingList.isEmpty()) {
-			this.sendMessage(sender, "schematic.info.build.empty");
+			sendMessage(sender, Component.translatable("schematic.info.build.empty"));
 		} else {
 			StringBuilder smts = new StringBuilder();
-			for (SchematicWrapper sm : this.buildingList) {
-				if (smts.length() > 0) {
-					smts.append(";" + ((char) 10));
-				}
-				smts.append(this.chr).append("7\"").append(sm.schema.getName()).append("\" in [").append(sm.start.getX()).append(", ").append(sm.start.getY()).append(", ").append(sm.start.getZ()).append("]");
+			for (SchematicWrapper sm : buildingList) {
+				if (smts.length() > 0) { smts.append(";" + ((char) 10)); }
+				smts.append(((char) 167)).append("7\"").append(sm.schema.getName()).append("\" in [")
+						.append(sm.start.getX()).append(", ").append(sm.start.getY()).append(", ").append(sm.start.getZ()).append("]");
 			}
-			this.sendMessage(sender, "schematic.info.build.stop", smts.toString());
-			this.buildingList.clear();
+			sendMessage(sender, Component.translatable("schematic.info.build.stop", smts.toString()));
+			buildingList.clear();
 		}
 	}
 
@@ -232,26 +239,27 @@ public class SchematicController {
 		if (buildingList.isEmpty()) { return; }
 		CustomNpcs.debugData.start(null);
 		List<SchematicWrapper> del = new ArrayList<>();
-		for (SchematicWrapper sm : buildingList) {
-			sm.build();
-			if (sm.sender != null && sm.getPercentage() - sm.buildingPercentage >= 10) {
-				this.sendMessage(sm.sender, "schematic.info.build.percentage", this.chr + "7" + sm.schema.getName(), this.chr + "7" + sm.getPercentage(), this.chr + "7%");
-				sm.buildingPercentage = sm.getPercentage();
+		for (SchematicWrapper wrapper : buildingList) {
+			wrapper.build();
+			if (wrapper.sender != null && wrapper.getPercentage() - wrapper.buildingPercentage >= 10) {
+				sendMessage(wrapper.sender, Component.translatable("schematic.info.build.percentage",
+						Component.literal(wrapper.schema.getName()).withStyle(TextFormatting.GRAY),
+						Component.literal(wrapper.getPercentage() + "%").withStyle(TextFormatting.GRAY)));
+				wrapper.buildingPercentage = wrapper.getPercentage();
 			}
-			if (!sm.isBuilding) {
-				if (sm.sender != null) {
-					if (sm.schema.hasEntitys()) {
-						this.sendMessage(sm.sender, "schematic.info.spawn.entitys",
-								this.chr + "7" + sm.schema.getName());
+			if (!wrapper.isBuilding) {
+				if (wrapper.sender != null) {
+					if (wrapper.schema.hasEntitys()) {
+						sendMessage(wrapper.sender, Component.translatable("schematic.info.spawn.entitys",
+								Component.literal(wrapper.schema.getName()).withStyle(TextFormatting.GRAY)));
 					}
-					this.sendMessage(sm.sender, "schematic.info.build.finish", this.chr + "7" + sm.schema.getName());
+					sendMessage(wrapper.sender, Component.translatable("schematic.info.build.finish",
+							Component.literal(wrapper.schema.getName()).withStyle(TextFormatting.GRAY)));
 				}
-				del.add(sm);
+				del.add(wrapper);
 			}
 		}
-		for (SchematicWrapper sm : del) {
-			this.buildingList.remove(sm);
-		}
+		for (SchematicWrapper sm : del) { buildingList.remove(sm); }
 		CustomNpcs.debugData.end(null);
 	}
 

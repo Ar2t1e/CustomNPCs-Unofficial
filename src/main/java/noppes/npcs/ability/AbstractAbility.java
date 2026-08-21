@@ -17,9 +17,7 @@ public abstract class AbstractAbility implements IAbility {
 
 	@Override
 	public boolean canRun(EntityLivingBase target) {
-		if (onCooldown()) {
-			return false;
-		}
+		if (onCooldown()) { return false; }
 		float f = npc.getHealth() / npc.getMaxHealth();
 		return f >= minHP && f <= maxHP
 				&& (getRNG() <= 1 || npc.getRNG().nextInt(getRNG()) == 0)
@@ -27,23 +25,16 @@ public abstract class AbstractAbility implements IAbility {
 	}
 
 	@Override
-	public void endAbility() {
-		cooldown = System.currentTimeMillis() + npc.ais.getMaxHurtResistantTime() * 1000L;
-	}
+	public void endAbility() { cooldown = System.currentTimeMillis() + (long) npc.ais.getMaxHurtResistantTime() * 1000L; }
 
 	@Override
-	public int getRNG() {
-		return 0;
-	}
+	public int getRNG() { return 0; }
 
 	public abstract boolean isType(EnumAbilityType type);
 
-	private boolean onCooldown() {
-		return System.currentTimeMillis() < cooldown;
-	}
+	private boolean onCooldown() { return System.currentTimeMillis() < cooldown; }
 
 	@Override
-	public void startCombat() {
-		cooldown = System.currentTimeMillis() + npc.ais.getMaxHurtResistantTime() * 1000L;
-	}
+	public void startCombat() { cooldown = System.currentTimeMillis() + (long) npc.ais.getMaxHurtResistantTime() * 1000L; }
+
 }

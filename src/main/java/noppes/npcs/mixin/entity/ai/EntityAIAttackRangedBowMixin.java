@@ -11,12 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = EntityAIAttackRangedBow.class, priority = 499)
+@Mixin(value = EntityAIAttackRangedBow.class, priority = 498)
 public class EntityAIAttackRangedBowMixin<T extends EntityMob & IRangedAttackMob> {
 
-    @Final
-    @Shadow
-    private T entity;
+    @Final @Shadow private T entity;
 
     @Inject(method = "shouldExecute", at = @At("RETURN"), cancellable = true)
     public void npcs$shouldExecute(CallbackInfoReturnable<Boolean> cir) {

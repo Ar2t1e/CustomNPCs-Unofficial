@@ -5,64 +5,71 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.MathHelper;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.NoppesStringUtils;
-import noppes.npcs.NoppesUtilPlayer;
+import noppes.npcs.NoppesUtilServer;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketCompanionOpenInv;
+import noppes.npcs.packets.server.SPacketNpcRoleGet;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiMenuTopButton;
+import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumCompanionJobs;
 import noppes.npcs.constants.EnumCompanionTalent;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPlayerPacket;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.roles.RoleCompanion;
-
-import javax.annotation.Nonnull;
+import noppes.npcs.shared.client.gui.listeners.IGuiData;
 
 public class GuiNpcCompanionStats extends GuiNPCInterface implements IGuiData {
 
 	public static void addTopMenu(RoleCompanion role, GuiScreen screen, int active) {
-		if (screen instanceof GuiNPCInterface) {
-			GuiNPCInterface gui = (GuiNPCInterface) screen;
-			GuiMenuTopIconButton button;
-			gui.addTopButton(button = new GuiMenuTopIconButton(1, gui.guiLeft + 4, gui.guiTop - 27, "menu.stats", new ItemStack(Items.BOOK)));
-			gui.addTopButton(button = new GuiMenuTopIconButton(2, button, "companion.talent", new ItemStack(Items.NETHER_STAR)));
-			if (role.hasInv()) { gui.addTopButton(button = new GuiMenuTopIconButton(3, button, "inv.inventory", new ItemStack(Blocks.CHEST))); }
-			if (role.job != EnumCompanionJobs.NONE) { gui.addTopButton(new GuiMenuTopIconButton(4, button, "job.name", new ItemStack(Items.CARROT))); }
-			gui.getTopButton(active).setIsActive(true);
-		}
-		if (screen instanceof GuiContainerNPCInterface) {
-			GuiContainerNPCInterface gui2 = (GuiContainerNPCInterface) screen;
-			GuiMenuTopIconButton button;
-			gui2.addTopButton(button = new GuiMenuTopIconButton(1, gui2.getGuiLeft() + 4, gui2.getGuiTop() - 27, "menu.stats", new ItemStack(Items.BOOK)));
-			gui2.addTopButton(button = new GuiMenuTopIconButton(2, button, "companion.talent", new ItemStack(Items.NETHER_STAR)));
-			if (role.hasInv()) { gui2.addTopButton(button = new GuiMenuTopIconButton(3, button, "inv.inventory", new ItemStack(Blocks.CHEST))); }
-			if (role.job != EnumCompanionJobs.NONE) { gui2.addTopButton(new GuiMenuTopIconButton(4, button, "job.name", new ItemStack(Items.CARROT))); }
-			gui2.getTopButton(active).setIsActive(true);
+		GuiMenuTopButton button;
+		if (screen instanceof IGuiInterface) {
+			IGuiInterface gui = (IGuiInterface) screen;
+			button = gui.addTopButton(1, gui.getX() + 4, gui.getY() - 27,
+							Component.translatable("menu.stats"), new ItemStack(Items.BOOK))
+					.setIsEnabled(active == 1);
+			button = gui.addTopButton(2, button.getX() + button.getWidth(), button.getY(),
+							Component.translatable("companion.talent"), new ItemStack(Items.NETHER_STAR))
+					.setIsEnabled(active == 2);
+			if (role.hasInv()) {
+				button = gui.addTopButton(3, button.getX() + button.getWidth(), button.getY(),
+								Component.translatable("inv.inventory"), new ItemStack(Blocks.CHEST))
+						.setIsEnabled(active == 3);
+			}
+			if (role.job.getType() != EnumCompanionJobs.NONE) {
+				gui.addTopButton(4, button.getX() + button.getWidth(), button.getY(),
+								Component.translatable("job.name"), new ItemStack(Items.CARROT))
+						.setIsEnabled(active == 4);
+			}
 		}
 	}
 
 	protected final RoleCompanion role;
-	protected boolean isEating;
+	protected boolean isEating = false;
 
 	public GuiNpcCompanionStats(EntityNPCInterface npc) {
 		super(npc);
 		setBackground("companion.png");
-		closeOnEsc = true;
-		xSize = 171;
-		ySize = 166;
+		imageWidth = 171;
+		imageHeight = 166;
 
-		isEating = false;
-		role = (RoleCompanion) npc.advanced.roleInterface;
-		NoppesUtilPlayer.sendData(EnumPlayerPacket.RoleGet);
+		role = (RoleCompanion)npc.role;
+		Packets.sendServer(new SPacketNpcRoleGet());
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 2: CustomNpcs.proxy.openGui(npc, EnumGuiType.CompanionTalent); break;
-			case 3: NoppesUtilPlayer.sendData(EnumPlayerPacket.CompanionOpenInv); break;
+	public void buttonEvent(GuiButtonNop button) {
+		switch (button.id) {
+			case 2: {
+				NoppesUtilServer.setEditingNpc(player, npc);
+				CustomNpcs.proxy.openGui(npc, EnumGuiType.CompanionTalent, null);
+				break;
+			}
+			case 3: Packets.sendServer(new SPacketCompanionOpenInv()); break;
 		}
 	}
 
@@ -105,7 +112,7 @@ public class GuiNpcCompanionStats extends GuiNPCInterface implements IGuiData {
 	@Override
 	public void drawScreen(int mouseXIn, int mouseYIn, float partialTicks) {
 		super.drawScreen(mouseXIn, mouseYIn, partialTicks);
-		if (isEating && !role.isEating()) { NoppesUtilPlayer.sendData(EnumPlayerPacket.RoleGet); }
+		if (isEating && !role.isEating()) { Packets.sendServer(new SPacketNpcRoleGet()); }
 		isEating = role.isEating();
 		super.drawNpc(34, 150);
 		drawHealth(guiTop + 88);
@@ -116,12 +123,19 @@ public class GuiNpcCompanionStats extends GuiNPCInterface implements IGuiData {
 		super.initGui();
 		int x = guiLeft + 4;
 		int y = guiTop + 10;
-		addLabel(new GuiNpcLabel(0, NoppesStringUtils.translate("gui.name", ": ", npc.display.getName()), x, y));
-		addLabel(new GuiNpcLabel(1, NoppesStringUtils.translate("companion.owner", ": ", role.ownerName), x, y += 12));
-		addLabel(new GuiNpcLabel(2, NoppesStringUtils.translate("companion.age", ": ", role.ticksActive / 18000L + " (", role.stage.name, ")"), x, y += 12));
-		addLabel(new GuiNpcLabel(3, NoppesStringUtils.translate("companion.strength", ": ", npc.stats.melee.getStrength()), x, y += 12));
-		addLabel(new GuiNpcLabel(4, NoppesStringUtils.translate("companion.level", ": ", role.getTotalLevel()), x, y += 12));
-		addLabel(new GuiNpcLabel(5, NoppesStringUtils.translate("job.name", ": ", "gui.none"), x, y + 12));
+		addLabel(0, x, y, Component.translatable("gui.name").append(": ")
+				.append(npc.display.getName()));
+		addLabel(1, x, y += 12, Component.translatable("companion.owner").append(": ")
+				.append(role.ownerName));
+		addLabel(2, x, y += 12, Component.translatable("companion.age").append(": ")
+				.append("" + role.ticksActive / 18000L)
+				.append(" (").append(role.stage.name).append(")"));
+		addLabel(3, x, y += 12, Component.translatable("companion.strength").append(": ")
+				.append("" + npc.stats.melee.getStrength()));
+		addLabel(4, x, y += 12, Component.translatable("companion.level").append(": ")
+				.append("" + role.getTotalLevel()));
+		addLabel(5, x, y + 12, Component.translatable("job.name").append(": ")
+				.append(Component.translatable("gui.none")));
 		addTopMenu(role, this, 1);
 	}
 

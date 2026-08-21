@@ -1,7 +1,7 @@
 package noppes.npcs.api.event;
 
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.inventory.Container;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -14,22 +14,22 @@ public class ClientEvent extends CustomNPCsEvent {
     public EntityNPCInterface npc;
     public GuiScreen returnGui;
 
+    public ClientEvent(EntityNPCInterface npcIn, GuiScreen returnGuiIn) {
+        super();
+        npc = npcIn;
+        returnGui = returnGuiIn;
+    }
+
     @Cancelable
     public static class PreGetGuiCustomNpcs extends ClientEvent {
 
         public EnumGuiType guiType;
-        public Container container;
-        public int x;
-        public int y;
-        public int z;
+        public FriendlyByteBuf buffer;
 
-        public PreGetGuiCustomNpcs(EntityNPCInterface npc, EnumGuiType gui, Container containerIn, int xIn, int yIn, int zIn) {
+        public PreGetGuiCustomNpcs(EntityNPCInterface npc, EnumGuiType gui, FriendlyByteBuf bufIn) {
             super(npc, null);
             guiType = gui;
-            container = containerIn;
-            x = xIn;
-            y = yIn;
-            z = zIn;
+            buffer = bufIn;
         }
 
     }
@@ -38,18 +38,12 @@ public class ClientEvent extends CustomNPCsEvent {
     public static class PostGetGuiCustomNpcs extends ClientEvent {
 
         public EnumGuiType guiType;
-        public Container container;
-        public int x;
-        public int y;
-        public int z;
+        public FriendlyByteBuf buffer;
 
-        public PostGetGuiCustomNpcs(EntityNPCInterface npc, EnumGuiType gui, Container containerIn, int xIn, int yIn, int zIn, GuiScreen returnGuiIn) {
+        public PostGetGuiCustomNpcs(EntityNPCInterface npc, EnumGuiType gui, FriendlyByteBuf bufferIn, GuiScreen returnGuiIn) {
             super(npc, returnGuiIn);
             guiType = gui;
-            container = containerIn;
-            x = xIn;
-            y = yIn;
-            z = zIn;
+            buffer = bufferIn;
         }
 
     }
@@ -66,10 +60,16 @@ public class ClientEvent extends CustomNPCsEvent {
 
     }
 
-    public ClientEvent(EntityNPCInterface npcIn, GuiScreen returnGuiIn) {
-        super();
-        npc = npcIn;
-        returnGui = returnGuiIn;
+    @Cancelable
+    public static class SubGuiCustomNpcs extends ClientEvent {
+
+        public GuiScreen oldSubGui;
+
+        public SubGuiCustomNpcs(EntityNPCInterface npc, GuiScreen newSubGuiIn, GuiScreen oldSubGuiIn) {
+            super(npc, newSubGuiIn);
+            oldSubGui = oldSubGuiIn;
+        }
+
     }
 
 }

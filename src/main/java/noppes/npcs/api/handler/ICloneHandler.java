@@ -1,7 +1,7 @@
 package noppes.npcs.api.handler;
 
 import noppes.npcs.api.IWorld;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.entity.IEntity;
 
 public interface ICloneHandler {

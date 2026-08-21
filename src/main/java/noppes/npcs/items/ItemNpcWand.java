@@ -8,7 +8,6 @@ import javax.annotation.Nullable;
 
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
@@ -25,20 +24,20 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.*;
 import noppes.npcs.api.item.INPCToolItem;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.CustomNPCsScheduler;
-import noppes.npcs.util.IPermission;
 import noppes.npcs.util.Util;
 
-public class ItemNpcWand extends Item implements IPermission, INPCToolItem {
+public class ItemNpcWand extends Item implements INPCToolItem {
+
 	public ItemNpcWand() {
-		this.setRegistryName(CustomNpcs.MODID, "npcwand");
-		this.setUnlocalizedName("npcwand");
-		this.setFull3D();
-		this.maxStackSize = 1;
-		this.setCreativeTab(CustomRegisters.tab);
+		super();
+		setRegistryName(CustomNpcs.MODID, "npcwand");
+		setUnlocalizedName("npcwand");
+		setFull3D();
+		maxStackSize = 1;
+		setCreativeTab(CustomTabs.TOOLS);
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -50,27 +49,22 @@ public class ItemNpcWand extends Item implements IPermission, INPCToolItem {
 		}
 	}
 
-	public int getMaxItemUseDuration(@Nonnull ItemStack par1ItemStack) {
-		return 72000;
-	}
-
-	public boolean isAllowed(EnumPacketServer e) {
-		return true;
-	}
+	public int getMaxItemUseDuration(@Nonnull ItemStack par1ItemStack) { return 72000; }
 
 	public @Nonnull ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
 		ItemStack itemstack = player.getHeldItem(hand);
-		if (!world.isRemote) { return new ActionResult<>(EnumActionResult.SUCCESS, itemstack); }
-		CustomNpcs.proxy.openGui(0, 0, 0, EnumGuiType.NpcRemote, player);
+		if (world.isRemote) { CustomNpcs.proxy.openGui(player, EnumGuiType.NpcRemote); }
 		return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
 	}
 
-	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer playerIn, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
+	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer playerIn, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand,
+											   @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (world.isRemote) { return EnumActionResult.SUCCESS; }
 		EntityPlayerMP player = (EntityPlayerMP) playerIn;
 		if (CustomNpcs.OpsOnly && !Objects.requireNonNull(player.getServer()).getPlayerList().canSendCommands(player.getGameProfile())) {
 			player.sendMessage(new TextComponentTranslation("availability.permission"));
-		} else if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.NPC_CREATE)) {
+		}
+		else if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.NPC_CREATE)) {
 			Entity rayTraceEntity = Util.instance.getLookEntity(player, 4.0d, false);
 			if (rayTraceEntity instanceof EntityNPCInterface) {
 				if (CustomNpcsPermissions.hasPermission(player, CustomNpcsPermissions.NPC_GUI)) {
@@ -89,10 +83,6 @@ public class ItemNpcWand extends Item implements IPermission, INPCToolItem {
 			player.sendMessage(new TextComponentTranslation("availability.permission"));
 		}
 		return EnumActionResult.SUCCESS;
-	}
-
-	public @Nonnull ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull World worldIn, @Nonnull EntityLivingBase playerIn) {
-		return stack;
 	}
 
 }

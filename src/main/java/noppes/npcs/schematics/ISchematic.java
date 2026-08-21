@@ -3,7 +3,7 @@ package noppes.npcs.schematics;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.math.BlockPos;
+import noppes.npcs.api.IPos;
 
 public interface ISchematic {
 
@@ -21,7 +21,7 @@ public interface ISchematic {
 
 	NBTTagCompound getNBT();
 
-	BlockPos getOffset();
+	IPos getOffset();
 
 	NBTTagCompound getTileEntity(int pos);
 

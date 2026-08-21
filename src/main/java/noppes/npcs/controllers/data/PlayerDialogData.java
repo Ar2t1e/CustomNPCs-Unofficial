@@ -4,27 +4,31 @@ import java.util.*;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import noppes.npcs.api.handler.data.IPlayerData;
 import noppes.npcs.client.TextBlockClient;
 
-public class PlayerDialogData {
+public class PlayerDialogData implements IPlayerData {
+
+	protected static final String dataName = "DialogData";
 
 	public final Map<Integer, Set<Integer>> dialogsRead = new TreeMap<>();
 
-	public void loadNBTData(NBTTagCompound compound) {
-		if (compound == null) {
-			return;
-		}
+	@Override
+	public void load(NBTTagCompound compound) {
 		dialogsRead.clear();
-		NBTTagList dialogs = compound.getTagList("DialogData", 10);
-        for (int i = 0; i < dialogs.tagCount(); ++i) {
-			NBTTagCompound nbtDialog = dialogs.getCompoundTagAt(i);
-			Set<Integer> set = new TreeSet<>();
-			for (int id : nbtDialog.getIntArray("OptionRead")) { set.add(id); }
-			dialogsRead.put(nbtDialog.getInteger("Dialog"), set);
+		if (compound != null && compound.hasKey(dataName, 9)) {
+			NBTTagList dialogs = compound.getTagList(dataName, 10);
+			for (int i = 0; i < dialogs.tagCount(); ++i) {
+				NBTTagCompound nbtDialog = dialogs.getCompoundTagAt(i);
+				Set<Integer> set = new TreeSet<>();
+				for (int id : nbtDialog.getIntArray("OptionRead")) { set.add(id); }
+				dialogsRead.put(nbtDialog.getInteger("Dialog"), set);
+			}
 		}
 	}
 
-	public void saveNBTData(NBTTagCompound compound) {
+	@Override
+	public NBTTagCompound save(NBTTagCompound compound) {
 		NBTTagList dialogs = new NBTTagList();
 		for (int dialogId : dialogsRead.keySet()) {
 			NBTTagCompound nbtDialog = new NBTTagCompound();
@@ -35,8 +39,12 @@ public class PlayerDialogData {
 			nbtDialog.setIntArray("OptionRead", set);
 			dialogs.appendTag(nbtDialog);
 		}
-		compound.setTag("DialogData", dialogs);
+		compound.setTag(dataName, dialogs);
+		return compound;
 	}
+
+	// New from Unofficial (BetaZavr)
+	public void clear() { dialogsRead.clear(); }
 
 	public boolean has(int dialogId) { return dialogsRead.containsKey(dialogId); }
 
@@ -50,7 +58,6 @@ public class PlayerDialogData {
 		dialogsRead.get(dialogId).add(optionId);
 	}
 
-	@SuppressWarnings("all")
     public void addLogs(List<TextBlockClient> lines, String texture) {
 
     }

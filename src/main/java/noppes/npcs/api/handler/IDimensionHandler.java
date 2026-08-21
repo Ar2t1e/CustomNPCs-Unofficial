@@ -1,22 +1,28 @@
 package noppes.npcs.api.handler;
 
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 import noppes.npcs.api.handler.data.IWorldInfo;
 
-@SuppressWarnings("all")
+import java.util.List;
+
+@SuppressWarnings("unused")
 public interface IDimensionHandler {
 
-	IWorldInfo createDimension();
+	IWorldInfo createNewDimension();
 
 	void deleteDimension(@ParamName("dimensionId") int dimensionId);
 
-	int[] getAllIDs();
+    int copyDimension(int dimensionId);
+
+    List<Integer> getAllIDs();
 
 	IWorldInfo getMCWorldInfo(@ParamName("dimensionId") int dimensionId);
 
 	INbt getNbt();
 
 	void setNbt(@ParamName("nbt") INbt nbt);
+
+	INbt getProviderInfo(int id);
 
 }

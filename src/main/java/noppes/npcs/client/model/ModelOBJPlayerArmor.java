@@ -15,76 +15,81 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.client.model.part.ModelOBJPart;
-import noppes.npcs.client.renderer.ModelBuffer;
+import noppes.npcs.client.renderer.obj.ModelBuffer;
 import noppes.npcs.constants.EnumParts;
-import noppes.npcs.items.CustomArmor;
-import noppes.npcs.reflection.client.renderer.entity.RenderPlayerReflection;
+import noppes.npcs.items.custom.CustomArmor;
+import noppes.npcs.mixin.client.renderer.entity.IRenderPlayerMixin;
 
 import javax.annotation.Nonnull;
 
 public class ModelOBJPlayerArmor extends ModelBiped {
-	public ResourceLocation objModel, mainTexture;
-	public ModelRenderer bipedBelt, bipedRightFeet, bipedLeftFeet;
-	private ModelOBJPart childRightArm, childLeftArm;
+
+	public ResourceLocation objModel;
+	public ResourceLocation mainTexture;
+	public ModelRenderer bipedBelt;
+	public ModelRenderer bipedRightFeet;
+	public ModelRenderer bipedLeftFeet;
+	private ModelOBJPart childRightArm;
+	private ModelOBJPart childLeftArm;
 
 	public ModelOBJPlayerArmor(CustomArmor armor) {
 		super(0, 0, 128, 128);
 		// Clear Basic Armor Pieces
-		this.bipedHeadwear.cubeList.clear();
-		this.bipedHeadwear.showModel = false;
-		this.bipedHeadwear.isHidden = true;
-		this.bipedHead.cubeList.clear();
-		this.bipedBody.cubeList.clear();
-		this.bipedLeftArm.cubeList.clear();
-		this.bipedRightArm.cubeList.clear();
-		this.bipedLeftLeg.cubeList.clear();
-		this.bipedRightLeg.cubeList.clear();
+		bipedHeadwear.cubeList.clear();
+		bipedHeadwear.showModel = false;
+		bipedHeadwear.isHidden = true;
+		bipedHead.cubeList.clear();
+		bipedBody.cubeList.clear();
+		bipedLeftArm.cubeList.clear();
+		bipedRightArm.cubeList.clear();
+		bipedLeftLeg.cubeList.clear();
+		bipedRightLeg.cubeList.clear();
 
-		this.bipedBelt = new ModelRenderer(this);
-		this.bipedRightFeet = new ModelRenderer(this);
-		this.bipedLeftFeet = new ModelRenderer(this);
-		this.objModel = armor.objModel;
-		this.mainTexture = ModelBuffer.getMainOBJTexture(armor.objModel);
+		bipedBelt = new ModelRenderer(this);
+		bipedRightFeet = new ModelRenderer(this);
+		bipedLeftFeet = new ModelRenderer(this);
+		objModel = armor.objModel;
+		mainTexture = ModelBuffer.getMainOBJTexture(armor.objModel);
 
 		addLayer(armor);
 		setVisible(true);
 	}
 
 	public void addLayer(CustomArmor armor) {
-		this.bipedHead.addChild(new ModelOBJPart(this, EnumParts.FEET_LEFT, armor.getMeshNames(EnumParts.HEAD), 0.0f, 1.5f, 0.0f));
+		bipedHead.addChild(new ModelOBJPart(this, EnumParts.FEET_LEFT, armor.getMeshNames(EnumParts.HEAD), 0.0f, 1.5f, 0.0f));
 
-		this.bipedBody.addChild(new ModelOBJPart(this, EnumParts.BODY, armor.getMeshNames(EnumParts.BODY), 0.0f, 1.5f, 0.0f));
-		this.bipedBelt.addChild(new ModelOBJPart(this, EnumParts.BELT, armor.getMeshNames(EnumParts.BELT), 0.0f, 1.5f, 0.0f));
+		bipedBody.addChild(new ModelOBJPart(this, EnumParts.BODY, armor.getMeshNames(EnumParts.BODY), 0.0f, 1.5f, 0.0f));
+		bipedBelt.addChild(new ModelOBJPart(this, EnumParts.BELT, armor.getMeshNames(EnumParts.BELT), 0.0f, 1.5f, 0.0f));
 
 		List<String> listAR = armor.getMeshNames(EnumParts.ARM_RIGHT);
 		listAR.addAll(armor.getMeshNames(EnumParts.WRIST_RIGHT));
-		this.childRightArm = new ModelOBJPart(this, EnumParts.ARM_RIGHT, listAR, 0.3175f, 1.375f, 0.0f);
-		this.bipedRightArm.addChild(this.childRightArm);
+		childRightArm = new ModelOBJPart(this, EnumParts.ARM_RIGHT, listAR, 0.3175f, 1.375f, 0.0f);
+		bipedRightArm.addChild(childRightArm);
 		
 		List<String> listAL = armor.getMeshNames(EnumParts.ARM_LEFT);
 		listAL.addAll(armor.getMeshNames(EnumParts.WRIST_LEFT));
-		this.childLeftArm = new ModelOBJPart(this, EnumParts.ARM_LEFT, listAL, -0.3175f, 1.375f, 0.0f);
-		this.bipedLeftArm.addChild(this.childLeftArm);
+		childLeftArm = new ModelOBJPart(this, EnumParts.ARM_LEFT, listAL, -0.3175f, 1.375f, 0.0f);
+		bipedLeftArm.addChild(childLeftArm);
 
 		List<String> listLR = armor.getMeshNames(EnumParts.LEG_RIGHT);
-		listLR.addAll(armor.getMeshNames(EnumParts.FOOT_RIGHT));
-		this.bipedRightLeg.addChild(new ModelOBJPart(this, EnumParts.LEG_RIGHT, listLR, 0.125f, 0.75f, 0.0f));
+		listLR.addAll(armor.getMeshNames(EnumParts.FEET_RIGHT));
+		bipedRightLeg.addChild(new ModelOBJPart(this, EnumParts.LEG_RIGHT, listLR, 0.125f, 0.75f, 0.0f));
 
 		List<String> listLL = armor.getMeshNames(EnumParts.LEG_LEFT);
-		listLL.addAll(armor.getMeshNames(EnumParts.FOOT_LEFT));
-		this.bipedLeftLeg.addChild(new ModelOBJPart(this, EnumParts.LEG_LEFT, listLL, -0.115f, 0.75f, 0.0f));
+		listLL.addAll(armor.getMeshNames(EnumParts.FEET_LEFT));
+		bipedLeftLeg.addChild(new ModelOBJPart(this, EnumParts.LEG_LEFT, listLL, -0.115f, 0.75f, 0.0f));
 
-		this.bipedRightFeet.addChild(new ModelOBJPart(this, EnumParts.FEET_RIGHT, armor.getMeshNames(EnumParts.FEET_RIGHT), 0.125f, 0.75f, 0.0f));
-		this.bipedLeftFeet.addChild(new ModelOBJPart(this, EnumParts.FEET_LEFT, armor.getMeshNames(EnumParts.FEET_LEFT), -0.115f, 0.75f, 0.0f));
+		bipedRightFeet.addChild(new ModelOBJPart(this, EnumParts.FEET_RIGHT, armor.getMeshNames(EnumParts.FEET_RIGHT), 0.125f, 0.75f, 0.0f));
+		bipedLeftFeet.addChild(new ModelOBJPart(this, EnumParts.FEET_LEFT, armor.getMeshNames(EnumParts.FEET_LEFT), -0.115f, 0.75f, 0.0f));
 	}
 
 	public void render(@Nonnull Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
-		this.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
+		setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
 		GlStateManager.pushMatrix();
-		if (this.isChild) {
+		if (isChild) {
 			GlStateManager.scale(0.75F, 0.75F, 0.75F);
 			GlStateManager.translate(0.0F, 16.0F * scale, 0.0F);
-			this.bipedHead.render(scale);
+			bipedHead.render(scale);
 			GlStateManager.popMatrix();
 			
 			GlStateManager.pushMatrix();
@@ -94,20 +99,20 @@ public class ModelOBJPlayerArmor extends ModelBiped {
 			if (entityIn.isSneaking()) {
 				GlStateManager.translate(0.0F, 0.2F, 0.0F);
 			}
-			this.bipedHead.render(scale);
+			bipedHead.render(scale);
 		}
-		this.bipedBody.render(scale);
-		this.bipedRightArm.render(scale);
-		this.bipedLeftArm.render(scale);
+		bipedBody.render(scale);
+		bipedRightArm.render(scale);
+		bipedLeftArm.render(scale);
 		
-		this.bipedRightLeg.render(scale);
-		this.bipedLeftLeg.render(scale);
+		bipedRightLeg.render(scale);
+		bipedLeftLeg.render(scale);
 
-		this.bipedBelt.showModel = this.bipedRightLeg.showModel;
-		this.bipedBelt.isHidden = this.bipedRightLeg.isHidden;
-		this.bipedBelt.render(scale);
-		this.bipedRightFeet.render(scale);
-		this.bipedLeftFeet.render(scale);
+		bipedBelt.showModel = bipedRightLeg.showModel;
+		bipedBelt.isHidden = bipedRightLeg.isHidden;
+		bipedBelt.render(scale);
+		bipedRightFeet.render(scale);
+		bipedLeftFeet.render(scale);
 		GlStateManager.popMatrix();
 	}
 
@@ -116,58 +121,56 @@ public class ModelOBJPlayerArmor extends ModelBiped {
 		if (entity instanceof EntityPlayerSP) {
 			Minecraft mc = Minecraft.getMinecraft();
 			Render<?> rp = mc.getRenderManager().getEntityRenderObject(entity);
-			if (rp instanceof RenderPlayer) {
-				smallArms = RenderPlayerReflection.getSmallArms((RenderPlayer) rp);
-			}
+			if (rp instanceof RenderPlayer) { smallArms = ((IRenderPlayerMixin) rp).getSmallArms(); }
 		}
 
 		// Initially nothing is visible
-		this.setHidden(true);
-		this.setVisible(false);
+		setHidden(true);
+		setVisible(false);
 
 		ItemStack headItem = entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
 		if (headItem.getItem() instanceof CustomArmor && ((CustomArmor) headItem.getItem()).objModel != null &&
-				((CustomArmor) headItem.getItem()).objModel.equals(this.objModel)) {
-			this.bipedHead.isHidden = false;
-			this.bipedHead.showModel = true;
+				((CustomArmor) headItem.getItem()).objModel.equals(objModel)) {
+			bipedHead.isHidden = false;
+			bipedHead.showModel = true;
 		}
 		ItemStack chestItem = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
 		if (chestItem.getItem() instanceof CustomArmor
-				&& ((CustomArmor) chestItem.getItem()).objModel.equals(this.objModel)) {
-			this.bipedBody.isHidden = false;
-			this.bipedLeftArm.isHidden = false;
-			this.bipedRightArm.isHidden = false;
-			this.bipedBody.showModel = true;
-			this.bipedLeftArm.showModel = true;
-			this.bipedRightArm.showModel = true;
+				&& ((CustomArmor) chestItem.getItem()).objModel.equals(objModel)) {
+			bipedBody.isHidden = false;
+			bipedLeftArm.isHidden = false;
+			bipedRightArm.isHidden = false;
+			bipedBody.showModel = true;
+			bipedLeftArm.showModel = true;
+			bipedRightArm.showModel = true;
 
-			this.childLeftArm.smallArms = smallArms;
-			this.childRightArm.smallArms = smallArms;
+			childLeftArm.smallArms = smallArms;
+			childRightArm.smallArms = smallArms;
 		}
 
 		ItemStack legsItem = entity.getItemStackFromSlot(EntityEquipmentSlot.LEGS);
 		if (legsItem.getItem() instanceof CustomArmor
-				&& ((CustomArmor) legsItem.getItem()).objModel.equals(this.objModel)) {
-			this.bipedBelt.isHidden = false;
-			this.bipedLeftLeg.isHidden = false;
-			this.bipedRightLeg.isHidden = false;
-			this.bipedBelt.showModel = true;
-			this.bipedLeftLeg.showModel = true;
-			this.bipedRightLeg.showModel = true;
+				&& ((CustomArmor) legsItem.getItem()).objModel.equals(objModel)) {
+			bipedBelt.isHidden = false;
+			bipedLeftLeg.isHidden = false;
+			bipedRightLeg.isHidden = false;
+			bipedBelt.showModel = true;
+			bipedLeftLeg.showModel = true;
+			bipedRightLeg.showModel = true;
 		}
 
 		ItemStack feetItem = entity.getItemStackFromSlot(EntityEquipmentSlot.FEET);
 		if (feetItem.getItem() instanceof CustomArmor
-				&& ((CustomArmor) feetItem.getItem()).objModel.equals(this.objModel)) {
-			this.bipedLeftFeet.isHidden = false;
-			this.bipedRightFeet.isHidden = false;
-			this.bipedLeftFeet.showModel = true;
-			this.bipedRightFeet.showModel = true;
+				&& ((CustomArmor) feetItem.getItem()).objModel.equals(objModel)) {
+			bipedLeftFeet.isHidden = false;
+			bipedRightFeet.isHidden = false;
+			bipedLeftFeet.showModel = true;
+			bipedRightFeet.showModel = true;
 		}
 
-		this.isSneak = entity.isSneaking();
-		this.isRiding = entity.isRiding();
-		this.isChild = entity.isChild();
+		isSneak = entity.isSneaking();
+		isRiding = entity.isRiding();
+		isChild = entity.isChild();
 
 	}
 
@@ -179,16 +182,16 @@ public class ModelOBJPlayerArmor extends ModelBiped {
 	}
 
 	public void setHidden(boolean hidden) {
-		this.bipedHead.isHidden = hidden;
-		this.bipedLeftArm.isHidden = hidden;
-		this.bipedRightArm.isHidden = hidden;
-		this.bipedBody.isHidden = hidden;
-		this.bipedLeftLeg.isHidden = hidden;
-		this.bipedRightLeg.isHidden = hidden;
+		bipedHead.isHidden = hidden;
+		bipedLeftArm.isHidden = hidden;
+		bipedRightArm.isHidden = hidden;
+		bipedBody.isHidden = hidden;
+		bipedLeftLeg.isHidden = hidden;
+		bipedRightLeg.isHidden = hidden;
 
-		this.bipedBelt.isHidden = hidden;
-		this.bipedLeftFeet.isHidden = hidden;
-		this.bipedRightFeet.isHidden = hidden;
+		bipedBelt.isHidden = hidden;
+		bipedLeftFeet.isHidden = hidden;
+		bipedRightFeet.isHidden = hidden;
 	}
 
 	@Override
@@ -201,31 +204,31 @@ public class ModelOBJPlayerArmor extends ModelBiped {
 		if (source == null) {
 			return;
 		}
-		this.reset((EntityLivingBase) entityIn);
-		resetPos(this.bipedHead, source.bipedHead);
-		resetPos(this.bipedBody, source.bipedBody);
-		resetPos(this.bipedBelt, source.bipedBody);
-		resetPos(this.bipedLeftArm, source.bipedLeftArm);
-		resetPos(this.bipedRightArm, source.bipedRightArm);
-		resetPos(this.bipedLeftLeg, source.bipedLeftLeg);
-		resetPos(this.bipedRightLeg, source.bipedRightLeg);
+		reset((EntityLivingBase) entityIn);
+		resetPos(bipedHead, source.bipedHead);
+		resetPos(bipedBody, source.bipedBody);
+		resetPos(bipedBelt, source.bipedBody);
+		resetPos(bipedLeftArm, source.bipedLeftArm);
+		resetPos(bipedRightArm, source.bipedRightArm);
+		resetPos(bipedLeftLeg, source.bipedLeftLeg);
+		resetPos(bipedRightLeg, source.bipedRightLeg);
 
-		resetPos(this.bipedBelt, source.bipedBody);
-		resetPos(this.bipedLeftFeet, source.bipedLeftLeg);
-		resetPos(this.bipedRightFeet, source.bipedRightLeg);
+		resetPos(bipedBelt, source.bipedBody);
+		resetPos(bipedLeftFeet, source.bipedLeftLeg);
+		resetPos(bipedRightFeet, source.bipedRightLeg);
 	}
 
 	public void setVisible(boolean visible) {
-		this.bipedHead.showModel = visible;
-		this.bipedBody.showModel = visible;
-		this.bipedRightArm.showModel = visible;
-		this.bipedLeftArm.showModel = visible;
-		this.bipedRightLeg.showModel = visible;
-		this.bipedLeftLeg.showModel = visible;
+		bipedHead.showModel = visible;
+		bipedBody.showModel = visible;
+		bipedRightArm.showModel = visible;
+		bipedLeftArm.showModel = visible;
+		bipedRightLeg.showModel = visible;
+		bipedLeftLeg.showModel = visible;
 
-		this.bipedBelt.showModel = visible;
-		this.bipedLeftFeet.showModel = visible;
-		this.bipedRightFeet.showModel = visible;
+		bipedBelt.showModel = visible;
+		bipedLeftFeet.showModel = visible;
+		bipedRightFeet.showModel = visible;
 	}
 
 }

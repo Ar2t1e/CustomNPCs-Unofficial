@@ -15,16 +15,15 @@ import net.minecraftforge.common.config.Property;
 import net.minecraftforge.common.config.Property.Type;
 import net.minecraftforge.fml.client.config.IConfigElement;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.LogWriter;
-import noppes.npcs.Server;
-import noppes.npcs.constants.EnumPacketClient;
-import noppes.npcs.constants.EnumSync;
-import noppes.npcs.controllers.ScriptController;
+import noppes.npcs.ForgeEventHandler;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketSync;
+import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.util.Util;
 
 public class ConfigLoader {
 
-	private static final List<Field> data = new ArrayList<>();
+	private static final List<Field> configFields = new ArrayList<>();
 	public Configuration config;
 
 	public ConfigLoader(File directory) {
@@ -297,7 +296,7 @@ public class ConfigLoader {
 
 	public static void sendTo(EntityPlayerMP player) {
 		NBTTagCompound compound = new NBTTagCompound();
-		for (Field field : data) {
+		for (Field field : configFields) {
 			String key = field.getName();
 			try {
 				Object value = field.get(CustomNpcs.instance);
@@ -315,32 +314,32 @@ public class ConfigLoader {
 			}
 			catch (Exception ignored) { }
 		}
-		if (compound.getKeySet().isEmpty()) { return; }
+		if (compound.hasNoTags()) { return; }
 		NBTTagList list = new NBTTagList();
-		for (Class<?> cls : ScriptController.forgeEventNames.keySet()) {
+		for (Class<?> cls : ForgeEventHandler.eventNames.keySet()) {
 			NBTTagCompound nbt = new NBTTagCompound();
-			nbt.setString("Name", ScriptController.forgeEventNames.get(cls));
+			nbt.setString("Name", ForgeEventHandler.eventNames.get(cls));
 			nbt.setString("Class", cls.getName());
 			list.appendTag(nbt);
 		}
 		compound.setTag("ForgeEventNames", list);
-		Server.sendData(player, EnumPacketClient.SYNC_END, EnumSync.ModData, compound);
+		Packets.send(player, new PacketSync(13, compound, false));
 	}
 
 	public static void load(NBTTagCompound compound) {
-		ScriptController.forgeEventNames.clear();
+		ForgeEventHandler.eventNames.clear();
 		for (int i = 0; i < compound.getTagList("ForgeEventNames", 10).tagCount(); i++) {
 			NBTTagCompound nbt = compound.getTagList("ForgeEventNames", 10).getCompoundTagAt(i);
 			String name = nbt.getString("Name");
 			Class<?> cls = null;
 			try { cls = Class.forName(nbt.getString("Class")); }
 			catch (Exception e) { LogWriter.error(e); }
-			ScriptController.forgeEventNames.put(cls, name);
+			ForgeEventHandler.eventNames.put(cls, name);
 		}
 		compound.removeTag("ForgeEventNames");
 		for (String key : compound.getKeySet()) {
 			Field field = null;
-			for (Field f : data) {
+			for (Field f : configFields) {
 				if (f.getName().equals(key)) {
 					field = f;
 					break;
@@ -384,12 +383,9 @@ public class ConfigLoader {
 		return new ArrayList<>(map.values());
 	}
 
-	public void resetConfig() {
+	public void updateConfig() {
 		for (Field field : CustomNpcs.class.getDeclaredFields()) {
-			if (!field.isAnnotationPresent(ConfigProp.class)) {
-				continue;
-			}
-
+			if (!field.isAnnotationPresent(ConfigProp.class)) { continue; }
 			ConfigProp prop = field.getAnnotation(ConfigProp.class);
 			String name = field.getName();
 			ConfigCategory cat = config.getCategory(prop.type());
@@ -480,42 +476,41 @@ public class ConfigLoader {
 						}
 					}
 				}
-			} else {
-                if (object != null) {
-					String value = object.toString();
-                    switch (classType) {
-                        case "int":
-                            type = Type.INTEGER;
-                            value = object.toString();
-                            break;
-                        case "boolean":
-                            type = Type.BOOLEAN;
-                            value = object.toString();
-                            break;
-                        case "double":
-                            type = Type.DOUBLE;
-                            value = object.toString();
-                            break;
-                        case "color":
-                            type = Type.COLOR;
-                            value = Integer.toHexString(((Color) object).getRGB()).toUpperCase();
-                            break;
-                    }
-					property = new Property(name, value, type, "config." + name + ".key");
-					property.setDefaultValue(prop.def());
-					if (!prop.min().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMinValue(Integer.parseInt(prop.min()));
-						} else if (classType.equals("double")) {
-							property.setMinValue(Double.parseDouble(prop.min()));
-						}
+			}
+			else if (object != null) {
+				String value = object.toString();
+				switch (classType) {
+					case "int":
+						type = Type.INTEGER;
+						value = object.toString();
+						break;
+					case "boolean":
+						type = Type.BOOLEAN;
+						value = object.toString();
+						break;
+					case "double":
+						type = Type.DOUBLE;
+						value = object.toString();
+						break;
+					case "color":
+						type = Type.COLOR;
+						value = Integer.toHexString(((Color) object).getRGB()).toUpperCase();
+						break;
+				}
+				property = new Property(name, value, type, "config." + name + ".key");
+				property.setDefaultValue(prop.def());
+				if (!prop.min().isEmpty()) {
+					if (classType.equals("int")) {
+						property.setMinValue(Integer.parseInt(prop.min()));
+					} else if (classType.equals("double")) {
+						property.setMinValue(Double.parseDouble(prop.min()));
 					}
-					if (!prop.max().isEmpty()) {
-						if (classType.equals("int")) {
-							property.setMaxValue(Integer.parseInt(prop.max()));
-						} else if (classType.equals("double")) {
-							property.setMaxValue(Double.parseDouble(prop.max()));
-						}
+				}
+				if (!prop.max().isEmpty()) {
+					if (classType.equals("int")) {
+						property.setMaxValue(Integer.parseInt(prop.max()));
+					} else if (classType.equals("double")) {
+						property.setMaxValue(Double.parseDouble(prop.max()));
 					}
 				}
 			}
@@ -534,7 +529,8 @@ public class ConfigLoader {
 		for (Field field : CustomNpcs.class.getDeclaredFields()) {
 			if (!field.isAnnotationPresent(ConfigProp.class)) { continue; }
             ConfigProp prop = field.getAnnotation(ConfigProp.class);
-			if (prop.type().equals(Configuration.CATEGORY_GENERAL)) {data.add(field); }
+			if (prop.type().equals(Configuration.CATEGORY_GENERAL)) {
+				configFields.add(field); }
 			String name = field.getName();
 			ConfigCategory cat = config.getCategory(prop.type());
 			if (!cat.containsKey(name)) {
@@ -749,7 +745,7 @@ public class ConfigLoader {
 			}
 		}
 		if (needResetConfig) {
-			resetConfig();
+			updateConfig();
 		}
 	}
 

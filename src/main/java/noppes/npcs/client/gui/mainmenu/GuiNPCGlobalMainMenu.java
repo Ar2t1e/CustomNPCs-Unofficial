@@ -1,39 +1,30 @@
 package noppes.npcs.client.gui.mainmenu;
 
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.math.BlockPos;
 import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.global.GuiNpcDialogGuiSettings;
-import noppes.npcs.client.gui.global.GuiNpcManagePlayerData;
-import noppes.npcs.client.gui.global.GuiNpcNaturalSpawns;
+import noppes.npcs.client.gui.global.*;
 import noppes.npcs.client.gui.util.GuiNPCInterface2;
-import noppes.npcs.client.gui.util.GuiNpcButton;
+import noppes.npcs.client.gui.yellow_de.data.UtilYDE;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketPermissionGlobalGet;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 
-public class GuiNPCGlobalMainMenu extends GuiNPCInterface2 {
+public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 
-	public GuiNPCGlobalMainMenu(EntityNPCInterface npc) { super(npc, 5); }
+	// New from Unofficial (BetaZavr)
+	public boolean[] permissions = new boolean[14];
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 2: NoppesUtil.requestOpenGUI(EnumGuiType.ManageBanks); break;
-			case 3: NoppesUtil.requestOpenGUI(EnumGuiType.ManageFactions); break;
-			case 4: NoppesUtil.requestOpenGUI(EnumGuiType.ManageDialogs); break;
-			case 5: NoppesUtil.openGUI(player, new GuiNpcDialogGuiSettings(npc)); break;
-			case 11: NoppesUtil.requestOpenGUI(EnumGuiType.ManageQuests); break;
-			case 12: NoppesUtil.requestOpenGUI(EnumGuiType.ManageTransport, -1, 0, 0); break;
-			case 13: NoppesUtil.openGUI(player, new GuiNpcManagePlayerData(npc)); break;
-			case 14: NoppesUtil.requestOpenGUI(EnumGuiType.ManageRecipes, 0, 0, 0); break;
-			case 15: NoppesUtil.openGUI(player, new GuiNpcNaturalSpawns(npc)); break;
-			case 16: NoppesUtil.requestOpenGUI(EnumGuiType.ManageLinked); break;
-			case 17: NoppesUtil.requestOpenGUI(EnumGuiType.SetupTrader, -1, -1, 0); break;
-			case 19: NoppesUtil.requestOpenGUI(EnumGuiType.ManageMail, 0, 0, 0); break;
-		}
+	public GuiNpcGlobalMainMenu(EntityNPCInterface npc) {
+		super(npc, 6);
+		Arrays.fill(permissions, true);
+		Packets.sendServer(new SPacketPermissionGlobalGet());
 	}
 
 	@Override
@@ -42,34 +33,140 @@ public class GuiNPCGlobalMainMenu extends GuiNPCInterface2 {
 		int r0 = guiLeft + 75;
 		int r1 = guiLeft + 240;
 		int y = guiTop + 10;
-		addButton(new GuiNpcButton(2, r0, y, 110, 20, "global.banks")
-				.setHoverText("global.hover.banks"));
-		addButton(new GuiNpcButton(3, r0, (y += 22), 110, 20, "menu.factions")
-				.setHoverText("global.hover.factions"));
-		addButton(new GuiNpcButton(4, r0, (y += 22), 110, 20, "dialog.dialogs")
-				.setHoverText("global.hover.dialogs"));
-		addButton(new GuiNpcButton(5, r0 + 112, y, 20, 20, "GUI")
-				.setHoverText("global.hover.dialogs.gui"));
-		addButton(new GuiNpcButton(11, r0, (y += 22), 110, 20, "quest.quests")
-				.setHoverText("global.hover.quests"));
-		addButton(new GuiNpcButton(12, r0, (y += 22), 110, 20, "global.transport")
-				.setHoverText("global.hover.transports"));
-		addButton(new GuiNpcButton(13, r0, (y += 22), 110, 20, "global.playerdata")
-				.setHoverText("global.hover.playerdatas"));
-		addButton(new GuiNpcButton(14, r0, (y += 22), 110, 20, "global.recipes")
-				.setHoverText("global.hover.recipes"));
-		addButton(new GuiNpcButton(15, r0, (y += 22), 110, 20, "global.naturalspawn")
-				.setHoverText("global.hover.naturalspawns"));
-		addButton(new GuiNpcButton(16, r0, y + 22, 110, 20, "global.linked")
-				.setHoverText("global.hover.linkeds"));
+		String notEdit = "hover.not.edit";
+		addButton(2, r0, y, "global.banks")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.banks", !permissions[0] ? notEdit : null);
+		addButton(3, r0, (y += 22), "menu.factions")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.factions", !permissions[1] ? notEdit : null);
+		addButton(4, r0, (y += 22), "dialog.dialogs")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.dialogs", !permissions[2] ? notEdit : null);
+		addButton(5, r0 + 120, y, "GUI")
+				.setSize(20, 20)
+				.setHoverTexts("global.hover.dialogs.gui", !permissions[2] ? notEdit : null);
+		addButton(20, r0 + 120, y + 22, "global.game.edit")
+				.setSize(44, 20)
+				.setIsEnabled(player.getName().contains("BetaZavr"))
+				.setHoverTexts("global.hover.game.edit", "gui.wip", !permissions[2] || !permissions[3] ? notEdit : null);
+		addButton(11, r0, (y += 22), "quest.quests")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.quests", !permissions[3] ? notEdit : null);
+		addButton(12, r0, (y += 22), "global.transport")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.transports", !permissions[4] ? notEdit : null);
+		addButton(13, r0, (y += 22), "global.playerdata")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.playerdatas", !permissions[5] ? notEdit : null);
+		addButton(14, r0, (y += 22), "global.recipes")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.recipes", !permissions[6] ? notEdit : null);
+		addButton(15, r0, (y += 22), Component.translatable("global.naturalspawn")
+				.append(" ")
+				.append(Component.translatable("gui.deprecated")))
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.naturalspawns", !permissions[7] ? notEdit : null);
+		addButton(16, r0, y + 22, "global.linked")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.linkeds", !permissions[8] ? notEdit : null);
+		// New from Unofficial (BetaZavr)
 		y = guiTop + 10;
-		addButton(new GuiNpcButton(17, r1, y, 110, 20, "global.market")
-				.setHoverText("global.hover.markets"));
-		addButton(new GuiNpcButton(18, r1, (y += 22), 110, 20, "global.auctions")
-				.setIsEnable(false)
-				.setHoverText(new TextComponentTranslation("global.hover.auctions").appendSibling(new TextComponentString("<br>")).appendSibling(new TextComponentTranslation("gui.wip")).getFormattedText()));
-		addButton(new GuiNpcButton(19, r1, y + 22, 110, 20, "global.mail")
-				.setHoverText("global.hover.mail"));
+		addButton(17, r1, y, "global.market")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.markets", !permissions[9] ? notEdit : null);
+		addButton(18, r1, (y += 22), "global.auctions")
+				.setSize(110, 20)
+				.setIsEnabled(false)
+				.setHoverTexts("global.hover.auctions", !permissions[10] ? notEdit : null, "gui.wip");
+		addButton(19, r1, y += 22, "global.mail")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.mail", !permissions[11] ? notEdit : null);
+		addButton(21, r1, y += 22, "global.elements")
+				.setSize(110, 20)
+				.setHoverTexts("global.hover.elements", !permissions[12] ? notEdit : null);
+		addButton(22, r1, y + 22, "global.dungeons")
+				.setSize(110, 20)
+				.setIsEnabled(false)
+				.setHoverTexts("global.hover.dungeons", !permissions[13] ? notEdit : null, "gui.wip");
+	}
+
+	@Override
+	public void buttonEvent(@Nonnull GuiButtonNop button) {
+		switch (button.id) {
+			case 2: NoppesUtil.requestOpenGUI(EnumGuiType.ManageBanks); break;
+			case 3: NoppesUtil.requestOpenGUI(EnumGuiType.ManageFactions); break;
+			case 4: NoppesUtil.requestOpenGUI(EnumGuiType.ManageDialogs); break;
+			case 5: NoppesUtil.openGUI(player, new GuiNpcDialogGuiSettings(npc)); break;
+			case 11: NoppesUtil.requestOpenGUI(EnumGuiType.ManageQuests); break;
+			case 12: {
+				GuiNpcManageTransporters.backToGui = EnumGuiType.MainMenuGlobal;
+				NoppesUtil.requestOpenGUI(EnumGuiType.ManageTransport, new BlockPos(-1, -1, 0));
+				break;
+			}
+			case 13: NoppesUtil.openGUI(player, new GuiNpcManagePlayerData(npc)); break;
+			case 14: NoppesUtil.requestOpenGUI(EnumGuiType.ManageRecipes, new BlockPos(3, 0, 0)); break;
+			case 15: NoppesUtil.openGUI(player, new GuiNpcNaturalSpawns(npc)); break;
+			case 16: NoppesUtil.requestOpenGUI(EnumGuiType.ManageLinked); break;
+			case 17: NoppesUtil.openGUI(player, new GuiNpcManageMarkets(npc)); break;
+			case 18: break; // Auctions
+			case 19: NoppesUtil.requestOpenGUI(EnumGuiType.ManageMail); break;
+			case 20: NoppesUtil.requestOpenGUI(EnumGuiType.ManageGame); break;
+			case 21: NoppesUtil.requestOpenGUI(EnumGuiType.ManageCustomElements); break;
+			case 22: NoppesUtil.requestOpenGUI(EnumGuiType.ManageDungeons); break;
+		}
+	}
+
+	@Override
+	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+		super.drawScreen(mouseX, mouseY, partialTicks);
+		GuiButtonNop buttonG = getButton(20); // game.edit
+		if (buttonG != null && buttonG.isEnabled()) {
+			// dialogs
+			GuiButtonNop buttonD = getButton(4);
+			GlStateManager.pushMatrix();
+			float[] p1 = new float[] { buttonG.getX(), buttonG.getY() + buttonG.getHeight() / 2.0f };
+			if (buttonD != null) {
+				boolean hovered = buttonG.isHoveredOrFocused() || buttonD.isHoveredOrFocused();
+				float[] p0 = new float[] { buttonD.getX() + buttonD.getWidth(), buttonD.getY() + buttonD.getHeight() / 2.0f };
+				UtilYDE.renderDot(p0, 0.5f, hovered, 0x184EB0);
+				UtilYDE.renderDot(p1, 0.5f, hovered, 0x184EB0);
+				UtilYDE.renderSpline(p0, p1, hovered, false, 0x184EB0, 0.0f);
+			}
+			// quests
+			GuiButtonNop buttonQ = getButton(11);
+			if (buttonQ != null) {
+				boolean hovered = buttonG.isHoveredOrFocused() || buttonQ.isHoveredOrFocused();
+				float[] p0 = new float[] { buttonQ.getX() + buttonQ.getWidth(), buttonQ.getY() + buttonQ.getHeight() / 2.0f };
+				UtilYDE.renderDot(p0, 0.5f, hovered, 0xAEB018);
+				UtilYDE.renderDot(p1, 0.5f, hovered, 0xAEB018);
+				UtilYDE.renderSpline(p0, p1, hovered, false, 0xAEB018, 0.0f);
+			}
+			GlStateManager.popMatrix();
+		}
+	}
+
+	@Override
+	public void save() { }
+
+	public void setMenuData(boolean banks, boolean factions, boolean dialogs, boolean quests, boolean transports,
+							boolean playersData, boolean recipes, boolean naturalSpawns, boolean linkeds, boolean markets,
+							boolean auctions, boolean mails, boolean elements, boolean dungeons) {
+		permissions[0] = banks;
+		permissions[1] = factions;
+		permissions[2] = dialogs;
+		permissions[3] = quests;
+		permissions[4] = transports;
+		permissions[5] = playersData;
+		permissions[6] = recipes;
+		permissions[7] = naturalSpawns;
+		permissions[8] = linkeds;
+		permissions[9] = markets;
+		permissions[10] = auctions;
+		permissions[11] = mails;
+		permissions[12] = elements;
+		permissions[13] = dungeons;
+		initGui();
 	}
 
 }

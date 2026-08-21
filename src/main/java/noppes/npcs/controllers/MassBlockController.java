@@ -14,25 +14,24 @@ import noppes.npcs.entity.EntityNPCInterface;
 public class MassBlockController {
 
 	public interface IMassBlock {
+
 		EntityNPCInterface getNpc();
 
 		int getRange();
 
-		void processed(List<BlockData> p0);
+		void processed(List<BlockData> blocks);
 
 		void setRange(int range);
 	}
 
-	public static MassBlockController Instance;
+	private static final Queue<MassBlockController.IMassBlock> queue = new LinkedList<>();
 
-	public static void Queue(IMassBlock imb) {
-		MassBlockController.Instance.queue.add(imb);
-	}
+	public static void Queue(IMassBlock imb) { queue.add(imb); }
 
 	public static void Update() {
-		if (MassBlockController.Instance.queue.isEmpty()) { return; }
+		if (queue.isEmpty()) { return; }
 		CustomNpcs.debugData.start(null);
-		IMassBlock imb = MassBlockController.Instance.queue.remove();
+		IMassBlock imb = queue.remove();
 		World world = imb.getNpc().world;
 		BlockPos pos = imb.getNpc().getPosition();
 		int range = imb.getRange();
@@ -51,10 +50,4 @@ public class MassBlockController {
 		CustomNpcs.debugData.end(null);
 	}
 
-	public Queue<IMassBlock> queue;
-
-	public MassBlockController() {
-		MassBlockController.Instance = this;
-		MassBlockController.Instance.queue = new LinkedList<>();
-	}
 }

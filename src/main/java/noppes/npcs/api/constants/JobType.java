@@ -3,22 +3,13 @@ package noppes.npcs.api.constants;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.minecraft.network.chat.Component;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.roles.JobBard;
-import noppes.npcs.roles.JobBuilder;
-import noppes.npcs.roles.JobChunkLoader;
-import noppes.npcs.roles.JobConversation;
-import noppes.npcs.roles.JobFarmer;
-import noppes.npcs.roles.JobFollower;
-import noppes.npcs.roles.JobGuard;
-import noppes.npcs.roles.JobHealer;
-import noppes.npcs.roles.JobInterface;
-import noppes.npcs.roles.JobItemGiver;
-import noppes.npcs.roles.JobSpawner;
+import noppes.npcs.roles.*;
 
 public enum JobType {
 
-	DEFAULT("none", 0, false),
+	NONE("none", 0, false),
 	BARD("bard", 1, true),
 	HEALER("healer", 2, true),
 	GUARD("guard", 3, true),
@@ -27,6 +18,7 @@ public enum JobType {
 	SPAWNER("spawner", 6, true),
 	CONVERSATION("conversation", 7, true),
 	CHUNK_LOADER("chunkloader", 8, false),
+	PUPPET("puppet", 9, true),
 	BUILDER("builder", 10, false),
 	FARMER("farmer", 11, true);
 
@@ -36,22 +28,22 @@ public enum JobType {
 				return ej;
 			}
 		}
-		return JobType.DEFAULT;
+		return JobType.NONE;
 	}
-	public static String[] getNames() {
-		List<String> list = new ArrayList<>();
+	public static Object[] getNames() {
+		List<Component> list = new ArrayList<>();
 		for (JobType ej : JobType.values()) {
-			list.add(ej.name);
+			if (ej != PUPPET) { list.add(ej.name); }
 		}
-		return list.toArray(new String[0]);
+		return list.toArray(new Component[0]);
 	}
 	private final int type;
-	public final String name;
+	public final Component name;
 	public final boolean hasSettings;
 
 	JobType(String named, int t, boolean hasSet) {
 		type = t;
-		name = "job." + named;
+		name = Component.translatable("job." + named);
 		hasSettings = hasSet;
 	}
 
@@ -59,18 +51,19 @@ public enum JobType {
 
 	public void setToNpc(EntityNPCInterface npc) {
 		switch (this) {
-			case DEFAULT: npc.advanced.jobInterface = new JobInterface(npc); break;
-			case BARD: npc.advanced.jobInterface = new JobBard(npc); break;
-			case HEALER: npc.advanced.jobInterface = new JobHealer(npc); break;
-			case GUARD: npc.advanced.jobInterface = new JobGuard(npc); break;
-			case ITEM_GIVER: npc.advanced.jobInterface = new JobItemGiver(npc); break;
-			case FOLLOWER: npc.advanced.jobInterface = new JobFollower(npc); break;
-			case SPAWNER: npc.advanced.jobInterface = new JobSpawner(npc); break;
-			case CONVERSATION: npc.advanced.jobInterface = new JobConversation(npc); break;
-			case CHUNK_LOADER: npc.advanced.jobInterface = new JobChunkLoader(npc); break;
-			case BUILDER: npc.advanced.jobInterface = new JobBuilder(npc); break;
-			case FARMER: npc.advanced.jobInterface = new JobFarmer(npc); break;
+			case BARD: npc.job = new JobBard(npc); break;
+			case HEALER: npc.job = new JobHealer(npc); break;
+			case GUARD: npc.job = new JobGuard(npc); break;
+			case ITEM_GIVER: npc.job = new JobItemGiver(npc); break;
+			case FOLLOWER: npc.job = new JobFollower(npc); break;
+			case SPAWNER: npc.job = new JobSpawner(npc); break;
+			case CONVERSATION: npc.job = new JobConversation(npc); break;
+			case CHUNK_LOADER: npc.job = new JobChunkLoader(npc); break;
+			case BUILDER: npc.job = new JobBuilder(npc); break;
+			case FARMER: npc.job = new JobFarmer(npc); break;
+			default: npc.job = new JobInterface(npc); break;
 		}
+		if (this == PUPPET) { npc.puppet = new JobPuppet(npc); }
     }
 
 }

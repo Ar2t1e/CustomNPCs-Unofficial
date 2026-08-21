@@ -3,7 +3,9 @@ package noppes.npcs.entity.data;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import noppes.npcs.LogWriter;
+import noppes.npcs.client.model.part.ModelPartConfig;
+import noppes.npcs.controllers.VisibilityController;
+import noppes.npcs.shared.common.util.LogWriter;
 import org.apache.commons.codec.binary.Base64;
 
 import com.google.common.collect.Iterables;
@@ -27,7 +29,6 @@ import net.minecraft.world.BossInfo;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.ModelPartConfig;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.entity.data.INPCDisplay;
@@ -52,7 +53,6 @@ public class DataDisplay implements INPCDisplay {
 	private byte showBossBar = 0;
 	private int markovGender = 0;
 	private int markovGeneratorId = new Random().nextInt(CustomNpcs.MARKOV_GENERATOR.length - 1);
-	private int modelSize = 5;
 	private int showName = 0;
 	private int skinColor = 0xFFFFFF;
 	private int visible = 0;
@@ -65,6 +65,11 @@ public class DataDisplay implements INPCDisplay {
 	public float shadowSize = 1.0f;
 	public float width = 0.6f;
 	public float height = 1.9f;
+
+	// New from Unofficial (GoodBird)
+	protected boolean overlayGlowing = true;
+	protected float modelSize = 5.0F;
+	private int[] lineColors = new int[]{ 0xFF8D3800, 0xFFFEA53B, 0xFFAE5301 };
 
 	public DataDisplay(EntityNPCInterface npcIn) {
 		npc = npcIn;
@@ -83,9 +88,7 @@ public class DataDisplay implements INPCDisplay {
 		}
 	}
 
-	public Availability getAvailability() {
-		return availability;
-	}
+	public Availability getAvailability() { return availability; }
 
 	@Override
 	public int getBossbar() {
@@ -165,7 +168,7 @@ public class DataDisplay implements INPCDisplay {
 		if (model == null) {
 			throw new CustomNPCsException("Unknown part: " + part);
 		}
-		return new float[] { model.scale[0], model.scale[1], model.scale[2] };
+		return new float[] { model.scaleX, model.scaleY, model.scaleZ };
 	}
 
 	@Override
@@ -183,28 +186,12 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public int getShadowType() {
-		if (shadowSize < 0.5f) {
-			return 0;
-		}
-		if (shadowSize < 1.0f) {
-			return 1;
-		}
-		if (shadowSize < 1.5f) {
-			return 2;
-		}
-		return 3;
-	}
-
-	@Override
 	public int getShowName() {
 		return showName;
 	}
 
 	@Override
-	public int getSize() {
-		return modelSize;
-	}
+	public float getSize() { return modelSize; }
 
 	@Override
 	public String getSkinPlayer() {
@@ -236,15 +223,11 @@ public class DataDisplay implements INPCDisplay {
 		return visible;
 	}
 
-	@SuppressWarnings("all")
-	public boolean hasVisibleOptions() {
-		return CustomNpcs.EnableInvisibleNpcs && availability.hasOptions();
-	}
+	@SuppressWarnings("unused")
+	public boolean hasVisibleOptions() { return CustomNpcs.EnableInvisibleNpcs && availability.hasOptions(); }
 
 	public boolean isVisibleTo(EntityPlayerMP player) {
-		if (visible == 1) {
-			return !availability.isAvailable(player);
-		}
+		if (visible == 1) { return !availability.isAvailable(player); }
 		return true;
 	}
 
@@ -267,20 +250,21 @@ public class DataDisplay implements INPCDisplay {
 		}
 	}
 
-	public void readToNBT(NBTTagCompound displayNbt) {
-		setName(displayNbt.getString("Name"));
-		setMarkovGeneratorId(displayNbt.getInteger("MarkovGeneratorId"));
-		setMarkovGender(displayNbt.getInteger("MarkovGender"));
-		title = displayNbt.getString("Title");
+	public void load(NBTTagCompound compound) {
+		setName(compound.getString("Name"));
+		setMarkovGeneratorId(compound.getInteger("MarkovGeneratorId"));
+		setMarkovGender(compound.getInteger("MarkovGender"));
+		title = compound.getString("Title");
 		int prevSkinType = skinType;
 		String prevTexture = texture;
 		String prevUrl = url;
 		String prevPlayer = getSkinPlayer();
-		url = displayNbt.getString("SkinUrl");
-		skinType = displayNbt.getByte("UsingSkinUrl");
-		texture = displayNbt.getString("Texture");
-		cloakTexture = displayNbt.getString("CloakTexture");
-		glowTexture = displayNbt.getString("GlowTexture");
+		url = compound.getString("SkinUrl");
+		skinType = compound.getByte("UsingSkinUrl");
+		texture = compound.getString("Texture");
+		cloakTexture = compound.getString("CloakTexture");
+		glowTexture = compound.getString("GlowTexture");
+		if (compound.hasKey("OverlayGlowing")) { overlayGlowing = compound.getBoolean("OverlayGlowing"); }
 		playerProfile = null;
 		if (!url.isEmpty() && !url.startsWith("http")) {
 			try {
@@ -293,45 +277,53 @@ public class DataDisplay implements INPCDisplay {
 			catch (Exception e) { LogWriter.error(e); }
 		}
 		if (skinType == 1) {
-			if (displayNbt.hasKey("SkinUsername", 10)) {
-				playerProfile = NBTUtil.readGameProfileFromNBT(displayNbt.getCompoundTag("SkinUsername"));
-			} else if (displayNbt.hasKey("SkinUsername", 8) && !StringUtils.isNullOrEmpty(displayNbt.getString("SkinUsername"))) {
-				playerProfile = new GameProfile(null, displayNbt.getString("SkinUsername"));
+			if (compound.hasKey("SkinUsername", 10)) {
+				playerProfile = NBTUtil.readGameProfileFromNBT(compound.getCompoundTag("SkinUsername"));
+			} else if (compound.hasKey("SkinUsername", 8) && !StringUtils.isNullOrEmpty(compound.getString("SkinUsername"))) {
+				playerProfile = new GameProfile(null, compound.getString("SkinUsername"));
 			}
 			loadProfile();
 		}
-		modelSize = ValueUtil.correctInt(displayNbt.getInteger("Size"), 1, 30);
-		showName = displayNbt.getInteger("ShowName");
-		if (displayNbt.hasKey("SkinColor")) {
-			skinColor = displayNbt.getInteger("SkinColor");
+		showName = compound.getInteger("ShowName");
+		if (compound.hasKey("SkinColor")) {
+			skinColor = compound.getInteger("SkinColor");
 		}
-		visible = displayNbt.getInteger("NpcVisible");
-		availability.load(displayNbt.getCompoundTag("VisibleAvailability"));
-		disableLivingAnimation = displayNbt.getBoolean("NoLivingAnimation");
-		hitboxState = displayNbt.getByte("IsStatue");
-		isNormalModel = displayNbt.getBoolean("HasJoints");
+		visible = compound.getInteger("NpcVisible");
+		availability.load(compound.getCompoundTag("VisibleAvailability"));
+		disableLivingAnimation = compound.getBoolean("NoLivingAnimation");
+		hitboxState = compound.getByte("IsStatue");
+		isNormalModel = compound.getBoolean("HasJoints");
 		
-		setBossbar(displayNbt.getByte("BossBar"));
-		setBossColor(displayNbt.getInteger("BossColor"));
+		setBossbar(compound.getByte("BossBar"));
+		setBossColor(compound.getInteger("BossColor"));
 		if (prevSkinType != skinType || !texture.equals(prevTexture) || !url.equals(prevUrl) || !getSkinPlayer().equals(prevPlayer)) {
 			npc.textureLocation = null;
 		}
 		npc.textureGlowLocation = null;
 		npc.textureCloakLocation = null;
+		VisibilityController.instance.trackNpc(npc);
+
+		// New from Unofficial (GoodBird)
+		if (compound.hasKey("Size", 99)) {
+			modelSize = ValueUtil.onlyPositiveFloat(compound.getFloat("Size"), Float.MAX_VALUE);
+		}
+		if (compound.hasKey("Size", 11)) { lineColors = compound.getIntArray("LineColors"); }
+
+		// New from Unofficial (BetaZavr)
 		npc.updateHitbox();
-		if (displayNbt.hasKey("ShadowSize", 5)) {
-			shadowSize = ValueUtil.correctFloat(displayNbt.getFloat("ShadowSize"), 0, 1.5f);
+		if (compound.hasKey("ShadowSize", 5)) {
+			shadowSize = ValueUtil.correctFloat(compound.getFloat("ShadowSize"), 0, 1.5f);
 		} else {
 			shadowSize = 1.0f;
 		}
-		if (displayNbt.hasKey("HitBoxWidth", 5)) { width = ValueUtil.correctFloat(displayNbt.getFloat("HitBoxWidth"), 0.0f, 5.0f); }
-		if (displayNbt.hasKey("HitBoxHeight", 5)) { height = ValueUtil.correctFloat(displayNbt.getFloat("HitBoxHeight"), 0.0f, 10.0f); }
-        if (hitboxState != (byte) 1 && (width != 0.0f || height != 0.0f)) {
-        	npc.baseWidth = width;
-        	npc.baseHeight = height;
-        	npc.updateHitbox();
+		if (compound.hasKey("HitBoxWidth", 5)) { width = ValueUtil.correctFloat(compound.getFloat("HitBoxWidth"), 0.0f, 5.0f); }
+		if (compound.hasKey("HitBoxHeight", 5)) { height = ValueUtil.correctFloat(compound.getFloat("HitBoxHeight"), 0.0f, 10.0f); }
+		if (hitboxState != (byte) 1 && (width != 0.0f || height != 0.0f)) {
+			if (npc.baseHeight > 0.0f && height > 0.0f) { npc.baseEyeHeight = npc.baseEyeHeight / npc.baseHeight * height; }
+			npc.baseWidth = width;
+			npc.baseHeight = height;
+			npc.updateHitbox();
 		}
-		CustomNpcs.visibilityController.trackNpc(npc);
 	}
 
 	@Override
@@ -464,27 +456,6 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public void setShadowType(int type) {
-		if (type < 0) {
-			type *= -1;
-		}
-		switch (type % 4) {
-			case 0:
-				shadowSize = 0.0f;
-				break;
-			case 1:
-				shadowSize = 0.5f;
-				break;
-			case 2:
-				shadowSize = 1.0f;
-				break;
-			default:
-				shadowSize = 1.5f;
-				break;
-		}
-	}
-
-	@Override
 	public void setShowName(int type) {
 		if (type == showName) {
 			return;
@@ -494,12 +465,11 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public void setSize(int size) {
-		if (modelSize == size) {
-			return;
+	public void setSize(float size) {
+		if (modelSize != size) {
+			modelSize = ValueUtil.onlyPositiveFloat(size, Float.MAX_VALUE);
+			npc.updateClient = true;
 		}
-		modelSize = ValueUtil.correctInt(size, 1, 30);
-		npc.updateClient = true;
 	}
 
 	@Override
@@ -566,36 +536,93 @@ public class DataDisplay implements INPCDisplay {
 		return !npc.isKilled() && (showName == 0 || (showName == 2 && npc.isAttacking()));
 	}
 
-	public NBTTagCompound writeToNBT(NBTTagCompound displayNbt) {
-		displayNbt.setString("Name", name);
-		displayNbt.setInteger("MarkovGeneratorId", markovGeneratorId);
-		displayNbt.setInteger("MarkovGender", markovGender);
-		displayNbt.setString("Title", title);
-		displayNbt.setString("SkinUrl", url);
-		displayNbt.setString("Texture", texture);
-		displayNbt.setString("CloakTexture", cloakTexture);
-		displayNbt.setString("GlowTexture", glowTexture);
-		displayNbt.setByte("UsingSkinUrl", skinType);
+	public NBTTagCompound save(NBTTagCompound compound) {
+		compound.setString("Name", name);
+		compound.setInteger("MarkovGeneratorId", markovGeneratorId);
+		compound.setInteger("MarkovGender", markovGender);
+		compound.setString("Title", title);
+		compound.setString("SkinUrl", url);
+		compound.setString("Texture", texture);
+		compound.setString("CloakTexture", cloakTexture);
+		compound.setString("GlowTexture", glowTexture);
+		compound.setBoolean("OverlayGlowing", overlayGlowing);
+		compound.setByte("UsingSkinUrl", skinType);
 		if (playerProfile != null) {
 			NBTTagCompound displayNbt2 = new NBTTagCompound();
 			NBTUtil.writeGameProfile(displayNbt2, playerProfile);
-			displayNbt.setTag("SkinUsername", displayNbt2);
+			compound.setTag("SkinUsername", displayNbt2);
 		}
-		displayNbt.setInteger("Size", modelSize);
-		displayNbt.setInteger("ShowName", showName);
-		displayNbt.setInteger("SkinColor", skinColor);
-		displayNbt.setInteger("NpcVisible", visible);
-		displayNbt.setTag("VisibleAvailability", availability.save(new NBTTagCompound()));
-		displayNbt.setBoolean("NoLivingAnimation", disableLivingAnimation);
-		displayNbt.setByte("IsStatue", hitboxState);
-		displayNbt.setBoolean("HasJoints", isNormalModel);
-		displayNbt.setByte("BossBar", showBossBar);
-		displayNbt.setInteger("BossColor", bossColor.ordinal());
-		displayNbt.setBoolean("EnableInvisibleNpcs", CustomNpcs.EnableInvisibleNpcs);
-		displayNbt.setFloat("ShadowSize", shadowSize);
-		displayNbt.setFloat("HitBoxWidth", width);
-		displayNbt.setFloat("HitBoxHeight", height);
-		return displayNbt;
+		compound.setInteger("ShowName", showName);
+		compound.setInteger("SkinColor", skinColor);
+		compound.setInteger("NpcVisible", visible);
+		compound.setTag("VisibleAvailability", availability.save(new NBTTagCompound()));
+		compound.setBoolean("NoLivingAnimation", disableLivingAnimation);
+		compound.setByte("IsStatue", hitboxState);
+		compound.setBoolean("HasJoints", isNormalModel);
+		compound.setByte("BossBar", showBossBar);
+		compound.setInteger("BossColor", bossColor.ordinal());
+		compound.setBoolean("EnableInvisibleNpcs", CustomNpcs.EnableInvisibleNpcs);
+
+		// New from Unofficial (GoodBird)
+		compound.setFloat("Size", modelSize);
+		compound.setIntArray("LineColors", lineColors);
+
+		// New from Unofficial (BetaZavr)
+		compound.setFloat("ShadowSize", shadowSize);
+		compound.setFloat("HitBoxWidth", width);
+		compound.setFloat("HitBoxHeight", height);
+
+		return compound;
+	}
+
+	// New from Unofficial (GoodBird)
+	@Override
+	public boolean isOverlayGlowing() { return overlayGlowing; }
+
+	@Override
+	public void setOverlayGlowing(boolean glowing) { overlayGlowing = glowing; }
+
+	@Override
+	public int[] getLineColors() { return lineColors; }
+
+	@Override
+	public void setLineColors(int color1, int color2, int color3) { lineColors = new int[]{ color1, color2, color3}; }
+
+	// New from Unofficial (BetaZavr)
+	@Override
+	public float[] getDimensions() { return new float[] { width, height }; }
+
+	@Override
+	public void setDimensions(float widthIn, float heightIn) {
+		if (widthIn < 0 || heightIn < 0) { throw new CustomNPCsException("Width or height must be greater than 0. Now width: " + widthIn + "; height: " + heightIn); }
+		if (widthIn > 7.5f || heightIn > 15.0f) { throw new CustomNPCsException("Width must be less than 7.5 or height must be less than 15. Now width: " + widthIn + "; height: " + heightIn); }
+		width = widthIn;
+		height = heightIn;
+		if (hitboxState != (byte) 1 && (width != 0.0f || height != 0.0f)) {
+			npc.width = width;
+			npc.height = height;
+		}
+	}
+
+	public float getShadowSize() { return shadowSize; }
+
+	@Override
+	public int getShadowType() {
+		if (shadowSize < 0.5f) { return 0; }
+		if (shadowSize < 1.0f) { return 1; }
+		if (shadowSize < 1.5f) { return 2; }
+		return 3;
+	}
+
+	@Override
+	public void setShadowType(int type) {
+		if (type < 0) { type *= -1; }
+		switch (type % 4) {
+			case 0: shadowSize = 0.0f; break;
+			case 1: shadowSize = 0.5f; break;
+			case 2: shadowSize = 1.0f; break;
+			default: shadowSize = 1.5f; break;
+		}
 	}
 
 }

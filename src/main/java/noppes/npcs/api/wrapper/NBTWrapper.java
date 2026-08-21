@@ -1,19 +1,9 @@
 package noppes.npcs.api.wrapper;
 
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagFloat;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagIntArray;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
+import net.minecraft.nbt.*;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.INbt;
-import noppes.npcs.api.NpcAPI;
 import noppes.npcs.util.NBTJsonUtil;
-
-import java.util.Objects;
 
 public class NBTWrapper implements INbt {
 
@@ -25,10 +15,13 @@ public class NBTWrapper implements INbt {
 
 	@Override
 	public void clear() {
-		for (String name : this.compound.getKeySet()) {
-			this.compound.removeTag(name);
+		for (String name : compound.getKeySet()) {
+			compound.removeTag(name);
 		}
 	}
+
+	@Override
+	public boolean isEmpty() { return compound.hasNoTags(); }
 
 	@Override
 	public boolean getBoolean(String key) {
@@ -47,7 +40,7 @@ public class NBTWrapper implements INbt {
 
 	@Override
 	public INbt getCompound(String key) {
-		return Objects.requireNonNull(NpcAPI.Instance()).getINbt(this.compound.getCompoundTag(key));
+		return new NBTWrapper(compound.getCompoundTag(key));
 	}
 
 	@Override
@@ -81,7 +74,7 @@ public class NBTWrapper implements INbt {
 		Object[] nbts = new Object[list.tagCount()];
 		for (int i = 0; i < list.tagCount(); ++i) {
 			if (list.getTagType() == 10) {
-				nbts[i] = Objects.requireNonNull(NpcAPI.Instance()).getINbt(list.getCompoundTagAt(i));
+				nbts[i] = new NBTWrapper(list.getCompoundTagAt(i));
 			} else if (list.getTagType() == 8) {
 				nbts[i] = list.getStringTagAt(i);
 			} else if (list.getTagType() == 6) {
@@ -104,6 +97,78 @@ public class NBTWrapper implements INbt {
 			throw new CustomNPCsException("NBT tag " + key + " isn't a list");
 		}
 		return ((NBTTagList) b).getTagType();
+	}
+
+
+	@Override
+	public void addToList(String keyList, Object value) {
+		if (!compound.hasKey(keyList)) { compound.setTag(keyList, new NBTTagList()); }
+		NBTBase list = compound.getTag(keyList);
+		if (!(list instanceof NBTTagList)) { throw new CustomNPCsException("\"" + keyList + "\" - already exists and is not a \"" + keyList + "\" ListTag!"); }
+		if (((NBTTagList) list).tagCount() == 0) {
+			NBTBase tag = getListTag(value, -1);
+			if (tag != null) { ((NBTTagList) list).appendTag(tag); }
+			return;
+		}
+		NBTBase tag = getListTag(value, -1);
+		if (tag == null) {
+			throw new CustomNPCsException("Value \"" + value + "\" - cannot be converted to tag from \"" + keyList + "\" NBTTagList!");
+		}
+		if (tag.getId() != ((NBTTagList) list).getTagType()) {
+			throw new CustomNPCsException("Value \"" + value + "\" - does not match storage type in \"" + keyList + "\"NBTTagList!");
+		}
+		((NBTTagList) list).appendTag(tag);
+	}
+
+	private NBTBase getListTag(Object value, int type) {
+		if (value instanceof NBTBase) {
+			if (type < 0 || ((NBTBase) value).getId() == type) { return (NBTBase) value; }
+		} else if (value instanceof Boolean) {
+			if (type < 0 || type == 1) { return new NBTTagByte((byte) ((boolean) value ? 1 : 0)); }
+		} else if (value instanceof Byte) {
+			if (type < 0 || type == 2) { return new NBTTagByte((Byte) value); }
+		} else if (value instanceof Integer) {
+			if (type < 0 || type == 3) { return new NBTTagInt((Integer) value); }
+		} else if (value instanceof Short) {
+			if (type < 0 || type == 4) { return new NBTTagShort((Short) value); }
+		} else if (value instanceof Float) {
+			if (type < 0 || type == 5) { return new NBTTagFloat((Float) value); }
+		} else if (value instanceof Double) {
+			if (type < 0 || type == 6) { return new NBTTagDouble((Double) value); }
+		} else if (value instanceof Byte[]) {
+			if (type < 0 || type == 7) {
+				byte[] data;
+				if (value instanceof Byte[]) {
+					data = new byte[((Byte[]) value).length];
+					for (int i = 0; i < data.length; i++) { data[i] = ((Byte[]) value)[i]; }
+				} else { data = (byte[]) value; }
+				return new NBTTagByteArray(data);
+			}
+		} else if (value instanceof String) {
+			if (type < 0 || type == 8) { return new NBTTagString((String) value); }
+		} else if (value instanceof INbt) {
+			if (type < 0 || type == 10) { return ((INbt) value).getMCNBT(); }
+		} else if (value instanceof int[] || value instanceof Integer[]) {
+			if (type < 0 || type == 11) {
+				int[] data;
+				if (value instanceof Integer[]) {
+					data = new int[((Integer[]) value).length];
+					for (int i = 0; i < data.length; i++) { data[i] = ((Integer[]) value)[i]; }
+				} else { data = (int[]) value; }
+				return new NBTTagIntArray(data);
+			}
+		}
+		else if (value instanceof long[] || value instanceof Long[]) {
+			if (type < 0 || type == 12) {
+				long[] data;
+				if (value instanceof Long[]) {
+					data = new long[((Long[]) value).length];
+					for (int i = 0; i < data.length; i++) { data[i] = ((Long[]) value)[i]; }
+				} else { data = (long[]) value; }
+				return new NBTTagLongArray(data);
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -134,6 +199,11 @@ public class NBTWrapper implements INbt {
 	@Override
 	public boolean has(String key) {
 		return this.compound.hasKey(key);
+	}
+
+	@Override
+	public boolean has(String key, int type) {
+		return compound.hasKey(key, type);
 	}
 
 	@Override
@@ -195,55 +265,18 @@ public class NBTWrapper implements INbt {
 	}
 
 	@Override
-	public void setList(String key, Object[] value) {
+	public void setList(String key, Object[] values) {
 		NBTTagList list = new NBTTagList();
 		int type = -1;
-		for (Object nbt : value) {
-			if (nbt instanceof INbt) {
-				if (type == -1) {
-					type = 10;
-				} else if (type != 10) {
-					continue;
-				}
-				list.appendTag(((INbt) nbt).getMCNBT());
-			} else if (nbt instanceof String) {
-				if (type == -1) {
-					type = 8;
-				} else if (type != 8) {
-					continue;
-				}
-				list.appendTag(new NBTTagString((String) nbt));
-			} else if (nbt instanceof Double) {
-				if (type == -1) {
-					type = 6;
-				} else if (type != 6) {
-					continue;
-				}
-				list.appendTag(new NBTTagDouble((double) nbt));
-			} else if (nbt instanceof Float) {
-				if (type == -1) {
-					type = 5;
-				} else if (type != 5) {
-					continue;
-				}
-				list.appendTag(new NBTTagFloat((float) nbt));
-			} else if (nbt instanceof Integer) {
-				if (type == -1) {
-					type = 3;
-				} else if (type != 3) {
-					continue;
-				}
-				list.appendTag(new NBTTagInt((int) nbt));
-			} else if (nbt instanceof int[]) {
-				if (type == -1) {
-					type = 11;
-				} else if (type != 11) {
-					continue;
-				}
-				list.appendTag(new NBTTagIntArray((int[]) nbt));
+		for (int i = 0; i < values.length; i++) {
+			NBTBase tag = getListTag(values[i], type);
+			if (tag == null) {
+				throw new CustomNPCsException("Value[" + i + "] \"" + values[i] + "\" - cannot be converted to a tag or does not match the storage type of the ListTag!");
 			}
+			if (type < 0) { type = tag.getId(); }
+			list.appendTag(tag);
 		}
-		this.compound.setTag(key, list);
+		compound.setTag(key, list);
 	}
 
 	@Override
@@ -265,4 +298,15 @@ public class NBTWrapper implements INbt {
 	public String toJsonString() {
 		return NBTJsonUtil.Convert(this.compound);
 	}
+
+	@Override
+	public NBTBase mcGetTag(String key) {
+		return compound.getTag(key);
+	}
+
+	@Override
+	public void mcSetTag(String key, NBTBase tag) {
+		compound.setTag(key, tag);
+	}
+
 }

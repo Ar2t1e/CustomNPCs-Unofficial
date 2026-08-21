@@ -7,6 +7,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
@@ -17,36 +18,56 @@ import noppes.npcs.api.entity.IEntityLivingBase;
 import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.handler.data.IFaction;
 import noppes.npcs.api.handler.data.IKeySetting;
+import noppes.npcs.api.interfaces.EventName;
 import noppes.npcs.api.item.IItemStack;
+import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.constants.EnumScriptType;
-
-import java.util.Objects;
 
 public class PlayerEvent extends CustomNPCsEvent {
 
-	@Cancelable
-	@EventName(EnumScriptType.ATTACK)
-	public static class AttackEvent extends PlayerEvent {
-		public Object target;
-		public int type;
+	public IPlayer<?> player;
 
-		public AttackEvent(IPlayer<?> player, int type, Object target) {
-			super(player);
-			this.type = type;
-			this.target = target;
-		}
+	public PlayerEvent(IPlayer<?> playerIn) {
+		super();
+		player = playerIn;
 	}
 
-	@Cancelable
-	@EventName(EnumScriptType.BROKEN)
-	public static class BreakEvent extends PlayerEvent {
-		public IBlock block;
-		public int exp;
+	@EventName(EnumScriptType.PLAY_SOUND)
+	public static class PlayerSound extends PlayerEvent {
 
-		public BreakEvent(IPlayer<?> player, IBlock block, int exp) {
+		public final String name;
+		public final String resource;
+		public final String category;
+		public final boolean looping;
+		public IPos pos;
+		public float volume;
+		public float pitch;
+
+		public PlayerSound(IPlayer<?> player, String nameIn, String resourceIn, String categoryIn,
+						   boolean loopingIn, double x, double y, double z, float volumeIn, float pitchIn) {
 			super(player);
-			this.block = block;
-			this.exp = exp;
+			name = nameIn;
+			resource = resourceIn;
+			category = categoryIn;
+			looping = loopingIn;
+			pos = API.getIPos(x, y, z);
+			volume = volumeIn;
+			pitch = pitchIn;
+		}
+
+	}
+
+	@EventName(EnumScriptType.FACTION_UPDATE)
+	public static class FactionUpdateEvent extends PlayerEvent {
+		public IFaction faction;
+		public boolean init;
+		public int points;
+
+		public FactionUpdateEvent(IPlayer<?> player, IFaction factionIn, int pointsIn, boolean initIn) {
+			super(player);
+			faction = factionIn;
+			points = pointsIn;
+			init = initIn;
 		}
 	}
 
@@ -55,73 +76,61 @@ public class PlayerEvent extends CustomNPCsEvent {
 	public static class ChatEvent extends PlayerEvent {
 		public String message;
 
-		public ChatEvent(IPlayer<?> player, String message) {
+		public ChatEvent(IPlayer<?> player, String messageIn) {
 			super(player);
-			this.message = message;
+			message = messageIn;
 		}
 	}
 
-	@Cancelable
-	@EventName(EnumScriptType.SEND_COMMAND)
-	public static class CommandEvent extends PlayerEvent {
-		public ICommand command;
-		public String[] parameters;
+	@EventName(EnumScriptType.KEY_PRESSED)
+	public static class KeyPressedEvent extends PlayerEvent {
 
-		public CommandEvent(IPlayer<?> player, ICommand command, String[] parameters) {
+		public final int key;
+		public final boolean isAltPressed;
+		public final boolean isCtrlPressed;
+		public final boolean isMetaPressed;
+		public final boolean isShiftPressed;
+		public final String openGui;
+
+		public KeyPressedEvent(IPlayer<?> player, int keyIn, boolean isCtrlPressedIn, boolean isAltPressedIn, boolean isShiftPressedIn,
+							   boolean isMetaPressedIn, String openGuiIn) {
 			super(player);
-			this.command = command;
-			this.parameters = parameters;
+			key = keyIn;
+			isCtrlPressed = isCtrlPressedIn;
+			isAltPressed = isAltPressedIn;
+			isShiftPressed = isShiftPressedIn;
+			isMetaPressed = isMetaPressedIn;
+			openGui = openGuiIn;
 		}
 	}
 
-	@EventName(EnumScriptType.CONTAINER_CLOSED)
-	public static class ContainerClosed extends PlayerEvent {
-		public IContainer container;
+	@EventName(EnumScriptType.LEVEL_UP)
+	public static class LevelUpEvent extends PlayerEvent {
+		public int change;
 
-		public ContainerClosed(IPlayer<?> player, IContainer container) {
+		public LevelUpEvent(IPlayer<?> player, int changeIn) {
 			super(player);
-			this.container = container;
+			change = changeIn;
 		}
 	}
 
-	@EventName(EnumScriptType.CONTAINER_OPEN)
-	public static class ContainerOpen extends PlayerEvent {
-		public IContainer container;
-
-		public ContainerOpen(IPlayer<?> player, IContainer container) {
-			super(player);
-			this.container = container;
-		}
+	@EventName(EnumScriptType.LOGOUT)
+	public static class LogoutEvent extends PlayerEvent {
+		public LogoutEvent(IPlayer<?> player) { super(player); }
 	}
 
-	@Cancelable
-	@EventName(EnumScriptType.CUSTOM_TELEPORT)
-	public static class CustomTeleport extends PlayerEvent {
-
-		public IPos pos, portal;
-		public int dimension;
-
-		public CustomTeleport(IPlayer<?> player, IPos portal, IPos pos, int dimensionID) {
-			super(player);
-			this.pos = pos;
-			this.portal = portal;
-			this.dimension = dimensionID;
-		}
-
+	@EventName(EnumScriptType.LOGIN)
+	public static class LoginEvent extends PlayerEvent {
+		public LoginEvent(IPlayer<?> player) { super(player); }
 	}
 
-	@Cancelable
-	@EventName(EnumScriptType.DAMAGED_ENTITY)
-	public static class DamagedEntityEvent extends PlayerEvent {
-		public float damage;
-		public IDamageSource damageSource;
-		public IEntity<?> target;
+	@EventName(EnumScriptType.TIMER)
+	public static class TimerEvent extends PlayerEvent {
+		public int id;
 
-		public DamagedEntityEvent(IPlayer<?> player, Entity target, float damage, DamageSource damagesource) {
+		public TimerEvent(IPlayer<?> player, int idIn) {
 			super(player);
-			this.target = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(target);
-			this.damage = damage;
-			this.damageSource = Objects.requireNonNull(NpcAPI.Instance()).getIDamageSource(damagesource);
+			id = idIn;
 		}
 	}
 
@@ -129,17 +138,26 @@ public class PlayerEvent extends CustomNPCsEvent {
 	@EventName(EnumScriptType.DAMAGED)
 	public static class DamagedEvent extends PlayerEvent {
 
-		public boolean clearTarget;
+		public boolean clearTarget = false;
 		public float damage;
 		public IDamageSource damageSource;
 		public IEntity<?> source;
 
-		public DamagedEvent(IPlayer<?> player, Entity source, float damage, DamageSource damagesource) {
+		public DamagedEvent(IPlayer<?> player, Entity sourceIn, float damageIn, DamageSource damagesourceIn) {
 			super(player);
-			this.clearTarget = false;
-			this.source = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(source);
-			this.damage = damage;
-			this.damageSource = Objects.requireNonNull(NpcAPI.Instance()).getIDamageSource(damagesource);
+			source = API.getIEntity(sourceIn);
+			damage = damageIn;
+			damageSource = API.getIDamageSource(damagesourceIn);
+		}
+	}
+
+	@EventName(EnumScriptType.KILL)
+	public static class KilledEntityEvent extends PlayerEvent {
+		public IEntityLivingBase<?> entity;
+
+		public KilledEntityEvent(IPlayer<?> player, EntityLivingBase entityIn) {
+			super(player);
+			entity = (IEntityLivingBase<?>) API.getIEntity(entityIn);
 		}
 	}
 
@@ -150,33 +168,112 @@ public class PlayerEvent extends CustomNPCsEvent {
 		public IEntity<?> source;
 		public String type;
 
-		public DiedEvent(IPlayer<?> player, DamageSource damagesource, Entity entity) {
+		public DiedEvent(IPlayer<?> player, DamageSource damagesourceIn, Entity entityIn) {
 			super(player);
-			this.type = damagesource.damageType;
-			this.source = Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity);
-			this.damageSource = Objects.requireNonNull(NpcAPI.Instance()).getIDamageSource(damagesource);
+			type = damagesourceIn.damageType;
+			source = API.getIEntity(entityIn);
+			damageSource = API.getIDamageSource(damagesourceIn);
 		}
 	}
 
-	@EventName(EnumScriptType.FACTION_UPDATE)
-	public static class FactionUpdateEvent extends PlayerEvent {
-		public IFaction faction;
-		public boolean init;
-		public int points;
+	@Cancelable
+	@EventName(EnumScriptType.DAMAGED_ENTITY)
+	public static class DamagedEntityEvent extends PlayerEvent {
+		public float damage;
+		public IDamageSource damageSource;
+		public IEntity<?> target;
 
-		public FactionUpdateEvent(IPlayer<?> player, IFaction faction, int points, boolean init) {
+		public DamagedEntityEvent(IPlayer<?> player, Entity targetIn, float damageIn, DamageSource damagesourceIn) {
 			super(player);
-			this.faction = faction;
-			this.points = points;
-			this.init = init;
+			target = API.getIEntity(targetIn);
+			damage = damageIn;
+			damageSource = API.getIDamageSource(damagesourceIn);
 		}
 	}
 
-	@EventName(EnumScriptType.INIT)
-	public static class InitEvent extends PlayerEvent {
-		public InitEvent(IPlayer<?> player) {
+	@Cancelable
+	@EventName(EnumScriptType.RANGED_LAUNCHED)
+	public static class RangedLaunchedEvent extends PlayerEvent {
+		public RangedLaunchedEvent(IPlayer<?> player) { super(player); }
+	}
+
+	@EventName(EnumScriptType.CONTAINER_CLOSED)
+	public static class ContainerClosed extends PlayerEvent {
+		public IContainer container;
+
+		public ContainerClosed(IPlayer<?> player, IContainer containerIn) {
 			super(player);
+			container = containerIn;
 		}
+	}
+
+	@EventName(EnumScriptType.CONTAINER_OPEN)
+	public static class ContainerOpen extends PlayerEvent {
+		public IContainer container;
+
+		public ContainerOpen(IPlayer<?> player, IContainer containerIn) {
+			super(player);
+			container = containerIn;
+		}
+	}
+
+	@Cancelable
+	@EventName(EnumScriptType.PICKUP)
+	public static class PickUpEvent extends PlayerEvent {
+		public IItemStack item;
+
+		public PickUpEvent(IPlayer<?> player, IItemStack itemIn) {
+			super(player);
+			item = itemIn;
+		}
+	}
+
+	@Cancelable
+	@EventName(EnumScriptType.TOSS)
+	public static class TossEvent extends PlayerEvent {
+		public IItemStack item;
+
+		public TossEvent(IPlayer<?> player, IItemStack itemIn) {
+			super(player);
+			item = itemIn;
+		}
+	}
+
+	@Cancelable
+	@EventName(EnumScriptType.BROKEN)
+	public static class BreakEvent extends PlayerEvent {
+		public IBlock block;
+		public int exp;
+
+		public BreakEvent(IPlayer<?> player, IBlock blockIn, int expIn) {
+			super(player);
+			block = blockIn;
+			exp = expIn;
+		}
+	}
+
+	@Cancelable
+	@EventName(EnumScriptType.ATTACK)
+	public static class AttackEvent extends PlayerEvent {
+
+		public Object target;
+		public int type;
+		public final IDamageSource damageSource;
+
+		public AttackEvent(IPlayer<?> player, int typeIn, Object targetIn) {
+			super(player);
+			type = typeIn;
+			target = targetIn;
+			damageSource = null;
+		}
+
+		public AttackEvent(IPlayer<?> player, IEntity<?> targetIn, DamageSource damageSourceIn) {
+			super(player);
+			type = 1;
+			target = targetIn;
+			damageSource = API.getIDamageSource(damageSourceIn);
+		}
+
 	}
 
 	@Cancelable
@@ -186,10 +283,35 @@ public class PlayerEvent extends CustomNPCsEvent {
 		public Object target;
 		public int type;
 
-		public InteractEvent(IPlayer<?> player, int type, Object target) {
+		public InteractEvent(IPlayer<?> player, int typeIn, Object targetIn) {
 			super(player);
-			this.type = type;
-			this.target = target;
+			type = typeIn;
+			target = targetIn;
+		}
+
+	}
+
+	@EventName(EnumScriptType.TICK)
+	public static class UpdateEvent extends PlayerEvent {
+		public UpdateEvent(IPlayer<?> player) { super(player); }
+	}
+
+	@EventName(EnumScriptType.INIT)
+	public static class InitEvent extends PlayerEvent {
+		public InitEvent(IPlayer<?> player) { super(player); }
+	}
+
+	// New from Unofficial (BetaZavr)
+	@EventName(EnumScriptType.GUI_OPEN)
+	public static class OpenGUI extends PlayerEvent {
+
+		public String newGUI;
+		public String oldGUI;
+
+		public OpenGUI(IPlayer<?> player, String n, String o) {
+			super(player);
+			newGUI = n;
+			oldGUI = o;
 		}
 
 	}
@@ -200,10 +322,10 @@ public class PlayerEvent extends CustomNPCsEvent {
 		public final IItemStack crafting;
 		public final IInventory craftMatrix;
 
-		public ItemCrafted(IPlayer<?> player, @Nonnull IItemStack crafting, IInventory craftMatrix) {
+		public ItemCrafted(IPlayer<?> player, @Nonnull IItemStack craftingIn, IInventory craftMatrixIn) {
 			super(player);
-			this.crafting = crafting;
-			this.craftMatrix = craftMatrix;
+			crafting = craftingIn;
+			craftMatrix = craftMatrixIn;
 		}
 	}
 
@@ -214,44 +336,22 @@ public class PlayerEvent extends CustomNPCsEvent {
 		public int rodDamage;
 		public IItemStack[] stacks;
 
-		public ItemFished(IPlayer<?> player, NonNullList<ItemStack> drops, int rodDamage) {
+		public ItemFished(IPlayer<?> player, NonNullList<ItemStack> drops, int rodDamageIn) {
 			super(player);
-			this.stacks = new IItemStack[drops.size()];
+			stacks = new IItemStack[drops.size()];
 			for (int i = 0; i < drops.size(); i++) {
-				this.stacks[i] = Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(drops.get(i));
+				stacks[i] = API.getIItemStack(drops.get(i));
 			}
-			this.rodDamage = rodDamage;
+			rodDamage = rodDamageIn;
 		}
 	}
 
-	@EventName(EnumScriptType.KEY_ACTIVE)
-	public static class KeyActive extends PlayerEvent {
-
-		public IKeySetting key;
-		public int id;
-
-		public KeyActive(IPlayer<?> player, IKeySetting kb) {
+	@EventName(EnumScriptType.PACKAGE_FROM)
+	public static class PlayerPackage extends PlayerEvent {
+		public INbt nbt;
+		public PlayerPackage(IPlayer<?> player, NBTTagCompound nbtMC) {
 			super(player);
-			this.key = kb;
-		}
-
-	}
-
-	@EventName(EnumScriptType.KEY_DOWN)
-	public static class KeyPressedEvent extends PlayerEvent {
-		public boolean isAltPressed;
-		public boolean isCtrlPressed;
-		public boolean isMetaPressed;
-		public boolean isShiftPressed;
-		public int key;
-
-		public KeyPressedEvent(IPlayer<?> player, int key, boolean isCtrlPressed, boolean isAltPressed, boolean isShiftPressed, boolean isMetaPressed) {
-			super(player);
-			this.key = key;
-			this.isCtrlPressed = isCtrlPressed;
-			this.isAltPressed = isAltPressed;
-			this.isShiftPressed = isShiftPressed;
-			this.isMetaPressed = isMetaPressed;
+			nbt = new NBTWrapper(nbtMC);
 		}
 	}
 
@@ -265,78 +365,51 @@ public class PlayerEvent extends CustomNPCsEvent {
 		public int posY;
 		public int mouseX;
 		public int mouseY;
-		public int dWheel;
+		public int scrolled;
 
-		public MouseMoveEvent(IPlayer<?> player, int x, int y, int dx, int dy, int wheel, boolean isCtrlPressed, boolean isAltPressed, boolean isShiftPressed, boolean isMetaPressed) {
+		public MouseMoveEvent(IPlayer<?> player, int x, int y, int dx, int dy, int scrolledIn,
+							  boolean isCtrlPressedIn, boolean isAltPressedIn, boolean isShiftPressedIn, boolean isMetaPressedIn) {
 			super(player);
 			posX = x;
 			posY = y;
 			mouseX = dx;
 			mouseY = dy;
-			dWheel = wheel;
-			this.isCtrlPressed = isCtrlPressed;
-			this.isAltPressed = isAltPressed;
-			this.isShiftPressed = isShiftPressed;
-			this.isMetaPressed = isMetaPressed;
+			scrolled = scrolledIn;
+			isCtrlPressed = isCtrlPressedIn;
+			isAltPressed = isAltPressedIn;
+			isShiftPressed = isShiftPressedIn;
+			isMetaPressed = isMetaPressedIn;
 		}
 	}
 
-	@EventName(EnumScriptType.KILL)
-	public static class KilledEntityEvent extends PlayerEvent {
-		public IEntityLivingBase<?> entity;
+	@EventName(EnumScriptType.KEY_ACTIVE)
+	public static class KeyActive extends PlayerEvent {
 
-		public KilledEntityEvent(IPlayer<?> player, EntityLivingBase entity) {
+		public IKeySetting key;
+		public int id;
+
+		public KeyActive(IPlayer<?> player, IKeySetting kb) {
 			super(player);
-			this.entity = (IEntityLivingBase<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(entity);
-		}
-	}
-
-	@EventName(EnumScriptType.LEVEL_UP)
-	public static class LevelUpEvent extends PlayerEvent {
-		public int change;
-
-		public LevelUpEvent(IPlayer<?> player, int change) {
-			super(player);
-			this.change = change;
-		}
-	}
-
-	@EventName(EnumScriptType.LOGIN)
-	public static class LoginEvent extends PlayerEvent {
-		public LoginEvent(IPlayer<?> player) {
-			super(player);
-		}
-	}
-
-	@EventName(EnumScriptType.LOGOUT)
-	public static class LogoutEvent extends PlayerEvent {
-		public LogoutEvent(IPlayer<?> player) {
-			super(player);
-		}
-	}
-
-	@EventName(EnumScriptType.GUI_OPEN)
-	public static class OpenGUI extends PlayerEvent {
-
-		public String newGUI, oldGUI;
-
-		public OpenGUI(IPlayer<?> player, String n, String o) {
-			super(player);
-			this.newGUI = n;
-			this.oldGUI = o;
+			key = kb;
 		}
 
 	}
 
 	@Cancelable
-	@EventName(EnumScriptType.PICKUP)
-	public static class PickUpEvent extends PlayerEvent {
-		public IItemStack item;
+	@EventName(EnumScriptType.CUSTOM_TELEPORT)
+	public static class CustomTeleport extends PlayerEvent {
 
-		public PickUpEvent(IPlayer<?> player, IItemStack item) {
+		public IPos pos;
+		public IPos portal;
+		public int dimension;
+
+		public CustomTeleport(IPlayer<?> player, IPos portalIn, IPos posIn, int dimensionID) {
 			super(player);
-			this.item = item;
+			pos = posIn;
+			portal = portalIn;
+			dimension = dimensionID;
 		}
+
 	}
 
 	@Cancelable
@@ -344,88 +417,25 @@ public class PlayerEvent extends CustomNPCsEvent {
 	public static class PlaceEvent extends PlayerEvent {
 
 		public IBlock block;
-		public int exp;
 
-		public PlaceEvent(IPlayer<?> player, IBlock block) {
+		public PlaceEvent(IPlayer<?> player, IBlock blockIn) {
 			super(player);
-			this.block = block;
+			block = blockIn;
 		}
 
-	}
-
-	@EventName(EnumScriptType.PACKAGE_FROM)
-	public static class PlayerPackage extends PlayerEvent {
-
-		public INbt nbt;
-
-		public PlayerPackage(IPlayer<?> player, INbt nbt) {
-			super(player);
-			this.nbt = nbt;
-		}
-
-	}
-
-	@EventName(EnumScriptType.SOUND_STOP)
-	public static class PlayerSound extends PlayerEvent {
-
-		public String name;
-		public String resource;
-		public String category;
-		public IPos pos;
-		public float volume;
-		public float pitch;
-
-		public PlayerSound(IPlayer<?> player, String resource, String name, String category, float x, float y, float z, float volume, float pitch) {
-			super(player);
-			this.name = name;
-			this.resource = resource;
-			this.category = category;
-			this.pos = Objects.requireNonNull(NpcAPI.Instance()).getIPos(x, y, z);
-			this.volume = volume;
-			this.pitch = pitch;
-		}
 	}
 
 	@Cancelable
-	@EventName(EnumScriptType.RANGED_LAUNCHED)
-	public static class RangedLaunchedEvent extends PlayerEvent {
-		public RangedLaunchedEvent(IPlayer<?> player) {
+	@EventName(EnumScriptType.SEND_COMMAND)
+	public static class CommandEvent extends PlayerEvent {
+		public ICommand command;
+		public String[] parameters;
+
+		public CommandEvent(IPlayer<?> player, ICommand commandIn, String[] parametersIn) {
 			super(player);
+			command = commandIn;
+			parameters = parametersIn;
 		}
-	}
-
-	@EventName(EnumScriptType.TIMER)
-	public static class TimerEvent extends PlayerEvent {
-		public int id;
-
-		public TimerEvent(IPlayer<?> player, int id) {
-			super(player);
-			this.id = id;
-		}
-	}
-
-	@Cancelable
-	@EventName(EnumScriptType.TOSS)
-	public static class TossEvent extends PlayerEvent {
-		public IItemStack item;
-
-		public TossEvent(IPlayer<?> player, IItemStack item) {
-			super(player);
-			this.item = item;
-		}
-	}
-
-	@EventName(EnumScriptType.TICK)
-	public static class UpdateEvent extends PlayerEvent {
-		public UpdateEvent(IPlayer<?> player) {
-			super(player);
-		}
-	}
-
-	public IPlayer<?> player;
-
-	public PlayerEvent(IPlayer<?> player) {
-		this.player = player;
 	}
 
 }

@@ -52,7 +52,7 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 	@SideOnly(Side.CLIENT)
 	class ListSlot extends GuiSlot {
 
-		public int field_148175_k = -1;
+		public int selected = -1;
 
 		public ListSlot() {
 			super(GuiFlatDimensionPresets.this.mc, GuiFlatDimensionPresets.this.width,
@@ -71,12 +71,12 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 
 		@Override
 		protected void elementClicked(int slotIndex, boolean isDoubleClick, int mouseX, int mouseY) {
-			field_148175_k = slotIndex;
-			func_146426_g();
-			field_146433_u.setText(GuiFlatDimensionPresets.FLAT_WORLD_PRESETS.get(field_146435_s.field_148175_k).generatorInfo);
+			selected = slotIndex;
+			updateButtonValidity();
+			export.setText(GuiFlatDimensionPresets.FLAT_WORLD_PRESETS.get(list.selected).generatorInfo);
 		}
 
-		private void func_148171_c(int p_148171_1_, int p_148171_2_) {
+		private void blitSlotIcon(int p_148171_1_, int p_148171_2_) {
 			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 			mc.getTextureManager().bindTexture(Gui.STAT_ICONS);
 			Tessellator tessellator = Tessellator.getInstance();
@@ -89,7 +89,7 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 			tessellator.draw();
 		}
 
-		private void func_148173_e(int p_148173_1_, int p_148173_2_) { func_148171_c(p_148173_1_, p_148173_2_); }
+		private void blitSlotBg(int p_148173_1_, int p_148173_2_) { blitSlotIcon(p_148173_1_, p_148173_2_); }
 
 		@Override
 		protected int getSize() {
@@ -97,10 +97,10 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 		}
 
 		@Override
-		protected boolean isSelected(int slotIndex) { return slotIndex == field_148175_k; }
+		protected boolean isSelected(int slotIndex) { return slotIndex == selected; }
 
 		private void renderIcon(int p_178054_1_, int p_178054_2_, Item icon, int iconMetadata) {
-			func_148173_e(p_178054_1_ + 1, p_178054_2_ + 1);
+			blitSlotBg(p_178054_1_ + 1, p_178054_2_ + 1);
 			GlStateManager.enableRescaleNormal();
 			RenderHelper.enableGUIStandardItemLighting();
 			itemRender.renderItemIntoGUI(new ItemStack(icon, 1, iconMetadata), p_178054_1_ + 2, p_178054_2_ + 2);
@@ -175,20 +175,20 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 
 	private String presetsShare;
 
-	private String field_146436_r;
+	private String listText;
 
-	private GuiFlatDimensionPresets.ListSlot field_146435_s;
+	private GuiFlatDimensionPresets.ListSlot list;
 
-	private GuiButton field_146434_t;
+	private GuiButton btnSelect;
 
-	private GuiTextField field_146433_u;
+	private GuiTextField export;
 
-	public GuiFlatDimensionPresets(GuiCreateFlatDimension p_i46318_1_) { parentScreen = p_i46318_1_; }
+	public GuiFlatDimensionPresets(GuiCreateFlatDimension parent) { parentScreen = parent; }
 
 	@Override
 	protected void actionPerformed(@Nonnull GuiButton button) throws IOException {
-		if (button.id == 0 && func_146430_p()) {
-			parentScreen.setPreset(field_146433_u.getText());
+		if (button.id == 0 && hasValidSelection()) {
+			parentScreen.setPreset(export.getText());
 			mc.displayGuiScreen(parentScreen);
 		}
 		else if (button.id == 1) { mc.displayGuiScreen(parentScreen); }
@@ -197,24 +197,24 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		drawDefaultBackground();
-		field_146435_s.drawScreen(mouseX, mouseY, partialTicks);
+		list.drawScreen(mouseX, mouseY, partialTicks);
 		drawCenteredString(fontRenderer, presetsTitle, width / 2, 8, 0xFFFFFF);
 		drawString(fontRenderer, presetsShare, 50, 30, 0xA0A0A0);
-		drawString(fontRenderer, field_146436_r, 50, 70, 0xA0A0A0);
-		field_146433_u.drawTextBox();
+		drawString(fontRenderer, listText, 50, 70, 0xA0A0A0);
+		export.drawTextBox();
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 
-	public void func_146426_g() { field_146434_t.enabled = func_146430_p(); }
+	public void updateButtonValidity() { btnSelect.enabled = hasValidSelection(); }
 
-	private boolean func_146430_p() {
-		return field_146435_s.field_148175_k > -1 && field_146435_s.field_148175_k < FLAT_WORLD_PRESETS.size() || field_146433_u.getText().length() > 1;
+	private boolean hasValidSelection() {
+		return list.selected > -1 && list.selected < FLAT_WORLD_PRESETS.size() || export.getText().length() > 1;
 	}
 
 	@Override
 	public void handleMouseInput() throws IOException {
 		super.handleMouseInput();
-		field_146435_s.handleMouseInput();
+		list.handleMouseInput();
 	}
 
 	@Override
@@ -223,28 +223,28 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 		Keyboard.enableRepeatEvents(true);
 		presetsTitle = new TextComponentTranslation("createWorld.customize.presets.title").getFormattedText();
 		presetsShare = new TextComponentTranslation("createWorld.customize.presets.share").getFormattedText();
-		field_146436_r = new TextComponentTranslation("createWorld.customize.presets.list").getFormattedText();
-		field_146433_u = new GuiTextField(2, fontRenderer, 50, 40, width - 100, 20);
-		field_146435_s = new GuiFlatDimensionPresets.ListSlot();
-		field_146433_u.setMaxStringLength(1230);
-		field_146433_u.setText(parentScreen.getPreset());
-		buttonList.add(field_146434_t = new GuiButton(0, width / 2 - 155, height - 28, 150, 20,
+		listText = new TextComponentTranslation("createWorld.customize.presets.list").getFormattedText();
+		export = new GuiTextField(2, fontRenderer, 50, 40, width - 100, 20);
+		list = new GuiFlatDimensionPresets.ListSlot();
+		export.setMaxStringLength(1230);
+		export.setText(parentScreen.getPreset());
+		buttonList.add(btnSelect = new GuiButton(0, width / 2 - 155, height - 28, 150, 20,
 				new TextComponentTranslation("createWorld.customize.presets.select").getFormattedText()));
 		buttonList.add(new GuiButton(1, width / 2 + 5, height - 28, 150, 20,
 				new TextComponentTranslation("gui.cancel").getFormattedText()));
-		func_146426_g();
+		updateButtonValidity();
 	}
 
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
-		if (!field_146433_u.textboxKeyTyped(typedChar, keyCode)) {
+		if (!export.textboxKeyTyped(typedChar, keyCode)) {
 			super.keyTyped(typedChar, keyCode);
 		}
 	}
 
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-		field_146433_u.mouseClicked(mouseX, mouseY, mouseButton);
+		export.mouseClicked(mouseX, mouseY, mouseButton);
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 	}
 
@@ -255,7 +255,7 @@ public class GuiFlatDimensionPresets extends GuiScreen {
 
 	@Override
 	public void updateScreen() {
-		field_146433_u.updateCursorCounter();
+		export.updateCursorCounter();
 		super.updateScreen();
 	}
 

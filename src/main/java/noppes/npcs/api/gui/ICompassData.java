@@ -1,7 +1,7 @@
 package noppes.npcs.api.gui;
 
 import noppes.npcs.api.IPos;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 @SuppressWarnings("all")
 public interface ICompassData {
@@ -18,9 +18,15 @@ public interface ICompassData {
 
 	String getTitle();
 
-	int getType();
+	int getTaskType();
 
-	boolean isShow();
+	boolean isCustomPoint();
+
+	boolean getShowOfPlayer();
+
+	boolean isShowDial();
+
+	boolean isFlat();
 
 	void setDimensionID(@ParamName("dimensionId") int dimensionId);
 
@@ -34,7 +40,13 @@ public interface ICompassData {
 
 	void setRange(@ParamName("range") int range);
 
-	void setShow(@ParamName("show") boolean show);
+	void setIsCustomPoint(@ParamName("show") boolean show);
+
+	void setShowOfPlayer(@ParamName("show") boolean show);
+
+	void setShowDial(@ParamName("show") boolean show);
+
+	void setIsFlat(@ParamName("flat") boolean flat);
 
 	void setTitle(@ParamName("title") String title);
 

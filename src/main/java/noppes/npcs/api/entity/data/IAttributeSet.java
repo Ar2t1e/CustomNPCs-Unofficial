@@ -1,7 +1,7 @@
 package noppes.npcs.api.entity.data;
 
 import net.minecraft.entity.ai.attributes.IAttribute;
-import noppes.npcs.api.ParamName;
+import noppes.npcs.api.interfaces.ParamName;
 
 public interface IAttributeSet {
 
@@ -17,7 +17,7 @@ public interface IAttributeSet {
 
 	void remove();
 
-	void setAttribute(@ParamName("attribute") IAttribute attribute);
+	void setAttribute(@ParamName("iattribute") IAttribute iattribute);
 
 	void setAttribute(@ParamName("name") String name);
 

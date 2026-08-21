@@ -2,142 +2,246 @@ package noppes.npcs.client.gui;
 
 import java.util.*;
 
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.client.Client;
-import noppes.npcs.client.ClientHandler;
+import noppes.npcs.api.gui.IDimensionGetter;
 import noppes.npcs.client.NoppesUtil;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.constants.EnumPacketServer;
-import org.lwjgl.input.Keyboard;
+import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.controllers.data.DimensionData;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.*;
+import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
+import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
-import javax.annotation.Nonnull;
+public class GuiNpcDimension extends GuiNPCInterface
+		implements IDimensionGetter, ICustomScrollListener {
 
-public class GuiNpcDimension extends GuiNPCInterface implements IScrollData, ICustomScrollListener {
-
-	protected final HashMap<String, Integer> data = new HashMap<>();
-	protected GuiCustomScroll scroll;
+	protected final HashMap<Component, Integer> data = new HashMap<>();
+	protected GuiCustomScrollNop scroll;
+	public int currentDimId;
 
 	public GuiNpcDimension() {
 		super();
 		setBackground("menubg.png");
-		xSize = 256;
-	}
+		imageWidth = 256;
 
-	@Override
-	public void buttonEvent(@Nonnull GuiNpcButton button, int mouseButton) {
-		if (mouseButton != 0) { return; }
-		switch (button.getID()) {
-			case 1: {
-				player.sendMessage(new TextComponentTranslation("gui.wip"));
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				int id = data.get(scroll.getSelected());
-				if (!ClientHandler.getInstance().has(id)) { return; }
-				CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, id, 0, 0);
-				break;
-			} // settings
-			case 2: CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, 0, 0, 0); break; // add
-			case 3: {
-				if (!data.containsKey(scroll.getSelected())) { return; }
-				int id = data.get(scroll.getSelected());
-				if (!ClientHandler.getInstance().has(id)) { return; }
-				Client.sendData(EnumPacketServer.DimensionDelete, id);
-				break;
-			} // remove
-			case 4: tp(); break;
-		}
-	}
-
-	public void confirmClicked(boolean flag, int i) {
-		if (flag) { Client.sendData(EnumPacketServer.RemoteDelete, data.get(scroll.getSelected())); }
-		NoppesUtil.openGUI(player, this);
+		currentDimId = minecraft.world.provider.getDimension();
+		Packets.sendServer(new SPacketDimensionsGet());
 	}
 
 	@Override
 	public void initGui() {
 		super.initGui();
-		int id = 0;
-		if (scroll == null) { scroll = new GuiCustomScroll(this, 0).setSize(186, 199); }
-		scroll.guiLeft = guiLeft + 4;
-		scroll.guiTop = guiTop + 14;
-		addScroll(scroll);
-		if (scroll.getSelect() == -1) {
-			for (String key : data.keySet()) {
-				if (data.get(key) == mc.player.world.provider.getDimension()) { scroll.setSelected(key); }
+		int sw = 184;
+		int x0 = guiLeft + 5;
+		int x1 = x0 + sw + 2;
+		int y = guiTop + 4;
+		if (scroll == null) { scroll = addScroll(0).setSize(sw, 199); }
+		if (!scroll.hasSelected()) {
+			for (Component key : data.keySet()) {
+				if (data.get(key) == currentDimId) {
+					scroll.setSelected(key);
+					break;
+				}
 			}
 		}
-		if (data.containsKey(scroll.getSelected())) { id = data.get(scroll.getSelected()); }
+		DimensionController dData = DimensionController.getInstance();
 		// title
-		addLabel(new GuiNpcLabel(0, "gui.dimensions", guiLeft, guiTop + 4)
-				.setCenter(xSize));
+		addLabel(0, x0, y, "gui.dimensions")
+				.setSize(imageWidth - 10, 10)
+				.setCenter(imageWidth - 10);
+		// scroll
+		add(scroll.setPos(x0, y += 10));
+		int id = data.getOrDefault(scroll.getNormalSelected(), 0);
+		// tp to
+		addButton(4, x1, y, "TP")
+				.setSize(60, 20)
+				.setIsEnabled(scroll.hasSelected() && !dData.isDelete(id))
+				.setHoverTexts("dimensions.hover.tp");
 		// settings
-		addButton(new GuiNpcButton(1, guiLeft + 192, guiTop + 36, 60, 20, "gui.settings")
-				.setIsEnable(scroll.getSelect() >= 0 && ClientHandler.getInstance().has(id))
-				.setHoverText("dimensions.hover.settings"));
+		addButton(1, x1, y += 22, "gui.settings")
+				.setSize(60, 20)
+				.setIsEnabled(scroll.hasSelected() &&
+						dData.getMCWorldInfo(id) != null &&
+						!dData.isDelete(id))
+				.setHoverTexts("dimensions.hover.settings");
 		// add
-		addButton(new GuiNpcButton(2, guiLeft + 192, guiTop + 80, 60, 20, "gui.add")
-				.setHoverText("dimensions.hover.add"));
+		addButton(2, x1, y += 44, "gui.add")
+				.setSize(60, 20)
+				.setHoverTexts("dimensions.hover.add");
+		// reset
+		addButton(5, x1, y += 22, "gui.reset")
+				.setSize(60, 20)
+				.setIsEnabled(id != 0 && scroll.hasSelected() && DimensionManager.isDimensionRegistered(id) && !dData.isDelete(id))
+				.setHoverTexts("dimensions.hover.recreate");
+		// copy
+		addButton(6, x1, y += 22, "gui.copy")
+				.setSize(60, 20)
+				.setIsEnabled(scroll.hasSelected() && DimensionManager.isDimensionRegistered(id) && !dData.isDelete(id))
+				.setHoverTexts("dimensions.hover.copy");
 		// del
-		addButton(new GuiNpcButton(3, guiLeft + 192, guiTop + 102, 60, 20, "gui.remove")
-				.setIsEnable(scroll.getSelect() >= 0 && ClientHandler.getInstance().has(id))
-				.setHoverText("dimensions.hover.del"));
-		// pt
-		addButton(new GuiNpcButton(4, guiLeft + 192, guiTop + 14, 60, 20, "TP")
-				.setIsEnable(scroll.getSelect() >= 0)
-				.setHoverText("dimensions.hover.tp"));
+		addButton(3, x1, y + 22, dData.isDelete(id) ? "gui.restore" : "gui.remove")
+				.setSize(60, 20)
+				.setIsEnabled(scroll.hasSelected() && id > 100 && DimensionController.hasDimensionData(id))
+				.setHoverTexts("dimensions.hover.del");
 	}
 
 	@Override
-	public void initPacket() {
-		Client.sendData(EnumPacketServer.DimensionsGet);
-	}
-
-	@Override
-	public boolean keyCnpcsPressed(char typedChar, int keyCode) {
-		if (subgui != null) { return subgui.keyCnpcsPressed(typedChar, keyCode); }
-		if (keyCode == Keyboard.KEY_ESCAPE || isInventoryKey(keyCode)) {
-			onClosed();
-			return true;
+	public void buttonEvent(GuiButtonNop button) {
+		DimensionController dData = DimensionController.getInstance();
+		switch (button.id) {
+			case 1: {
+				if (data.containsKey(scroll.getNormalSelected())) {
+					int id = data.get(scroll.getNormalSelected());
+					if (dData.getMCWorldInfo(id) != null) {
+						FriendlyByteBuf buffer = new FriendlyByteBuf();
+						buffer.writeInt(id);
+						CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, buffer);
+					}
+				}
+				break;
+			} // settings
+			case 2: {
+				FriendlyByteBuf buffer = new FriendlyByteBuf();
+				buffer.writeInt(0);
+				CustomNpcs.proxy.openGui(null, EnumGuiType.DimensionSetting, buffer);
+				break;
+			} // add
+			case 3: {
+				if (data.containsKey(scroll.getNormalSelected())) {
+					int id = data.get(scroll.getNormalSelected());
+					if (DimensionController.hasDimensionData(id) && !dData.isDelete(id)) {
+						ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+							if (agree) {
+								Packets.sendServer(new SPacketDimensionDelete(id));
+							}
+							NoppesUtil.openGUI(player, this);
+						},
+								Component.literal("ID: " + id).getParent(),
+								Component.translatable("message.delete").getParent());
+						setScreen(guiYesNo);
+					}
+					else { Packets.sendServer(new SPacketDimensionRestore(id)); }
+				}
+				break;
+			} // remove
+			case 4: tp(); break;
+			case 5: {
+				if (data.containsKey(scroll.getNormalSelected())) {
+					int id = data.get(scroll.getNormalSelected());
+					if (DimensionController.hasDimensionData(id) && !dData.isDelete(id)) {
+						ConfirmScreen guiYesNo = new ConfirmScreen((agree) -> {
+							if (agree) { Packets.sendServer(new SPacketDimensionRecreate(id)); }
+							NoppesUtil.openGUI(player, this);
+						},
+								Component.literal("ID: " + id).getParent(),
+								Component.translatable("message.recreate").getParent());
+						setScreen(guiYesNo);
+					}
+				}
+				break;
+			} // reset
+			case 6: {
+				if (data.containsKey(scroll.getNormalSelected())) {
+					int id = data.get(scroll.getNormalSelected());
+					if (DimensionController.hasDimensionData(id) && !dData.isDelete(id)) {
+						Packets.sendServer(new SPacketDimensionCopy(id));
+					}
+				}
+				break;
+			}
 		}
-		return super.keyCnpcsPressed(typedChar, keyCode);
 	}
 
-    @Override
-	public void scrollClicked(int mouseX, int mouseY, int mouseButton, GuiCustomScroll scroll) { initGui(); }
+	// New from Unofficial (BetaZavr)
+	@Override
+	public void scrollClicked(GuiCustomScrollNop scroll) { initGui(); }
 
 	@Override
-	public void scrollDoubleClicked(String select, GuiCustomScroll scroll) { tp(); }
+	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { tp(); }
 
 	@Override
-	public void setData(Vector<String> dataList, HashMap<String, Integer> dataMap) {
+	public void resetDimension() {
 		data.clear();
-		TreeMap<Integer, String> m = new TreeMap<>();
-		// reverse K V
-		for (String key : dataMap.keySet()) { m.put(dataMap.get(key), key); }
-		List<String> l = new ArrayList<>();
-		List<String> s = new ArrayList<>();
-		String c = "" + ((char) 167);
-		for (int id : m.keySet()) {
-			String[] t = m.get(id).split("&");
-			String r = t[0].equals("delete") ? "8" : "7";
-			String str = c + r + "ID:" + (t[0].equals("delete") ? c + "7" : c + "6") + id + c + r + " - \"" + (t[0].equals("delete") ? c + "7" : c + "r") + new TextComponentTranslation(t[1]).getFormattedText() + c + r + "\"" + (t.length >= 3 && !t[2].isEmpty() ? " [" + t[2] + "]" : "");
-			l.add(str);
-			String p = c + (id > 99 ? "6NPC" : "bMC") + c + r + ".";
-			s.add(p + (t[0].equals("delete") ? c + "7delete" : t[0].equals("true") ? c + "aloaded" : c + "cunloaded"));
-			data.put(str, id);
+		List<Component> list = new ArrayList<>();
+		List<Component> suffixes = new ArrayList<>();
+		LinkedHashMap<Integer, List<Component>> htx = new LinkedHashMap<>();
+		for (DimensionData dd : DimensionController.getDimensionsData()) {
+			TextFormatting color = dd.isRemoved ? TextFormatting.DARK_GRAY : TextFormatting.GRAY;
+			Component key = Component.empty()
+					.append(Component.literal("ID:").withStyle(color))
+					.append(Component.literal("" + dd.dimensionId).withStyle(dd.isRemoved ? TextFormatting.GRAY : TextFormatting.GOLD))
+					.append(Component.literal(" \"").withStyle(color))
+					.append(Component.translatable(dd.name).withStyle(dd.isRemoved ? TextFormatting.GRAY : TextFormatting.RESET))
+					.append(Component.literal("\"").withStyle(color));
+			list.add(key);
+			data.put(key, dd.dimensionId);
+			boolean isMC = dd.dimensionId == 0 || dd.dimensionId == 1 || dd.dimensionId == -1;
+			Component sfx = Component.empty()
+					.append(Component.literal(isMC ? "MC" : "Mod").withStyle(isMC ? TextFormatting.GOLD : TextFormatting.AQUA))
+					.append(Component.literal(".").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(dd.isRemoved ? "D" : dd.isLoad ? "L" : "U")
+							.withStyle(dd.isRemoved ? TextFormatting.DARK_RED : dd.isLoad ? TextFormatting.GREEN : TextFormatting.GRAY));
+			suffixes.add(sfx);
+			List<Component> hover = new ArrayList<>();
+			hover.add(Component.empty()
+					.append(Component.literal(isMC ? "Minecraft" : "Mod").withStyle(isMC ? TextFormatting.GOLD : TextFormatting.AQUA))
+					.append(Component.literal(" dimension").withStyle(TextFormatting.GRAY)));
+			hover.add(Component.empty()
+					.append(Component.literal("ID: ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal("" + dd.dimensionId).withStyle(TextFormatting.GOLD)));
+			hover.add(Component.empty()
+					.append(Component.literal("Now is ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(dd.isRemoved ? "Delete" : dd.isLoad ? "loaded" : "unloaded")
+							.withStyle(dd.isRemoved ? TextFormatting.DARK_RED : dd.isLoad ? TextFormatting.GREEN : TextFormatting.RED)));
+			if (!dd.worldName.isEmpty()) {
+				hover.add(Component.empty()
+						.append(Component.literal("Game name: \"").withStyle(TextFormatting.GRAY))
+						.append(Component.literal(dd.worldName).withStyle(TextFormatting.RESET))
+						.append(Component.literal("\"").withStyle(TextFormatting.GRAY)));
+			}
+			if (!dd.suffix.isEmpty()) {
+				hover.add(Component.empty()
+						.append(Component.literal("Suffix: \"").withStyle(TextFormatting.GRAY))
+						.append(Component.literal(dd.suffix).withStyle(TextFormatting.RESET))
+						.append(Component.literal("\"").withStyle(TextFormatting.GRAY)));
+			}
+			hover.add(Component.empty()
+					.append(Component.literal("Spawn pos X:").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(""+dd.spawnPos.getX()).withStyle(TextFormatting.GOLD))
+					.append(Component.literal(", Y:").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(""+dd.spawnPos.getY()).withStyle(TextFormatting.GOLD))
+					.append(Component.literal(", Z:").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(""+dd.spawnPos.getZ()).withStyle(TextFormatting.GOLD)));
+			hover.add(Component.empty()
+					.append(Component.literal("Spawn angle: ").withStyle(TextFormatting.GRAY))
+					.append(Component.literal(""+dd.spawnAngle).withStyle(TextFormatting.GOLD)));
+			htx.put(htx.size(), hover);
 		}
-		scroll.setUnsortedList(l).setSuffixes(s);
+		if (scroll != null) {
+			scroll.clearSelection();
+			scroll.setUnsortedList(list)
+					.setSuffixes(suffixes)
+					.setHoverTexts(htx);
+		}
 		initGui();
 	}
 
-	@Override
-	public void setSelected(String selected) { getButton(3).setDisplayText(selected); }
-
 	private void tp() {
-		if (!data.containsKey(scroll.getSelected())) {return; }
-		Client.sendData(EnumPacketServer.DimensionTeleport, data.get(scroll.getSelected()));
-		onClosed();
+		if (data.containsKey(scroll.getNormalSelected())) {
+			int id = data.get(scroll.getNormalSelected());
+			DimensionData dd = DimensionController.getDimensionData(id);
+			if (dd == null || !dd.isRemoved) {
+				Packets.sendServer(new SPacketDimensionTeleport(id));
+			}
+			onClose();
+		}
 	}
 
 }
