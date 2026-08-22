@@ -1,8 +1,0 @@
-{
-	"_comment": "Texture by max100500profi",
-    "parent": "block/cube_all",
-    "textures": {
-        "all": "customnpcs:blocks/waypoint"
-    }
-}
-

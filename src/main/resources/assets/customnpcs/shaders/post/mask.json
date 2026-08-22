@@ -1,9 +1,0 @@
-{
-    "targets": ["mask"],
-    "passes": [{
-        "name": "mask",
-        "intarget": "minecraft:main",
-        "outtarget": "mask",
-        "shader": "mask"
-    }]
-}

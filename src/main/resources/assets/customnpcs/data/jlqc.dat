@@ -1,1 +1,0 @@
-{  "_comment": "Custom Blockstate Cauldron Fluid created by default",  "variants": {    "level=0": { "model": "minecraft:cauldron_empty" },    "level=1": { "model": "{mod_id}:custom_cauldron_{name}_level1" },    "level=2": { "model": "{mod_id}:custom_cauldron_{name}_level2" },    "level=3": { "model": "{mod_id}:custom_cauldron_{name}_level3" }  }}
