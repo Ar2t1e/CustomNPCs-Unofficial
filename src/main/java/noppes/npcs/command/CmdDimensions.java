@@ -1,0 +1,133 @@
+package noppes.npcs.command;
+
+import java.util.*;
+
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.play.server.SPacketSpawnPosition;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
+import noppes.npcs.CustomNpcs;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.api.CommandNoppesBase;
+import noppes.npcs.controllers.DimensionController;
+import noppes.npcs.packets.server.SPacketDimensionTeleport;
+
+import javax.annotation.Nonnull;
+
+public class CmdDimensions extends CommandNoppesBase {
+
+	@Override
+	public int getRequiredPermissionLevel() { return CustomNpcs.NoppesCommandOpOnly ? 4 : 2; }
+
+	@Override
+	public String getDescription() { return "World operations"; }
+
+	@Nonnull
+	@Override
+	public String getName() { return "world"; }
+
+	public @Nonnull List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args, BlockPos pos) {
+		List<String> list = new ArrayList<>();
+		if (args.length == 3) {
+			Set<Integer> s = new TreeSet<>();
+			for (int id : DimensionManager.getIDs()) {
+				if (DimensionController.getInstance().isDelete(id)) {
+					continue;
+				}
+				s.add(id);
+			}
+            s.add(-1);
+            s.add(1);
+			for (int id : s) {
+				list.add("" + id);
+			}
+		} else if (args.length >= 4 && args.length <= 6) {
+			list.add("~");
+		}
+		return list;
+	}
+
+	@SubCommand(desc = "Set spawn block in dimension", isOpOnly = true)
+	public void setspawn(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+		if (sender == null) {
+			return;
+		}
+		int id = sender.getEntityWorld().provider.getDimension(), x = sender.getPosition().getX(),
+				y = sender.getPosition().getY() + 1, z = sender.getPosition().getZ();
+		if (args.length == 3) {
+			try {
+				double dx = parseCoordinate(sender.getPosition().getX(), args[0], true).getResult();
+				double dy = parseCoordinate(sender.getPosition().getY(), args[1], 0, 255, false).getResult();
+				double dz = parseCoordinate(sender.getPosition().getZ(), args[2], true).getResult();
+				x = (int) dx;
+				y = (int) dy;
+				z = (int) dz;
+			} catch (NumberFormatException e) { LogWriter.error(e); }
+		}
+		if (args.length == 4) {
+			try {
+				id = Integer.parseInt(args[0]);
+				double dx = parseCoordinate(sender.getPosition().getX(), args[1], true).getResult();
+				double dy = parseCoordinate(sender.getPosition().getY(), args[2], 0, 255, false).getResult();
+				double dz = parseCoordinate(sender.getPosition().getZ(), args[3], true).getResult();
+				x = (int) dx;
+				y = (int) dy;
+				z = (int) dz;
+			} catch (NumberFormatException e) { LogWriter.error(e); }
+		}
+		if (!DimensionManager.isDimensionRegistered(id)) {
+			throw new CommandException("DimensionID: " + id + " - not found");
+		}
+		BlockPos pos = new BlockPos(x, y, z);
+		DimensionManager.getProvider(id).setSpawnPoint(pos);
+		DimensionManager.getWorld(id).setSpawnPoint(pos);
+		server.getPlayerList().sendPacketToAllPlayers(new SPacketSpawnPosition(pos));
+		sender.sendMessage(
+				new TextComponentString("Set new spawn pos: [" + x + ", " + y + ", " + z + "] in dimension ID: " + id));
+	}
+
+	@SubCommand(desc = "Transfer player to dimension", usage = "<player> <dimensionID>", permission = 2)
+	public void tp(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+		EntityPlayerMP player = CommandBase.getPlayer(server, sender, args[0]);
+		int dimId;
+		try {
+			dimId = Integer.parseInt(args[1]);
+			if (!DimensionManager.isDimensionRegistered(dimId) || DimensionController.getInstance().isDelete(dimId)) {
+				throw new CommandException("DimensionID: " + dimId + " - not found");
+			}
+		} catch (NumberFormatException ex) {
+			throw new CommandException("DimensionID \"" + args[1]+"\" - must be an integer");
+		}
+
+		WorldServer world = Objects.requireNonNull(sender.getServer()).getWorld(dimId);
+		BlockPos pos = world.getSpawnPoint();
+		double x, y, z;
+        if (!world.isAirBlock(pos)) { pos = world.getTopSolidOrLiquidBlock(pos); }
+		else if (!world.isAirBlock(pos.up())) {
+            while (world.isAirBlock(pos) && pos.getY() > 0) { pos = pos.down(); }
+            if (pos.getY() == 0) { pos = world.getTopSolidOrLiquidBlock(pos); }
+        }
+		pos = pos.up();
+        x = pos.getX();
+        y = pos.getY();
+        z = pos.getZ();
+        if (args.length == 5) {
+			try {
+				double dx = parseCoordinate(sender.getPosition().getX(), args[2], true).getResult();
+				double dy = parseCoordinate(sender.getPosition().getY(), args[3], 0, 255, false).getResult();
+				double dz = parseCoordinate(sender.getPosition().getZ(), args[4], true).getResult();
+				x = dx;
+				y = dy;
+				z = dz;
+			} catch (NumberFormatException e) { LogWriter.error(e); }
+		}
+		SPacketDimensionTeleport.teleportPlayer(player, dimId, x, y, z, player.rotationYaw, player.rotationPitch);
+	}
+
+}

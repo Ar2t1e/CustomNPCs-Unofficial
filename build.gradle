@@ -5,7 +5,6 @@
  2. Build this project command "./gradlew build" or by running a task;
  3. Then uncomment the line again and rebuild the project to run in semi-local mode;
  */
-
 import java.time.LocalDateTime
 
 // DEV resources path

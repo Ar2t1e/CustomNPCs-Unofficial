@@ -1,0 +1,346 @@
+package noppes.npcs.entity.data;
+
+import java.util.HashSet;
+
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.SoundCategory;
+import noppes.npcs.NBTTags;
+import noppes.npcs.api.constants.JobType;
+import noppes.npcs.api.constants.RoleType;
+import noppes.npcs.api.entity.data.INPCAdvanced;
+import noppes.npcs.api.handler.data.IFaction;
+import noppes.npcs.client.controllers.MusicController;
+import noppes.npcs.constants.EnumAnimationType;
+import noppes.npcs.controllers.FactionController;
+import noppes.npcs.controllers.data.Faction;
+import noppes.npcs.controllers.data.FactionOptions;
+import noppes.npcs.controllers.data.Line;
+import noppes.npcs.controllers.data.Lines;
+import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.controllers.data.PlayerFactionData;
+import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.client.PacketPlaySound;
+import noppes.npcs.util.ValueUtil;
+
+public class DataAdvanced implements INPCAdvanced {
+
+	public boolean attackOtherFactions = false;
+	public boolean defendFaction = false;
+	public boolean disablePitch = false;
+	public boolean orderedLines = false;
+	public boolean throughWalls = true;
+	private String angrySound = "";
+	private String deathSound = "minecraft:entity.player.hurt";
+	private String hurtSound = "minecraft:entity.player.hurt";
+	private String idleSound = "";
+	private String stepSound = "";
+	private final EntityNPCInterface npc;
+	public Lines interactLines = new Lines();
+	public Lines npcInteractLines = new Lines();
+	public Lines worldLines = new Lines();
+	public Lines attackLines = new Lines();
+	public Lines killedLines = new Lines();
+	public Lines killLines = new Lines();
+	public FactionOptions factions = new FactionOptions();
+	public DataScenes scenes;
+
+	// New from Unofficial (BetaZavr)
+	public EnumAnimationType animationType = EnumAnimationType.NONE;
+	public HashSet<Integer> attackFactions = new HashSet<>();
+	public HashSet<Integer> friendFactions = new HashSet<>();
+	public EntityNPCInterface spawner;
+
+	public DataAdvanced(EntityNPCInterface npcIn) {
+		npc = npcIn;
+		scenes = new DataScenes(npcIn);
+	}
+
+	public void load(NBTTagCompound compound) {
+		interactLines.load(compound.getCompoundTag("NpcInteractLines"));
+		worldLines.load(compound.getCompoundTag("NpcLines"));
+		attackLines.load(compound.getCompoundTag("NpcAttackLines"));
+		killedLines.load(compound.getCompoundTag("NpcKilledLines"));
+		killLines.load(compound.getCompoundTag("NpcKillLines"));
+		npcInteractLines.load(compound.getCompoundTag("NpcInteractNPCLines"));
+		orderedLines = compound.getBoolean("OrderedLines");
+		idleSound = compound.getString("NpcIdleSound");
+		angrySound = compound.getString("NpcAngrySound");
+		hurtSound = compound.getString("NpcHurtSound");
+		deathSound = compound.getString("NpcDeathSound");
+		stepSound = compound.getString("NpcStepSound");
+		npc.setFaction(compound.getInteger("FactionID"));
+		npc.faction = npc.getFaction();
+		attackOtherFactions = compound.getBoolean("AttackOtherFactions");
+		defendFaction = compound.getBoolean("DefendFaction");
+		disablePitch = compound.getBoolean("DisablePitch");
+		setRole(compound.getInteger("Role"));
+		setJob(compound.getInteger("NpcJob"));
+		factions.load(compound.getCompoundTag("FactionPoints"));
+		scenes.load(compound.getCompoundTag("NpcScenes"));
+		if (compound.hasKey("NPCDialogOptions", 11)) {
+			npc.dialogs = compound.getIntArray("NPCDialogOptions");
+		}
+		else if (compound.hasKey("NPCDialogOptions", 9)) {
+			NBTTagList list = compound.getTagList("NPCDialogOptions", 10);
+			npc.dialogs = new int[list.tagCount()];
+			for (int i = 0; i < list.tagCount(); ++i) {
+				npc.dialogs[i] = list.getCompoundTagAt(i).getCompoundTag("NPCDialog").getInteger("Dialog");
+			}
+		}
+		// New from Unofficial (BetaZavr)
+		if (compound.hasKey("AnimationType", 3)) { setAnimationType(compound.getInteger("AnimationType")); }
+		if (!compound.hasKey("ThroughWalls", 1)) { throughWalls = true; }
+		else { throughWalls = compound.getBoolean("ThroughWalls"); }
+		attackFactions = NBTTags.getIntegerSet(compound.getTagList("AttackFactions", 10));
+		friendFactions = NBTTags.getIntegerSet(compound.getTagList("FrendFactions", 10));
+	}
+
+	public NBTTagCompound save(NBTTagCompound compound) {
+		compound.setTag("NpcLines", worldLines.save());
+		compound.setTag("NpcKilledLines", killedLines.save());
+		compound.setTag("NpcInteractLines", interactLines.save());
+		compound.setTag("NpcAttackLines", attackLines.save());
+		compound.setTag("NpcKillLines", killLines.save());
+		compound.setTag("NpcInteractNPCLines", npcInteractLines.save());
+		compound.setBoolean("OrderedLines", orderedLines);
+		compound.setString("NpcIdleSound", idleSound);
+		compound.setString("NpcAngrySound", angrySound);
+		compound.setString("NpcHurtSound", hurtSound);
+		compound.setString("NpcDeathSound", deathSound);
+		compound.setString("NpcStepSound", stepSound);
+		compound.setInteger("FactionID", npc.getFaction().id);
+		compound.setBoolean("AttackOtherFactions", attackOtherFactions);
+		compound.setBoolean("DefendFaction", defendFaction);
+		compound.setBoolean("DisablePitch", disablePitch);
+		compound.setInteger("Role", npc.role.getType());
+		compound.setInteger("NpcJob", npc.job.getType());
+		compound.setTag("FactionPoints", factions.save(new NBTTagCompound()));
+		compound.setTag("NpcScenes", scenes.save(new NBTTagCompound()));
+		compound.setIntArray("NPCDialogOptions", npc.dialogs);
+		// New from Unofficial (BetaZavr)
+		compound.setInteger("AnimationType", animationType.ordinal());
+		compound.setBoolean("ThroughWalls", throughWalls);
+		compound.setTag("AttackFactions", NBTTags.nbtIntegerCollection(attackFactions));
+		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(friendFactions));
+		return compound;
+	}
+
+	public Line getAttackLine() {
+		return attackLines.getLine(!orderedLines);
+	}
+
+	public Line getInteractLine() {
+		return interactLines.getLine(!orderedLines);
+	}
+
+	public Line getKilledLine() {
+		return killedLines.getLine(!orderedLines);
+	}
+
+	public Line getKillLine() {
+		return killLines.getLine(!orderedLines);
+	}
+
+	@Override
+	public String getLine(int type, int slot) {
+		Lines lines = getLines(type);
+        if (lines == null) {
+            return null;
+        }
+		Line line = lines.lines.get(slot);
+        if (line == null) {
+            return null;
+        }
+        return line.getText();
+    }
+
+	@Override
+	public int getLineCount(int type) {
+		Lines lines = getLines(type);
+		return lines == null ? 0 : lines.lines.size();
+	}
+
+	private Lines getLines(int type) {
+		switch (type) {
+		case 0: {
+			return interactLines;
+		}
+		case 1: {
+			return attackLines;
+		}
+		case 2: {
+			return worldLines;
+		}
+		case 3: {
+			return killedLines;
+		}
+		case 4: {
+			return killLines;
+		}
+		case 5: {
+			return npcInteractLines;
+		}
+		}
+		return null;
+	}
+
+	public Line getNPCInteractLine() {
+		return npcInteractLines.getLine(!orderedLines);
+	}
+
+	@Override
+	public String getSound(int type) {
+		String sound = null;
+		switch (type) {
+		case 0: {
+			sound = idleSound;
+			break;
+		}
+		case 1: {
+			sound = angrySound;
+			break;
+		}
+		case 2: {
+			sound = hurtSound;
+			break;
+		}
+		case 3: {
+			sound = deathSound;
+			break;
+		}
+		case 4: {
+			sound = stepSound;
+			break;
+		}
+		default: {
+			break;
+		}
+		}
+		if (sound != null && sound.isEmpty()) {
+			sound = null;
+		}
+		return sound;
+	}
+
+	public Line getWorldLine() {
+		return worldLines.getLine(!orderedLines);
+	}
+
+	public boolean hasWorldLines() {
+		return !worldLines.isEmpty();
+	}
+
+	private boolean isAggressive(PlayerFactionData data, EntityPlayer player, Faction faction) {
+		return data.getFactionPoints(player, faction.id) < faction.neutralPoints;
+	}
+
+	public boolean isAggressiveToNpc(EntityNPCInterface entity) {
+        return attackOtherFactions && (npc.faction.isAggressiveToNpc(entity) || attackFactions.contains(entity.faction.id));
+    }
+
+	public boolean isAggressiveToPlayer(EntityPlayer player) {
+		if (player.capabilities.isCreativeMode) {
+			return false;
+		}
+		PlayerFactionData data = PlayerData.get(player).factionData;
+		if (isAggressive(data, player, npc.faction)) {
+			return true;
+		}
+		FactionController fData = FactionController.instance;
+		for (int id : attackFactions) {
+			IFaction faction = fData.get(id);
+			if (faction == null) {
+				continue;
+			}
+			if (isAggressive(data, player, (Faction) faction)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void playSound(int type, float volume, float pitch) {
+		String sound = getSound(type);
+		if (sound != null) {
+			if (!npc.world.isRemote) {
+				Packets.sendNearby(npc.world, npc.getPosition(), 16,
+						new PacketPlaySound(sound, SoundCategory.NEUTRAL, npc.posX, npc.posY, npc.posZ, volume, pitch));
+			}
+			else { MusicController.Instance.playSound(SoundCategory.VOICE, sound, npc.posX, npc.posY, npc.posZ, volume, pitch); }
+		}
+	}
+
+	public void setJob(int id) {
+		JobType.get(id).setToNpc(npc);
+		if (!npc.world.isRemote) { npc.job.reset(); }
+	}
+
+	@Override
+	public void setLine(int type, int slot, String text, String sound) {
+		slot = ValueUtil.correctInt(slot, 0, 7);
+		Lines lines = getLines(type);
+		if (lines == null) { return; }
+		if (text == null || text.isEmpty()) {
+			lines.lines.remove(slot);
+		} else {
+            Line line = lines.lines.computeIfAbsent(slot, k -> new Line());
+            line.setText(text);
+			line.setSound(sound);
+		}
+	}
+
+	public void setRole(int id) { RoleType.get(id).setToNpc(npc); }
+
+	@Override
+	public void setSound(int type, String sound) {
+		if (sound == null) {
+			sound = "";
+		}
+		switch (type) {
+		case 0:
+			idleSound = sound;
+			break;
+		case 1:
+			angrySound = sound;
+			break;
+		case 2:
+			hurtSound = sound;
+			break;
+		case 3:
+			deathSound = sound;
+			break;
+		case 4:
+			stepSound = sound;
+			break;
+		}
+	}
+
+	public void tryDefendFaction(int id, EntityLivingBase possibleFriend, EntityLivingBase attacked) {
+		if (npc.isKilled() || !defendFaction || possibleFriend.equals(attacked)) {
+			return;
+		}
+		boolean canSee = npc.canSee(possibleFriend);
+		if (!canSee && throughWalls) {
+			float dist = npc.getDistance(possibleFriend);
+			canSee = dist <= npc.stats.aggroRange;
+		}
+		if (!(npc.faction.id == id || npc.faction.frendFactions.contains(id) || friendFactions.contains(id)) || !canSee) {
+			return;
+		}
+		npc.onAttack(attacked);
+	}
+
+	@Override
+	public int getAnimationType() { return animationType.ordinal(); }
+
+	@Override
+	public void setAnimationType(int type) {
+		animationType = EnumAnimationType.values()[ValueUtil.onlyPositiveInt(type, EnumAnimationType.values().length - 1)];
+		npc.updateClient = true;
+	}
+
+}
