@@ -1,0 +1,9 @@
+newmtl material
+Kd 1.000000 1.000000 1.000000
+d 1.000000
+map_Kd customnpcs:util/compass
+
+newmtl task
+Kd 1.000000 1.000000 1.000000
+d 1.000000
+map_Kd customnpcs:util/task_0
