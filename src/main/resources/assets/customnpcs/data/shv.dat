@@ -1,0 +1,16 @@
+#version 120
+
+vec4 projection_from_position(vec4 pos) {
+    vec4 projection = pos;
+    projection.xyz = projection.xyz * 0.5 + 0.5 * projection.w;
+    return projection;
+}
+
+varying vec4 texProj0;
+varying vec4 vertexColor;
+
+void main() {
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    texProj0 = projection_from_position(gl_Position);
+    vertexColor = gl_Color;
+}
