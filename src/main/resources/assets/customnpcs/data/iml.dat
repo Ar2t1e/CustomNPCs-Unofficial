@@ -1,0 +1,1 @@
+{  "_comment": "Custom Fluid {part} Item Model created by default",  "parent": "minecraft:item/generated",  "textures": { "layer0": "{mod_id}:item/{name}_{part}" }}

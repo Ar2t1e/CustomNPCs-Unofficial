@@ -1,0 +1,1 @@
+{	"_comment": "Custom Slab Simple Block created by default",	"parent": "block/{type}_slab",	"textures": {		"top": "{mod_id}:block/{name}_top",		"bottom": "{mod_id}:block/{name}_bottom",		"side": "{mod_id}:block/{name}_side"	}}

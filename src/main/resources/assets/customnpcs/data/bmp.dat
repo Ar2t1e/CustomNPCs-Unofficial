@@ -1,0 +1,1 @@
+{  "_comment": "Custom Block Portal frame Model created by default",  "textures": {    "particle": "{mod_id}:entity/{name}_portal"  }}

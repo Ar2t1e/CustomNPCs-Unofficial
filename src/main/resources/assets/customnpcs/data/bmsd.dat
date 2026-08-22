@@ -1,0 +1,1 @@
+{	"_comment": "Custom Slab Double Block created by default",	"parent": "block/cube_column",	"textures": {		"end": "{mod_id}:block/{name}_top",		"side": "{mod_id}:block/{name}_side"	}}
