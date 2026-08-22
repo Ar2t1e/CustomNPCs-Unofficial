@@ -1,0 +1,13 @@
+{
+	"parent": "customnpcs:block/orientable",
+	"textures": {
+		"particle": "customnpcs:blocks/copy_block_side",
+		"bottom": "customnpcs:blocks/copy_block_side",
+		"top": "customnpcs:blocks/copy_block",
+		"front": "customnpcs:blocks/copy_block",
+		"right": "customnpcs:blocks/copy_block_side",
+		"back": "customnpcs:blocks/copy_block",
+		"left": "customnpcs:blocks/copy_block_side"
+	}
+}
+
