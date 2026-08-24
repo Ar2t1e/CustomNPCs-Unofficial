@@ -75,7 +75,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 	public String extraButtonText = "";
 	public QuestCategory category;
 	public FactionOptions factionOptions = new FactionOptions();
-	public ResourceLocation icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest icon/q_0.png");
+	public ResourceLocation icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest/icon/q_0.png");
 	public ResourceLocation texture = null;
 	public PlayerMail mail = new PlayerMail();
 	public QuestInterface questInterface = new QuestInterface();
@@ -141,15 +141,15 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 			nextQuestTitle = "";
 		}
 		if (compound.hasKey("QuestIcon", 8)) {
-			icon = new ResourceLocation(compound.getString("QuestIcon"));
+			String loc = compound.getString("QuestIcon");
+			if (loc.contains("quest icon")) { loc = loc.replace("quest icon", "quest/icon"); }
+			icon = new ResourceLocation(NoppesUtilServer.validLocation(loc));
 		} else {
-			icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest icon/q_0.png");
+			icon = new ResourceLocation(CustomNpcs.MODID, "textures/quest/icon/q_0.png");
 		}
 		if (compound.hasKey("QuestTexture", 8)) {
-			texture = new ResourceLocation(compound.getString("QuestTexture"));
-		} else {
-			texture = null;
-		}
+			texture = new ResourceLocation(NoppesUtilServer.validLocation(compound.getString("QuestTexture")));
+		} else { texture = null; }
 		extraButtonText = compound.getString("ExtraButtonText");
 		level = compound.getInteger("QuestLevel");
 		cancelable = compound.getBoolean("Cancelable");
@@ -589,12 +589,14 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 			try { uuid = compound.getUniqueId("CompleterUUID"); } catch (Exception ignored) {}
 			if (compound.hasKey("CompleterIsStrict", 1)) { strict = compound.getBoolean("CompleterIsStrict"); }
 			if (compound.hasKey("CompleterNpc", 10)) { spawnData = compound.getCompoundTag("CompleterNpc"); }
+			if (name.isEmpty() && !spawnData.getString("Name").isEmpty()) { name = spawnData.getString("Name"); }
 		}
 
 		public NBTTagCompound save(NBTTagCompound compound) {
 			compound.setInteger("CompleterPosDimension", dimension);
 			compound.setLong("CompleterPos", npcPos.toLong());
 			compound.setUniqueId("CompleterUUID", uuid);
+			compound.setString("CompleterName", name);
 			compound.setBoolean("CompleterIsStrict", strict);
 			compound.setTag("CompleterNpc", spawnData);
 			return compound;
@@ -616,6 +618,7 @@ public class Quest implements ICompatibilty, IQuest, Predicate<EntityNPCInterfac
 				dimension = npcIn.homeDimensionId;
 				npcPos = npcIn.getPosition();
 				uuid = npcIn.getUniqueID();
+				name = npcIn.getName();
 				strict = true;
 			}
 		}

@@ -916,10 +916,25 @@ public class ClientEventHandler extends Gui {
 		GlStateManager.pushMatrix();
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 		GlStateManager.enableColorMaterial();
+
+		// In HUD overlay depth test is usually disabled.
+		// We must enable it so faces are drawn in correct Z-order.
+		boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+		boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+		GlStateManager.enableDepth();
+		GlStateManager.depthMask(true);
+
 		float scW = entity.width > 1.0f ? 1.0f / entity.width : 1.0f;
 		float scH = entity.height > 2.4f ? 2.4f / entity.height : 1.0f;
 		float scale = Math.min(scW, scH);
-		GlStateManager.scale(-30.0f * scale * 0.75f, -30.0f * scale * 0.75f, -30.0f * scale * 0.75f);
+		float renderScale = 30.0f * scale * 0.75f;
+
+		// Use the same scale pattern as GuiInventory.drawEntityOnScreen:
+		// negative X flips the entity horizontally, positive Y/Z keep correct winding.
+		GlStateManager.scale(-renderScale, renderScale, renderScale);
+		// Rotate 180 around Z to compensate for GUI Y-down coordinate system.
+		GlStateManager.rotate(180.0f, 0.0f, 0.0f, 1.0f);
+
 		RenderHelper.enableStandardItemLighting();
 		float f2 = entity.renderYawOffset;
 		float f3 = entity.rotationYaw;
@@ -927,13 +942,15 @@ public class ClientEventHandler extends Gui {
 		float f5 = entity.rotationYawHead;
 		float f6 = 0.0f;
 		GlStateManager.rotate(-20.0f, 1.0f, 0.0f, 0.0f);
-		GlStateManager.rotate(210.0f, 0.0f, 1.0f, 0.0f);
+		GlStateManager.rotate(-30.0f, 0.0f, 1.0f, 0.0f);
 		entity.renderYawOffset = 0;
 		entity.rotationYaw = (float) (Math.atan(f6 / 80.0f) * 40.0f + 0);
 		entity.rotationPitch = 0.0f;
 		entity.rotationYawHead = entity.rotationYaw;
-		mc.getRenderManager().playerViewY = 180.0f;
+		mc.getRenderManager().setPlayerViewY(180.0f);
+		mc.getRenderManager().setRenderShadow(false);
 		mc.getRenderManager().renderEntity(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, false);
+		mc.getRenderManager().setRenderShadow(true);
 		entity.renderYawOffset = f2;
 		entity.prevRenderYawOffset = f2;
 		entity.rotationYaw = f3;
@@ -947,6 +964,15 @@ public class ClientEventHandler extends Gui {
 			npc.display.setShowName(showName);
 			npc.ais.orientation = orientation;
 		}
+
+		// Restore previous depth state so HUD text/icons are not clipped.
+		if (!depthTest) {
+			GlStateManager.disableDepth();
+		}
+		if (!depthMask) {
+			GlStateManager.depthMask(false);
+		}
+
 		GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
 		GlStateManager.disableTexture2D();
 		GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
@@ -2702,7 +2728,8 @@ public class ClientEventHandler extends Gui {
 						.append(Component.literal("" + (Math.round(entity.posZ * 10.0d) / 10.0d)).withStyle(TextFormatting.GOLD))
 						.append(Component.literal("]").withStyle(TextFormatting.AQUA))
 						.append(Component.literal(" " + dist).withStyle(TextFormatting.DARK_AQUA));
-			} else {
+			}
+			else {
 				float f = (float) (mc.player.posX - blockPos.getX() + 0.5d);
 				float f1 = (float) (mc.player.posY - blockPos.getY() + 0.5d);
 				float f2 = (float) (mc.player.posZ - blockPos.getZ() + 0.5d);

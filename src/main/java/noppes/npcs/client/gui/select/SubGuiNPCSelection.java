@@ -5,14 +5,15 @@ import java.util.*;
 import java.util.List;
 
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
+import noppes.npcs.packets.server.SPacketRemoteNpcsEntity;
 import noppes.npcs.packets.server.SPacketRemoteNpcsGet;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
@@ -35,6 +36,8 @@ public class SubGuiNPCSelection
 
 		selectEntity = completer;
 		main = completer;
+
+		Packets.sendServer(new SPacketRemoteNpcsGet(false));
 	}
 
 	@Override
@@ -59,7 +62,6 @@ public class SubGuiNPCSelection
 		super.initGui();
 		if (scroll == null) { scroll = addScroll(0).setSize(165, 209); }
 		add(scroll.setPos(guiLeft + 4, guiTop + 4));
-		Packets.sendServer(new SPacketRemoteNpcsGet(false));
 	}
 
 	@Override
@@ -89,57 +91,62 @@ public class SubGuiNPCSelection
 	@Override
 	public void setGuiData(NBTTagCompound compound) {
 		NBTTagList nbtList = compound.getTagList("Data", 10);
-		List<Component> list = new ArrayList<>();
 		dataIDs.clear();
-		Component mainKey = Component.empty()
-				.append(Component.literal("ID:-1 ").withStyle(TextFormatting.GREEN))
-				.append(Component.literal(main.getName() + " ").withStyle(TextFormatting.RESET))
-				.append(Component.literal(df.format(-1.0f)).withStyle(TextFormatting.GRAY));
-		dataIDs.put(mainKey, -1);
+		if (minecraft.world == null) { return; }
+		List<Component> list = new ArrayList<>();
 		LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
 		for (int i = 0; i < nbtList.tagCount(); ++i) {
 			NBTTagCompound nbt = nbtList.getCompoundTagAt(i);
-			int id = nbt.getInteger("K");
+			int id = nbt.getInteger("Id");
+			ITextComponent name = Component.jsonToComponent(nbt.getString("Name")).getParent();
 			TextFormatting type;
-			switch (nbt.getInteger("C")) {
+			switch (nbt.getInteger("Type")) {
 				case 1: type = TextFormatting.GREEN; break;
 				case 2: type = TextFormatting.RED; break;
 				case 3: type = TextFormatting.YELLOW; break;
 				case 4: type = TextFormatting.AQUA; break;
 				default: type = TextFormatting.GRAY; break;
 			}
-			String distance = df.format(nbt.getFloat("V"));
+			Component distance = Component.literal(df.format(nbt.getFloat("Distance"))).withStyle(TextFormatting.GOLD);
+			ITextComponent tempName = name.createCopy();
+			tempName.getStyle().setColor(TextFormatting.RESET);
 			Component key = Component.empty()
 					.append(Component.literal("ID:" + id).withStyle(type))
-					.append(Component.literal(" " + nbt.getString("N")).withStyle(TextFormatting.RESET))
-					.append(Component.literal(" (" + distance + ")").withStyle(TextFormatting.GRAY));
+					.append(" ")
+					.append(tempName)
+					.append(Component.literal(" (").withStyle(TextFormatting.GRAY))
+					.append(distance)
+					.append(Component.literal(")").withStyle(TextFormatting.GRAY));
 			list.add(key);
-			dataIDs.put(key, nbt.getInteger("K"));
-
+			dataIDs.put(key, id);
 			List<Component> hoverList = new ArrayList<>();
+			tempName = name.createCopy();
+			tempName.getStyle().setColor(TextFormatting.WHITE);
 			hoverList.add(Component.literal("Name: ").withStyle(TextFormatting.GRAY)
-					.append(Component.literal(nbt.getString("N")).withStyle(TextFormatting.WHITE)));
+					.append(tempName));
 			hoverList.add(Component.literal("Entity ID: ").withStyle(TextFormatting.GRAY)
 					.append(Component.literal("" + id).withStyle(type)));
 			hoverList.add(Component.literal("Distance to: ").withStyle(TextFormatting.GRAY)
-					.append(Component.literal(distance).withStyle(TextFormatting.GOLD))
+					.append(distance)
 					.append(Component.literal(" blocks").withStyle(TextFormatting.GRAY)));
 			hoverList.add(Component.literal("Class Type: ").withStyle(TextFormatting.GRAY)
-					.append(Component.literal(nbt.getString("S")).withStyle(TextFormatting.WHITE)));
+					.append(Component.literal(nbt.getString("Class")).withStyle(TextFormatting.WHITE)));
 			hts.put(i, hoverList);
 		}
-		scroll.setUnsortedList(list);
-		scroll.setHoverTexts(hts);
+		scroll.setUnsortedList(list)
+				.setHoverTexts(hts);
 		resetEntity();
 	}
 
 	private void resetEntity() {
 		selectEntity = null;
-		if (dataIDs.containsKey(scroll.getNormalSelected())) {
-			Entity entity = mc.world.getEntityByID(dataIDs.get(scroll.getNormalSelected()));
-			if (!(entity instanceof EntityNPCInterface)) { return; }
-			selectEntity = (EntityNPCInterface) entity;
+		if (minecraft.world != null && dataIDs.containsKey(scroll.getNormalSelected())) {
+			selectEntity = (EntityNPCInterface) minecraft.world.getEntityByID(dataIDs.get(scroll.getNormalSelected()));
+			if (selectEntity == null) {
+				Packets.sendServer(new SPacketRemoteNpcsEntity(dataIDs.get(scroll.getNormalSelected())));
+			}
 		}
+		if (selectEntity != null) { initGui(); }
 	}
 
 }

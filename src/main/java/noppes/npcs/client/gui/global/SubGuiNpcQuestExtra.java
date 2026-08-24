@@ -1,10 +1,11 @@
-package noppes.npcs.client.gui;
+package noppes.npcs.client.gui.global;
 
 import java.awt.*;
-import java.util.List;
 
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.entity.EntityList;
 import net.minecraft.network.chat.Component;
+import noppes.npcs.client.gui.player.GuiLog;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.shared.client.gui.GuiTextAreaScreen;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
@@ -65,17 +66,15 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 	}
 
 	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-		List<Component> tempHoverText = getHoverText();
-		hoverText.clear();
-		super.drawScreen(mouseX, mouseY, partialTicks);
+	public void drawDefaultBackground() {
+		super.drawDefaultBackground();
+		GlStateManager.enableBlend();
 		int u = guiLeft + 182;
 		int v = guiTop + 97;
 		if (getButton(2) != null) {
 			u = getButton(2).getX() + getButton(2).getWidth() + 7;
 			v = getButton(2).getY() + 2;
 		}
-		GlStateManager.enableBlend();
 		// Back on NPC
 		int color = new Color(0xFF404040).getRGB();
 		GlStateManager.pushMatrix();
@@ -85,7 +84,6 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 		minecraft.getTextureManager().bindTexture(SHEET);
 		drawTexturedModalRect(-5, -5, 34, 54, 65, 65);
 		GlStateManager.popMatrix();
-
 		if (showNpc != null && !hasSubGui()) {
 			// NPC
 			GlStateManager.pushMatrix();
@@ -93,11 +91,20 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 			int c = sw.getScaledWidth() < mc.displayWidth
 					? (int) Math.round((double) mc.displayWidth / (double) sw.getScaledWidth())
 					: 1;
-			GL11.glScissor((u + 10) * c, (v + 11) * c, (54) * c, (44) * c);
+			GL11.glScissor((u + 10) * c, (v + 18) * c, (47) * c, (44) * c);
 			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 			GlStateManager.translate(0.0f, 0.0f, 10.0f);
-			//drawRect((u + 10), (v + 11), (u + 54), (v + 44), 0xFFFF0000);
-			drawNpc(showNpc, 218, 149, 1.0f, 30, -5, 1);
+			String modelName = "";
+			if (showNpc.display.getModel() != null) { modelName = showNpc.display.getModel(); }
+			else {
+				ResourceLocation location = EntityList.getKey(showNpc);
+				if (location != null) { modelName = location.toString(); }
+			}
+			float[] offsets = GuiLog.preDrawEntity(modelName, showNpc);
+			drawNpc(showNpc, 218 + (int) offsets[0],
+					149 + (int) offsets[1],
+					offsets[2], -30,
+					5, 1);
 			GL11.glDisable(GL11.GL_SCISSOR_TEST);
 			GlStateManager.popMatrix();
 
@@ -146,14 +153,12 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 			v = getButton(0).getY() - 1;
 		}
 		GlStateManager.pushMatrix();
-
 		GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
 		drawRect(-1, -1,  33, 33, color);
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 		minecraft.getTextureManager().bindTexture(SHEET);
 		drawTexturedModalRect(0, 0, 34, 54, 32, 32);
 		GlStateManager.popMatrix();
-
 		if (quest.icon != null) {
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
@@ -163,7 +168,6 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 			drawTexturedModalRect(0, 0, 0, 0, 256, 256);
 			GlStateManager.popMatrix();
 		}
-
 		// quest texture
 		u = guiLeft + 214;
 		v = guiTop + 38;
@@ -173,12 +177,10 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 		}
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
-		drawRect(-1, -1, 33, 33, color);
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 		minecraft.getTextureManager().bindTexture(SHEET);
 		drawTexturedModalRect(0, 0, 34, 54, 32, 32);
 		GlStateManager.popMatrix();
-
 		if (quest.texture != null) {
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(u + 1.0f, v + 1.0f, 1.0f);
@@ -188,8 +190,6 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 			drawTexturedModalRect(0, 0, 0, 0, 256, 256);
 			GlStateManager.popMatrix();
 		}
-		if (tempHoverText != null) { setHoverText(tempHoverText); }
-		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 
 	@Override

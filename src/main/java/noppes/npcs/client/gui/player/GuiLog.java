@@ -71,6 +71,7 @@ public class GuiLog extends GuiNPCInterface
 	public static float scaleW;
 	public static float scaleH;
 	public static int fontHeight = ClientProxy.LogFont.getHeight();
+	protected static ScaledResolution sw;
 
 	static {
 		GuiLog.ql.clear();
@@ -80,126 +81,142 @@ public class GuiLog extends GuiNPCInterface
 
 	public static QuestInfo activeQuest;
 
-	public static boolean preDrawEntity(String modelName) {
+	public static float[] preDrawEntity(String modelName, Entity entity) {
+		initScale();
+		float[] offsets = new float[] { 0.0f, 0.0f, 1.0f };
 		boolean canUpdate = true;
-        switch (modelName) {
-            case "customnpcs:npcslime":
-            case "minecraft:shulker":
-                GlStateManager.translate(-2.0f, -15.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:magma_cube":
-            case "minecraft:silverfish":
-            case "minecraft:slime":
-                GlStateManager.translate(-2.0f, -21.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:zombie":
-                GlStateManager.translate(3.0f, 9.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:vex":
-                GlStateManager.translate(-3.0f, -15.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:endermite":
-                GlStateManager.translate(-1.0f, -25.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:enderman":
-                GlStateManager.translate(0.0f, 30.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:cave_spider":
-                GlStateManager.translate(-2.0f, -18.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:chicken":
-            case "minecraft:wolf":
-            case "minecraft:ocelot":
-            case "minecraft:spider":
-                GlStateManager.translate(0.0f, -15.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:squid":
-                GlStateManager.translate(0.0f, -5.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:guardian":
-                GlStateManager.translate(4.0f, -18.5f * scaleH, 0.0f);
-                canUpdate = false;
-                break;
-            case "minecraft:parrot":
-            case "minecraft:rabbit":
-            case "minecraft:bat":
-                GlStateManager.translate(0.0f, -19.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:horse":
-            case "minecraft:illusion_illager":
-            case "minecraft:villager":
-            case "minecraft:snowman":
-            case "minecraft:vindication_illager":
-            case "minecraft:zombie_horse":
-            case "minecraft:zombie_villager":
-            case "minecraft:stray":
-            case "minecraft:skeleton":
-            case "minecraft:witch":
-            case "minecraft:skeleton_horse":
-            case "minecraft:mule":
-            case "minecraft:evocation_illager":
-            case "minecraft:zombie_pigman":
-                GlStateManager.translate(0.0f, 5.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:ender_dragon":
-                GlStateManager.translate(35.0f, -32.0f * scaleH, 0.0f);
-                GlStateManager.scale(0.5f, 0.5f, 0.5f);
-                break;
-            case "minecraft:elder_guardian":
-                GlStateManager.translate(1.5f, -15.0f * scaleH, 0.0f);
-                GlStateManager.scale(0.5f, 0.5f, 0.5f);
-                canUpdate = false;
-                break;
-            case "minecraft:giant":
-                GlStateManager.translate(0.0f, 15.0f * scaleH, 0.0f);
-                GlStateManager.scale(0.1875f, 0.1875f, 0.1875f);
-                canUpdate = false;
-                break;
-            case "customnpcs:npcdragon":
-                GlStateManager.translate(22.0f, -16.0f * scaleH, 0.0f);
-                canUpdate = false;
-                break;
-            case "customnpcs:npcpony":
-                GlStateManager.translate(-5.0f, 2.0f * scaleH, 0.0f);
-                break;
-            case "customnpcs:npccrystal":
-                GlStateManager.translate(0.0f, 3.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:wither_skeleton":
-            case "minecraft:villager_golem":
-            case "minecraft:customnpcs.npcgolem":
-                GlStateManager.translate(0.0f, 18.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:polar_bear":
-                GlStateManager.translate(-1.0f, -12.0f * scaleH, 0.0f);
-                GlStateManager.scale(0.75f, 0.75f, 0.75f);
-                break;
-            case "minecraft:husk":
-            case "minecraft:llama":
-                GlStateManager.translate(0.0f, 12.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:pig":
-                GlStateManager.translate(0.0f, -12.0f * scaleH, 0.0f);
-                break;
-            case "minecraft:wither":
-                GlStateManager.translate(-3.0f, 3.0f * scaleH, 0.0f);
-                GlStateManager.scale(0.5f, 0.5f, 0.5f);
-                break;
-            case "minecraft:ghast":
-                GlStateManager.translate(-2.0f, -21.0f * scaleH, 0.0f);
-                GlStateManager.scale(0.2f, 0.2f, 0.2f);
-                break;
-            case "minecraft:customnpcs.customnpcalex":
-                GlStateManager.translate(-1.0f, 0.0f, 0.0f);
-                break;
-            default:
-                GlStateManager.translate(0.0f, -8.0f * scaleH, 0.0f);
-                break;
-        }
+		switch (modelName) {
+			case "customnpcs:npcslime":
+			case "minecraft:shulker":
+				offsets[0] = -2.0f * scaleW;
+				offsets[1] = -15.0f * scaleH;
+				break;
+			case "minecraft:magma_cube":
+			case "minecraft:silverfish":
+			case "minecraft:slime":
+				offsets[0] = -2.0f * scaleW;
+				offsets[1] = -21.0f * scaleH;
+				break;
+			case "minecraft:zombie":
+				offsets[0] = 3.0f * scaleW;
+				offsets[1] = 9.0f * scaleH;
+				break;
+			case "minecraft:vex":
+				offsets[0] = -3.0f * scaleW;
+				offsets[1] = -15.0f * scaleH;
+				break;
+			case "minecraft:endermite":
+				offsets[0] = -1.0f * scaleW;
+				offsets[1] = -25.0f * scaleH;
+				break;
+			case "minecraft:enderman":
+				offsets[1] = 30.0f * scaleH;
+				break;
+			case "minecraft:cave_spider":
+				offsets[0] = -2.0f * scaleW;
+				offsets[1] = -18.0f * scaleH;
+				break;
+			case "minecraft:chicken":
+			case "minecraft:cow":
+			case "minecraft:wolf":
+			case "minecraft:ocelot":
+			case "minecraft:spider":
+				offsets[1] = -15.0f * scaleH;
+				break;
+			case "minecraft:squid":
+				offsets[1] = -5.0f * scaleH;
+				break;
+			case "minecraft:guardian":
+				offsets[0] = 4.0f * scaleW;
+				offsets[1] = -18.5f * scaleH;
+				canUpdate = false;
+				break;
+			case "minecraft:parrot":
+			case "minecraft:rabbit":
+			case "minecraft:bat":
+				offsets[1] = -19.0f * scaleH;
+				break;
+			case "minecraft:horse":
+			case "minecraft:illusion_illager":
+			case "minecraft:villager":
+			case "minecraft:snowman":
+			case "minecraft:vindication_illager":
+			case "minecraft:zombie_horse":
+			case "minecraft:zombie_villager":
+			case "minecraft:stray":
+			case "minecraft:skeleton":
+			case "minecraft:witch":
+			case "minecraft:skeleton_horse":
+			case "minecraft:mule":
+			case "minecraft:evocation_illager":
+			case "minecraft:zombie_pigman":
+				offsets[1] = 5.0f * scaleH;
+				break;
+			case "minecraft:ender_dragon":
+				offsets[0] = 35.0f * scaleW;
+				offsets[1] = -32.0f * scaleH;
+				offsets[2] = 0.5f;
+				break;
+			case "minecraft:elder_guardian":
+				offsets[0] = 1.5f * scaleW;
+				offsets[1] = -15.0f * scaleH;
+				offsets[2] = 0.5f;
+				canUpdate = false;
+				break;
+			case "minecraft:giant":
+				offsets[1] = 15.0f * scaleH;
+				offsets[2] = 0.1875f;
+				canUpdate = false;
+				break;
+			case "customnpcs:npcdragon":
+				offsets[0] = 22.0f * scaleW;
+				offsets[1] = -16.0f * scaleH;
+				canUpdate = false;
+				break;
+			case "customnpcs:npcpony":
+				offsets[0] = -5.0f * scaleW;
+				offsets[1] = 2.0f * scaleH;
+				break;
+			case "customnpcs:npccrystal":
+				offsets[1] = 3.0f * scaleH;
+				break;
+			case "minecraft:wither_skeleton":
+			case "minecraft:villager_golem":
+			case "minecraft:customnpcs.npcgolem":
+				offsets[1] = 18.0f * scaleH;
+				break;
+			case "minecraft:polar_bear":
+				offsets[0] = -1.0f * scaleW;
+				offsets[1] = -12.0f * scaleH;
+				offsets[2] = 0.75f;
+				break;
+			case "minecraft:husk":
+			case "minecraft:llama":
+				offsets[1] = 12.0f * scaleH;
+				break;
+			case "minecraft:pig":
+				offsets[1] = -12.0f * scaleH;
+				break;
+			case "minecraft:wither":
+				offsets[0] = -3.0f * scaleW;
+				offsets[1] = 3.0f * scaleH;
+				offsets[2] = 0.5f;
+				break;
+			case "minecraft:ghast":
+				offsets[0] = -2.0f * scaleW;
+				offsets[1] = -21.0f * scaleH;
+				offsets[2] = 0.2f;
+				break;
+			case "minecraft:customnpcs.customnpcalex":
+				offsets[0] = -1.0f * scaleW;
+				break;
+			default:
+				offsets[1] = -8.0f * scaleH;
+				break;
+		}
 		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-		GlStateManager.rotate(180.0f, 1.0f, 0.0f, 0.0f);
-		GlStateManager.rotate(210.0f, 0.0f, 1.0f, 0.0f);
-		return canUpdate;
+		if (canUpdate) { entity.onUpdate(); }
+		return offsets;
 	}
 	/*
 	 * 0-tab inv; 1-tab factions; 2-tab quests; 3-tab compass 4-page right; 5-page
@@ -214,7 +231,6 @@ public class GuiLog extends GuiNPCInterface
 	protected final int questLogColor;
 	protected final int notEnableColor;
 	protected final PlayerData data;
-	protected ScaledResolution sw;
 	protected int hoverButton;
 	protected int hoverQuestId;
 	protected int catRow;
@@ -389,20 +405,21 @@ public class GuiLog extends GuiNPCInterface
 				return true;
 			} // page left
 			case 6: {
-				if (hoverQuestId < 1) { return false; }
-				String catName = "";
-				int i = 0;
-				for (String key : categories.keySet()) {
-					if (i == catSelect) {
-						catName = key;
-						break;
+				if (hoverQuestId >= 0) {
+					String catName = "";
+					int i = 0;
+					for (String key : categories.keySet()) {
+						if (i == catSelect) {
+							catName = key;
+							break;
+						}
+						i++;
 					}
-					i++;
+					if (catName.isEmpty() || !quests.containsKey(catName) || !quests.get(catName).containsKey(hoverQuestId)) { return false; }
+					activeQuest = new QuestInfo(quests.get(catName).get(hoverQuestId), mc.world);
+					step = 10;
+					setNextTick(10, false);
 				}
-				if (catName.isEmpty() || !quests.containsKey(catName) || !quests.get(catName).containsKey(hoverQuestId)) { return false; }
-				activeQuest = new QuestInfo(quests.get(catName).get(hoverQuestId), mc.world);
-				step = 10;
-				setNextTick(10, false);
 				return true;
 			} // quest select
 			case 16: {
@@ -912,8 +929,10 @@ public class GuiLog extends GuiNPCInterface
 						ResourceLocation location = EntityList.getKey(activeQuest.npc);
 						if (location != null) { modelName = location.toString(); }
 					}
-					GuiLog.preDrawEntity(modelName);
-					drawNpc(activeQuest.npc, (int) (74.0f * scaleW), 70 + (int) (41.0f * scaleH), 1.0f, 30, 0, 1);
+					float[] offsets = GuiLog.preDrawEntity(modelName, activeQuest.npc);
+					drawNpc(activeQuest.npc, (int) (74.0f * scaleW + offsets[0]),
+							70 + (int) (41.0f * scaleH + offsets[1]),
+							offsets[2], 30, 0, 1);
 
 					GL11.glDisable(GL11.GL_SCISSOR_TEST);
 					GlStateManager.popMatrix();
@@ -1776,7 +1795,6 @@ public class GuiLog extends GuiNPCInterface
 			ResourceLocation location = EntityList.getKey(entity);
 			if (location != null) { modelName = location.toString(); }
 		}
-		boolean canUpdate = GuiLog.preDrawEntity(modelName);
 		GlStateManager.rotate((mc.world.getTotalWorldTime() % 360) * 5.0f, 0.0f, 1.0f, 0.0f);
 		GlStateManager.enableBlend();
 		GlStateManager.enableColorMaterial();
@@ -1784,7 +1802,7 @@ public class GuiLog extends GuiNPCInterface
 		mc.getRenderManager().playerViewY = 180.0f;
 		GlStateManager.scale(25.0f, 25.0f, 25.0f);
 		entity.ticksExisted = 1;
-		if (canUpdate) { entity.onUpdate(); }
+		GuiLog.preDrawEntity(modelName, entity);
 		mc.getRenderManager().renderEntity(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, false);
 		GlStateManager.disableRescaleNormal();
 		GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
@@ -1797,9 +1815,7 @@ public class GuiLog extends GuiNPCInterface
 	@Override
 	public void initGui() {
 		super.initGui();
-		sw = new ScaledResolution(mc);
-		scaleW = ((float) sw.getScaledWidth_double() - 160.0f) / 256.0f;
-		scaleH = ((float) sw.getScaledHeight_double() - 78.0f) / 175.0f;
+		initScale();
 		guiCenter = (int) Math.ceil(sw.getScaledWidth_double() / 2.0d + 15.0d * scaleW);
 		width = (int) (256.0f * scaleW);
 		height = (int) (203.0f * scaleH);
@@ -1935,6 +1951,12 @@ public class GuiLog extends GuiNPCInterface
 					.setVariants("quest.screen.compass.type.0", "quest.screen.compass.type.1", "quest.screen.compass.type.2", "quest.screen.compass.type.3", "quest.screen.compass.type.4")
 					.setDisplay(CustomNpcs.TypeShowQuestCompass);
 		} // Compass
+	}
+
+	public static void initScale() {
+		sw = new ScaledResolution(Minecraft.getMinecraft());
+		scaleW = ((float) sw.getScaledWidth_double() - 160.0f) / 256.0f;
+		scaleH = ((float) sw.getScaledHeight_double() - 78.0f) / 175.0f;
 	}
 
 	@Override
