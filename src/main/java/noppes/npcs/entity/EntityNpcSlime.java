@@ -25,7 +25,7 @@ public class EntityNpcSlime extends EntityNPCInterface {
 			EntityCustomNpc npc = new EntityCustomNpc(this.world);
 			npc.readFromNBT(compound);
 			ModelData data = npc.modelData;
-			data.setEntityClass(EntityNpcSlime.class);
+			data.setEntity(EntityNpcSlime.class);
 			this.world.spawnEntity(npc);
 		}
 		super.onUpdate();

@@ -22,7 +22,7 @@ public class EntityNPCVillager extends EntityNPCInterface {
 			EntityCustomNpc npc = new EntityCustomNpc(this.world);
 			npc.readFromNBT(compound);
 			ModelData data = npc.modelData;
-			data.setEntityClass(EntityVillager.class);
+			data.setEntity(EntityVillager.class);
 			this.world.spawnEntity(npc);
 		}
 		super.onUpdate();

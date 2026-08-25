@@ -370,7 +370,7 @@ public class ClientProxy extends CommonProxy {
 			case QuestCompleteText: returnGui = new GuiQuestCompletion(preEvent.buffer.readInt()); break;
 			case QuestLog: returnGui = new GuiLog(buffer.readInt()); break;
 			case DeadInventory: returnGui = new GuiNPCDeadInventory(npc, (ContainerDead) container); break;
-			case CreationParts: returnGui = new GuiCreationParts(npc, (ContainerLayer) container); break;
+			case CreationParts: returnGui = new GuiCreationParts(npc); break;
 			// New from Unofficial (BetaZavr)
 			case DimensionSetting: returnGui = new GuiCreateDimension(buffer.readInt()); break;
 			case EditClientScript: returnGui = new GuiScriptClient(); break;

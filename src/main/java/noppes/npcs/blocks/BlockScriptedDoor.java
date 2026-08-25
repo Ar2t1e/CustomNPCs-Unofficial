@@ -21,6 +21,7 @@ import noppes.npcs.CustomItems;
 import noppes.npcs.EventHooks;
 import noppes.npcs.blocks.tiles.TileScriptedDoor;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketPlaySound;
 import noppes.npcs.packets.server.SPacketGuiOpen;
@@ -117,6 +118,7 @@ public class BlockScriptedDoor extends BlockNpcDoorInterface {
 		}
 		ItemStack currentItem = player.inventory.getCurrentItem();
 		if (currentItem.getItem() == CustomItems.wand || currentItem.getItem() == CustomItems.scripter || currentItem.getItem() == CustomBlocks.scripted_door_item) {
+			PlayerData.get(player).scriptBlockPos = blockpos1;
 			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.ScriptDoor, null, blockpos1);
 			return true;
 		}

@@ -58,7 +58,13 @@ public class LayerBlockModel implements ILayerBlockModel {
     @Override
     public INbt getNbt() {
         NBTTagCompound nbtLayer = new NBTTagCompound();
-        if (!itemModel.isEmpty()) { nbtLayer.setTag("Model", itemModel.getMCItemStack().writeToNBT(new NBTTagCompound())); }
+        // models
+        if (!itemModel.isEmpty()) {
+            nbtLayer.setTag("ItemModel", itemModel.getMCItemStack().writeToNBT(new NBTTagCompound()));
+        }
+        if (!blockModel.isEmpty()) {
+            nbtLayer.setTag("BlockModel", blockModel.save());
+        }
         // OBJ
         if (objModel != null) { nbtLayer.setString("OBJModel", objModel.toString()); }
         NBTTagList ovm = new NBTTagList();
@@ -103,8 +109,12 @@ public class LayerBlockModel implements ILayerBlockModel {
     @Override
     public void setNbt(INbt nbt) {
         NBTTagCompound nbtLayer = nbt.getMCNBT();
-        if (nbtLayer.hasKey("Model", 10)) {
-            itemModel = (ItemStackWrapper) Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(new ItemStack(nbtLayer.getCompoundTag("Model")));
+        // models
+        if (nbtLayer.hasKey("ItemModel", 10)) {
+            itemModel = (ItemStackWrapper) Objects.requireNonNull(NpcAPI.Instance()).getIItemStack(new ItemStack(nbtLayer.getCompoundTag("ItemModel")));
+        }
+        if (nbtLayer.hasKey("BlockModel", 10)) {
+            blockModel = BlockWrapper.of(nbt.getMCNBT().getCompoundTag("BlockModel"));
         }
         // OBJ
         if (nbtLayer.hasKey("OBJModel", 8)) { objModel = new ResourceLocation(nbtLayer.getString("OBJModel")); }

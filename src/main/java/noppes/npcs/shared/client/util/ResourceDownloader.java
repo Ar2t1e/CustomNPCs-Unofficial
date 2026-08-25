@@ -21,7 +21,7 @@ public class ResourceDownloader {
             active.add(resource.location);
             CustomNPCsScheduler.runTack(() -> {
                 resource.loadTextureFromServer();
-                CustomNPCsScheduler.runTack(() -> {
+                Minecraft.getMinecraft().addScheduledTask(() -> {
                     Minecraft.getMinecraft().getTextureManager().loadTexture(resource.location, resource);
                     active.remove(resource.location);
                 });

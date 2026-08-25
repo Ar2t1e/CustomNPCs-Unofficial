@@ -23,7 +23,7 @@ public class EntityNpcSkeleton extends EntityNPCInterface {
 			EntityCustomNpc npc = new EntityCustomNpc(this.world);
 			npc.readFromNBT(compound);
 			ModelData data = npc.modelData;
-			data.setEntityClass(EntitySkeleton.class);
+			data.setEntity(EntitySkeleton.class);
 			this.world.spawnEntity(npc);
 		}
 		super.onUpdate();

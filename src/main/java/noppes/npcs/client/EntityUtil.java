@@ -98,7 +98,7 @@ public class EntityUtil {
 		if (entity instanceof EntityCustomNpc && copied instanceof EntityCustomNpc) {
 			EntityCustomNpc npc2 = (EntityCustomNpc) copied;
 			EntityCustomNpc target2 = (EntityCustomNpc) entity;
-			(target2.modelData = npc2.modelData.copy()).setEntityClass(null);
+			(target2.modelData = npc2.modelData.copy()).setEntity(null);
 		}
 	}
 

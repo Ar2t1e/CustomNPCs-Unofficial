@@ -14,11 +14,7 @@ import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.controllers.scripts.ScriptContainer;
 import noppes.npcs.mixin.nbt.INBTTagLongArrayMixin;
 import noppes.npcs.packets.Packets;
-import noppes.npcs.packets.server.SPacketScriptConsole;
-import noppes.npcs.packets.server.SPacketSaveClientScripts;
-import noppes.npcs.packets.server.SPacketScriptEncrypt;
-import noppes.npcs.packets.server.SPacketScriptSave;
-import noppes.npcs.packets.server.SPacketScriptText;
+import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiMenuTopButton;
@@ -67,6 +63,7 @@ public class GuiScriptInterface extends GuiNPCInterface
 		setBackground("menubg.png");
 
 		type = typeIn;
+		Packets.sendServer(new SPacketScriptGet(type));
 	}
 
 	@Override

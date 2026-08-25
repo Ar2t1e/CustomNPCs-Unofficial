@@ -1055,7 +1055,6 @@ encrypt.hover.type.false=Зашифровать скрипт из текущей
 encrypt.hover.type.true=Зашифровать только видимый скрипт из текущей вкладки
 encrypt.only.tab=Только видимый скрипт вкладки
 
-entity.customnpc=Кастомный NPC
 entity.customnpcs.customnpc=Кастомный NPC
 entity.customnpcs.customnpcalex=NPC Алекс
 entity.customnpcs.customnpcchairmount=Маунт NPC блок

@@ -27,6 +27,7 @@ import noppes.npcs.CustomTabs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.blocks.tiles.TileScripted;
 import noppes.npcs.constants.EnumGuiType;
+import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.packets.server.SPacketGuiOpen;
 
 import javax.annotation.Nonnull;
@@ -220,19 +221,19 @@ public class BlockScripted extends BlockInterface {
 
 	@Override
 	public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
-		if (!world.isRemote) {
-			ItemStack currentItem = player.inventory.getCurrentItem();
-			if (currentItem.getItem() == CustomItems.wand || currentItem.getItem() == CustomItems.scripter) {
-				SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.ScriptBlock, null, pos);
-				return true;
-			}
-			TileEntity tile = world.getTileEntity(pos);
-			if (!(tile instanceof TileScripted)) {
-				return super.onBlockActivated(world, pos, state, player, hand, side, hitX, hitY, hitZ);
-			}
-			return !EventHooks.onScriptBlockInteract((TileScripted) tile, player, side.getIndex(), hitX, hitY, hitZ);
+		if (world.isRemote) { return false; }
+		ItemStack currentItem = player.inventory.getCurrentItem();
+		if (currentItem.getItem() != CustomItems.wand && currentItem.getItem() != CustomItems.scripter) {
+			float x = (float)(hitX - (double)pos.getX());
+			float y = (float)(hitY - (double)pos.getY());
+			float z = (float)(hitZ - (double)pos.getZ());
+			TileScripted tile = (TileScripted) world.getTileEntity(pos);
+			return tile != null && !EventHooks.onScriptBlockInteract(tile, player, side.getIndex(), x, y, z);
+		} else {
+			PlayerData.get(player).scriptBlockPos = pos;
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) player, EnumGuiType.ScriptBlock, null, pos);
+			return true;
 		}
-		return true;
 	}
 
 	@Override
@@ -264,7 +265,8 @@ public class BlockScripted extends BlockInterface {
 
 	@Override
 	public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityLivingBase entity, @Nonnull ItemStack stack) {
-		if (entity instanceof EntityPlayerMP && !world.isRemote) {
+		if (!world.isRemote && entity instanceof EntityPlayerMP) {
+			PlayerData.get((EntityPlayerMP) entity).scriptBlockPos = pos;
 			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entity, EnumGuiType.ScriptBlock, null, pos);
 		}
 	}

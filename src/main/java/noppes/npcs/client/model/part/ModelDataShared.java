@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import noppes.npcs.client.parts.ModelPartData;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.constants.EnumParts;
 
@@ -141,7 +142,8 @@ public class ModelDataShared {
 
 	public void removePart(EnumParts type) { parts.remove(type); }
 
-	public void setEntityClass(Class<? extends EntityLivingBase> entityClassIn) {
+	public void setEntity(Class<? extends EntityLivingBase> entityClassIn) {
+		if (entityClassIn == EntityCustomNpc.class) { entityClassIn = null; }
 		entityClass = entityClassIn;
 		entity = null;
 		extra = new NBTTagCompound();
@@ -245,6 +247,7 @@ public class ModelDataShared {
 		return slotID;
 	}
 
+	@SuppressWarnings("unused")
 	public int removeLayer(int slotID) {
 		Map<Integer, LayerModel> newLayersData = new TreeMap<>();
 		int id = 0;

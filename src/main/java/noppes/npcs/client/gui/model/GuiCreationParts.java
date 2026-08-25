@@ -7,9 +7,7 @@ import java.util.List;
 
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
@@ -19,7 +17,6 @@ import noppes.npcs.client.gui.util.*;
 import noppes.npcs.client.model.part.LayerModel;
 import noppes.npcs.client.model.part.ModelEyeData;
 import noppes.npcs.constants.EnumParts;
-import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
@@ -34,7 +31,7 @@ import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nonnull;
 
-public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
+public class GuiCreationParts extends GuiCreationScreenInterface
 		implements ITextfieldListener, ICustomScrollListener, ISliderListener {
 
 	public class GuiPart {
@@ -503,15 +500,12 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 
 	class GuiPartLayers extends GuiPart {
 
-		private final ContainerLayer cont;
-
 		public GuiCustomScrollNop scrollIn;
 		public int selectPos = 0;
 		public Map<Integer, EnumParts> partNames = new LinkedHashMap<>();
 
         public GuiPartLayers(GuiCreationParts parentIn) {
 			super(EnumParts.CUSTOM_LAYERS, parentIn);
-			cont = (ContainerLayer) inventorySlots;
 			partNames.put(0, EnumParts.HEAD);
 			partNames.put(1, EnumParts.BODY);
 			partNames.put(2, EnumParts.ARM_RIGHT);
@@ -533,28 +527,10 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 		public boolean buttonEvent(@Nonnull GuiButtonNop button) {
 			switch (button.id) {
 				case 21: {
-					if (cont == null) { return true; }
 					selectPos = playerdata.addNewLayer();
-					cont.getSlot(0).putStack(ItemStack.EMPTY);
 					Packets.sendServer(new SPacketItemChange("ContainerLayer", 0, ItemStack.EMPTY));
 					return true;
 				} // add new item layer
-				case 22: {
-					selectPos = playerdata.removeLayer(selectPos);
-					LayerModel lm = playerdata.getLayerModel(selectPos);
-					ItemStack stack;
-					if (lm == null) {
-						stack = ItemStack.EMPTY;
-						cont.getSlot(0).putStack(ItemStack.EMPTY);
-					}
-					else {
-						stack = lm.getStack();
-						cont.getSlot(0).putStack(lm.getStack());
-					}
-					Packets.sendServer(new SPacketItemChange("ContainerLayer", 0, stack));
-					parent.initGui();
-					return true;
-				} // remove item layer
 				case 23: {
 					if (toolType == 1) { return true; }
 					GuiTextFieldNop.unfocus();
@@ -615,20 +591,6 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 			scrollIn = new GuiCustomScrollNop(parent, 1)
 					.setSize(100, 127);
 			LayerModel lm = playerdata.getLayerModel(selectPos);
-			ItemStack stack;
-			if (lm == null) {
-				stack = cont.getSlot(0).getStack();
-				if (!stack.isEmpty()) {
-					selectPos = playerdata.addNewLayer();
-					lm = playerdata.getLayerModel(selectPos);
-					lm.setStack(stack);
-				} else {
-					selectPos = -1;
-					stack = ItemStack.EMPTY;
-				}
-			}
-			else { stack = lm.getStack(); }
-			Packets.sendServer(new SPacketItemChange("ContainerLayer", 0, stack));
 			scrollIn.setUnsortedList(playerdata.getLayerKeys());
 			scrollIn.setSelected(selectPos);
 			addLabel(20, x0, y, "part.layers.info.0")
@@ -758,8 +720,8 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 	private int waitKeyID;
 	private int toolType; // 0 - rotation, 1 - offset, 2 - scale
 
-	public GuiCreationParts(EntityNPCInterface npc, ContainerLayer container) {
-		super(npc, container);
+	public GuiCreationParts(EntityNPCInterface npc) {
+		super(npc);
 		parts = new GuiPart[] {
 				new GuiPart(EnumParts.EARS, this).setTypes(new String[] { "gui.none", "gui.normal", "ears.bunny" }),
 				new GuiPartHorns(this),
@@ -794,31 +756,6 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 	protected GuiPart getPart() { return parts[GuiCreationParts.selected]; }
 
 	@Override
-	public void drawDefaultBackground() {
-		super.drawDefaultBackground();
-		GuiPart part = getPart();
-		if (part instanceof GuiPartLayers) {
-			GlStateManager.pushMatrix();
-			GlStateManager.translate( guiLeft + 121.0f, guiTop + 163.0f, 0.0f);
-			mc.getTextureManager().bindTexture(GuiNPCInterface.RESOURCE_SLOT);
-			int x;
-			int y;
-			for (Slot slot : ((GuiPartLayers) part).cont.inventorySlots) {
-				if (slot.slotNumber == 0) {
-					x = 164;
-					y = 0;
-				}
-				else {
-					x = ((slot.slotNumber - 1) % 9) * 18;
-					y = ((slot.slotNumber - 1) / 9) * 18;
-				}
-				drawTexturedModalRect(x, y, 0, 0, 18, 18);
-			}
-			GlStateManager.popMatrix();
-		}
-	}
-
-	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		if (waitKey != 0) { waitKey--; }
@@ -827,16 +764,6 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 			CustomNPCsScheduler.runTack(() -> {
 				isCheck = true;
 				getButton(21).setIsEnabled(playerdata.isNoEmptyLayer()); // add
-				LayerModel lm = playerdata.getLayerModel(((GuiPartLayers) getPart()).selectPos);
-				GuiCustomScrollNop scrollIn = ((GuiPartLayers) part).scrollIn;
-				ItemStack stack = ((GuiPartLayers) part).cont.getSlot(0).getStack();
-				if (lm == null) {
-					if (scrollIn.hasSelected() || !stack.isEmpty()) { initGui(); }
-				}
-				else if (lm.getStack() != stack) {
-					lm.setStack(((GuiPartLayers) part).cont.getSlot(0).getStack());
-					initGui();
-				}
 				isCheck = false;
 			});
 		}
@@ -845,35 +772,17 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 	@Override
 	public void initGui() {
 		super.initGui();
-		if (entity != null) { openGui(new GuiCreationExtra(npc, (ContainerLayer) inventorySlots)); return; }
+		if (entity != null) { openGui(new GuiCreationExtra(npc)); return; }
 		if (scroll == null) {
 			List<Component> list = new ArrayList<>();
 			for (GuiPart part : parts) { list.add(Component.translatable("part." + part.part.name)); }
 			scroll = addScroll(0).setUnsortedList(list);
 		}
 		add(scroll.setPos(guiLeft, guiTop + 46)
-				.setSize(121, ySize - 74));
+				.setSize(121, imageHeight - 74));
 		if (getPart() != null) {
 			scroll.setSelected(Component.translatable("part." + getPart().part.name));
 			getPart().initGui();
-		}
-		if (inventorySlots instanceof ContainerLayer) {
-			boolean bo = getPart() instanceof GuiPartLayers;
-			int x;
-			int y;
-			for (Slot slot : inventorySlots.inventorySlots) {
-				if (slot.slotNumber == 0) {
-					x = 164;
-					y = 0;
-				}
-				else {
-					x = ((slot.slotNumber - 1) % 9) * 18;
-					y = ((slot.slotNumber - 1) / 9) * 18;
-					if ((slot.slotNumber - 1) < 9) { y += 54;} else if ((slot.slotNumber - 1) != 36) { y -= 18;}
-				}
-				slot.xPos = bo ? 122 + x : -5000;
-				slot.yPos = bo ? 164 + y : -5000;
-			}
 		}
 	}
 
@@ -886,9 +795,6 @@ public class GuiCreationParts extends GuiCreationScreenInterface<ContainerLayer>
 		if (scroll.id == 1 && getPart() instanceof GuiPartLayers) {
 			GuiPartLayers part = (GuiPartLayers) getPart();
 			part.selectPos = scroll.getSelectedIndex();
-			LayerModel lm = playerdata.getLayerModel(part.selectPos);
-			if (lm == null) { part.cont.getSlot(0).putStack(ItemStack.EMPTY); }
-			else { part.cont.getSlot(0).putStack(lm.getStack()); }
 			part.initGui();
 		}
 	}

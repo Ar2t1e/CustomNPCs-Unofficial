@@ -15,35 +15,38 @@ public class CustomEntities {
 
     @SubscribeEvent
     public void registerEntities(RegistryEvent.Register<EntityEntry> event) {
-        EntityEntry[] entries = { this.registerNpc(EntityNPCHumanMale.class, "npchumanmale"),
-                this.registerNpc(EntityNPCVillager.class, "npcvillager"),
-                this.registerNpc(EntityNpcPony.class, "npcpony"),
-                this.registerNpc(EntityNPCHumanFemale.class, "npchumanfemale"),
-                this.registerNpc(EntityNPCDwarfMale.class, "npcdwarfmale"),
-                this.registerNpc(EntityNPCFurryMale.class, "npcfurrymale"),
-                this.registerNpc(EntityNpcMonsterMale.class, "npczombiemale"),
-                this.registerNpc(EntityNpcMonsterFemale.class, "npczombiefemale"),
-                this.registerNpc(EntityNpcSkeleton.class, "npcskeleton"),
-                this.registerNpc(EntityNPCDwarfFemale.class, "npcdwarffemale"),
-                this.registerNpc(EntityNPCFurryFemale.class, "npcfurryfemale"),
-                this.registerNpc(EntityNPCOrcMale.class, "npcorcfmale"),
-                this.registerNpc(EntityNPCOrcFemale.class, "npcorcfemale"),
-                this.registerNpc(EntityNPCElfMale.class, "npcelfmale"),
-                this.registerNpc(EntityNPCElfFemale.class, "npcelffemale"),
-                this.registerNpc(EntityNpcCrystal.class, "npccrystal"),
-                this.registerNpc(EntityNpcEnderchibi.class, "npcenderchibi"),
-                this.registerNpc(EntityNpcNagaMale.class, "npcnagamale"),
-                this.registerNpc(EntityNpcNagaFemale.class, "npcnagafemale"),
-                this.registerNpc(EntityNpcSlime.class, "NpcSlime"),
-                this.registerNpc(EntityNpcDragon.class, "NpcDragon"),
-                this.registerNpc(EntityNPCEnderman.class, "npcEnderman"),
-                this.registerNpc(EntityNPCGolem.class, "npcGolem"),
-                this.registerNpc(EntityCustomNpc.class, "CustomNpc"),
-                this.registerNpc(EntityNPC64x32.class, "CustomNpc64x32"),
-                this.registerNpc(EntityNpcAlex.class, "CustomNpcAlex"),
-                this.registerNpc(EntityNpcClassicPlayer.class, "CustomNpcClassic"),
-                this.registerNewEntity("CustomNpcChairMount", 10, false).entity(EntityChairMount.class).build(),
-                this.registerNewEntity("CustomNpcProjectile", 3, true).entity(EntityProjectile.class).build() };
+        EntityEntry[] entries = {
+                registerNpc(EntityNPCHumanMale.class, "npchumanmale"),
+                registerNpc(EntityNPCVillager.class, "npcvillager"),
+                registerNpc(EntityNPCHumanFemale.class, "npchumanfemale"),
+                registerNpc(EntityNPCDwarfMale.class, "npcdwarfmale"),
+                registerNpc(EntityNPCFurryMale.class, "npcfurrymale"),
+                registerNpc(EntityNpcMonsterMale.class, "npczombiemale"),
+                registerNpc(EntityNpcMonsterFemale.class, "npczombiefemale"),
+                registerNpc(EntityNpcSkeleton.class, "npcskeleton"),
+                registerNpc(EntityNPCDwarfFemale.class, "npcdwarffemale"),
+                registerNpc(EntityNPCFurryFemale.class, "npcfurryfemale"),
+                registerNpc(EntityNPCOrcMale.class, "npcorcfmale"),
+                registerNpc(EntityNPCOrcFemale.class, "npcorcfemale"),
+                registerNpc(EntityNPCElfMale.class, "npcelfmale"),
+                registerNpc(EntityNPCElfFemale.class, "npcelffemale"),
+                registerNpc(EntityNpcEnderchibi.class, "npcenderchibi"),
+                registerNpc(EntityNpcNagaMale.class, "npcnagamale"),
+                registerNpc(EntityNpcNagaFemale.class, "npcnagafemale"),
+                registerNpc(EntityNPCEnderman.class, "npcenderman"),
+
+                registerNpc(EntityNpcPony.class, "npcpony"),
+                registerNpc(EntityNpcCrystal.class, "npccrystal"),
+                registerNpc(EntityNpcSlime.class, "npcslime"),
+                registerNpc(EntityNpcDragon.class, "npcdragon"),
+                registerNpc(EntityNPCGolem.class, "npcgolem"),
+                registerNpc(EntityCustomNpc.class, "customnpc"),
+                registerNpc(EntityNPC64x32.class, "customnpc64x32"),
+                registerNpc(EntityNpcAlex.class, "customnpcalex"),
+                registerNpc(EntityNpcClassicPlayer.class, "customnpcclassic"),
+
+                registerNewEntity("customnpcchairmount", 10, false).entity(EntityChairMount.class).build(),
+                registerNewEntity("customnpcprojectile", 3, true).entity(EntityProjectile.class).build() };
         event.getRegistry().registerAll(entries);
     }
 
@@ -54,7 +57,7 @@ public class CustomEntities {
     }
 
     private EntityEntry registerNpc(Class<? extends Entity> cl, String name) {
-        return this.registerNewEntity(name, 3, true).entity(cl).build();
+        return registerNewEntity(name, 3, true).entity(cl).build();
     }
 
 }

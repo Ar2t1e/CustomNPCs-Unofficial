@@ -1,11 +1,9 @@
 package noppes.npcs.client.gui.model;
 
-import net.minecraft.network.chat.Component;
 import net.minecraftforge.common.MinecraftForge;
 import noppes.npcs.api.event.ClientEvent;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumMenuType;
-import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketMenuSave;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
@@ -34,7 +32,7 @@ import noppes.npcs.entity.EntityNPCInterface;
 
 import javax.annotation.Nonnull;
 
-public abstract class GuiCreationScreenInterface<C extends ContainerLayer> extends GuiContainerNPCInterface<C>
+public abstract class GuiCreationScreenInterface extends GuiNPCInterface
 		implements ISliderListener {
 
 	protected static float rotation = 0.5f;
@@ -48,10 +46,10 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 	public int active = 0;
 	public int xOffset = 140;
 
-	public GuiCreationScreenInterface(EntityNPCInterface npc, C container) {
-		super(npc, container, Component.empty());
-		xSize = 400;
-		ySize = 240;
+	public GuiCreationScreenInterface(EntityNPCInterface npc) {
+		super(npc);
+		imageWidth = 400;
+		imageHeight = 240;
 
 		playerdata = ((EntityCustomNpc) npc).modelData;
 		original = playerdata.save();
@@ -60,16 +58,16 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 	@Override
 	public void buttonEvent(@Nonnull GuiButtonNop button) {
 		switch (button.id) {
-			case 1: openGui(new GuiCreationEntities(npc, (ContainerLayer) inventorySlots)); break;
+			case 1: openGui(new GuiCreationEntities(npc)); break;
 			case 2: {
-				if (entity == null) { openGui(new GuiCreationParts(npc, (ContainerLayer) inventorySlots)); }
-				else { openGui(new GuiCreationExtra(npc, (ContainerLayer) inventorySlots)); }
+				if (entity == null) { openGui(new GuiCreationParts(npc)); }
+				else { openGui(new GuiCreationExtra(npc)); }
 				break;
 			}
-			case 3: openGui(new GuiCreationScale(npc, (ContainerLayer) inventorySlots)); break;
+			case 3: openGui(new GuiCreationScale(npc)); break;
 			case 4: setSubGui(new SubGuiPresetSave(this, playerdata)); break;
-			case 5: openGui(new GuiCreationLoad(npc, (ContainerLayer) inventorySlots)); break;
-			case 6: openGui(new GuiCreationLayers<>(npc, (ContainerLayer) inventorySlots)); break;
+			case 5: openGui(new GuiCreationLoad(npc)); break;
+			case 6: openGui(new GuiCreationLayers<>(npc)); break;
 			case 66: save(); NoppesUtil.openGUI(player, new GuiNpcDisplay(npc)); break;
 		}
 	}
@@ -163,7 +161,7 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 					.setHoverTexts("display.hover.extra");
 		}
 		else if (!(entity instanceof EntityNPCInterface)) {
-			GuiCreationExtra gui = new GuiCreationExtra(npc, (ContainerLayer) inventorySlots);
+			GuiCreationExtra gui = new GuiCreationExtra(npc);
 			gui.playerdata = playerdata;
 			if (!gui.getData(entity).isEmpty()) {
 				addButton(2, guiLeft, guiTop + 23, "gui.extra")
@@ -171,7 +169,7 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 						.setHoverTexts("display.hover.parts");
 			}
 			else if (active == 2) {
-				openGui(new GuiCreationEntities(npc, (ContainerLayer) inventorySlots));
+				openGui(new GuiCreationEntities(npc));
 				return;
 			}
 		}
@@ -181,24 +179,24 @@ public abstract class GuiCreationScreenInterface<C extends ContainerLayer> exten
 					.setHoverTexts("display.hover.part.size");
 		}
 		if (hasSaving) {
-			addButton(4, guiLeft, guiTop + ySize - 24, "gui.save")
+			addButton(4, guiLeft, guiTop + imageHeight - 24, "gui.save")
 					.setSize(60, 20)
 					.setHoverTexts("display.hover.part.save");
-			addButton(5, guiLeft + 62, guiTop + ySize - 24, "gui.load")
+			addButton(5, guiLeft + 62, guiTop + imageHeight - 24, "gui.load")
 					.setSize(60, 20)
 					.setHoverTexts("display.hover.part.load");
 		}
 		if (getButton(active) == null) {
-			openGui(new GuiCreationEntities(npc, (ContainerLayer) inventorySlots));
+			openGui(new GuiCreationEntities(npc));
 			return;
 		}
 		getButton(active).setIsEnabled(false);
-		addButton(66, guiLeft + xSize - 20, guiTop, "X")
+		addButton(66, guiLeft + imageWidth - 20, guiTop, "X")
 				.setSize(20, 20)
 				.setHoverTexts("hover.back");
-		addLabel(0, guiLeft + 120, guiTop + ySize - 10, GuiCreationScreenInterface.Message)
+		addLabel(0, guiLeft + 120, guiTop + imageHeight - 10, GuiCreationScreenInterface.Message)
 				.setColor(0xFF0000)
-				.setCenter(xSize - 120);
+				.setCenter(imageWidth - 120);
 		addSlider(500, guiLeft + xOffset + 142, guiTop + 210, GuiCreationScreenInterface.rotation)
 				.setSize(120, 20)
 				.setHoverTexts("display.hover.part.rotate");

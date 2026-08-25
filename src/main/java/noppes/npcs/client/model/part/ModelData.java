@@ -16,6 +16,7 @@ import noppes.npcs.entity.EntityNPCInterface;
 
 public class ModelData extends ModelDataShared {
 
+	public boolean simpleRender = false;
 	public EntityCustomNpc npc;
 
 	public ModelData(EntityCustomNpc npcIn) { npc = npcIn; }
@@ -24,6 +25,19 @@ public class ModelData extends ModelDataShared {
 		ModelData data = new ModelData(npc);
 		data.load(save());
 		return data;
+	}
+
+	@Override
+	public NBTTagCompound save() {
+		NBTTagCompound compound = super.save();
+		compound.setBoolean("SimpleRender", simpleRender);
+		return compound;
+	}
+
+	@Override
+	public void load(NBTTagCompound compound) {
+		super.load(compound);
+		simpleRender = compound.getBoolean("SimpleRender");
 	}
 
 	public EntityLivingBase getEntity(EntityNPCInterface npc) {

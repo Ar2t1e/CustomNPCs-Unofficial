@@ -5,14 +5,12 @@ import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.inventory.Slot;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.renderer.RenderCustomNpc;
-import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.mixin.client.renderer.entity.IRenderLivingBaseMixin;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
@@ -23,12 +21,14 @@ import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class GuiCreationLayers<T extends EntityLivingBase>  extends GuiCreationScreenInterface<ContainerLayer> implements ICustomScrollListener {
+public class GuiCreationLayers<T extends EntityLivingBase>
+        extends GuiCreationScreenInterface
+        implements ICustomScrollListener {
 
     private GuiCustomScrollNop scroll;
 
-    public GuiCreationLayers(EntityNPCInterface npc, ContainerLayer container) {
-        super(npc, container);
+    public GuiCreationLayers(EntityNPCInterface npc) {
+        super(npc);
         closeOnEsc = true;
         active = 6;
         xOffset = 60;
@@ -118,10 +118,6 @@ public class GuiCreationLayers<T extends EntityLivingBase>  extends GuiCreationS
                 .setSelectedList(new HashSet<>(Arrays.asList(playerdata.getDisableLayers())))
                 .setHoverTexts(hts)
                 .setSuffixes(suffixes));
-        for (Slot slot : inventorySlots.inventorySlots) {
-            slot.xPos = -5000;
-            slot.yPos = -5000;
-        }
     }
 
     @Override

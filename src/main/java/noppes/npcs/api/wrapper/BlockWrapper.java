@@ -296,7 +296,7 @@ public class BlockWrapper implements IBlock {
 	}
 
 	@Override
-	public boolean isEmpty() { return getMCBlock() == Blocks.AIR; }
+	public boolean isEmpty() { return state == null ? getMCBlock() == Blocks.AIR : state.getBlock() == Blocks.AIR; }
 
 	public TileNpcEntity getStorage() { return storage; }
 
@@ -320,6 +320,17 @@ public class BlockWrapper implements IBlock {
 		if (world.getMCWorld() != worldIn) { return true; }
 		if (pos != null && !iPos.blockPos.equals(pos)) { return true; }
 		return !worldIn.getBlockState(iPos.blockPos).equals(state);
+	}
+
+	public NBTTagCompound save() {
+		NBTTagCompound compound = new NBTTagCompound();
+		IBlockState stateIn = state != null ? state : getMCBlockState();
+		if (stateIn.getBlock().getRegistryName() != null) {
+			compound.setString("Block", stateIn.getBlock().getRegistryName().toString());
+			compound.setInteger("Meta", stateIn.getBlock().getMetaFromState(state));
+		}
+		compound.setLong("BlockPos", iPos.blockPos.toLong());
+		return compound;
 	}
 
 }

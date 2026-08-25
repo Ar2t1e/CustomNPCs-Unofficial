@@ -36,7 +36,6 @@ import noppes.npcs.containers.*;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.controllers.RecipeController;
 import noppes.npcs.controllers.data.*;
-import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataInventory;
 import noppes.npcs.mixin.entity.player.IEntityPlayerMPMixin;
@@ -165,9 +164,6 @@ public class CommonProxy implements IGuiHandler {
 			case RemoverTool: {
 				buffer.readInt(); // npc id
 				return new ContainerBuilderSettings(player, buffer.readBlockPos());
-			}
-			case CreationParts: {
-				if (npc instanceof EntityCustomNpc) { return new ContainerLayer(player); }
 			}
 			case SetupDrop: { return new ContainerNPCDropSetup(player, buffer.readNbt()); }
 			case CustomGui: { return new ContainerCustomGui(buffer.readNbt()); }

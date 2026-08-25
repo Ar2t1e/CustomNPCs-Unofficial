@@ -23,7 +23,7 @@ public class EntityNPCGolem extends EntityNPCInterface {
 			EntityCustomNpc npc = new EntityCustomNpc(this.world);
 			npc.readFromNBT(compound);
 			ModelData data = npc.modelData;
-			data.setEntityClass(EntityNPCGolem.class);
+			data.setEntity(EntityNPCGolem.class);
 			this.world.spawnEntity(npc);
 		}
 		super.onUpdate();

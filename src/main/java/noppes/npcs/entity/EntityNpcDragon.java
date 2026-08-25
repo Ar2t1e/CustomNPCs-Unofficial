@@ -82,7 +82,7 @@ public class EntityNpcDragon extends EntityNPCInterface {
 			EntityCustomNpc npc = new EntityCustomNpc(this.world);
 			npc.readFromNBT(compound);
 			ModelData data = npc.modelData;
-			data.setEntityClass(EntityNpcDragon.class);
+			data.setEntity(EntityNpcDragon.class);
 			this.world.spawnEntity(npc);
 		}
 		super.onUpdate();

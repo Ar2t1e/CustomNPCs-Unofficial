@@ -39,7 +39,7 @@ public class BlockScriptedRenderer<T extends TileScripted> extends TileEntitySpe
 		if (overrideModel()) {
 			GlStateManager.pushMatrix();
 			GlStateManager.enableBlend();
-			GlStateManager.translate(x + 0.5, y + 0.5, z + 0.5);
+			GlStateManager.translate(x + 0.5D, y + 0.5D, z + 0.5D);
 			renderItem(new ItemStack(CustomBlocks.scripted));
 			GlStateManager.popMatrix();
 			return;
@@ -52,7 +52,7 @@ public class BlockScriptedRenderer<T extends TileScripted> extends TileEntitySpe
 			if (!itemModel.isEmpty() || !blockModel.isEmpty() || objModel != null) {
 				GlStateManager.pushMatrix();
 				GlStateManager.enableBlend();
-				GlStateManager.translate(x + 0.5, y, z + 0.5);
+				GlStateManager.translate(x, y, z);
 				// offset
 				GlStateManager.translate(layer.getOffset(0), layer.getOffset(1), layer.getOffset(2));
 				// rotate
@@ -66,10 +66,11 @@ public class BlockScriptedRenderer<T extends TileScripted> extends TileEntitySpe
 				GlStateManager.scale(layer.getScale(0), layer.getScale(1), layer.getScale(2));
 				// model
 				if (!itemModel.isEmpty()) {
-					GlStateManager.translate(0.0, 0.5, 0.0);
+					GlStateManager.translate(0.5F, 0.5F, 0.5F);
 					renderItem(itemModel.getMCItemStack());
 				}
 				else if (!blockModel.isEmpty()) {
+					GlStateManager.translate(0.0F, 0.0F, 1.0F);
 					renderBlock(tile, blockModel.getState(), partialTicks);
 				}
 				else {

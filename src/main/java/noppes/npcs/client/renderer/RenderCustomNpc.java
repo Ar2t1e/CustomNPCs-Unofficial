@@ -99,6 +99,14 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 		entity = npc.modelData.getEntity(npc);
 		if (entity != null) {
 			Render<?> render = renderManager.getEntityRenderObject(entity);
+			if (npc.modelData.simpleRender && render instanceof RenderLivingBase<?>) {
+				renderEntity = null;
+				GlStateManager.pushMatrix();
+				((RenderLivingBase<EntityLivingBase>) render).doRender(entity, d, d1, d2, f, partialTicks);
+				renderName(npc, d, d1, d2);
+				GlStateManager.popMatrix();
+				return;
+			}
 			if (render instanceof RenderLivingBase) {
 				renderEntity = (RenderLivingBase<EntityLivingBase>) render;
 			} else {

@@ -345,7 +345,7 @@ public class TileScripted extends TileNpcEntity implements ITickable, IScriptBlo
 			}
 			tickCount = 0;
 		}
-		if (needsClientUpdate) {
+		if (needsClientUpdate && !world.isRemote) {
 			markDirty();
 			IBlockState state = world.getBlockState(pos);
 			world.notifyBlockUpdate(pos, state, state, 3);

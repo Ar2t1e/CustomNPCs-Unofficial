@@ -118,6 +118,8 @@ import noppes.npcs.schematics.SchematicWrapper;
 import noppes.npcs.util.BuilderData;
 import noppes.npcs.util.CustomNPCsScheduler;
 
+import javax.annotation.Nonnull;
+
 public class ClientEventHandler extends Gui {
 
 	protected static final ResourceLocation[] BORDER = new ResourceLocation[16];
@@ -897,9 +899,7 @@ public class ClientEventHandler extends Gui {
 		return new BlockPos(x, y, z);
 	}
 
-	private void renderEntityForBook(Entity entityIn) {
-		if (!(entityIn instanceof EntityLivingBase)) { return; }
-		EntityLivingBase entity = (EntityLivingBase) entityIn;
+	private void renderEntityForBook(@Nonnull EntityLivingBase entity) {
 		EntityNPCInterface npc = null;
 		int visible = 0;
 		int showName = 0;
@@ -2781,11 +2781,11 @@ public class ClientEventHandler extends Gui {
 
 			// Render entity preview
 			GlStateManager.pushMatrix();
-			if (entity != null) {
+			if (entity instanceof EntityLivingBase) {
 				GlStateManager.pushMatrix();
 				GlStateManager.translate(8.0d + playerData.overlay.getWindowSize().getWidth() / 2.0d,
 						playerData.overlay.getWindowSize().getHeight() - 45.0d - 3.5d * lH, -200.0d);
-				renderEntityForBook(entity);
+				renderEntityForBook((EntityLivingBase) entity);
 				GlStateManager.popMatrix();
 			} else if (state != null) {
 				st = new ItemStack(Item.getItemFromBlock(state.getBlock()), 1, state.getBlock().damageDropped(state));

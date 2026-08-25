@@ -25,7 +25,7 @@ public class EntityNPCEnderman extends EntityNpcEnderchibi {
 			EntityCustomNpc npc = new EntityCustomNpc(this.world);
 			npc.readFromNBT(compound);
 			ModelData data = npc.modelData;
-			data.setEntityClass(EntityEnderman.class);
+			data.setEntity(EntityEnderman.class);
 			this.world.spawnEntity(npc);
 		}
 		super.onUpdate();

@@ -7,7 +7,6 @@ import net.minecraft.client.renderer.entity.NPCRendererHelper;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.inventory.Slot;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagCompound;
@@ -15,7 +14,6 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.controllers.PixelmonHelper;
 import noppes.npcs.entity.EntityFakeLiving;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -23,7 +21,9 @@ import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
 
 import javax.annotation.Nonnull;
 
-public class GuiCreationExtra extends GuiCreationScreenInterface<ContainerLayer> implements ICustomScrollListener {
+public class GuiCreationExtra
+		extends GuiCreationScreenInterface
+		implements ICustomScrollListener {
 
 	public abstract static class GuiType {
 
@@ -158,8 +158,8 @@ public class GuiCreationExtra extends GuiCreationScreenInterface<ContainerLayer>
 
 	private GuiType selected;
 
-	public GuiCreationExtra(EntityNPCInterface npc, ContainerLayer container) {
-		super(npc, container);
+	public GuiCreationExtra(EntityNPCInterface npc) {
+		super(npc);
 		ignoredTags = new String[] { "CanBreakDoors", "Bred", "PlayerCreated", "HasReproduced" };
 		booleanTags = new String[0];
 		data = new HashMap<>();
@@ -208,7 +208,7 @@ public class GuiCreationExtra extends GuiCreationScreenInterface<ContainerLayer>
 	public void initGui() {
 		super.initGui();
 		if (entity == null) {
-			openGui(new GuiCreationParts(npc, (ContainerLayer) inventorySlots));
+			openGui(new GuiCreationParts(npc));
 			return;
 		}
 		if (scroll == null) {
@@ -221,13 +221,9 @@ public class GuiCreationExtra extends GuiCreationScreenInterface<ContainerLayer>
 		}
 		if (scroll.hasSelected()) { scroll.setHoverTexts("display.hover.part." + scroll.getList().get(scroll.getSelectedIndex()).toLowerCase()); }
 		add(scroll.setPos(guiLeft, guiTop + 46)
-				.setSize(100, ySize - 74));
+				.setSize(100, imageHeight - 74));
 		selected = data.get(scroll.getSelected());
 		if (selected != null) { selected.initGui(); }
-		for (Slot slot : inventorySlots.inventorySlots) {
-			slot.xPos = -5000;
-			slot.yPos = -5000;
-		}
 	}
 
 	private boolean isIgnored(String tag) {

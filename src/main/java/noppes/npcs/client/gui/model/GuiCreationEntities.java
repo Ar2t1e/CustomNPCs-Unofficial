@@ -1,114 +1,124 @@
 package noppes.npcs.client.gui.model;
 
-import java.lang.reflect.Modifier;
 import java.util.*;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.NPCRendererHelper;
+import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.inventory.Slot;
+import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.entity.EntityCustomNpc;
+import noppes.npcs.entity.old.*;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.components.GuiButtonYesNo;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
-import noppes.npcs.shared.common.util.ComponentOrderComparator;
-import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.shared.client.gui.listeners.ICustomScrollListener;
-import noppes.npcs.containers.ContainerLayer;
-import noppes.npcs.entity.EntityNPC64x32;
 import noppes.npcs.entity.EntityNPCInterface;
-import noppes.npcs.entity.EntityNpcAlex;
-import noppes.npcs.entity.EntityNpcClassicPlayer;
 
-import javax.annotation.Nonnull;
-
-public class GuiCreationEntities extends GuiCreationScreenInterface<ContainerLayer>
+public class GuiCreationEntities extends GuiCreationScreenInterface
 		implements ICustomScrollListener {
 
-	public final HashMap<Component, Class<? extends EntityLivingBase>> data = new HashMap<>();
-	protected final List<Component> list;
+	protected final List<EntityEntry> types;
 	protected GuiCustomScrollNop scroll;
 	protected boolean resetToSelected = true;
 
-	public GuiCreationEntities(EntityNPCInterface npc, ContainerLayer container) {
-		super(npc, container);
-		for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
-			Component name = Component.literal(ent.getName());
-			Class<? extends Entity> c = ent.getEntityClass();
-			try {
-				if (!EntityLiving.class.isAssignableFrom(c) || Modifier.isAbstract(c.getModifiers()) || !(Minecraft.getMinecraft().getRenderManager()
-                        .getEntityClassRenderObject(c) instanceof RenderLivingBase)) {
-					continue;
-				}
-                if (name.getFormattedText().toLowerCase().contains("customnpc")) { continue; }
-				data.put(name, c.asSubclass(EntityLivingBase.class));
-			} catch (Exception e) { LogWriter.error(e); }
-		}
-		data.put(Component.literal("NPC 64x32"), EntityNPC64x32.class);
-		data.put(Component.literal("NPC Alex Arms"), EntityNpcAlex.class);
-		data.put(Component.literal("NPC Classic Player"), EntityNpcClassicPlayer.class);
-		(list = new ArrayList<>(data.keySet())).add(Component.literal("NPC"));
-		list.sort(new ComponentOrderComparator());
+	public GuiCreationEntities(EntityNPCInterface npc) {
+		super(npc);
+		types = getAllEntities();
+		types.sort(Comparator.comparing((t) -> {
+			if (t.getRegistryName() != null) { return t.getRegistryName().toString(); }
+			return t.getName().toLowerCase();
+		}));
 		active = 1;
 		xOffset = 60;
 	}
 
 	@Override
-	public void buttonEvent(@Nonnull GuiButtonNop button) {
-		if (button.id == 10) {
-			playerdata.setEntityClass(null);
-			resetToSelected = true;
-			npc.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/humanmale/steve.png");
-			npc.reset();
-			npc.display.width = npc.baseWidth;
-			npc.display.height = npc.baseHeight;
-			initGui();
-		}
-		super.buttonEvent(button);
-	}
-
-	@Override
 	public void initGui() {
 		super.initGui();
-		if (scroll == null) { scroll = addScroll(0).setUnsortedList(list); }
-		scroll.setSize(121, ySize - 74);
-		Component selected =  Component.literal("NPC");
-		if (entity != null) {
-			for (Map.Entry<Component, Class<? extends EntityLivingBase>> en : data.entrySet()) {
-				if (en.getValue().toString().equals(entity.getClass().toString())) { selected = en.getKey(); }
+		add(new GuiButtonNop(this, 10, "Reset To NPC", guiLeft, guiTop + 46,
+				button -> {
+					playerdata.setEntity(null);
+					npc.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/humanmale/steve.png");
+					resetToSelected = true;
+					npc.reset();
+					npc.display.width = npc.baseWidth;
+					npc.display.height = npc.baseHeight;
+					initGui();
+				}).setSize(120, 20));
+		if (scroll == null) {
+			List<Component> list = new ArrayList<>();
+			LinkedHashMap<Integer, List<Component>> hts = new LinkedHashMap<>();
+			for (EntityEntry entry : types) {
+				ResourceLocation loc = entry.getRegistryName();
+				if (loc == null) { continue; }
+				Component name;
+				Component hover;
+				if (loc.getResourceDomain().equals(CustomNpcs.MODID)) {
+					name = Component.translatable("entity.customnpcs." + entry.getName());
+					hover = Component.translatable("entity.hover.customnpcs." + entry.getName());
+				}
+				else if (loc.getResourceDomain().equals("minecraft")) {
+					name = Component.translatable("entity." + entry.getName() + ".name");
+					hover = Component.translatable("entity.hover.minecraft");
+				}
+				else {
+					name = Component.translatable("entity." + entry.getName() + ".name");
+					hover = Component.translatable("entity.hover.in.mod", loc.getResourceDomain());
+				}
+				list.add(name);
+				hts.put(hts.size(), Collections.singletonList(hover));
+			}
+			scroll = addScroll(0)
+					.setUnsortedList(list)
+					.setHoverTexts(hts);
+		}
+
+		int index = -1;
+		for(int i = 0; i < types.size(); ++i) {
+			EntityEntry entry = types.get(i);
+			if ((entity == null && entry.getEntityClass() == EntityCustomNpc.class) || (entity != null && entry.getEntityClass() == entity.getClass())) {
+				index = i;
+				break;
 			}
 		}
-		addButton(10, guiLeft, guiTop + 23, "Reset To NPC")
-				.setSize(120, 20)
-				.setIsVisible(!selected.getString().equals("NPC"));
-		scroll.setSelected(selected);
+		if (index >= 0) { scroll.setSelected(index); }
+		else { scroll.setSelected("entity." + CustomNpcs.MODID + ".customnpc"); }
+
 		if (resetToSelected) {
 			scroll.scrollTo(scroll.getSelected());
 			resetToSelected = false;
 		}
-		add(scroll.setPos(guiLeft, guiTop + 46));
-		for (Slot slot : inventorySlots.inventorySlots) {
-			slot.xPos = -5000;
-			slot.yPos = -5000;
-		}
+		add(scroll.setPos(guiLeft, guiTop + 68)
+				.setSize(120, imageHeight - 96));
+		addLabel(110, guiLeft + 124, guiTop + 5, "gui.simpleRenderer")
+				.setColor(CustomNpcs.MainColor.getRGB());
+		add(new GuiButtonYesNo(this, 110, guiLeft + 260, guiTop, playerdata.simpleRender,
+				(b) -> playerdata.simpleRender = ((GuiButtonYesNo)b).getBoolean()));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
-		playerdata.setEntityClass(data.get(scroll.getNormalSelected()));
+		if (!scroll.hasSelected()) { playerdata.setEntity(null); }
+		else { playerdata.setEntity((Class<? extends EntityLivingBase>) types.get(scroll.getSelectedIndex()).getEntityClass()); }
+
 		EntityLivingBase entity = playerdata.getEntity(npc);
 		if (entity != null) {
-			@SuppressWarnings("rawtypes")
-			RenderLivingBase render = (RenderLivingBase) mc.getRenderManager().getEntityClassRenderObject(entity.getClass());
-			if (!NPCRendererHelper.getTexture(render, entity).equals(TextureMap.LOCATION_MISSING_TEXTURE.toString())) {
-				npc.display.setSkinTexture(NPCRendererHelper.getTexture(render, entity));
+			Render<Entity> mcRender = mc.getRenderManager().getEntityClassRenderObject(entity.getClass());
+			if (mcRender instanceof RenderLivingBase<?>) {
+				@SuppressWarnings("rawtypes")
+				RenderLivingBase<EntityLivingBase> render = (RenderLivingBase) mcRender;
+				if (!NPCRendererHelper.getTexture(render, entity).equals(TextureMap.LOCATION_MISSING_TEXTURE.toString())) {
+					npc.display.setSkinTexture(NPCRendererHelper.getTexture(render, entity));
+				}
 			}
 		}
 		else { npc.display.setSkinTexture(CustomNpcs.MODID + ":textures/entity/humanmale/steve.png"); }
@@ -120,5 +130,39 @@ public class GuiCreationEntities extends GuiCreationScreenInterface<ContainerLay
 
 	@Override
 	public void scrollDoubleClicked(GuiCustomScrollNop scroll) { }
+
+	private static List<EntityEntry> getAllEntities() {
+		List<EntityEntry> data = new ArrayList<>();
+        for (EntityEntry ent : ForgeRegistries.ENTITIES.getValuesCollection()) {
+			try {
+				Class<? extends Entity> cl = ent.getEntityClass();
+				if (EntityLivingBase.class.isAssignableFrom(cl) &&
+						!EntityDragon.class.isAssignableFrom(cl)) {
+					// old entities
+					if (EntityNPCHumanMale.class.isAssignableFrom(cl) ||
+							EntityNPCVillager.class.isAssignableFrom(cl) ||
+							EntityNPCHumanFemale.class.isAssignableFrom(cl) ||
+							EntityNPCDwarfMale.class.isAssignableFrom(cl) ||
+							EntityNPCFurryMale.class.isAssignableFrom(cl) ||
+							EntityNpcMonsterMale.class.isAssignableFrom(cl) ||
+							EntityNpcMonsterFemale.class.isAssignableFrom(cl) ||
+							EntityNpcSkeleton.class.isAssignableFrom(cl) ||
+							EntityNPCDwarfFemale.class.isAssignableFrom(cl) ||
+							EntityNPCFurryFemale.class.isAssignableFrom(cl) ||
+							EntityNPCOrcMale.class.isAssignableFrom(cl) ||
+							EntityNPCOrcFemale.class.isAssignableFrom(cl) ||
+							EntityNPCElfMale.class.isAssignableFrom(cl) ||
+							EntityNPCElfFemale.class.isAssignableFrom(cl) ||
+							EntityNpcEnderchibi.class.isAssignableFrom(cl) ||
+							EntityNpcNagaMale.class.isAssignableFrom(cl) ||
+							EntityNpcNagaFemale.class.isAssignableFrom(cl) ||
+							EntityNPCEnderman.class.isAssignableFrom(cl)
+					) { continue; }
+					data.add(ent);
+				}
+			} catch (Exception ignored) {}
+		}
+		return data;
+    }
 	
 }

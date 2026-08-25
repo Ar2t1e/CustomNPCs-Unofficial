@@ -33,9 +33,8 @@ public class ItemScriptedDoor extends ItemDoor {
 	public @Nonnull EnumActionResult onItemUse(@Nonnull EntityPlayer playerIn, @Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing side, float hitX, float hitY, float hitZ) {
 		EnumActionResult res = super.onItemUse(playerIn, worldIn, pos, hand, side, hitX, hitY, hitZ);
 		if (res == EnumActionResult.SUCCESS && !worldIn.isRemote) {
-			PlayerData data = PlayerData.get(playerIn);
-			data.scriptBlockPos = pos;
-			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) playerIn, EnumGuiType.ScriptDoor, null, data.scriptBlockPos.up());
+			PlayerData.get(playerIn).scriptBlockPos = pos;
+			SPacketGuiOpen.sendOpenGui((EntityPlayerMP) playerIn, EnumGuiType.ScriptDoor, null, pos.up());
 			return EnumActionResult.SUCCESS;
 		}
 		return res;

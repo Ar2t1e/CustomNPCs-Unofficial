@@ -3,12 +3,10 @@ package noppes.npcs.client.gui.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.inventory.Slot;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.model.part.ModelPartConfig;
 import noppes.npcs.constants.EnumParts;
-import noppes.npcs.containers.ContainerLayer;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
@@ -18,15 +16,15 @@ import noppes.npcs.shared.client.gui.listeners.ISliderListener;
 
 import javax.annotation.Nonnull;
 
-public class GuiCreationScale extends GuiCreationScreenInterface<ContainerLayer>
+public class GuiCreationScale extends GuiCreationScreenInterface
 		implements ISliderListener, ICustomScrollListener {
 
 	protected static EnumParts selected = EnumParts.HEAD;
 	protected final List<EnumParts> data = new ArrayList<>();
 	protected GuiCustomScrollNop scroll;
 
-	public GuiCreationScale(EntityNPCInterface npc, ContainerLayer container) {
-		super(npc, container);
+	public GuiCreationScale(EntityNPCInterface npc) {
+		super(npc);
 		active = 3;
 		xOffset = 140;
 	}
@@ -64,7 +62,7 @@ public class GuiCreationScale extends GuiCreationScreenInterface<ContainerLayer>
 		add(scroll.setPos(guiLeft, guiTop + 46)
 				.setUnsortedList(list)
 				.setSelected(Component.translatable("part." + GuiCreationScale.selected.name))
-				.setSize(100, ySize - 74));
+				.setSize(100, imageHeight - 74));
 		ModelPartConfig config2 = playerdata.getPartConfig(GuiCreationScale.selected);
 		int y = guiTop + 65;
 		addLabel(10, guiLeft + 102, y + 5, "scale.width")
@@ -88,10 +86,6 @@ public class GuiCreationScale extends GuiCreationScreenInterface<ContainerLayer>
 			addYesNo(13, guiLeft + 150, y, config2.notShared)
 					.setSize(50, 20)
 					.setHoverTexts("display.hover.part.pattern");
-		}
-		for (Slot slot : inventorySlots.inventorySlots) {
-			slot.xPos = -5000;
-			slot.yPos = -5000;
 		}
 	}
 
