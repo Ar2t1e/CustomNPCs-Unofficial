@@ -5,7 +5,6 @@ import net.minecraft.util.math.MathHelper;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.data.role.IJobPuppet;
-import noppes.npcs.constants.EnumAnimationType;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.ValueUtil;
 
@@ -156,7 +155,9 @@ public class JobPuppet extends JobInterface implements IJobPuppet {
     }
 
     public boolean isActive() {
-        return npc.isEntityAlive() && ((whileAttacking && npc.isAttacking()) || (whileMoving && npc.isWalking()) || (whileStanding && !npc.isWalking()));
+        return npc.advanced.animationType == 1 &&
+                npc.isEntityAlive() &&
+                ((whileAttacking && npc.isAttacking()) || (whileMoving && npc.isWalking()) || (whileStanding && !npc.isWalking()));
     }
 
     @Override
@@ -173,7 +174,7 @@ public class JobPuppet extends JobInterface implements IJobPuppet {
 
     @Override
     public void setIsAnimated(boolean bo) {
-        if (npc.advanced.animationType == EnumAnimationType.PUPPET) {
+        if (npc.advanced.animationType == 1) {
             if (!(animate = bo)) {
                 val = 0.0f;
                 valNext = 0.0f;

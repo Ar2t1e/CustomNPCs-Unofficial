@@ -3,7 +3,6 @@ package noppes.npcs.entity.data;
 import java.util.HashSet;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.SoundCategory;
@@ -11,16 +10,10 @@ import noppes.npcs.NBTTags;
 import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.entity.data.INPCAdvanced;
-import noppes.npcs.api.handler.data.IFaction;
 import noppes.npcs.client.controllers.MusicController;
-import noppes.npcs.constants.EnumAnimationType;
-import noppes.npcs.controllers.FactionController;
-import noppes.npcs.controllers.data.Faction;
 import noppes.npcs.controllers.data.FactionOptions;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.Lines;
-import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.controllers.data.PlayerFactionData;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketPlaySound;
@@ -49,7 +42,7 @@ public class DataAdvanced implements INPCAdvanced {
 	public DataScenes scenes;
 
 	// New from Unofficial (BetaZavr)
-	public EnumAnimationType animationType = EnumAnimationType.NONE;
+	public int animationType = 0;
 	public HashSet<Integer> attackFactions = new HashSet<>();
 	public HashSet<Integer> friendFactions = new HashSet<>();
 	public EntityNPCInterface spawner;
@@ -122,7 +115,7 @@ public class DataAdvanced implements INPCAdvanced {
 		compound.setTag("NpcScenes", scenes.save(new NBTTagCompound()));
 		compound.setIntArray("NPCDialogOptions", npc.dialogs);
 		// New from Unofficial (BetaZavr)
-		compound.setInteger("AnimationType", animationType.ordinal());
+		compound.setInteger("AnimationType", animationType);
 		compound.setBoolean("ThroughWalls", throughWalls);
 		compound.setTag("AttackFactions", NBTTags.nbtIntegerCollection(attackFactions));
 		compound.setTag("FrendFactions", NBTTags.nbtIntegerCollection(friendFactions));
@@ -226,42 +219,9 @@ public class DataAdvanced implements INPCAdvanced {
 		return sound;
 	}
 
-	public Line getWorldLine() {
-		return worldLines.getLine(!orderedLines);
-	}
+	public Line getWorldLine() { return worldLines.getLine(!orderedLines); }
 
-	public boolean hasWorldLines() {
-		return !worldLines.isEmpty();
-	}
-
-	private boolean isAggressive(PlayerFactionData data, EntityPlayer player, Faction faction) {
-		return data.getFactionPoints(player, faction.id) < faction.neutralPoints;
-	}
-
-	public boolean isAggressiveToNpc(EntityNPCInterface entity) {
-        return attackOtherFactions && (npc.faction.isAggressiveToNpc(entity) || attackFactions.contains(entity.faction.id));
-    }
-
-	public boolean isAggressiveToPlayer(EntityPlayer player) {
-		if (player.capabilities.isCreativeMode) {
-			return false;
-		}
-		PlayerFactionData data = PlayerData.get(player).factionData;
-		if (isAggressive(data, player, npc.faction)) {
-			return true;
-		}
-		FactionController fData = FactionController.instance;
-		for (int id : attackFactions) {
-			IFaction faction = fData.get(id);
-			if (faction == null) {
-				continue;
-			}
-			if (isAggressive(data, player, (Faction) faction)) {
-				return true;
-			}
-		}
-		return false;
-	}
+	public boolean hasWorldLines() { return !worldLines.isEmpty(); }
 
 	public void playSound(int type, float volume, float pitch) {
 		String sound = getSound(type);
@@ -335,11 +295,11 @@ public class DataAdvanced implements INPCAdvanced {
 	}
 
 	@Override
-	public int getAnimationType() { return animationType.ordinal(); }
+	public int getAnimationType() { return animationType; }
 
 	@Override
 	public void setAnimationType(int type) {
-		animationType = EnumAnimationType.values()[ValueUtil.onlyPositiveInt(type, EnumAnimationType.values().length - 1)];
+		animationType = ValueUtil.onlyPositiveInt(type, 100);
 		npc.updateClient = true;
 	}
 

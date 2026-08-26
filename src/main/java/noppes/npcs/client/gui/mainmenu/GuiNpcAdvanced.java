@@ -18,7 +18,6 @@ import noppes.npcs.client.gui.animation.GuiNpcAnimation;
 import noppes.npcs.client.gui.animation.GuiNpcEmotion;
 import noppes.npcs.client.gui.roles.*;
 import noppes.npcs.client.gui.util.*;
-import noppes.npcs.constants.EnumAnimationType;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumMenuType;
 import noppes.npcs.entity.EntityCustomNpc;
@@ -33,7 +32,13 @@ import noppes.npcs.shared.client.gui.listeners.IGuiData;
 public class GuiNpcAdvanced extends GuiNPCInterface2 implements IGuiData {
 
 	protected boolean hasChanges = false;
+
 	// New from Unofficial (BetaZavr)
+	protected Object[] animationTypes = new Component[] {
+			Component.translatable("animation.type.none"),
+			Component.translatable("animation.type.puppet"),
+			Component.translatable("animation.type.custom")
+	};
 	protected final DataAI ais;
 
 	public GuiNpcAdvanced(EntityNPCInterface npc) {
@@ -81,18 +86,25 @@ public class GuiNpcAdvanced extends GuiNPCInterface2 implements IGuiData {
 		// New from Unofficial (BetaZavr): line 3
 		addLabel(lId++, x, (y += 22) + 5, "movement.animation");
 		boolean bo;
-		switch (npc.advanced.animationType) {
-			case CUSTOM: bo = npc instanceof EntityCustomNpc && ((EntityCustomNpc) npc).modelData.entity == null; break;
-			case PUPPET: bo = true; break;
-			default: bo = false; break;
-		}
 		Component hoverAnim;
 		switch (npc.advanced.animationType) {
-			case CUSTOM: hoverAnim = Component.translatable("advanced.menu.hover.anim.custom"); break;
-			case PUPPET: hoverAnim = Component.translatable("advanced.menu.hover.anim.puppet"); break;
-			default: hoverAnim = Component.translatable("advanced.menu.hover.anim.none"); break;
+			case 1: {
+				hoverAnim = Component.translatable("advanced.menu.hover.anim.puppet");
+				bo = true;
+				break;
+			}
+			case 2: {
+				bo = npc instanceof EntityCustomNpc && ((EntityCustomNpc) npc).modelData.entity == null;
+				hoverAnim = Component.translatable("advanced.menu.hover.anim.custom");
+				break;
+			}
+			default: {
+				bo = false;
+				hoverAnim = Component.translatable("advanced.menu.hover.anim.none");
+				break;
+			}
 		}
-		addButton(2, x + 70, y, true, npc.advanced.animationType.ordinal(), EnumAnimationType.getNames())
+		addButton(2, x + 70, y, true, npc.advanced.animationType, animationTypes)
 				.setSize(155, 20)
 				.setIsEnabled(!ais.aiDisabled)
 				.setHoverTexts(hoverAnim);
@@ -142,8 +154,8 @@ public class GuiNpcAdvanced extends GuiNPCInterface2 implements IGuiData {
 		switch (button.id) {
 			case 1: {
 				switch (npc.advanced.animationType) {
-					case PUPPET: NoppesUtil.openGUI(player, new GuiNpcPuppet(this, (EntityCustomNpc) npc)); break;
-					case CUSTOM: NoppesUtil.openGUI(player, new GuiNpcAnimation((EntityCustomNpc) npc)); break;
+					case 1: NoppesUtil.openGUI(player, new GuiNpcPuppet(this, (EntityCustomNpc) npc)); break;
+					case 2: NoppesUtil.openGUI(player, new GuiNpcAnimation((EntityCustomNpc) npc)); break;
 				}
 				break;
 			} // edit animation

@@ -60,21 +60,22 @@ public class GuiCreationEntities extends GuiCreationScreenInterface
 				ResourceLocation loc = entry.getRegistryName();
 				if (loc == null) { continue; }
 				Component name;
-				Component hover;
+				List<Component> hover = new ArrayList<>();
 				if (loc.getResourceDomain().equals(CustomNpcs.MODID)) {
 					name = Component.translatable("entity.customnpcs." + entry.getName());
-					hover = Component.translatable("entity.hover.customnpcs." + entry.getName());
+					hover.add(Component.translatable("entity.hover.customnpcs." + entry.getName()));
 				}
 				else if (loc.getResourceDomain().equals("minecraft")) {
 					name = Component.translatable("entity." + entry.getName() + ".name");
-					hover = Component.translatable("entity.hover.minecraft");
+					hover.add(Component.translatable("entity.hover.minecraft"));
 				}
 				else {
 					name = Component.translatable("entity." + entry.getName() + ".name");
-					hover = Component.translatable("entity.hover.in.mod", loc.getResourceDomain());
+					hover.add(Component.translatable("entity.hover.in.mod"));
+					hover.add(Component.literal(loc.getResourceDomain()));
 				}
 				list.add(name);
-				hts.put(hts.size(), Collections.singletonList(hover));
+				hts.put(hts.size(), hover);
 			}
 			scroll = addScroll(0)
 					.setUnsortedList(list)
