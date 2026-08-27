@@ -45,23 +45,23 @@ public class DataDisplay implements INPCDisplay {
 	public GameProfile playerProfile;
 	public byte skinType = (byte) 0;
 
-	private final Availability availability = new Availability();
-	private BossInfo.Color bossColor = BossInfo.Color.PINK;
-	private boolean disableLivingAnimation = false;
-	private boolean isNormalModel = false;
-	private byte hitboxState = 0;
-	private byte showBossBar = 0;
-	private int markovGender = 0;
-	private int markovGeneratorId = new Random().nextInt(CustomNpcs.MARKOV_GENERATOR.length - 1);
-	private int showName = 0;
-	private int skinColor = 0xFFFFFF;
-	private int visible = 0;
-	private String cloakTexture = "";
-	private String title = "";
-	private String url = "";
-	private String glowTexture = "";
-	private String name;
-	private String texture = CustomNpcs.MODID + ":textures/entity/humanmale/steve.png";
+	protected final Availability availability = new Availability();
+	protected BossInfo.Color bossColor = BossInfo.Color.PINK;
+	protected boolean disableLivingAnimation = false;
+	protected boolean isNormalModel = false;
+	protected byte hitboxState = 0;
+	protected byte showBossBar = 0;
+	protected int markovGender = 0;
+	protected int markovGeneratorId = new Random().nextInt(CustomNpcs.MARKOV_GENERATOR.length - 1);
+	protected int showName = 0;
+	protected int skinColor = 0xFFFFFF;
+	protected int visible = 0;
+	protected String cloakTexture = "";
+	protected String title = "";
+	protected String url = "";
+	protected String glowTexture = "";
+	protected String name;
+	protected String texture = CustomNpcs.MODID + ":textures/entity/humanmale/steve.png";
 	public float shadowSize = 1.0f;
 	public float width = 0.6f;
 	public float height = 1.9f;
@@ -69,7 +69,7 @@ public class DataDisplay implements INPCDisplay {
 	// New from Unofficial (GoodBird)
 	protected boolean overlayGlowing = true;
 	protected float modelSize = 5.0F;
-	private int[] lineColors = new int[]{ 0xFF8D3800, 0xFFFEA53B, 0xFFAE5301 };
+	protected int[] lineColors = new int[]{ 0xFF8D3800, 0xFFFEA53B, 0xFFAE5301 };
 
 	public DataDisplay(EntityNPCInterface npcIn) {
 		npc = npcIn;

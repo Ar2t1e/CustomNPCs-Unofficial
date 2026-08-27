@@ -34,7 +34,6 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.model.part.AnimData;
 import noppes.npcs.client.model.part.head.ModelHeadwear;
-import noppes.npcs.constants.EnumAnimationType;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityCustomNpc;
@@ -725,7 +724,7 @@ public class ModelNpcAlt extends ModelPlayer {
         }
         if (entityIn instanceof EntityNPCInterface) {
             EntityNPCInterface npc = (EntityNPCInterface) entityIn;
-            if (npc.advanced.animationType == EnumAnimationType.PUPPET && npc.puppet.isActive()) {
+            if (npc.advanced.animationType == 1 && npc.puppet.isActive()) {
                 Minecraft minecraft = Minecraft.getMinecraft();
                 float partialTicks = 0.0f;
                 if (minecraft.currentScreen == null || minecraft.currentScreen.isFocused()) { partialTicks = minecraft.getRenderPartialTicks(); }
