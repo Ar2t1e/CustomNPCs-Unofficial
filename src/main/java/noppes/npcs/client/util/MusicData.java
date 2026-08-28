@@ -49,6 +49,8 @@ public class MusicData {
 	public final SoundCategory category;
 	public long duration;
 
+	protected SoundSystem sndSystem;
+
 	public MusicData(@Nonnull ISound soundIn, String uuidIn, SoundManager manager) {
 		sound = soundIn;
 		uuid = uuidIn;
@@ -67,7 +69,7 @@ public class MusicData {
 		if (soundSystem != null) {
 			try {
 				soundSystem.setAccessible(true);
-				SoundSystem sndSystem = (SoundSystem) soundSystem.get(manager);
+				sndSystem = (SoundSystem) soundSystem.get(manager);
 				if (sndSystem != null) {
 					Library soundLibrary = ((ISoundSystemMixin) sndSystem).getSoundLibrary();
 					HashMap<String, Source> sourceMap = ((ILibraryMixin) soundLibrary).getSourceMap() ;
@@ -119,7 +121,15 @@ public class MusicData {
 		duration = durations.getOrDefault(resource, 0L);
 	}
 
-	public long getCurrentTime() { return source == null || duration > source.millisecondsPlayed() ? duration : (long) source.millisecondsPlayed(); }
+	public long getCurrentTime() {
+		if (source == null) {
+			if (sndSystem != null) {
+				Library soundLibrary = ((ISoundSystemMixin) sndSystem).getSoundLibrary();
+				HashMap<String, Source> sourceMap = ((ILibraryMixin) soundLibrary).getSourceMap();
+				if (sourceMap != null && sourceMap.containsKey(uuid)) { source = sourceMap.get(uuid); }
+			}
+		}
+		return source == null || duration < source.millisecondsPlayed() ? duration : (long) source.millisecondsPlayed(); }
 
 	/**
 	 * @param player player in game

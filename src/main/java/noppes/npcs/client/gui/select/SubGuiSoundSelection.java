@@ -20,6 +20,8 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiLabel;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
+import noppes.npcs.shared.common.util.LogWriter;
+import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
@@ -59,7 +61,7 @@ public class SubGuiSoundSelection extends ResourceSelection {
 	public void initGui() {
 		super.initGui();
 		if (scroll == null) { scroll = addScroll(0); }
-		scroll.setSize(scrollWidth, 180);
+		scroll.setSize(scrollWidth, 168);
 		int h = guiTop + imageHeight - 25;
 		List<Object> options = new ArrayList<>();
 		options.add("spawner.random");
@@ -116,10 +118,11 @@ public class SubGuiSoundSelection extends ResourceSelection {
 				delay = 0L;
 				wait = System.currentTimeMillis();
 				ResourceLocation played = resource;
-				ISound playing = null;
+				ISound playing;
 				List<Sound> sounds = getSounds(event);
 				if (sounds.isEmpty()) {
-					MusicController.Instance.playSound(SoundCategory.MASTER, played.toString(), player.posX, player.posY, player.posZ, 1.0F, 1.0F);
+                    playing = null;
+                    MusicController.Instance.playSound(SoundCategory.MASTER, played.toString(), player.posX, player.posY, player.posZ, 1.0F, 1.0F);
 				}
 				else {
 					int i = (int) (Math.random() * (double) sounds.size());
@@ -144,18 +147,25 @@ public class SubGuiSoundSelection extends ResourceSelection {
 				}
 				name.setMessage(Component.literal(played.getResourcePath()));
 				time.setMessage(Component.empty());
-				for (MusicData md : new ArrayList<>(ClientTickHandler.musics)) {
-					if (md != null && (md.sound == playing || md.resource.equals(played))) {
-						musicData = md;
-						name.setMessage(Component.literal(musicData.name)
-								.append(Component.literal(" / ").withStyle(TextFormatting.GRAY))
-								.append(Component.literal(musicData.resource.getResourcePath().replaceAll("/", ".")).withStyle(TextFormatting.GRAY)));
-						break;
+				CustomNPCsScheduler.runTack(() -> {
+					long n = System.currentTimeMillis() + 2500L;
+					while (n >= System.currentTimeMillis()) {
+						for (MusicData md : ClientTickHandler.musics) {
+							if (md != null && (md.sound == playing || md.resource.equals(played))) {
+								musicData = md;
+								name.setMessage(Component.literal(musicData.name)
+										.append(Component.literal(" / ").withStyle(TextFormatting.GRAY))
+										.append(Component.literal(musicData.resource.getResourcePath().replaceAll("/", ".")).withStyle(TextFormatting.GRAY)));
+								error = null;
+								LogWriter.info("Sound found and is played: "+md.name+"; option: "+md.resource);
+								return;
+							}
+						}
 					}
-				}
-				if (musicData == null) {
-					error = Component.literal(played.getResourcePath()).append(" -").append(Component.translatable("quest.task.location.1"));
-				}
+					error = Component.literal(resource.getResourcePath())
+							.append(" - ")
+							.append(Component.translatable("quest.task.location.1"));
+				}, 100);
 				break;
 			} // play
 			case 4: if (resource != null) { NoppesStringUtils.setClipboardContents(resource.toString()); } break; // copy
@@ -177,15 +187,16 @@ public class SubGuiSoundSelection extends ResourceSelection {
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		super.drawScreen(mouseX, mouseY, partialTicks);
+		int left = guiLeft + 5;
+		int right = guiLeft + imageWidth - 5;
+		int top = guiTop + imageHeight - 37;
+		int bottom = guiTop + imageHeight - 27;
+		drawRect(left, top, right, bottom, 0xFF808080);
 		if (isPlay) {
 			int alpha = 0x80;
 			if (delay > 0L) {
 				alpha = Math.min(128, Math.max(0, (int) ((double) (delay - System.currentTimeMillis()) * 0.064d)));
 			}
-			int left = guiLeft + 5;
-			int right = guiLeft + imageWidth - 5;
-			int top = guiTop + imageHeight - 37;
-			int bottom = guiTop + imageHeight - 27;
 			drawRect(left, top, right, bottom, alpha << 24);
 			if (error != null) {
 				if (delay == 0L) { delay = System.currentTimeMillis() + 4000L; }

@@ -83,7 +83,7 @@ import javax.annotation.Nullable;
 
 @Mod(modid = CustomNpcs.MODID,
 		name = CustomNpcs.MODNAME,
-		version = "4.433",
+		version = CustomNpcs.VERSION,
 		acceptedMinecraftVersions = "1.12, 1.12.1, 1.12.2",
 		guiFactory = "noppes.npcs.config.CustomNpcsGuiFactory")
 public class CustomNpcs {
@@ -294,6 +294,7 @@ public class CustomNpcs {
 	public static CommonProxy proxy;
 	public static final String MODID = "customnpcs";
 	public static final String MODNAME = "CustomNpcs";
+	public static final String VERSION = "5.433";
 	public static CustomNpcs instance;
 	public static CommandNoppes NoppesCommand = new CommandNoppes();
 	public static MarkovGenerator[] MARKOV_GENERATOR = new MarkovGenerator[10];

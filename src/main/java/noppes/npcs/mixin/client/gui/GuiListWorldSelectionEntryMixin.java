@@ -15,7 +15,6 @@ import noppes.npcs.controllers.ScriptController;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -73,19 +72,17 @@ public class GuiListWorldSelectionEntryMixin {
      */
     @Inject(method = "deleteWorld", at = @At("TAIL"))
     private void npcs$deleteWorld(CallbackInfo ci) {
-        ScriptController.Instance.checkAgreements(npcs$getCheckList());
-    }
-
-    @Unique
-    private static List<String> npcs$getCheckList() {
         ISaveFormat isaveformat = Minecraft.getMinecraft().getSaveLoader();
         List<WorldSummary> list;
-        try { list = isaveformat.getSaveList(); }
-        catch (AnvilConverterException anvilconverterexception) { return null; }
-
-        List<String> checkList = new ArrayList<>();
-        for (WorldSummary worldsummary : list) { checkList.add(((IWorldSummaryMixin) worldsummary).npcs$getAgreementName()); }
-        return checkList;
+        try {
+            list = isaveformat.getSaveList();
+            List<String> checkList = new ArrayList<>();
+            for (WorldSummary worldsummary : list) { checkList.add(((IWorldSummaryMixin) worldsummary).npcs$getAgreementName()); }
+            ScriptController.Instance.checkAgreements(checkList);
+        }
+        catch (AnvilConverterException e) {
+            LogWriter.error("Error while getting check list: " + e.getMessage());
+        }
     }
 
 }

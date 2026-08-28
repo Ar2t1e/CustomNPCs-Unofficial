@@ -10,10 +10,12 @@ import net.minecraft.block.*;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -900,85 +902,98 @@ public class ClientEventHandler extends Gui {
 	}
 
 	private void renderEntityForBook(@Nonnull EntityLivingBase entity) {
-		EntityNPCInterface npc = null;
-		int visible = 0;
-		int showName = 0;
-		int orientation = 0;
-		if (entity instanceof EntityNPCInterface) {
-			npc = (EntityNPCInterface) entity;
-			visible = npc.display.getVisible();
-			showName = npc.display.getShowName();
-			orientation = npc.ais.orientation;
-			npc.display.setVisible(2);
-			npc.display.setShowName(0);
-			npc.ais.orientation = 0;
-		}
 		GlStateManager.pushMatrix();
-		GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 		GlStateManager.enableColorMaterial();
+		float lastBrightnessX = OpenGlHelper.lastBrightnessX;
+		float lastBrightnessY = OpenGlHelper.lastBrightnessY;
+		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240.0F, 240.0F);
 
-		// In HUD overlay depth test is usually disabled.
-		// We must enable it so faces are drawn in correct Z-order.
-		boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
-		boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
-		GlStateManager.enableDepth();
-		GlStateManager.depthMask(true);
+		EntityNPCInterface npc = null;
+		if (entity instanceof EntityNPCInterface) { npc = (EntityNPCInterface)entity; }
+		EntityLiving livingEntity = null;
+		if (entity instanceof EntityLiving) { livingEntity = (EntityLiving) entity; }
+		float originalYaw = entity.rotationYaw;
+		float originalPitch = entity.rotationPitch;
+		float bodyRotation = 0.0F;
+		float headRotationO = 0.0F;
+		float headRotation = 0.0F;
+		if (livingEntity != null) {
+			bodyRotation = livingEntity.renderYawOffset;
+			headRotationO = livingEntity.prevRotationYawHead;
+			headRotation = livingEntity.rotationYawHead;
+		}
+		float scale = 1.0F;
+		if (entity.height > 2.4F) { scale = 2.0F / entity.height; }
+        entity.rotationYaw = 0.0f;
+		entity.rotationPitch = -5.0f;
 
-		float scW = entity.width > 1.0f ? 1.0f / entity.width : 1.0f;
-		float scH = entity.height > 2.4f ? 2.4f / entity.height : 1.0f;
-		float scale = Math.min(scW, scH);
-		float renderScale = 30.0f * scale * 0.75f;
+		if (livingEntity != null) { livingEntity.renderYawOffset = livingEntity.rotationYawHead = livingEntity.rotationYaw; }
 
-		// Use the same scale pattern as GuiInventory.drawEntityOnScreen:
-		// negative X flips the entity horizontally, positive Y/Z keep correct winding.
-		GlStateManager.scale(-renderScale, renderScale, renderScale);
-		// Rotate 180 around Z to compensate for GUI Y-down coordinate system.
-		GlStateManager.rotate(180.0f, 0.0f, 0.0f, 1.0f);
-
-		RenderHelper.enableStandardItemLighting();
-		float f2 = entity.renderYawOffset;
-		float f3 = entity.rotationYaw;
-		float f4 = entity.rotationPitch;
-		float f5 = entity.rotationYawHead;
-		float f6 = 0.0f;
-		GlStateManager.rotate(-20.0f, 1.0f, 0.0f, 0.0f);
-		GlStateManager.rotate(-30.0f, 0.0f, 1.0f, 0.0f);
-		entity.renderYawOffset = 0;
-		entity.rotationYaw = (float) (Math.atan(f6 / 80.0f) * 40.0f + 0);
-		entity.rotationPitch = 0.0f;
-		entity.rotationYawHead = entity.rotationYaw;
-		mc.getRenderManager().setPlayerViewY(180.0f);
-		mc.getRenderManager().setRenderShadow(false);
-		mc.getRenderManager().renderEntity(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, false);
-		mc.getRenderManager().setRenderShadow(true);
-		entity.renderYawOffset = f2;
-		entity.prevRenderYawOffset = f2;
-		entity.rotationYaw = f3;
-		entity.prevRotationYaw = f3;
-		entity.rotationPitch = f4;
-		entity.prevRotationPitch = f4;
-		entity.rotationYawHead = f5;
-		entity.prevRotationYawHead = f5;
+		int orientation = 0;
+		int showname = 0;
 		if (npc != null) {
-			npc.display.setVisible(visible);
-			npc.display.setShowName(showName);
+			orientation = npc.ais.orientation;
+			npc.ais.orientation = 0;
+			showname = npc.display.getShowName();
+			npc.display.setShowName(1);
+		}
+
+		if (npc instanceof EntityCustomNpc) {
+			EntityCustomNpc cnpc = (EntityCustomNpc) npc;
+			if (cnpc.modelData.getEntity(cnpc) != null) {
+				EntityUtil.Copy(npc, cnpc.modelData.getEntity(cnpc));
+			}
+		}
+
+		float scaledZoom = 30.0F * scale;
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(0.0F, 0.0F, 50.0F);
+		GlStateManager.scale(scaledZoom, scaledZoom, -scaledZoom);
+		GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
+		GlStateManager.rotate(180.0F, 0.0F, 0.0F, 1.0F);
+		RenderHelper.enableStandardItemLighting();
+		GlStateManager.rotate(-30.0F, 0.0F, 1.0F, 0.0F);
+		RenderManager renderManager = Minecraft.getMinecraft().getRenderManager();
+		renderManager.setRenderShadow(false);
+		renderManager.renderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, false);
+		renderManager.setRenderShadow(true);
+
+		GlStateManager.popMatrix();
+
+		entity.rotationYaw = originalYaw;
+		entity.rotationPitch = originalPitch;
+		if (livingEntity != null) {
+			livingEntity.renderYawOffset = bodyRotation;
+			livingEntity.prevRotationYawHead = headRotationO;
+			livingEntity.rotationYawHead = headRotation;
+		}
+		if (npc != null) {
 			npc.ais.orientation = orientation;
+			npc.display.setShowName(showname);
+		}
+		if (npc instanceof EntityCustomNpc) {
+			EntityCustomNpc cnpc = (EntityCustomNpc) npc;
+			if (cnpc.modelData.getEntity(cnpc) != null) { EntityUtil.Copy(npc, cnpc.modelData.getEntity(cnpc)); }
 		}
 
-		// Restore previous depth state so HUD text/icons are not clipped.
-		if (!depthTest) {
-			GlStateManager.disableDepth();
-		}
-		if (!depthMask) {
-			GlStateManager.depthMask(false);
-		}
-
+		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, lastBrightnessX, lastBrightnessY);
+		RenderHelper.disableStandardItemLighting();
+		GlStateManager.disableColorMaterial();
+		GlStateManager.disableRescaleNormal();
 		GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
 		GlStateManager.disableTexture2D();
 		GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+		GlStateManager.enableTexture2D();
+		GlStateManager.enableCull();
+		GlStateManager.depthMask(true);
+		GlStateManager.depthFunc(515);
+		GlStateManager.shadeModel(7424);
+		GlStateManager.alphaFunc(516, 0.1F);
+		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+		GlStateManager.disableBlend();
+		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 		GlStateManager.popMatrix();
-		RenderHelper.disableStandardItemLighting();
-		GlStateManager.disableRescaleNormal();
 	}
 
 	private void renderNpcMovingPath(EntityCustomNpc npc) {

@@ -85,13 +85,14 @@ public class SPacketGuiOpen extends PacketServerBasic {
          if (player.getServer() != null) {
             try {
                if (!gui.hasContainer) { Packets.send(player, new PacketGuiOpen(gui, pos)); }
-               else if (NoppesUtilServer.openContainerGui(player, gui, (buffer) -> {
-                  buffer.writeInt(npc != null ? npc.getEntityId() : -1);
-                  buffer.writeBlockPos(pos);
-               })) {
-                  Map<String, Integer> map = getScrollData(player, gui, npc);
-                  if (map != null && !map.isEmpty()) { NoppesUtilServer.sendScrollData(player, map); }
+               else {
+                  NoppesUtilServer.openContainerGui(player, gui, (buffer) -> {
+                     buffer.writeInt(npc != null ? npc.getEntityId() : -1);
+                     buffer.writeBlockPos(pos);
+                  });
                }
+               Map<String, Integer> map = getScrollData(player, gui, npc);
+               if (map != null && !map.isEmpty()) { NoppesUtilServer.sendScrollData(player, map); }
             }
             catch (Exception e) { LogWriter.error(e); }
          }

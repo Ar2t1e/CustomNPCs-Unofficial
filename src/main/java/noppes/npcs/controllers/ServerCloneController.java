@@ -153,6 +153,7 @@ public class ServerCloneController implements ICloneHandler {
 	public void cleanTags(NBTTagCompound compound) {
 		if (compound.hasKey("ItemGiverId")) { compound.setInteger("ItemGiverId", 0); }
 		if (compound.hasKey("TransporterId")) { compound.setInteger("TransporterId", -1); }
+		compound.removeTag("HomeDimensionId");
 		compound.removeTag("StartPosNew");
 		compound.removeTag("StartPos");
 		compound.removeTag("MovingPathNew");
