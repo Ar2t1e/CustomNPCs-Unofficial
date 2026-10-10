@@ -10,6 +10,7 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -291,9 +292,13 @@ public class ModelDataShared {
 		return null;
 	}
 
+	public boolean hasRenderLayers() {
+		return !layersData.isEmpty();
+	}
+
 	public List<LayerModel> getRenderLayers(EnumParts part) {
 		List<LayerModel> list = new ArrayList<>();
-		for (LayerModel lm : new ArrayList<>(layersData.values())) {
+		for (LayerModel lm : CustomNpcs.FastNpcFrame ? layersData.values() : new ArrayList<>(layersData.values())) {
 			if (lm.part == part) { list.add(lm); }
 		}
 		return list;

@@ -28,39 +28,50 @@ public class NPCAttackSelector implements Predicate<EntityLivingBase> {
 				npc.isInRange(entity, npc.stats.aggroRange) &&
 				entity.getHealth() >= 0.1F) {
 			if (npc.aiAttackTarget != null && !npc.aiAttackTarget.canNewAttack()) { return false; }
+			if (CustomNpcs.FastNpcTargeting) {
+				return nearHome(entity) && wanted(entity) && (npc.ais.directLOS == EnumSeeTarget.NONE || npc.canSee(entity));
+			}
 			if (npc.ais.directLOS != EnumSeeTarget.NONE && !npc.canSee(entity)) { return false; }
-			if (!npc.isFollower() && npc.ais.shouldReturnHome()) {
-				int allowedDistance = npc.stats.aggroRange * 2;
-				if (npc.ais.getMovingType() == 1) {
-					allowedDistance += npc.ais.walkingRange;
-				}
-				double distance = entity.getDistanceSq(npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
-				if (npc.ais.getMovingType() == 2) {
-					int[] arr = npc.ais.getCurrentMovingPath();
-					distance = entity.getDistanceSq(arr[0], arr[1], arr[2]);
-				}
-				if (distance > allowedDistance * allowedDistance) { return false; }
+			return nearHome(entity) && wanted(entity);
+		}
+		return false;
+	}
+
+	private boolean nearHome(EntityLivingBase entity) {
+		if (!npc.isFollower() && npc.ais.shouldReturnHome()) {
+			int allowedDistance = npc.stats.aggroRange * 2;
+			if (npc.ais.getMovingType() == 1) {
+				allowedDistance += npc.ais.walkingRange;
 			}
-			if (npc.job instanceof JobGuard && ((JobGuard) npc.job).isEntityApplicable(entity)) { return true; }
-			if (npc.role instanceof RoleCompanion) {
-				RoleCompanion role = (RoleCompanion) npc.role;
-				if (role.job.getType() == EnumCompanionJobs.GUARD && ((CompanionGuard) role.job).isEntityApplicable(entity)) { return true; }
+			double distance = entity.getDistanceSq(npc.getStartXPos(), npc.getStartYPos(), npc.getStartZPos());
+			if (npc.ais.getMovingType() == 2) {
+				int[] arr = npc.ais.getCurrentMovingPath();
+				distance = entity.getDistanceSq(arr[0], arr[1], arr[2]);
 			}
-			if (entity instanceof EntityPlayerMP) {
-				if (npc.faction.isAggressiveToPlayer((EntityPlayerMP) entity) && !((EntityPlayerMP) entity).isCreative()) {
-					if (CustomNpcs.EnableInvisibleNpcs && CustomNpcs.InvisibilityAlgorithm == 2) {
-						return npc.display.isVisibleTo((EntityPlayerMP) entity) || ((EntityPlayerMP) entity).isSpectator() ||
-								entity.getHeldItemMainhand().getItem() == CustomItems.wand;
-					}
-					return true;
+			return distance <= allowedDistance * allowedDistance;
+		}
+		return true;
+	}
+
+	private boolean wanted(EntityLivingBase entity) {
+		if (npc.job instanceof JobGuard && ((JobGuard) npc.job).isEntityApplicable(entity)) { return true; }
+		if (npc.role instanceof RoleCompanion) {
+			RoleCompanion role = (RoleCompanion) npc.role;
+			if (role.job.getType() == EnumCompanionJobs.GUARD && ((CompanionGuard) role.job).isEntityApplicable(entity)) { return true; }
+		}
+		if (entity instanceof EntityPlayerMP) {
+			if (npc.faction.isAggressiveToPlayer((EntityPlayerMP) entity) && !((EntityPlayerMP) entity).isCreative()) {
+				if (CustomNpcs.EnableInvisibleNpcs && CustomNpcs.InvisibilityAlgorithm == 2) {
+					return npc.display.isVisibleTo((EntityPlayerMP) entity) || ((EntityPlayerMP) entity).isSpectator() ||
+							entity.getHeldItemMainhand().getItem() == CustomItems.wand;
 				}
-				return false;
-			}
-			if (entity instanceof EntityNPCInterface) {
-				EntityNPCInterface cNpc = (EntityNPCInterface) entity;
-				if (!cNpc.isKilled() && npc.advanced.attackOtherFactions) { return npc.faction.isAggressiveToNpc(cNpc); }
+				return true;
 			}
 			return false;
+		}
+		if (entity instanceof EntityNPCInterface) {
+			EntityNPCInterface cNpc = (EntityNPCInterface) entity;
+			if (!cNpc.isKilled() && npc.advanced.attackOtherFactions) { return npc.faction.isAggressiveToNpc(cNpc); }
 		}
 		return false;
 	}

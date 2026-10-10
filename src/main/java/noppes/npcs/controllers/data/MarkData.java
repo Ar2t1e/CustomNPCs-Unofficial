@@ -82,6 +82,7 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 	private static final ResourceLocation CNPCS_CAPKEY = new ResourceLocation(CustomNpcs.MODID, "markdata");
 	private static final String NBT_KEY = "cnpcmarkdata";
 	private static final MarkData backup = new MarkData();
+	public static volatile boolean anyMarks;
 
 	public static void register(AttachCapabilitiesEvent<Entity> event) {
 		event.addCapability(MarkData.CNPCS_CAPKEY, new MarkData());
@@ -114,6 +115,7 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 			m.is3d = c.getBoolean("is3d");
 			marksIn.add(m);
 		}
+		if (!marksIn.isEmpty()) { anyMarks = true; }
 		marks = marksIn;
 	}
 
@@ -144,6 +146,7 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 		Mark m = new Mark();
 		m.setType(type);
 		marks.add(m);
+		anyMarks = true;
 		if (!entity.world.isRemote) { syncClients(); }
 		return m;
 	}
@@ -153,6 +156,7 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 		m.setType(type);
 		m.color = color;
 		marks.add(m);
+		anyMarks = true;
 		if (!entity.world.isRemote) { syncClients(); }
 	}
 

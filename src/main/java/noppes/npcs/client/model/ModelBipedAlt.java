@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import noppes.npcs.mixin.client.model.IModelPlayerMixin;
-import org.lwjgl.opengl.GL11;
+import noppes.npcs.client.util.GlCache;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
@@ -134,7 +134,7 @@ public class ModelBipedAlt extends ModelNpcAlt {
 		}
 
 		ItemStack stack;
-		int entitySkinTextureID = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+		int entitySkinTextureID = GlCache.boundTexture();
 		GlStateManager.pushMatrix();
 		if (!isChild && entityIn.isSneaking()) { GlStateManager.translate(0.0f, 0.2f, 0.0f); }
 		GlStateManager.enableBlend();
@@ -146,7 +146,7 @@ public class ModelBipedAlt extends ModelNpcAlt {
 				GlStateManager.scale(0.75F, 0.75F, 0.75F);
 				GlStateManager.translate(0.0F, 16.0F * scale, 0.0F);
 				if (renderHead((EntityLivingBase) entityIn, scale)) {
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+					GlCache.bindTexture(entitySkinTextureID);
 					renderHeadWear(scale);
 				}
 				GlStateManager.popMatrix();
@@ -156,7 +156,7 @@ public class ModelBipedAlt extends ModelNpcAlt {
 			}
 			else {
 				if (renderHead((EntityLivingBase) entityIn, scale)) {
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+					GlCache.bindTexture(entitySkinTextureID);
 					renderHeadWear(scale);
 				}
 			}
@@ -184,12 +184,12 @@ public class ModelBipedAlt extends ModelNpcAlt {
             GlStateManager.pushMatrix();
             if (bipedRightArm.showModel) {
                 ((ModelRendererAlt) bipedRightArm).checkBacklightColor(r, g, b);
-                if (((ModelRendererAlt) bipedRightArm).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+                if (((ModelRendererAlt) bipedRightArm).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
                 bipedRightArm.render(scale);
             }
             if (bipedLeftArm.showModel) {
                 ((ModelRendererAlt) bipedLeftArm).checkBacklightColor(r, g, b);
-                if (((ModelRendererAlt) bipedLeftArm).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+                if (((ModelRendererAlt) bipedLeftArm).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
                 bipedLeftArm.render(scale);
             }
             GlStateManager.popMatrix();
@@ -246,12 +246,12 @@ public class ModelBipedAlt extends ModelNpcAlt {
 				GlStateManager.pushMatrix();
 				if (bipedRightLeg.showModel) {
 					((ModelRendererAlt) bipedRightLeg).checkBacklightColor(r, g, b);
-					if (((ModelRendererAlt) bipedRightLeg).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+					if (((ModelRendererAlt) bipedRightLeg).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 					bipedRightLeg.render(scale);
 				}
 				if (bipedLeftLeg.showModel) {
 					((ModelRendererAlt) bipedLeftLeg).checkBacklightColor(r, g, b);
-					if (((ModelRendererAlt) bipedLeftLeg).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+					if (((ModelRendererAlt) bipedLeftLeg).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 					bipedLeftLeg.render(scale);
 				}
 				GlStateManager.popMatrix();
@@ -267,7 +267,7 @@ public class ModelBipedAlt extends ModelNpcAlt {
 			}
 			GlStateManager.pushMatrix();
 			((ModelRendererAlt) bipedBody).checkBacklightColor(r, g, b);
-			if (((ModelRendererAlt) bipedBody).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+			if (((ModelRendererAlt) bipedBody).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 			bipedBody.render(scale);
 			GlStateManager.popMatrix();
 		}

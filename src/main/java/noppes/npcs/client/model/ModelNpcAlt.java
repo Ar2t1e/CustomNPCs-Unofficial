@@ -18,7 +18,7 @@ import noppes.npcs.api.util.IModelRenderer;
 import noppes.npcs.client.model.animation.*;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import noppes.npcs.mixin.client.model.IModelPlayerMixin;
-import org.lwjgl.opengl.GL11;
+import noppes.npcs.client.util.GlCache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBiped;
@@ -205,14 +205,16 @@ public class ModelNpcAlt extends ModelPlayer {
     @Override
     public void render(@Nonnull Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
         if (Minecraft.getMinecraft().currentScreen == null && editAnimDataSelect.part != -1) { editAnimDataSelect.clear(); }
-        Map<EnumParts, Boolean> ba = new HashMap<>();
-        Map<EnumParts, Boolean> bAW = new HashMap<>();
+        boolean fast = CustomNpcs.FastNpcFrame;
+        Map<EnumParts, Boolean> ba = fast ? Collections.emptyMap() : new HashMap<>();
+        Map<EnumParts, Boolean> bAW = fast ? Collections.emptyMap() : new HashMap<>();
         editAnimDataSelect.isNPC = entityIn.equals(editAnimDataSelect.displayNpc);
         float r = 1.0f, g = 1.0f, b = 1.0f;
         int animID = -1;
         boolean showWear = true;
         if (entityIn instanceof EntityPlayer) {
-            ba.putAll(PlayerData.get((EntityPlayer) entityIn).animation.showParts);
+            if (fast) { ba = PlayerData.get((EntityPlayer) entityIn).animation.showParts; }
+            else { ba.putAll(PlayerData.get((EntityPlayer) entityIn).animation.showParts); }
             IEntityPlayerMixin playerMixin = (IEntityPlayerMixin) entityIn;
             if (playerMixin.npcs$getAnimation().isAnimated()) {
                 animID = playerMixin.npcs$getAnimation().getAnimation().id;
@@ -221,16 +223,18 @@ public class ModelNpcAlt extends ModelPlayer {
         else if (entityIn instanceof EntityCustomNpc) {
             EntityCustomNpc npc = (EntityCustomNpc) entityIn;
             showWear = !npc.modelData.isDisableLayer("LayerWear");
-            ba.putAll(npc.animation.showParts);
+            if (fast) { ba = npc.animation.showParts; }
+            else { ba.putAll(npc.animation.showParts); }
             EnumParts ep = EnumParts.get(editAnimDataSelect.part);
             if (editAnimDataSelect.isNPC && ba.containsKey(ep) && !ba.get(ep)) {
+                if (fast) { ba = new HashMap<>(ba); }
                 ba.put(ep, true);
             }
             if (npc.animation.isAnimated()) {
                 animID = npc.animation.getAnimation().id;
             }
             // possible disabling of body parts rendering from the AW mod:
-            if (ArmourersWorkshopApi.isAvailable()) {
+            if (ArmourersWorkshopUtil.isAvailable()) {
                 npc.animation.resetShowAWParts();
                 Map<EnumParts, List<ISkinDescriptor>> map = new HashMap<>();
                 map.put(EnumParts.HEAD, new ArrayList<>());
@@ -317,7 +321,8 @@ public class ModelNpcAlt extends ModelPlayer {
                     }
                 }
             }
-            bAW.putAll(npc.animation.showAWParts);
+            if (fast) { bAW = npc.animation.showAWParts; }
+            else { bAW.putAll(npc.animation.showAWParts); }
             if (((EntityCustomNpc) entityIn).display.getTint() != 0xFFFFFF) {
                 r = (float)(((EntityCustomNpc) entityIn).display.getTint() >> 16 & 255) / 255.0F;
                 g = (float)(((EntityCustomNpc) entityIn).display.getTint() >> 8 & 255) / 255.0F;
@@ -325,7 +330,7 @@ public class ModelNpcAlt extends ModelPlayer {
             }
         }
         Map<Integer, List<ModelRendererAlt>> animatedMap = animAddedChildren.get(animID);
-        int entitySkinTextureID = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+        int entitySkinTextureID = GlCache.boundTexture();
         GlStateManager.pushMatrix();
         if (!isChild && entityIn.isSneaking()) { GlStateManager.translate(0.0F, 0.2F, 0.0F); }
         // Custom parts
@@ -356,7 +361,7 @@ public class ModelNpcAlt extends ModelPlayer {
                 }
 
                 if (((ModelRendererAlt) bipedHead).notOBJModel() && showWear) {
-                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+                    GlCache.bindTexture(entitySkinTextureID);
                     renderHeadWear(scale);
                 }
                 GlStateManager.popMatrix();
@@ -376,7 +381,7 @@ public class ModelNpcAlt extends ModelPlayer {
                 }
 
                 if (((ModelRendererAlt) bipedHead).notOBJModel() && showWear) {
-                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+                    GlCache.bindTexture(entitySkinTextureID);
                     renderHeadWear(scale);
                 }
             }
@@ -387,7 +392,7 @@ public class ModelNpcAlt extends ModelPlayer {
         }
         if (ba.get(EnumParts.BODY) && bAW.get(EnumParts.BODY) && bipedBody.showModel) {
             ((ModelRendererAlt) bipedBody).checkBacklightColor(r, g, b);
-            if (((ModelRendererAlt) bipedBody).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+            if (((ModelRendererAlt) bipedBody).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 
             List<ModelRendererAlt> list = null;
             if (animatedMap != null) { list = animatedMap.get(3); }
@@ -403,13 +408,13 @@ public class ModelNpcAlt extends ModelPlayer {
             }
 
             if (bipedBodyWear != null && ((ModelRendererAlt) bipedBody).notOBJModel() && showWear) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+                GlCache.bindTexture(entitySkinTextureID);
                 bipedBodyWear.render(scale);
             }
         }
         if (ba.get(EnumParts.ARM_RIGHT) && bAW.get(EnumParts.ARM_RIGHT) && bipedRightArm.showModel) {
             ((ModelRendererAlt) bipedRightArm).checkBacklightColor(r, g, b);
-            if (((ModelRendererAlt) bipedRightArm).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+            if (((ModelRendererAlt) bipedRightArm).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 
             List<ModelRendererAlt> list = null;
             if (animatedMap != null) { list = animatedMap.get(2); }
@@ -424,13 +429,13 @@ public class ModelNpcAlt extends ModelPlayer {
                 for (ModelRendererAlt child : list) { bipedRightArm.childModels.remove(child); }
             }
             if (bipedRightArmwear != null && ((ModelRendererAlt) bipedLeftArm).notOBJModel() && showWear) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+                GlCache.bindTexture(entitySkinTextureID);
                 bipedRightArmwear.render(scale);
             }
         }
         if (ba.get(EnumParts.ARM_LEFT) && bAW.get(EnumParts.ARM_LEFT) && bipedLeftArm.showModel) {
             ((ModelRendererAlt) bipedLeftArm).checkBacklightColor(r, g, b);
-            if (((ModelRendererAlt) bipedLeftArm).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+            if (((ModelRendererAlt) bipedLeftArm).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 
             List<ModelRendererAlt> list = null;
             if (animatedMap != null) { list = animatedMap.get(1); }
@@ -445,13 +450,13 @@ public class ModelNpcAlt extends ModelPlayer {
                 for (ModelRendererAlt child : list) { bipedLeftArm.childModels.remove(child); }
             }
             if (bipedLeftArmwear != null && ((ModelRendererAlt) bipedLeftArm).notOBJModel() && showWear) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+                GlCache.bindTexture(entitySkinTextureID);
                 bipedLeftArmwear.render(scale);
             }
         }
         if (ba.get(EnumParts.LEG_RIGHT) && bAW.get(EnumParts.LEG_RIGHT) && bipedRightLeg.showModel) {
             ((ModelRendererAlt) bipedRightLeg).checkBacklightColor(r, g, b);
-            if (((ModelRendererAlt) bipedRightLeg).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+            if (((ModelRendererAlt) bipedRightLeg).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 
             List<ModelRendererAlt> list = null;
             if (animatedMap != null) { list = animatedMap.get(5); }
@@ -467,13 +472,13 @@ public class ModelNpcAlt extends ModelPlayer {
             }
 
             if (bipedRightLegwear != null && ((ModelRendererAlt) bipedRightLeg).notOBJModel() && showWear) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+                GlCache.bindTexture(entitySkinTextureID);
                 bipedRightLegwear.render(scale);
             }
         }
         if (ba.get(EnumParts.LEG_LEFT) && bAW.get(EnumParts.LEG_LEFT) && bipedLeftLeg.showModel) {
             ((ModelRendererAlt) bipedLeftLeg).checkBacklightColor(r, g, b);
-            if (((ModelRendererAlt) bipedLeftLeg).notOBJModel()) { GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID); }
+            if (((ModelRendererAlt) bipedLeftLeg).notOBJModel()) { GlCache.bindTexture(entitySkinTextureID); }
 
             List<ModelRendererAlt> list = null;
             if (animatedMap != null) { list = animatedMap.get(4); }
@@ -489,7 +494,7 @@ public class ModelNpcAlt extends ModelPlayer {
             }
 
             if (bipedLeftLegwear != null && ((ModelRendererAlt) bipedLeftLeg).notOBJModel() && showWear) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, entitySkinTextureID);
+                GlCache.bindTexture(entitySkinTextureID);
                 bipedLeftLegwear.render(scale);
             }
         }
@@ -500,8 +505,9 @@ public class ModelNpcAlt extends ModelPlayer {
         if (CustomNpcs.HeadWearType == 2) { return; }
         ModelRenderer bipedHead = bipedHeadwear;
         if (CustomNpcs.HeadWearType == 1) {
-            int w = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
-            int h = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
+            int[] size = GlCache.boundTextureSize();
+            int w = size[0];
+            int h = size[1];
             boolean isOld = w > h;
             if (w >= 4096) {
                 if (isOld && bipedHeadwear_4096_old != null) {

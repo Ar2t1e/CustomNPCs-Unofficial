@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
 import moe.plushie.armourers_workshop.api.common.IExtraColours;
 import moe.plushie.armourers_workshop.api.common.ISkinInventoryContainer;
 import moe.plushie.armourers_workshop.api.common.skin.data.ISkin;
@@ -14,6 +15,7 @@ import net.minecraft.client.model.ModelBiped;
 import net.minecraft.entity.Entity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.util.ResourceLocation;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.constants.EnumParts;
 import noppes.npcs.entity.EntityNPCInterface;
@@ -21,6 +23,13 @@ import noppes.npcs.entity.EntityNPCInterface;
 public class ArmourersWorkshopUtil {
 
 	private static ArmourersWorkshopUtil INSTANCE;
+	private static Boolean available;
+
+	public static boolean isAvailable() {
+		if (!CustomNpcs.FastNpcLayers) { return ArmourersWorkshopApi.isAvailable(); }
+		if (available == null) { available = ArmourersWorkshopApi.isAvailable(); }
+		return available;
+	}
 
 	public static ArmourersWorkshopUtil getInstance() {
 		if (INSTANCE != null) {

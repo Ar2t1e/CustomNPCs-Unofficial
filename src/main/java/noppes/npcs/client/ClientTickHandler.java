@@ -91,6 +91,7 @@ public class ClientTickHandler {
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public void cnpcClientTick(TickEvent.ClientTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) { return; }
+		Client.flushDeferred();
 		CustomNpcs.debugData.start(null);
 		Minecraft mc = Minecraft.getMinecraft();
 		PlayerData data = PlayerData.get(mc.player);

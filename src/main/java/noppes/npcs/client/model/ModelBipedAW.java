@@ -32,7 +32,7 @@ public class ModelBipedAW extends ModelBipedAlt {
 
     @Override
     public void render(@Nonnull Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
-        if (!ArmourersWorkshopApi.isAvailable()) { return; }
+        if (!ArmourersWorkshopUtil.isAvailable()) { return; }
         if (entityIn.equals(ModelNpcAlt.editAnimDataSelect.displayNpc) && !ModelNpcAlt.editAnimDataSelect.showArmor) { return; }
         ArmourersWorkshopUtil awu = ArmourersWorkshopUtil.getInstance();
         if (awu == null) { return; }
