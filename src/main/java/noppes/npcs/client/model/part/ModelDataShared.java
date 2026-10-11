@@ -34,6 +34,7 @@ public class ModelDataShared {
 	protected HashMap<EnumParts, ModelPartData> parts = new HashMap<>();
 	protected final Map<Integer, LayerModel> layersData = new TreeMap<>();
 	private final List<String> disableLayers = new ArrayList<>();
+	private final Set<String> disableLayerSet = new HashSet<>();
 
 	public EntityLivingBase entity;
 	public Class<? extends EntityLivingBase> entityClass;
@@ -137,6 +138,8 @@ public class ModelDataShared {
 		if (compound.hasKey("DisableLayers", 9)) {
 			NBTTagList listDL = compound.getTagList("DisableLayers", 8);
 			for (int i = 0; i < listDL.tagCount(); i++) { disableLayers.add(listDL.getStringTagAt(i)); }
+			disableLayerSet.clear();
+			disableLayerSet.addAll(disableLayers);
 		}
 		updateTranslate();
 	}
@@ -312,6 +315,7 @@ public class ModelDataShared {
 	}
 
 	public boolean isDisableLayer(String layerName) {
+		if (CustomNpcs.FastNpcLayers) { return !disableLayerSet.isEmpty() && disableLayerSet.contains(layerName); }
 		return disableLayers.contains(layerName);
 	}
 
@@ -322,6 +326,8 @@ public class ModelDataShared {
 	public void setDisableLayers(String[] newLayers) {
 		disableLayers.clear();
 		if (newLayers != null && newLayers.length != 0) { disableLayers.addAll(Arrays.asList(newLayers)); }
+		disableLayerSet.clear();
+		disableLayerSet.addAll(disableLayers);
 	}
 
 	public boolean hasDisableLayers() { return !disableLayers.isEmpty(); }
