@@ -43,6 +43,11 @@ import javax.annotation.Nonnull;
 @SideOnly(Side.CLIENT)
 public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLiving<T> {
 
+	private int brightnessId = -1;
+	private int brightnessTick;
+	private float brightnessPartial = -1.0f;
+	private float brightnessValue;
+
 	private static final DynamicTexture TEXTURE_BRIGHTNESS = new DynamicTexture(16, 16);
 	public static int LastTextureTick; // ++ in ClientTickHandler.npcClientTick()
 
@@ -202,7 +207,17 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 
 	@Override
 	protected boolean setBrightness(@Nonnull T npc, float partialTicks, boolean combineTextures) {
-		float f = npc.getBrightness();
+		float f;
+		if (CustomNpcs.FastNpcLayers && npc.getEntityId() == brightnessId && npc.ticksExisted == brightnessTick && partialTicks == brightnessPartial) {
+			f = brightnessValue;
+		}
+		else {
+			f = npc.getBrightness();
+			brightnessId = npc.getEntityId();
+			brightnessTick = npc.ticksExisted;
+			brightnessPartial = partialTicks;
+			brightnessValue = f;
+		}
 		int color = getColorMultiplier(npc, f, partialTicks);
 		boolean hasColor = (color >> 24 & 255) > 0;
 		boolean isHurt = !npc.animation.isAnimated(AnimationKind.DIES) && npc.hurtTime > 0 || npc.deathTime > 0;

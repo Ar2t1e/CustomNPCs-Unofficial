@@ -1121,6 +1121,14 @@ public class Util implements IMethods {
 	}
 
 	public IRayTraceResults rayTraceBlocksAndEntitys(Entity entity, double yaw, double pitch, double distance) {
+		return rayTrace(entity, yaw, pitch, distance, true);
+	}
+
+	public IRayTraceResults rayTraceBlocks(Entity entity, double yaw, double pitch, double distance) {
+		return rayTrace(entity, yaw, pitch, distance, false);
+	}
+
+	private IRayTraceResults rayTrace(Entity entity, double yaw, double pitch, double distance, boolean withEntities) {
 		if (entity == null || entity.world == null || distance <= 0.0d) { return RayTraceResults.EMPTY; }
 		RayTraceResults rtrs = new RayTraceResults();
 
@@ -1132,7 +1140,7 @@ public class Util implements IMethods {
 		double f3 = Math.sin(-pitch * rad);
 		Vec3d vecLook = new Vec3d(f1 * f2, f3, f * f2);
 		Vec3d vecEnd = vecStart.addVector(vecLook.x * distance, vecLook.y * distance, vecLook.z * distance);
-		rtrs.add(entity, distance, vecStart, vecEnd);
+		if (withEntities) { rtrs.add(entity, distance, vecStart, vecEnd); }
 
 		int x0 = MathHelper.floor(vecStart.x);
 		int y0 = MathHelper.floor(vecStart.y);

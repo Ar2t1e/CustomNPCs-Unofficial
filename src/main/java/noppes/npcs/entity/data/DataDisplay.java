@@ -61,6 +61,10 @@ public class DataDisplay implements INPCDisplay {
 	protected String title = "";
 	protected String url = "";
 	protected String glowTexture = "";
+	private String glowClean = "";
+	private String glowCleanFrom;
+	private String cloakClean = "";
+	private String cloakCleanFrom;
 	protected String name;
 	protected String texture = CustomNpcs.MODID + ":textures/entity/humanmale/steve.png";
 	public float shadowSize = 1.0f;
@@ -103,7 +107,12 @@ public class DataDisplay implements INPCDisplay {
 
 	@Override
 	public String getCapeTexture() {
-		return NoppesStringUtils.cleanResource(cloakTexture);
+		if (!CustomNpcs.FastNpcLayers) { return NoppesStringUtils.cleanResource(cloakTexture); }
+		if (cloakCleanFrom != cloakTexture) {
+			cloakClean = NoppesStringUtils.cleanResource(cloakTexture);
+			cloakCleanFrom = cloakTexture;
+		}
+		return cloakClean;
 	}
 
 	@Override
@@ -178,7 +187,14 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public String getOverlayTexture() { return NoppesStringUtils.cleanResource(glowTexture); }
+	public String getOverlayTexture() {
+		if (!CustomNpcs.FastNpcLayers) { return NoppesStringUtils.cleanResource(glowTexture); }
+		if (glowCleanFrom != glowTexture) {
+			glowClean = NoppesStringUtils.cleanResource(glowTexture);
+			glowCleanFrom = glowTexture;
+		}
+		return glowClean;
+	}
 
 	public String getRandomName() {
 		return CustomNpcs.MARKOV_GENERATOR[markovGeneratorId].fetch(markovGender);

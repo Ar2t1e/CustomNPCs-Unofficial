@@ -7,7 +7,6 @@ import noppes.npcs.client.model.animation.AnimationFrameConfig;
 import noppes.npcs.client.model.animation.PartConfig;
 import noppes.npcs.client.model.part.ModelPartConfig;
 import noppes.npcs.client.renderer.obj.ParameterizedModel;
-import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBase;
@@ -77,6 +76,7 @@ public class ModelRendererAlt
 
 	public boolean smallArms;
 	public boolean isAnimPart;
+	public static boolean childrenOnce = true;
 	private float r = 1.0f;
 	private float g = 1.0f;
 	private float b = 1.0f;
@@ -313,7 +313,7 @@ public class ModelRendererAlt
 	private void simpleDraw(float scale) {
 		if (displayList > 0) {
 			GlStateManager.callList(displayList);
-			if (childModels != null) {
+			if (childModels != null && !(CustomNpcs.FastNpcFrame && childrenOnce)) {
 				for (ModelRenderer childModel : childModels) { childModel.render(scale); }
 			}
 			return;
@@ -334,7 +334,7 @@ public class ModelRendererAlt
 		setQuard(5, vs.get(4), vs.get(5), vs.get(6), vs.get(7), u + dz + dx + dz, v + dz, u + dz + dx + dz + dx, v + dz + dy2); // back
 		GlStateManager.glNewList(displayList = GLAllocation.generateDisplayLists(1), 4864);
 		draw(scale);
-		GL11.glEndList();
+		GlStateManager.glEndList();
 	}
 
 	// Joint and rotate Top

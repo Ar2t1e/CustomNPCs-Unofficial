@@ -1,6 +1,7 @@
 package noppes.npcs.client.layer;
 
 import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
+import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
@@ -61,7 +62,7 @@ public class LayerCustomArmor<T extends ModelBiped> extends LayerArmorBase<T> {
 
 	@SuppressWarnings("all")
 	protected void renderArmorLayer(EntityLivingBase entityLivingBaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, EntityEquipmentSlot slotIn) {
-		boolean isAWLoad = ArmourersWorkshopApi.isAvailable();
+		boolean isAWLoad = ArmourersWorkshopUtil.isAvailable();
 		if (isAWLoad && entityLivingBaseIn instanceof EntityNPCInterface) {
 			modelAW.setSlot(slotIn);
 			modelAW.setModelAttributes(renderer.getMainModel());

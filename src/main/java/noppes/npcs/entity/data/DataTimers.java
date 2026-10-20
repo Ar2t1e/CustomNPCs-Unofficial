@@ -6,6 +6,7 @@ import java.util.Map;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import noppes.npcs.CustomNpcs;
 import noppes.npcs.EventHooks;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.ITimers;
@@ -86,6 +87,7 @@ public class DataTimers implements ITimers {
 	public boolean stop(int id) { return timers.remove(id) != null; }
 
 	public void update() {
+		if (CustomNpcs.FastNpcTick && timers.isEmpty()) { return; }
 		for (Timer timer : new ArrayList<>(timers.values())) { timer.update(); }
 	}
 

@@ -1,6 +1,5 @@
 package noppes.npcs.client.model;
 
-import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
@@ -110,7 +109,7 @@ public class Model2DRenderer extends ModelRenderer {
 			GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
 		}
 		renderItemIn2D(Tessellator.getInstance().getBuffer(), this.minU, this.minV, this.maxU, this.maxV, this.width, this.height, scale);
-		GL11.glEndList();
+		GlStateManager.glEndList();
 		this.isCompiled = true;
 	}
 	

@@ -108,9 +108,40 @@ public class Client {
     private static Minecraft minecraft;
     private static final Gson gson = new Gson();
 
+    private static final List<PacketBasic> deferred = new ArrayList<>();
+    private static int deferredTicks;
+
+    public static void flushDeferred() {
+        if (deferred.isEmpty()) { return; }
+        if (Minecraft.getMinecraft().player == null) {
+            if (++deferredTicks > 600) {
+                deferred.clear();
+                deferredTicks = 0;
+            }
+            return;
+        }
+        deferredTicks = 0;
+        List<PacketBasic> list = new ArrayList<>(deferred);
+        deferred.clear();
+        for (PacketBasic msg : list) {
+            try { processPacket(msg); }
+            catch (Exception e) { LogWriter.error("Error processing deferred packet " + msg.getClass().getSimpleName(), e); }
+        }
+    }
+
     public static <MSG extends PacketBasic> void processPacket(MSG msg) {
-        CustomNpcs.debugData.start("Packet", msg.getClass().getSimpleName());
         minecraft = Minecraft.getMinecraft();
+        if (CustomNpcs.DeferEarlyPackets) {
+            if (minecraft.player == null) {
+                deferred.add(msg);
+                return;
+            }
+            if (msg.player != minecraft.player) {
+                msg.player = minecraft.player;
+                msg.npc = NoppesUtilServer.getEditingNpc(msg.player);
+            }
+        }
+        CustomNpcs.debugData.start("Packet", msg.getClass().getSimpleName());
         if (msg instanceof PacketAchievement) { packetAchievement((PacketAchievement) msg); }
         else if (msg instanceof PacketChat) { packetChat((PacketChat) msg); }
         else if (msg instanceof PacketChatBubble) { packetChatBubble((PacketChatBubble) msg); }

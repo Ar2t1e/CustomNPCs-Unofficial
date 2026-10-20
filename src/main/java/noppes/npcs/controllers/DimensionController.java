@@ -1,6 +1,8 @@
 package noppes.npcs.controllers;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -71,6 +73,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	public DimensionController(String mapName) { super(mapName); }
 
 	protected static final Map<Integer, DimensionData> data = new LinkedHashMap<>();
+	protected static final Map<Integer, DimensionType> ownTypes = new HashMap<>();
 	protected final Map<Integer, CustomWorldInfo> dimensionInfo = new TreeMap<>();
 	protected final Map<Integer, NBTTagCompound> providerInfo = new TreeMap<>();
 	protected final Map<Integer, UUID> toBeDeleted = new TreeMap<>();
@@ -92,6 +95,9 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	public List<Integer> getAllIDs() {
 		List<Integer> list = new ArrayList<>();
 		for (DimensionType dt : DimensionType.values()) { list.add(dt.getId()); }
+		for (int id : ownTypes.keySet()) {
+			if (!list.contains(id)) { list.add(id); }
+		}
 		for (int id : dimensionInfo.keySet()) {
 			if (!list.contains(id)) { list.add(id); }
 		}
@@ -188,7 +194,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		dimensionInfo.put(id, worldInfo);
 		providerInfo.put(id, new NBTTagCompound());
 		DimensionType dimensionType = getDimensionType(id, worldInfo.getDimensionName());
-		if (!DimensionManager.isDimensionRegistered(id)) { DimensionManager.registerDimension(id, dimensionType); }
+		if (!DimensionManager.isDimensionRegistered(id)) { registerDimension(id, dimensionType); }
 		worldInfo.setDimensionName(dimensionType.getName());
 		if (player != null) {
 			player.sendMessage(Component.translatable("message.dimensions.created", id, name).getParent());
@@ -196,8 +202,36 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		if (isUpdating) { syncWithClients(); }
 	}
 
+	private static void registerDimension(int id, DimensionType type) {
+		try { DimensionManager.registerDimension(id, type); }
+		catch (IllegalArgumentException e) {
+			if (ownTypes.get(type.getId()) != type || DimensionManager.isDimensionRegistered(id)) { throw e; }
+			LogWriter.error("Dimension type " + type.getId() + " is not visible to DimensionType.getById, registering dimension " + id + " directly");
+			registerDirect(id, type);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void registerDirect(int id, DimensionType type) {
+		try {
+			Field dimensionsField = DimensionManager.class.getDeclaredField("dimensions");
+			dimensionsField.setAccessible(true);
+			Class<?> dimensionClass = Class.forName("net.minecraftforge.common.DimensionManager$Dimension");
+			Constructor<?> constructor = dimensionClass.getDeclaredConstructor(DimensionType.class);
+			constructor.setAccessible(true);
+			((Map<Integer, Object>) dimensionsField.get(null)).put(id, constructor.newInstance(type));
+			if (id >= 0) {
+				Field usedIdsField = DimensionManager.class.getDeclaredField("usedIds");
+				usedIdsField.setAccessible(true);
+				((Set<Integer>) usedIdsField.get(null)).add(id);
+			}
+		}
+		catch (ReflectiveOperationException e) { throw new IllegalStateException("Cannot register dimension " + id, e); }
+	}
+
 	public DimensionType getDimensionType(int id, String name) {
-		DimensionType dimensionType = null;
+		DimensionType dimensionType = ownTypes.get(id);
+		if (dimensionType != null) { return dimensionType; }
 		for (DimensionType dt : DimensionType.values()) {
 			if (dt.getId() == id) {
 				dimensionType = dt;
@@ -211,6 +245,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 					"_cnpc",
 					CustomWorldProvider.class);
 			dimensionType = dimensionTemp != null ? dimensionTemp.setLoadSpawn(false) : DimensionType.OVERWORLD;
+			if (dimensionTemp != null) { ownTypes.put(id, dimensionTemp); }
 		} // register
 		return dimensionType;
 	}
@@ -293,7 +328,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 	public void loadDimensions() {
 		for (Entry<Integer, CustomWorldInfo> entry : dimensionInfo.entrySet()) {
 			if (!DimensionManager.isDimensionRegistered(entry.getKey())) {
-				DimensionManager.registerDimension(entry.getKey(), getDimensionType(entry.getKey(), entry.getValue().getDimensionName()));
+				registerDimension(entry.getKey(), getDimensionType(entry.getKey(), entry.getValue().getDimensionName()));
 			}
 		}
 	}
@@ -451,7 +486,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 			}
 			return;
 		}
-		if (!DimensionManager.isDimensionRegistered(dimId)) { DimensionManager.registerDimension(dimId, getDimensionType(dimId, null)); }
+		if (!DimensionManager.isDimensionRegistered(dimId)) { registerDimension(dimId, getDimensionType(dimId, null)); }
 		IDimensionManagerMixin.getUnloadQueue().remove(dimId);
 		toBeDeleted.remove(dimId);
 		syncWithClients();

@@ -105,6 +105,20 @@ public class CustomNpcs {
 	public static int FontSize = 18;
 	@ConfigProp(info = "Font for writing scripts. When set to \"Minecraft\" it will use minecraft fonts, when \"Default\" it will use \"JetBrainsMono\". Can only use fonts installed on <you game dir>/customnpcs/assets/customnpcs/fonts/*.ttf", def = "Default")
 	public static String FontType = "Default";
+	@ConfigProp(info = "Render NPC models without querying the video driver for the bound texture and its size (faster crowds)", def = "true")
+	public static boolean FastNpcRender = true;
+	@ConfigProp(info = "NPC line of sight checks trace only blocks, skipping the unused search for entities on the line", def = "true")
+	public static boolean FastNpcSight = true;
+	@ConfigProp(info = "NPC target search checks faction, job and home distance before the costly line of sight check", def = "true")
+	public static boolean FastNpcTargeting = true;
+	@ConfigProp(info = "Client packets that arrive before the player exists (world join) wait for the player instead of failing", def = "true")
+	public static boolean DeferEarlyPackets = true;
+	@ConfigProp(info = "NPC layers reuse values that do not change within a frame (light, texture names, mod checks)", def = "true")
+	public static boolean FastNpcLayers = true;
+	@ConfigProp(info = "NPC tick skips work with no effect: home height on the client, empty timer lists", def = "true")
+	public static boolean FastNpcTick = true;
+	@ConfigProp(info = "NPC frame skips work with no visible effect: empty custom model layers, repeated list copies", def = "true")
+	public static boolean FastNpcFrame = true;
 	@ConfigProp(info = "Type 0=Normal; 1=Solid; 2=Not show", def = "1", min = "0", max = "1")
 	public static int HeadWearType = 1;
 	@ConfigProp(info = "Enables Ice Melting", def = "true")

@@ -1487,8 +1487,10 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 				}
 			}
 			// fell out of the world
-			startYPos = calculateStartYPos(ais.startPos());
-			if (startYPos < 0.0d && isServerWorld()) { isDead = true; }
+			if (!CustomNpcs.FastNpcTick || isServerWorld()) {
+				startYPos = calculateStartYPos(ais.startPos());
+				if (startYPos < 0.0d && isServerWorld()) { isDead = true; }
+			}
 			// to script event
 			EventHooks.onNPCTick(this);
 		}
@@ -2266,7 +2268,8 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 					ais.directLOS == EnumSeeTarget.REALISTIC;
 			if (isDirect && isPlayerSleeping()) { return false; }
 			if (ais.directLOS != EnumSeeTarget.BLIND) {
-				IRayTraceResults rtrs = Util.instance.rayTraceBlocksAndEntitys(this, rtr.getYaw(), rtr.getPitch(), rtr.getDistance());
+				IRayTraceResults rtrs = CustomNpcs.FastNpcSight ? Util.instance.rayTraceBlocks(this, rtr.getYaw(), rtr.getPitch(), rtr.getDistance())
+						: Util.instance.rayTraceBlocksAndEntitys(this, rtr.getYaw(), rtr.getPitch(), rtr.getDistance());
 				if (rtrs != null) {
 					for (DataBlock db : rtrs.getMCBlocks()) {
 						if (!db.state.getBlock().isPassable(world, db.pos) ||

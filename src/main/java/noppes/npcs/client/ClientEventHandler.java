@@ -545,7 +545,7 @@ public class ClientEventHandler extends Gui {
 	@SubscribeEvent
 	public <T extends EntityLivingBase> void cnpcPostLivingEvent(RenderLivingEvent.Post<T> event) {
 		CustomNpcs.debugData.start(null);
-		if (event.getEntity().isEntityAlive()) {
+		if ((!CustomNpcs.FastNpcFrame || MarkData.anyMarks) && event.getEntity().isEntityAlive()) {
 			MarkData data = MarkData.get(event.getEntity());
 			for (MarkData.Mark m : data.marks) {
 				if (m.getType() != 0 && m.availability.isAvailable(Minecraft.getMinecraft().player)) {
