@@ -7,7 +7,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.DimensionManager;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.entity.data.role.ITransportLocation;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 
 public class TransportLocation implements ITransportLocation {
 

@@ -10,7 +10,6 @@ import java.util.Arrays;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.entity.EntityNPCInterface;
 
@@ -108,9 +107,8 @@ public class NoppesStringUtils {
 		return s.toString();
 	}
 
-	@SuppressWarnings("unused")
 	public static String cleanResource(String s) {
-		if (CustomNpcs.FastNpcLayers && isCleanResource(s)) { return s; }
+		if (isCleanResource(s)) { return s; }
 		return s.toLowerCase().replaceAll("[^a-z0-9_.\\-/:]", "");
 	}
 

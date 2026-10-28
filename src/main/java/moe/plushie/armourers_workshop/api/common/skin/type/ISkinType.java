@@ -9,10 +9,9 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
- * 
  * @author RiskyKen
- *
  */
+@SuppressWarnings("unused")
 public interface ISkinType {
 
 	/**
@@ -20,10 +19,10 @@ public interface ISkinType {
 	 * 
 	 * @return Is enabled?
 	 */
-	public boolean enabled();
+    boolean enabled();
 
 	@SideOnly(Side.CLIENT)
-	public ResourceLocation getIcon();
+	ResourceLocation getIcon();
 
 	/**
 	 * This only exists for backwards compatibility with old world saves. Just
@@ -31,9 +30,9 @@ public interface ISkinType {
 	 * 
 	 * @return name
 	 */
-	public String getName();
+	String getName();
 
-	public ArrayList<ISkinProperty<?>> getProperties();
+	ArrayList<ISkinProperty<?>> getProperties();
 
 	/**
 	 * Gets the name this skin will be registered with. Armourer's Workshop uses the
@@ -42,12 +41,12 @@ public interface ISkinType {
 	 * 
 	 * @return registryName
 	 */
-	public String getRegistryName();
+	String getRegistryName();
 
-	public ArrayList<ISkinPartType> getSkinParts();
+	ArrayList<ISkinPartType> getSkinParts();
 
 	@SideOnly(Side.CLIENT)
-	public ResourceLocation getSlotIcon();
+	ResourceLocation getSlotIcon();
 
 	/**
 	 * If this skin is for vanilla armour return the slot id here, otherwise return
@@ -55,29 +54,26 @@ public interface ISkinType {
 	 * 
 	 * @return slotId
 	 */
-	public int getVanillaArmourSlotId();
+	int getVanillaArmourSlotId();
 
-	public boolean haveBoundsChanged(ISkinProperties skinPropsOld, ISkinProperties skinPropsNew);
+	boolean haveBoundsChanged(ISkinProperties skinPropsOld, ISkinProperties skinPropsNew);
 
 	/**
 	 * Should this skin be hidden from the user?
 	 * 
 	 * @return Is hidden?
 	 */
-	public boolean isHidden();
+	boolean isHidden();
 
 	/**
 	 * Should the helper check box be shown in the armourer and mini armourer.
-	 * 
-	 * @return
 	 */
-	public boolean showHelperCheckbox();
+	boolean showHelperCheckbox();
 
 	/**
 	 * Should the show skin overlay check box be shown in the armourer and mini
 	 * armourer.
-	 * 
-	 * @return
 	 */
-	public boolean showSkinOverlayCheckbox();
+	boolean showSkinOverlayCheckbox();
+
 }

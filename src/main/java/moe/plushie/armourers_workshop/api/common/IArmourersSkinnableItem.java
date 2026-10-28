@@ -2,7 +2,9 @@ package moe.plushie.armourers_workshop.api.common;
 
 import moe.plushie.armourers_workshop.api.common.skin.type.ISkinType;
 
+@SuppressWarnings("unused")
 public interface IArmourersSkinnableItem {
 
-	public boolean isSkinValidForItem(ISkinType skinType);
+	boolean isSkinValidForItem(ISkinType skinType);
+
 }

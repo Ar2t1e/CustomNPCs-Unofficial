@@ -5,7 +5,6 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.recipebook.GuiButtonRecipe;
 import net.minecraft.client.gui.recipebook.RecipeList;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.network.chat.Component;
@@ -15,6 +14,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.common.crafting.IShapedRecipe;
 import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.mixin.client.gui.IGuiButton;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -77,9 +77,7 @@ public class GuiButtonRecipeMixin {
             // vanilla
             if (!GuiScreen.isCtrlKeyDown()) { time += partialTicks; }
             ((IGuiButton) this).setHovered(mouseX >= parent.x && mouseY >= parent.y && mouseX < parent.x + parent.width && mouseY < parent.y + parent.height);
-            RenderHelper.enableGUIStandardItemLighting();
             mc.getTextureManager().bindTexture(RECIPE_BOOK);
-            GlStateManager.disableLighting();
             int i = 29;
             if (!list.containsCraftableRecipes() || !npcRecipe.availability.isAvailable(mc.player)) { i += 25; }
             int j = 206;
@@ -98,13 +96,11 @@ public class GuiButtonRecipeMixin {
             ItemStack itemstack = listOrderedRecipes.get(currentIndex).getRecipeOutput();
             int k = 4;
             if (list.hasSingleResultItem() && listOrderedRecipes.size() > 1) {
-                mc.getRenderItem().renderItemAndEffectIntoGUI(itemstack, parent.x + k + 1, parent.y + k + 1);
+                GuiBasic.renderStackInGUI(itemstack, parent.x + k + 1, parent.y + k + 1, 0.0f, 1.0f, "");
                 --k;
             }
-            mc.getRenderItem().renderItemAndEffectIntoGUI(itemstack, parent.x + k, parent.y + k);
+            GuiBasic.renderStackInGUI(itemstack, parent.x + k, parent.y + k, 0.0f, 1.0f, "");
             if (isAnimated) { GlStateManager.popMatrix(); }
-            GlStateManager.enableLighting();
-            RenderHelper.disableStandardItemLighting();
         }
     }
 

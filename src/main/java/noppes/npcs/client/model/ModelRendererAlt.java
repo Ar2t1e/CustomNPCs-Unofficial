@@ -76,7 +76,6 @@ public class ModelRendererAlt
 
 	public boolean smallArms;
 	public boolean isAnimPart;
-	public static boolean childrenOnce = true;
 	private float r = 1.0f;
 	private float g = 1.0f;
 	private float b = 1.0f;
@@ -313,9 +312,11 @@ public class ModelRendererAlt
 	private void simpleDraw(float scale) {
 		if (displayList > 0) {
 			GlStateManager.callList(displayList);
-			if (childModels != null && !(CustomNpcs.FastNpcFrame && childrenOnce)) {
+			/*
+			if (childModels != null) {
 				for (ModelRenderer childModel : childModels) { childModel.render(scale); }
 			}
+			/**/
 			return;
 		}
 		vs.put(0, new PositionTextureVertex(x, y, z, 0.0F, 0.0F));

@@ -1,8 +1,10 @@
 package moe.plushie.armourers_workshop.api.common.skin.data;
 
+@SuppressWarnings("unused")
 public interface ISkinDescriptor {
 
-	public ISkinIdentifier getIdentifier();
+	ISkinIdentifier getIdentifier();
 
-	public ISkinDye getSkinDye();
+	ISkinDye getSkinDye();
+
 }

@@ -34,6 +34,7 @@ public class PlayerMail implements IInventory, IPlayerMail {
 	public int questId = -1;
 	public int ransom = 0;
 	public int money = 0;
+	public int donat = 0;
 	public boolean beenRead = false;
 	public boolean returned = false;
 	public String sender = "";
@@ -48,6 +49,7 @@ public class PlayerMail implements IInventory, IPlayerMail {
 		questId = -1;
 		items.clear();
 		money = 0;
+		donat = 0;
 		ransom = 0;
 		for (String key : message.getKeySet()) { message.removeTag(key); }
 		timeWhenReceived = System.currentTimeMillis();
@@ -70,6 +72,7 @@ public class PlayerMail implements IInventory, IPlayerMail {
 			if (j < items.size()) { items.set(j, new ItemStack(nbt)); }
 		}
 		money = compound.getInteger("Money");
+		donat = compound.getInteger("Donat");
 		ransom = compound.getInteger("Ransom");
 	}
 
@@ -95,6 +98,7 @@ public class PlayerMail implements IInventory, IPlayerMail {
 		}
 		compound.setTag("MailItems", list);
 		compound.setInteger("Money", money);
+		compound.setInteger("Donat", donat);
 		compound.setInteger("Ransom", ransom);
 		return compound;
 	}
@@ -195,6 +199,12 @@ public class PlayerMail implements IInventory, IPlayerMail {
 
 	@Override
 	public void setMoney(int moneyIn) { money = ValueUtil.correctInt(moneyIn, 0, Integer.MAX_VALUE); }
+
+	@Override
+	public int getDonat() { return donat; }
+
+	@Override
+	public void setDonat(int donatIn) { donat = ValueUtil.correctInt(donatIn, 0, Integer.MAX_VALUE); }
 
 	@Override
 	public int getRansom() { return ransom; }

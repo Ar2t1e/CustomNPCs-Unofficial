@@ -1,7 +1,6 @@
 package noppes.npcs.client.layer;
 
 import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
-import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
@@ -62,7 +61,7 @@ public class LayerCustomArmor<T extends ModelBiped> extends LayerArmorBase<T> {
 
 	@SuppressWarnings("all")
 	protected void renderArmorLayer(EntityLivingBase entityLivingBaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale, EntityEquipmentSlot slotIn) {
-		boolean isAWLoad = ArmourersWorkshopUtil.isAvailable();
+		boolean isAWLoad = ArmourersWorkshopApi.isAvailable();
 		if (isAWLoad && entityLivingBaseIn instanceof EntityNPCInterface) {
 			modelAW.setSlot(slotIn);
 			modelAW.setModelAttributes(renderer.getMainModel());
@@ -76,11 +75,11 @@ public class LayerCustomArmor<T extends ModelBiped> extends LayerArmorBase<T> {
 		ItemArmor itemarmor = (ItemArmor) itemstack.getItem();
 		if (itemarmor.getEquipmentSlot() != slotIn) { return; }
 
-		T t = (T) getModelFromSlot(slotIn);
-		t = (T) getArmorModelHook(entityLivingBaseIn, itemstack, slotIn, (ModelBiped) t);
+		T t = getModelFromSlot(slotIn);
+		t = getArmorModelHook(entityLivingBaseIn, itemstack, slotIn, t);
 		t.setModelAttributes(renderer.getMainModel());
 		t.setLivingAnimations(entityLivingBaseIn, limbSwing, limbSwingAmount, partialTicks);
-		setModelSlotVisible((ModelBiped) t, slotIn);
+		setModelSlotVisible(t, slotIn);
 		renderer.bindTexture(getArmorResource(entityLivingBaseIn, itemstack, slotIn, null));
 		if (t instanceof ModelBipedAlt) { ((ModelBipedAlt) t).setSlot(slotIn); }
 		if (itemarmor.hasOverlay(itemstack)) { // Allow this for anything, not only cloth

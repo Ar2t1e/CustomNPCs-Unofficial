@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.*;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -66,16 +65,16 @@ public class GuiLog extends GuiNPCInterface
 		implements IGuiData, ISliderListener, ITextfieldListener {
 
 	protected static final Map<Integer, ResourceLocation> ql = new TreeMap<>();
-	protected static final ResourceLocation bookGuiTextures = new ResourceLocation("textures/gui/book.png");
 	protected static final ResourceLocation killIcon = new ResourceLocation("textures/entity/skeleton/skeleton.png");
+	public static final ResourceLocation BOOK_TEXTURE = new ResourceLocation("textures/gui/book.png");
 	public static float scaleW;
 	public static float scaleH;
 	public static int fontHeight = ClientProxy.LogFont.getHeight();
 	protected static ScaledResolution sw;
 
 	static {
-		GuiLog.ql.clear();
-		for (int i = 0; i < 6; i++) { GuiLog.ql.put(i,
+		ql.clear();
+		for (int i = 0; i < 6; i++) { ql.put(i,
 				new ResourceLocation(CustomNpcs.MODID, "textures/quest/log/q_log_" + i + ".png")); }
 	}
 
@@ -519,15 +518,8 @@ public class GuiLog extends GuiNPCInterface
 				}
 			}
 			if (hover) { hoverButton = i; }
-			mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+			mc.getTextureManager().bindTexture(ql.get(4));
 			drawTexturedModalRect(0, 0, 0, hover || offset ? 30 : 60, 28, 30);
-
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(6.0f, 8.0f, 0.0f);
-			zLevel = 100.0f;
-			itemRender.zLevel = 100.0f;
-			GlStateManager.enableLighting();
-			GlStateManager.enableRescaleNormal();
 			ItemStack stack;
 			switch (i) {
 				case 1: stack = new ItemStack(Items.BANNER, 1, 1); break;
@@ -535,14 +527,7 @@ public class GuiLog extends GuiNPCInterface
 				case 3: stack = new ItemStack(Items.COMPASS); break;
 				default: stack = new ItemStack(Blocks.CRAFTING_TABLE); break;
 			}
-			RenderHelper.enableGUIStandardItemLighting();
-			itemRender.renderItemAndEffectIntoGUI(stack, 0, 0);
-			itemRender.renderItemOverlayIntoGUI(mc.fontRenderer, stack, 6, 8, null);
-			RenderHelper.disableStandardItemLighting();
-			GlStateManager.disableLighting();
-			itemRender.zLevel = 0.0f;
-			zLevel = 0.0f;
-			GlStateManager.popMatrix();
+			renderStackInGUI(stack, 0, 0, 0.0f, 1.0f, null);
 		}
 		GlStateManager.popMatrix();
 
@@ -550,9 +535,9 @@ public class GuiLog extends GuiNPCInterface
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(guiLeft, guiTopLog, 0.0f);
 		GlStateManager.scale(scaleW, scaleH, 1.0f);
-		mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+		mc.getTextureManager().bindTexture(ql.get(0));
 		drawTexturedModalRect(0, 0, 0, 0, 256, 175);
-		mc.getTextureManager().bindTexture(GuiLog.ql.get(1));
+		mc.getTextureManager().bindTexture(ql.get(1));
 		drawTexturedModalRect(0, 0, 0, 0, 256, 175);
 		GlStateManager.popMatrix();
 
@@ -698,7 +683,7 @@ public class GuiLog extends GuiNPCInterface
 				if (isMouseHover(mouseX, mouseY, (int) (guiLLeft - 5.0f * scaleW), (int) (guiLTop + 160.0f * scaleH), 18, 10)) {
 					hoverButton = 5;
 				} // pre cat list;
-				mc.getTextureManager().bindTexture(GuiLog.bookGuiTextures);
+				mc.getTextureManager().bindTexture(BOOK_TEXTURE);
 				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 				drawTexturedModalRect(0, 0, hoverButton == 5 ? 26 : 3, 207, 18, 10);
 				GlStateManager.popMatrix();
@@ -709,7 +694,7 @@ public class GuiLog extends GuiNPCInterface
 				if (isMouseHover(mouseX, mouseY, (int) (guiLeft + 230.0f * scaleW), (int) (guiLTop + 160.0f * scaleH), 18, 10)) {
 					hoverButton = 4;
 				} // next cat list;
-				mc.getTextureManager().bindTexture(GuiLog.bookGuiTextures);
+				mc.getTextureManager().bindTexture(BOOK_TEXTURE);
 				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 				drawTexturedModalRect(0, 0, hoverButton == 4 ? 26 : 3, 194, 18, 10);
 				GlStateManager.popMatrix();
@@ -737,7 +722,7 @@ public class GuiLog extends GuiNPCInterface
 				drawGradientRect(1, 1, 90, 12, 0x20FF0000, 0x80FF0000);
 				GlStateManager.popMatrix();
 			}
-			mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+			mc.getTextureManager().bindTexture(ql.get(4));
 			Color c = new Color(f.color);
 			GlStateManager.color(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1.0f);
 
@@ -844,7 +829,7 @@ public class GuiLog extends GuiNPCInterface
 
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(guiLeft, guiTopLog + 23.5f * scaleH, 0.0f);
-		mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+		mc.getTextureManager().bindTexture(ql.get(4));
 		if (catRow > 0) { // pre Cats
 			if (isMouseHover(mouseX, mouseY, guiLeft - (int) (17.0f * scaleW), (int) (guiTopLog + 7.5f * scaleH), (int) (18.0f * scaleW), (int) (16.0f * scaleH))) {
 				hoverButton = 16;
@@ -874,7 +859,7 @@ public class GuiLog extends GuiNPCInterface
 				continue;
 			}
 			int catW = ClientProxy.LogFont.width(catName) + 10 + i;
-			mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+			mc.getTextureManager().bindTexture(ql.get(4));
 			if (isMouseHover(mouseX, mouseY, guiLeft + (int) ((5 - catW) * scaleW), (int) (guiTopLog + (23.5f + i * 16.0f) * scaleH), (int) (catW * scaleH), (int) (16.0f * scaleH))) {
 				hoverButton = 7 + i;
 			} // 7/15-tab categories;
@@ -928,7 +913,7 @@ public class GuiLog extends GuiNPCInterface
 						ResourceLocation location = EntityList.getKey(activeQuest.npc);
 						if (location != null) { modelName = location.toString(); }
 					}
-					float[] offsets = GuiLog.preDrawEntity(modelName, activeQuest.npc);
+					float[] offsets = preDrawEntity(modelName, activeQuest.npc);
 					drawNpc(activeQuest.npc, (int) (74.0f * scaleW + offsets[0]),
 							70 + (int) (41.0f * scaleH + offsets[1]),
 							offsets[2], 30, 0, 1);
@@ -941,7 +926,7 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.scale(scaleW, scaleH, 1.0f);
 					GlStateManager.enableBlend();
 					GlStateManager.color(3.0f, 3.0f, 3.0f, 1.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+					mc.getTextureManager().bindTexture(ql.get(4));
 					drawTexturedModalRect(0, 0, 193, 0, 63, 52);
 					GlStateManager.popMatrix();
 				}
@@ -984,20 +969,7 @@ public class GuiLog extends GuiNPCInterface
 								if (isMouseHover(mouseX, mouseY, guiLLeft + pos + xPos, guiLTop + yPos, size, size)) {
 									setHoverText(stack.getTooltip(player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL));
 								}
-								GlStateManager.pushMatrix();
-								GlStateManager.translate(pos + xPos, yPos, 0.0f);
-								GlStateManager.scale(scale, scale, scale);
-								zLevel = 100.0f;
-								itemRender.zLevel = 100.0f;
-								GlStateManager.enableLighting();
-								GlStateManager.enableRescaleNormal();
-								RenderHelper.enableGUIStandardItemLighting();
-								itemRender.renderItemAndEffectIntoGUI(stack, 0, 0);
-								RenderHelper.disableStandardItemLighting();
-								GlStateManager.disableLighting();
-								itemRender.zLevel = 0.0f;
-								zLevel = 0.0f;
-								GlStateManager.popMatrix();
+								renderStackInGUI(stack, pos + xPos, yPos, 0.0f, scale, "");
 								j++;
 							}
 							line = preText + stackText + postText;
@@ -1040,7 +1012,7 @@ public class GuiLog extends GuiNPCInterface
 				GlStateManager.enableBlend();
 				GlStateManager.translate(guiLLeft - 5.0f * scaleW, guiLTop + 160.0f * scaleH, 0.0f);
 				if (isMouseHover(mouseX, mouseY, (int) (guiLLeft - 5.0f * scaleW), (int) (guiLTop + 160.0f * scaleH), 18, 10)) { hoverButton = 5; } // pre cat list;
-				mc.getTextureManager().bindTexture(GuiLog.bookGuiTextures);
+				mc.getTextureManager().bindTexture(BOOK_TEXTURE);
 				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 				drawTexturedModalRect(0, 0, hoverButton == 5 ? 26 : 3, 207, 18, 10);
 				GlStateManager.popMatrix();
@@ -1050,7 +1022,7 @@ public class GuiLog extends GuiNPCInterface
 				GlStateManager.enableBlend();
 				GlStateManager.translate(guiLeft + 230.0f * scaleW, guiLTop + 160.0f * scaleH, 0.0f);
 				if (isMouseHover(mouseX, mouseY, (int) (guiLeft + 230.0f * scaleW), (int) (guiLTop + 160.0f * scaleH), 18, 10)) { hoverButton = 4; } // next cat list;
-				mc.getTextureManager().bindTexture(GuiLog.bookGuiTextures);
+				mc.getTextureManager().bindTexture(BOOK_TEXTURE);
 				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 				drawTexturedModalRect(0, 0, hoverButton == 4 ? 26 : 3, 194, 18, 10);
 				GlStateManager.popMatrix();
@@ -1066,7 +1038,7 @@ public class GuiLog extends GuiNPCInterface
 						18, 10)) {
 					hoverButton = 5;
 				} // pre cat list;
-				mc.getTextureManager().bindTexture(GuiLog.bookGuiTextures);
+				mc.getTextureManager().bindTexture(BOOK_TEXTURE);
 				drawTexturedModalRect(0, 0, hoverButton == 5 ? 26 : 3, 207, 18, 10);
 				GlStateManager.popMatrix();
 			}
@@ -1077,7 +1049,7 @@ public class GuiLog extends GuiNPCInterface
 						18, 10)) {
 					hoverButton = 4;
 				} // next cat list;
-				mc.getTextureManager().bindTexture(GuiLog.bookGuiTextures);
+				mc.getTextureManager().bindTexture(BOOK_TEXTURE);
 				GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 				drawTexturedModalRect(0, 0, hoverButton == 4 ? 26 : 3, 194, 18, 10);
 				GlStateManager.popMatrix();
@@ -1099,7 +1071,7 @@ public class GuiLog extends GuiNPCInterface
 
 				GlStateManager.color(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f,
 						1.0f);
-				mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+				mc.getTextureManager().bindTexture(ql.get(4));
 				GlStateManager.pushMatrix();
 				GlStateManager.scale(scaleW, scaleH, 1.0f);
 				drawTexturedModalRect(0, 0, 0, 0, 98, 30);
@@ -1130,7 +1102,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 						xo = (int) ((System.currentTimeMillis() % 5000) / 1000) * 9 + 9;
 					}
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+					mc.getTextureManager().bindTexture(ql.get(4));
 					if (isMouseHover(mouseX, mouseY, qxPos + (int) (87.0f * scaleW), qyPos + (int) (19.0f * scaleH),
 							(int) (9.0f * scaleW), (int) (9.0f * scaleH))) {
 						hoverButton = 30;
@@ -1150,7 +1122,7 @@ public class GuiLog extends GuiNPCInterface
 						drawGradientRect(1, 1, 8, 8, 0x20FF0000, 0x80FF0000);
 						GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 					}
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+					mc.getTextureManager().bindTexture(ql.get(4));
 					if (isMouseHover(mouseX, mouseY, qxPos + (int) ((87.0f - (hasExtraButton ? 9.0f : 0.0f)) * scaleW),
 							qyPos + (int) (19.0f * scaleH), (int) (9.0f * scaleW), (int) (9.0f * scaleH))) {
 						hoverButton = 31;
@@ -1173,7 +1145,7 @@ public class GuiLog extends GuiNPCInterface
 						drawGradientRect(1, 1, 8, 8, 0x20FF0000, 0x80FF0000);
 						GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 					}
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+					mc.getTextureManager().bindTexture(ql.get(4));
 					if (isMouseHover(mouseX, mouseY,
 							qxPos + (int) (v
 									* scaleW),
@@ -1286,7 +1258,7 @@ public class GuiLog extends GuiNPCInterface
 			else if (cos > 1.0f) { cos = 1.0f; }
 			switch (step) {
 				case 0: {
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(2));
+					mc.getTextureManager().bindTexture(ql.get(2));
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiCenter + (1.0f - cos) * (guiCenter + 50.0f),
 							guiTopLog + (1.0f - cos) * 250.0f, 0.0f);
@@ -1307,7 +1279,7 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiCenter, guiTopLog, 0.0f);
 					GlStateManager.scale(scaleW, scaleH, 1.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+					mc.getTextureManager().bindTexture(ql.get(0));
 					drawTexturedModalRect(0, 0, 128, 0, 128, 175);
 					GlStateManager.popMatrix();
 					// left
@@ -1324,7 +1296,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter, guiTopLog, 0.0f);
 						GlStateManager.scale(1.0f - cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(2));
+						mc.getTextureManager().bindTexture(ql.get(2));
 						drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 					} else {
 						part = (float) tick + partialTicks;
@@ -1337,7 +1309,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter - cos * width / 2.0f, guiTopLog, 0.0f);
 						GlStateManager.scale(cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+						mc.getTextureManager().bindTexture(ql.get(0));
 						drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 					}
 					GlStateManager.popMatrix();
@@ -1352,10 +1324,10 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiLeft, guiTopLog, 0.0f);
 					GlStateManager.scale(scaleW, scaleH, 1.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+					mc.getTextureManager().bindTexture(ql.get(0));
 					drawTexturedModalRect(0, 0, 0, 0, 256, 175);
 					if (temp > 0) {
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(1));
+						mc.getTextureManager().bindTexture(ql.get(1));
 						drawTexturedModalRect(0, 0, 0, 0, 256, 175);
 					}
 					GlStateManager.popMatrix();
@@ -1374,7 +1346,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter, guiTopLog, 0.0f);
 						GlStateManager.scale(1.0f - cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(3));
+						mc.getTextureManager().bindTexture(ql.get(3));
 						drawTexturedModalRect(0, 0, 128, 0, 128, 175);
 					} else {
 						part = (float) tick + partialTicks;
@@ -1387,7 +1359,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter - cos * width / 2.0f, guiTopLog, 0.0f);
 						GlStateManager.scale(cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(3));
+						mc.getTextureManager().bindTexture(ql.get(3));
 						drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 					}
 					GlStateManager.popMatrix();
@@ -1415,7 +1387,7 @@ public class GuiLog extends GuiNPCInterface
 					// Tabs
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiLeft + 10, guiTop + (1.0f - cos) * 28.0f, 0.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+					mc.getTextureManager().bindTexture(ql.get(4));
 					drawTexturedModalRect(0, 0, 0, 30, 28, 30);
 					GlStateManager.translate(33.0f, 0.0f, 0.0f);
 					drawTexturedModalRect(0, 0, 0, 30, 28, 30);
@@ -1430,9 +1402,9 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiLeft, guiTopLog, 0.0f);
 					GlStateManager.scale(scaleW, scaleH, 1.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+					mc.getTextureManager().bindTexture(ql.get(0));
 					drawTexturedModalRect(0, 0, 0, 0, 256, 175);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(1));
+					mc.getTextureManager().bindTexture(ql.get(1));
 					drawTexturedModalRect(0, 0, 0, 0, 256, 175);
 					GlStateManager.popMatrix();
 
@@ -1447,11 +1419,11 @@ public class GuiLog extends GuiNPCInterface
 					if (!categories.isEmpty()) {
 						GlStateManager.pushMatrix();
 						GlStateManager.translate(guiLeft, guiTopLog + 23.5f * scaleH, 0.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+						mc.getTextureManager().bindTexture(ql.get(4));
 						int i = 0, p = 0;
 						for (String catName : categories.keySet()) {
 							int catW = (int) ((ClientProxy.LogFont.width(catName) + 10 + i) * cos);
-							mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+							mc.getTextureManager().bindTexture(ql.get(4));
 							if (isMouseHover(mouseX, mouseY, guiLeft + (int) ((5 - catW) * scaleW),
 									(int) (guiTopLog + (23.5f + i * 16.0f) * scaleH), (int) (catW * scaleH),
 									(int) (16.0f * scaleH))) {
@@ -1516,7 +1488,7 @@ public class GuiLog extends GuiNPCInterface
 								continue;
 							}
 							int catW = (int) ((ClientProxy.LogFont.width(catName) + 10) * (1.0f - cos));
-							mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+							mc.getTextureManager().bindTexture(ql.get(4));
 							drawTexturedModalRect(5 - catW, i * 16, 0, 90 + (catSelect == p ? 0 : 16), catW, 16);
 							StringBuilder name = new StringBuilder();
 							for (int j = 0; j < catName.length(); j++) {
@@ -1591,7 +1563,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter, guiTopLog, 0.0f);
 						GlStateManager.scale(1.0f - cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(3));
+						mc.getTextureManager().bindTexture(ql.get(3));
 						drawTexturedModalRect(0, 0, 128, 0, 128, 175);
 					} else {
 						part = (float) tick + partialTicks;
@@ -1604,7 +1576,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter - cos * width / 2.0f, guiTopLog, 0.0f);
 						GlStateManager.scale(cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(3));
+						mc.getTextureManager().bindTexture(ql.get(3));
 						drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 					}
 					GlStateManager.popMatrix();
@@ -1637,7 +1609,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter - (1.0f - cos) * width / 2.0f, guiTopLog, 0.0f);
 						GlStateManager.scale((1.0f - cos), 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(3));
+						mc.getTextureManager().bindTexture(ql.get(3));
 						drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 					} else {
 						part = (float) tick + partialTicks;
@@ -1650,7 +1622,7 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(guiCenter, guiTopLog, 0.0f);
 						GlStateManager.scale(cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(3));
+						mc.getTextureManager().bindTexture(ql.get(3));
 						drawTexturedModalRect(0, 0, 128, 0, 128, 175);
 					}
 					GlStateManager.popMatrix();
@@ -1670,7 +1642,7 @@ public class GuiLog extends GuiNPCInterface
 					// Tabs
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiLeft + 10, guiTop + cos * 28.0f, 0.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(4));
+					mc.getTextureManager().bindTexture(ql.get(4));
 					drawTexturedModalRect(0, 0, 0, 30, 28, 30);
 					GlStateManager.translate(33.0f, 0.0f, 0.0f);
 					drawTexturedModalRect(0, 0, 0, 30, 28, 30);
@@ -1685,9 +1657,9 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiLeft, guiTopLog, 0.0f);
 					GlStateManager.scale(scaleW, scaleH, 1.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+					mc.getTextureManager().bindTexture(ql.get(0));
 					drawTexturedModalRect(0, 0, 0, 0, 256, 175);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(1));
+					mc.getTextureManager().bindTexture(ql.get(1));
 					drawTexturedModalRect(0, 0, 0, 0, 256, 175);
 					GlStateManager.popMatrix();
 					if (tick == 0) {
@@ -1700,7 +1672,7 @@ public class GuiLog extends GuiNPCInterface
 					// left
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiCenter - 64.0f * cos, guiTopLog, 0.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+					mc.getTextureManager().bindTexture(ql.get(0));
 					GlStateManager.scale(scaleW, scaleH, 1.0f);
 					drawTexturedModalRect(0, 0, 128, 0, 128, 175);
 					GlStateManager.popMatrix();
@@ -1716,10 +1688,10 @@ public class GuiLog extends GuiNPCInterface
 						GlStateManager.translate(-128.0f * (1.0d - cos), 0.0f, 0.0f);
 						GlStateManager.scale(1.0f - cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(0));
+						mc.getTextureManager().bindTexture(ql.get(0));
 						drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 						if (temp > 0) {
-							mc.getTextureManager().bindTexture(GuiLog.ql.get(1));
+							mc.getTextureManager().bindTexture(ql.get(1));
 							drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 						}
 					} else {
@@ -1732,7 +1704,7 @@ public class GuiLog extends GuiNPCInterface
 						}
 						GlStateManager.scale(cos, 1.0f, 1.0f);
 						GlStateManager.scale(scaleW, scaleH, 1.0f);
-						mc.getTextureManager().bindTexture(GuiLog.ql.get(2));
+						mc.getTextureManager().bindTexture(ql.get(2));
 						drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 					}
 					GlStateManager.popMatrix();
@@ -1750,7 +1722,7 @@ public class GuiLog extends GuiNPCInterface
 					GlStateManager.pushMatrix();
 					GlStateManager.translate(guiCenter - 64.0f + cos * (guiCenter + 50.0f), guiTopLog + cos * 250.0f, 0.0f);
 					GlStateManager.scale(scaleW, scaleH, 1.0f);
-					mc.getTextureManager().bindTexture(GuiLog.ql.get(2));
+					mc.getTextureManager().bindTexture(ql.get(2));
 					drawTexturedModalRect(0, 0, 0, 0, 128, 175);
 					GlStateManager.popMatrix();
 					if (tick == 0) {
@@ -1806,7 +1778,7 @@ public class GuiLog extends GuiNPCInterface
 		mc.getRenderManager().playerViewY = 180.0f;
 		GlStateManager.scale(25.0f, 25.0f, 25.0f);
 		entity.ticksExisted = 1;
-		GuiLog.preDrawEntity(modelName, entity);
+		preDrawEntity(modelName, entity);
 		mc.getRenderManager().renderEntity(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f, false);
 		GlStateManager.disableRescaleNormal();
 		GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
@@ -1998,17 +1970,17 @@ public class GuiLog extends GuiNPCInterface
 		if (type != 2) { return; }
 		switch (slider.id) {
 			case 0: {
-				compassData.scale = Math.round((slider.sliderValue + 0.5f) * 100.0f) / 100.0f;
+				compassData.scale = Math.round((slider.getValue() + 0.5f) * 100.0f) / 100.0f;
 				slider.setString(("" + compassData.scale).replace(".", ","));
 				break;
 			}
 			case 1: {
-				compassData.incline = Math.round((-45.0f * slider.sliderValue + 22.5f) * 100.0f) / 100.0f;
+				compassData.incline = Math.round((-45.0f * slider.getValue() + 22.5f) * 100.0f) / 100.0f;
 				slider.setString(("" + (45.0f + compassData.incline * -1.0f)).replace(".", ","));
 				break;
 			}
 			case 2: {
-				compassData.rot = Math.round((60.0f * slider.sliderValue - 30.0f) * 100.0f) / 100.0f;
+				compassData.rot = Math.round((60.0f * slider.getValue() - 30.0f) * 100.0f) / 100.0f;
 				slider.setString(("" + compassData.rot).replace(".", ","));
 				break;
 			}
@@ -2111,7 +2083,7 @@ public class GuiLog extends GuiNPCInterface
 				String[] words = text.split(" ");
 				String line = "";
 				String color = ((char) 167) + "r";
-				float width = 98.0f * GuiLog.scaleW;
+				float width = 98.0f * scaleW;
 				for (String word : words) {
 					Label_0236: {
 						if (!word.isEmpty()) {

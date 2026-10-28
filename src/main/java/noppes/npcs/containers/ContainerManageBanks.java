@@ -7,6 +7,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import noppes.npcs.CustomNpcsPermissions;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.data.Bank;
 
 import javax.annotation.Nonnull;

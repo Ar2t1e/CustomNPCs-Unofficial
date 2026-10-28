@@ -4,13 +4,15 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+@SuppressWarnings("unused")
 public interface ISkinInventoryContainer {
 
-	public void clear();
+	void clear();
 
-	public void dropItems(World world, Vec3d pos);
+	void dropItems(World world, Vec3d pos);
 
-	public void readFromNBT(NBTTagCompound compound);
+	void readFromNBT(NBTTagCompound compound);
 
-	public void writeToNBT(NBTTagCompound compound);
+	void writeToNBT(NBTTagCompound compound);
+
 }

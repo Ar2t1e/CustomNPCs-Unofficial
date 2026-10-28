@@ -12,6 +12,7 @@ import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCheckBoxNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.gui.ScaledResolution;
@@ -125,7 +126,9 @@ public class SubGuiNpcQuestExtra extends GuiNPCInterface implements ITextfieldLi
 			GlStateManager.pushMatrix();
 			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 			GlStateManager.translate(0.0f, 0.0f, 200.0f);
-			GuiButtonNop.renderString(name, u, v, u + 63, v +10, CustomNpcs.QuestLogColor.getRGB(), false, true, null);
+			GuiButtonNop.renderString(name, u, v, u + 63, v +10,
+					CustomNpcs.QuestLogColor.getRGB(), false,
+					EnumAlignText.CENTER, false, null);
 			GlStateManager.popMatrix();
 		}
 		// script button

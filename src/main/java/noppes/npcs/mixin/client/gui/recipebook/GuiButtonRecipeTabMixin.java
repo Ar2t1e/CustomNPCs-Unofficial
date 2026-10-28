@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import noppes.npcs.CustomItems;
 import noppes.npcs.client.ClientRegisterEvents;
 import noppes.npcs.controllers.RecipeController;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,12 +26,12 @@ public class GuiButtonRecipeTabMixin {
         GuiButtonRecipeTab parent = (GuiButtonRecipeTab) (Object) this;
         if (category == ClientRegisterEvents.CRAFTING_CUSTOM_GLOBAL_CATEGORY) {
             ci.cancel();
-            renderItem.renderItemAndEffectIntoGUI(category.getIconItemStack(), parent.x + 3, parent.y + 5);
-            renderItem.renderItemAndEffectIntoGUI(new ItemStack(CustomItems.cloner), parent.x + 14, parent.y + 5);
+            GuiBasic.renderStackInGUI(category.getIconItemStack(), parent.x + 3, parent.y + 5, 0.0f, 1.0f, "");
+            GuiBasic.renderStackInGUI(new ItemStack(CustomItems.cloner), parent.x + 14, parent.y + 5, 0.0f, 1.0f, "");
         }
         if (category == ClientRegisterEvents.CRAFTING_CUSTOM_ANVIL_CATEGORY) {
             ci.cancel();
-            renderItem.renderItemAndEffectIntoGUI(category.getIconItemStack(), parent.x + 9, parent.y + 5);
+            GuiBasic.renderStackInGUI(category.getIconItemStack(), parent.x + 9, parent.y + 5, 0.0f, 1.0f, "");
         }
     }
 

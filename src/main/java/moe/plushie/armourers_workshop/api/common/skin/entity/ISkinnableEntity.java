@@ -9,23 +9,25 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SuppressWarnings("unused")
 public interface ISkinnableEntity {
 
 	/** Return the render class for the entity. */
 	@SideOnly(Side.CLIENT)
-	public void addRenderLayer(RenderManager renderManager);
+	void addRenderLayer(RenderManager renderManager);
 
 	/** Should skins be right click-able on this entity? */
-	public boolean canUseSkinsOnEntity();
+	boolean canUseSkinsOnEntity();
 
 	/** Should the wand of style be usable on this entity? */
-	public boolean canUseWandOfStyle(EntityPlayer user);
+	boolean canUseWandOfStyle(EntityPlayer user);
 
 	/** Return the class of the entity to be skinned. */
-	public Class<? extends Entity> getEntityClass();
+	Class<? extends Entity> getEntityClass();
 
-	public int getSlotsForSkinType(ISkinType skinType);
+	int getSlotsForSkinType(ISkinType skinType);
 
 	/** Return a list of skins that are valid for this entity. */
-	public void getValidSkinTypes(ArrayList<ISkinType> skinTypes);
+	void getValidSkinTypes(ArrayList<ISkinType> skinTypes);
+
 }

@@ -117,7 +117,7 @@ public class GuiNpcPather
 					list.set(selected + 1, a);
 					ai.setMovingPath(list);
 					initGui();
-					scroll.setSelectedIndex(selected + 1);
+					scroll.setSelected(selected + 1);
 					break;
 				} // down
 				case 1 : {
@@ -130,7 +130,7 @@ public class GuiNpcPather
 					list.set(selected - 1, a);
 					ai.setMovingPath(list);
 					initGui();
-					scroll.setSelectedIndex(selected - 1);
+					scroll.setSelected(selected - 1);
 					break;
 				} // up
 				case 2 : {

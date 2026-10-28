@@ -13,6 +13,7 @@ import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.PlayerWrapper;
 import noppes.npcs.api.wrapper.gui.CustomGuiWrapper;
 import noppes.npcs.api.wrapper.gui.GuiComponentsScrollableWrapper;
+import noppes.npcs.containers.slots.SlotCustomGui;
 import noppes.npcs.util.CustomNPCsScheduler;
 
 import javax.annotation.Nonnull;

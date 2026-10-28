@@ -18,8 +18,8 @@ public class ContainerBuilderSettings extends Container {
 	public BuilderData builderData;
 	EntityPlayer player;
 
-	public ContainerBuilderSettings(EntityPlayer player, BlockPos pos) {
-		this.player = player;
+	public ContainerBuilderSettings(EntityPlayer playerIn, BlockPos pos) {
+		player = playerIn;
 		BuilderData base = SyncController.dataBuilder.get(pos.getX());
 		
 		if (base != null) { this.builderData = base; }

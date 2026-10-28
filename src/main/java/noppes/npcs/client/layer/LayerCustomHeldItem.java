@@ -51,7 +51,7 @@ public class LayerCustomHeldItem<T extends EntityCustomNpc> extends LayerInterfa
 		ItemStack offhand = flag ? npc.getHeldItemOffhand() : npc.getHeldItemMainhand();
 		boolean showMain = npc.animation.showParts.get(flag ? EnumParts.ARM_RIGHT : EnumParts.ARM_LEFT);
 		boolean showOff = npc.animation.showParts.get(flag ? EnumParts.ARM_LEFT : EnumParts.ARM_RIGHT);
-		boolean isAWShow = ArmourersWorkshopUtil.isAvailable();
+		boolean isAWShow = ArmourersWorkshopApi.isAvailable();
 		if (!isAWShow && mainhand.isEmpty() && offhand.isEmpty()) { return; }
 		boolean isAnimated = npc.animation.isAnimated();
 		if (isAnimated) {

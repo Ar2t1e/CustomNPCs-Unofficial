@@ -68,6 +68,7 @@ import noppes.npcs.client.gui.custom.GuiCustom;
 import noppes.npcs.client.gui.dimentions.GuiCreateDimension;
 import noppes.npcs.client.gui.drop.SubGuiDropEdit;
 import noppes.npcs.client.gui.global.*;
+import noppes.npcs.client.gui.global.GuiNpcManageDropTemplates;
 import noppes.npcs.client.gui.mainmenu.GuiNpcGlobalMainMenu;
 import noppes.npcs.client.gui.mainmenu.GuiNpcInv;
 import noppes.npcs.client.gui.mainmenu.GuiNpcAI;
@@ -81,10 +82,10 @@ import noppes.npcs.client.gui.player.companion.GuiNpcCompanionInv;
 import noppes.npcs.client.gui.player.companion.GuiNpcCompanionStats;
 import noppes.npcs.client.gui.player.companion.GuiNpcCompanionTalents;
 import noppes.npcs.client.gui.questtypes.SubGuiNpcQuestTypeItem;
-import noppes.npcs.client.gui.roles.GuiNpcBankSetup;
+import noppes.npcs.client.gui.roles.SubGuiNpcBankSetup;
 import noppes.npcs.client.gui.roles.GuiNpcFollowerSetup;
 import noppes.npcs.client.gui.roles.GuiNpcItemGiver;
-import noppes.npcs.client.gui.roles.GuiNpcTransporter;
+import noppes.npcs.client.gui.roles.SubGuiNpcTransporter;
 import noppes.npcs.client.gui.script.*;
 import noppes.npcs.client.model.ModelBipedAlt;
 import noppes.npcs.client.model.ModelNPCGolem;
@@ -106,6 +107,7 @@ import noppes.npcs.client.renderer.RenderProjectile;
 import noppes.npcs.client.util.CustomNpcsLangPack;
 import noppes.npcs.client.util.TabRegistry;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
+import noppes.npcs.controllers.data.*;
 import noppes.npcs.mixin.client.particle.IParticleFlameMixin;
 import noppes.npcs.mixin.client.particle.IParticleSmokeNormalMixin;
 import noppes.npcs.mixin.minecraftforge.client.IItemModelMesherForgeMixin;
@@ -115,10 +117,6 @@ import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumQuestTask;
 import noppes.npcs.containers.*;
 import noppes.npcs.controllers.*;
-import noppes.npcs.controllers.data.KeyConfig;
-import noppes.npcs.controllers.data.PlayerData;
-import noppes.npcs.controllers.data.PlayerScriptData;
-import noppes.npcs.controllers.data.Quest;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPC64x32;
 import noppes.npcs.entity.EntityNPCGolem;
@@ -275,24 +273,21 @@ public class ClientProxy extends CommonProxy {
 		if (preEvent.isCanceled()) { return null; }
 		if (preEvent.returnGui != null) { return preEvent.returnGui; }
 		GuiScreen returnGui = null;
-		EntityPlayerSP player = Minecraft.getMinecraft().player;
-		Container container = getContainer(gui, player, buffer.copy());
-		switch (gui) {
+		Minecraft mc = Minecraft.getMinecraft();
+		Container container = getContainer(preEvent.guiType, mc.player, preEvent.buffer.copy());
+		switch (preEvent.guiType) {
 			case AvailabilityStack: returnGui = new SubGuiNpcAvailabilityItemStacks((ContainerNpcAvailabilityItem) container); break;
 			case CustomContainer: returnGui = new GuiCustomContainer((ContainerChestCustom) container); break;
 			case CustomChest: returnGui = new GuiCustomChest((ContainerCustomChest) container); break;
 			case MainMenuDisplay: {
-				if (npc != null) {
-					returnGui = new GuiNpcDisplay(npc);
-					break;
-				}
-				player.sendMessage(Component.translatable("message.unable.find.npc").getParent());
+				if (preEvent.npc != null) { returnGui = new GuiNpcDisplay(preEvent.npc); }
+				else if (mc.player != null) { mc.player.sendMessage(Component.translatable("message.unable.find.npc").getParent()); }
 				break;
 			}
-			case MainMenuStats: returnGui = npc == null ? null : new GuiNpcStats(npc); break;
-			case MainMenuInv: returnGui = new GuiNpcInv(npc, (ContainerNPCInv) container); break;
-			case SetupDrop: returnGui = new SubGuiDropEdit(npc, (ContainerNPCDropSetup) container); break;
-			case MainMenuAdvanced: returnGui = new GuiNpcAdvanced(npc); break;
+			case MainMenuStats: returnGui = preEvent.npc == null ? null : new GuiNpcStats(preEvent.npc); break;
+			case MainMenuInv: returnGui = new GuiNpcInv(preEvent.npc, (ContainerNPCInv) container); break;
+			case SetupDrop: returnGui = new SubGuiDropEdit(preEvent.npc, (ContainerNPCDropSetup) container); break;
+			case MainMenuAdvanced: returnGui = new GuiNpcAdvanced(preEvent.npc); break;
 			case QuestChooseReward: {
 				Quest quest = QuestController.instance.get(preEvent.buffer.readInt());
 				if (quest != null) {
@@ -304,77 +299,77 @@ public class ClientProxy extends CommonProxy {
 				break;
 			}
 			case QuestTypeItem: {
-				Quest quest = NoppesUtilServer.getEditingQuest(player);
-				int id = buffer.readInt();
+				Quest quest = NoppesUtilServer.getEditingQuest(mc.player);
+				int id = preEvent.buffer.readInt();
 				if (quest != null && quest.questInterface.tasks[id].getEnumType() == EnumQuestTask.ITEM || Objects.requireNonNull(quest).questInterface.tasks[id].getEnumType() == EnumQuestTask.CRAFT) {
 					returnGui = new SubGuiNpcQuestTypeItem((ContainerNpcQuestTypeItem) container);
 				}
 				break;
 			}
-			case MovingPath: returnGui = npc == null ? null : new GuiNpcPather(npc); break;
-			case ManageFactions: returnGui = new GuiNpcManageFactions(npc); break;
-			case ManageLinked: returnGui = new GuiNpcManageLinkedNpc(npc); break;
-			case ManageMail: returnGui = new GuiNpcManageMail(npc); break;
+			case MovingPath: returnGui = preEvent.npc == null ? null : new GuiNpcPather(preEvent.npc); break;
+			case ManageFactions: returnGui = new GuiNpcManageFactions(preEvent.npc); break;
+			case ManageLinked: returnGui = new GuiNpcManageLinkedNpc(preEvent.npc); break;
+			case ManageMail: returnGui = new GuiNpcManageMail(preEvent.npc); break;
 			case ManageGame: returnGui = new GuiYellowDialogEditor(); break;
-			case BuilderBlock: returnGui = new GuiBlockBuilder(buffer.readBlockPos()); break;
-			case ManageTransport: returnGui = new GuiNpcManageTransporters(npc, (ContainerNPCTransports) container); break;
-			case ManageRecipes: returnGui = new GuiNpcManageRecipes(npc, (ContainerManageRecipes) container); break;
-			case ManageDialogs: returnGui = new GuiNpcManageDialogs(npc); break;
-			case ManageQuests: returnGui = new GuiNpcManageQuest(npc); break;
-			case ManageBanks: returnGui = new GuiNpcManageBanks(npc, (ContainerManageBanks) container); break;
-			case MainMenuGlobal: returnGui = new GuiNpcGlobalMainMenu(npc); break;
-			case MainMenuAI: returnGui = new GuiNpcAI(npc); break;
+			case BuilderBlock: returnGui = new GuiBlockBuilder(preEvent.buffer.readBlockPos()); break;
+			case ManageTransport: returnGui = new GuiNpcManageTransporters(preEvent.npc, (ContainerNPCTransports) container); break;
+			case ManageRecipes: returnGui = new GuiNpcManageRecipes(preEvent.npc, (ContainerManageRecipes) container); break;
+			case ManageDialogs: returnGui = new GuiNpcManageDialogs(preEvent.npc); break;
+			case ManageQuests: returnGui = new GuiNpcManageQuest(preEvent.npc); break;
+			case ManageBanks: returnGui = new GuiNpcManageBanks(preEvent.npc, (ContainerManageBanks) container); break;
+			case MainMenuGlobal: returnGui = new GuiNpcGlobalMainMenu(preEvent.npc); break;
+			case MainMenuAI: returnGui = new GuiNpcAI(preEvent.npc); break;
 			case PlayerAnvil: returnGui = new GuiNpcCarpentryBench((ContainerCarpentryBench) container); break;
-			case PlayerFollower: returnGui = new GuiNpcFollower(npc, (ContainerNPCFollowerHire) container); break;
-			case PlayerFollowerHire: returnGui = new GuiNpcFollowerHire(npc, (ContainerNPCFollowerHire) container); break;
+			case PlayerFollower: returnGui = new GuiNpcFollower(preEvent.npc, (ContainerNPCFollowerHire) container); break;
+			case PlayerFollowerHire: returnGui = new GuiNpcFollowerHire(preEvent.npc, (ContainerNPCFollowerHire) container); break;
 			case PlayerTrader: returnGui = new GuiNPCTrader((ContainerNPCTrader) container); break;
-			case PlayerBank: returnGui = new GuiNPCBankChest(npc, (ContainerNPCBank) container); break;
-			case PlayerTransporter: returnGui = new GuiTransportSelection(npc); break;
-			case Script: returnGui = new GuiScriptNpc(npc); break;
-			case ScriptBlock: returnGui = new GuiScriptBlock(buffer.readBlockPos()); break;
+			case PlayerBank: returnGui = new GuiNPCBankChest(preEvent.npc, (ContainerNPCBank) container); break;
+			case PlayerTransporter: returnGui = new GuiTransportSelection(preEvent.npc); break;
+			case Script: returnGui = new GuiScriptNpc(preEvent.npc); break;
+			case ScriptBlock: returnGui = new GuiScriptBlock(preEvent.buffer.readBlockPos()); break;
 			case ScriptItem: returnGui = new GuiScriptItem(); break;
-			case ScriptDoor: returnGui = new GuiScriptDoor(buffer.readBlockPos()); break;
+			case ScriptDoor: returnGui = new GuiScriptDoor(preEvent.buffer.readBlockPos()); break;
 			case ScriptPlayers: returnGui = new GuiScriptGlobal(); break;
-			case SetupFollower: returnGui = new GuiNpcFollowerSetup(npc, (ContainerNPCFollowerSetup) container); break;
-			case SetupItemGiver: returnGui = new GuiNpcItemGiver(npc, (ContainerNpcItemGiver) container); break;
+			case SetupFollower: returnGui = new GuiNpcFollowerSetup(preEvent.npc, (ContainerNPCFollowerSetup) container); break;
+			case SetupItemGiver: returnGui = new GuiNpcItemGiver(preEvent.npc, (ContainerNpcItemGiver) container); break;
 			case SetupTrader: {
-				int marcetId = buffer.readInt();
-				int dealId = buffer.readInt();
+				int marcetId = preEvent.buffer.readInt();
+				int dealId = preEvent.buffer.readInt();
 				if (marcetId >= 0) { GuiNpcManageMarkets.marcetId = marcetId; }
 				if (dealId >= 0) { GuiNpcManageMarkets.dealId = dealId; }
-				returnGui = new GuiNpcManageMarkets(npc);
+				returnGui = new GuiNpcManageMarkets(preEvent.npc);
 				break;
 			}
 			case SetupTraderDeal: returnGui = new SubGuiNPCManageDeal((ContainerNPCTraderSetup) container); break;
-			case SetupTransporter: returnGui = new GuiNpcTransporter(npc); break;
-			case SetupBank: returnGui = new GuiNpcBankSetup(npc); break;
+			case SetupTransporter: returnGui = new SubGuiNpcTransporter(preEvent.npc); break;
+			case SetupBank: returnGui = new SubGuiNpcBankSetup(preEvent.npc); break;
 			case NpcRemote: returnGui = Minecraft.getMinecraft().currentScreen == null ? new GuiNpcRemoteEditor() : null; break;
 			case PlayerMailbox: returnGui = new GuiMailbox(); break;
 			case PlayerMailOpen: returnGui = new GuiMailmanWrite((ContainerMail) container); break;
 			case MerchantAdd: returnGui = new GuiMerchantAdd((ContainerMerchantAdd) container); break;
 			case NpcDimensions: returnGui = new GuiNpcDimension(); break;
-			case Border: returnGui = new GuiBorderBlock(buffer.readBlockPos()); break;
-			case Portal: returnGui = new GuiPortalBlock(buffer.readBlockPos()); break;
-			case RedstoneBlock: returnGui = new GuiNpcRedstoneBlock(buffer.readBlockPos()); break;
-			case MobSpawner: returnGui = new GuiNpcMobSpawner(buffer.readBlockPos()); break;
-			case CopyBlock: returnGui = new GuiBlockCopy(buffer.readBlockPos()); break;
+			case Border: returnGui = new GuiBorderBlock(preEvent.buffer.readBlockPos()); break;
+			case Portal: returnGui = new GuiPortalBlock(preEvent.buffer.readBlockPos()); break;
+			case RedstoneBlock: returnGui = new GuiNpcRedstoneBlock(preEvent.buffer.readBlockPos()); break;
+			case MobSpawner: returnGui = new GuiNpcMobSpawner(preEvent.buffer.readBlockPos()); break;
+			case CopyBlock: returnGui = new GuiBlockCopy(preEvent.buffer.readBlockPos()); break;
 			case MobSpawnerMounter: returnGui = new GuiNpcMobSpawnerMounter(); break;
-			case Waypoint: returnGui = new GuiNpcWaypoint(buffer.readBlockPos()); break;
-			case Companion: returnGui = new GuiNpcCompanionStats(npc); break;
-			case CompanionTalent: returnGui = new GuiNpcCompanionTalents(npc); break;
-			case CompanionInv: returnGui = new GuiNpcCompanionInv(npc, (ContainerNPCCompanion) container); break;
-			case NbtBook: returnGui = new GuiNbtBook(buffer.readBlockPos()); break;
+			case Waypoint: returnGui = new GuiNpcWaypoint(preEvent.buffer.readBlockPos()); break;
+			case Companion: returnGui = new GuiNpcCompanionStats(preEvent.npc); break;
+			case CompanionTalent: returnGui = new GuiNpcCompanionTalents(preEvent.npc); break;
+			case CompanionInv: returnGui = new GuiNpcCompanionInv(preEvent.npc, (ContainerNPCCompanion) container); break;
+			case NbtBook: returnGui = new GuiNbtBook(preEvent.buffer.readBlockPos()); break;
 			case CustomGui: returnGui = new GuiCustom((ContainerCustomGui) container); break;
 			case QuestCompleteText: {
 				Quest quest = QuestController.instance.get(preEvent.buffer.readBlockPos().getX());
 				if (quest != null) { returnGui = new GuiQuestCompletion(quest); }
 				break;
 			}
-			case QuestLog: returnGui = new GuiLog(buffer.readInt()); break;
-			case DeadInventory: returnGui = new GuiNPCDeadInventory(npc, (ContainerDead) container); break;
-			case CreationParts: returnGui = new GuiCreationParts(npc); break;
+			case QuestLog: returnGui = new GuiLog(preEvent.buffer.readInt()); break;
+			case DeadInventory: returnGui = new GuiNPCDeadInventory(preEvent.npc, (ContainerDead) container); break;
+			case CreationParts: returnGui = new GuiCreationParts(preEvent.npc); break;
 			// New from Unofficial (BetaZavr)
-			case DimensionSetting: returnGui = new GuiCreateDimension(buffer.readInt()); break;
+			case DimensionSetting: returnGui = new GuiCreateDimension(preEvent.buffer.readInt()); break;
 			case EditClientScript: returnGui = new GuiScriptClient(); break;
 			case PermissionsEdit: returnGui = new GuiPermissionsEdit(); break;
 			case BoundarySetting: returnGui = new GuiBoundarySetting(preEvent.buffer.readBlockPos()); break;
@@ -391,6 +386,25 @@ public class ClientProxy extends CommonProxy {
 				break;
 			}
 			case ManageCustomElements: returnGui = new GuiManageCustomElements(); break;
+			case ManageDropTemplates: returnGui = new GuiNpcManageDropTemplates(preEvent.npc); break;
+			case ManageAuctions: returnGui = new GuiNpcManageAuctions(preEvent.npc); break;
+			case PlayerAuction: {
+				AuctionHouse auction = AuctionController.getInstance().getAuction(preEvent.buffer.readBlockPos().getX());
+				if (auction != null) { returnGui = new GuiNpcAuction(auction); }
+				break;
+			}
+			case PlayerAuctionCreateLot: {
+				if (container instanceof ContainerAuctionCreateLot) {
+					ContainerAuctionCreateLot c = (ContainerAuctionCreateLot) container;
+					if (c.auction != null) { returnGui = new SubGuiNpcAuctionCreateLot(c); }
+				}
+			}
+			case ManageAuctionForbiddenItem: {
+				if (container instanceof ContainerAuctionForbiddenItem) {
+					ContainerAuctionForbiddenItem c = (ContainerAuctionForbiddenItem) container;
+					if (c.auction != null) { returnGui = new SubGuiNpcAuctionForbiddenItem(c); }
+				}
+			}
 			default: { break; }
 		}
 		ClientEvent.PostGetGuiCustomNpcs postEvent = new ClientEvent.PostGetGuiCustomNpcs(preEvent.npc, preEvent.guiType, preEvent.buffer, returnGui);

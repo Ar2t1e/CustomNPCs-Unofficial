@@ -4,13 +4,15 @@ import moe.plushie.armourers_workshop.api.common.skin.Point3D;
 import moe.plushie.armourers_workshop.api.common.skin.type.ISkinPartType;
 import net.minecraft.util.EnumFacing;
 
+@SuppressWarnings("unused")
 public interface ISkinPart {
 
-	public Point3D getMarker(int index);
+	Point3D getMarker(int index);
 
-	public int getMarkerCount();
+	int getMarkerCount();
 
-	public EnumFacing getMarkerSide(int index);
+	EnumFacing getMarkerSide(int index);
 
-	public ISkinPartType getPartType();
+	ISkinPartType getPartType();
+
 }

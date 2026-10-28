@@ -7,6 +7,7 @@ import noppes.npcs.api.wrapper.gui.CustomGuiLabelWrapper;
 import noppes.npcs.client.gui.custom.GuiCustom;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiLabel;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 
 public class CustomGuiLabel extends GuiLabel implements IComponentCustomGui {
 
@@ -30,7 +31,7 @@ public class CustomGuiLabel extends GuiLabel implements IComponentCustomGui {
       enabled = component.getEnabled();
       visible = component.getVisible();
       if (component.hasHoverText()) { hoverText = component.getHoverTextList(); }
-      centered = component.getCentered();
+      alignText = component.getCentered() ? EnumAlignText.CENTER : EnumAlignText.LEFT;
       textColor = component.getColor();
       showShadow = component.isShadow();
       setMessage(Component.translatable(component.getText()));
@@ -64,7 +65,7 @@ public class CustomGuiLabel extends GuiLabel implements IComponentCustomGui {
       int b = (int) ((getY() + height)  / component.getScale());
       isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
       drawBox();
-      GuiButtonNop.renderString(getMessage(), x, y, r, b, textColor, showShadow, centered, customFont);
+      GuiButtonNop.renderString(getMessage(), x, y, r, b, textColor, showShadow, alignText, false, customFont);
       GlStateManager.popMatrix();
    }
 

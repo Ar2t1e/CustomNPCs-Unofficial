@@ -14,7 +14,7 @@ import noppes.npcs.client.gui.ConfirmScreen;
 import noppes.npcs.client.gui.global.GuiNpcManagePlayerData;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.constants.EnumPlayerData;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.mixin.client.gui.inventory.IGuiContainerMixin;
@@ -22,6 +22,7 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.*;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Mouse;
@@ -417,8 +418,7 @@ public class GuiNPCBankChest extends GuiContainerNPCInterface<ContainerNPCBank> 
 				xs += 1;
 				ys += 1;
 				// item
-				minecraft.getRenderItem().renderItemAndEffectIntoGUI(stack, xs, ys);
-				minecraft.getRenderItem().renderItemOverlayIntoGUI(font, stack, xs, ys, null);
+				GuiBasic.renderStackInGUI(stack, xs, ys, 0.0f, 1.0f, null);
 				// info
 				if (isMouseHover(mouseX, mouseY, xs, ys, 16, 16)) {
 					List<Component> hover = new ArrayList<>();
@@ -732,8 +732,7 @@ public class GuiNPCBankChest extends GuiContainerNPCInterface<ContainerNPCBank> 
 		if (!flag1) {
 			if (hovering) { drawRect(xPos, yPos, xPos + 16, yPos + 16, 0x80FFFFFF); }
 			GlStateManager.enableDepth();
-			itemRender.renderItemAndEffectIntoGUI(mc.player, itemstack, xPos, yPos);
-			itemRender.renderItemOverlayIntoGUI(fontRenderer, itemstack, xPos, yPos, s);
+			GuiBasic.renderStackInGUI(itemstack, xPos, yPos, 0.0f, 1.0f, s);
 		}
 		itemRender.zLevel = 0.0F;
 		zLevel = 0.0F;
@@ -821,7 +820,7 @@ public class GuiNPCBankChest extends GuiContainerNPCInterface<ContainerNPCBank> 
 			Component mes = getMessage();
 			renderString(getMessage(), getX() + (isCeil ? - mc.fontRenderer.getStringWidth(mes.getString()) : 2), getY(),
 					getX() + (isCeil ? 0 : getWidth() - 2), getY() + getHeight(),
-					getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true, null);
+					getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, EnumAlignText.CENTER, false, null);
 			GlStateManager.popMatrix();
 		}
 

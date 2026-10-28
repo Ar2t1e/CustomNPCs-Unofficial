@@ -27,7 +27,12 @@ public class ContainerMail extends ContainerNpcInterface {
 		canSend = canSendIn;
 		player.inventory.openInventory(player);
 		for (int k = 0; k < 4; ++k) {
-			addSlotToContainer(new SlotValid(mail, k, 199 + (k % 2) * 18, 190 + (k / 2) * 18, canEdit));
+			addSlotToContainer(new Slot(mail, k, 199 + (k % 2) * 18, 190 + (k / 2) * 18){
+				@Override
+				public boolean isItemValid(@Nonnull ItemStack stack) {
+					return canEdit && inventory.isItemValidForSlot(0, stack);
+				}
+			});
 		}
 		for (int j = 0; j < 3; ++j) {
 			for (int k = 0; k < 9; ++k) {

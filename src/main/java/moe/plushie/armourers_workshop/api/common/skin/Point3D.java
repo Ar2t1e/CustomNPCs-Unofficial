@@ -8,29 +8,22 @@ public class Point3D implements IPoint3D {
 	private final int y;
 	private final int z;
 
-	public Point3D(int x, int y, int z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
+	public Point3D(int xIn, int yIn, int zIn) {
+		x = xIn;
+		y = yIn;
+		z = zIn;
 	}
 
 	@Override
-	public int getX() {
-		return this.x;
-	}
+	public int getX() { return x; }
 
 	@Override
-	public int getY() {
-		return this.y;
-	}
+	public int getY() { return y; }
 
 	@Override
-	public int getZ() {
-		return this.z;
-	}
+	public int getZ() { return z; }
 
 	@Override
-	public String toString() {
-		return "Point3D [x=" + x + ", y=" + y + ", z=" + z + "]";
-	}
+	public String toString() { return "Point3D [x=" + x + ", y=" + y + ", z=" + z + "]"; }
+
 }

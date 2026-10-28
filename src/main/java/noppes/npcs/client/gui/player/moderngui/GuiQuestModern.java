@@ -169,8 +169,7 @@ public class GuiQuestModern
             ItemStack rewardStack = quest.rewardItems.get(i).item;
             if (rewardStack == null || rewardStack.isEmpty()) continue;
             drawTexturedModalRect(690 + 26 * i, topToObjectivesBottom + 16, 0, 27, 24, 24);
-            itemRender.renderItemAndEffectIntoGUI(mc.player, rewardStack, 694 + 26 * i, topToObjectivesBottom + 20);
-            itemRender.renderItemOverlayIntoGUI(fontRenderer, rewardStack, 694 + 26 * i, topToObjectivesBottom + 20, "" + rewardStack.getCount());
+            renderStackInGUI(rewardStack, 694 + 26 * i, topToObjectivesBottom + 20, 0.0f, 1.0f, "" + rewardStack.getCount());
         }
 
         if (quest.rewardExp != 0) {

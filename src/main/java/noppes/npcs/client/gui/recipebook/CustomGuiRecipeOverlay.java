@@ -25,6 +25,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.controllers.data.RecipeCarpentry;
 import noppes.npcs.recipebook.PlaceRecipe;
+import noppes.npcs.shared.client.gui.GuiBasic;
 
 // Displaying variations of one recipe in the GUI recipe window
 @SideOnly(Side.CLIENT)
@@ -236,8 +237,8 @@ public class CustomGuiRecipeOverlay extends GuiRecipeOverlay {
                     GlStateManager.pushMatrix();
                     GlStateManager.translate(recipeButtonPos.x, recipeButtonPos.y, 0.0D);
                     GlStateManager.scale(ITEM_RENDER_SCALE, ITEM_RENDER_SCALE, 1.0F);
-                    GlStateManager.translate(-8.0D, -8.0D, 0.0D);
-                    minecraft.getRenderItem().renderItemAndEffectIntoGUI(recipeButtonPos.ingredients[MathHelper.floor(time / 30.0F) % recipeButtonPos.ingredients.length], 0, 0);
+                    GuiBasic.renderStackInGUI(recipeButtonPos.ingredients[MathHelper.floor(time / 30.0F) % recipeButtonPos.ingredients.length],
+                            -8.0D, -8.0D, 0.0f, 1.0f, "");
                     GlStateManager.popMatrix();
                 }
             }

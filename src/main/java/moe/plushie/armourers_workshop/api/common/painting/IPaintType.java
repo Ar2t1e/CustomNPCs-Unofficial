@@ -4,28 +4,30 @@ import moe.plushie.armourers_workshop.api.common.IExtraColours.ExtraColourType;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SuppressWarnings("unused")
 public interface IPaintType {
 
-	public int getChannelIndex();
+	int getChannelIndex();
 
-	public ExtraColourType getColourType();
+	ExtraColourType getColourType();
 
-	public int getId();
+	int getId();
 
 	@SideOnly(Side.CLIENT)
-	public String getLocalizedName();
+	String getLocalizedName();
 
-	public int getMarkerIndex();
+	int getMarkerIndex();
 
-	public String getName();
+	String getName();
 
-	public float getU();
+	float getU();
 
-	public String getUnlocalizedName();
+	String getUnlocalizedName();
 
-	public float getV();
+	float getV();
 
-	public boolean hasAverageColourChannel();
+	boolean hasAverageColourChannel();
 
-	public void setColourChannelIndex(int channelIndex);
+	void setColourChannelIndex(int channelIndex);
+
 }

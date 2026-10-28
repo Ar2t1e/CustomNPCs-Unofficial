@@ -5,6 +5,8 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.FriendlyByteBuf;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
+import noppes.npcs.containers.slots.SlotAvailability;
 import noppes.npcs.controllers.data.Availability;
 
 import javax.annotation.Nonnull;

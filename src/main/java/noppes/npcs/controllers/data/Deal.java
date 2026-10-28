@@ -22,7 +22,7 @@ import noppes.npcs.api.handler.data.IDeal;
 import noppes.npcs.api.handler.data.IDropSetData;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.MarcetController;
 import noppes.npcs.entity.data.DropSet;
 import noppes.npcs.packets.Packets;

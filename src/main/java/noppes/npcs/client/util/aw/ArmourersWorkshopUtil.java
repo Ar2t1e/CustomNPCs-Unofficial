@@ -23,18 +23,9 @@ import noppes.npcs.entity.EntityNPCInterface;
 public class ArmourersWorkshopUtil {
 
 	private static ArmourersWorkshopUtil INSTANCE;
-	private static Boolean available;
-
-	public static boolean isAvailable() {
-		if (!CustomNpcs.FastNpcLayers) { return ArmourersWorkshopApi.isAvailable(); }
-		if (available == null) { available = ArmourersWorkshopApi.isAvailable(); }
-		return available;
-	}
 
 	public static ArmourersWorkshopUtil getInstance() {
-		if (INSTANCE != null) {
-			return INSTANCE;
-		}
+		if (INSTANCE != null) { return INSTANCE; }
 		return new ArmourersWorkshopUtil();
 	}
 	public String MODID = "armourers_workshop";

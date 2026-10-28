@@ -24,7 +24,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;

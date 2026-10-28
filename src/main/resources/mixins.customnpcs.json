@@ -25,8 +25,6 @@
     "entity.passive.IEntityVillagerMixin",
     "entity.player.EntityPlayerMixin",
     "entity.player.IEntityPlayerMPMixin",
-    "fml.common.eventhandler.EventMixin",
-    "fml.common.eventhandler.IEventBusMixin",
     "init.ItemsMixin",
     "inv.ContainerMixin",
     "inv.IInventoryBasicMixin",
@@ -38,6 +36,10 @@
     "item.crafting.IIngredientMixin",
     "minecraftforge.common.IDimensionManagerMixin",
     "minecraftforge.event.entity.living.ILivingAttackEventMixin",
+    "minecraftforge.fml.common.eventhandler.EventMixin",
+    "minecraftforge.fml.common.eventhandler.IEventBusMixin",
+    "minecraftforge.fml.common.network.internal.IEntitySpawnHandlerMixin",
+    "minecraftforge.fml.common.network.internal.IEntitySpawnMessageMixin",
     "minecraftforge.registries.ForgeRegistryMixin",
     "nbt.INBTTagListMixin",
     "nbt.INBTTagLongArrayMixin",
@@ -121,9 +123,9 @@
     "client.settings.IKeyBindingMixin",
     "client.util.IRecipeBookClientMixin",
     "client.world.storage.WorldSummaryMixin",
-    "fml.client.GuiModListMixin",
     "item.ItemStackMixin",
-    "minecraftforge.client.IItemModelMesherForgeMixin"
+    "minecraftforge.client.IItemModelMesherForgeMixin",
+    "minecraftforge.fml.client.GuiModListMixin"
   ],
   "server": [],
   "injectors": {

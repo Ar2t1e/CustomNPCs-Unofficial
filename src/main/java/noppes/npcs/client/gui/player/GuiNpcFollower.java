@@ -1,7 +1,6 @@
 package noppes.npcs.client.gui.player;
 
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.chat.Component;
@@ -91,12 +90,7 @@ public class GuiNpcFollower extends GuiContainerNPCInterface<ContainerNPCFollowe
 					int yOffset = index * 16;
 					int x = guiLeft + 68;
 					int y = guiTop + yOffset + 4;
-					GlStateManager.enableRescaleNormal();
-					RenderHelper.enableGUIStandardItemLighting();
-					itemRender.renderItemAndEffectIntoGUI(itemstack, x + 11, y);
-					itemRender.renderItemOverlays(fontRenderer, itemstack, x + 11, y);
-					RenderHelper.disableStandardItemLighting();
-					GlStateManager.disableRescaleNormal();
+					GuiBasic.renderStackInGUI(itemstack, x + 11, y, 0.0f, 1.0f, null);
 					Component daysS = Component.empty()
 							.append(" = " + days + " ")
 							.append(Component.translatable(days == 1 ? "follower.day": "follower.days"));

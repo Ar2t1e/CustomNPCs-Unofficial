@@ -478,12 +478,7 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 					drawTexturedModalRect(0, 0, 0, 22, 24, 24);
 					GlStateManager.popMatrix();
 					if (!((ContainerMail) inventorySlots).canEdit && !((ContainerMail) inventorySlots).canSend && mail.ransom > 0) {
-						GlStateManager.pushMatrix();
-						GlStateManager.translate(px + 4, py + 4, 0.0f);
-						mc.getRenderItem().renderItemAndEffectIntoGUI(slot.getStack(), 0, 0);
-						GlStateManager.translate(0.0f, 0.0f, 200.0f);
-						int count = slot.getStack().getCount();
-						drawString(mc.fontRenderer, "" + count, 17 - mc.fontRenderer.getStringWidth("" + count), 9, new Color(0xFFFFFFFF).getRGB());
+						GuiBasic.renderStackInGUI(slot.getStack(), px + 4, py + 4, 0.0f, 1.0f, null);
 						if (isMouseHover(mouseX, mouseY, px, py, 18, 18)) {
 							List<Component> list = new ArrayList<>();
 							list.add(Component.translatable("mailbox.hover.ransom.sell"));
@@ -497,8 +492,10 @@ public class GuiMailmanWrite extends GuiContainerNPCInterface<ContainerMail>
 							getLabel(8).setBackColor(new Color(0x80FF0000).getRGB());
 							getButton(6).layerColor = new Color(0xFFF00000).getRGB();
 						}
+						GlStateManager.pushMatrix();
+						GlStateManager.translate(px + 2, py + 2, 200.0f);
 						mc.getTextureManager().bindTexture(icons);
-						drawTexturedModalRect(-2, -2, 0, 32, 20, 20);
+						drawTexturedModalRect(0, 0, 0, 32, 20, 20);
 						GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
 						GlStateManager.popMatrix();
 					}

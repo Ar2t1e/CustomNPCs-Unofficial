@@ -214,7 +214,7 @@ public abstract class GuiCreationScreenInterface extends GuiNPCInterface
 	@Override
 	public void mouseDragged(GuiSliderNop slider) {
 		if (slider.id == 500) {
-			GuiCreationScreenInterface.rotation = slider.sliderValue;
+			GuiCreationScreenInterface.rotation = slider.getValue();
 			slider.setString(Math.round((GuiCreationScreenInterface.rotation * 3600.0f)) / 10.0f);
 		}
 	}

@@ -2,7 +2,7 @@ package noppes.npcs.packets.client;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.common.network.internal.EntitySpawnMessageHelper;
+import noppes.npcs.util.EntitySpawnMessageHelper;
 import net.minecraftforge.fml.common.network.internal.FMLMessage;
 import noppes.npcs.client.Client;
 import noppes.npcs.shared.common.PacketBasic;
@@ -35,7 +35,7 @@ public class PacketUpdatePhysics extends PacketBasic {
    public void encode(FriendlyByteBuf buf) {
       buf.writeInt(id);
       buf.writeUUID(uuid);
-      EntitySpawnMessageHelper.toBytes(pkt, buf);
+      if (pkt != null) { EntitySpawnMessageHelper.toBytes(pkt, buf); }
    }
 
    @Override

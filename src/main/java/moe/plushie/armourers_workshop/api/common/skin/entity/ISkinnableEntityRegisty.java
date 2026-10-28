@@ -2,11 +2,13 @@ package moe.plushie.armourers_workshop.api.common.skin.entity;
 
 import net.minecraft.entity.Entity;
 
+@SuppressWarnings("unused")
 public interface ISkinnableEntityRegisty {
 
-	public ISkinnableEntity getSkinnableEntity(Entity entity);
+	ISkinnableEntity getSkinnableEntity(Entity entity);
 
-	public boolean isValidEntity(Entity entity);
+	boolean isValidEntity(Entity entity);
 
-	public void registerEntity(ISkinnableEntity skinnableEntity);
+	void registerEntity(ISkinnableEntity skinnableEntity);
+
 }

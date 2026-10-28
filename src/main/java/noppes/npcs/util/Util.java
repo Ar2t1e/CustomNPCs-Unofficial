@@ -30,6 +30,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -569,11 +570,11 @@ public class Util implements IMethods {
 			type = new StringBuilder("E" + power + exp);
 		}
 		if (negatively) {
-			if (color) { sufc = chr + "c"; }
+			if (color) { sufc = TextFormatting.RED.toString(); }
 			if (corr != 0.0d) { sufc += "-"; }
 		} // negative or zero
 		String end = "";
-		if (color) { end = chr + "r"; }
+		if (color) { end = TextFormatting.RESET.toString(); }
 		if (notPfx) { sufc = ""; }
 		String num = isInteger ? ("" + (long) corr) : ("" + corr).replace(".", ",");
 		return sufc + num + type + end;
@@ -1141,6 +1142,7 @@ public class Util implements IMethods {
 		Vec3d vecLook = new Vec3d(f1 * f2, f3, f * f2);
 		Vec3d vecEnd = vecStart.addVector(vecLook.x * distance, vecLook.y * distance, vecLook.z * distance);
 		if (withEntities) { rtrs.add(entity, distance, vecStart, vecEnd); }
+		rtrs.add(entity, distance, vecStart, vecEnd);
 
 		int x0 = MathHelper.floor(vecStart.x);
 		int y0 = MathHelper.floor(vecStart.y);

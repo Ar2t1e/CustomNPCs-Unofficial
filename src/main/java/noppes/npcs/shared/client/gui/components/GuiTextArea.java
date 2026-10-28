@@ -89,8 +89,19 @@ public class GuiTextArea
         isHovered = false;
         if (!visible) { return; }
         isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
-        drawRect(x - 1, y - 1, x + width + 1, y + height + 1, enabled && isFocused() ? 0xFFFFFFFF : 0xFFA0A0A0);
-        drawRect(x, y, x + width, y + height, isFocused() ? 0xFF181818 : 0xFF000000);
+        // background
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(getX() - 1, getY() - 1, 0.0f);
+        if (isYDE) {
+            GlStateManager.scale(0.5f, 0.5f, 0.5f);
+            drawRect(0, 0, width * 2 + 2, height * 2 + 2, 0xFFA0A0A0);
+            drawRect(1, 1, width * 2 + 1, height * 2 + 1, 0xFF000000);
+        }
+        else {
+            drawRect(0, 0, width + 2, height + 2, 0xFFA0A0A0);
+            drawRect(0, 0, width + 1, height + 1, 0xFF000000);
+        }
+        GlStateManager.popMatrix();
         container.visibleLines = height / container.lineHeight;
         int startBracket;
         if (clicked) {
@@ -186,6 +197,16 @@ public class GuiTextArea
             GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             drawRect(posX2, posY3, posX2 + 5, posY3 + sbSize, 0xFFE0E0E0);
+        }
+        String tr = Component.translatable(text).getString();
+        if (isYDE && isHovered && !Util.instance.equalsDeleteColor(text, tr, false)) {
+            if (tr.length() > 200) { tr = tr.substring(0, 200) + "..."; }
+            hoverText.clear();
+            for (String line : tr.split("\n")) { hoverText.add(Component.literal(line)); }
+        }
+        if (listener != null && isHovered && !hoverText.isEmpty()) {
+            listener.setHoverText(hoverText);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 

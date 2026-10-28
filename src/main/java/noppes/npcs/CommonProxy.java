@@ -40,6 +40,7 @@ import noppes.npcs.entity.data.DataInventory;
 import noppes.npcs.mixin.entity.player.IEntityPlayerMPMixin;
 import noppes.npcs.mixin.minecraftforge.registries.ForgeRegistryMixin;
 import noppes.npcs.mixin.stats.IRecipeBookMixin;
+import noppes.npcs.shared.common.util.LogWriter;
 
 import javax.annotation.Nullable;
 
@@ -161,8 +162,10 @@ public class CommonProxy implements IGuiHandler {
 				buffer.readInt(); // npc id
 				return new ContainerBuilderSettings(player, buffer.readBlockPos());
 			}
-			case SetupDrop: { return new ContainerNPCDropSetup(player, buffer.readNbt()); }
-			case CustomGui: { return new ContainerCustomGui(buffer.readNbt()); }
+			case SetupDrop: return new ContainerNPCDropSetup(player, buffer.readNbt());
+			case CustomGui: return new ContainerCustomGui(buffer.readNbt());
+			case PlayerAuctionCreateLot: return new ContainerAuctionCreateLot(player, buffer.readBlockPos());
+			case ManageAuctionForbiddenItem: return new ContainerAuctionForbiddenItem(player, buffer.readBlockPos());
 		}
 		return null;
 	}

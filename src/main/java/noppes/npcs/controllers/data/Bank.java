@@ -12,7 +12,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.controllers.PlayerDataController;
 

@@ -11,7 +11,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.handler.data.IPlayerData;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
 import noppes.npcs.containers.ContainerNPCBank;

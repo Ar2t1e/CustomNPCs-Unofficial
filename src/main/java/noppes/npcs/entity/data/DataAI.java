@@ -529,4 +529,6 @@ public class DataAI
 	@Override
 	public void setMountControl(boolean enabled) { mountControl = enabled; }
 
+	public boolean noHasStartPos() { return startPos == null; }
+
 }

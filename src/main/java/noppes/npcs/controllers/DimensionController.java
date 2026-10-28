@@ -229,6 +229,7 @@ public class DimensionController extends WorldSavedData implements IDimensionHan
 		catch (ReflectiveOperationException e) { throw new IllegalStateException("Cannot register dimension " + id, e); }
 	}
 
+
 	public DimensionType getDimensionType(int id, String name) {
 		DimensionType dimensionType = ownTypes.get(id);
 		if (dimensionType != null) { return dimensionType; }

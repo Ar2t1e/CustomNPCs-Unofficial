@@ -19,6 +19,7 @@ import net.minecraftforge.common.MinecraftForge;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.ClientProxy;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.event.ClientEvent;
@@ -75,7 +76,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         menu = cont;
         mc = Minecraft.getMinecraft();
         minecraft = mc;
-        scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        scaledResolution = new ScaledResolution(minecraft);
         font = (fontRenderer = mc.fontRenderer);
         itemRender = mc.getRenderItem();
         player = mc.player;
@@ -88,7 +89,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         buttonList.clear();
         guiLeft = (width - xSize) / 2;
         guiTop = (height - ySize) / 2;
-        scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        scaledResolution = new ScaledResolution(minecraft);
         wrapper.initGui(mc, width, height);
         setFocused(!hasSubGui());
     }
@@ -373,6 +374,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     @Override
     public int getY() { return guiTop; }
 
+    @Override
     public GuiButtonNop getButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.BUTTON &&
@@ -383,6 +385,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     }
 
     @SuppressWarnings("unused")
+    @Override
     public GuiMenuSideButton getSideButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SIDE_BUTTON &&
@@ -393,6 +396,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     }
 
     @SuppressWarnings("unused")
+    @Override
     public GuiMenuTopButton getTopButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.TOP_BUTTON &&
@@ -402,6 +406,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         return null;
     }
 
+    @Override
     public GuiTextFieldNop getTextField(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.TEXT_FIELD &&
@@ -411,6 +416,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         return null;
     }
 
+    @Override
     public GuiLabel getLabel(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.LABEL &&
@@ -420,6 +426,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         return null;
     }
 
+    @Override
     public GuiSliderNop getSlider(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SLIDER &&
@@ -430,6 +437,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     }
 
     @SuppressWarnings("unused")
+    @Override
     public GuiCustomScrollNop getScroll(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SCROLL &&
@@ -440,6 +448,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     }
 
     @SuppressWarnings("unused")
+    @Override
     public IComponentGui getExtra(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.EXTRA && element.getId() == id) { return element; }
@@ -451,39 +460,37 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
     public void drawDefaultBackground() {
         if (drawDefaultBackground) { super.drawDefaultBackground(); }
         if (wrapper.subgui == null) {
-            {
-                postDrawBackground();
-                if (background != null && !(this instanceof GuiContainerNPCInterface2)) {
-                    GlStateManager.pushMatrix();
-                    GlStateManager.translate(guiLeft, guiTop, 0.0f);
-                    GlStateManager.scale(bgScale, bgScale, bgScale);
-                    mc.getTextureManager().bindTexture(background);
-                    if (widthTexture != 0 && heightTexture != 0) {
-                        int maxRow = ValueUtil.correctInt((int) Math.ceil((float) ySize / (float) (heightTexture - 2 * borderTexture)), 2, 10);
-                        int maxCol = ValueUtil.correctInt((int) Math.ceil((float) xSize / (float) (widthTexture - 2 * borderTexture)), 2, 10);
-                        int tileWidth = xSize / maxCol;
-                        int tileHeight = ySize / maxRow;
-                        int lastTileWidth = xSize - tileWidth * (maxCol - 1);
-                        int lastTileHeight = ySize - tileHeight * (maxRow - 1);
+            postDrawBackground();
+            if (background != null && !(this instanceof GuiContainerNPCInterface2)) {
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(guiLeft, guiTop, 0.0f);
+                GlStateManager.scale(bgScale, bgScale, bgScale);
+                mc.getTextureManager().bindTexture(background);
+                if (widthTexture != 0 && heightTexture != 0) {
+                    int maxRow = ValueUtil.correctInt((int) Math.ceil((float) ySize / (float) (heightTexture - 2 * borderTexture)), 2, 10);
+                    int maxCol = ValueUtil.correctInt((int) Math.ceil((float) xSize / (float) (widthTexture - 2 * borderTexture)), 2, 10);
+                    int tileWidth = xSize / maxCol;
+                    int tileHeight = ySize / maxRow;
+                    int lastTileWidth = xSize - tileWidth * (maxCol - 1);
+                    int lastTileHeight = ySize - tileHeight * (maxRow - 1);
 
-                        int uOffset = (widthTexture - 2 * borderTexture - tileWidth) / 2;
-                        int uMax = widthTexture - lastTileWidth;
-                        int vOffset = (heightTexture - 2 * borderTexture - tileHeight) / 2;
-                        int vMax = heightTexture - lastTileHeight;
-                        for (int col = 0; col < maxCol; ++col) {
-                            for (int row = 0; row < maxRow; ++row) {
-                                drawTexturedModalRect(col * tileWidth,
-                                        row * tileHeight,
-                                        col == 0 ? 0 : col == maxCol - 1 ? uMax : uOffset,
-                                        row == 0 ? 0 : row == maxRow - 1 ? vMax : vOffset,
-                                        col == maxCol - 1 ? lastTileWidth : tileWidth,
-                                        row == maxRow - 1 ? lastTileHeight : tileHeight);
-                            }
+                    int uOffset = (widthTexture - 2 * borderTexture - tileWidth) / 2;
+                    int uMax = widthTexture - lastTileWidth;
+                    int vOffset = (heightTexture - 2 * borderTexture - tileHeight) / 2;
+                    int vMax = heightTexture - lastTileHeight;
+                    for (int col = 0; col < maxCol; ++col) {
+                        for (int row = 0; row < maxRow; ++row) {
+                            drawTexturedModalRect(col * tileWidth,
+                                    row * tileHeight,
+                                    col == 0 ? 0 : col == maxCol - 1 ? uMax : uOffset,
+                                    row == 0 ? 0 : row == maxRow - 1 ? vMax : vOffset,
+                                    col == maxCol - 1 ? lastTileWidth : tileWidth,
+                                    row == maxRow - 1 ? lastTileHeight : tileHeight);
                         }
                     }
-                    else { drawTexturedModalRect(0, 0, 0, 0, xSize, ySize); }
-                    GlStateManager.popMatrix();
                 }
+                else { drawTexturedModalRect(0, 0, 0, 0, xSize, ySize); }
+                GlStateManager.popMatrix();
             }
         }
     }
@@ -498,7 +505,7 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
         drawDefaultBackground();
         if (title != null && !title.getFormattedText().isEmpty()) {
             GuiButtonNop.renderString(title, guiLeft + 4, guiTop + 5, guiLeft + xSize - 8, guiTop + 15,
-                    CustomNpcs.LableColor.getRGB(), false, true, null);
+                    CustomNpcs.LableColor.getRGB(), false, EnumAlignText.CENTER, false, null);
         }
     }
 
@@ -618,11 +625,20 @@ public class GuiBasicContainer<T extends Container> extends GuiContainer impleme
                 heightTexture = 71;
                 break;
             }
+            case "itemsetup.png": {
+                widthTexture = 176;
+                heightTexture = 202;
+                break;
+            }
             case "largebg.png": {
                 widthTexture = 192;
                 heightTexture = 231;
                 break;
             }
+            case "npcinv.png":
+            case "npcdrop.png":
+            case "npcbanksetup.png":
+            case "followersetup.png":
             case "menubg.png": {
                 widthTexture = 256;
                 heightTexture = 217;

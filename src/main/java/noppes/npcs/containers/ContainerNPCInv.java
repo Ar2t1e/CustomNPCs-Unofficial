@@ -11,32 +11,34 @@ import net.minecraft.item.ItemBow;
 import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
+import noppes.npcs.containers.slots.*;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.entity.data.DataInventory;
 
 import javax.annotation.Nonnull;
 
 public class ContainerNPCInv extends Container {
 
 	public ContainerNPCInv(EntityNPCInterface npc, EntityPlayer player) {
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 0, 9, 22, EntityEquipmentSlot.HEAD));
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 1, 9, 40, EntityEquipmentSlot.CHEST));
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 2, 9, 58, EntityEquipmentSlot.LEGS));
-		addSlotToContainer(new SlotNPCArmor(npc.inventory, 3, 9, 76, EntityEquipmentSlot.FEET));
-		addSlotToContainer(new Slot(npc.inventory, 4, 81, 22));
-		addSlotToContainer(new Slot(npc.inventory, 5, 81, 40));
-		addSlotToContainer(new Slot(npc.inventory, 6, 81, 58));
+		DataInventory inv = npc != null ? npc.inventory : new DataInventory(null);
+		addSlotToContainer(new SlotNPCArmor(inv, 0, 9, 22, EntityEquipmentSlot.HEAD));
+		addSlotToContainer(new SlotNPCArmor(inv, 1, 9, 40, EntityEquipmentSlot.CHEST));
+		addSlotToContainer(new SlotNPCArmor(inv, 2, 9, 58, EntityEquipmentSlot.LEGS));
+		addSlotToContainer(new SlotNPCArmor(inv, 3, 9, 76, EntityEquipmentSlot.FEET));
+		addSlotToContainer(new SlotNPCHand(inv, 4, 81, 22, "weapon"));
+		addSlotToContainer(new SlotNPCHand(inv, 5, 81, 40, "arrow"));
+		addSlotToContainer(new SlotNPCHand(inv, 6, 81, 58, "shield"));
+		// AW mod
 		if (ArmourersWorkshopApi.isAvailable()) {
-			addSlotToContainer(new AWSlotOutfit(npc.inventory, 7, 27, 4));
-			addSlotToContainer(new AWSlotWings(npc.inventory, 8, 45, 4));
+			addSlotToContainer(new AWSlotOutfit(inv, 7, 27, 4));
+			addSlotToContainer(new AWSlotWings(inv, 8, 45, 4));
 		}
-		for (int i1 = 0; i1 < 3; ++i1) {
-			for (int l2 = 0; l2 < 9; ++l2) {
-				addSlotToContainer(new Slot(player.inventory, l2 + i1 * 9 + 9, l2 * 18 + 8, 113 + i1 * 18));
-			}
+		// player inventory
+		for(int x = 0; x < 3; ++x) {
+			for(int y = 0; y < 9; ++y) { addSlotToContainer(new Slot(player.inventory, y + x * 9 + 9, y * 18 + 8, 113 + x * 18)); }
 		}
-		for (int j1 = 0; j1 < 9; ++j1) {
-			addSlotToContainer(new Slot(player.inventory, j1, j1 * 18 + 8, 171));
-		}
+		// player hotbar
+		for(int x = 0; x < 9; ++x) { addSlotToContainer(new Slot(player.inventory, x, x * 18 + 8, 171)); }
 	}
 
 	@Override

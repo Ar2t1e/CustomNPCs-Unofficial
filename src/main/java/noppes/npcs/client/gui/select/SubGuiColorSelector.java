@@ -166,7 +166,7 @@ public class SubGuiColorSelector
 		else if (textfield.id == 1) {
 			alpha = textfield.getInteger() / 255.0f;
 			color = textfield.getInteger() << 24 | color & 0x00FFFFFF;
-			if (alphaSlider != null) { alphaSlider.sliderValue = alpha; }
+			if (alphaSlider != null) { alphaSlider.setValue(alpha); }
 		}
 	}
 
@@ -192,7 +192,7 @@ public class SubGuiColorSelector
 
 	@Override
 	public void mouseDragged(GuiSliderNop slider) {
-		alpha = slider.sliderValue;
+		alpha = slider.getValue();
 		color = (int) (alpha * 255.0f) << 24 | color & 0x00FFFFFF;
 		if (alphaField != null) { alphaField.setValue("" + (int) (alpha * 255.0f)); }
 	}

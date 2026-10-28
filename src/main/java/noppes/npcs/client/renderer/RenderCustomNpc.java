@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import moe.plushie.armourers_workshop.api.ArmourersWorkshopApi;
-import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelBiped;
@@ -176,7 +175,8 @@ public class RenderCustomNpc<T extends EntityCustomNpc> extends RenderNPCInterfa
 				String layerName = layerrenderer.getClass().getSimpleName();
 				if (npc.modelData.isDisableLayer(layerName)) { continue; }
 				if ((layerrenderer instanceof LayerEyes || layerrenderer instanceof LayerHead || layerName.equals("LayerCustomHead")) && !sp.get(EnumParts.HEAD)) { continue; }
-				if (ArmourersWorkshopUtil.isAvailable() && layerName.equals("LayerCustomHead") && ArmourersWorkshopApi.getSkinNBTUtils().hasSkinDescriptor(npc.getItemStackFromSlot(EntityEquipmentSlot.HEAD))) { continue; }
+				if (ArmourersWorkshopApi.isAvailable() && layerName.equals("LayerCustomHead") &&
+						ArmourersWorkshopApi.getSkinNBTUtils().hasSkinDescriptor(npc.getItemStackFromSlot(EntityEquipmentSlot.HEAD))) { continue; }
 				if ((layerrenderer instanceof LayerBody || layerrenderer instanceof LayerNpcCloak) && !sp.get(EnumParts.BODY)) { continue; }
 				if (layerName.equals("SkinLayerRendererCustomNPC")) { continue; }
 				boolean flag = setBrightness(npc, partialTicks, layerrenderer.shouldCombineTextures());

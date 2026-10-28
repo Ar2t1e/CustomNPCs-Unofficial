@@ -545,7 +545,7 @@ public class ClientEventHandler extends Gui {
 	@SubscribeEvent
 	public <T extends EntityLivingBase> void cnpcPostLivingEvent(RenderLivingEvent.Post<T> event) {
 		CustomNpcs.debugData.start(null);
-		if ((!CustomNpcs.FastNpcFrame || MarkData.anyMarks) && event.getEntity().isEntityAlive()) {
+		if (MarkData.hasMarksInGame() && event.getEntity().isEntityAlive()) {
 			MarkData data = MarkData.get(event.getEntity());
 			for (MarkData.Mark m : data.marks) {
 				if (m.getType() != 0 && m.availability.isAvailable(Minecraft.getMinecraft().player)) {
@@ -2808,15 +2808,8 @@ public class ClientEventHandler extends Gui {
 
 			// Render item icon
 			if (st != null) {
-				GlStateManager.pushMatrix();
-				GlStateManager.translate(playerData.overlay.getWindowSize().getWidth() / 2.0d,
-						playerData.overlay.getWindowSize().getHeight() - 45.0d - 4.5d * lH, 0.0d);
-				RenderHelper.enableGUIStandardItemLighting();
-				RenderItem itemRender = mc.getRenderItem();
-				itemRender.renderItemAndEffectIntoGUI(st, 0, 0);
-				itemRender.renderItemOverlays(mc.fontRenderer, st, 0, 0);
-				RenderHelper.disableStandardItemLighting();
-				GlStateManager.popMatrix();
+				GuiBasic.renderStackInGUI(st, playerData.overlay.getWindowSize().getWidth() / 2.0d,
+						playerData.overlay.getWindowSize().getHeight() - 45.0d - 4.5d * lH, 0.0f, 1.0f, null);
 			}
 
 			// Text lines (смещение Y на -45 вместо -35 из 1.20.1)

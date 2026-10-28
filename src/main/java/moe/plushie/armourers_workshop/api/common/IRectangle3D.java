@@ -1,16 +1,18 @@
 package moe.plushie.armourers_workshop.api.common;
 
+@SuppressWarnings("unused")
 public interface IRectangle3D {
 
-	public int getDepth();
+	int getDepth();
 
-	public int getHeight();
+	int getHeight();
 
-	public int getWidth();
+	int getWidth();
 
-	public int getX();
+	int getX();
 
-	public int getY();
+	int getY();
 
-	public int getZ();
+	int getZ();
+
 }

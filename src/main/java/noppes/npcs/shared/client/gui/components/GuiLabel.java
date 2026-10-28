@@ -11,6 +11,7 @@ import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
@@ -20,7 +21,7 @@ import java.util.List;
 public class GuiLabel extends Gui implements IComponentGui {
 
     protected int textColor = CustomNpcResourceListener.DefaultTextColor;
-    protected boolean centered = false;
+    public EnumAlignText alignText = EnumAlignText.LEFT;
     protected boolean labelBgEnabled;
     protected int ulColor;
     protected int brColor;
@@ -86,8 +87,19 @@ public class GuiLabel extends Gui implements IComponentGui {
         return this;
     }
 
-    public GuiLabel setCentered(boolean bo) {
-        centered = bo;
+    public GuiLabel setAlignCenter() {
+        alignText = EnumAlignText.CENTER;
+        return this;
+    }
+
+    public GuiLabel setAlignLeft() {
+        alignText = EnumAlignText.LEFT;
+        return this;
+    }
+
+    @SuppressWarnings("unused")
+    public GuiLabel setAlignRight() {
+        alignText = EnumAlignText.RIGHT;
         return this;
     }
 
@@ -120,7 +132,7 @@ public class GuiLabel extends Gui implements IComponentGui {
         GlStateManager.enableBlend();
         drawBox();
         GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + width, getY() + height,
-                textColor | 0xFF000000, showShadow, centered, customFont);
+                textColor | 0xFF000000, showShadow, alignText, false, customFont);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.popMatrix();
     }
@@ -192,7 +204,7 @@ public class GuiLabel extends Gui implements IComponentGui {
     public boolean isEnabled() { return enabled; }
 
     @Override
-    public boolean isVisible() { return visible; }
+    public boolean isVisible() { return enabled && visible; }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) { return false; }

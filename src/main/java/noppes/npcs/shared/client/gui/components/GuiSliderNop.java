@@ -12,6 +12,7 @@ import noppes.npcs.client.ClientProxy;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 import noppes.npcs.shared.client.gui.listeners.ISliderListener;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Mouse;
@@ -24,8 +25,9 @@ public class GuiSliderNop extends Gui implements IComponentGui {
 
     protected final IGuiInterface listener;
     public int id;
-    public float sliderValue;
-    public float startValue;
+    /** 0.0 ... 1.0 */
+    protected float sliderValue;
+    protected float startValue;
 
     // New from Unofficial (BetaZavr)
     protected List<Component> hoverText = new ArrayList<>();
@@ -51,8 +53,8 @@ public class GuiSliderNop extends Gui implements IComponentGui {
         x = xIn;
         y = yIn;
         message = Component.empty();
-        sliderValue = sliderValueIn;
-        startValue = sliderValueIn;
+        sliderValue = ValueUtil.correctFloat(sliderValueIn, 0.0f, 1.0f);
+        startValue = sliderValue;
         listener = parent;
         if (listener instanceof ISliderListener) { ((ISliderListener) listener).mouseDragged(this); }
         packedFGColor = CustomNpcs.MainColor.getRGB();
@@ -67,7 +69,17 @@ public class GuiSliderNop extends Gui implements IComponentGui {
 
     public void setMessage(@Nonnull Component label) { message = label; }
 
-    public void setSliderValue(float value) {
+    @SuppressWarnings("unused")
+    public float getStartValue() { return startValue; }
+
+    public float getValue() { return sliderValue; }
+
+    public void setValue(float value) {
+        value = ValueUtil.correctFloat(value, 0.0f, 1.0f);
+        if (value != sliderValue) { sliderValue = value; }
+    }
+
+    protected void setSliderValue(float value) {
         value = ValueUtil.correctFloat(value, 0.0f, 1.0f);
         if (value != sliderValue) {
             sliderValue = value;
@@ -139,7 +151,7 @@ public class GuiSliderNop extends Gui implements IComponentGui {
         // scroll
         drawDefaultBackground();
         GuiButtonNop.renderString(getMessage(), getX(), getY(), getX() + getWidth(), getY() + getHeight(),
-                packedFGColor | 255 << 24, showShadow, true, customFont);
+                packedFGColor | 255 << 24, showShadow, EnumAlignText.CENTER, false, customFont);
         if (enabled && isFocused()) {
             drawHorizontalLine(x, x + width - 1, y, 0xFFFFFFFF);
             drawHorizontalLine(x, x + width - 1, y + height - 1, 0xFFFFFFFF);

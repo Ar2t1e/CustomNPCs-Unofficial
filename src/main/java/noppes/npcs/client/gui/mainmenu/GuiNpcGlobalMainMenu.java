@@ -19,7 +19,7 @@ import java.util.Arrays;
 public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 
 	// New from Unofficial (BetaZavr)
-	public boolean[] permissions = new boolean[15];
+	public boolean[] permissions = new boolean[16];
 	protected boolean isAdmin = false;
 	protected boolean addedPermissions = false;
 
@@ -40,6 +40,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 		int y = guiTop + 10;
 		String notEdit = "hover.not.edit";
 		boolean enabled = permissions[0] || isAdmin;
+		boolean isWip = player.getName().startsWith("BetaZavr");
 		addButton(2, r0, y, "global.banks")
 				.setSize(110, 20)
 				.setIsEnabled(enabled)
@@ -107,28 +108,30 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 		addButton(18, r1, (y += 22), "global.auctions")
 				.setSize(110, 20)
 				.setIsEnabled(enabled)
-				.setHoverTexts("global.hover.auctions", !enabled ? notEdit : null, "gui.wip")
-				.layerColor = 0xFFF00000;
+				.setHoverTexts("global.hover.auctions", !enabled ? notEdit : null);
 		enabled = permissions[11] || isAdmin;
 		addButton(19, r1, y += 22, "global.mail")
 				.setSize(110, 20)
 				.setIsEnabled(enabled)
 				.setHoverTexts("global.hover.mail", !enabled ? notEdit : null);
-		enabled = permissions[12] || isAdmin;
+		enabled = permissions[12] || isAdmin && isWip;
 		addButton(21, r1, y += 22, "global.elements")
 				.setSize(110, 20)
 				.setIsEnabled(enabled)
 				.setHoverTexts("global.hover.elements", !enabled ? notEdit : null, "gui.wip")
 				.layerColor = 0xFF808080;
-		enabled = permissions[13] || isAdmin;
+		enabled = permissions[13] || isAdmin && isWip;
 		addButton(22, r1, y += 22, "global.dungeons")
 				.setSize(110, 20)
 				.setIsEnabled(enabled)
 				.setHoverTexts("global.hover.dungeons", !enabled ? notEdit : null, "gui.wip")
 				.layerColor = 0xFFF00000;
-
-		y += 66;
-
+		enabled = permissions[15] || isAdmin;
+		addButton(23, r1, y += 22, "global.drop.templates")
+				.setSize(110, 20)
+				.setIsEnabled(enabled)
+				.setHoverTexts("global.hover.drop.templates", !enabled ? notEdit : null);
+		y += 44;
 		enabled = permissions[14] || isAdmin;
 		addButton(26, r1, y + 22, "global.permissions")
 				.setSize(110, 20)
@@ -154,11 +157,12 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 			case 15: NoppesUtil.openGUI(player, new GuiNpcNaturalSpawns(npc)); break;
 			case 16: NoppesUtil.requestOpenGUI(EnumGuiType.ManageLinked); break;
 			case 17: NoppesUtil.openGUI(player, new GuiNpcManageMarkets(npc)); break;
-			case 18: NoppesUtil.requestOpenGUI(EnumGuiType.ManageAuctions); break;
+			case 18: NoppesUtil.openGUI(player, new GuiNpcManageAuctions(npc)); break;
 			case 19: NoppesUtil.requestOpenGUI(EnumGuiType.ManageMail); break;
 			case 20: NoppesUtil.requestOpenGUI(EnumGuiType.ManageGame); break;
 			case 21: NoppesUtil.requestOpenGUI(EnumGuiType.ManageCustomElements); break;
 			case 22: NoppesUtil.requestOpenGUI(EnumGuiType.ManageDungeons); break;
+			case 23: NoppesUtil.requestOpenGUI(EnumGuiType.ManageDropTemplates); break;
 
 			case 26: NoppesUtil.requestOpenGUI(EnumGuiType.PermissionsEdit); break;
 		}
@@ -198,7 +202,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 
 	public void setMenuData(boolean isAdminIn, boolean banks, boolean factions, boolean dialogs, boolean quests, boolean transports,
 							boolean playersData, boolean recipes, boolean naturalSpawns, boolean linkeds, boolean markets,
-							boolean auctions, boolean mails, boolean elements, boolean dungeons, boolean permission) {
+							boolean auctions, boolean mails, boolean elements, boolean dungeons, boolean permission, boolean dropTemplates) {
 		isAdmin = isAdminIn;
 		permissions[0] = banks;
 		permissions[1] = factions;
@@ -215,6 +219,7 @@ public class GuiNpcGlobalMainMenu extends GuiNPCInterface2 {
 		permissions[12] = elements;
 		permissions[13] = dungeons;
 		permissions[14] = permission;
+		permissions[15] = dropTemplates;
 		addedPermissions = true;
 		initGui();
 	}

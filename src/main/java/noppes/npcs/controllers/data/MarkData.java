@@ -79,10 +79,10 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 	@CapabilityInject(IMarkDataHandler.class)
 	public static Capability<IMarkDataHandler> MARKDATA_CAPABILITY;
 
-	private static final ResourceLocation CNPCS_CAPKEY = new ResourceLocation(CustomNpcs.MODID, "markdata");
-	private static final String NBT_KEY = "cnpcmarkdata";
-	private static final MarkData backup = new MarkData();
-	public static volatile boolean anyMarks;
+	protected static final ResourceLocation CNPCS_CAPKEY = new ResourceLocation(CustomNpcs.MODID, "markdata");
+	protected static final String NBT_KEY = "cnpcmarkdata";
+	protected static final MarkData backup = new MarkData();
+	protected static volatile boolean hasMarksInGame;
 
 	public static void register(AttachCapabilitiesEvent<Entity> event) {
 		event.addCapability(MarkData.CNPCS_CAPKEY, new MarkData());
@@ -97,6 +97,8 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 		}
 		return data;
 	}
+
+	public static  boolean hasMarksInGame() { return hasMarksInGame; }
 
 	public EntityLivingBase entity;
 	public List<Mark> marks = new ArrayList<>();
@@ -115,7 +117,7 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 			m.is3d = c.getBoolean("is3d");
 			marksIn.add(m);
 		}
-		if (!marksIn.isEmpty()) { anyMarks = true; }
+		if (!marksIn.isEmpty()) { hasMarksInGame = true; }
 		marks = marksIn;
 	}
 
@@ -146,7 +148,7 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 		Mark m = new Mark();
 		m.setType(type);
 		marks.add(m);
-		anyMarks = true;
+		hasMarksInGame = true;
 		if (!entity.world.isRemote) { syncClients(); }
 		return m;
 	}
@@ -156,7 +158,7 @@ public class MarkData implements IMarkDataHandler, ICapabilityProvider {
 		m.setType(type);
 		m.color = color;
 		marks.add(m);
-		anyMarks = true;
+		hasMarksInGame = true;
 		if (!entity.world.isRemote) { syncClients(); }
 	}
 

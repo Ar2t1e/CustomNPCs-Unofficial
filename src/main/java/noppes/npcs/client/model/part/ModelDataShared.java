@@ -10,7 +10,6 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.client.parts.ModelPartData;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -34,7 +33,6 @@ public class ModelDataShared {
 	protected HashMap<EnumParts, ModelPartData> parts = new HashMap<>();
 	protected final Map<Integer, LayerModel> layersData = new TreeMap<>();
 	private final List<String> disableLayers = new ArrayList<>();
-	private final Set<String> disableLayerSet = new HashSet<>();
 
 	public EntityLivingBase entity;
 	public Class<? extends EntityLivingBase> entityClass;
@@ -138,8 +136,6 @@ public class ModelDataShared {
 		if (compound.hasKey("DisableLayers", 9)) {
 			NBTTagList listDL = compound.getTagList("DisableLayers", 8);
 			for (int i = 0; i < listDL.tagCount(); i++) { disableLayers.add(listDL.getStringTagAt(i)); }
-			disableLayerSet.clear();
-			disableLayerSet.addAll(disableLayers);
 		}
 		updateTranslate();
 	}
@@ -295,13 +291,11 @@ public class ModelDataShared {
 		return null;
 	}
 
-	public boolean hasRenderLayers() {
-		return !layersData.isEmpty();
-	}
+	public boolean hasRenderLayers() { return !layersData.isEmpty(); }
 
 	public List<LayerModel> getRenderLayers(EnumParts part) {
 		List<LayerModel> list = new ArrayList<>();
-		for (LayerModel lm : CustomNpcs.FastNpcFrame ? layersData.values() : new ArrayList<>(layersData.values())) {
+		for (LayerModel lm : layersData.values()) {
 			if (lm.part == part) { list.add(lm); }
 		}
 		return list;
@@ -315,7 +309,6 @@ public class ModelDataShared {
 	}
 
 	public boolean isDisableLayer(String layerName) {
-		if (CustomNpcs.FastNpcLayers) { return !disableLayerSet.isEmpty() && disableLayerSet.contains(layerName); }
 		return disableLayers.contains(layerName);
 	}
 
@@ -326,8 +319,6 @@ public class ModelDataShared {
 	public void setDisableLayers(String[] newLayers) {
 		disableLayers.clear();
 		if (newLayers != null && newLayers.length != 0) { disableLayers.addAll(Arrays.asList(newLayers)); }
-		disableLayerSet.clear();
-		disableLayerSet.addAll(disableLayers);
 	}
 
 	public boolean hasDisableLayers() { return !disableLayers.isEmpty(); }

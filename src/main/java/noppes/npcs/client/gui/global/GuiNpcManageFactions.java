@@ -257,7 +257,18 @@ public class GuiNpcManageFactions
 		}
 		GlStateManager.popMatrix();
 		super.drawScreen(mouseX, mouseY, partialTicks);
-		if (!scroll.hasSelected() && faction.id > -1 && data.containsValue(faction.id)) {
+		if (scroll.hasSelected() && faction.id > -1) {
+			Component currentSelected = scroll.getNormalSelected();
+			Integer currentId = data.get(currentSelected);
+			if (currentId != faction.id) {
+				for (Component name : data.keySet()) {
+					if (data.get(name) == faction.id) {
+						scroll.setSelected(name);
+						break;
+					}
+				}
+			}
+		} else if (!scroll.hasSelected() && faction.id > -1 && data.containsValue(faction.id)) {
 			for (Component name : data.keySet()) {
 				if (data.get(name) == faction.id) {
 					scroll.setSelected(name);
@@ -278,9 +289,16 @@ public class GuiNpcManageFactions
 
 	@Override
 	public void scrollClicked(GuiCustomScrollNop scroll) {
-		if (scroll.id == 0 && data.containsKey(scroll.getNormalSelected())) {
-			save();
-			Packets.sendServer(new SPacketFactionGet(data.get(scroll.getNormalSelected())));
+		if (scroll.id == 0) {
+			int idx = scroll.getSelectedIndex();
+			if (idx >= 0 && idx < scroll.getNormalList().size()) {
+				Component key = scroll.getNormalList().get(idx);
+				Integer id = data.get(key);
+				if (id != null && id != faction.id) {
+					save();
+					Packets.sendServer(new SPacketFactionGet(id));
+				}
+			}
 		}
 	}
 

@@ -17,6 +17,8 @@ import net.minecraftforge.fml.common.Loader;
 @SuppressWarnings("all")
 public final class ArmourersWorkshopApi {
 
+	private static Boolean available;
+
 	@CapabilityInject(IEntitySkinCapability.class)
 	public static final Capability<IEntitySkinCapability> ENTITY_SKIN_CAP = null;
 
@@ -35,25 +37,20 @@ public final class ArmourersWorkshopApi {
 
 	public static IWardrobeCap getEntityWardrobeCapability(Entity entity) { return entity.getCapability(ENTITY_WARDROBE_CAP, null); }
 
-	public static ISkinnableEntityRegisty getISkinnableEntityRegisty() {
-		return skinnableEntityRegisty;
-	}
+	public static ISkinnableEntityRegisty getISkinnableEntityRegisty() { return skinnableEntityRegisty; }
 
-	public static IPaintTypeRegistry getPaintTypeRegistry() {
-		return paintTypeRegistry;
-	}
+	public static IPaintTypeRegistry getPaintTypeRegistry() { return paintTypeRegistry; }
 
 	public static IPlayerWardrobeCap getPlayerWardrobeCapability(EntityPlayer player) { return player.getCapability(PLAYER_WARDROBE_CAP, null); }
 
-	public static ISkinNBTUtils getSkinNBTUtils() {
-		return skinNBTUtils;
-	}
+	public static ISkinNBTUtils getSkinNBTUtils() { return skinNBTUtils; }
 
-	public static ISkinTypeRegistry getSkinTypeRegistry() {
-		return skinTypeRegistry;
-	}
+	public static ISkinTypeRegistry getSkinTypeRegistry() { return skinTypeRegistry; }
 
-	public static boolean isAvailable() { return Loader.isModLoaded(LibApi.MOD_ID); }
+	public static boolean isAvailable() {
+		if (available == null) { available = Loader.isModLoaded(LibApi.MOD_ID); }
+		return available;
+	}
 
 	private ArmourersWorkshopApi() { throw new IllegalAccessError(); }
 

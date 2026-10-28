@@ -71,7 +71,7 @@ public class GuiButtonBiDirectional extends GuiButtonNop {
          label = Component.literal(TextFormatting.UNDERLINE + label.getFormattedText());
       }
       renderString(label, x + 11, y, x + width - 11, y + height,
-              getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true, customFont);
+              getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, alignText, false, customFont);
       if (isHovered && !hoverText.isEmpty()) {
          if (listener != null) { listener.setHoverText(hoverText); }
          else { drawHoveringText(hoverText, mouseX, mouseY, width, height); }
@@ -83,10 +83,13 @@ public class GuiButtonBiDirectional extends GuiButtonNop {
    @Override
    protected void onClick(double x, double y) {
       if (display != null && display.length != 0) {
-         if (hoverR) { displayValue = (displayValue + 1) % display.length; }
+         if (hoverR) {
+            displayValue++;
+            if (displayValue >= display.length) { displayValue = 0; }
+         }
          if (hoverL) {
-            if (displayValue <= 0) { displayValue = display.length; }
             --displayValue;
+            if (displayValue < 0) { displayValue = display.length - 1; }
          }
          setDisplay(displayValue);
       }

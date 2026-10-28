@@ -81,9 +81,6 @@ public class SubGuiNPCManageDeal extends GuiContainerNPCInterface<ContainerNPCTr
 			case 4: deal.setIsCase(button.getValue() == 1); initGui(); break;
 			case 5: {
 				if (!deal.isCase()) { return; }
-				SubGuiDropEdit.parent = null;
-				SubGuiDropEdit.parentContainer = EnumGuiType.SetupTraderDeal;
-				SubGuiDropEdit.parentData = new BlockPos(menu.marcet.getId(), deal.getId(), 0);
 				NBTTagCompound compound = new NBTTagCompound();
 				compound.setInteger("InventoryType", 1);
 				compound.setInteger("Marcet", menu.marcet.getId());
@@ -100,9 +97,6 @@ public class SubGuiNPCManageDeal extends GuiContainerNPCInterface<ContainerNPCTr
 			} // del
 			case 7: {
 				if (!deal.isCase() || !scroll.hasSelected()) { return; }
-				SubGuiDropEdit.parent = null;
-				SubGuiDropEdit.parentContainer = EnumGuiType.SetupTraderDeal;
-				SubGuiDropEdit.parentData = new BlockPos(menu.marcet.getId(), deal.getId(), 0);
 				NBTTagCompound compound = new NBTTagCompound();
 				compound.setInteger("InventoryType", 1);
 				compound.setInteger("Marcet", menu.marcet.getId());
@@ -365,6 +359,9 @@ public class SubGuiNPCManageDeal extends GuiContainerNPCInterface<ContainerNPCTr
 		CHEST_FULL = ModelBuffer.getParameterizedModel(objCase, null, materialTextures, true, 0, false);
 		CHEST_BODY = ModelBuffer.getParameterizedModel(objCase, Collections.singletonList("body"), materialTextures, true, 0, false);
 		CHEST_TOP = ModelBuffer.getParameterizedModel(objCase, Collections.singletonList("top"), materialTextures, true, 0, false);
+		SubGuiDropEdit.parent = null;
+		SubGuiDropEdit.parentContainer = EnumGuiType.SetupTraderDeal;
+		SubGuiDropEdit.parentData = new BlockPos(menu.marcet.getId(), deal.getId(), 0);
 	}
 
 	@Override

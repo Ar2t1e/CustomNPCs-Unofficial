@@ -109,10 +109,10 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 	@Override
 	public void mouseDragged(GuiSliderNop slider) {
 		float n = 5.0f / 6.0f;
-		int t = Math.round(slider.sliderValue * 600.0f - 500.0f);
+		int t = Math.round(slider.getValue() * 600.0f - 500.0f);
 		Component message = Component.empty();
-		TextFormatting color = slider.sliderValue < n ? TextFormatting.RED : TextFormatting.GREEN;
-		if (slider.sliderValue != n) { message.append(Component.literal(slider.sliderValue < n ? "" : "+").withStyle(color)); }
+		TextFormatting color = slider.getValue() < n ? TextFormatting.RED : TextFormatting.GREEN;
+		if (slider.getValue() != n) { message.append(Component.literal(slider.getValue() < n ? "" : "+").withStyle(color)); }
 		message.append(Component.literal(String.valueOf(t).replace(".", ",") + "%").withStyle(color));
 		slider.setMessage(message);
 		Component mes = Component.translatable("stats.hover.resist", select.getFormattedText());
@@ -131,7 +131,7 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 	@Override
 	public void mouseReleased(GuiSliderNop slider) {
 		if (!data.containsKey(select)) { return; }
-		setValue(data.get(select), (int) (slider.sliderValue * 600.0f - 500.0f));
+		setValue(data.get(select), (int) (slider.getValue() * 600.0f - 500.0f));
 	}
 
 	// New from Unofficial (BetaZavr)
@@ -183,7 +183,7 @@ public class SubGuiNpcResistanceProperties extends GuiNPCInterface
 		setValue(data.get(select), textField.getInteger());
 		float v = (2.0f - resistances.get(data.get(select)));
 		int t = (int) (v * -100.0f + 100.0f);
-		getSlider(0).sliderValue = (float) t * 0.001667f + 0.833333f;
+		getSlider(0).setValue((float) t * 0.001667f + 0.833333f);
 		getSlider(0).setString((t == 0 ? "" : (((char) 167) + (t < 0 ? "c" : "a+"))) +
 				String.valueOf(t).replace(".", ",") + "%");
 	}

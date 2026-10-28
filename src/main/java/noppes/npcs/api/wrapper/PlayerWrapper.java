@@ -30,6 +30,7 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.*;
 import noppes.npcs.packets.server.SPacketCustomNBT;
 import noppes.npcs.packets.server.SPacketDimensionTeleport;
+import noppes.npcs.packets.server.SPacketGuiOpen;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.*;
@@ -746,6 +747,18 @@ public class PlayerWrapper<T extends EntityPlayer> extends EntityLivingBaseWrapp
 		if (entity instanceof EntityPlayerMP) {
 			Marcet market = MarcetController.getInstance().getMarcet(marcetId);
 			if (market != null) { NoppesUtilServer.openContainerGui((EntityPlayerMP) entity, EnumGuiType.PlayerTrader, (buffer) -> buffer.writeInt(marcetId)); }
+		}
+	}
+
+	@Override
+	public void showAuction(int auctionId) {
+		if (entity instanceof EntityPlayerMP) {
+			AuctionHouse auction = AuctionController.getInstance().getAuction(auctionId);
+			if (auction != null) {
+				auction.addPlayer((EntityPlayerMP) entity);
+				SPacketGuiOpen.sendOpenGui((EntityPlayerMP) entity, EnumGuiType.PlayerAuction,
+						null, new BlockPos(auctionId, 0, 0));
+			}
 		}
 	}
 

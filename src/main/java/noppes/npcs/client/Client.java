@@ -36,7 +36,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.fml.common.network.internal.EntitySpawnMessageHelper;
+import noppes.npcs.util.EntitySpawnMessageHelper;
 import noppes.npcs.*;
 import noppes.npcs.api.NpcAPI;
 import noppes.npcs.api.event.PlayerEvent;
@@ -90,6 +90,8 @@ import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.TempFile;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -107,7 +109,6 @@ public class Client {
 
     private static Minecraft minecraft;
     private static final Gson gson = new Gson();
-
     private static final List<PacketBasic> deferred = new ArrayList<>();
     private static int deferredTicks;
 
@@ -130,18 +131,16 @@ public class Client {
     }
 
     public static <MSG extends PacketBasic> void processPacket(MSG msg) {
-        minecraft = Minecraft.getMinecraft();
-        if (CustomNpcs.DeferEarlyPackets) {
-            if (minecraft.player == null) {
-                deferred.add(msg);
-                return;
-            }
-            if (msg.player != minecraft.player) {
-                msg.player = minecraft.player;
-                msg.npc = NoppesUtilServer.getEditingNpc(msg.player);
-            }
-        }
         CustomNpcs.debugData.start("Packet", msg.getClass().getSimpleName());
+        minecraft = Minecraft.getMinecraft();
+        if (minecraft.player == null) {
+            deferred.add(msg);
+            return;
+        }
+        if (msg.player != minecraft.player) {
+            msg.player = minecraft.player;
+            msg.npc = NoppesUtilServer.getEditingNpc(msg.player);
+        }
         if (msg instanceof PacketAchievement) { packetAchievement((PacketAchievement) msg); }
         else if (msg instanceof PacketChat) { packetChat((PacketChat) msg); }
         else if (msg instanceof PacketChatBubble) { packetChatBubble((PacketChatBubble) msg); }
@@ -236,6 +235,11 @@ public class Client {
         else if (msg instanceof PacketBorderData) { packetBorderData((PacketBorderData) msg); }
         else if (msg instanceof PacketBorderClear) { packetBorderClear(); }
         else if (msg instanceof PacketHeapAnalyzer) { packetHeapAnalyzer((PacketHeapAnalyzer) msg); }
+        else if (msg instanceof PacketAuctionHouseSet) { packetAuctionSet((PacketAuctionHouseSet) msg); }
+        else if (msg instanceof PacketAuctionHouseAddLots) { packetAuctionAddLots((PacketAuctionHouseAddLots) msg); }
+        else if (msg instanceof PacketAuctionLotRemoved) { packetAuctionLotRemoved((PacketAuctionLotRemoved) msg); }
+        else if (msg instanceof PacketAuctionLotUpdate) { packetAuctionLotUpdate((PacketAuctionLotUpdate) msg); }
+
         CustomNpcs.debugData.end("Packet", msg.getClass().getSimpleName());
     }
 
@@ -300,11 +304,13 @@ public class Client {
 
     private static void packetChatBubble(PacketChatBubble msg) {
         Entity entity = minecraft.world.getEntityByID(msg.id);
-        if (CustomNpcs.EnableChatBubbles && entity instanceof EntityNPCInterface) {
+        if (entity instanceof EntityNPCInterface) {
             EntityNPCInterface npc = (EntityNPCInterface) entity;
-            if (npc.messages == null) { npc.messages = new RenderChatMessages(); }
             String text = NoppesStringUtils.formatText(msg.message.getFormattedText(), msg.player, npc);
-            npc.messages.addMessage(text, npc);
+            if (CustomNpcs.EnableChatBubbles) {
+                if (npc.messages == null) { npc.messages = new RenderChatMessages(); }
+                npc.messages.addMessage(text, npc);
+            }
             if (msg.showMessage) { msg.player.sendMessage(new TextComponentString(npc.getName() + ": " + text)); }
         }
         else if (CustomNpcs.EnablePlayerChatBubbles && entity instanceof EntityPlayer) {
@@ -660,7 +666,7 @@ public class Client {
                 break;
             } // ItemScriptedModels
             case 17: {
-                KeyController.getInstance().loadKeys(msg.data);
+                KeyController.getInstance().load(msg.data);
                 CustomNpcs.proxy.updateKeys();
                 break;
             } // custom keys
@@ -1262,7 +1268,7 @@ public class Client {
         if (minecraft.currentScreen instanceof GuiNpcGlobalMainMenu) {
             ((GuiNpcGlobalMainMenu) minecraft.currentScreen).setMenuData(msg.admin, msg.banks, msg.factions, msg.dialogs, msg.quests,
                     msg.transports, msg.players_data, msg.recipes, msg.natural_spawns, msg.linkeds, msg.markets, msg.auctions,
-                    msg.mails, msg.elements, msg.dungeons, msg.permissions);
+                    msg.mails, msg.elements, msg.dungeons, msg.permissions, msg.drop_templates);
         }
     }
 
@@ -1725,6 +1731,68 @@ public class Client {
         if (isChanged != 0) {
             msg.player.sendMessage(Component.translatable("minimap.set.points." + isChanged, ChatFormatting.GRAY + mm.modName).getParent());
         }
+    }
+
+    private static void packetAuctionSet(PacketAuctionHouseSet msg) {
+        if (msg.compound.hasNoTags()) {
+            AuctionController.getInstance().auctionHouses.remove(msg.auctionId);
+        }
+        else {
+            AuctionHouse auction = AuctionController.getInstance().getAuction(msg.auctionId);
+            if (auction == null) {
+                auction = new AuctionHouse(msg.auctionId);
+            }
+            auction.load(msg.compound, true);
+            auction.clientAvailabilityLot = msg.compound.getBoolean("AvailabilityLot");
+            auction.clientAvailabilityBuyout = msg.compound.getBoolean("AvailabilityBuyout");
+            AuctionController.getInstance().auctionHouses.put(msg.auctionId, auction);
+            if (minecraft.currentScreen instanceof GuiNpcAuction) { ((GuiNpcAuction) minecraft.currentScreen).update(); }
+        }
+    }
+
+    private static void packetAuctionAddLots(PacketAuctionHouseAddLots msg) {
+        AuctionHouse auction = AuctionController.getInstance().getAuction(msg.auctionId);
+        if (auction != null) {
+            GuiNpcAuction gui = null;
+            if (minecraft.currentScreen instanceof GuiNpcAuction) { gui = (GuiNpcAuction) minecraft.currentScreen; }
+            NBTTagList list = msg.compound.getTagList("Lots", 10);
+            for (int i = 0; i < list.tagCount(); i++) {
+                processUpdateAuctionLot(gui, auction, list.getCompoundTagAt(i));
+            }
+        }
+    }
+
+    private static void packetAuctionLotRemoved(PacketAuctionLotRemoved msg) {
+        AuctionHouse auction = AuctionController.getInstance().getAuction(msg.auctionId);
+        if (auction != null) {
+            auction.removeLot(msg.lotId);
+            if (minecraft.currentScreen instanceof GuiNpcAuction) { ((GuiNpcAuction) minecraft.currentScreen).updateLot(msg.lotId); }
+        }
+    }
+
+    private static void packetAuctionLotUpdate(PacketAuctionLotUpdate msg) {
+        AuctionHouse auction = AuctionController.getInstance().getAuction(msg.auctionId);
+        if (auction != null) {
+            GuiNpcAuction gui = null;
+            if (minecraft.currentScreen instanceof GuiNpcAuction) { gui = (GuiNpcAuction) minecraft.currentScreen; }
+            processUpdateAuctionLot(gui, auction, msg.compound);
+        }
+    }
+
+    private static void processUpdateAuctionLot(@Nullable GuiNpcAuction gui, @Nonnull AuctionHouse auction, @Nonnull NBTTagCompound compound) {
+        if (!compound.hasKey("CreationDate", 4)) { return; }
+        long lotId = compound.getLong("CreationDate");
+        AuctionLot existingLot = (AuctionLot) auction.getLot(lotId);
+        if (existingLot == null) {
+            // New lot - create and add
+            AuctionLot lot = new AuctionLot(0);
+            lot.load(compound);
+            auction.addLot(lot);
+        } else {
+            // Existing lot - update in place
+            existingLot.load(compound);
+        }
+        if (gui != null) { gui.updateLot(lotId); }
     }
 
     public static class TempWaypointText {

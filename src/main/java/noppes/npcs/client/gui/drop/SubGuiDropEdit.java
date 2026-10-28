@@ -28,6 +28,7 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketDealDropSetSave;
 import noppes.npcs.packets.server.SPacketNpcInvDropSetSave;
 import noppes.npcs.packets.server.SPacketQuestDropSetSave;
+import noppes.npcs.packets.server.SPacketTemplateDropSetSave;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiCustomScrollNop;
 import noppes.npcs.shared.client.gui.components.GuiTextFieldNop;
@@ -175,6 +176,11 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
 				.setMinMaxDefault(0.0001d, 100.0d, drop.getChance())
 				.setIsVisible(!drop.item.isEmpty())
 				.setHoverTexts("drop.hover.chance");
+		// availability
+		addButton(12, x + 104, y - 1, "availability.available")
+				.setSize(87, 18)
+				.setIsVisible(!drop.item.isEmpty())
+				.setHoverTexts("availability.hover");
 		// amount
 		String tied = Component.translatable("drop.tied.random").getFormattedText();
 		if (drop.tiedToLevel) { tied = Component.translatable("drop.tied.level").getFormattedText(); }
@@ -207,6 +213,11 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
 				.setMinMaxDefault(1, drop.item.getMaxStackSize(), drop.item.getCount())
 				.setIsVisible(!drop.item.isEmpty())
 				.setHoverTexts(Component.translatable("drop.hover.amount", tied));
+		// lootMode
+		addButton(10, x + 104, y - 1, false, drop.lootMode, "stats.normal", "inv.auto", "inv.inventory")
+				.setSize(87, 18)
+				.setIsVisible(!drop.item.isEmpty() && parentContainer == EnumGuiType.MainMenuInv)
+				.setHoverTexts("drop.hover.mode");
 		addLabel(lId++, x, (y += 20) + 2, "gui.max")
 				.setSize(48, 12)
 				.setIsVisible(!drop.item.isEmpty());
@@ -214,6 +225,12 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
 				.setMinMaxDefault(1, drop.item.getMaxStackSize(), drop.item.getCount())
 				.setIsVisible(!drop.item.isEmpty())
 				.setHoverTexts(Component.translatable("drop.hover.amount", tied));
+		// tied level
+		int t = (int) (3.0f + 9.0f * 17.0f / (float) CustomNpcs.MaxLv);
+		addButton(11, x + 104, y - 1, false, drop.tiedToLevel ? 1 : 0, "drop.type.random", "drop.type.level")
+				.setSize(87, 18)
+				.setIsVisible(!drop.item.isEmpty() && (parentContainer == EnumGuiType.MainMenuInv || parent instanceof GuiNpcManageQuest))
+				.setHoverTexts(Component.translatable("drop.hover.tied", TextFormatting.RED + "" + CustomNpcs.MaxLv, CustomNpcs.MaxLv, TextFormatting.YELLOW + "" + t));
 		// reset
 		addButton(0, guiLeft + 171, guiTop + 169, "remote.reset")
 				.setSize(48, 20)
@@ -300,24 +317,6 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
 				.setSize(43, 20)
 				.setIsEnabled(scrollTags.hasSelected())
 				.setHoverTexts("drop.hover.tag.edit");
-		x = guiLeft + 329;
-		y = guiTop + 146;
-		// availability
-		addButton(12, x, y, "availability.available")
-				.setSize(87, 20)
-				.setIsVisible(!drop.item.isEmpty())
-				.setHoverTexts("availability.hover");
-		// lootMode
-		addButton(10, x, y += 23, false, drop.lootMode, "stats.normal", "inv.auto", "inv.inventory")
-				.setSize(87, 20)
-				.setIsVisible(!drop.item.isEmpty() && parentContainer == EnumGuiType.MainMenuInv)
-				.setHoverTexts("drop.hover.mode");
-		// tied level
-		int t = (int) (3.0f + 9.0f * 17.0f / (float) CustomNpcs.MaxLv);
-		addButton(11, x, y + 23, false, drop.tiedToLevel ? 1 : 0, "drop.type.random", "drop.type.level")
-				.setSize(87, 20)
-				.setIsVisible(!drop.item.isEmpty() && (parentContainer == EnumGuiType.MainMenuInv || parent instanceof GuiNpcManageQuest))
-				.setHoverTexts(Component.translatable("drop.hover.tied", TextFormatting.RED + "" + CustomNpcs.MaxLv, CustomNpcs.MaxLv, TextFormatting.YELLOW + "" + t));
 	}
 
 	@Override
@@ -330,7 +329,6 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
 	@Override
 	public void onClose() {
 		GuiTextFieldNop.unfocus();
-		save();
 		if (parent != null) { setScreen(parent); }
 		else if (parentData != null && parentContainer != null) { NoppesUtil.requestOpenGUI(parentContainer, parentData); }
 	}
@@ -342,9 +340,10 @@ public class SubGuiDropEdit extends GuiContainerNPCInterface<ContainerNPCDropSet
 			if (drop.getMinAmount() == 1 && drop.getMaxAmount() == 1) { drop.setAmount(drop.item.getCount(), drop.item.getCount()); }
 		}
 		drop.item.setCount(1);
-		if (menu.dataType == 0 ) { Packets.sendServer(new SPacketNpcInvDropSetSave(menu.dropType, menu.groupId, drop.pos, drop.save())); }
+		if (menu.dataType == 0 ) { Packets.sendServer(new SPacketNpcInvDropSetSave(drop.save())); }
 		else if (menu.dataType == 1) { Packets.sendServer(new SPacketDealDropSetSave(menu.marcetID, menu.dealID, drop.save())); }
 		else if (menu.dataType == 2) { Packets.sendServer(new SPacketQuestDropSetSave(menu.questID, drop.save())); }
+		else if (menu.dataType == 3) { Packets.sendServer(new SPacketTemplateDropSetSave(menu.templateId, menu.groupId, drop.save())); }
 	}
 
 	@Override

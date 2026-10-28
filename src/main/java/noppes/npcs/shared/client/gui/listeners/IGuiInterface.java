@@ -10,6 +10,7 @@ import noppes.npcs.shared.client.gui.components.*;
 import javax.annotation.Nullable;
 import java.util.List;
 
+@SuppressWarnings("unused")
 @SideOnly(Side.CLIENT)
 public interface IGuiInterface {
 
@@ -18,6 +19,22 @@ public interface IGuiInterface {
 	void buttonEvent(GuiButtonNop button);
 
 	boolean mouseButtonEvent(GuiButtonNop button, int mouseButton);
+
+	GuiButtonNop getButton(int id);
+
+	GuiMenuSideButton getSideButton(int id);
+
+	GuiMenuTopButton getTopButton(int id);
+
+	GuiTextFieldNop getTextField(int id);
+
+	GuiLabel getLabel(int id);
+
+	GuiSliderNop getSlider(int id);
+
+	GuiCustomScrollNop getScroll(int id);
+
+	IComponentGui getExtra(int id);
 
 	void save();
 
@@ -104,4 +121,5 @@ public interface IGuiInterface {
 	boolean keyPressed(char typedChar, int keyCode);
 
 	boolean doubleClicked(IComponentGui component);
+
 }

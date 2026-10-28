@@ -7,20 +7,19 @@ import java.util.ArrayList;
  * ISkinType's and ISkinPart's.
  * 
  * @author RiskyKen
- *
  */
+@SuppressWarnings("unused")
 public interface ISkinTypeRegistry {
 
-	public ArrayList<ISkinType> getRegisteredSkinTypes();
+	ArrayList<ISkinType> getRegisteredSkinTypes();
 
-	public ISkinPartType getSkinPartFromRegistryName(String registryName);
+	ISkinPartType getSkinPartFromRegistryName(String registryName);
 
-	public ISkinType getSkinTypeFromRegistryName(String registryName);
+	ISkinType getSkinTypeFromRegistryName(String registryName);
 
 	/**
 	 * Register a new skin type.
-	 * 
-	 * @param skinType
 	 */
-	public boolean registerSkin(ISkinType skinType);
+    boolean registerSkin(ISkinType skinType);
+
 }

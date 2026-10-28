@@ -10,7 +10,7 @@ import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.constants.RoleType;
 import noppes.npcs.api.entity.data.role.IRolePostman;
 import noppes.npcs.constants.EnumGuiType;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.data.Line;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.entity.EntityNPCInterface;

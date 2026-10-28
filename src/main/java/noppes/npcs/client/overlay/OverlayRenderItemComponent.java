@@ -2,10 +2,10 @@ package noppes.npcs.client.overlay;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.item.ItemStack;
 import noppes.npcs.api.constants.AlignmentType;
 import noppes.npcs.api.overlay.IRenderItemOverlay;
+import noppes.npcs.shared.client.gui.GuiBasic;
 
 import javax.annotation.Nonnull;
 
@@ -40,12 +40,7 @@ public class OverlayRenderItemComponent implements IOverlayRenderComponent {
             xPos += alignment.getOffsetX(widthWin / 2);
             yPos += alignment.getOffsetY(heightWin / 2);
         }
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(xPos, yPos, (float) id * 0.01F);
-        GlStateManager.scale(scale, scale, scale);
-        minecraft.getRenderItem().renderItemIntoGUI(item, 0, 0);
-        minecraft.getRenderItem().renderItemAndEffectIntoGUI(minecraft.player, item, 0, 0);
-        GlStateManager.popMatrix();
+        GuiBasic.renderStackInGUI(item, xPos, yPos, (float) id * 0.01F, scale, null);
     }
 
 }

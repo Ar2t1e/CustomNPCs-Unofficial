@@ -1,7 +1,6 @@
 package noppes.npcs.shared.client.gui.components.custom;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.NoppesUtilServer;
@@ -9,6 +8,7 @@ import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.gui.ICustomGuiComponent;
 import noppes.npcs.api.wrapper.gui.CustomGuiItemRendererWrapper;
 import noppes.npcs.client.gui.custom.GuiCustom;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiLabel;
 
 public class CustomGuiItemRenderer
@@ -59,12 +59,7 @@ public class CustomGuiItemRenderer
       int b = (int) ((getY() + height)  / component.getScale());
       isHovered = mouseX >= x && mouseY >= y && mouseX < r && mouseY < b;
       if (!NoppesUtilServer.isItemStackNull(stack)) {
-         GlStateManager.pushMatrix();
-         GlStateManager.scale(component.getScale(), component.getScale(), 1.0F);
-         GlStateManager.translate(x, y, (float)id);
-         minecraft.getRenderItem().renderItemAndEffectIntoGUI(stack, 0, 0);
-         minecraft.getRenderItem().renderItemOverlays(minecraft.fontRenderer, stack, 0, 0);
-         GlStateManager.popMatrix();
+         GuiBasic.renderStackInGUI(stack, x, y, (float) id * 0.01F, component.getScale(), null);
       }
    }
 

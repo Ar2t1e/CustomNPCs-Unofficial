@@ -3,8 +3,8 @@ package noppes.npcs.client.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import noppes.npcs.mixin.client.model.IModelPlayerMixin;
 import noppes.npcs.client.util.GlCache;
+import noppes.npcs.mixin.client.model.IModelPlayerMixin;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;

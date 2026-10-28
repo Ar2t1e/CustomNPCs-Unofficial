@@ -22,6 +22,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.ForgeHooks;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
+import noppes.npcs.NoppesUtilPlayer;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.CustomNPCsException;
 import noppes.npcs.api.NpcAPI;
@@ -569,6 +570,38 @@ public class DataInventory implements IInventory, INPCInventory, IDropSetData {
 		return map;
 	}
 
+	/**
+	 * Merges identical item stacks into combined stacks.
+	 * Items are considered identical if they have the same item type, damage value, and NBT tags.
+	 */
+	private List<IItemStack> mergeItemStacks(List<IItemStack> stacks) {
+		List<IItemStack> merged = new ArrayList<>();
+		for (IItemStack newStack : stacks) {
+			if (newStack == null || newStack.isEmpty()) { continue; }
+			ItemStack mcNew = newStack.getMCItemStack();
+			boolean mergedIntoExisting = false;
+			for (IItemStack existing : merged) {
+				ItemStack mcExisting = existing.getMCItemStack();
+				if (NoppesUtilPlayer.compareItems(mcNew, mcExisting, false, false)) {
+					int spaceLeft = mcExisting.getMaxStackSize() - mcExisting.getCount();
+					if (spaceLeft > 0) {
+						int toAdd = Math.min(spaceLeft, mcNew.getCount());
+						mcExisting.setCount(mcExisting.getCount() + toAdd);
+						mcNew.setCount(mcNew.getCount() - toAdd);
+						if (mcNew.getCount() == 0) {
+							mergedIntoExisting = true;
+							break;
+						}
+					}
+				}
+			}
+			if (!mergedIntoExisting && mcNew.getCount() > 0) {
+				merged.add(newStack);
+			}
+		}
+		return merged;
+	}
+
 	public void dropStuff(NpcEvent.DiedEvent event, DamageSource damagesource) {
 		deadLoot = null;
 		deadLoots = null;
@@ -624,14 +657,15 @@ public class DataInventory implements IInventory, INPCInventory, IDropSetData {
 		}
 		if (event.inventoryItems != null) {
 			if (event.totalDamageOnlyPlayers == 0.0d) {
-				List<IItemStack> stacks = new ArrayList<>();
+				List<IItemStack> rawStacks = new ArrayList<>();
 				for (IEntity<?> iEntity : event.inventoryItems.keySet()) {
 					for (IItemStack iStack : event.inventoryItems.get(iEntity)) {
-						if (!stacks.contains(iStack)) { stacks.add(iStack); }
-						if (stacks.size() == 54) { break; }
+						if (!rawStacks.contains(iStack)) { rawStacks.add(iStack); }
+						if (rawStacks.size() == 54) { break; }
 					}
-					if (stacks.size() == 54) { break; }
+					if (rawStacks.size() == 54) { break; }
 				}
+				List<IItemStack> stacks = mergeItemStacks(rawStacks);
 				deadLoot = new InventoryBasic("NPC Loot", true, Math.max(9, (int) (Math.ceil((double) stacks.size() / 9.0d) * 9.0d)));
 				int i = 0;
 				for (IItemStack stack : stacks) {
@@ -640,11 +674,12 @@ public class DataInventory implements IInventory, INPCInventory, IDropSetData {
 				}
 			}
 			for (IEntity<?> iEntity : event.inventoryItems.keySet()) {
-				List<IItemStack> stacks = new ArrayList<>();
+				List<IItemStack> rawStacks = new ArrayList<>();
 				for (IItemStack iStack : event.inventoryItems.get(iEntity)) {
-					if (!stacks.contains(iStack)) { stacks.add(iStack); }
-					if (stacks.size() == 54) { break; }
+					if (!rawStacks.contains(iStack)) { rawStacks.add(iStack); }
+					if (rawStacks.size() == 54) { break; }
 				}
+				List<IItemStack> stacks = mergeItemStacks(rawStacks);
 				InventoryBasic inv = new InventoryBasic("NPC Loot", true, Math.max(9, (int) (Math.ceil((double) stacks.size() / 9.0d) * 9.0d)));
 				int i = 0;
 				for (IItemStack stack : stacks) {

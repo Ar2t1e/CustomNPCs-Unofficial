@@ -17,6 +17,7 @@ import noppes.npcs.client.CustomNpcResourceListener;
 import noppes.npcs.containers.ContainerMerchantAdd;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketMerchantSetSlot;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.GuiBasicContainer;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
@@ -160,26 +161,13 @@ public class GuiMerchantAdd extends GuiBasicContainer<ContainerMerchantAdd> {
 				int l = (height - ySize) / 2;
 				int i1 = currentRecipeIndex;
 				MerchantRecipe merchantrecipe = merchantrecipelist.get(i1);
-				GlStateManager.pushMatrix();
-				ItemStack itemstack = merchantrecipe.getItemToBuy();
-				ItemStack itemstack2 = merchantrecipe.getSecondItemToBuy();
-				ItemStack itemstack3 = merchantrecipe.getItemToSell();
-				GlStateManager.enableRescaleNormal();
-				GlStateManager.enableColorMaterial();
-				GlStateManager.enableLighting();
-				itemRender.zLevel = 100.0f;
-				itemRender.renderItemAndEffectIntoGUI(itemstack, k + 36, l + 24);
-				itemRender.renderItemOverlays(fontRenderer, itemstack, k + 36, l + 24);
-				itemRender.renderItemAndEffectIntoGUI(itemstack2, k + 62, l + 24);
-				itemRender.renderItemOverlays(fontRenderer, itemstack2, k + 62, l + 24);
-				itemRender.renderItemAndEffectIntoGUI(itemstack3, k + 120, l + 24);
-				itemRender.renderItemOverlays(fontRenderer, itemstack3, k + 120, l + 24);
-				itemRender.zLevel = 0.0f;
-				GlStateManager.disableLighting();
-				if (isPointInRegion(36, 24, 16, 16, mouseX, mouseY)) { renderToolTip(itemstack, mouseX, mouseY); }
-				else if (isPointInRegion(62, 24, 16, 16, mouseX, mouseY)) { renderToolTip(itemstack2, mouseX, mouseY); }
-				else if (isPointInRegion(120, 24, 16, 16, mouseX, mouseY)) { renderToolTip(itemstack3, mouseX, mouseY); }
-				GlStateManager.popMatrix();
+				GuiBasic.renderStackInGUI(merchantrecipe.getItemToBuy(), k + 36, l + 24, 0.0f, 1.0f, "");
+				GuiBasic.renderStackInGUI(merchantrecipe.getSecondItemToBuy(), k + 62, l + 24, 0.0f, 1.0f, "");
+				GuiBasic.renderStackInGUI(merchantrecipe.getItemToSell(), k + 120, l + 24, 0.0f, 1.0f, "");
+				if (isPointInRegion(36, 24, 16, 16, mouseX, mouseY)) { renderToolTip(merchantrecipe.getItemToBuy(), mouseX, mouseY); }
+				else if (isPointInRegion(62, 24, 16, 16, mouseX, mouseY)) { renderToolTip(merchantrecipe.getSecondItemToBuy(), mouseX, mouseY); }
+				else if (isPointInRegion(120, 24, 16, 16, mouseX, mouseY)) { renderToolTip(merchantrecipe.getItemToSell(), mouseX, mouseY); }
+
 				GlStateManager.enableLighting();
 				GlStateManager.enableDepth();
 			}

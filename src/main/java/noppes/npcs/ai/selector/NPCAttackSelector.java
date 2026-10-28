@@ -28,11 +28,7 @@ public class NPCAttackSelector implements Predicate<EntityLivingBase> {
 				npc.isInRange(entity, npc.stats.aggroRange) &&
 				entity.getHealth() >= 0.1F) {
 			if (npc.aiAttackTarget != null && !npc.aiAttackTarget.canNewAttack()) { return false; }
-			if (CustomNpcs.FastNpcTargeting) {
-				return nearHome(entity) && wanted(entity) && (npc.ais.directLOS == EnumSeeTarget.NONE || npc.canSee(entity));
-			}
-			if (npc.ais.directLOS != EnumSeeTarget.NONE && !npc.canSee(entity)) { return false; }
-			return nearHome(entity) && wanted(entity);
+			return nearHome(entity) && wanted(entity) && (npc.ais.directLOS == EnumSeeTarget.NONE || npc.canSee(entity));
 		}
 		return false;
 	}

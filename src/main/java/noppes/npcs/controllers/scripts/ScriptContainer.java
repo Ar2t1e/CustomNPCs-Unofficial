@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NBTTags;
 import noppes.npcs.api.NpcAPI;
@@ -154,7 +155,7 @@ public class ScriptContainer {
 		return fullscript;
 	}
 
-	public void run(EnumScriptType type, net.minecraftforge.fml.common.eventhandler.Event event) { run(type.function, event); }
+	public void run(EnumScriptType type, Event event) { run(type.function, event); }
 
 	/**
 	 * WARNING: Removed try catching itself - possible behaviour change.

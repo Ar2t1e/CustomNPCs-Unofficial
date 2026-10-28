@@ -7,6 +7,7 @@ import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.item.ItemStack;
 
+@SuppressWarnings("unused")
 public interface ISkinRenderHandler {
 
 	public ModelBase getArmourerHandModel();

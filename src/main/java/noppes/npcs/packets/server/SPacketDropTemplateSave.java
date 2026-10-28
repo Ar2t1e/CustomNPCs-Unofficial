@@ -15,11 +15,15 @@ import java.util.List;
 public class SPacketDropTemplateSave extends PacketServerBasic {
 
     protected static int channelId;
+    private String name;
     private NBTTagCompound compound;
 
     public SPacketDropTemplateSave() { }
 
-    public SPacketDropTemplateSave(NBTTagCompound compoundIn) { compound = compoundIn; }
+    public SPacketDropTemplateSave(String nameIn, NBTTagCompound compoundIn) {
+        name = nameIn;
+        compound = compoundIn;
+    }
 
     @Override
     public boolean requiresNpc() { return false; }
@@ -31,10 +35,16 @@ public class SPacketDropTemplateSave extends PacketServerBasic {
     public boolean toolAllowed(ItemStack item) { return true; }
 
     @Override
-    public void encode(FriendlyByteBuf buf) { buf.writeNbt(compound); }
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeUtf(name);
+        buf.writeNbt(compound);
+    }
 
     @Override
-    public void decode(FriendlyByteBuf buf) { compound = buf.readNbt(); }
+    public void decode(FriendlyByteBuf buf) {
+        name = buf.readUtf();
+        compound = buf.readNbt();
+    }
 
     @Override
     public int getChannelId() { return channelId; }
@@ -42,8 +52,12 @@ public class SPacketDropTemplateSave extends PacketServerBasic {
     @Override
     protected void handle() {
         CustomNpcs.debugData.start("Packets");
-        if (!compound.hasKey("Name", 8) || !compound.hasKey("Groups", 10)) { return; }
-        DropController.getInstance().templates.put(compound.getString("Name"), new DropsTemplate(compound.getCompoundTag("Groups")));
+        if (compound.hasKey("Name", 8) && compound.hasKey("Groups", 10)) {
+            DropController dData = DropController.getInstance();
+            dData.templates.put(name, new DropsTemplate(compound));
+            dData.save();
+            dData.sendTo(player);
+        }
         CustomNpcs.debugData.end("Packets");
     }
 

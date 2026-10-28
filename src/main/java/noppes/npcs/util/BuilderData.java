@@ -21,7 +21,7 @@ import net.minecraft.world.World;
 import noppes.npcs.api.IPos;
 import noppes.npcs.api.item.ISpecBuilder;
 import noppes.npcs.api.wrapper.BlockPosWrapper;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.SchematicController;
 import noppes.npcs.items.ItemBuilder;
 import noppes.npcs.packets.Packets;

@@ -15,6 +15,7 @@ import noppes.npcs.client.controllers.YDEController;
 import noppes.npcs.client.gui.GuiBoundarySetting;
 import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.*;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
@@ -140,7 +141,7 @@ public class GuiCustomWindowNop extends GuiBasic
                 if (title != null && !title.getFormattedText().isEmpty()) {
                     GuiButtonNop.renderString(title, getX() + 3, getY() + 1,
                             getX() + imageWidth - 10, getY() + 11,
-                            YDEController.textColor, false, false, customFont);
+                            YDEController.textColor, false, EnumAlignText.LEFT, false, customFont);
                 }
             }
             else {
@@ -182,7 +183,7 @@ public class GuiCustomWindowNop extends GuiBasic
                 if (title != null && !title.getFormattedText().isEmpty()) {
                     GuiButtonNop.renderString(title, getX() + 4, getY() + 2,
                             getX() + imageWidth - 20, getY() + 11,
-                            CustomNpcs.MainColor.getRGB() | 255 << 24, false, false, null);
+                            CustomNpcs.MainColor.getRGB() | 255 << 24, false, EnumAlignText.LEFT, false, null);
                 }
             }
         }

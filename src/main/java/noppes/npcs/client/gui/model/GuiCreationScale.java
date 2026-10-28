@@ -94,10 +94,10 @@ public class GuiCreationScale extends GuiCreationScreenInterface
 	public void mouseDragged(GuiSliderNop slider) {
 		super.mouseDragged(slider);
 		if (slider.id >= 10 && slider.id <= 12) {
-			int percent = (int) (50.0f + slider.sliderValue * 100.0f);
+			int percent = (int) (50.0f + slider.getValue() * 100.0f);
 			slider.setString(percent + "%");
 			ModelPartConfig config = playerdata.getPartConfig(GuiCreationScale.selected);
-			float value = slider.sliderValue + 0.5f;
+			float value = slider.getValue() + 0.5f;
 			switch (slider.id - 10) {
 				case 0: config.scaleX = value; break;
 				case 1: config.scaleY = value; break;

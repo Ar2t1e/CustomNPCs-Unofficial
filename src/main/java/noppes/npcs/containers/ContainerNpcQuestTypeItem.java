@@ -6,6 +6,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.gui.util.quests.QuestObjective;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.data.Quest;
 
 import javax.annotation.Nonnull;

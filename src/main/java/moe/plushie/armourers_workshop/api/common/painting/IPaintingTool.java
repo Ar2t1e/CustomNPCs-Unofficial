@@ -2,16 +2,18 @@ package moe.plushie.armourers_workshop.api.common.painting;
 
 import net.minecraft.item.ItemStack;
 
+@SuppressWarnings("unused")
 public interface IPaintingTool {
 
-	public int getToolColour(ItemStack stack);
+	int getToolColour(ItemStack stack);
 
 	@Deprecated
-	public boolean getToolHasColour(ItemStack stack);
+    boolean getToolHasColour(ItemStack stack);
 
-	public IPaintType getToolPaintType(ItemStack stack);
+	IPaintType getToolPaintType(ItemStack stack);
 
-	public void setToolColour(ItemStack stack, int colour);
+	void setToolColour(ItemStack stack, int colour);
 
-	public void setToolPaintType(ItemStack stack, IPaintType paintType);
+	void setToolPaintType(ItemStack stack, IPaintType paintType);
+
 }

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = EntityLivingBase.class, priority = 498)
+@Mixin(value = EntityLivingBase.class)
 public class EntityLivingBaseMixin implements IEntityLivingBaseIMixin {
 
     @Unique private DamageSource npcs$currentDamageSource;

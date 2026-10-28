@@ -21,14 +21,14 @@ public class SPacketDealDropSetSave extends PacketServerBasic {
     protected static int channelId;
     private int marcetId;
     private int dealId;
-    private NBTTagCompound data;
+    private NBTTagCompound compound;
 
     public SPacketDealDropSetSave() { }
 
-    public SPacketDealDropSetSave(int marcetIDIn, int dealIDIn, NBTTagCompound dataIn) {
+    public SPacketDealDropSetSave(int marcetIDIn, int dealIDIn, NBTTagCompound compoundIn) {
         marcetId = marcetIDIn;
         dealId = dealIDIn;
-        data = dataIn;
+        compound = compoundIn;
     }
 
     @Override
@@ -44,14 +44,14 @@ public class SPacketDealDropSetSave extends PacketServerBasic {
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(marcetId);
         buf.writeInt(dealId);
-        buf.writeNbt(data);
+        buf.writeNbt(compound);
     }
 
     @Override
     public void decode(FriendlyByteBuf buf) {
         marcetId = buf.readInt();
         dealId = buf.readInt();
-        data = buf.readNbt();
+        compound = buf.readNbt();
     }
 
     @Override
@@ -63,17 +63,17 @@ public class SPacketDealDropSetSave extends PacketServerBasic {
         MarcetController mData = MarcetController.getInstance();
         Deal dealIn = mData.deals.get(dealId);
         if (dealIn != null && dealIn.isCase()) {
-            int pos = data.getInteger("Slot");
-            if (pos < 0) { dealIn.addCaseItem(ItemStack.EMPTY, 100.0d).load(data); }
+            int pos = compound.getInteger("Slot");
+            if (pos < 0) { dealIn.addCaseItem(ItemStack.EMPTY, 100.0d).load(compound); }
             else {
                 DropSet[] drops = dealIn.getCaseItems();
-                if (pos < drops.length) { drops[pos].load(data); }
+                if (pos < drops.length) { drops[pos].load(compound); }
             }
             for (Marcet marcet : new ArrayList<>(mData.markets.values())) {
                 boolean nasInMarcet = false;
                 for (MarcetSection section : new ArrayList<>(marcet.sections.values())) {
                     for (Deal deal : new ArrayList<>(section.deals)) {
-                        if (deal.getId() == data.getInteger("DealID")) {
+                        if (deal.getId() == compound.getInteger("DealID")) {
                             nasInMarcet = true;
                             deal.load(dealIn.saveData());
                         }

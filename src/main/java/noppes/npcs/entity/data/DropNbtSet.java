@@ -2,30 +2,25 @@ package noppes.npcs.entity.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagFloat;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagIntArray;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
+import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
+import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.shared.common.util.LogWriter;
-import noppes.npcs.api.INbt;
 import noppes.npcs.api.entity.data.IDropNbtSet;
-import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.util.ValueUtil;
 
 public class DropNbtSet implements IDropNbtSet {
 
-	public double chance;
-	private final DropSet parent;
-	public String path;
-	public int type;
-	public int typeList;
-	String[] values;
+	protected final DropSet parent;
+	protected double chance;
+	protected String path;
+	protected int type;
+	protected int typeList;
+	protected String[] values;
+	protected Random rnd = new Random();
 
 	public DropNbtSet(DropSet ds) {
 		parent = ds;
@@ -38,113 +33,71 @@ public class DropNbtSet implements IDropNbtSet {
 
 	public String checkValue(String value, int typeIn) {
 		switch (typeIn) {
-		case 0: { // boolean
-			try {
-				boolean b = Boolean.parseBoolean(value);
-				return String.valueOf(b);
-			}
-			catch (Exception e) { LogWriter.error(e); }
-			break;
-		}
-		case 1: { // byte
-			try {
-				byte b = Byte.parseByte(value);
-				return String.valueOf(b);
-			} catch (Exception e) { LogWriter.error(e); }
-			break;
-		}
-		case 2: { // short
-			try {
-				short s = Short.parseShort(value);
-				return String.valueOf(s);
-			} catch (Exception e) { LogWriter.error(e); }
-			break;
-		}
-		case 3: { // integer
-			try {
-				int b = Integer.parseInt(value);
-				return String.valueOf(b);
-			} catch (Exception e) { LogWriter.error(e); }
-			break;
-		}
-		case 4: { // long
-			try {
-				long l = Long.parseLong(value);
-				return String.valueOf(l);
-			} catch (Exception e) { LogWriter.error(e); }
-			break;
-		}
-		case 5: { // float
-			try {
-				float f = Float.parseFloat(value);
-				return String.valueOf(f);
-			} catch (Exception e) { LogWriter.error(e); }
-			break;
-		}
-		case 6: { // double
-			try {
-				double d = Double.parseDouble(value);
-				return String.valueOf(d);
-			} catch (Exception e) { LogWriter.error(e); }
-			break;
-		}
-		case 7: { // byte array
-			String[] br = value.split(",");
-			StringBuilder text = new StringBuilder();
-			for (String str : br) {
+			case 0: {
+				if (value.equalsIgnoreCase("true")) { return "true"; }
+				else if (value.equalsIgnoreCase("false")) { return "false"; }
+				break;
+			} // boolean
+			case 1: {
 				try {
-					byte b = Byte.parseByte(str);
-					if (text.length() > 0) {
-						text.append(",");
-					}
-					text.append(String.valueOf(b));
+					byte b = Byte.parseByte(value);
+					return String.valueOf(b);
 				} catch (Exception e) { LogWriter.error(e); }
-			}
-			if (text.length() > 0) {
-				return text.toString();
-			}
-			break;
-		}
-		case 8: { // string
-			return value;
-		}
-		case 9: { // list
-			String[] br = value.split(",");
-			StringBuilder text = new StringBuilder();
-			for (String str : br) {
+				break;
+			} // byte
+			case 2: {
 				try {
-					String sc = checkValue(str, typeList);
-					if (sc != null) {
-						if (text.length() > 0) {
-							text.append(",");
+					short s = Short.parseShort(value);
+					return String.valueOf(s);
+				} catch (Exception e) { LogWriter.error(e); }
+				break;
+			} // short
+			case 3: {
+				try {
+					int b = Integer.parseInt(value);
+					return String.valueOf(b);
+				} catch (Exception e) { LogWriter.error(e); }
+				break;
+			} // integer
+			case 4: {
+				try {
+					long l = Long.parseLong(value);
+					return String.valueOf(l);
+				} catch (Exception e) { LogWriter.error(e); }
+				break;
+			} // long
+			case 5: {
+				try {
+					float f = Float.parseFloat(value);
+					return String.valueOf(f);
+				} catch (Exception e) { LogWriter.error(e); }
+				break;
+			} // float
+			case 6: {
+				try {
+					double d = Double.parseDouble(value);
+					return String.valueOf(d);
+				} catch (Exception e) { LogWriter.error(e); }
+				break;
+			} // double
+			case 8: { return value == null ? "" : value; } // string
+			case 7: // byte array
+			case 9: // list
+			case 11: // integer array
+			case 12: {
+				if (value.startsWith("[") && value.endsWith("]")) {
+					StringBuilder text = new StringBuilder();
+					for (String str : value.substring(1, value.length() - 1).split(",")) {
+						String sc = checkValue(str, typeIn == 9 ? typeList : typeIn);
+						if (sc != null) {
+							if (text.length() > 0) { text.append(","); }
+							text.append(sc);
 						}
-						text.append(sc);
 					}
-				} catch (Exception e) { LogWriter.error(e); }
-			}
-			if (text.length() > 0) {
-				return text.toString();
-			}
-			break;
-		}
-		case 11: { // integer array
-			String[] br = value.split(",");
-			StringBuilder text = new StringBuilder();
-			for (String str : br) {
-				try {
-					int i = Integer.parseInt(str);
-					if (text.length() > 0) {
-						if (typeIn == type) { text.append(","); }
-						else { text.append(";"); }
-					}
-					text.append(i);
-				} catch (Exception e) { LogWriter.error(e); }
-			}
-			if (text.length() > 0) {
-				return text.toString();
-			}
-			break;
-		}
+					if (text.length() > 0) { return text.toString(); }
+				}
+				break;
+			} // or long array
 		}
 		return null;
 	}
@@ -153,102 +106,139 @@ public class DropNbtSet implements IDropNbtSet {
 	public double getChance() { return Math.round(chance * 10000.0d) / 10000.0d; }
 
 	@Override
-	public INbt getConstructorTag(INbt nbt) {
-		NBTTagCompound pos = nbt.getMCNBT();
+	public void createAndPut(IItemStack item) {
+		NBTTagCompound compound = item.getNbt().getMCNBT();
 		String key = path;
-		if (path.contains(".")) {
+		// create path:
+		if (key.contains(".")) {
 			String keyName;
 			while (key.contains(".")) {
 				keyName = key.substring(0, key.indexOf("."));
-				if (!pos.hasKey(keyName, 10)) {
-					pos.setTag(keyName, new NBTTagCompound());
-				}
-				pos = pos.getCompoundTag(keyName);
 				key = key.substring(key.indexOf(".") + 1);
-			}
-		}
-		int idx = (int) ((double) values.length * Math.random());
-		if (idx >= values.length) {
-			idx = values.length - 1;
-		}
-		String value = values[idx];
-		switch (type) {
-			case 0: { // boolean
-				pos.setBoolean(key, Boolean.parseBoolean(value));
-				break;
-			}
-			case 1: { // byte
-				pos.setByte(key, Byte.parseByte(value));
-				break;
-			}
-			case 2: { // short
-				pos.setShort(key, Short.parseShort(value));
-				break;
-			}
-			case 3: { // integer
-				pos.setInteger(key, Integer.parseInt(value));
-				break;
-			}
-			case 4: { // long
-				pos.setLong(key, Long.parseLong(value));
-				break;
-			}
-			case 5: { // float
-				pos.setFloat(key, Float.parseFloat(value));
-				break;
-			}
-			case 6: { // double
-				pos.setDouble(key, Double.parseDouble(value));
-				break;
-			}
-			case 7: { // byte array
-				String[] brs = value.split(",");
-				byte[] br = new byte[brs.length];
-				for (int i = 0; i < brs.length; i++) {
-					br[i] = Byte.parseByte(brs[i]);
-				}
-				pos.setByteArray(key, br);
-				break;
-			}
-			case 8: { // string
-				pos.setString(key, value);
-				break;
-			}
-			case 9: { // list
-				String[] brs = value.split(",");
-				NBTTagList list = new NBTTagList();
-				for (String br : brs) {
-					if (typeList == 3) {
-						list.appendTag(new NBTTagInt(Integer.parseInt(br)));
-					} else if (typeList == 5) {
-						list.appendTag(new NBTTagFloat(Float.parseFloat(br)));
-					} else if (typeList == 6) {
-						list.appendTag(new NBTTagDouble(Double.parseDouble(br)));
-					} else if (typeList == 8) {
-						list.appendTag(new NBTTagString(br));
-					} else if (typeList == 11) {
-						String[] ints = br.split(";");
-						int[] is = new int[ints.length];
-						for (int j = 0; j < ints.length; j++) {
-							is[j] = Integer.parseInt(ints[j]);
+				if (compound instanceof NBTTagCompound) {
+					if (keyName.contains("[") || keyName.endsWith("]")) {
+						try {
+							int pos = Integer.parseInt(keyName.substring(keyName.indexOf("[") + 1, keyName.length() - 1));
+							if (pos < 0) { pos = 0;}
+							keyName = keyName.substring(0, keyName.indexOf("["));
+							if (!compound.hasKey(keyName, 9)) { compound.setTag(keyName, new NBTTagList()); }
+							NBTTagList list = compound.getTagList(keyName, 9);
+							if (pos >= list.tagCount()) {
+								while (pos >= list.tagCount()) {
+									NBTBase tag;
+									switch (list.getTagType() == 0 ? key.contains(".") ? 10 : typeList : list.getTagType()) {
+										case 1: tag = new NBTTagByte((byte) 0); break;
+										case 2: tag = new NBTTagShort((short) 0); break;
+										case 3: tag = new NBTTagInt(0); break;
+										case 4: tag = new NBTTagLong(0); break;
+										case 5: tag = new NBTTagFloat(0.0f); break;
+										case 6: tag = new NBTTagDouble(0.0d); break;
+										case 8: tag = new NBTTagString(""); break;
+										case 9: tag = new NBTTagList(); break;
+										case 11: tag = new NBTTagIntArray(new int[0]); break;
+										case 12: tag = new NBTTagLongArray(new long[0]); break;
+										default: tag = new NBTTagCompound(); break;
+									}
+									list.appendTag(tag);
+								}
+							}
+							if (list.get(pos) instanceof NBTTagCompound) { compound = (NBTTagCompound) list.get(pos); }
 						}
-						list.appendTag(new NBTTagIntArray(is));
+						catch (Exception e) {
+							LogWriter.error("Failed create list tag: " + keyName + " from path: " + path);
+							return;
+						}
+					}
+					else {
+						if (!compound.hasKey(keyName, 10)) { compound.setTag(keyName, new NBTTagCompound()); }
+						compound = compound.getCompoundTag(keyName);
 					}
 				}
-				pos.setTag(key, list);
-				break;
-			}
-			case 11: { // integer array
-				String[] ints = value.split(",");
-				int[] is = new int[ints.length];
-				for (int i = 0; i < ints.length; i++) {
-					is[i] = Integer.parseInt(ints[i]);
-				}
-				pos.setIntArray(key, is);
-				break;
+				else {
+					LogWriter.error("Failed create compound tag: " + keyName + " from path: " + path);
+					return;
+				} // error create path
 			}
 		}
-		return new NBTWrapper(pos);
+		// set value:
+		String rndValue = values[rnd.nextInt(values.length)];
+		try {
+			switch (type) {
+				case 0: compound.setBoolean(key, Boolean.parseBoolean(rndValue)); break;
+				case 1: compound.setByte(key, Byte.parseByte(rndValue)); break;
+				case 2: compound.setShort(key, Short.parseShort(rndValue)); break;
+				case 3: compound.setInteger(key, Integer.parseInt(rndValue)); break;
+				case 4: compound.setLong(key, Long.parseLong(rndValue)); break;
+				case 5: compound.setFloat(key, Float.parseFloat(rndValue)); break;
+				case 6: compound.setDouble(key, Double.parseDouble(rndValue)); break;
+				case 7: {
+					String[] variants = rndValue.split(",");
+					byte[] array = new byte[variants.length];
+					for (int i = 0; i < variants.length; i++) { array[i] = Byte.parseByte(variants[i]); }
+					compound.setByteArray(key, array);
+					break;
+				} // byte array
+				case 8: compound.setString(key, rndValue); break;
+				case 9: { // list
+					String[] variants = rndValue.split(",");
+					NBTTagList list = new NBTTagList();
+					for (String value : variants) {
+						switch (typeList) {
+							case 1: {
+								if (value.equalsIgnoreCase("false")) { list.appendTag(new NBTTagByte((byte) 0)); }
+								else if (value.equalsIgnoreCase("true")) { list.appendTag(new NBTTagByte((byte) 1)); }
+								else { list.appendTag(new NBTTagByte(Byte.parseByte(value))); }
+								break;
+							}
+							case 2: list.appendTag(new NBTTagShort(Short.parseShort(value))); break;
+							case 3: list.appendTag(new NBTTagInt(Integer.parseInt(value))); break;
+							case 4: list.appendTag(new NBTTagLong(Long.parseLong(value))); break;
+							case 5: list.appendTag(new NBTTagFloat(Float.parseFloat(value))); break;
+							case 6: list.appendTag(new NBTTagDouble(Double.parseDouble(value))); break;
+							case 7: {
+								String[] ints = value.split(";");
+								byte[] array = new byte[ints.length];
+								for (int i = 0; i < ints.length; i++) { array[i] = Byte.parseByte(variants[i]); }
+								list.appendTag(new NBTTagByteArray(array));
+								break;
+							}
+							case 8: list.appendTag(new NBTTagString(value)); break;
+							case 11: {
+								String[] ints = value.split(";");
+								int[] array = new int[ints.length];
+								for (int i = 0; i < ints.length; i++) { array[i] = Integer.parseInt(variants[i]); }
+								list.appendTag(new NBTTagIntArray(array));
+								break;
+							}
+							case 12: {
+								String[] ints = value.split(";");
+								long[] array = new long[ints.length];
+								for (int i = 0; i < ints.length; i++) { array[i] = Long.parseLong(ints[i]); }
+								list.appendTag(new NBTTagLongArray(array));
+								break;
+							}
+						}
+					}
+					compound.setTag(key, list);
+					break;
+				}
+				case 11: {
+					String[] variants = rndValue.split(",");
+					int[] array = new int[variants.length];
+					for (int i = 0; i < variants.length; i++) { array[i] = Integer.parseInt(variants[i]); }
+					compound.setIntArray(key, array);
+					break;
+				} // integer array
+				case 12: {
+					String[] variants = rndValue.split(",");
+					long[] array = new long[variants.length];
+					for (int i = 0; i < variants.length; i++) { array[i] = Long.parseLong(variants[i]); }
+					compound.setTag(key, new NBTTagLongArray(array));
+					break;
+				} // long array
+			}
+		}
+		catch (Exception e) { LogWriter.error("Failed set key: " + key + " with value: " + rndValue + " to path: " + path); }
 	}
 
 	public Component getKey() {
@@ -335,9 +325,7 @@ public class DropNbtSet implements IDropNbtSet {
 		String[] vs = new String[nbtDS.getTagList("Values", 8).tagCount()];
 		for (int i = 0; i < nbtDS.getTagList("Values", 8).tagCount(); i++) {
 			String ch = checkValue(nbtDS.getTagList("Values", 8).getStringTagAt(i), type);
-			if (ch != null) {
-				vs[i] = ch;
-			}
+			if (ch != null) { vs[i] = ch; }
 		}
 		values = vs;
 	}
@@ -356,32 +344,29 @@ public class DropNbtSet implements IDropNbtSet {
 
 	@Override
 	public void setType(int typeIn) {
-		if ((typeIn >= 0 && typeIn <= 9) || typeIn == 11) { type = typeIn; }
+		if ((typeIn >= 0 && typeIn <= 9) || typeIn == 11 || typeIn == 12) { type = typeIn; }
 	}
 
 	@Override
-	public void setTypeList(int type) {
-		if (type == 3 || type == 5 || type == 6 || type == 8 || type == 11) { typeList = type;}
+	public void setTypeList(int typeIn) {
+		if ((typeIn >= 0 && typeIn <= 8) || typeIn == 11 || typeIn == 12) { typeList = typeIn; }
 	}
 
 	@Override
 	public void setValues(String valuesIn) {
 		if (valuesIn.contains("|")) {
-			List<String> nal = new ArrayList<>();
+			List<String> variants = new ArrayList<>();
+			String variant;
 			while (valuesIn.contains("|")) {
-				String key = checkValue(valuesIn.substring(0, valuesIn.indexOf("|")), this.type);
-				if (key != null) {
-					nal.add(key);
-				}
+				variant = checkValue(valuesIn.substring(0, valuesIn.indexOf("|")), type); // check part
+				if (variant != null) { variants.add(variant); }
 				valuesIn = valuesIn.substring(valuesIn.indexOf("|") + 1);
 			}
-			nal.add(valuesIn);
-			String[] svs = new String[nal.size()];
-			for (int i = 0; i < nal.size(); i++) {
-				svs[i] = nal.get(i);
-			}
-			values = svs;
-		} else {
+			variant = checkValue(valuesIn, type); // check value or end part
+			if (variant != null) { variants.add(variant); }
+			values = variants.toArray(new String[0]);
+		}
+		else {
 			String ch = checkValue(valuesIn, type);
 			if (ch != null) { values = new String[] { ch }; }
 		}
@@ -398,4 +383,5 @@ public class DropNbtSet implements IDropNbtSet {
 		for (int i = 0; i < nal.size(); i++) { svs[i] = nal.get(i); }
 		values = svs;
 	}
+
 }

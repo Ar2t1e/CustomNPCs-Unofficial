@@ -126,7 +126,7 @@ public class GuiPermissionsEdit extends GuiNPCInterface implements ICustomScroll
 
     @Override
     public void scrollClicked(GuiCustomScrollNop scroll) {
-        if (scroll.id == 0) { names.setSelectedIndex(-1); }
+        if (scroll.id == 0) { names.setSelected(-1); }
         initGui();
     }
 

@@ -22,4 +22,5 @@ public interface IGuiContainerMixin {
     @Accessor int getDragSplittingRemnant();
 
     @Accessor void setDragSplittingRemnant(int newDragSplittingRemnant);
+
 }

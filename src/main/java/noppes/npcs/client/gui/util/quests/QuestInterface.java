@@ -13,7 +13,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NBTTags;
 import noppes.npcs.NoppesUtilPlayer;

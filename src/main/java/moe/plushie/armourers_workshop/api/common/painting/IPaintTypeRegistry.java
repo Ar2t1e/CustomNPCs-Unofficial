@@ -2,21 +2,23 @@ package moe.plushie.armourers_workshop.api.common.painting;
 
 import java.util.ArrayList;
 
+@SuppressWarnings("unused")
 public interface IPaintTypeRegistry {
 
-	public int getExtraChannels();
+	int getExtraChannels();
 
-	public IPaintType getPaintTypeFormByte(byte index);
+	IPaintType getPaintTypeFormByte(byte index);
 
-	public IPaintType getPaintTypeFormName(String name);
+	IPaintType getPaintTypeFormName(String name);
 
-	public IPaintType getPaintTypeFromColour(int trgb);
+	IPaintType getPaintTypeFromColour(int trgb);
 
-	public IPaintType getPaintTypeFromIndex(int index);
+	IPaintType getPaintTypeFromIndex(int index);
 
-	public ArrayList<IPaintType> getRegisteredTypes();
+	ArrayList<IPaintType> getRegisteredTypes();
 
-	public boolean registerPaintType(IPaintType paintType);
+	boolean registerPaintType(IPaintType paintType);
 
-	public int setPaintTypeOnColour(IPaintType paintType, int colour);
+	int setPaintTypeOnColour(IPaintType paintType, int colour);
+
 }

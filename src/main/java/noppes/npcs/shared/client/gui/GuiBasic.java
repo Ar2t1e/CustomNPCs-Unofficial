@@ -5,10 +5,7 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
@@ -18,6 +15,7 @@ import net.minecraftforge.common.MinecraftForge;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.client.ClientProxy;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.event.ClientEvent;
@@ -113,6 +111,24 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     public static final Map<String, ResourceLocation> TEXTURES_COMPASS = new HashMap<>();
     public static final ResourceLocation RESOURCE_COMPASS = new ResourceLocation(CustomNpcs.MODID + ":models/util/compass.obj");
 
+    /**
+     * @param count null: normal draw; empty: not draw count; not empty: draw custom count
+     */
+    public static void renderStackInGUI(ItemStack stack, double x, double y, double z, float scale, @Nullable String count) {
+        if (NoppesUtilServer.isItemStackNull(stack)) { return; }
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(x, y, z);
+        GlStateManager.scale(scale, scale, scale);
+        GlStateManager.enableRescaleNormal();
+        RenderHelper.enableGUIStandardItemLighting();
+        RenderItem itemRender = Minecraft.getMinecraft().getRenderItem();
+        itemRender.renderItemAndEffectIntoGUI(stack, 0, 0);
+        if (count == null) { itemRender.renderItemOverlays(Minecraft.getMinecraft().fontRenderer, stack, 0, 0); }
+        else if (!count.isEmpty()) { itemRender.renderItemOverlayIntoGUI(Minecraft.getMinecraft().fontRenderer, stack, 0, 0, count); }
+        RenderHelper.disableStandardItemLighting();
+        GlStateManager.popMatrix();
+    }
+
     static {
         TEXTURES_COMPASS.put(CustomNpcs.MODID + ":util/compass", new ResourceLocation(CustomNpcs.MODID, "util/compass"));
         TEXTURES_COMPASS.put(CustomNpcs.MODID + ":util/task_0", new ResourceLocation(CustomNpcs.MODID, "util/task_0"));
@@ -159,11 +175,20 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
                 heightTexture = 71;
                 break;
             }
+            case "itemsetup.png": {
+                widthTexture = 176;
+                heightTexture = 202;
+                break;
+            }
             case "largebg.png": {
                 widthTexture = 192;
                 heightTexture = 231;
                 break;
             }
+            case "npcinv.png":
+            case "npcdrop.png":
+            case "npcbanksetup.png":
+            case "followersetup.png":
             case "menubg.png": {
                 widthTexture = 256;
                 heightTexture = 217;
@@ -192,7 +217,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         buttonList.clear();
         guiLeft = (width - imageWidth) / 2;
         guiTop = (height - imageHeight) / 2;
-        scaledResolution = new ScaledResolution(Minecraft.getMinecraft());
+        scaledResolution = new ScaledResolution(minecraft);
         wrapper.initGui(mc, width, height);
         setFocused(!hasSubGui());
     }
@@ -454,6 +479,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     @Override
     public int getY() { return guiTop; }
 
+    @Override
     public GuiButtonNop getButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.BUTTON &&
@@ -463,6 +489,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         return null;
     }
 
+    @Override
     public GuiMenuSideButton getSideButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SIDE_BUTTON &&
@@ -472,6 +499,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         return null;
     }
 
+    @Override
     public GuiMenuTopButton getTopButton(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.TOP_BUTTON &&
@@ -481,6 +509,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         return null;
     }
 
+    @Override
     public GuiTextFieldNop getTextField(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.TEXT_FIELD &&
@@ -490,6 +519,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         return null;
     }
 
+    @Override
     public GuiLabel getLabel(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.LABEL &&
@@ -499,6 +529,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         return null;
     }
 
+    @Override
     public GuiSliderNop getSlider(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SLIDER &&
@@ -509,6 +540,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     }
 
     @SuppressWarnings("unused")
+    @Override
     public GuiCustomScrollNop getScroll(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.SCROLL &&
@@ -519,6 +551,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
     }
 
     @SuppressWarnings("unused")
+    @Override
     public IComponentGui getExtra(int id) {
         for (IComponentGui element : new ArrayList<>(wrapper.components)) {
             if (element.getElementType() == GuiComponentType.EXTRA && element.getId() == id) { return element; }
@@ -586,7 +619,7 @@ public class GuiBasic extends GuiScreen implements IGuiInterface {
         drawDefaultBackground();
         if (title != null && !title.getFormattedText().isEmpty()) {
             GuiButtonNop.renderString(title, guiLeft + 4, guiTop + 5, guiLeft + imageWidth - 8, guiTop + 15,
-                    CustomNpcs.LableColor.getRGB(), false, true, null);
+                    CustomNpcs.LableColor.getRGB(), false, EnumAlignText.CENTER, false, null);
         }
         for (IComponentGui component : new ArrayList<>(wrapper.components)) { component.render(x, y, partialTicks); }
         super.drawScreen(x, y, partialTicks);

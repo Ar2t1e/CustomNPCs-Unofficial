@@ -110,11 +110,11 @@ public class GuiNbtBook extends GuiNPCInterface implements IGuiData {
 				.setIsEnabled(compound != null && !compound.hasNoTags());
 		addLabel(0, guiLeft + 4, guiTop + 167, "")
 				.setSize(58, 12)
-				.setCentered(false)
+				.setAlignLeft()
 				.setColor(0xFFA00000);
 		addLabel(1, guiLeft + 4, guiTop + 177, "")
 				.setSize(imageWidth - 8, 12)
-				.setCentered(false)
+				.setAlignLeft()
 				.setColor(0xFFA00000);
 		addButton(66, guiLeft + 128, guiTop + 190, "gui.close")
 				.setSize(120, 20);
@@ -203,13 +203,7 @@ public class GuiNbtBook extends GuiNPCInterface implements IGuiData {
 			Gui.drawRect(guiLeft + 4, guiTop + 4, guiLeft + 54, guiTop + 54, 0xFF000000);
 			GlStateManager.popMatrix();
 			// object
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(guiLeft + 5.0f, guiTop + 5.0f, 0.0f);
-			GlStateManager.scale(3.0f, 3.0f, 3.0f);
-			ItemStack item = stack != null ? stack : blockStack;
-			itemRender.renderItemAndEffectIntoGUI(item, 0, 0);
-			itemRender.renderItemOverlays(fontRenderer, item, 0, 0);
-			GlStateManager.popMatrix();
+			renderStackInGUI(stack != null ? stack : blockStack, guiLeft + 5.0f, guiTop + 5.0f, 0.0f, 3.0f, null);
 		}
 		if (entity != null) {
 			GlStateManager.pushMatrix();

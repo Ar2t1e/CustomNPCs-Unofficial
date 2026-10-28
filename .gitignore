@@ -12,6 +12,7 @@ out
 *.iws
 *.iml
 .idea
+.profileconfig.json
 
 # gradle
 build
@@ -27,5 +28,11 @@ eclipse
 run
 libs.ink
 
+# git
+.git
+
 # Files from Forge MDK
 forge*changelog.txt
+
+# AI
+.gigacode

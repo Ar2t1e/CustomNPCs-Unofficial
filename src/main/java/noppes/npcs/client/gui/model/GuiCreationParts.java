@@ -849,9 +849,9 @@ public class GuiCreationParts extends GuiCreationScreenInterface
 	public void mouseDragged(GuiSliderNop slider) {
 		if (getPart() instanceof GuiPartLayers) {
 			switch (slider.id) {
-				case 26: sliderMoved(0, slider.sliderValue); break; // X
-				case 27: sliderMoved(1, slider.sliderValue); break; // Y
-				case 28: sliderMoved(2, slider.sliderValue); break; // Z
+				case 26: sliderMoved(0, slider.getValue()); break; // X
+				case 27: sliderMoved(1, slider.getValue()); break; // Y
+				case 28: sliderMoved(2, slider.getValue()); break; // Z
 				default: super.mouseDragged(slider); break;
 			}
 			if (showEntity instanceof EntityCustomNpc && playerdata != null){ ((EntityCustomNpc) showEntity).modelData.load(playerdata.save()); }
@@ -919,19 +919,19 @@ public class GuiCreationParts extends GuiCreationScreenInterface
 				while (textValue < -180.0f) { textValue += 180.0f; }
 				while (textValue > 180.0f) { textValue -= 180.0f; }
 				lm.rotation[id] = textValue;
-				if (getSlider(26 + id) != null) { getSlider(26 + id).setSliderValue(0.002778f * lm.rotation[id] + 0.5f); }
+				if (getSlider(26 + id) != null) { getSlider(26 + id).setValue(0.002778f * lm.rotation[id] + 0.5f); }
 				text = df.format(lm.rotation[id]);
 				break;
 			} // rotation
 			case 1: {
 				lm.offset[id] = ValueUtil.correctFloat(textValue, -10.0f, 10.0f);
-				if (getSlider(26 + id) != null) { getSlider(26 + id).setSliderValue(0.2f * lm.offset[id] + 0.5f); }
+				if (getSlider(26 + id) != null) { getSlider(26 + id).setValue(0.2f * lm.offset[id] + 0.5f); }
 				text = df.format(lm.offset[id]);
 				break;
 			} // offset
 			default: {
 				lm.scale[id] = ValueUtil.correctFloat(textValue, 0.0f, 5.0f);
-				if (getSlider(26 + id) != null) { getSlider(26 + id).setSliderValue(0.2f * lm.scale[id]); }
+				if (getSlider(26 + id) != null) { getSlider(26 + id).setValue(0.2f * lm.scale[id]); }
 				text = df.format(lm.scale[id]);
 				break;
 			} // scale
@@ -946,19 +946,19 @@ public class GuiCreationParts extends GuiCreationScreenInterface
 			case 0: {
 				lm.rotation[id] = 0.0f;
 				if (getTextField(26 + id) != null) { getTextField(26 + id).setValue("0"); }
-				if (getSlider(26 + id) != null) { getSlider(26 + id).setSliderValue(0.002778f * lm.rotation[id] + 0.5f); }
+				if (getSlider(26 + id) != null) { getSlider(26 + id).setValue(0.002778f * lm.rotation[id] + 0.5f); }
 				break;
 			} // rotation
 			case 1: {
 				lm.offset[id] = 0.0f;
 				if (getTextField(26 + id) != null) { getTextField(26 + id).setValue("0"); }
-				if (getSlider(26 + id) != null) { getSlider(26 + id).setSliderValue(0.2f * lm.offset[id] + 0.5f); }
+				if (getSlider(26 + id) != null) { getSlider(26 + id).setValue(0.2f * lm.offset[id] + 0.5f); }
 				break;
 			} // offset
 			default: {
 				lm.scale[id] = 1.0f;
 				if (getTextField(26 + id) != null) { getTextField(26 + id).setValue("1"); }
-				if (getSlider(26 + id) != null) { getSlider(26 + id).setSliderValue(0.2f * lm.scale[id]); }
+				if (getSlider(26 + id) != null) { getSlider(26 + id).setValue(0.2f * lm.scale[id]); }
 				break;
 			} // scale
 		}

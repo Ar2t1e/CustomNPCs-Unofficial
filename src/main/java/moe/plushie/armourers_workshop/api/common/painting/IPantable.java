@@ -2,25 +2,27 @@ package moe.plushie.armourers_workshop.api.common.painting;
 
 import moe.plushie.armourers_workshop.api.common.skin.cubes.ICubeColour;
 
+@SuppressWarnings("unused")
 public interface IPantable {
 
-	public ICubeColour getColour();
+	ICubeColour getColour();
 
-	public int getColour(int side);
+	int getColour(int side);
 
-	public IPaintType getPaintType(int side);
+	IPaintType getPaintType(int side);
 
-	public void setColour(byte[] rgb, int side);
+	void setColour(byte[] rgb, int side);
 
-	public void setColour(ICubeColour colour);
-
-	/** @deprecated Replaced by {@link #setColour(byte[] rgb, int side)} */
-	@Deprecated
-	public void setColour(int colour);
+	void setColour(ICubeColour colour);
 
 	/** @deprecated Replaced by {@link #setColour(byte[] rgb, int side)} */
 	@Deprecated
-	public void setColour(int colour, int side);
+	void setColour(int colour);
 
-	public void setPaintType(IPaintType paintType, int side);
+	/** @deprecated Replaced by {@link #setColour(byte[] rgb, int side)} */
+	@Deprecated
+	void setColour(int colour, int side);
+
+	void setPaintType(IPaintType paintType, int side);
+
 }

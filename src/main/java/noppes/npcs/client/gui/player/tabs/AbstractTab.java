@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import noppes.npcs.client.util.TabRegistry;
+import noppes.npcs.shared.client.gui.GuiBasic;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
@@ -56,17 +57,7 @@ public abstract class AbstractTab extends GuiButton {
 			int xOffset = active ? 0 : 28;
 			mc.getTextureManager().bindTexture(texture);
 			drawTexturedModalRect(x, y, xOffset, yTexPos, 28, ySize);
-
-			zLevel = 100.0f;
-			itemRender.zLevel = 100.0f;
-			GlStateManager.enableLighting();
-			GlStateManager.enableRescaleNormal();
-			RenderHelper.enableGUIStandardItemLighting();
-			itemRender.renderItemAndEffectIntoGUI(renderStack, x + 6, y + 8);
-			itemRender.renderItemOverlayIntoGUI(mc.fontRenderer, renderStack, x + 6, y + 8, null);
-			GlStateManager.disableLighting();
-			itemRender.zLevel = 0.0f;
-			zLevel = 0.0f;
+			GuiBasic.renderStackInGUI(renderStack, x + 6, y + 8, 0.0f, 1.0f, null);
 			if (isHovered && displayString != null && !displayString.isEmpty()) {
 				GlStateManager.pushMatrix();
 				GlStateManager.translate(0.0f, 0.0f, 300.0f);

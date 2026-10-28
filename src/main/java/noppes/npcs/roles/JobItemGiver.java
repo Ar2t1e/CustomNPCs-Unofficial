@@ -17,7 +17,7 @@ import noppes.npcs.api.constants.JobType;
 import noppes.npcs.api.entity.data.role.IJobItemGiver;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.api.wrapper.ItemStackWrapper;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.GlobalDataController;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.controllers.data.Line;

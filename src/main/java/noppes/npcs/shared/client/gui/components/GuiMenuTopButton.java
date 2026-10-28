@@ -8,6 +8,7 @@ import net.minecraft.util.ResourceLocation;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 
 public class GuiMenuTopButton extends GuiButtonNop {
 
@@ -19,6 +20,7 @@ public class GuiMenuTopButton extends GuiButtonNop {
         active = false;
         height = 20;
         width = Minecraft.getMinecraft().fontRenderer.getStringWidth(getMessage().getFormattedText()) + 12;
+        alignText = EnumAlignText.CENTER;
     }
 
     @Override
@@ -40,7 +42,7 @@ public class GuiMenuTopButton extends GuiButtonNop {
             drawTexturedModalRect(getX() + getWidth() / 2, getY(), 200 - getWidth() / 2, state * 20, getWidth() / 2, h);
             if (rotated) { GlStateManager.rotate(90.0F, 1.0f, 0.0f, 0.0f); }
             renderString(getMessage(), getX() + 2, getY(), getX() + getWidth() - 2, getY() + getHeight(),
-                    getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true, customFont);
+                    getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, alignText, false, customFont);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }

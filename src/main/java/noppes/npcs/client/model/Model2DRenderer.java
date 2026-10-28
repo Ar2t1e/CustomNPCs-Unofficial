@@ -1,6 +1,5 @@
 package noppes.npcs.client.model;
 
-
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -13,53 +12,53 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class Model2DRenderer extends ModelRenderer {
 	
-	public static void renderItemIn2D(BufferBuilder worldrenderer, float minU, float maxU, float minV, float maxV, int sheetWidth, int sheetHeight, float scale) {
+	public static void renderItemIn2D(BufferBuilder worldRenderer, float minU, float maxU, float minV, float maxV, int sheetWidth, int sheetHeight, float scale) {
 		Tessellator tessellator = Tessellator.getInstance();
-		worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
-		worldrenderer.pos(0.0, 0.0, 0.0).tex(minU, maxV).normal(0.0f, 0.0f, 1.0f).endVertex();
-		worldrenderer.pos(1.0, 0.0, 0.0).tex(minV, maxV).normal(0.0f, 0.0f, 1.0f).endVertex();
-		worldrenderer.pos(1.0, 1.0, 0.0).tex(minV, maxU).normal(0.0f, 0.0f, 1.0f).endVertex();
-		worldrenderer.pos(0.0, 1.0, 0.0).tex(minU, maxU).normal(0.0f, 0.0f, 1.0f).endVertex();
-		worldrenderer.pos(0.0, 1.0, 0.0f - scale).tex(minU, maxU).normal(0.0f, 0.0f, -1.0f).endVertex();
-		worldrenderer.pos(1.0, 1.0, 0.0f - scale).tex(minV, maxU).normal(0.0f, 0.0f, -1.0f).endVertex();
-		worldrenderer.pos(1.0, 0.0, 0.0f - scale).tex(minV, maxV).normal(0.0f, 0.0f, -1.0f).endVertex();
-		worldrenderer.pos(0.0, 0.0, 0.0f - scale).tex(minU, maxV).normal(0.0f, 0.0f, -1.0f).endVertex();
+		worldRenderer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
+		worldRenderer.pos(0.0, 0.0, 0.0).tex(minU, maxV).normal(0.0f, 0.0f, 1.0f).endVertex();
+		worldRenderer.pos(1.0, 0.0, 0.0).tex(minV, maxV).normal(0.0f, 0.0f, 1.0f).endVertex();
+		worldRenderer.pos(1.0, 1.0, 0.0).tex(minV, maxU).normal(0.0f, 0.0f, 1.0f).endVertex();
+		worldRenderer.pos(0.0, 1.0, 0.0).tex(minU, maxU).normal(0.0f, 0.0f, 1.0f).endVertex();
+		worldRenderer.pos(0.0, 1.0, 0.0f - scale).tex(minU, maxU).normal(0.0f, 0.0f, -1.0f).endVertex();
+		worldRenderer.pos(1.0, 1.0, 0.0f - scale).tex(minV, maxU).normal(0.0f, 0.0f, -1.0f).endVertex();
+		worldRenderer.pos(1.0, 0.0, 0.0f - scale).tex(minV, maxV).normal(0.0f, 0.0f, -1.0f).endVertex();
+		worldRenderer.pos(0.0, 0.0, 0.0f - scale).tex(minU, maxV).normal(0.0f, 0.0f, -1.0f).endVertex();
 		
 		float f5 = 0.5f * (minU - minV) / sheetWidth;
 		float f6 = 0.5f * (maxV - maxU) / sheetHeight;
 		for (int k = 0; k < sheetWidth; ++k) {
 			float f7 = k / (float) sheetWidth;
 			float f8 = minU + (minV - minU) * f7 - f5;
-			worldrenderer.pos(f7, 0.0, 0.0f - scale).tex(f8, maxV).normal(-1.0f, 0.0f, 0.0f).endVertex();
-			worldrenderer.pos(f7, 0.0, 0.0).tex(f8, maxV).normal(-1.0f, 0.0f, 0.0f).endVertex();
-			worldrenderer.pos(f7, 1.0, 0.0).tex(f8, maxU).normal(-1.0f, 0.0f, 0.0f).endVertex();
-			worldrenderer.pos(f7, 1.0, 0.0f - scale).tex(f8, maxU).normal(-1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f7, 0.0, 0.0f - scale).tex(f8, maxV).normal(-1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f7, 0.0, 0.0).tex(f8, maxV).normal(-1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f7, 1.0, 0.0).tex(f8, maxU).normal(-1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f7, 1.0, 0.0f - scale).tex(f8, maxU).normal(-1.0f, 0.0f, 0.0f).endVertex();
 		}
 		for (int k = 0; k < sheetWidth; ++k) {
 			float f7 = k / (float) sheetWidth;
 			float f8 = minU + (minV - minU) * f7 - f5;
 			float f9 = f7 + 1.0f / sheetWidth;
-			worldrenderer.pos(f9, 1.0, 0.0f - scale).tex(f8, maxU).normal(1.0f, 0.0f, 0.0f).endVertex();
-			worldrenderer.pos(f9, 1.0, 0.0).tex(f8, maxU).normal(1.0f, 0.0f, 0.0f).endVertex();
-			worldrenderer.pos(f9, 0.0, 0.0).tex(f8, maxV).normal(1.0f, 0.0f, 0.0f).endVertex();
-			worldrenderer.pos(f9, 0.0, 0.0f - scale).tex(f8, maxV).normal(1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f9, 1.0, 0.0f - scale).tex(f8, maxU).normal(1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f9, 1.0, 0.0).tex(f8, maxU).normal(1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f9, 0.0, 0.0).tex(f8, maxV).normal(1.0f, 0.0f, 0.0f).endVertex();
+			worldRenderer.pos(f9, 0.0, 0.0f - scale).tex(f8, maxV).normal(1.0f, 0.0f, 0.0f).endVertex();
 		}
 		for (int k = 0; k < sheetHeight; ++k) {
 			float f7 = k / (float) sheetHeight;
 			float f8 = maxV + (maxU - maxV) * f7 - f6;
 			float f9 = f7 + 1.0f / sheetHeight;
-			worldrenderer.pos(0.0, f9, 0.0).tex(minU, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
-			worldrenderer.pos(1.0, f9, 0.0).tex(minV, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
-			worldrenderer.pos(1.0, f9, 0.0f - scale).tex(minV, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
-			worldrenderer.pos(0.0, f9, 0.0f - scale).tex(minU, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
+			worldRenderer.pos(0.0, f9, 0.0).tex(minU, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
+			worldRenderer.pos(1.0, f9, 0.0).tex(minV, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
+			worldRenderer.pos(1.0, f9, 0.0f - scale).tex(minV, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
+			worldRenderer.pos(0.0, f9, 0.0f - scale).tex(minU, f8).normal(0.0f, 1.0f, 0.0f).endVertex();
 		}
 		for (int k = 0; k < sheetHeight; ++k) {
 			float f7 = k / (float) sheetHeight;
 			float f8 = maxV + (maxU - maxV) * f7 - f6;
-			worldrenderer.pos(1.0, f7, 0.0).tex(minV, f8).normal(0.0f, -1.0f, 0.0f).endVertex();
-			worldrenderer.pos(0.0, f7, 0.0).tex(minU, f8).normal(0.0f, -1.0f, 0.0f) .endVertex();
-			worldrenderer.pos(0.0, f7, 0.0f - scale).tex(minU, f8).normal(0.0f, -1.0f, 0.0f).endVertex();
-			worldrenderer.pos(1.0, f7, 0.0f - scale).tex(minV, f8).normal(0.0f, -1.0f, 0.0f).endVertex();
+			worldRenderer.pos(1.0, f7, 0.0).tex(minV, f8).normal(0.0f, -1.0f, 0.0f).endVertex();
+			worldRenderer.pos(0.0, f7, 0.0).tex(minU, f8).normal(0.0f, -1.0f, 0.0f) .endVertex();
+			worldRenderer.pos(0.0, f7, 0.0f - scale).tex(minU, f8).normal(0.0f, -1.0f, 0.0f).endVertex();
+			worldRenderer.pos(1.0, f7, 0.0f - scale).tex(minV, f8).normal(0.0f, -1.0f, 0.0f).endVertex();
 		}
 		tessellator.draw();
 	}

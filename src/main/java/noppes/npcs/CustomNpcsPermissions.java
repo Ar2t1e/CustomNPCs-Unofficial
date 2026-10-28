@@ -98,6 +98,7 @@ public class CustomNpcsPermissions {
 	public static final Permission GLOBAL_MAIL = new Permission(CustomNpcs.MODID + ".global.mail");
 	public static final Permission GLOBAL_ELEMENTS = new Permission(CustomNpcs.MODID + ".global.elements", false);
 	public static final Permission GLOBAL_DUNGEONS = new Permission(CustomNpcs.MODID + ".global.dungeons", false);
+	public static final Permission GLOBAL_DROP_TEMPLATE = new Permission(CustomNpcs.MODID + ".global.drop_template", false);
 	public static final Permission MONEY_MANAGER = new Permission(CustomNpcs.MODID + ".money.manager");
 	public static final Permission DONAT_MANAGER = new Permission(CustomNpcs.MODID + ".donat.manager", false);
 

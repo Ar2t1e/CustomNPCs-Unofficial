@@ -13,7 +13,6 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumHandSide;
 import noppes.npcs.CustomItems;
-import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.AnimationKind;
 import noppes.npcs.client.model.ModelNpcAlt;
 import noppes.npcs.client.model.part.LayerModel;
@@ -54,7 +53,7 @@ public class LayerCustomModels<T extends EntityLivingBase> extends LayerInterfac
             green = (color >> 8 & 0xFF) / 255.0f;
             blue = (color & 0xFF) / 255.0f;
         }
-        if (CustomNpcs.FastNpcFrame && !isInvisible && !playerdata.hasRenderLayers()) {
+        if (!isInvisible && !playerdata.hasRenderLayers()) {
             GlStateManager.enableAlpha();
             GlStateManager.enableBlend();
             return;

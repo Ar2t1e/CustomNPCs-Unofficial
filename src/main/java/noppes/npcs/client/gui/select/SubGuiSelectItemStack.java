@@ -49,16 +49,8 @@ public class SubGuiSelectItemStack extends GuiBasic {
             if (stack != null && !stack.isEmpty()) { list = stack.getTooltip(player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL); }
         }
         if (stack != null && !stack.isEmpty()) {
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(x + 1.0f, y + 1.0f, 0.0f);
-            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-            mc.getRenderItem().renderItemAndEffectIntoGUI(stack, 0, 0);
-            GlStateManager.translate(0.0f, 0.0f, 200.0f);
-            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-            drawString(mc.fontRenderer, "" + stack.getCount(), 16 - mc.fontRenderer.getStringWidth("" + stack.getCount()), 9, new Color(0xFFFFFFFF).getRGB());
-            GlStateManager.popMatrix();
+            renderStackInGUI(stack, x + 1.0f, y + 1.0f, 0.0f, 1.0f, null);
         }
-
         for (int i = 0; i < player.inventory.mainInventory.size(); i ++) {
             ItemStack st = player.inventory.mainInventory.get(i);
             x = guiLeft + 7 + (i % 9) * 18;
@@ -70,14 +62,7 @@ public class SubGuiSelectItemStack extends GuiBasic {
                 if (!st.isEmpty()) { list = st.getTooltip(player, mc.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL); }
             }
             if (st.isEmpty()) { continue; }
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(x + 1.0f, y + 1.0f, 0.0f);
-            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-            mc.getRenderItem().renderItemAndEffectIntoGUI(st, 0, 0);
-            GlStateManager.translate(0.0f, 0.0f, 200.0f);
-            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-            drawString(mc.fontRenderer, "" + st.getCount(), 16 - mc.fontRenderer.getStringWidth("" + st.getCount()), 9, new Color(0xFFFFFFFF).getRGB());
-            GlStateManager.popMatrix();
+            renderStackInGUI(st, x + 1.0f, y + 1.0f, 0.0f, 1.0f, null);
         }
         GlStateManager.popMatrix();
         if (list != null && !list.isEmpty()) {

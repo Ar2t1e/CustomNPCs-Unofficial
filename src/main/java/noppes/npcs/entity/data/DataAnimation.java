@@ -32,7 +32,6 @@ public class DataAnimation implements INPCAnimation {
 	// Tools
 	public final Map<EnumParts, Boolean> showParts = new HashMap<>();
 	public final Map<EnumParts, Boolean> showArmorParts = new HashMap<>();
-	private boolean partsDirty = true;
 	public final Map<EnumParts, Boolean> showAWParts = new HashMap<>();
 
 	public DataAnimation(@Nonnull EntityLivingBase main) {
@@ -67,8 +66,6 @@ public class DataAnimation implements INPCAnimation {
 	}
 
 	public void resetShowParts() {
-		if (CustomNpcs.FastNpcFrame && !partsDirty) { return; }
-		partsDirty = false;
 		showParts.replaceAll((k, v) -> true);
 		showArmorParts.replaceAll((k, v) -> true);
 	}
@@ -88,7 +85,6 @@ public class DataAnimation implements INPCAnimation {
 		animationHandler.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, partialTicks);
 		// set show parts
 		if (animationHandler.currentFrame != null) {
-			partsDirty = true;
 			// show model parts
 			for (PartConfig part : animationHandler.currentFrame.parts.values()) {
 				showParts.put(part.getEnumType(), part.isShow());

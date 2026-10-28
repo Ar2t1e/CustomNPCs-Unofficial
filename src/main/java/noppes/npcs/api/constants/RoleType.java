@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.minecraft.network.chat.Component;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.roles.RoleAuctioneer;
 import noppes.npcs.roles.RoleBank;
 import noppes.npcs.roles.RoleCompanion;
 import noppes.npcs.roles.RoleDialog;
@@ -13,6 +14,7 @@ import noppes.npcs.roles.RoleInterface;
 import noppes.npcs.roles.RolePostman;
 import noppes.npcs.roles.RoleTrader;
 import noppes.npcs.roles.RoleTransporter;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public enum RoleType {
 
@@ -23,7 +25,8 @@ public enum RoleType {
 	TRANSPORTER("transporter", 4, true),
 	MAILMAN("mailman", 5, false),
 	COMPANION("companion", 6, true),
-	DIALOG("dialog", 7, true);
+	DIALOG("dialog", 7, true),
+	AUCTIONEER("auctioneer", 8, true);
 
 	public static RoleType get(int id) {
 		for (RoleType er : RoleType.values()) {
@@ -67,6 +70,7 @@ public enum RoleType {
 			case MAILMAN: npc.role = new RolePostman(npc); break;
 			case COMPANION: npc.role = new RoleCompanion(npc); break;
 			case DIALOG: npc.role = new RoleDialog(npc); break;
+			case AUCTIONEER: npc.role = new RoleAuctioneer(npc); break;
 		}
 	}
 

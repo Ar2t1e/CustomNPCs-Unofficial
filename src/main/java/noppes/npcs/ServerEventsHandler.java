@@ -32,7 +32,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.event.world.ChunkDataEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
@@ -331,7 +330,7 @@ public class ServerEventsHandler {
 		}
 		else if (event.getCommand() instanceof CommandTime) {
 			try {
-				List<EntityPlayerMP> players = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
+				List<EntityPlayerMP> players = CustomNpcs.Server.getPlayerList().getPlayers();
 				for (EntityPlayerMP playerMP : players) { VisibilityController.instance.onUpdate(playerMP); }
 			} catch (Exception e) {
 				LogWriter.error("Error player update visible NPC:", e);

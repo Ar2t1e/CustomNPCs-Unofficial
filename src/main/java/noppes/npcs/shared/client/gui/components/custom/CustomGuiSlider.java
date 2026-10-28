@@ -81,7 +81,7 @@ public class CustomGuiSlider extends GuiSliderNop implements IComponentCustomGui
    }
 
    @Override
-   public void setSliderValue(float value) {
+   public void setValue(float value) {
       value = ValueUtil.correctFloat(value, 0.0F, 1.0F);
       if (value != sliderValue) {
          sliderValue = value;
@@ -102,7 +102,7 @@ public class CustomGuiSlider extends GuiSliderNop implements IComponentCustomGui
    }
 
    private void closeTextfield() {
-      setSliderValue((tfComponent.getFloat() + component.getMin()) / total);
+      setValue((tfComponent.getFloat() + component.getMin()) / total);
       textfield = null;
    }
 
@@ -145,7 +145,7 @@ public class CustomGuiSlider extends GuiSliderNop implements IComponentCustomGui
          return;
       }
       lastClickedTime = time;
-      setSliderValue((float)(x - (double)(getX() + 4)) / (float)(width - 8));
+      setValue((float)(x - (double)(getX() + 4)) / (float)(width - 8));
    }
 
    @Override
@@ -157,7 +157,7 @@ public class CustomGuiSlider extends GuiSliderNop implements IComponentCustomGui
    public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dx, double dy) {
       if (mouseButton != 0 || (!isHovered && !isDrag)) { return false; }
       isDrag = true;
-      setSliderValue((float)(mouseX - (double)(getX() + 4)) / (float)(width - 8));
+      setValue((float)(mouseX - (double)(getX() + 4)) / (float)(width - 8));
       return true;
    }
 

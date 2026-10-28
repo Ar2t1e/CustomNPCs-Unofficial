@@ -33,6 +33,7 @@ import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
 import noppes.npcs.shared.client.gui.listeners.ITextChangeListener;
 import noppes.npcs.shared.client.gui.listeners.ITextfieldListener;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
@@ -1007,8 +1008,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 				mc.getTextureManager().bindTexture(GuiNPCTrader.ICONS);
 				drawTexturedModalRect(x + 6, y + 2, 0, getState(true) * 24, 24, 24);
 				if (!inTrade) { GlStateManager.color(0.4F, 0.4F, 0.4F, 1.0F); }
-				mc.getRenderItem().renderItemAndEffectIntoGUI(mc.player, renderStack, x + 10, y + 6);
-				mc.getRenderItem().renderItemOverlayIntoGUI(mc.fontRenderer, renderStack, x + 10, y + 6, "");
+				GuiBasic.renderStackInGUI(renderStack, x + 10, y + 6, 0.0f, 1.0f, null);
 				if (!inTrade) { GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F); }
 				if (isHovered && isMouseHover(mouseX, mouseY, x + 6, y + parent.scrollY + 3, 22, 22)) {
 					hoverText.clear();
@@ -1094,7 +1094,8 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 					int i = 0;
 					List<Component> hovers = new ArrayList<>();
 					for (ItemStack stack : dm.buyItems.keySet()) {
-						mc.getRenderItem().renderItemAndEffectIntoGUI(stack, i * 18, 0);
+						GuiBasic.renderStackInGUI(stack, i * 18, 0, 0.0f, 1.0f, "");
+
 						GlStateManager.pushMatrix();
 						String sCount = String.valueOf(dm.buyItems.get(stack));
 						GlStateManager.translate(i * 18.0f + 17.0f, 16.0f, 200.0f);
@@ -1132,7 +1133,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 			x = getX() + 36;
 			y = getY() + 2 + parent.scrollY;
 			renderString(getMessage(), x, y, x + width - 39 - mw, y + 10,
-					CustomNpcs.MainColor.getRGB() | 0xFF000000, true, false, customFont);
+					CustomNpcs.MainColor.getRGB() | 0xFF000000, true, EnumAlignText.LEFT, false, customFont);
 			GlStateManager.popMatrix();
 
 			GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1255,7 +1256,7 @@ public class GuiNPCTrader extends GuiContainerNPCInterface<ContainerNPCTrader>
 			Component mes = getMessage();
 			if (isHovered) { mes = Component.empty().append(mes).withStyle(TextFormatting.UNDERLINE); }
 			renderString(mes, getX() + 11, getY(), getX() + getWidth() - 11, getY() + getHeight(),
-					getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, true, customFont);
+					getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24, showShadow, EnumAlignText.CENTER, false, customFont);
 			if (isHovered && !hoverText.isEmpty() && listener != null) { listener.setHoverText(hoverText); }
 		}
 

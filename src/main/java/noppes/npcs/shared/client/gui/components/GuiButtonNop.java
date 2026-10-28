@@ -20,8 +20,11 @@ import noppes.npcs.CustomNpcs;
 import noppes.npcs.api.constants.GuiComponentType;
 import noppes.npcs.api.mixin.util.text.IStyleMixin;
 import noppes.npcs.client.ClientProxy;
+import noppes.npcs.client.gui.player.GuiLog;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.IComponentGui;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.ValueUtil;
 import org.lwjgl.input.Keyboard;
@@ -72,6 +75,8 @@ public class GuiButtonNop extends Gui implements IComponentGui {
     public int offsetHoverY = 0;
 
     public int layerColor;
+    public int bookTextureType = 0;
+    public EnumAlignText alignText = EnumAlignText.CENTER;
     public boolean hasDefBack;
     public boolean isSimple = false;
     public boolean isAnim = false;
@@ -105,13 +110,13 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     public static void renderString(@Nonnull Component message,
                                     int left, int top, int right, int bottom, int color, boolean showShadow,
-                                    boolean centered, ClientProxy.FontContainer customFont) {
+                                    EnumAlignText alignText, boolean isMoved, ClientProxy.FontContainer customFont) {
         Minecraft mc = Minecraft.getMinecraft();
         int textWidth = customFont != null ? customFont.width(message) : mc.fontRenderer.getStringWidth(message.getFormattedText());
-        int height = (top + bottom - 9) / 2 + 1;
+        float yPos = (float) (top + bottom - 9) / 2.0f + 1.0f;
         if (customFont != null) {
             textWidth++;
-            height--;
+            yPos--;
         }
         int width = right - left;
         GlStateManager.pushMatrix();
@@ -129,7 +134,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 color = (alpha << 24) | (((r1 + r2) / 2) << 16) | (((g1 + g2) / 2) << 8) | ((b1 + b2) / 2);
             }
         }
-        if (textWidth > width) {
+        if (textWidth > width || isMoved) {
             boolean wasScissor = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);
             GL11.glEnable(GL11.GL_SCISSOR_TEST);
             ScaledResolution sw = new ScaledResolution(Minecraft.getMinecraft());
@@ -144,20 +149,20 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             double d1 = Math.max((double) centerX * 0.5, 3.0);
             double d2 = Math.sin(Math.PI / 2.0d * Math.cos(Math.PI * 2.0d * d0 / d1)) / 2.0 + 0.5;
             double d3 = ValueUtil.lerp(d2, 0.0, centerX);
-            if (customFont != null) { customFont.draw(message, left - (int) d3, height, color); }
-            else { mc.fontRenderer.drawString(message.getFormattedText(), left - (int) d3, height, color, showShadow); }
+            if (customFont != null) { customFont.draw(message, left - (int) d3, yPos, color); }
+            else { mc.fontRenderer.drawString(message.getFormattedText(), left - (int) d3, yPos, color, showShadow); }
             if (!wasScissor) { GL11.glDisable(GL11.GL_SCISSOR_TEST); }
         } // moved
         else {
-            if (centered) {
-                width = (left + right) / 2;
-                if (customFont != null) { customFont.draw(message, width - (float) textWidth / 2.0f, height, color); }
-                else { mc.fontRenderer.drawString(message.getFormattedText(), width - (float) textWidth / 2.0f, height, color, showShadow); }
+            float xPos;
+            switch (alignText) {
+                case LEFT: xPos = left; break;
+                case RIGHT: xPos = (float) (right - textWidth); break;
+                default: xPos = (float) (left + right - textWidth) / 2.0f; break; // CENTER
             }
-            else {
-                if (customFont != null) { customFont.draw(message, left, height, color); }
-                else { mc.fontRenderer.drawString(message.getFormattedText(), left, height, color, showShadow); }
-            }
+            // draw
+            if (customFont != null) { customFont.draw(message, xPos, yPos, color); }
+            else { mc.fontRenderer.drawString(message.getFormattedText(), xPos, yPos, color, showShadow); }
         } // in round
         GlStateManager.popMatrix();
     }
@@ -365,7 +370,10 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 mc.getTextureManager().bindTexture(texture);
                 GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
                 GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                if (isSimple) {
+                if (bookTextureType != 0) {
+                    drawTexturedModalRect(x, y, 3 + state * 23, 194 + (bookTextureType - 1) * 13, width, height);
+                }
+                else if (isSimple) {
                     int w0 = width / 2;
                     int w1 = width - w0;
                     drawTexturedModalRect(x, y, txrX, txrY + state * height, w0, height);
@@ -394,7 +402,8 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         GlStateManager.pushMatrix();
         @Nonnull Component label = getMessage();
         String text = label.getString();
-        if (enabled && (text.equals("<") || text.equals(">") || text.equals("<<") || text.equals("<<<") || text.equals(">>") || text.equals(">>>"))) {
+        boolean isMoved = text.equals("<") || text.equals(">") || text.equals("<<") || text.equals("<<<") || text.equals(">>") || text.equals(">>>");
+        if (enabled && isMoved) {
             int w = mc.fontRenderer.getStringWidth(text);
             float wm = width - 4 + 2 * w;
             float ox = (float) (System.currentTimeMillis() % 2000L) / 2000.0f * wm;
@@ -404,7 +413,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
         if (!enabled) { GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F); }
         int color = getFGColor() | (int) Math.ceil(alpha * 255.0F) << 24;
         if (isScissor) {
-            renderString(label, x + 2, y, x + width - 2, y + height, color, showShadow, true, customFont);
+            renderString(label, x + 2, y, x + width - 2, y + height, color, showShadow, alignText, isMoved, customFont);
         } else {
             if (customFont != null) { customFont.draw(label, getX() + 2, getY(), color); }
             else { mc.fontRenderer.drawString(label.getFormattedText(), getX() + 2.0f - mc.fontRenderer.getStringWidth(label.getFormattedText()) / 2.0f, getY(), color, showShadow); }
@@ -423,13 +432,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
                 }
             }
             if (renderStack != null && !renderStack.isEmpty()) {
-                GlStateManager.pushMatrix();
-                GlStateManager.translate((float) x + (float) width / 2.0f - 8.0f, (float) y + (float) height / 2.0f - 8.0f, 30.0F);
-                RenderHelper.enableGUIStandardItemLighting();
-                mc.getRenderItem().renderItemAndEffectIntoGUI(renderStack, 0, 0);
-                mc.getRenderItem().renderItemOverlays(mc.fontRenderer, renderStack, 0, 0);
-                RenderHelper.disableStandardItemLighting();
-                GlStateManager.popMatrix();
+                GuiBasic.renderStackInGUI(renderStack, (float) x + (float) width / 2.0f - 8.0f, (float) y + (float) height / 2.0f - 8.0f, 30.0F, 1.0f, null);
             }
             if (wait == 0) {
                 ticks++;
@@ -463,7 +466,8 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     public GuiButtonNop setDisplay(int value) {
         if (display == null || display.length == 0) { return this; }
-        displayValue = ((value % display.length) + display.length) % display.length;
+        if (value < 0) { value *= -1; }
+        displayValue = value % display.length;
         setDisplayText(display[displayValue]);
         return this;
     }
@@ -478,6 +482,41 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     @SuppressWarnings("unused")
     public int getRenderStackId() { return renderStackId; }
+
+    // New from Unofficial (BetaZavr)
+    /**
+     * @param bookTextureTypeIn 0 - not; 1 - right; 2 - left
+     */
+    public GuiButtonNop setIsBookTexture(int bookTextureTypeIn) {
+        bookTextureType = ValueUtil.correctInt(bookTextureTypeIn, 0, 2);
+        if (bookTextureType != 0) {
+            texture = GuiLog.BOOK_TEXTURE;
+            width = 18;
+            height = 10;
+        } else {
+            texture = null;
+            width = 50;
+            height = 20;
+        }
+        return this;
+    }
+
+    @SuppressWarnings("unused")
+    public GuiButtonNop setAlignCenter() {
+        alignText = EnumAlignText.CENTER;
+        return this;
+    }
+
+    public GuiButtonNop setAlignLeft() {
+        alignText = EnumAlignText.LEFT;
+        return this;
+    }
+
+    @SuppressWarnings("unused")
+    public GuiButtonNop setAlignRight() {
+        alignText = EnumAlignText.RIGHT;
+        return this;
+    }
 
     @SideOnly(Side.CLIENT)
     public interface OnRender {
@@ -555,7 +594,6 @@ public class GuiButtonNop extends Gui implements IComponentGui {
 
     public Component[] getVariants() { return display; }
 
-
     public GuiButtonNop setVariants(Object ... variants) {
         List<Component> lines = new ArrayList<>();
         for (Object o : variants) {
@@ -587,6 +625,7 @@ public class GuiButtonNop extends Gui implements IComponentGui {
             else if (hover) { i = 2; }
             return i;
         }
+        else if (bookTextureType != 0) { return isHovered ? 1 : 0; }
         if (isAnim) {
             if (!enabled) { return 1; }
             return hover ? lbm ? 3 : 2 : 0;

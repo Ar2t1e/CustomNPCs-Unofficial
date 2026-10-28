@@ -675,15 +675,15 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 			case 1: { // pupil
 				switch(toolType) { // 0 - rotation, 1 - offset, 2 - scale
 					case 1: {
-						frame.offsetPupil[pos] = (value = slider.sliderValue * 2.5f - (isRight ? 1.0f : 1.5f));
+						frame.offsetPupil[pos] = (value = slider.getValue() * 2.5f - (isRight ? 1.0f : 1.5f));
 						break;
 					}
 					case 2: {
-						frame.offsetPupil[pos] = (value = slider.sliderValue * 2.0f);
+						frame.offsetPupil[pos] = (value = slider.getValue() * 2.0f);
 						break;
 					}
 					default: {
-						frame.rotPupil[isRight ? 0 : 1] = (value = slider.sliderValue * 360.0f - 180.0f);
+						frame.rotPupil[isRight ? 0 : 1] = (value = slider.getValue() * 360.0f - 180.0f);
 						break;
 					}
 				}
@@ -692,15 +692,15 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 			case 2: { // brow
 				switch(toolType) {
 					case 1: {
-						frame.offsetBrow[pos] = (value = slider.sliderValue * 2.5f - (isRight ? 1.0f : 1.5f));
+						frame.offsetBrow[pos] = (value = slider.getValue() * 2.5f - (isRight ? 1.0f : 1.5f));
 						break;
 					}
 					case 2: {
-						frame.scaleBrow[pos] = (value = slider.sliderValue * 2.0f);
+						frame.scaleBrow[pos] = (value = slider.getValue() * 2.0f);
 						break;
 					}
 					default: {
-						frame.rotBrow[isRight ? 0 : 1] = (value = slider.sliderValue * 360.0f - 180.0f);
+						frame.rotBrow[isRight ? 0 : 1] = (value = slider.getValue() * 360.0f - 180.0f);
 						break;
 					}
 				}
@@ -709,15 +709,15 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 			case 3: { // mouth
 				switch(toolType) {
 					case 1: {
-						frame.offsetMouth[slider.id] = (value = slider.sliderValue * 2.5f - (isRight ? 1.0f : 1.5f));
+						frame.offsetMouth[slider.id] = (value = slider.getValue() * 2.5f - (isRight ? 1.0f : 1.5f));
 						break;
 					}
 					case 2: {
-						frame.scaleMouth[slider.id] = (value = slider.sliderValue * 2.0f);
+						frame.scaleMouth[slider.id] = (value = slider.getValue() * 2.0f);
 						break;
 					}
 					default: {
-						frame.rotMouth = (value = slider.sliderValue * 360.0f - 180.0f);
+						frame.rotMouth = (value = slider.getValue() * 360.0f - 180.0f);
 						break;
 					}
 				}
@@ -727,15 +727,15 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 				elementType = 0;
 				switch(toolType) {
 					case 1: {
-						frame.offsetEye[pos] = (value = slider.sliderValue * 2.5f - (isRight ? 1.0f : 1.5f));
+						frame.offsetEye[pos] = (value = slider.getValue() * 2.5f - (isRight ? 1.0f : 1.5f));
 						break;
 					}
 					case 2: {
-						frame.scaleEye[pos] = (value = slider.sliderValue * 2.0f);
+						frame.scaleEye[pos] = (value = slider.getValue() * 2.0f);
 						break;
 					}
 					default: {
-						frame.rotEye[isRight ? 0 : 1] = (value = slider.sliderValue * 360.0f - 180.0f);
+						frame.rotEye[isRight ? 0 : 1] = (value = slider.getValue() * 360.0f - 180.0f);
 						break;
 					}
 				}
@@ -864,7 +864,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 					} // Mouth
 				}
 				textField.setValue("" + (Math.round(data * 1000.0f) / 1000.0f));
-				if (getSlider(0) != null) { getSlider(0).setSliderValue(value); }
+				if (getSlider(0) != null) { getSlider(0).setValue(value); }
 				resetEmtns();
 				break;
 			} // X
@@ -914,7 +914,7 @@ public class GuiNpcEmotion extends GuiNPCInterface2
 					} // Mouth
 				}
 				textField.setValue("" + (Math.round(data * 1000.0f) / 1000.0f));
-				if (getSlider(1) != null) { getSlider(1).setSliderValue(value); }
+				if (getSlider(1) != null) { getSlider(1).setValue(value); }
 				resetEmtns();
 				break;
 			} // Y

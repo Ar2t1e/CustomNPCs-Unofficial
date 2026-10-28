@@ -11,6 +11,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.listeners.IGuiInterface;
 
 import javax.annotation.Nonnull;
@@ -52,9 +53,7 @@ public class GuiMenuTopIconButton extends GuiMenuTopButton {
             GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
             mc.getTextureManager().bindTexture(resource);
             drawTexturedModalRect(getX(), getY() + (active ? 2 : 0), 0, active ? 32 : 0, 28, 28);
-            GlStateManager.translate(0.0F, 0.0F, 100.0F);
-            mc.getRenderItem().renderItemAndEffectIntoGUI(item, getX() + 6, getY() + 10);
-            mc.getRenderItem().renderItemOverlays(mc.fontRenderer, item, getX() + 6, getY() + 10);
+            GuiBasic.renderStackInGUI(item, x + 6, y + 10, 100.0f, 1.0f, null);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }

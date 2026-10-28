@@ -61,10 +61,6 @@ public class DataDisplay implements INPCDisplay {
 	protected String title = "";
 	protected String url = "";
 	protected String glowTexture = "";
-	private String glowClean = "";
-	private String glowCleanFrom;
-	private String cloakClean = "";
-	private String cloakCleanFrom;
 	protected String name;
 	protected String texture = CustomNpcs.MODID + ":textures/entity/humanmale/steve.png";
 	public float shadowSize = 1.0f;
@@ -107,12 +103,7 @@ public class DataDisplay implements INPCDisplay {
 
 	@Override
 	public String getCapeTexture() {
-		if (!CustomNpcs.FastNpcLayers) { return NoppesStringUtils.cleanResource(cloakTexture); }
-		if (cloakCleanFrom != cloakTexture) {
-			cloakClean = NoppesStringUtils.cleanResource(cloakTexture);
-			cloakCleanFrom = cloakTexture;
-		}
-		return cloakClean;
+		return NoppesStringUtils.cleanResource(cloakTexture);
 	}
 
 	@Override
@@ -187,14 +178,7 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public String getOverlayTexture() {
-		if (!CustomNpcs.FastNpcLayers) { return NoppesStringUtils.cleanResource(glowTexture); }
-		if (glowCleanFrom != glowTexture) {
-			glowClean = NoppesStringUtils.cleanResource(glowTexture);
-			glowCleanFrom = glowTexture;
-		}
-		return glowClean;
-	}
+	public String getOverlayTexture() { return NoppesStringUtils.cleanResource(glowTexture); }
 
 	public String getRandomName() {
 		return CustomNpcs.MARKOV_GENERATOR[markovGeneratorId].fetch(markovGender);
@@ -227,9 +211,7 @@ public class DataDisplay implements INPCDisplay {
 	}
 
 	@Override
-	public String getTitle() {
-		return title;
-	}
+	public String getTitle() { return title; }
 
 	@Override
 	public int getVisible() {

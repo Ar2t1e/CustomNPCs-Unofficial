@@ -178,11 +178,7 @@ public class GuiTransportSelection extends GuiNPCInterface
 				for (ItemStack stack : barterItems.keySet()) {
 					int u = guiLeft + imageWidth + 5 + (slot % 3) * 18;
 					int v = guiTop + 31 + (slot / 3) * 18;
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(u, v, 50.0f);
-					minecraft.getRenderItem().renderItemAndEffectIntoGUI(stack, 0, 0);
-					minecraft.getRenderItem().renderItemOverlays(fontRenderer, stack, 0, 0);
-					GlStateManager.popMatrix();
+					renderStackInGUI(stack, u + 1, v + 1, 50.0f, 1.0f, null);
 					if (isMouseHover(mouseX, mouseY, u, v, 18, 18)) {
 						setHoverText(stack.getTooltip(player, minecraft.gameSettings.advancedItemTooltips ? TooltipFlags.ADVANCED : TooltipFlags.NORMAL));
 					}

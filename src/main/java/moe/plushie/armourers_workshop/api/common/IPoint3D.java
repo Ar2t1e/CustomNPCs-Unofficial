@@ -1,10 +1,12 @@
 package moe.plushie.armourers_workshop.api.common;
 
+@SuppressWarnings("unused")
 public interface IPoint3D {
 
-	public int getX();
+	int getX();
 
-	public int getY();
+	int getY();
 
-	public int getZ();
+	int getZ();
+
 }

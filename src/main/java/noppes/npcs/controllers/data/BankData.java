@@ -11,7 +11,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.containers.ContainerNPCBank;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketBankReOpen;
 import noppes.npcs.packets.client.PacketBankSave;

@@ -10,6 +10,7 @@ import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketHudTimerEnd;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.components.GuiLabel;
+import noppes.npcs.shared.client.gui.util.EnumAlignText;
 import noppes.npcs.util.Util;
 
 import javax.annotation.Nonnull;
@@ -62,7 +63,7 @@ public class CustomGuiTimer extends GuiLabel implements IComponentCustomGui {
         int r = (int) ((getX() + width) / component.getScale());
         int b = (int) ((getY() + height)  / component.getScale());
         isHovered = mouseX >= x && mouseY >= y && mouseX < r && mouseY < b;
-        GuiButtonNop.renderString(getMessage(), x, y, r, b, textColor, showShadow, false, customFont);
+        GuiButtonNop.renderString(getMessage(), x, y, r, b, textColor, showShadow, EnumAlignText.LEFT, false, customFont);
         GlStateManager.popMatrix();
     }
 

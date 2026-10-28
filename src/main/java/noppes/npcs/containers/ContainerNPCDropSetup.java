@@ -26,7 +26,8 @@ public class ContainerNPCDropSetup extends Container {
 	public final int dataType;
 
 	public int dropType;
-	public int groupId;
+	public String templateId;
+	public String groupId;
 	public int marcetID;
 	public int dealID;
 	public int questID;
@@ -42,19 +43,12 @@ public class ContainerNPCDropSetup extends Container {
 			}
 			if (npc != null) {
 				dropType = compound.getInteger("DropType");
-				groupId = compound.getInteger("GroupId");
+				groupId = compound.getString("GroupId");
 				int pos = compound.getInteger("Pos");
-				if (dropType == 1) {
-					DropsTemplate template = DropController.getInstance().templates.get(npc.inventory.saveDropsName);
-					if (template != null && template.groups.containsKey(groupId) && template.groups.get(groupId).containsKey(pos)) {
-						inv = template.groups.get(groupId).get(pos);
-					}
-				} else {
-					if (npc.inventory.drops.containsKey(pos)) { inv = npc.inventory.drops.get(pos); }
-				}
+				if (npc.inventory.drops.containsKey(pos)) { inv = npc.inventory.drops.get(pos); }
 				if (inv == null) { inv = new DropSet(npc.inventory); }
 			}
-		}
+		} // npc inv
 		else if (dataType == 1) {
 			marcetID = compound.getInteger("Marcet");
 			dealID = compound.getInteger("Deal");
@@ -68,7 +62,7 @@ public class ContainerNPCDropSetup extends Container {
 					inv.pos = pos;
 				}
 			}
-		} // Marcet deal
+		} // marcet deal
 		else if (dataType == 2) {
 			questID = compound.getInteger("QuestID");
 			Quest quest = QuestController.instance.get(questID);
@@ -81,11 +75,19 @@ public class ContainerNPCDropSetup extends Container {
 				}
 			}
 		} // quest
+		else if (dataType == 3) {
+			groupId = compound.getString("GroupId");
+			templateId = compound.getString("TemplateId");
+			int pos = compound.getInteger("Pos");
+			DropsTemplate template = DropController.getInstance().templates.get(templateId);
+			if (template != null && template.groups.containsKey(groupId) && template.groups.get(groupId).containsKey(pos)) {
+				inv = template.groups.get(groupId).get(pos);
+			}
+			if (inv == null) { inv = new DropSet(null); }
+		} // templates
 		if (inv != null && player instanceof EntityPlayerMP) { inventoryDS = inv.copy(); }
 		else { inventoryDS = inv; }
-		if (inventoryDS != null) {
-			addSlotToContainer(new Slot(inventoryDS, 0, 202, 135));
-		}
+		if (inventoryDS != null) { addSlotToContainer(new Slot(inventoryDS, 0, 202, 135)); }
 		for (int i1 = 0; i1 < 3; ++i1) {
 			for (int l2 = 0; l2 < 9; ++l2) { addSlotToContainer(new Slot(player.inventory, l2 + i1 * 9 + 9, l2 * 18 + 8, 135 + i1 * 18)); }
 		}

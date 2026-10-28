@@ -7,7 +7,7 @@ import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.*;
 import noppes.npcs.api.event.RoleEvent;
 import noppes.npcs.containers.ContainerNPCBank;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.data.Bank;
 import noppes.npcs.controllers.data.PlayerData;
 import noppes.npcs.shared.common.PacketServerBasic;

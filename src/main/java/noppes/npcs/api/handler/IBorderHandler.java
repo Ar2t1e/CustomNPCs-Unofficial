@@ -7,7 +7,7 @@ import noppes.npcs.controllers.data.Zone3D;
 
 import java.util.List;
 
-@SuppressWarnings("all")
+@SuppressWarnings("unused")
 public interface IBorderHandler {
 
 	IBorder createNew(@ParamName("dimensionId") int dimensionId, @ParamName("pos") IPos pos);

@@ -10,6 +10,7 @@ import noppes.npcs.api.wrapper.gui.CustomGuiButtonWrapper;
 import noppes.npcs.client.gui.custom.GuiCustom;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketCustomGuiButton;
+import noppes.npcs.shared.client.gui.GuiBasic;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 
 import java.awt.*;
@@ -80,7 +81,6 @@ public class CustomGuiButton extends GuiButtonNop implements IComponentCustomGui
       isHovered = mouseX >= getX() && mouseY >= getY() && mouseX < getX() + width && mouseY < getY() + height;
       GlStateManager.pushMatrix();
       GlStateManager.translate((float)getX(), (float)getY(), 0.0F);
-      Minecraft mc = Minecraft.getMinecraft();
       int i;
       if (component.getTexture().equals("textures/gui/widgets.png")) { i = !active ? 0 : (isHovered ? 2 : 1); }
       else { i = isHovered ? 1 : 0; }
@@ -88,13 +88,9 @@ public class CustomGuiButton extends GuiButtonNop implements IComponentCustomGui
       background.render(mouseX - getX(), mouseY - getY(), partialTicks);
       renderLabel();
       if (!component.getDisplayItem().isEmpty()) {
-         GlStateManager.pushMatrix();
-         GlStateManager.translate((float)getX() + ((float)width - 16.0F) / 2.0F,
-                 (float)getY() + ((float)height - 16.0F) / 2.0F + 1.0F,
-                 -180.0F);
-         mc.getRenderItem().renderItemAndEffectIntoGUI(component.getDisplayItem().getMCItemStack(), 0, 0);
-         mc.getRenderItem().renderItemOverlays(mc.fontRenderer, component.getDisplayItem().getMCItemStack(), 0, 0);
-         GlStateManager.popMatrix();
+         GuiBasic.renderStackInGUI(component.getDisplayItem().getMCItemStack(), (float) x + ((float)width - 16.0F) / 2.0F,
+                 (float) y + ((float)height - 16.0F) / 2.0F + 1.0F,
+                 -180.0F, 1.0f, null);
       }
       GlStateManager.popMatrix();
    }

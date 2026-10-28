@@ -16,9 +16,9 @@ import net.minecraft.item.ItemStack;
 import noppes.npcs.api.mixin.entity.player.IEntityPlayerMixin;
 import noppes.npcs.api.util.IModelRenderer;
 import noppes.npcs.client.model.animation.*;
+import noppes.npcs.client.util.GlCache;
 import noppes.npcs.client.util.aw.ArmourersWorkshopUtil;
 import noppes.npcs.mixin.client.model.IModelPlayerMixin;
-import noppes.npcs.client.util.GlCache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBiped;
@@ -205,16 +205,14 @@ public class ModelNpcAlt extends ModelPlayer {
     @Override
     public void render(@Nonnull Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
         if (Minecraft.getMinecraft().currentScreen == null && editAnimDataSelect.part != -1) { editAnimDataSelect.clear(); }
-        boolean fast = CustomNpcs.FastNpcFrame;
-        Map<EnumParts, Boolean> ba = fast ? Collections.emptyMap() : new HashMap<>();
-        Map<EnumParts, Boolean> bAW = fast ? Collections.emptyMap() : new HashMap<>();
+        Map<EnumParts, Boolean> ba = Collections.emptyMap();
+        Map<EnumParts, Boolean> bAW = Collections.emptyMap();
         editAnimDataSelect.isNPC = entityIn.equals(editAnimDataSelect.displayNpc);
         float r = 1.0f, g = 1.0f, b = 1.0f;
         int animID = -1;
         boolean showWear = true;
         if (entityIn instanceof EntityPlayer) {
-            if (fast) { ba = PlayerData.get((EntityPlayer) entityIn).animation.showParts; }
-            else { ba.putAll(PlayerData.get((EntityPlayer) entityIn).animation.showParts); }
+            ba = PlayerData.get((EntityPlayer) entityIn).animation.showParts;
             IEntityPlayerMixin playerMixin = (IEntityPlayerMixin) entityIn;
             if (playerMixin.npcs$getAnimation().isAnimated()) {
                 animID = playerMixin.npcs$getAnimation().getAnimation().id;
@@ -223,18 +221,17 @@ public class ModelNpcAlt extends ModelPlayer {
         else if (entityIn instanceof EntityCustomNpc) {
             EntityCustomNpc npc = (EntityCustomNpc) entityIn;
             showWear = !npc.modelData.isDisableLayer("LayerWear");
-            if (fast) { ba = npc.animation.showParts; }
-            else { ba.putAll(npc.animation.showParts); }
+            ba = npc.animation.showParts;
             EnumParts ep = EnumParts.get(editAnimDataSelect.part);
             if (editAnimDataSelect.isNPC && ba.containsKey(ep) && !ba.get(ep)) {
-                if (fast) { ba = new HashMap<>(ba); }
+                ba = new HashMap<>(ba);
                 ba.put(ep, true);
             }
             if (npc.animation.isAnimated()) {
                 animID = npc.animation.getAnimation().id;
             }
             // possible disabling of body parts rendering from the AW mod:
-            if (ArmourersWorkshopUtil.isAvailable()) {
+            if (ArmourersWorkshopApi.isAvailable()) {
                 npc.animation.resetShowAWParts();
                 Map<EnumParts, List<ISkinDescriptor>> map = new HashMap<>();
                 map.put(EnumParts.HEAD, new ArrayList<>());
@@ -321,8 +318,7 @@ public class ModelNpcAlt extends ModelPlayer {
                     }
                 }
             }
-            if (fast) { bAW = npc.animation.showAWParts; }
-            else { bAW.putAll(npc.animation.showAWParts); }
+            bAW = npc.animation.showAWParts;
             if (((EntityCustomNpc) entityIn).display.getTint() != 0xFFFFFF) {
                 r = (float)(((EntityCustomNpc) entityIn).display.getTint() >> 16 & 255) / 255.0F;
                 g = (float)(((EntityCustomNpc) entityIn).display.getTint() >> 8 & 255) / 255.0F;

@@ -57,6 +57,9 @@ public class GuiNpcManageQuest
 	@Override
 	public void initGui() {
 		super.initGui();
+		SubGuiDropEdit.parent = this;
+		SubGuiDropEdit.parentContainer = null;
+		SubGuiDropEdit.parentData = null;
 		categoryData.clear();
 		questData.clear();
 		QuestController qData = QuestController.instance;
@@ -227,9 +230,6 @@ public class GuiNpcManageQuest
 			} // remove quest
 			case 13: {
 				if (!questData.containsKey(selectedQuest)) { return; }
-				SubGuiDropEdit.parent = this;
-				SubGuiDropEdit.parentContainer = null;
-				SubGuiDropEdit.parentData = null;
 				setSubGui(new SubGuiQuestEdit(questData.get(selectedQuest)));
 				break;
 			} // edit quest
@@ -334,9 +334,6 @@ public class GuiNpcManageQuest
 	public void scrollDoubleClicked(GuiCustomScrollNop scroll) {
 		if (scroll.id == 0 && categoryData.containsKey(selectedCategory)) { setSubGui(new SubGuiEditText(3, categoryData.get(selectedCategory).title)); }
 		else if (scroll.id == 1 && questData.containsKey(selectedQuest)) {
-			SubGuiDropEdit.parent = this;
-			SubGuiDropEdit.parentContainer = null;
-			SubGuiDropEdit.parentData = null;
 			setSubGui(new SubGuiQuestEdit(questData.get(selectedQuest)));
 		}
 	}

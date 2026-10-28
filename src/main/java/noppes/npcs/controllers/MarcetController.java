@@ -14,9 +14,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import noppes.npcs.CustomNpcs;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.*;
 import noppes.npcs.shared.common.util.LogWriter;
@@ -38,7 +37,7 @@ public class MarcetController implements IMarcetHandler {
 		}
 		return MarcetController.instance;
 	}
-	public static boolean isNotLocalServerData() { return FMLCommonHandler.instance().getMinecraftServerInstance() == null; }
+	public static boolean isNotLocalServerData() { return CustomNpcs.Server == null; }
 
 	private static boolean newInstance() {
 		if (MarcetController.instance == null) {
@@ -162,12 +161,11 @@ public class MarcetController implements IMarcetHandler {
 	}
 
 	private void load() {
-		CustomNpcs.debugData.start(null);
 		File saveDir = CustomNpcs.getWorldSaveDirectory();
 		if (saveDir == null || saveDir.toString().equals(".")) {
-			CustomNpcs.debugData.end(null);
 			return;
 		}
+		CustomNpcs.debugData.start(null);
 		filePath = saveDir.getAbsolutePath();
 		try {
 			File file = new File(saveDir, "marcet.dat");

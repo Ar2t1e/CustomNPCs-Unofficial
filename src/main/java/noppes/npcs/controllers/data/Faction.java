@@ -18,6 +18,7 @@ import noppes.npcs.api.entity.IPlayer;
 import noppes.npcs.api.handler.data.IFaction;
 import noppes.npcs.controllers.FactionController;
 import noppes.npcs.entity.EntityNPCInterface;
+import noppes.npcs.shared.common.util.LogWriter;
 
 public class Faction implements IFaction {
 
@@ -91,39 +92,18 @@ public class Faction implements IFaction {
 	}
 
 	public boolean isFriendlyToPlayer(EntityPlayer player) {
-		PlayerFactionData data = PlayerData.get(player).factionData;
-		if (data.getFactionPoints(player, id) < friendlyPoints) { return false; }
-		FactionController fData = FactionController.instance;
-		for (int idIn : attackFactions) {
-			Faction faction = fData.factions.get(idIn);
-			if (faction != null && data.getFactionPoints(player, idIn) < faction.neutralPoints) { return false; }
-		}
-		return true;
-	}
+        return PlayerData.get(player).factionData.getFactionPoints(player, id) >= friendlyPoints;
+    }
 
 	public boolean isAggressiveToPlayer(EntityPlayer player) {
 		if (player.isCreative()) { return false; }
-		PlayerFactionData data = PlayerData.get(player).factionData;
-		if (data.getFactionPoints(player, id) < neutralPoints) { return true; }
-		FactionController fData = FactionController.instance;
-		for (int idIn : attackFactions) {
-			Faction faction = fData.factions.get(idIn);
-			if (faction != null && data.getFactionPoints(player, idIn) < faction.neutralPoints) { return true; }
-		}
-		return false;
-	}
+        return PlayerData.get(player).factionData.getFactionPoints(player, id) < neutralPoints;
+    }
 
 	public boolean isNeutralToPlayer(EntityPlayer player) {
-		PlayerFactionData data = PlayerData.get(player).factionData;
-		int points = data.getFactionPoints(player, id);
-		if (points < neutralPoints || points >= friendlyPoints) { return false; }
-		FactionController fData = FactionController.instance;
-		for (int idIn : attackFactions) {
-			Faction faction = fData.factions.get(idIn);
-			if (faction != null && data.getFactionPoints(player, idIn) < faction.neutralPoints) { return false; }
-		}
-		return true;
-	}
+		int points = PlayerData.get(player).factionData.getFactionPoints(player, id);
+        return points >= neutralPoints && points < friendlyPoints;
+    }
 
 	public boolean isAggressiveToNpc(EntityNPCInterface npc) {
 		return attackFactions.contains(npc.faction.id) || npc.advanced.attackFactions.contains(id);

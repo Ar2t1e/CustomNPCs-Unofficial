@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = TextureUtil.class, priority = 499)
+@Mixin(value = TextureUtil.class, priority = 498)
 public class TextureUtilMixin {
 
     @Inject(method = "allocateTextureImpl", at = @At("HEAD"))

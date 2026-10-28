@@ -1,6 +1,8 @@
 package noppes.npcs.packets;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -19,6 +21,7 @@ import noppes.npcs.shared.common.PacketServerBasic;
 import noppes.npcs.util.CustomNPCsScheduler;
 import noppes.npcs.util.Util;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -169,6 +172,10 @@ public class Packets {
         register(PacketBorderData.class);
         register(PacketBorderClear.class);
         register(PacketHeapAnalyzer.class);
+        register(PacketAuctionHouseSet.class);
+        register(PacketAuctionHouseAddLots.class);
+        register(PacketAuctionLotRemoved.class);
+        register(PacketAuctionLotUpdate.class);
 
         // Client -> Server
         register(SPacketBankGet.class);
@@ -338,9 +345,11 @@ public class Packets {
         register(SPacketNpcInvDropSetSave.class);
         register(SPacketDealDropSetSave.class);
         register(SPacketQuestDropSetSave.class);
+        register(SPacketTemplateDropSetSave.class);
         register(SPacketDropTemplateClear.class);
         register(SPacketDropTemplateSave.class);
         register(SPacketDropTemplateRemove.class);
+        register(SPacketDropTemplateRename.class);
         register(SPacketWindowSize.class);
         register(SPacketQuestChooseReward.class);
         register(SPacketPlayerDataSet.class);
@@ -390,6 +399,12 @@ public class Packets {
         register(SPacketDimensionRecreate.class);
         register(SPacketDimensionRestore.class);
         register(SPacketCustomGuiKeyPressed.class);
+        register(SPacketAuctionBid.class);
+        register(SPacketAuctionBuyout.class);
+        register(SPacketAuctionCreateLot.class);
+        register(SPacketAuctionsGet.class);
+        register(SPacketAuctionSave.class);
+        register(SPacketAuctionClose.class);
 
     }
 
@@ -429,34 +444,35 @@ public class Packets {
         }
     }
 
-    public static <MSG extends PacketBasic> void send(EntityPlayerMP player, MSG msg) {
-        logged(msg, true);
+    public static <MSG extends PacketBasic> void send(@Nonnull EntityPlayerMP player, MSG msg) {
+        logged(msg, player.getName(), true);
         CHANNELS.get(msg.getChannelId()).sendTo(msg, player);
     }
 
-    public static <MSG extends PacketBasic> void sendDelayed(EntityPlayerMP player, MSG msg, int delay) {
-        logged(msg, true);
+    public static <MSG extends PacketBasic> void sendDelayed(@Nonnull EntityPlayerMP player, MSG msg, int delay) {
+        logged(msg, player.getName(), true);
         CustomNPCsScheduler.runTack(() -> send(player, msg), delay);
     }
 
     public static <MSG extends PacketBasic> void sendNearby(World level, BlockPos pos, int range, MSG msg) {
-        logged(msg, true);
+        logged(msg, "[To Nearby]", true);
         CHANNELS.get(msg.getChannelId()).sendToAllAround(msg, new NetworkRegistry.TargetPoint(level.provider.getDimension(), pos.getX(), pos.getY(), pos.getZ(), range));
     }
 
     public static <MSG extends PacketBasic> void sendNearby(Entity entity, MSG msg) {
         if (entity == null || entity.isDead) { return; }
-        logged(msg, true);
+        logged(msg, "[To Nearby]", true);
         CHANNELS.get(msg.getChannelId()).sendToAllTracking(msg, entity);
     }
 
     public static <MSG extends PacketBasic> void sendAll(MSG msg) {
-        logged(msg, true);
+        logged(msg, "[To All]", true);
         CHANNELS.get(msg.getChannelId()).sendToAll(msg);
     }
 
     public static <MSG extends PacketServerBasic> void sendServer(MSG msg) {
-        logged(msg, false);
+        EntityPlayer player = Minecraft.getMinecraft().player;
+        logged(msg, player == null ? "null" :player.getName(), false);
         CHANNELS.get(msg.getChannelId()).sendToServer(msg);
     }
 
@@ -465,12 +481,13 @@ public class Packets {
         long now = System.currentTimeMillis();
         if (delaySendMap.size() > 1000) { delaySendMap.entrySet().removeIf(entry -> entry.getValue() <= now); }
         if (existing != null && existing > now) { return; }
-        logged(msg, false);
+        EntityPlayer player = Minecraft.getMinecraft().player;
+        logged(msg, player == null ? "null" :player.getName(),false);
         CHANNELS.get(msg.getChannelId()).sendToServer(msg);
         delaySendMap.put(key, now + delay);
     }
 
-    private static <MSG extends IMessage> void logged(MSG msg, boolean onClients) {
+    private static <MSG extends IMessage> void logged(MSG msg, @Nonnull String player, boolean onClients) {
         if (onClients == msg instanceof PacketServerBasic) {
             LogWriter.warn("Packet \"" + msg.getClass().getSimpleName() + "\" is sent from the wrong side! Can be client: "+onClients);
         }
@@ -478,6 +495,7 @@ public class Packets {
             StringBuilder message = new StringBuilder(("" + Util.instance.getSide()));
             message.append(" send packet: ")
                     .append(msg.getClass().getSimpleName())
+                    .append("; player: \"").append(player).append("\"")
                     .append("; Channel ID:").append(((PacketBasic) msg).getChannelId());
             String line = Thread.currentThread().getStackTrace()[3].toString();
             if (line.contains("noppes.npcs")) { line = line.substring(line.indexOf("noppes.npcs")); }

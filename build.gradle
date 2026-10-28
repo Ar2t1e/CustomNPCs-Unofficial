@@ -51,6 +51,14 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+// ASM 6.2 conflicts
+configurations.configureEach {
+    exclude group: 'org.ow2.asm', module: 'asm-util'
+    exclude group: 'org.ow2.asm', module: 'asm-analysis'
+    exclude group: 'org.ow2.asm', module: 'asm-tree'
+    exclude group: 'org.ow2.asm', module: 'asm'
+}
+
 // launch in DEV environment
 minecraft {
     mappings channel: project.mapping_channel.toString(), version: project.mapping_version.toString()

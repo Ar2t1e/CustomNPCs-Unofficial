@@ -23,12 +23,14 @@ public class PacketPermissionGlobal extends PacketBasic {
     public boolean elements;
     public boolean dungeons;
     public boolean permissions;
+    public boolean drop_templates;
 
     public PacketPermissionGlobal() {}
 
     public PacketPermissionGlobal(boolean adminIn, boolean banksIn, boolean factionsIn, boolean dialogsIn, boolean questsIn, boolean transportsIn,
                                   boolean players_dataIn, boolean recipesIn, boolean natural_spawnsIn, boolean linkedsIn, boolean marketsIn,
-                                  boolean auctionsIn, boolean mailsIn, boolean elementsIn, boolean dungeonsIn, boolean permissionsIn) {
+                                  boolean auctionsIn, boolean mailsIn, boolean elementsIn, boolean dungeonsIn, boolean permissionsIn,
+                                  boolean drop_templatesIn) {
         admin = adminIn;
         banks = banksIn;
         factions = factionsIn;
@@ -45,6 +47,7 @@ public class PacketPermissionGlobal extends PacketBasic {
         elements = elementsIn;
         dungeons = dungeonsIn;
         permissions = permissionsIn;
+        drop_templates = drop_templatesIn;
     }
 
     @Override
@@ -65,6 +68,7 @@ public class PacketPermissionGlobal extends PacketBasic {
         elements = buf.readBoolean();
         dungeons = buf.readBoolean();
         permissions = buf.readBoolean();
+        drop_templates = buf.readBoolean();
     }
 
     @Override
@@ -85,6 +89,7 @@ public class PacketPermissionGlobal extends PacketBasic {
         buf.writeBoolean(elements);
         buf.writeBoolean(dungeons);
         buf.writeBoolean(permissions);
+        buf.writeBoolean(drop_templates);
     }
 
     @Override

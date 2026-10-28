@@ -107,24 +107,24 @@ public class KeyController implements IKeyBinding {
 		keybindings.get(id);
 	}
 
-	public void loadKeys() {
+	public void load() {
 		CustomNpcs.debugData.start(null);
 		File saveDir = CustomNpcs.Dir;
 		if (saveDir == null) { return; }
 		try {
 			File file = new File(saveDir, "keys.dat");
-			if (file.exists()) { loadKeys(file); }
+			if (file.exists()) { load(file); }
 			else { loadDefaultKeys(); }
 		}
 		catch (Exception e) { loadDefaultKeys(); }
 		CustomNpcs.debugData.end(null);
 	}
 
-	private void loadKeys(File file) throws IOException {
-		loadKeys(CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())));
+	private void load(File file) throws IOException {
+		load(CompressedStreamTools.readCompressed(Files.newInputStream(file.toPath())));
 	}
 
-	public void loadKeys(NBTTagCompound compound) {
+	public void load(NBTTagCompound compound) {
 		keybindings.clear();
 		if (compound != null) {
 			if (compound.hasKey("Data", 9)) {

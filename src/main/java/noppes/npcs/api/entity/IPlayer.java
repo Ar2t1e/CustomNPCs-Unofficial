@@ -214,7 +214,9 @@ public interface IPlayer<T extends EntityPlayer> extends IEntityLivingBase<T> {
 
 	void showMarket(@ParamName("marcetID") int marcetID);
 
-	IScreenSize getScreenSize();
+    void showAuction(int auctionId);
+
+    IScreenSize getScreenSize();
 
 	void showBank(@ParamName("bankId") int bankId);
 

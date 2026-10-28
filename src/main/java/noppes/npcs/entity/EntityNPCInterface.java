@@ -111,7 +111,7 @@ import noppes.npcs.client.model.part.ModelData;
 import noppes.npcs.client.model.part.ModelPartConfig;
 import noppes.npcs.constants.*;
 import noppes.npcs.constants.EnumNPCAnimationType;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.FactionController;
 import noppes.npcs.controllers.LinkedNpcController;
@@ -1487,7 +1487,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 				}
 			}
 			// fell out of the world
-			if (!CustomNpcs.FastNpcTick || isServerWorld()) {
+			if (isServerWorld() && ais.noHasStartPos()) {
 				startYPos = calculateStartYPos(ais.startPos());
 				if (startYPos < 0.0d && isServerWorld()) { isDead = true; }
 			}
@@ -1546,7 +1546,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		else if (CustomNpcs.EnableInvisibleNpcs && CustomNpcs.InvisibilityAlgorithm == 2 &&
 				!display.isVisibleTo((EntityPlayerMP) player) && !player.isSpectator() &&
 				player.getHeldItem(hand).getItem() != CustomItems.wand) { return false; }
-
+		PlayerData.get(player).factionData.getFactionPoints(player, faction.id);
 		ItemStack stack = player.getHeldItem(hand);
 		Item item = stack.getItem();
 		if (item == CustomItems.cloner || item == CustomItems.wand || item == CustomItems.mount || item == CustomItems.scripter) {
@@ -1739,7 +1739,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 		if (needsSync) {
 			EntityRegistry.EntityRegistration er = EntityRegistry.instance().lookupModSpawn(this.getClass(), false);
 			if (er != null) {
-				for (EntityPlayerMP player : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers()) {
+				for (EntityPlayerMP player : CustomNpcs.Server.getPlayerList().getPlayers()) {
 					if (display.isVisibleTo(player) || player.isSpectator() || player.getHeldItemMainhand().getItem() == CustomItems.wand) {
 						Packets.send(player, new PacketUpdatePhysics(this, new FMLMessage.EntitySpawnMessage(er, this, er.getContainer())));
 						player.connection.sendPacket(new SPacketEntityMetadata(getEntityId(), getDataManager(), true));
@@ -2268,8 +2268,7 @@ implements IEntityAdditionalSpawnData, ICommandSender, IRangedAttackMob, IAnimal
 					ais.directLOS == EnumSeeTarget.REALISTIC;
 			if (isDirect && isPlayerSleeping()) { return false; }
 			if (ais.directLOS != EnumSeeTarget.BLIND) {
-				IRayTraceResults rtrs = CustomNpcs.FastNpcSight ? Util.instance.rayTraceBlocks(this, rtr.getYaw(), rtr.getPitch(), rtr.getDistance())
-						: Util.instance.rayTraceBlocksAndEntitys(this, rtr.getYaw(), rtr.getPitch(), rtr.getDistance());
+				IRayTraceResults rtrs = Util.instance.rayTraceBlocks(this, rtr.getYaw(), rtr.getPitch(), rtr.getDistance());
 				if (rtrs != null) {
 					for (DataBlock db : rtrs.getMCBlocks()) {
 						if (!db.state.getBlock().isPassable(world, db.pos) ||

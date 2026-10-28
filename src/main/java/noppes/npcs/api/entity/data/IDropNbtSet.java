@@ -1,13 +1,13 @@
 package noppes.npcs.api.entity.data;
 
-import noppes.npcs.api.INbt;
 import noppes.npcs.api.interfaces.ParamName;
+import noppes.npcs.api.item.IItemStack;
 
 public interface IDropNbtSet {
 
 	double getChance();
 
-	INbt getConstructorTag(@ParamName("nbt") INbt nbt);
+	void createAndPut(@ParamName("item") IItemStack item);
 
 	String getPath();
 

@@ -20,7 +20,9 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.CustomNpcs;
+import noppes.npcs.api.handler.capability.IItemStackWrapperHandler;
 import noppes.npcs.api.handler.data.IDropSetData;
+import noppes.npcs.api.wrapper.ItemStackWrapper;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.api.NpcAPI;
@@ -30,7 +32,6 @@ import noppes.npcs.api.entity.data.IDropNbtSet;
 import noppes.npcs.api.entity.data.IEnchantSet;
 import noppes.npcs.api.handler.data.IAvailability;
 import noppes.npcs.api.item.IItemStack;
-import noppes.npcs.api.wrapper.NBTWrapper;
 import noppes.npcs.constants.EnumAvailabilityQuest;
 import noppes.npcs.controllers.data.Availability;
 import noppes.npcs.util.ValueUtil;
@@ -210,13 +211,10 @@ public class DropSet implements IInventory, ICustomDrop {
 		}
 		// Tags
 		if (!tags.isEmpty()) {
-			NBTTagCompound tag = dItem.getTagCompound();
-			if (tag == null) {
-				dItem.setTagCompound(tag = new NBTTagCompound());
-			}
 			for (DropNbtSet dns : tags) {
-				if (dns.values.length > 0 && (dns.chance >= 1.0d || dns.chance * addChance / 100.0d < Math.random())) {
-					tag = dns.getConstructorTag(new NBTWrapper(tag)).getMCNBT();
+				if (dns.values.length > 0 && (dns.getChance() >= 1.0d || dns.getChance() * addChance / 100.0d < Math.random())) {
+					IItemStackWrapperHandler iStack = dItem.getCapability(ItemStackWrapper.ITEMSTACK_CAPABILITY, null);
+					if (iStack != null) { dns.createAndPut((IItemStack) iStack); }
 				}
 			}
 		}
@@ -746,10 +744,10 @@ public class DropSet implements IInventory, ICustomDrop {
 			boolean start = false;
 			for (DropNbtSet ns : tags) {
 				if (start) { nbtKey.append(Component.literal(", ").withStyle(TextFormatting.GRAY)); }
-				if (ns.path == null) { nbtKey.append(Component.literal("null").withStyle(TextFormatting.GRAY)); }
+				if (ns.getPath() == null) { nbtKey.append(Component.literal("null").withStyle(TextFormatting.GRAY)); }
 				else {
 					nbtKey.append(Component.literal("id: ").withStyle(TextFormatting.GRAY))
-							.append(Component.literal(ns.path).withStyle(TextFormatting.BLUE));
+							.append(Component.literal(ns.getPath()).withStyle(TextFormatting.BLUE));
 				}
 				start = true;
 			}

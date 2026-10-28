@@ -3,7 +3,6 @@ package noppes.npcs.client.gui.player.companion;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.network.chat.Component;
 import noppes.npcs.NoppesUtilServer;
 import noppes.npcs.packets.Packets;
@@ -154,19 +153,9 @@ public class GuiNpcCompanionTalents extends GuiNPCInterface {
 			GlStateManager.enableBlend();
 			boolean hover = x < i && x + 24 > i && y < j && y + 24 > j;
 			drawTexturedModalRect(x, y, 0, hover ? 24 : 0, 24, 24);
-			zLevel = 100.0f;
-			itemRender.zLevel = 100.0f;
-			GlStateManager.enableLighting();
-			GlStateManager.enableRescaleNormal();
-			RenderHelper.enableGUIStandardItemLighting();
-			itemRender.renderItemAndEffectIntoGUI(item, x + 4, y + 4);
-			itemRender.renderItemOverlays(mc.fontRenderer, item, x + 4, y + 4);
-			RenderHelper.disableStandardItemLighting();
-			GlStateManager.disableLighting();
+			renderStackInGUI(item, x + 4, y + 4, 0.0f, 1.0f, null);
 			GlStateManager.translate(0.0f, 0.0f, 200.0f);
 			drawCenteredString(mc.fontRenderer, role.getTalentLevel(talent) + "", x + 20, y + 16, 16777215);
-			itemRender.zLevel = 0.0f;
-			zLevel = 0.0f;
 			GlStateManager.popMatrix();
 		}
 

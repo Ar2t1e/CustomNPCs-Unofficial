@@ -2,38 +2,40 @@ package moe.plushie.armourers_workshop.api.common.skin.cubes;
 
 import net.minecraft.nbt.NBTTagCompound;
 
+@SuppressWarnings("unused")
 public interface ICubeColour {
 
-	public byte[] getBlue();
+	byte[] getBlue();
 
-	public byte getBlue(int side);
+	byte getBlue(int side);
 
-	public byte[] getGreen();
+	byte[] getGreen();
 
-	public byte getGreen(int side);
+	byte getGreen(int side);
 
-	public byte[] getPaintType();
+	byte[] getPaintType();
 
-	public byte getPaintType(int side);
+	byte getPaintType(int side);
 
-	public byte[] getRed();
+	byte[] getRed();
 
-	public byte getRed(int side);
+	byte getRed(int side);
 
-	public void readFromNBT(NBTTagCompound compound);
+	void readFromNBT(NBTTagCompound compound);
 
-	public void setBlue(byte blue, int side);
+	void setBlue(byte blue, int side);
 
 	@Deprecated
-	public void setColour(int colour);
+	void setColour(int colour);
 
-	public void setColour(int colour, int side);
+	void setColour(int colour, int side);
 
-	public void setGreen(byte green, int side);
+	void setGreen(byte green, int side);
 
-	public void setPaintType(byte type, int side);
+	void setPaintType(byte type, int side);
 
-	public void setRed(byte red, int side);
+	void setRed(byte red, int side);
 
-	public void writeToNBT(NBTTagCompound compound);
+	void writeToNBT(NBTTagCompound compound);
+
 }

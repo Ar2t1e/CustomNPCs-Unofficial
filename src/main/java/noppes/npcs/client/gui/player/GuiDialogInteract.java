@@ -11,15 +11,16 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.text.TextFormatting;
 import noppes.npcs.*;
+import noppes.npcs.controllers.AuctionController;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.PlayerSkinController;
-import noppes.npcs.controllers.data.DialogGuiSettings;
-import noppes.npcs.controllers.data.PlayerData;
+import noppes.npcs.controllers.data.*;
 import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketDialogSelected;
 import noppes.npcs.packets.server.SPacketQuestCompletionCheckAll;
 import noppes.npcs.packets.server.SPacketSyncUpdate;
+import noppes.npcs.roles.RoleAuctioneer;
 import noppes.npcs.shared.client.gui.util.NoppesStringUtils;
 import noppes.npcs.shared.common.util.LogWriter;
 import org.lwjgl.input.Keyboard;
@@ -42,8 +43,6 @@ import noppes.npcs.client.TextBlockClient;
 import noppes.npcs.client.controllers.MusicController;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.shared.client.gui.listeners.IGuiClose;
-import noppes.npcs.controllers.data.Dialog;
-import noppes.npcs.controllers.data.DialogOption;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.util.Util;
 import noppes.npcs.util.CustomNPCsScheduler;
@@ -166,6 +165,10 @@ public class GuiDialogInteract extends GuiNPCInterface implements IGuiClose {
 			dialogNpc.display.setName(name);
 			addDots = false;
 			String title = dialogNpc.display.getTitle();
+			if (title.isEmpty() && npc.role instanceof RoleAuctioneer) {
+				AuctionHouse auction = AuctionController.getInstance().getAuction(((RoleAuctioneer) npc.role).getAuctionId());
+				if (auction != null) { title = Component.translatable(auction.getName()).getFormattedText(); }
+			}
 			while (ClientProxy.Font.width(title) > guiSettings.npcWidth && title.length() > 2) {
 				title = title.substring(0, title.length() - 2);
 				addDots = true;

@@ -5,12 +5,16 @@ import java.io.File;
 import java.util.Map;
 
 import net.minecraft.client.renderer.texture.*;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import noppes.npcs.CustomItems;
+import noppes.npcs.controllers.AuctionController;
+import noppes.npcs.controllers.data.AuctionHouse;
 import noppes.npcs.mixin.client.renderer.texture.ITextureManagerMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.SPacketNpcRarityTitleGet;
+import noppes.npcs.roles.RoleAuctioneer;
 import noppes.npcs.shared.client.util.ResourceDownloader;
 import noppes.npcs.shared.common.util.LogWriter;
 import noppes.npcs.client.gui.util.GuiNpcUtil;
@@ -178,16 +182,19 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 
 	@Override
 	public void renderName(@Nonnull T npc, double d, double d1, double d2) {
-		if (!canRenderName(npc) || renderManager.renderViewEntity == null) {
+		if (!canRenderName(npc) ||
+				renderManager.renderViewEntity == null ||
+				npc.getDistance(renderManager.renderViewEntity) > 512.0) {
 			return;
 		}
-		double d3 = npc.getDistance(renderManager.renderViewEntity);
-		if (d3 > 512.0) {
-			return;
+		String title = npc.display.getTitle();
+		if (title.isEmpty() && npc.role instanceof RoleAuctioneer) {
+			AuctionHouse auction = AuctionController.getInstance().getAuction(((RoleAuctioneer) npc.role).getAuctionId());
+			if (auction != null) { title = Component.translatable(auction.getName()).getFormattedText(); }
 		}
 		if (npc.messages != null) {
 			float height = npc.baseHeight / 5.0f * npc.display.getSize();
-			float offset = npc.height * (1.2f + (npc.display.showName() ? (npc.display.getTitle().isEmpty() ? 0.15f : 0.25f) : 0.0f));
+			float offset = npc.height * (1.2f + (npc.display.showName() ? (title.isEmpty() ? 0.15f : 0.25f) : 0.0f));
 			npc.messages.renderMessages(d, d1 + offset, d2, 0.666667f * height, npc.isInRange(renderManager.renderViewEntity, 4.0), false);
 		}
 		float scale = npc.baseHeight / 5.0f * npc.display.getSize();
@@ -195,7 +202,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 			if (npc.currentAnimation == 1) {
 				d1 -= 0.35f;
 			}
-			renderLivingLabel(npc, d, d1 + npc.height - 0.06f * scale, d2, npc.getName(), npc.display.getTitle());
+			renderLivingLabel(npc, d, d1 + npc.height - 0.06f * scale, d2, npc.getName(), title);
 			if (CustomNpcs.ShowLR) {
 				Packets.sendServerDelayed(new SPacketNpcRarityTitleGet(npc.getEntityId()), npc, 5000);
 				if (!npc.stats.getRarityTitle().isEmpty()) {
@@ -208,7 +215,7 @@ public class RenderNPCInterface<T extends EntityNPCInterface> extends RenderLivi
 	@Override
 	protected boolean setBrightness(@Nonnull T npc, float partialTicks, boolean combineTextures) {
 		float f;
-		if (CustomNpcs.FastNpcLayers && npc.getEntityId() == brightnessId && npc.ticksExisted == brightnessTick && partialTicks == brightnessPartial) {
+		if (npc.getEntityId() == brightnessId && npc.ticksExisted == brightnessTick && partialTicks == brightnessPartial) {
 			f = brightnessValue;
 		}
 		else {

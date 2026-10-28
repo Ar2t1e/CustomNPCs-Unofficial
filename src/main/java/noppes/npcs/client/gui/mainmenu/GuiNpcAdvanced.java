@@ -25,6 +25,7 @@ import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataAI;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.server.*;
+import noppes.npcs.roles.RoleAuctioneer;
 import noppes.npcs.roles.RoleTrader;
 import noppes.npcs.shared.client.gui.components.GuiButtonNop;
 import noppes.npcs.shared.client.gui.listeners.IGuiData;
@@ -214,12 +215,13 @@ public class GuiNpcAdvanced extends GuiNPCInterface2 implements IGuiData {
 		if (compound.hasKey("RoleData")) {
 			npc.role.load(compound);
 			switch (npc.role.getEnumType()) {
-				case TRADER: setSubGui(new SubGuiNpcSelectTrader(((RoleTrader) npc.role).getMarketID())); break;
+				case TRADER: setSubGui(new SubGuiNpcSelectTrader(npc)); break;
 				case FOLLOWER: NoppesUtil.requestOpenGUI(EnumGuiType.SetupFollower); break;
-				case BANK: setScreen(new GuiNpcBankSetup(npc)); break;
-				case TRANSPORTER: setScreen(new GuiNpcTransporter(npc)); break;
-				case COMPANION: setScreen(new GuiNpcCompanion(npc)); break;
-				case DIALOG: NoppesUtil.openGUI(player, new GuiRoleDialog(npc)); break;
+				case BANK: setScreen(new SubGuiNpcBankSetup(npc)); break;
+				case TRANSPORTER: setScreen(new SubGuiNpcTransporter(npc)); break;
+				case COMPANION: setScreen(new SubGuiNpcCompanion(npc)); break;
+				case DIALOG: setScreen(new SubGuiRoleDialog(npc)); break;
+				case AUCTIONEER: setSubGui(new SubGuiRoleAuctioneer(npc)); break;
 			}
 		}
 		else if (compound.hasKey("JobData")) {
@@ -247,6 +249,11 @@ public class GuiNpcAdvanced extends GuiNPCInterface2 implements IGuiData {
 		if (subgui instanceof SubGuiNpcSelectTrader) {
 			hasChanges = true;
 			((RoleTrader) npc.role).setMarket(((SubGuiNpcSelectTrader) subgui).id);
+			save();
+		}
+		else if (subgui instanceof SubGuiRoleAuctioneer) {
+			hasChanges = true;
+			((RoleAuctioneer) npc.role).setAuctionId(((SubGuiRoleAuctioneer) subgui).id);
 			save();
 		}
 	}

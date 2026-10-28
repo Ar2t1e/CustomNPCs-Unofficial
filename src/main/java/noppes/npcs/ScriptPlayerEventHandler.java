@@ -21,7 +21,7 @@ import noppes.npcs.controllers.*;
 import noppes.npcs.controllers.data.*;
 import noppes.npcs.api.mixin.tileentity.ITileEntityBanner;
 import noppes.npcs.entity.data.DataInventory;
-import noppes.npcs.mixin.fml.common.eventhandler.IEventBusMixin;
+import noppes.npcs.mixin.minecraftforge.fml.common.eventhandler.IEventBusMixin;
 import noppes.npcs.mixin.minecraftforge.event.entity.living.ILivingAttackEventMixin;
 import noppes.npcs.packets.Packets;
 import noppes.npcs.packets.client.PacketAchievement;
@@ -226,10 +226,10 @@ public class ScriptPlayerEventHandler {
 		for (QuestData data : playerdata.activeQuests.values()) {
 			if (data.quest.step == 2 && data.quest.questInterface.isCompleted(player)) { continue; }
 			boolean bo = data.quest.step == 1;
-			for (IQuestObjective obj : data.quest.getObjectives((IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player))) {
+			for (QuestObjective obj : data.quest.getObjectives((IPlayer<?>) Objects.requireNonNull(NpcAPI.Instance()).getIEntity(player))) {
 				if (data.quest.step == 1 && !bo) { break; }
 				bo = obj.isCompleted();
-				if (((QuestObjective) obj).getEnumType() != EnumQuestTask.CRAFT) { continue; }
+				if (obj.getEnumType() != EnumQuestTask.CRAFT) { continue; }
 				int size = 0;
 				if (!NoppesUtilServer.isItemStackNull(crafting) && NoppesUtilPlayer.compareItems(
 						obj.getItem().getMCItemStack(), crafting, obj.isIgnoreDamage(), obj.isItemIgnoreNBT())) {

@@ -22,7 +22,7 @@ import noppes.npcs.api.entity.data.IData;
 import noppes.npcs.api.handler.data.*;
 import noppes.npcs.api.item.IItemStack;
 import noppes.npcs.constants.*;
-import noppes.npcs.containers.NpcMiscInventory;
+import noppes.npcs.containers.inventories.NpcMiscInventory;
 import noppes.npcs.controllers.*;
 import noppes.npcs.mixin.scoreboard.IServerScoreboardMixin;
 import noppes.npcs.util.ValueUtil;

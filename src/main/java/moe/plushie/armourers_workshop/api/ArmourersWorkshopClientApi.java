@@ -4,17 +4,14 @@ import moe.plushie.armourers_workshop.api.client.render.ISkinRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SuppressWarnings("unused")
 @SideOnly(Side.CLIENT)
 public class ArmourersWorkshopClientApi {
 
 	public static ISkinRenderHandler skinRenderHandler;
 
-	public static ISkinRenderHandler getSkinRenderHandler() {
-		return skinRenderHandler;
-	}
+	public static ISkinRenderHandler getSkinRenderHandler() { return skinRenderHandler; }
 
-	private ArmourersWorkshopClientApi() {
-		throw new IllegalAccessError();
-	}
+	private ArmourersWorkshopClientApi() { throw new IllegalAccessError(); }
 
 }

@@ -1,8 +1,6 @@
 package noppes.npcs.client.gui.drop;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.network.chat.Component;
@@ -17,7 +15,7 @@ import javax.annotation.Nonnull;
 
 public class SubGuiDropEnchant extends GuiNPCInterface implements ITextfieldListener {
 
-	protected Object[] enchIds;
+	protected final Map<Component, Integer> enchIds = new TreeMap<>(Comparator.comparing(Component::getString));
 	protected int[] levels;
 	public EnchantSet enchant;
 
@@ -25,21 +23,25 @@ public class SubGuiDropEnchant extends GuiNPCInterface implements ITextfieldList
 		super();
 		setBackground("companion_empty.png");
 		closeOnEsc = true;
-		imageWidth = 172;
-		imageHeight = 167;
+		imageWidth = 130;
+		imageHeight = 95;
 
 		enchant = enchantIn;
-		List<Integer> el = new ArrayList<>();
-		for (Enchantment en : ForgeRegistries.ENCHANTMENTS.getValuesCollection()) { el.add(Enchantment.getEnchantmentID(en)); }
-		Collections.sort(el);
-		enchIds = new Object[el.size()];
-		for (int i = 0; i < el.size(); i++) { enchIds[i] = el.get(i); }
+		for (Enchantment enchantment : ForgeRegistries.ENCHANTMENTS.getValuesCollection()) {
+			enchIds.put(Component.translatable(enchantment.getName()), Enchantment.getEnchantmentID(enchantment));
+		}
 	}
 
 	@Override
 	public void buttonEvent(@Nonnull GuiButtonNop button) {
 		switch (button.id) {
-			case 50: enchant.setEnchant(Integer.parseInt(button.getVariants()[button.getValue()].getString())); initGui(); break;
+			case 50: {
+				if (enchIds.containsKey(button.getVariants()[button.getValue()])) {
+					enchant.setEnchant(enchIds.get(button.getVariants()[button.getValue()]));
+					initGui();
+				}
+				break;
+			}
 			case 66: onClose(); break;
 		}
 	}
@@ -48,39 +50,49 @@ public class SubGuiDropEnchant extends GuiNPCInterface implements ITextfieldList
 	public void initGui() {
 		super.initGui();
 		int lId = 60;
-		// name
-		addLabel(lId++, guiLeft + 4, guiTop + 5, Component.translatable("drop.enchants").append(": ")
-				.append(Component.translatable(enchant.getEnchant())));
+		int x = guiLeft + 5;
+		int y = guiTop + 5;
 		// select
 		int posId = 0;
-		int idName = Enchantment.getEnchantmentID(enchant.ench);
-		for (int i = 0; i < enchIds.length; i++) {
-			if ((int) enchIds[i] == idName) { posId = i; }
+		int enchantmentId = Enchantment.getEnchantmentID(enchant.ench);
+		Object[] es = enchIds.keySet().toArray();
+		for (int i = 0; i < es.length; i++) {
+			if (enchIds.get((Component) es[i]) == enchantmentId) {
+				posId = i;
+				break;
+			}
 		}
-		addButton(50, guiLeft + 4, guiTop + 17, true, posId, enchIds)
-				.setSize(80, 20)
-				.setHoverTexts("drop.hover.enchant.list");
+		addButton(50, x, y, true, posId, es)
+				.setSize(120, 16)
+				.setHoverTexts(Component.translatable("drop.hover.enchant.list", enchantmentId));
+		x += 1;
 		// levels
 		levels = new int[] { enchant.getMinLevel(), enchant.getMaxLevel() };
-		addLabel(lId++, guiLeft + 56, guiTop + 48, "type.level");
+		addLabel(lId++, x, (y += 18) + 8, "type.level")
+				.setSize(33, 10);
+		addLabel(lId++, x + 35, y + 2, Component.translatable("gui.min").append(":"))
+				.setSize(31, 10);
+		addLabel(lId++, x + 35, y + 16, Component.translatable("gui.max").append(":"))
+				.setSize(31, 10);
 		String tied = Component.translatable("drop.tied.random").getFormattedText();
 		if (enchant.parent.tiedToLevel) { tied = Component.translatable("drop.tied.level").getFormattedText(); }
 		// min
-		addTextField(52, guiLeft + 4, guiTop + 39, 50, 14, "" + levels[0])
+		addTextField(52, x + 68, y, 50, 14, "" + levels[0])
 				.setMinMaxDefault(0, 100000, enchant.getMinLevel())
 				.setHoverTexts(Component.translatable("drop.hover.enchant.levels", "" + enchant.ench.getMaxLevel(), tied));
 		// max
-		addTextField(53, guiLeft + 4, guiTop + 53, 50, 14, "" + levels[1])
+		addTextField(53, x + 68, y += 16, 50, 14, "" + levels[1])
 				.setMinMaxDefault(0, 100000, enchant.getMaxLevel())
 				.setHoverTexts(Component.translatable("drop.hover.enchant.levels", "" + enchant.ench.getMaxLevel(), tied));
 		// chance
-		addLabel(lId, guiLeft + 56, guiTop + 74, "drop.chance");
-		addTextField(54, guiLeft + 4, guiTop + 69, 50, 20, String.valueOf(enchant.getChance()))
+		addLabel(lId, x + 35, (y += 18) + 2, Component.translatable("drop.chance").append(":"))
+				.setSize(31, 10);
+		addTextField(54, x + 68, y, 50, 14, String.valueOf(enchant.getChance()))
 				.setMinMaxDefault(0.0001d, 100.0d, enchant.getChance())
 				.setHoverTexts("drop.hover.enchant.chance");
 		// done
-		addButton(66, guiLeft + 4, guiTop + 142, "gui.done")
-				.setSize(80, 20)
+		addButton(66, x + 19, y + 17, "gui.done")
+				.setSize(80, 16)
 				.setHoverTexts("hover.back");
 	}
 

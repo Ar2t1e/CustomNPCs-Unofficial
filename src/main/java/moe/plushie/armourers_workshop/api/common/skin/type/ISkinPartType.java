@@ -7,60 +7,51 @@ import moe.plushie.armourers_workshop.api.common.skin.data.ISkinProperties;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SuppressWarnings("unused")
 public interface ISkinPartType {
 
 	/**
 	 * The last 3 values are used to define the size of this part, the first 3
 	 * values will change the origin. Example -5, -5, -5, 10, 10, 10, Will create a
-	 * 10x10x10 cube with it's origin in the centre.
-	 * 
-	 * @return
+	 * 10x10x10 cube with its origin in the centre.
 	 */
-	public IRectangle3D getBuildingSpace();
+	IRectangle3D getBuildingSpace();
 
 	/**
 	 * The last 3 values set the size of the invisible blocks that cubes can be
 	 * placed on, the first 3 set the offset. Use 0, 0, 0, 0, 0, 0, if you don't
 	 * want to use this. Setting showArmourerDebugRender to true in the config will
 	 * show this box.
-	 * 
-	 * @return
 	 */
-	public IRectangle3D getGuideSpace();
+	IRectangle3D getGuideSpace();
 
 	@SideOnly(Side.CLIENT)
-	public IPoint3D getItemRenderOffset();
+	IPoint3D getItemRenderOffset();
 
 	@SideOnly(Side.CLIENT)
-	public IRectangle3D getItemRenderTextureBounds();
+	IRectangle3D getItemRenderTextureBounds();
 
 	/**
 	 * Gets the maximum number of markers allowed for this skin part.
-	 * 
-	 * @return
 	 */
-	public int getMaximumMarkersNeeded();
+	int getMaximumMarkersNeeded();
 
 	/**
 	 * Get the minimum number of markers needed for this skin part.
-	 * 
-	 * @return
 	 */
-	public int getMinimumMarkersNeeded();
+	int getMinimumMarkersNeeded();
 
 	/**
 	 * This is used by the armourer to position this part
-	 * 
-	 * @return
 	 */
-	public IPoint3D getOffset();
+	IPoint3D getOffset();
 
 	/**
 	 * Get the name of this part.
 	 * 
 	 * @return Part name
 	 */
-	public String getPartName();
+	String getPartName();
 
 	/**
 	 * Gets the name this skin will be registered with. Armourer's Workshop uses the
@@ -70,28 +61,24 @@ public interface ISkinPartType {
 	 * 
 	 * @return Registry name
 	 */
-	public String getRegistryName();
+	String getRegistryName();
 
-	public boolean isModelOverridden(ISkinProperties skinProps);
+	boolean isModelOverridden(ISkinProperties skinProps);
 
-	public boolean isOverlayOverridden(ISkinProperties skinProps);
+	boolean isOverlayOverridden(ISkinProperties skinProps);
 
 	/**
 	 * If true this part must be present for the skin to be saved.
-	 * 
-	 * @return
 	 */
-	public boolean isPartRequired();
+	boolean isPartRequired();
 
-	public ISkinPart makeDummyPaintPart(int[] paintData);
+	ISkinPart makeDummyPaintPart(int[] paintData);
 
 	/**
-	 * 
-	 * @param scale
-	 *            Normally 0.0625F.
-	 * @param showSkinOverlay
-	 * @param showHelper
+	 *
+	 * @param scale Normally 0.0625F.
 	 */
 	@SideOnly(Side.CLIENT)
-	public void renderBuildingGuide(float scale, ISkinProperties skinProps, boolean showHelper);
+	void renderBuildingGuide(float scale, ISkinProperties skinProps, boolean showHelper);
+
 }
